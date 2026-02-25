@@ -400,6 +400,21 @@ import { CreatureBeekeeperSystem } from '../systems/CreatureBeekeeperSystem'
 import { WorldAtollSystem } from '../systems/WorldAtollSystem'
 import { CreatureLamplighterSystem } from '../systems/CreatureLamplighterSystem'
 import { DiplomaticCeasefireSystem } from '../systems/DiplomaticCeasefireSystem'
+import { CreaturePerfumerSystem } from '../systems/CreaturePerfumerSystem'
+import { WorldCoralNurserySystem } from '../systems/WorldCoralNurserySystem'
+import { CreatureGlazierSystem } from '../systems/CreatureGlazierSystem'
+import { WorldMudVolcanoSystem } from '../systems/WorldMudVolcanoSystem'
+import { DiplomaticProtectorateSystem } from '../systems/DiplomaticProtectorateSystem'
+import { CreatureGondolierSystem } from '../systems/CreatureGondolierSystem'
+import { WorldFungalNetworkSystem } from '../systems/WorldFungalNetworkSystem'
+import { CreatureCooperSystem } from '../systems/CreatureCooperSystem'
+import { WorldSaltMarshSystem } from '../systems/WorldSaltMarshSystem'
+import { DiplomaticConfederationSystem } from '../systems/DiplomaticConfederationSystem'
+import { CreatureChandlerSystem } from '../systems/CreatureChandlerSystem'
+import { WorldFrostHollowSystem } from '../systems/WorldFrostHollowSystem'
+import { CreatureTinkerSystem } from '../systems/CreatureTinkerSystem'
+import { WorldBasaltColumnSystem } from '../systems/WorldBasaltColumnSystem'
+import { DiplomaticExtraditionSystem } from '../systems/DiplomaticExtraditionSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -801,6 +816,21 @@ export class Game {
   private worldAtoll!: WorldAtollSystem
   private creatureLamplighter!: CreatureLamplighterSystem
   private diplomaticCeasefire!: DiplomaticCeasefireSystem
+  private creaturePerfumer!: CreaturePerfumerSystem
+  private worldCoralNursery!: WorldCoralNurserySystem
+  private creatureGlazier!: CreatureGlazierSystem
+  private worldMudVolcano!: WorldMudVolcanoSystem
+  private diplomaticProtectorate!: DiplomaticProtectorateSystem
+  private creatureGondolier!: CreatureGondolierSystem
+  private worldFungalNetwork!: WorldFungalNetworkSystem
+  private creatureCooper!: CreatureCooperSystem
+  private worldSaltMarsh!: WorldSaltMarshSystem
+  private diplomaticConfederation!: DiplomaticConfederationSystem
+  private creatureChandler!: CreatureChandlerSystem
+  private worldFrostHollow!: WorldFrostHollowSystem
+  private creatureTinker!: CreatureTinkerSystem
+  private worldBasaltColumn!: WorldBasaltColumnSystem
+  private diplomaticExtradition!: DiplomaticExtraditionSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1353,6 +1383,21 @@ export class Game {
     this.worldAtoll = new WorldAtollSystem()
     this.creatureLamplighter = new CreatureLamplighterSystem()
     this.diplomaticCeasefire = new DiplomaticCeasefireSystem()
+    this.creaturePerfumer = new CreaturePerfumerSystem()
+    this.worldCoralNursery = new WorldCoralNurserySystem()
+    this.creatureGlazier = new CreatureGlazierSystem()
+    this.worldMudVolcano = new WorldMudVolcanoSystem()
+    this.diplomaticProtectorate = new DiplomaticProtectorateSystem()
+    this.creatureGondolier = new CreatureGondolierSystem()
+    this.worldFungalNetwork = new WorldFungalNetworkSystem()
+    this.creatureCooper = new CreatureCooperSystem()
+    this.worldSaltMarsh = new WorldSaltMarshSystem()
+    this.diplomaticConfederation = new DiplomaticConfederationSystem()
+    this.creatureChandler = new CreatureChandlerSystem()
+    this.worldFrostHollow = new WorldFrostHollowSystem()
+    this.creatureTinker = new CreatureTinkerSystem()
+    this.worldBasaltColumn = new WorldBasaltColumnSystem()
+    this.diplomaticExtradition = new DiplomaticExtraditionSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3064,6 +3109,36 @@ export class Game {
         this.creatureLamplighter.update(this.tickRate, this.em, this.world.tick)
         // Diplomatic ceasefire (v3.175) - temporary peace agreements
         this.diplomaticCeasefire.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature perfumers (v3.176) - fragrance crafting
+        this.creaturePerfumer.update(this.tickRate, this.em, this.world.tick)
+        // World coral nurseries (v3.177) - coral cultivation
+        this.worldCoralNursery.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature glaziers (v3.178) - glass crafting
+        this.creatureGlazier.update(this.tickRate, this.em, this.world.tick)
+        // World mud volcanoes (v3.179) - mud eruptions
+        this.worldMudVolcano.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic protectorate (v3.180) - vassal protection
+        this.diplomaticProtectorate.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature gondoliers (v3.181) - waterway transport
+        this.creatureGondolier.update(this.tickRate, this.em, this.world.tick)
+        // World fungal networks (v3.182) - underground mycelium
+        this.worldFungalNetwork.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature coopers (v3.183) - barrel making
+        this.creatureCooper.update(this.tickRate, this.em, this.world.tick)
+        // World salt marshes (v3.184) - coastal wetlands
+        this.worldSaltMarsh.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic confederation (v3.185) - multi-civ alliances
+        this.diplomaticConfederation.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature chandlers (v3.186) - candle making
+        this.creatureChandler.update(this.tickRate, this.em, this.world.tick)
+        // World frost hollows (v3.187) - cold air pooling
+        this.worldFrostHollow.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature tinkers (v3.188) - repair and mending
+        this.creatureTinker.update(this.tickRate, this.em, this.world.tick)
+        // World basalt columns (v3.189) - volcanic formations
+        this.worldBasaltColumn.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic extradition (v3.190) - fugitive exchange
+        this.diplomaticExtradition.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
