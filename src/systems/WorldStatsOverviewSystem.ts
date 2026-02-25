@@ -1,0 +1,216 @@
+import type { EntityManager } from '../ecs/Entity'
+import type { CivManager } from '../civilization/CivManager'
+
+const SPECIES_COLORS: Record<string, string> = {
+  human: '#ffcc99', elf: '#99ffcc', dwarf: '#cc9966', orc: '#66cc66',
+}
+
+const MAX_HISTORY = 200
+const SAMPLE_INTERVAL = 60
+const PANEL_W = 320
+const PANEL_H = 260
+const MARGIN = 12
+
+/**
+ * World statistics overview panel.
+ * Shows population curve, race distribution bar, war/peace counts, and civ aggregates.
+ * Toggle with Tab key.
+ */
+export class WorldStatsOverviewSystem {
+  private popHistory = new Float32Array(MAX_HISTORY)
+  private histHead = 0
+  private histCount = 0
+  private lastSampleTick = -SAMPLE_INTERVAL
+
+  private totalPop = 0
+  private civCount = 0
+  private buildingCount = 0
+  private resourceTotal = 0
+  private warCount = 0
+  private peaceCount = 0
+  private speciesCounts: Map<string, number> = new Map()
+  private visible = false
+
+  constructor() { /* no-op */ }
+
+  toggle(): void { this.visible = !this.visible }
+  isVisible(): boolean { return this.visible }
+
+  /** Sample world data every SAMPLE_INTERVAL ticks. */
+  update(tick: number, em: EntityManager, civManager: CivManager): void {
+    if (tick - this.lastSampleTick < SAMPLE_INTERVAL) return
+    this.lastSampleTick = tick
+
+    let pop = 0
+    this.speciesCounts.clear()
+    const creatures = em.getEntitiesWithComponent('creature')
+    for (let i = 0; i < creatures.length; i++) {
+      const c = em.getComponent<{ type: 'creature'; species: string }>(creatures[i], 'creature')
+      if (!c) continue
+      pop++
+      this.speciesCounts.set(c.species, (this.speciesCounts.get(c.species) ?? 0) + 1)
+    }
+    this.totalPop = pop
+
+    // Ring buffer push
+    if (this.histCount < MAX_HISTORY) {
+      this.popHistory[this.histCount++] = pop
+    } else {
+      this.popHistory[this.histHead] = pop
+      this.histHead = (this.histHead + 1) % MAX_HISTORY
+    }
+
+    const civs = civManager.civilizations
+    this.civCount = civs.size
+    let buildings = 0, resources = 0, wars = 0, peaces = 0
+    for (const [, civ] of civs) {
+      buildings += civ.buildings.length
+      const r = civ.resources
+      resources += r.food + r.wood + r.stone + r.gold
+      for (const [, rel] of civ.relations) {
+        if (rel <= -50) wars++
+        else if (rel > 50) peaces++
+      }
+    }
+    this.warCount = wars >> 1
+    this.peaceCount = peaces >> 1
+    this.buildingCount = buildings
+    this.resourceTotal = resources
+  }
+
+  /** Helper: compute chart point coords from ring buffer */
+  private chartPt(i: number, n: number, chartX: number, chartY: number, chartW: number, chartH: number, maxVal: number): [number, number] {
+    const idx = n < MAX_HISTORY ? i : (this.histHead + i) % MAX_HISTORY
+    return [chartX + i * (chartW / (n - 1)), chartY + chartH - (this.popHistory[idx] / maxVal) * chartH]
+  }
+
+  /** Render the overlay panel (screen-space, top-right corner). */
+  render(ctx: CanvasRenderingContext2D, screenW: number, screenH: number): void {
+    if (!this.visible) return
+    const x = screenW - PANEL_W - MARGIN, y = MARGIN
+    ctx.save()
+
+    // Background
+    ctx.fillStyle = 'rgba(8,10,18,0.9)'
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.roundRect(x, y, PANEL_W, PANEL_H, 6)
+    ctx.fill()
+    ctx.stroke()
+
+    // Title
+    ctx.fillStyle = '#ccc'
+    ctx.font = 'bold 12px monospace'
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'top'
+    ctx.fillText('World Overview  [Tab]', x + 10, y + 8)
+
+    // Summary row
+    const sy = y + 28
+    ctx.font = '10px monospace'
+    const stats = [
+      { l: 'Pop', v: this.totalPop, c: '#4fc3f7' },
+      { l: 'Civs', v: this.civCount, c: '#aed581' },
+      { l: 'Bldg', v: this.buildingCount, c: '#ffb74d' },
+      { l: 'Res', v: Math.round(this.resourceTotal), c: '#ce93d8' },
+    ]
+    const colW = (PANEL_W - 20) / stats.length
+    for (let i = 0; i < stats.length; i++) {
+      const lx = x + 10 + i * colW
+      ctx.fillStyle = stats[i].c
+      ctx.fillText(stats[i].l, lx, sy)
+      ctx.fillStyle = '#fff'
+      ctx.fillText(String(stats[i].v), lx, sy + 13)
+    }
+
+    // War / Peace
+    const wy = sy + 30
+    ctx.fillStyle = '#ef5350'
+    ctx.fillText(`War: ${this.warCount}`, x + 10, wy)
+    ctx.fillStyle = '#66bb6a'
+    ctx.fillText(`Peace: ${this.peaceCount}`, x + 100, wy)
+
+    // Population history curve
+    const cX = x + 10, cY = wy + 18, cW = PANEL_W - 20, cH = 80
+    ctx.fillStyle = 'rgba(255,255,255,0.03)'
+    ctx.fillRect(cX, cY, cW, cH)
+    ctx.fillStyle = 'rgba(255,255,255,0.35)'
+    ctx.font = '9px monospace'
+    ctx.fillText('Population History', cX, cY - 2)
+
+    if (this.histCount > 1) {
+      let maxVal = 1
+      for (let i = 0; i < this.histCount; i++) {
+        const idx = this.histCount < MAX_HISTORY ? i : (this.histHead + i) % MAX_HISTORY
+        if (this.popHistory[idx] > maxVal) maxVal = this.popHistory[idx]
+      }
+      const n = this.histCount
+      // Filled area
+      ctx.beginPath()
+      ctx.moveTo(cX, cY + cH)
+      for (let i = 0; i < n; i++) { const [px, py] = this.chartPt(i, n, cX, cY, cW, cH, maxVal); ctx.lineTo(px, py) }
+      ctx.lineTo(cX + (n - 1) * (cW / (n - 1)), cY + cH)
+      ctx.closePath()
+      ctx.fillStyle = 'rgba(79,195,247,0.15)'
+      ctx.fill()
+      // Line
+      ctx.beginPath()
+      for (let i = 0; i < n; i++) {
+        const [px, py] = this.chartPt(i, n, cX, cY, cW, cH, maxVal)
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)
+      }
+      ctx.strokeStyle = '#4fc3f7'
+      ctx.lineWidth = 1.5
+      ctx.stroke()
+      // Max label
+      ctx.fillStyle = 'rgba(255,255,255,0.3)'
+      ctx.font = '8px monospace'
+      ctx.textAlign = 'right'
+      ctx.fillText(String(Math.round(maxVal)), cX + cW, cY + 8)
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.2)'
+      ctx.font = '10px monospace'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText('Waiting...', cX + cW / 2, cY + cH / 2)
+    }
+
+    // Species distribution bar
+    const barY = cY + cH + 14, barH = 14
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'top'
+    ctx.fillStyle = 'rgba(255,255,255,0.35)'
+    ctx.font = '9px monospace'
+    ctx.fillText('Species Distribution', cX, barY - 12)
+
+    if (this.totalPop > 0) {
+      let bx = cX
+      const entries = Array.from(this.speciesCounts.entries()).sort((a, b) => b[1] - a[1])
+      for (const [species, count] of entries) {
+        const segW = (count / this.totalPop) * cW
+        if (segW < 1) continue
+        ctx.fillStyle = SPECIES_COLORS[species] ?? '#888'
+        ctx.fillRect(bx, barY, segW, barH)
+        if (segW > 30) {
+          ctx.fillStyle = '#000'
+          ctx.font = '8px monospace'
+          ctx.fillText(`${species} ${count}`, bx + 3, barY + 3)
+        }
+        bx += segW
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)'
+      ctx.lineWidth = 1
+      ctx.strokeRect(cX, barY, cW, barH)
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.06)'
+      ctx.fillRect(cX, barY, cW, barH)
+      ctx.fillStyle = 'rgba(255,255,255,0.2)'
+      ctx.font = '9px monospace'
+      ctx.textAlign = 'center'
+      ctx.fillText('No creatures', cX + cW / 2, barY + 3)
+    }
+
+    ctx.restore()
+  }
+}
