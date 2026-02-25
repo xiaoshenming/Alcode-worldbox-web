@@ -32,6 +32,7 @@ import { WorldEventSystem } from '../systems/WorldEventSystem'
 import { CaravanSystem } from '../systems/CaravanSystem'
 import { DiplomacySystem } from '../systems/DiplomacySystem'
 import { CropSystem } from '../systems/CropSystem'
+import { TechTreePanel } from '../ui/TechTreePanel'
 
 export class Game {
   private world: World
@@ -44,6 +45,7 @@ export class Game {
   private creaturePanel: CreaturePanel
   private eventPanel: EventPanel
   private statsPanel: StatsPanel
+  private techTreePanel: TechTreePanel
   private contextMenu: ContextMenu
 
   em: EntityManager
@@ -119,6 +121,7 @@ export class Game {
     this.creaturePanel = new CreaturePanel('creaturePanel', this.em, this.civManager)
     this.eventPanel = new EventPanel('eventPanel')
     this.statsPanel = new StatsPanel('statsPanel', this.em, this.civManager)
+    this.techTreePanel = new TechTreePanel('techTreePanel', this.civManager)
     this.contextMenu = new ContextMenu('contextMenu')
 
     this.setupSpeedControls()
@@ -199,6 +202,14 @@ export class Game {
         this.statsPanel.toggle()
       })
     }
+
+    // Tech Tree button
+    const techTreeBtn = document.getElementById('techTreeBtn')
+    if (techTreeBtn) {
+      techTreeBtn.addEventListener('click', () => {
+        this.techTreePanel.toggle()
+      })
+    }
   }
 
   private resetWorld(): void {
@@ -230,6 +241,7 @@ export class Game {
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
     this.creaturePanel = new CreaturePanel('creaturePanel', this.em, this.civManager)
     this.statsPanel = new StatsPanel('statsPanel', this.em, this.civManager)
+    this.techTreePanel = new TechTreePanel('techTreePanel', this.civManager)
 
     // Generate new world
     this.world.generate()
@@ -468,6 +480,8 @@ export class Game {
           const tlPanel = document.getElementById('timelinePanel')
           if (savePanel?.style.display !== 'none' && savePanel?.style.display) {
             savePanel.style.display = 'none'
+          } else if (this.techTreePanel.isVisible()) {
+            this.techTreePanel.hide()
           } else if (this.statsPanel.isVisible()) {
             this.statsPanel.hide()
           } else if (achPanel?.style.display !== 'none' && achPanel?.style.display) {
@@ -822,6 +836,9 @@ export class Game {
       this.statsPanel.update(this.world.tick)
       this.achievements.updateStats(this.gatherWorldStats())
       this.updateAchievementsButton()
+      if (this.techTreePanel.isVisible()) {
+        this.techTreePanel.render()
+      }
     }
 
     // Achievement notifications
