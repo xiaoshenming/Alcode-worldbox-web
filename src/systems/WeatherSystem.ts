@@ -2,9 +2,10 @@ import { World } from '../game/World'
 import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { ParticleSystem } from './ParticleSystem'
 import { EntityManager, NeedsComponent, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { BuildingComponent } from '../civilization/Civilization'
 import { EventLog } from './EventLog'
 
-export type WeatherType = 'clear' | 'rain' | 'snow' | 'storm' | 'fog'
+export type WeatherType = 'clear' | 'rain' | 'snow' | 'storm' | 'fog' | 'tornado' | 'drought' | 'heatwave'
 
 export class WeatherSystem {
   currentWeather: WeatherType = 'clear'
@@ -18,6 +19,12 @@ export class WeatherSystem {
   // Visual state
   windX: number = 0
   fogAlpha: number = 0
+
+  // Tornado tracking
+  tornadoX: number = 0
+  tornadoY: number = 0
+  tornadoDirX: number = 0
+  tornadoDirY: number = 0
 
   constructor(world: World, particles: ParticleSystem, em: EntityManager) {
     this.world = world
@@ -62,13 +69,13 @@ export class WeatherSystem {
         types = ['snow', 'snow', 'snow', 'fog', 'rain']
         break
       case 'spring':
-        types = ['rain', 'rain', 'rain', 'storm', 'fog']
+        types = ['rain', 'rain', 'rain', 'storm', 'fog', 'tornado']
         break
       case 'summer':
-        types = ['clear', 'clear', 'rain', 'storm', 'fog']
+        types = ['clear', 'clear', 'rain', 'storm', 'fog', 'drought', 'drought', 'heatwave', 'heatwave']
         break
       case 'autumn':
-        types = ['fog', 'fog', 'rain', 'rain', 'snow']
+        types = ['fog', 'fog', 'rain', 'rain', 'snow', 'tornado']
         break
       default:
         types = ['rain', 'rain', 'snow', 'storm', 'fog']
@@ -77,7 +84,26 @@ export class WeatherSystem {
     if (picked === 'clear') return // summer clear = no weather event
     this.currentWeather = picked
     this.intensity = 0.3 + Math.random() * 0.7
-    this.duration = 600 + Math.floor(Math.random() * 1800)
+
+    // Set duration based on weather type
+    switch (picked) {
+      case 'tornado':
+        this.duration = 300 + Math.floor(Math.random() * 300)
+        this.tornadoX = Math.floor(Math.random() * WORLD_WIDTH)
+        this.tornadoY = Math.floor(Math.random() * WORLD_HEIGHT)
+        this.tornadoDirX = (Math.random() - 0.5) * 2
+        this.tornadoDirY = (Math.random() - 0.5) * 2
+        break
+      case 'drought':
+        this.duration = 1200 + Math.floor(Math.random() * 1800)
+        break
+      case 'heatwave':
+        this.duration = 600 + Math.floor(Math.random() * 900)
+        break
+      default:
+        this.duration = 600 + Math.floor(Math.random() * 1800)
+    }
+
     EventLog.log('weather', `${this.getWeatherLabel()} has begun`, this.world.tick)
   }
 
@@ -94,6 +120,15 @@ export class WeatherSystem {
         break
       case 'fog':
         // Fog only affects visibility (handled in renderer)
+        break
+      case 'tornado':
+        this.applyTornado()
+        break
+      case 'drought':
+        this.applyDrought()
+        break
+      case 'heatwave':
+        this.applyHeatwave()
         break
     }
 
@@ -198,6 +233,125 @@ export class WeatherSystem {
     }
   }
 
+  private applyTornado(): void {
+    // Move tornado along its path
+    this.tornadoDirX += (Math.random() - 0.5) * 0.3
+    this.tornadoDirY += (Math.random() - 0.5) * 0.3
+    const dirLen = Math.sqrt(this.tornadoDirX * this.tornadoDirX + this.tornadoDirY * this.tornadoDirY)
+    if (dirLen > 0) {
+      const speed = 0.3 + Math.random() * 0.2
+      this.tornadoX += (this.tornadoDirX / dirLen) * speed
+      this.tornadoY += (this.tornadoDirY / dirLen) * speed
+    }
+
+    // Clamp to world bounds
+    this.tornadoX = Math.max(0, Math.min(WORLD_WIDTH - 1, this.tornadoX))
+    this.tornadoY = Math.max(0, Math.min(WORLD_HEIGHT - 1, this.tornadoY))
+
+    // Destroy terrain at tornado position
+    const tx = Math.floor(this.tornadoX)
+    const ty = Math.floor(this.tornadoY)
+    const tile = this.world.getTile(tx, ty)
+    if (tile === TileType.FOREST) {
+      this.world.setTile(tx, ty, TileType.GRASS)
+    } else if (tile === TileType.GRASS) {
+      this.world.setTile(tx, ty, TileType.SAND)
+    }
+
+    // Damage buildings on the path
+    const buildingEntities = this.em.getEntitiesWithComponents('position', 'building')
+    for (const id of buildingEntities) {
+      const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+      const dx = pos.x - this.tornadoX
+      const dy = pos.y - this.tornadoY
+      if (Math.sqrt(dx * dx + dy * dy) < 2) {
+        const b = this.em.getComponent<BuildingComponent>(id, 'building')!
+        b.health -= 10
+      }
+    }
+
+    // Damage creatures within 5 tiles
+    const creatureEntities = this.em.getEntitiesWithComponents('position', 'needs')
+    for (const id of creatureEntities) {
+      const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+      const dx = pos.x - this.tornadoX
+      const dy = pos.y - this.tornadoY
+      if (Math.sqrt(dx * dx + dy * dy) < 5) {
+        const needs = this.em.getComponent<NeedsComponent>(id, 'needs')!
+        needs.health -= 5
+      }
+    }
+
+    // Rotating gray particles around tornado
+    if (this.weatherTimer % 2 === 0) {
+      for (let i = 0; i < 8; i++) {
+        const angle = (this.weatherTimer * 0.2) + (i * Math.PI * 2 / 8)
+        const radius = 1 + Math.random() * 2
+        this.particles.addParticle({
+          x: this.tornadoX + Math.cos(angle) * radius,
+          y: this.tornadoY + Math.sin(angle) * radius,
+          vx: Math.cos(angle + Math.PI / 2) * 1.5,
+          vy: Math.sin(angle + Math.PI / 2) * 1.5 - 0.5,
+          life: 20 + Math.random() * 15,
+          maxLife: 35,
+          color: '#888888',
+          size: 0.8 + Math.random() * 0.6
+        })
+      }
+    }
+  }
+
+  private applyDrought(): void {
+    // Every 200 ticks, convert water/grass to sand
+    if (this.weatherTimer % 200 === 0) {
+      const rx = Math.floor(Math.random() * WORLD_WIDTH)
+      const ry = Math.floor(Math.random() * WORLD_HEIGHT)
+      const tile = this.world.getTile(rx, ry)
+      if (tile === TileType.SHALLOW_WATER) {
+        this.world.setTile(rx, ry, TileType.SAND)
+      } else if (tile === TileType.GRASS) {
+        this.world.setTile(rx, ry, TileType.SAND)
+      }
+    }
+
+    // Log drought event periodically
+    if (this.weatherTimer % 600 === 0) {
+      EventLog.log('weather', 'The drought continues to parch the land...', this.world.tick)
+    }
+  }
+
+  private applyHeatwave(): void {
+    // Every 300 ticks, melt snow -> mountain
+    if (this.weatherTimer % 300 === 0) {
+      const rx = Math.floor(Math.random() * WORLD_WIDTH)
+      const ry = Math.floor(Math.random() * WORLD_HEIGHT)
+      const tile = this.world.getTile(rx, ry)
+      if (tile === TileType.SNOW) {
+        this.world.setTile(rx, ry, TileType.MOUNTAIN)
+      }
+    }
+
+    // Occasional orange/red rising heat particles
+    if (this.weatherTimer % 10 === 0) {
+      const count = Math.floor(this.intensity * 3)
+      for (let i = 0; i < count; i++) {
+        const x = Math.random() * WORLD_WIDTH
+        const y = Math.random() * WORLD_HEIGHT
+        const color = Math.random() < 0.5 ? '#ff6633' : '#cc3300'
+        this.particles.addParticle({
+          x,
+          y,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: -0.3 - Math.random() * 0.4,
+          life: 25 + Math.random() * 20,
+          maxLife: 45,
+          color,
+          size: 0.6 + Math.random() * 0.4
+        })
+      }
+    }
+  }
+
   private affectCreatures(): void {
     const entities = this.em.getEntitiesWithComponents('position', 'needs', 'creature')
 
@@ -224,6 +378,16 @@ export class WeatherSystem {
             needs.health -= 0.01 * this.intensity
           }
           break
+        case 'drought':
+          // Hunger increases faster during drought
+          needs.hunger += 0.05 * this.intensity
+          break
+        case 'heatwave':
+          // Heat damages creatures (dragons are immune)
+          if (creature.species !== 'dragon') {
+            needs.health -= 0.03 * this.intensity
+          }
+          break
       }
     }
   }
@@ -235,6 +399,9 @@ export class WeatherSystem {
       case 'snow': return '❄️ Snow'
       case 'storm': return '⛈️ Storm'
       case 'fog': return '🌫️ Fog'
+      case 'tornado': return '🌪️ Tornado'
+      case 'drought': return '🏜️ Drought'
+      case 'heatwave': return '🔥 Heat Wave'
     }
   }
 }
