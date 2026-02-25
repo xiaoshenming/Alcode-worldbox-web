@@ -4,6 +4,7 @@ import { Camera } from './Camera'
 import { EntityManager, PositionComponent, RenderComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 import { BuildingComponent, BUILDING_COLORS } from '../civilization/Civilization'
+import { ParticleSystem } from '../systems/ParticleSystem'
 
 export class Renderer {
   private canvas: HTMLCanvasElement
@@ -25,7 +26,7 @@ export class Renderer {
     this.canvas.height = height
   }
 
-  render(world: World, camera: Camera, em?: EntityManager, civManager?: CivManager): void {
+  render(world: World, camera: Camera, em?: EntityManager, civManager?: CivManager, particles?: ParticleSystem): void {
     const ctx = this.ctx
     const bounds = camera.getVisibleBounds()
 
@@ -116,6 +117,26 @@ export class Renderer {
           ctx.stroke()
         }
       }
+    }
+
+    // Draw particles
+    if (particles) {
+      const tileSize = TILE_SIZE * camera.zoom
+      const offsetX = -camera.x * camera.zoom
+      const offsetY = -camera.y * camera.zoom
+
+      for (const p of particles.particles) {
+        const screenX = p.x * tileSize + offsetX + tileSize / 2
+        const screenY = p.y * tileSize + offsetY + tileSize / 2
+        const alpha = p.life / p.maxLife
+
+        ctx.globalAlpha = alpha
+        ctx.fillStyle = p.color
+        ctx.beginPath()
+        ctx.arc(screenX, screenY, p.size * camera.zoom, 0, Math.PI * 2)
+        ctx.fill()
+      }
+      ctx.globalAlpha = 1
     }
   }
 

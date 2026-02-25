@@ -8,6 +8,7 @@ import { InfoPanel } from '../ui/InfoPanel'
 import { EntityManager } from '../ecs/Entity'
 import { AISystem } from '../systems/AISystem'
 import { CombatSystem } from '../systems/CombatSystem'
+import { ParticleSystem } from '../systems/ParticleSystem'
 import { CreatureFactory } from '../entities/CreatureFactory'
 import { CivManager } from '../civilization/CivManager'
 
@@ -23,6 +24,7 @@ export class Game {
   em: EntityManager
   private aiSystem: AISystem
   private combatSystem: CombatSystem
+  particles: ParticleSystem
   creatureFactory: CreatureFactory
   civManager: CivManager
 
@@ -47,6 +49,7 @@ export class Game {
     this.civManager = new CivManager(this.em, this.world)
     this.aiSystem = new AISystem(this.em, this.world)
     this.combatSystem = new CombatSystem(this.em, this.civManager)
+    this.particles = new ParticleSystem()
 
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager)
     this.toolbar = new Toolbar('toolbar', this.powers)
@@ -152,11 +155,12 @@ export class Game {
         this.aiSystem.update()
         this.combatSystem.update()
         this.civManager.update()
+        this.particles.update()
         this.accumulator -= this.tickRate
       }
     }
 
-    this.renderer.render(this.world, this.camera, this.em, this.civManager)
+    this.renderer.render(this.world, this.camera, this.em, this.civManager, this.particles)
     this.renderer.renderMinimap(this.world, this.camera)
 
     if (this.world.tick % 30 === 0) {
