@@ -132,6 +132,10 @@ import { EntitySearchSystem } from '../systems/EntitySearchSystem'
 import { WorldStatsOverviewSystem } from '../systems/WorldStatsOverviewSystem'
 import { NotificationCenterSystem } from '../systems/NotificationCenterSystem'
 import { SandboxSettingsSystem } from '../systems/SandboxSettingsSystem'
+import { MiniMapModeSystem } from '../systems/MiniMapModeSystem'
+import { CameraBookmarkSystem } from '../systems/CameraBookmarkSystem'
+import { EntityInspectorSystem } from '../systems/EntityInspectorSystem'
+import { SpeedIndicatorSystem } from '../systems/SpeedIndicatorSystem'
 
 export class Game {
   private world: World
@@ -266,6 +270,10 @@ export class Game {
   private worldStatsOverview!: WorldStatsOverviewSystem
   private notificationCenter!: NotificationCenterSystem
   private sandboxSettings!: SandboxSettingsSystem
+  private minimapMode!: MiniMapModeSystem
+  private cameraBookmarks!: CameraBookmarkSystem
+  private entityInspector!: EntityInspectorSystem
+  private speedIndicator!: SpeedIndicatorSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -544,6 +552,10 @@ export class Game {
     this.worldStatsOverview = new WorldStatsOverviewSystem()
     this.notificationCenter = new NotificationCenterSystem()
     this.sandboxSettings = new SandboxSettingsSystem()
+    this.minimapMode = new MiniMapModeSystem()
+    this.cameraBookmarks = new CameraBookmarkSystem()
+    this.entityInspector = new EntityInspectorSystem()
+    this.speedIndicator = new SpeedIndicatorSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -880,11 +892,26 @@ export class Game {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
 
       switch (e.key) {
-        // Speed controls
-        case '1': this.setSpeed(1); break
-        case '2': this.setSpeed(2); break
-        case '3': this.setSpeed(5); break
-        case '4': this.setSpeed(0); break
+        // Speed controls (plain) / Camera bookmarks (Ctrl=save, Alt=jump)
+        case '1': case '2': case '3': case '4':
+        case '5': case '6': case '7': case '8': case '9': {
+          const slot = parseInt(e.key) - 1
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault()
+            this.cameraBookmarks.save(slot, this.camera.x, this.camera.y, this.camera.zoom)
+          } else if (e.altKey) {
+            e.preventDefault()
+            const bm = this.cameraBookmarks.get(slot)
+            if (bm) { this.camera.x = bm.x; this.camera.y = bm.y; this.camera.zoom = bm.zoom }
+          } else {
+            // Original speed controls for 1-4
+            if (e.key === '1') this.setSpeed(1)
+            else if (e.key === '2') this.setSpeed(2)
+            else if (e.key === '3') this.setSpeed(5)
+            else if (e.key === '4') this.setSpeed(0)
+          }
+          break
+        }
         case ' ':
           e.preventDefault()
           this.setSpeed(this.speed === 0 ? 1 : 0)
@@ -994,6 +1021,24 @@ export class Game {
           this.screenshotMode.enterScreenshotMode(1)
           break
 
+        // Camera bookmarks panel: B
+        case 'b':
+        case 'B':
+          if (!e.ctrlKey && !e.metaKey) this.cameraBookmarks.togglePanel()
+          break
+
+        // Entity inspector: I
+        case 'i':
+        case 'I':
+          if (!e.ctrlKey && !e.metaKey) this.entityInspector.togglePanel()
+          break
+
+        // Minimap mode cycle: V
+        case 'v':
+        case 'V':
+          if (!e.ctrlKey && !e.metaKey) this.minimapMode.cycleMode()
+          break
+
         // History replay toggle
         case 'r':
         case 'R':
@@ -1011,6 +1056,14 @@ export class Game {
 
         // Escape: close panels / deselect tool
         case 'Escape': {
+          if (this.entityInspector.isPanelOpen()) {
+            this.entityInspector.close()
+            break
+          }
+          if (this.cameraBookmarks.isPanelOpen()) {
+            this.cameraBookmarks.togglePanel()
+            break
+          }
           if (this.sandboxSettings.isPanelOpen()) {
             this.sandboxSettings.togglePanel()
             break
@@ -1760,6 +1813,13 @@ export class Game {
       }
     }
 
+    // Minimap mode button (v1.67)
+    {
+      const mRect = this.minimapCanvas.getBoundingClientRect()
+      const mCtx2 = this.canvas.getContext('2d')!
+      this.minimapMode.renderModeButton(mCtx2, mRect.left, mRect.top)
+    }
+
     // Portal rendering (rotating rings, glow effects)
     this.portalSystem.render(this.canvas.getContext('2d')!, this.camera.x, this.camera.y, this.camera.zoom)
 
@@ -1995,6 +2055,17 @@ export class Game {
 
     // Sandbox settings panel (v1.70)
     this.sandboxSettings.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Camera bookmarks toast/panel (v1.68)
+    this.cameraBookmarks.update()
+    this.cameraBookmarks.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Entity inspector panel (v1.69)
+    this.entityInspector.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Speed indicator HUD (v1.70)
+    this.speedIndicator.update(this.speed)
+    this.speedIndicator.render(ctx, this.canvas.width, this.canvas.height, this.speed)
 
     // Screenshot mode toast (v1.66)
     this.screenshotMode.update()
