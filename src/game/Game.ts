@@ -30,6 +30,8 @@ import { ArtifactSystem } from '../systems/ArtifactSystem'
 import { DiseaseSystem } from '../systems/DiseaseSystem'
 import { WorldEventSystem } from '../systems/WorldEventSystem'
 import { CaravanSystem } from '../systems/CaravanSystem'
+import { DiplomacySystem } from '../systems/DiplomacySystem'
+import { CropSystem } from '../systems/CropSystem'
 
 export class Game {
   private world: World
@@ -62,6 +64,8 @@ export class Game {
   private diseaseSystem: DiseaseSystem
   private worldEventSystem: WorldEventSystem
   private caravanSystem: CaravanSystem
+  private diplomacySystem: DiplomacySystem
+  private cropSystem: CropSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -100,6 +104,8 @@ export class Game {
     this.diseaseSystem = new DiseaseSystem()
     this.worldEventSystem = new WorldEventSystem()
     this.caravanSystem = new CaravanSystem()
+    this.diplomacySystem = new DiplomacySystem()
+    this.cropSystem = new CropSystem()
     this.setupAchievementTracking()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
@@ -213,6 +219,8 @@ export class Game {
     this.diseaseSystem = new DiseaseSystem()
     this.worldEventSystem = new WorldEventSystem()
     this.caravanSystem = new CaravanSystem()
+    this.diplomacySystem = new DiplomacySystem()
+    this.cropSystem = new CropSystem()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
     this.combatSystem.setArtifactSystem(this.artifactSystem)
@@ -605,12 +613,16 @@ export class Game {
         this.diseaseSystem.update(this.em, this.world, this.civManager, this.particles)
         this.worldEventSystem.update(this.em, this.world, this.civManager, this.particles, this.timeline)
         this.caravanSystem.update(this.civManager, this.em, this.world, this.particles)
+        this.cropSystem.update(this.world, this.civManager, this.em, this.particles)
+        if (this.world.tick % 60 === 0) {
+          this.diplomacySystem.update(this.civManager, this.world, this.em)
+        }
         this.particles.update()
         this.accumulator -= this.tickRate
       }
     }
 
-    this.renderer.render(this.world, this.camera, this.em, this.civManager, this.particles, this.weather.fogAlpha, this.resources, this.caravanSystem)
+    this.renderer.render(this.world, this.camera, this.em, this.civManager, this.particles, this.weather.fogAlpha, this.resources, this.caravanSystem, this.cropSystem)
     this.renderer.renderBrushOutline(this.camera, this.input.mouseX, this.input.mouseY, this.powers.getBrushSize())
     this.renderer.renderMinimap(this.world, this.camera, this.em, this.civManager)
 

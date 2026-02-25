@@ -8,6 +8,7 @@ import { ParticleSystem } from '../systems/ParticleSystem'
 import { ResourceSystem } from '../systems/ResourceSystem'
 import { CaravanSystem, Caravan } from '../systems/CaravanSystem'
 import { SpriteRenderer } from './SpriteRenderer'
+import { CropSystem, CropField, CropStage } from '../systems/CropSystem'
 
 export class Renderer {
   private canvas: HTMLCanvasElement
@@ -45,7 +46,7 @@ export class Renderer {
     this.terrainDirty = true
   }
 
-  render(world: World, camera: Camera, em?: EntityManager, civManager?: CivManager, particles?: ParticleSystem, fogAlpha?: number, resources?: ResourceSystem, caravanSystem?: CaravanSystem): void {
+  render(world: World, camera: Camera, em?: EntityManager, civManager?: CivManager, particles?: ParticleSystem, fogAlpha?: number, resources?: ResourceSystem, caravanSystem?: CaravanSystem, cropSystem?: CropSystem): void {
     const ctx = this.ctx
     const bounds = camera.getVisibleBounds()
 
@@ -80,6 +81,11 @@ export class Renderer {
     // Draw resource nodes
     if (resources) {
       this.renderResources(resources, camera, bounds, tileSize, offsetX, offsetY)
+    }
+
+    // Draw crop fields
+    if (cropSystem) {
+      this.renderCrops(cropSystem, camera, bounds, tileSize, offsetX, offsetY)
     }
 
     // Draw entities
@@ -473,6 +479,56 @@ export class Renderer {
       ctx.globalAlpha = alpha
       ctx.fillStyle = resources.getColor(node.type)
       ctx.fillText(resources.getSymbol(node.type), screenX, screenY)
+    }
+    ctx.globalAlpha = 1
+  }
+
+  private static readonly CROP_COLORS: Record<CropStage, string> = {
+    planted: '#5a7a3a',
+    growing: '#6aaa3a',
+    mature: '#daa520',
+    harvested: '#8b7355',
+    dead: '#4a3a2a',
+  }
+
+  private renderCrops(
+    cropSystem: CropSystem, camera: Camera, bounds: any,
+    tileSize: number, offsetX: number, offsetY: number
+  ): void {
+    const ctx = this.ctx
+    const fields = cropSystem.getCropFields()
+    if (fields.length === 0) return
+
+    const cropSize = Math.max(2, tileSize * 0.5)
+    const cropOffset = (tileSize - cropSize) / 2
+
+    for (const field of fields) {
+      if (field.x < bounds.startX - 1 || field.x > bounds.endX + 1 ||
+          field.y < bounds.startY - 1 || field.y > bounds.endY + 1) continue
+
+      const screenX = field.x * tileSize + offsetX + cropOffset
+      const screenY = field.y * tileSize + offsetY + cropOffset
+
+      // Base crop color by stage
+      ctx.fillStyle = Renderer.CROP_COLORS[field.stage]
+      ctx.globalAlpha = 0.85
+      ctx.fillRect(screenX, screenY, cropSize, cropSize)
+
+      // Growth progress indicator: small inner bar for growing crops
+      if (field.stage === 'growing' && tileSize >= 4) {
+        const barW = cropSize * (field.growth / 100)
+        ctx.fillStyle = '#aadd44'
+        ctx.globalAlpha = 0.6
+        ctx.fillRect(screenX, screenY + cropSize - 1, barW, 1)
+      }
+
+      // Mature shimmer
+      if (field.stage === 'mature') {
+        const shimmer = Math.sin(performance.now() * 0.004 + field.x * 3 + field.y * 5) * 0.2 + 0.3
+        ctx.fillStyle = '#ffee88'
+        ctx.globalAlpha = shimmer
+        ctx.fillRect(screenX, screenY, cropSize, cropSize)
+      }
     }
     ctx.globalAlpha = 1
   }

@@ -1,5 +1,6 @@
 import { TileType, TILE_COLORS, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { Noise } from '../utils/Noise'
+import { EventLog } from '../systems/EventLog'
 
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter'
 
@@ -121,24 +122,30 @@ export class World {
     const variant = this.tileVariants[y]?.[x] ?? 0
     const base = TILE_COLORS[tile][variant]
 
-    // Apply seasonal tint to grass and forest only
+    // Summer: no tint
     if (this.season === 'summer') return base
-    if (tile !== TileType.GRASS && tile !== TileType.FOREST) return base
 
-    let tint: string
-    let alpha: number
+    let tint: string | null = null
+    let alpha: number = 0
+
     if (this.season === 'spring') {
-      tint = '#88ff88'
-      alpha = 0.15
+      if (tile === TileType.GRASS) { tint = '#88ff88'; alpha = 0.15 }
+      else if (tile === TileType.FOREST) { tint = '#66ee66'; alpha = 0.12 }
     } else if (this.season === 'autumn') {
-      tint = tile === TileType.FOREST ? '#dd4422' : '#cc8833'
-      alpha = 0.25
+      if (tile === TileType.FOREST) { tint = '#dd4422'; alpha = 0.3 }
+      else if (tile === TileType.GRASS) { tint = '#cc8833'; alpha = 0.25 }
+      else if (tile === TileType.SAND) { tint = '#bb9944'; alpha = 0.1 }
     } else {
       // winter
-      tint = '#ccddee'
-      alpha = 0.2
+      if (tile === TileType.GRASS) { tint = '#ccddee'; alpha = 0.25 }
+      else if (tile === TileType.FOREST) { tint = '#aabbcc'; alpha = 0.2 }
+      else if (tile === TileType.SAND) { tint = '#dde0e4'; alpha = 0.15 }
+      else if (tile === TileType.DEEP_WATER) { tint = '#0a1a2c'; alpha = 0.2 }
+      else if (tile === TileType.SHALLOW_WATER) { tint = '#1a3050'; alpha = 0.15 }
+      else if (tile === TileType.MOUNTAIN) { tint = '#dde4ee'; alpha = 0.15 }
     }
 
+    if (!tint) return base
     return this.blendColors(base, tint, alpha)
   }
 
@@ -181,6 +188,10 @@ export class World {
 
     // Mark world dirty when season changes so tiles re-render with new tint
     if (this.season !== this.lastSeason) {
+      const seasonNames: Record<Season, string> = {
+        spring: 'Spring', summer: 'Summer', autumn: 'Autumn', winter: 'Winter'
+      }
+      EventLog.log('weather', `Season changed to ${seasonNames[this.season]}`, this.tick)
       this.lastSeason = this.season
       this._fullDirty = true
     }
