@@ -1,26 +1,29 @@
-// Diplomatic Non-Aggression System (v3.155) - Civilizations negotiate and sign
-// non-aggression pacts, reducing conflict and building trust over time
+// Diplomatic Non-Aggression System (v3.310) - Non-aggression pacts
+// Bilateral agreements where civilizations pledge not to attack each other
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+
+export type PactStrength = 'symbolic' | 'binding' | 'enforced' | 'sacred'
 
 export interface NonAggressionPact {
   id: number
   civIdA: number
   civIdB: number
-  duration: number      // total agreed duration in ticks
-  remaining: number     // ticks left before expiry
-  trustLevel: number    // 0-100, mutual trust
-  violations: number    // number of pact violations
+  pactStrength: PactStrength
+  trust: number
+  compliance: number
+  borderTension: number
+  tradeBonus: number
+  duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 5000
-const SPAWN_CHANCE = 0.005
-const MAX_PACTS = 12
-const TRUST_GAIN_RATE = 0.8
-const VIOLATION_TRUST_PENALTY = 25
-const MIN_TRUST_FOR_RENEWAL = 40
+const CHECK_INTERVAL = 2400
+const PACT_CHANCE = 0.003
+const MAX_PACTS = 20
+
+const STRENGTHS: PactStrength[] = ['symbolic', 'binding', 'enforced', 'sacred']
 
 export class DiplomaticNonAggressionSystem {
   private pacts: NonAggressionPact[] = []
@@ -31,83 +34,40 @@ export class DiplomaticNonAggressionSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    this.negotiatePacts(em, tick)
-    this.evolvePacts()
-    this.cleanup()
-  }
+    if (this.pacts.length < MAX_PACTS && Math.random() < PACT_CHANCE) {
+      const civA = 1 + Math.floor(Math.random() * 8)
+      const civB = 1 + Math.floor(Math.random() * 8)
+      if (civA === civB) return
 
-  private negotiatePacts(em: EntityManager, tick: number): void {
-    if (this.pacts.length >= MAX_PACTS) return
-    if (Math.random() > SPAWN_CHANCE) return
+      const strength = STRENGTHS[Math.floor(Math.random() * STRENGTHS.length)]
 
-    // Find civilizations from entities with 'civilization' component
-    const civEntities = em.getEntitiesWithComponents('civilization')
-    if (civEntities.length < 2) return
-
-    // Pick two random distinct civilizations
-    const idxA = Math.floor(Math.random() * civEntities.length)
-    let idxB = Math.floor(Math.random() * civEntities.length)
-    if (idxA === idxB) idxB = (idxB + 1) % civEntities.length
-
-    const civA = civEntities[idxA]
-    const civB = civEntities[idxB]
-
-    // Check no existing pact between these two
-    const exists = this.pacts.some(
-      p => (p.civIdA === civA && p.civIdB === civB) ||
-           (p.civIdA === civB && p.civIdB === civA)
-    )
-    if (exists) return
-
-    this.pacts.push({
-      id: this.nextId++,
-      civIdA: civA,
-      civIdB: civB,
-      duration: 3000 + Math.floor(Math.random() * 5000),
-      remaining: 3000 + Math.floor(Math.random() * 5000),
-      trustLevel: 20 + Math.random() * 30,
-      violations: 0,
-      tick,
-    })
-  }
-
-  private evolvePacts(): void {
-    for (const pact of this.pacts) {
-      pact.remaining--
-
-      // Trust grows over time if no violations
-      if (pact.violations === 0) {
-        pact.trustLevel += TRUST_GAIN_RATE
-      } else {
-        pact.trustLevel -= pact.violations * 0.5
-      }
-      pact.trustLevel = Math.max(0, Math.min(100, pact.trustLevel))
-
-      // Random violation chance (lower trust = higher chance)
-      if (Math.random() < 0.002 * (1 - pact.trustLevel / 100)) {
-        pact.violations++
-        pact.trustLevel = Math.max(0, pact.trustLevel - VIOLATION_TRUST_PENALTY)
-      }
-
-      // Auto-renew if trust is high enough at expiry
-      if (pact.remaining <= 0 && pact.trustLevel >= MIN_TRUST_FOR_RENEWAL) {
-        pact.remaining = pact.duration
-        pact.violations = Math.max(0, pact.violations - 1)
-      }
+      this.pacts.push({
+        id: this.nextId++,
+        civIdA: civA,
+        civIdB: civB,
+        pactStrength: strength,
+        trust: 30 + Math.random() * 40,
+        compliance: 50 + Math.random() * 30,
+        borderTension: 10 + Math.random() * 30,
+        tradeBonus: 5 + Math.random() * 20,
+        duration: 0,
+        tick,
+      })
     }
-  }
 
-  private cleanup(): void {
+    for (const pact of this.pacts) {
+      pact.duration += 1
+      pact.trust = Math.max(5, Math.min(100, pact.trust + (Math.random() - 0.47) * 0.15))
+      pact.compliance = Math.max(10, Math.min(100, pact.compliance + (Math.random() - 0.48) * 0.12))
+      pact.borderTension = Math.max(2, Math.min(60, pact.borderTension + (Math.random() - 0.52) * 0.18))
+      pact.tradeBonus = Math.max(2, Math.min(40, pact.tradeBonus + (Math.random() - 0.45) * 0.1))
+    }
+
+    const cutoff = tick - 82000
     for (let i = this.pacts.length - 1; i >= 0; i--) {
-      const pact = this.pacts[i]
-      if (pact.remaining <= 0 || pact.trustLevel <= 0) {
-        this.pacts.splice(i, 1)
-      }
+      if (this.pacts[i].tick < cutoff) this.pacts.splice(i, 1)
     }
   }
 
   getPacts(): NonAggressionPact[] { return this.pacts }
-  getPactsByCiv(civId: number): NonAggressionPact[] {
-    return this.pacts.filter(p => p.civIdA === civId || p.civIdB === civId)
-  }
 }

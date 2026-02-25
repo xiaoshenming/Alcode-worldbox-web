@@ -510,6 +510,18 @@ import { WorldCalderaSystem } from '../systems/WorldCalderaSystem'
 import { CreatureWheelersSystem } from '../systems/CreatureWheelersSystem'
 import { WorldEscarpmentSystem } from '../systems/WorldEscarpmentSystem'
 import { DiplomaticNeutralizationSystem } from '../systems/DiplomaticNeutralizationSystem'
+import { CreatureSieveMakersSystem } from '../systems/CreatureSieveMakersSystem'
+import { WorldPlainsSystem } from '../systems/WorldPlainsSystem'
+import { CreatureBroomMakersSystem } from '../systems/CreatureBroomMakersSystem'
+import { WorldSpireSystem } from '../systems/WorldSpireSystem'
+import { CreatureCharcoalBurnersSystem } from '../systems/CreatureCharcoalBurnersSystem'
+import { WorldGrottoSystem } from '../systems/WorldGrottoSystem'
+import { CreatureTinsmithsSystem } from '../systems/CreatureTinsmithsSystem'
+import { WorldPinnacleSystem } from '../systems/WorldPinnacleSystem'
+import { CreatureBasketWeaversSystem } from '../systems/CreatureBasketWeaversSystem'
+import { WorldHoodooSystem } from '../systems/WorldHoodooSystem'
+import { CreatureSoapMakersSystem } from '../systems/CreatureSoapMakersSystem'
+import { WorldCenoteSystem } from '../systems/WorldCenoteSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1021,6 +1033,18 @@ export class Game {
   private creatureWheelers!: CreatureWheelersSystem
   private worldEscarpment!: WorldEscarpmentSystem
   private diplomaticNeutralization!: DiplomaticNeutralizationSystem
+  private creatureSieveMakers!: CreatureSieveMakersSystem
+  private worldPlains!: WorldPlainsSystem
+  private creatureBroomMakers!: CreatureBroomMakersSystem
+  private worldSpire!: WorldSpireSystem
+  private creatureCharcoalBurners!: CreatureCharcoalBurnersSystem
+  private worldGrotto!: WorldGrottoSystem
+  private creatureTinsmiths!: CreatureTinsmithsSystem
+  private worldPinnacle!: WorldPinnacleSystem
+  private creatureBasketWeavers!: CreatureBasketWeaversSystem
+  private worldHoodoo!: WorldHoodooSystem
+  private creatureSoapMakers!: CreatureSoapMakersSystem
+  private worldCenote!: WorldCenoteSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1683,6 +1707,18 @@ export class Game {
     this.creatureWheelers = new CreatureWheelersSystem()
     this.worldEscarpment = new WorldEscarpmentSystem()
     this.diplomaticNeutralization = new DiplomaticNeutralizationSystem()
+    this.creatureSieveMakers = new CreatureSieveMakersSystem()
+    this.worldPlains = new WorldPlainsSystem()
+    this.creatureBroomMakers = new CreatureBroomMakersSystem()
+    this.worldSpire = new WorldSpireSystem()
+    this.creatureCharcoalBurners = new CreatureCharcoalBurnersSystem()
+    this.worldGrotto = new WorldGrottoSystem()
+    this.creatureTinsmiths = new CreatureTinsmithsSystem()
+    this.worldPinnacle = new WorldPinnacleSystem()
+    this.creatureBasketWeavers = new CreatureBasketWeaversSystem()
+    this.worldHoodoo = new WorldHoodooSystem()
+    this.creatureSoapMakers = new CreatureSoapMakersSystem()
+    this.worldCenote = new WorldCenoteSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3025,7 +3061,7 @@ export class Game {
         // World geothermal (v2.62) - hot springs and geysers
         this.worldGeothermal.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic federations (v2.63) - multi-civ alliances
-        this.diplomaticFederation.update(this.tickRate, this.civManager, this.world.tick)
+        this.diplomaticFederation.update(this.tickRate, this.world, this.em, this.world.tick)
         // Creature art (v2.64) - artistic expression
         this.creatureArt.update(this.tickRate, this.em, this.world.tick)
         // World miasma (v2.65) - toxic zones
@@ -3616,6 +3652,30 @@ export class Game {
         this.worldEscarpment.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic neutralization (v3.295) - neutrality agreements
         this.diplomaticNeutralization.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature sieve makers (v3.296) - sieve and screen craftsmen
+        this.creatureSieveMakers.update(this.tickRate, this.em, this.world.tick)
+        // World plains (v3.297) - vast open grassland plains
+        this.worldPlains.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature broom makers (v3.298) - broom and brush craftsmen
+        this.creatureBroomMakers.update(this.tickRate, this.em, this.world.tick)
+        // World spires (v3.299) - tall rock spire formations
+        this.worldSpire.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature charcoal burners (v3.301) - charcoal production workers
+        this.creatureCharcoalBurners.update(this.tickRate, this.em, this.world.tick)
+        // World grottos (v3.302) - small picturesque caves
+        this.worldGrotto.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature tinsmiths (v3.303) - tin and pewter workers
+        this.creatureTinsmiths.update(this.tickRate, this.em, this.world.tick)
+        // World pinnacles (v3.304) - pointed rock formations
+        this.worldPinnacle.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature basket weavers (v3.306) - basket weaving craftsmen
+        this.creatureBasketWeavers.update(this.tickRate, this.em, this.world.tick)
+        // World hoodoos (v3.307) - hoodoo rock formations
+        this.worldHoodoo.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature soap makers (v3.308) - soap production craftsmen
+        this.creatureSoapMakers.update(this.tickRate, this.em, this.world.tick)
+        // World cenotes (v3.309) - natural sinkholes with water
+        this.worldCenote.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
