@@ -34,7 +34,7 @@ interface CivLike {
 }
 interface EntityManagerLike {
   getEntitiesWithComponents(...types: string[]): number[]
-  getComponent<T>(id: number, type: string): T | undefined
+  getComponent(id: number, type: string): unknown
 }
 interface WorldLike { tick: number; season?: string }
 

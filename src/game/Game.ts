@@ -94,6 +94,12 @@ import { DisasterWarningSystem } from '../systems/DisasterWarningSystem'
 import { MoodSystem } from '../systems/MoodSystem'
 import { WorldAgeSystem } from '../systems/WorldAgeSystem'
 import { HelpOverlaySystem } from '../systems/HelpOverlaySystem'
+import { BloodMoonSystem } from '../systems/BloodMoonSystem'
+import { CreatureAgingSystem } from '../systems/CreatureAgingSystem'
+import { ResourceScarcitySystem } from '../systems/ResourceScarcitySystem'
+import { LegendaryBattleSystem } from '../systems/LegendaryBattleSystem'
+import { WorldBorderSystem } from '../systems/WorldBorderSystem'
+import { EnhancedTooltipSystem } from '../systems/EnhancedTooltipSystem'
 
 export class Game {
   private world: World
@@ -190,6 +196,12 @@ export class Game {
   private moodSystem: MoodSystem
   private worldAge: WorldAgeSystem
   private helpOverlay: HelpOverlaySystem
+  private bloodMoon: BloodMoonSystem
+  private creatureAging: CreatureAgingSystem
+  private resourceScarcity: ResourceScarcitySystem
+  private legendaryBattle: LegendaryBattleSystem
+  private worldBorder: WorldBorderSystem
+  private enhancedTooltip: EnhancedTooltipSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -430,6 +442,12 @@ export class Game {
     this.moodSystem = new MoodSystem()
     this.worldAge = new WorldAgeSystem()
     this.helpOverlay = new HelpOverlaySystem()
+    this.bloodMoon = new BloodMoonSystem()
+    this.creatureAging = new CreatureAgingSystem()
+    this.resourceScarcity = new ResourceScarcitySystem()
+    this.legendaryBattle = new LegendaryBattleSystem()
+    this.worldBorder = new WorldBorderSystem()
+    this.enhancedTooltip = new EnhancedTooltipSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -618,6 +636,11 @@ export class Game {
     this.disasterWarning = new DisasterWarningSystem()
     this.moodSystem = new MoodSystem()
     this.worldAge = new WorldAgeSystem()
+    this.bloodMoon = new BloodMoonSystem()
+    this.creatureAging = new CreatureAgingSystem()
+    this.resourceScarcity = new ResourceScarcitySystem()
+    this.legendaryBattle = new LegendaryBattleSystem()
+    this.worldBorder = new WorldBorderSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
   }
 
@@ -887,24 +910,19 @@ export class Game {
   }
 
   private setupTooltip(): void {
-    const tooltip = document.getElementById('tooltip')!
-    const tileNames = ['Deep Water', 'Shallow Water', 'Sand', 'Grass', 'Forest', 'Mountain', 'Snow', 'Lava']
+    const oldTooltip = document.getElementById('tooltip')
+    if (oldTooltip) oldTooltip.style.display = 'none'
 
     this.canvas.addEventListener('mousemove', (e) => {
-      const world = this.camera.screenToWorld(e.clientX, e.clientY)
-      const tile = this.world.getTile(world.x, world.y)
-      if (tile !== null) {
-        tooltip.style.display = 'block'
-        tooltip.style.left = (e.clientX + 15) + 'px'
-        tooltip.style.top = (e.clientY + 15) + 'px'
-        tooltip.textContent = `${tileNames[tile]} (${world.x}, ${world.y})`
-      } else {
-        tooltip.style.display = 'none'
-      }
+      this.enhancedTooltip.update(
+        e.clientX, e.clientY,
+        this.camera, this.world,
+        this.em, this.civManager
+      )
     })
 
     this.canvas.addEventListener('mouseleave', () => {
-      tooltip.style.display = 'none'
+      this.enhancedTooltip.hide()
     })
   }
 
@@ -1359,6 +1377,16 @@ export class Game {
         this.moodSystem.update(this.world.tick, this.em, this.world, this.civManager, this.weather.currentWeather, this.spatialHash)
         // World age system - epoch progression and terrain drift
         this.worldAge.update(this.world.tick, this.world)
+        // Blood moon event - periodic hostile event
+        this.bloodMoon.update(this.world.tick)
+        // Creature aging - life stages and visual aging
+        this.creatureAging.update(this.world.tick, this.em, this.spatialHash)
+        // Resource scarcity - famine, drought effects
+        this.resourceScarcity.update(this.world.tick, this.civManager, this.em as any, this.world)
+        // Legendary battles - detect and enhance large-scale combat
+        this.legendaryBattle.update(this.world.tick, this.em, this.civManager)
+        // World border - animate edge effects
+        this.worldBorder.update(this.world.tick)
         // Tutorial system - check step conditions
         this.tutorial.update()
         // Build fortification data from civilizations
@@ -1610,6 +1638,17 @@ export class Game {
           ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
         }
       }
+    }
+
+    // Blood moon overlay and moon rendering
+    if (this.bloodMoon.isActive()) {
+      this.bloodMoon.render(ctx, this.canvas.width, this.canvas.height, this.world.tick)
+    }
+
+    // World border edge effects
+    {
+      const bounds = this.camera.getVisibleBounds()
+      this.worldBorder.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, bounds.startX, bounds.startY, bounds.endX, bounds.endY)
     }
 
     // Tutorial overlay (rendered last for top-most visibility)
