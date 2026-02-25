@@ -230,6 +230,9 @@ import { WorldFossilSystem } from '../systems/WorldFossilSystem'
 import { DiplomaticSpySystem } from '../systems/DiplomaticSpySystem'
 import { CreatureDanceSystem } from '../systems/CreatureDanceSystem'
 import { WorldBeaconSystem } from '../systems/WorldBeaconSystem'
+import { WorldTectonicSystem } from '../systems/WorldTectonicSystem'
+import { CreatureMentorSystem } from '../systems/CreatureMentorSystem'
+import { WorldEchoSystem } from '../systems/WorldEchoSystem'
 
 export class Game {
   private world: World
@@ -462,6 +465,9 @@ export class Game {
   private diplomaticSpy!: DiplomaticSpySystem
   private creatureDance!: CreatureDanceSystem
   private worldBeacon!: WorldBeaconSystem
+  private worldTectonic!: WorldTectonicSystem
+  private creatureMentor!: CreatureMentorSystem
+  private worldEcho!: WorldEchoSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -845,6 +851,9 @@ export class Game {
     this.diplomaticSpy = new DiplomaticSpySystem()
     this.creatureDance = new CreatureDanceSystem()
     this.worldBeacon = new WorldBeaconSystem()
+    this.worldTectonic = new WorldTectonicSystem()
+    this.creatureMentor = new CreatureMentorSystem()
+    this.worldEcho = new WorldEchoSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2202,6 +2211,12 @@ export class Game {
         this.creatureDance.update(this.tickRate, this.em, this.world.tick)
         // World beacons (v2.70) - signal beacons and lighthouses
         this.worldBeacon.update(this.tickRate, this.world, this.world.tick)
+        // World tectonics (v2.72) - tectonic plates and earthquakes
+        this.worldTectonic.update(this.tickRate, this.world, this.world.tick)
+        // Creature mentors (v2.74) - elder mentoring younger creatures
+        this.creatureMentor.update(this.tickRate, this.em, this.world.tick)
+        // World echoes (v2.75) - sound propagation through the world
+        this.worldEcho.update(this.tickRate, this.world, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
