@@ -364,6 +364,19 @@ import { CreatureRunnerSystem } from '../systems/CreatureRunnerSystem'
 import { CreatureJesterSystem } from '../systems/CreatureJesterSystem'
 import { WorldPetrifiedForestSystem } from '../systems/WorldPetrifiedForestSystem'
 import { CreatureNomadSystem } from '../systems/CreatureNomadSystem'
+import { WorldStalactiteSystem } from '../systems/WorldStalactiteSystem'
+import { CreatureChroniclerSystem } from '../systems/CreatureChroniclerSystem'
+import { CreatureFirewalkerSystem } from '../systems/CreatureFirewalkerSystem'
+import { DiplomaticHostageExchangeSystem } from '../systems/DiplomaticHostageExchangeSystem'
+import { WorldFrostbiteSystem } from '../systems/WorldFrostbiteSystem'
+import { CreatureOracleSystem } from '../systems/CreatureOracleSystem'
+import { WorldCoralBleachingSystem } from '../systems/WorldCoralBleachingSystem'
+import { CreatureBlacksmithSystem } from '../systems/CreatureBlacksmithSystem'
+import { CreatureDowserSystem } from '../systems/CreatureDowserSystem'
+import { WorldMagneticFieldSystem } from '../systems/WorldMagneticFieldSystem'
+import { CreatureCheeseAgerSystem } from '../systems/CreatureCheeseAgerSystem'
+import { WorldSinkholePrevSystem } from '../systems/WorldSinkholePrevSystem'
+import { DiplomaticRansomSystem } from '../systems/DiplomaticRansomSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -729,6 +742,19 @@ export class Game {
   private creatureJester!: CreatureJesterSystem
   private worldPetrifiedForest!: WorldPetrifiedForestSystem
   private creatureNomad!: CreatureNomadSystem
+  private worldStalactite!: WorldStalactiteSystem
+  private creatureChronicler!: CreatureChroniclerSystem
+  private creatureFirewalker!: CreatureFirewalkerSystem
+  private diplomaticHostageExchange!: DiplomaticHostageExchangeSystem
+  private worldFrostbite!: WorldFrostbiteSystem
+  private creatureOracle!: CreatureOracleSystem
+  private worldCoralBleaching!: WorldCoralBleachingSystem
+  private creatureBlacksmith!: CreatureBlacksmithSystem
+  private creatureDowser!: CreatureDowserSystem
+  private worldMagneticField!: WorldMagneticFieldSystem
+  private creatureCheeseAger!: CreatureCheeseAgerSystem
+  private worldSinkholePrev!: WorldSinkholePrevSystem
+  private diplomaticRansom!: DiplomaticRansomSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1245,6 +1271,19 @@ export class Game {
     this.creatureJester = new CreatureJesterSystem()
     this.worldPetrifiedForest = new WorldPetrifiedForestSystem()
     this.creatureNomad = new CreatureNomadSystem()
+    this.worldStalactite = new WorldStalactiteSystem()
+    this.creatureChronicler = new CreatureChroniclerSystem()
+    this.creatureFirewalker = new CreatureFirewalkerSystem()
+    this.diplomaticHostageExchange = new DiplomaticHostageExchangeSystem()
+    this.worldFrostbite = new WorldFrostbiteSystem()
+    this.creatureOracle = new CreatureOracleSystem()
+    this.worldCoralBleaching = new WorldCoralBleachingSystem()
+    this.creatureBlacksmith = new CreatureBlacksmithSystem()
+    this.creatureDowser = new CreatureDowserSystem()
+    this.worldMagneticField = new WorldMagneticFieldSystem()
+    this.creatureCheeseAger = new CreatureCheeseAgerSystem()
+    this.worldSinkholePrev = new WorldSinkholePrevSystem()
+    this.diplomaticRansom = new DiplomaticRansomSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2884,6 +2923,32 @@ export class Game {
         this.worldPetrifiedForest.update(this.tickRate, this.world, this.em, this.world.tick)
         // Creature nomads (v3.129) - migrating tribes
         this.creatureNomad.update(this.tickRate, this.em, this.world.tick)
+        // World stalactites (v3.131) - cave formations
+        this.worldStalactite.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature chroniclers (v3.132) - event recorders
+        this.creatureChronicler.update(this.tickRate, this.em, this.world.tick)
+        // Creature firewalkers (v3.134) - lava immunity
+        this.creatureFirewalker.update(this.tickRate, this.em, this.world.tick)
+        // Diplomatic hostage exchange (v3.135) - trust building
+        this.diplomaticHostageExchange.update(this.tickRate, this.world, this.em, this.civManager, this.world.tick)
+        // World frostbite (v3.136) - cold damage zones
+        this.worldFrostbite.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature oracles (v3.137) - future sight
+        this.creatureOracle.update(this.tickRate, this.em, this.world.tick)
+        // World coral bleaching (v3.138) - reef degradation
+        this.worldCoralBleaching.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature blacksmiths (v3.139) - weapon forging
+        this.creatureBlacksmith.update(this.tickRate, this.em, this.world.tick)
+        // Creature dowsers (v3.141) - water finding
+        this.creatureDowser.update(this.tickRate, this.em, this.world.tick)
+        // World magnetic field (v3.142) - navigation anomalies
+        this.worldMagneticField.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature cheese agers (v3.143) - food quality
+        this.creatureCheeseAger.update(this.tickRate, this.em, this.world.tick)
+        // World sinkhole prevention (v3.144) - ground stability
+        this.worldSinkholePrev.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic ransom (v3.145) - prisoner negotiation
+        this.diplomaticRansom.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
