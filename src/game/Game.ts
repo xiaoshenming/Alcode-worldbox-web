@@ -415,6 +415,19 @@ import { WorldFrostHollowSystem } from '../systems/WorldFrostHollowSystem'
 import { CreatureTinkerSystem } from '../systems/CreatureTinkerSystem'
 import { WorldBasaltColumnSystem } from '../systems/WorldBasaltColumnSystem'
 import { DiplomaticExtraditionSystem } from '../systems/DiplomaticExtraditionSystem'
+import { CreatureFletcherSystem } from '../systems/CreatureFletcherSystem'
+import { WorldMangroveSwampSystem } from '../systems/WorldMangroveSwampSystem'
+import { CreatureWheelwrightSystem } from '../systems/CreatureWheelwrightSystem'
+import { WorldObsidianFieldSystem } from '../systems/WorldObsidianFieldSystem'
+import { CreatureFalconerSystem } from '../systems/CreatureFalconerSystem'
+import { CreatureEngraverSystem } from '../systems/CreatureEngraverSystem'
+import { WorldLavaTubeSystem } from '../systems/WorldLavaTubeSystem'
+import { DiplomaticSovereigntySystem } from '../systems/DiplomaticSovereigntySystem'
+import { CreatureTannerSystem } from '../systems/CreatureTannerSystem'
+import { WorldBioluminescentBaySystem } from '../systems/WorldBioluminescentBaySystem'
+import { CreatureCartographerSystem } from '../systems/CreatureCartographerSystem'
+import { WorldPumiceFieldSystem } from '../systems/WorldPumiceFieldSystem'
+import { DiplomaticTribunalSystem } from '../systems/DiplomaticTribunalSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -831,6 +844,19 @@ export class Game {
   private creatureTinker!: CreatureTinkerSystem
   private worldBasaltColumn!: WorldBasaltColumnSystem
   private diplomaticExtradition!: DiplomaticExtraditionSystem
+  private creatureFletcher!: CreatureFletcherSystem
+  private worldMangroveSwamp!: WorldMangroveSwampSystem
+  private creatureWheelwright!: CreatureWheelwrightSystem
+  private worldObsidianField!: WorldObsidianFieldSystem
+  private creatureFalconer!: CreatureFalconerSystem
+  private creatureEngraver!: CreatureEngraverSystem
+  private worldLavaTube!: WorldLavaTubeSystem
+  private diplomaticSovereignty!: DiplomaticSovereigntySystem
+  private creatureTanner!: CreatureTannerSystem
+  private worldBioluminescentBay!: WorldBioluminescentBaySystem
+  private creatureCartographer!: CreatureCartographerSystem
+  private worldPumiceField!: WorldPumiceFieldSystem
+  private diplomaticTribunal!: DiplomaticTribunalSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1398,6 +1424,19 @@ export class Game {
     this.creatureTinker = new CreatureTinkerSystem()
     this.worldBasaltColumn = new WorldBasaltColumnSystem()
     this.diplomaticExtradition = new DiplomaticExtraditionSystem()
+    this.creatureFletcher = new CreatureFletcherSystem()
+    this.worldMangroveSwamp = new WorldMangroveSwampSystem()
+    this.creatureWheelwright = new CreatureWheelwrightSystem()
+    this.worldObsidianField = new WorldObsidianFieldSystem()
+    this.creatureFalconer = new CreatureFalconerSystem()
+    this.creatureEngraver = new CreatureEngraverSystem()
+    this.worldLavaTube = new WorldLavaTubeSystem()
+    this.diplomaticSovereignty = new DiplomaticSovereigntySystem()
+    this.creatureTanner = new CreatureTannerSystem()
+    this.worldBioluminescentBay = new WorldBioluminescentBaySystem()
+    this.creatureCartographer = new CreatureCartographerSystem()
+    this.worldPumiceField = new WorldPumiceFieldSystem()
+    this.diplomaticTribunal = new DiplomaticTribunalSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2788,7 +2827,7 @@ export class Game {
         // World avalanche (v2.92) - avalanches in snowy mountain regions
         this.worldAvalanche.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic asylum (v2.93) - persecuted creatures seek asylum
-        this.diplomaticAsylum.update(this.tickRate, this.em, this.world.tick)
+        this.diplomaticAsylum.update(this.tickRate, this.world, this.em, this.world.tick)
         // Creature foraging (v2.94) - creatures forage for wild food
         this.creatureForaging.update(this.tickRate, this.world, this.em, this.world.tick)
         // World whirlpool (v2.95) - whirlpools in deep water
@@ -3139,6 +3178,32 @@ export class Game {
         this.worldBasaltColumn.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic extradition (v3.190) - fugitive exchange
         this.diplomaticExtradition.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature fletchers (v3.191) - arrow and bow crafting
+        this.creatureFletcher.update(this.tickRate, this.em, this.world.tick)
+        // World mangrove swamps (v3.192) - coastal ecosystems
+        this.worldMangroveSwamp.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature wheelwrights (v3.193) - wheel building
+        this.creatureWheelwright.update(this.tickRate, this.em, this.world.tick)
+        // World obsidian fields (v3.194) - volcanic glass deposits
+        this.worldObsidianField.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature falconers (v3.196) - raptor training
+        this.creatureFalconer.update(this.tickRate, this.em, this.world.tick)
+        // Creature engravers (v3.198) - inscription crafting
+        this.creatureEngraver.update(this.tickRate, this.em, this.world.tick)
+        // World lava tubes (v3.199) - underground tunnels
+        this.worldLavaTube.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic sovereignty (v3.200) - territorial claims
+        this.diplomaticSovereignty.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature tanners (v3.201) - leather processing
+        this.creatureTanner.update(this.tickRate, this.em, this.world.tick)
+        // World bioluminescent bays (v3.202) - glowing coastal waters
+        this.worldBioluminescentBay.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature cartographers (v3.203) - map making
+        this.creatureCartographer.update(this.tickRate, this.em, this.world.tick)
+        // World pumice fields (v3.204) - floating volcanic rock
+        this.worldPumiceField.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic tribunal (v3.205) - international justice
+        this.diplomaticTribunal.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
