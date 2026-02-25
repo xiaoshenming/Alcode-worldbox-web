@@ -9,6 +9,7 @@ export class CivManager {
   private world: World
   civilizations: Map<number, Civilization> = new Map()
   territoryMap: number[][] = [] // civId per tile, 0 = unclaimed
+  private previousRelations: Map<string, number> = new Map() // "civA:civB" -> previous relation
 
   constructor(em: EntityManager, world: World) {
     this.em = em
@@ -122,6 +123,11 @@ export class CivManager {
         civ.techLevel = Math.min(5, civ.techLevel + 1)
       }
 
+      // Culture strength grows slowly over time
+      if (civ.culture.strength < 100 && Math.random() < 0.005) {
+        civ.culture.strength = Math.min(100, civ.culture.strength + 0.5)
+      }
+
       // Diplomacy
       this.updateDiplomacy(civ)
 
@@ -164,6 +170,9 @@ export class CivManager {
     for (const [otherId, otherCiv] of this.civilizations) {
       if (otherId === civ.id) continue
 
+      // Track previous relation for threshold detection
+      const relKey = `${civ.id}:${otherId}`
+      const prevRelation = this.previousRelations.get(relKey) ?? (civ.relations.get(otherId) ?? 0)
       let relation = civ.relations.get(otherId) ?? 0
 
       // Natural drift: relations slowly move toward 0
@@ -185,6 +194,13 @@ export class CivManager {
         }
       }
 
+      // Culture affinity: same culture trait = +2, different = -1
+      if (civ.culture.trait === otherCiv.culture.trait) {
+        relation += 2
+      } else {
+        relation -= 1
+      }
+
       // Alliance formation: relation > 50
       // War declaration: relation < -50 (already handled by CombatSystem)
 
@@ -198,7 +214,17 @@ export class CivManager {
         this.attackTerritory(civ, otherCiv)
       }
 
-      civ.relations.set(otherId, Math.max(-100, Math.min(100, relation)))
+      const newRelation = Math.max(-100, Math.min(100, relation))
+      civ.relations.set(otherId, newRelation)
+
+      // Detect war/peace threshold crossings
+      if (prevRelation > -50 && newRelation <= -50) {
+        EventLog.log('war', `${civ.name} declared war on ${otherCiv.name}!`, 0)
+      } else if (prevRelation <= -50 && newRelation > -50) {
+        EventLog.log('peace', `${civ.name} made peace with ${otherCiv.name}`, 0)
+      }
+
+      this.previousRelations.set(relKey, newRelation)
     }
   }
 
@@ -316,6 +342,12 @@ export class CivManager {
     })
     civ.resources.food += farms.length * 0.1
 
+    // Nature culture bonus: +20% food production
+    const foodBonus = this.getCultureBonus(civ.id, 'food')
+    if (foodBonus > 1.0) {
+      civ.resources.food *= foodBonus
+    }
+
     // Population consumes food
     civ.resources.food -= civ.population * 0.02
     civ.resources.food = Math.max(0, civ.resources.food)
@@ -332,6 +364,9 @@ export class CivManager {
   private autoBuild(civ: Civilization): void {
     if (Math.random() > 0.002) return
 
+    // Builder culture: reduce resource costs
+    const costMult = this.getCultureBonus(civ.id, 'buildCost')
+
     // Find a random territory tile to build on
     const territoryArr = Array.from(civ.territory)
     if (territoryArr.length === 0) return
@@ -343,10 +378,10 @@ export class CivManager {
     const tile = this.world.getTile(x, y)
     if (tile === TileType.DEEP_WATER || tile === TileType.SHALLOW_WATER || tile === TileType.LAVA || tile === TileType.MOUNTAIN) {
       // Mountains allow mines
-      if (tile === TileType.MOUNTAIN && civ.techLevel >= 2 && civ.resources.wood >= 15) {
+      if (tile === TileType.MOUNTAIN && civ.techLevel >= 2 && civ.resources.wood >= 15 * costMult) {
         const hasBuilding = this.hasBuildingAt(civ, x, y)
         if (!hasBuilding) {
-          civ.resources.wood -= 15
+          civ.resources.wood -= 15 * costMult
           this.placeBuilding(civ.id, BuildingType.MINE, x, y)
         }
       }
@@ -357,26 +392,26 @@ export class CivManager {
     if (this.hasBuildingAt(civ, x, y)) return
 
     // Decide what to build based on needs and tech
-    if (civ.resources.food < 20 && civ.resources.wood >= 10) {
-      civ.resources.wood -= 10
+    if (civ.resources.food < 20 && civ.resources.wood >= 10 * costMult) {
+      civ.resources.wood -= 10 * costMult
       this.placeBuilding(civ.id, BuildingType.FARM, x, y)
-    } else if (civ.population > 3 && civ.resources.wood >= 20) {
-      civ.resources.wood -= 20
+    } else if (civ.population > 3 && civ.resources.wood >= 20 * costMult) {
+      civ.resources.wood -= 20 * costMult
       this.placeBuilding(civ.id, BuildingType.HOUSE, x, y)
-    } else if (civ.techLevel >= 2 && civ.resources.stone >= 30 && civ.resources.wood >= 20) {
-      civ.resources.stone -= 30
-      civ.resources.wood -= 20
+    } else if (civ.techLevel >= 2 && civ.resources.stone >= 30 * costMult && civ.resources.wood >= 20 * costMult) {
+      civ.resources.stone -= 30 * costMult
+      civ.resources.wood -= 20 * costMult
       this.placeBuilding(civ.id, BuildingType.BARRACKS, x, y)
-    } else if (civ.techLevel >= 3 && civ.resources.stone >= 40 && this.countBuildings(civ, BuildingType.TOWER) < 3) {
-      civ.resources.stone -= 40
+    } else if (civ.techLevel >= 3 && civ.resources.stone >= 40 * costMult && this.countBuildings(civ, BuildingType.TOWER) < 3) {
+      civ.resources.stone -= 40 * costMult
       this.placeBuilding(civ.id, BuildingType.TOWER, x, y)
-    } else if (civ.techLevel >= 4 && civ.resources.stone >= 80 && civ.resources.gold >= 30 && this.countBuildings(civ, BuildingType.CASTLE) < 1) {
-      civ.resources.stone -= 80
-      civ.resources.gold -= 30
+    } else if (civ.techLevel >= 4 && civ.resources.stone >= 80 * costMult && civ.resources.gold >= 30 * costMult && this.countBuildings(civ, BuildingType.CASTLE) < 1) {
+      civ.resources.stone -= 80 * costMult
+      civ.resources.gold -= 30 * costMult
       this.placeBuilding(civ.id, BuildingType.CASTLE, x, y)
-    } else if (civ.techLevel >= 2 && tile === TileType.SAND && civ.resources.wood >= 25 && this.countBuildings(civ, BuildingType.PORT) < 2) {
+    } else if (civ.techLevel >= 2 && tile === TileType.SAND && civ.resources.wood >= 25 * costMult && this.countBuildings(civ, BuildingType.PORT) < 2) {
       // Ports on sand (coastal)
-      civ.resources.wood -= 25
+      civ.resources.wood -= 25 * costMult
       this.placeBuilding(civ.id, BuildingType.PORT, x, y)
     }
   }
@@ -448,6 +483,30 @@ export class CivManager {
   getCivColor(x: number, y: number): string | null {
     const civ = this.getCivAt(x, y)
     return civ ? civ.color : null
+  }
+
+  getCultureBonus(civId: number, bonusType: 'combat' | 'trade' | 'tech' | 'food' | 'buildSpeed' | 'buildHealth' | 'buildCost'): number {
+    const civ = this.civilizations.get(civId)
+    if (!civ) return 1.0
+    const strength = civ.culture.strength / 100 // 0-1 scale
+    switch (bonusType) {
+      case 'combat':
+        return civ.culture.trait === 'warrior' ? 1 + 0.2 * strength : 1.0
+      case 'trade':
+        return civ.culture.trait === 'merchant' ? 1 + 0.3 * strength : 1.0
+      case 'tech':
+        return civ.culture.trait === 'scholar' ? 1 + 0.5 * strength : 1.0
+      case 'food':
+        return civ.culture.trait === 'nature' ? 1 + 0.2 * strength : 1.0
+      case 'buildSpeed':
+        return civ.culture.trait === 'builder' ? 1 + 0.3 * strength : 1.0
+      case 'buildCost':
+        return civ.culture.trait === 'builder' ? 1 - 0.3 * strength : 1.0
+      case 'buildHealth':
+        return civ.culture.trait === 'builder' ? 1 + 0.2 * strength : 1.0
+      default:
+        return 1.0
+    }
   }
 
   private updateTradeRoutes(civ: Civilization): void {

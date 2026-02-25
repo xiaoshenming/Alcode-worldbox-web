@@ -86,6 +86,16 @@ export class Renderer {
       this.renderEntities(em, camera, bounds, tileSize, offsetX, offsetY)
     }
 
+    // Battle effects (attacking creatures, damaged buildings)
+    if (em && civManager) {
+      this.renderBattleEffects(em, camera, bounds, tileSize, offsetX, offsetY)
+    }
+
+    // War border overlay
+    if (civManager && camera.zoom > 0.3) {
+      this.renderWarBorders(civManager, camera, bounds, tileSize, offsetX, offsetY)
+    }
+
     // Trade routes
     if (civManager) {
       this.renderTradeRoutes(civManager, camera)
@@ -454,6 +464,126 @@ export class Renderer {
     }
   }
 
+  private renderBattleEffects(
+    em: EntityManager, camera: Camera, bounds: any,
+    tileSize: number, offsetX: number, offsetY: number
+  ): void {
+    const ctx = this.ctx
+    const time = performance.now()
+
+    const entities = em.getEntitiesWithComponents('position', 'render')
+    for (const id of entities) {
+      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      if (pos.x < bounds.startX - 1 || pos.x > bounds.endX + 1 ||
+          pos.y < bounds.startY - 1 || pos.y > bounds.endY + 1) continue
+
+      const screenX = pos.x * TILE_SIZE * camera.zoom + offsetX
+      const screenY = pos.y * TILE_SIZE * camera.zoom + offsetY
+
+      const building = em.getComponent<BuildingComponent>(id, 'building')
+      if (building && building.health < building.maxHealth) {
+        // Damaged building: red health bar below
+        const bSize = tileSize * 1.5
+        const barWidth = bSize * 0.8
+        const barHeight = Math.max(2, 3 * camera.zoom)
+        const barX = screenX + tileSize / 2 - barWidth / 2
+        const barY = screenY + tileSize / 2 + bSize / 2 + 2 * camera.zoom
+
+        ctx.fillStyle = 'rgba(0,0,0,0.7)'
+        ctx.fillRect(barX, barY, barWidth, barHeight)
+        const hpPct = Math.max(0, building.health / building.maxHealth)
+        ctx.fillStyle = hpPct > 0.5 ? '#ff8800' : '#ff2200'
+        ctx.fillRect(barX, barY, barWidth * hpPct, barHeight)
+
+        // Red tint overlay on damaged building
+        if (hpPct < 0.5) {
+          const flash = Math.sin(time * 0.006 + id) * 0.1 + 0.15
+          ctx.fillStyle = `rgba(255, 0, 0, ${flash})`
+          ctx.fillRect(screenX + tileSize / 2 - bSize / 2, screenY + tileSize / 2 - bSize / 2, bSize, bSize)
+        }
+        continue
+      }
+
+      // Attacking creature: red spark above
+      const ai = em.getComponent<AIComponent>(id, 'ai')
+      if (ai && ai.state === 'attacking' && camera.zoom > 0.3) {
+        const cx = screenX + tileSize / 2
+        const cy = screenY + tileSize / 2
+        const sparkSize = Math.max(3, 5 * camera.zoom)
+        const pulse = Math.sin(time * 0.01 + id * 3) * 0.4 + 0.6
+
+        ctx.globalAlpha = pulse
+        ctx.strokeStyle = '#ff3300'
+        ctx.lineWidth = Math.max(1, 1.5 * camera.zoom)
+
+        // Draw small crossed swords (X shape)
+        const s = sparkSize
+        const sy = cy - tileSize * 0.5 - 2 * camera.zoom
+        ctx.beginPath()
+        ctx.moveTo(cx - s, sy - s)
+        ctx.lineTo(cx + s, sy + s)
+        ctx.moveTo(cx + s, sy - s)
+        ctx.lineTo(cx - s, sy + s)
+        ctx.stroke()
+        ctx.globalAlpha = 1
+      }
+    }
+  }
+
+  private renderWarBorders(
+    civManager: CivManager, camera: Camera, bounds: any,
+    tileSize: number, offsetX: number, offsetY: number
+  ): void {
+    const ctx = this.ctx
+    const tileSizeCeil = tileSize + 0.5
+
+    // Build set of warring civ pairs
+    const warPairs: Set<string> = new Set()
+    for (const [idA, civA] of civManager.civilizations) {
+      for (const [idB] of civManager.civilizations) {
+        if (idA >= idB) continue
+        const relation = civA.relations.get(idB) ?? 0
+        if (relation <= -50) {
+          warPairs.add(`${idA}:${idB}`)
+        }
+      }
+    }
+    if (warPairs.size === 0) return
+
+    ctx.globalAlpha = 0.15
+    ctx.fillStyle = '#ff0000'
+
+    for (let y = bounds.startY; y < bounds.endY; y++) {
+      for (let x = bounds.startX; x < bounds.endX; x++) {
+        const civId = civManager.territoryMap[y]?.[x]
+        if (!civId) continue
+
+        // Check if any neighbor belongs to a warring civ
+        const neighbors = [[0, 1], [0, -1], [1, 0], [-1, 0]]
+        let isBorderWar = false
+        for (const [dx, dy] of neighbors) {
+          const nx = x + dx, ny = y + dy
+          const neighborCivId = civManager.territoryMap[ny]?.[nx]
+          if (neighborCivId && neighborCivId !== civId) {
+            const lo = Math.min(civId, neighborCivId)
+            const hi = Math.max(civId, neighborCivId)
+            if (warPairs.has(`${lo}:${hi}`)) {
+              isBorderWar = true
+              break
+            }
+          }
+        }
+
+        if (isBorderWar) {
+          const screenX = x * TILE_SIZE * camera.zoom + offsetX
+          const screenY = y * TILE_SIZE * camera.zoom + offsetY
+          ctx.fillRect(screenX, screenY, tileSizeCeil, tileSizeCeil)
+        }
+      }
+    }
+    ctx.globalAlpha = 1
+  }
+
   renderBrushOutline(camera: Camera, mouseX: number, mouseY: number, brushSize: number): void {
     const ctx = this.ctx
     const world = camera.screenToWorld(mouseX, mouseY)
@@ -474,13 +604,16 @@ export class Renderer {
     ctx.setLineDash([])
   }
 
-  renderMinimap(world: World, camera: Camera): void {
+  renderMinimap(world: World, camera: Camera, em?: EntityManager, civManager?: CivManager): void {
     const ctx = this.minimapCtx
-    const scale = this.minimapCanvas.width / world.width
+    const mw = this.minimapCanvas.width
+    const mh = this.minimapCanvas.height
+    const scale = mw / world.width
 
     ctx.fillStyle = '#000'
-    ctx.fillRect(0, 0, this.minimapCanvas.width, this.minimapCanvas.height)
+    ctx.fillRect(0, 0, mw, mh)
 
+    // Terrain
     for (let y = 0; y < world.height; y += 2) {
       for (let x = 0; x < world.width; x += 2) {
         ctx.fillStyle = world.getColor(x, y)
@@ -488,9 +621,46 @@ export class Renderer {
       }
     }
 
-    const bounds = camera.getVisibleBounds()
-    ctx.strokeStyle = '#fff'
+    // Territory overlay (sample every 3rd tile for performance)
+    if (civManager) {
+      ctx.globalAlpha = 0.3
+      for (let y = 0; y < world.height; y += 3) {
+        for (let x = 0; x < world.width; x += 3) {
+          const civId = civManager.territoryMap[y]?.[x]
+          if (civId) {
+            const civ = civManager.civilizations.get(civId)
+            if (civ) {
+              ctx.fillStyle = civ.color
+              ctx.fillRect(x * scale, y * scale, scale * 3, scale * 3)
+            }
+          }
+        }
+      }
+      ctx.globalAlpha = 1
+    }
+
+    // Entity dots
+    if (em) {
+      const entities = em.getEntitiesWithComponents('position', 'render')
+      const skip = entities.length > 200 ? 2 : 1
+      for (let i = 0; i < entities.length; i += skip) {
+        const id = entities[i]
+        const pos = em.getComponent<PositionComponent>(id, 'position')!
+        const render = em.getComponent<RenderComponent>(id, 'render')!
+        ctx.fillStyle = render.color
+        ctx.fillRect(pos.x * scale, pos.y * scale, 2, 2)
+      }
+    }
+
+    // Border
+    ctx.strokeStyle = '#555'
     ctx.lineWidth = 1
+    ctx.strokeRect(0, 0, mw, mh)
+
+    // Viewport rectangle (brighter, thicker)
+    const bounds = camera.getVisibleBounds()
+    ctx.strokeStyle = '#ffcc00'
+    ctx.lineWidth = 2
     ctx.strokeRect(
       bounds.startX * scale,
       bounds.startY * scale,

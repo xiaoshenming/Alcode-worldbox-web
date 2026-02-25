@@ -86,6 +86,10 @@ export class CombatSystem {
               // Tech level 3+: +20% damage, level 5: additional bonus
               if (attackerCiv.techLevel >= 5) damage *= 1.4
               else if (attackerCiv.techLevel >= 3) damage *= 1.2
+
+              // Warrior culture bonus
+              const cultureMult = this.civManager.getCultureBonus(civMember.civId, 'combat')
+              damage *= cultureMult
             }
           }
 
@@ -117,6 +121,11 @@ export class CombatSystem {
           }
         }
       }
+    }
+
+    // Siege: soldiers attack enemy buildings
+    if (tick % 20 === 0) {
+      this.updateSiege(entities)
     }
 
     // Tower defense: towers attack nearby enemies
@@ -293,6 +302,59 @@ export class CombatSystem {
             }
           }
         }
+      }
+    }
+  }
+
+  private updateSiege(creatures: EntityId[]): void {
+    const buildings = this.em.getEntitiesWithComponent('building')
+
+    for (const creatureId of creatures) {
+      const civMember = this.em.getComponent<CivMemberComponent>(creatureId, 'civMember')
+      if (!civMember || civMember.role !== 'soldier') continue
+
+      const cPos = this.em.getComponent<PositionComponent>(creatureId, 'position')!
+      const creature = this.em.getComponent<CreatureComponent>(creatureId, 'creature')!
+      const needs = this.em.getComponent<NeedsComponent>(creatureId, 'needs')!
+      if (needs.health <= 0) continue
+
+      const attackerCiv = this.civManager.civilizations.get(civMember.civId)
+      if (!attackerCiv) continue
+
+      for (const buildingId of buildings) {
+        const b = this.em.getComponent<BuildingComponent>(buildingId, 'building')
+        if (!b || b.civId === civMember.civId) continue
+
+        // Check if at war (relation < -50)
+        const relation = attackerCiv.relations.get(b.civId) ?? 0
+        if (relation >= -50) continue
+
+        const bPos = this.em.getComponent<PositionComponent>(buildingId, 'position')
+        if (!bPos) continue
+
+        const dx = cPos.x - bPos.x
+        const dy = cPos.y - bPos.y
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        if (dist > 3) continue
+
+        // Deal siege damage
+        const damage = creature.damage * (0.3 + Math.random() * 0.4)
+        b.health -= damage
+        this.particles.spawn(bPos.x, bPos.y, 3, '#ff6600', 0.8)
+
+        if (b.health <= 0) {
+          // Destroy building
+          const defenderCiv = this.civManager.civilizations.get(b.civId)
+          if (defenderCiv) {
+            const idx = defenderCiv.buildings.indexOf(buildingId)
+            if (idx !== -1) defenderCiv.buildings.splice(idx, 1)
+            EventLog.log('combat', `${attackerCiv.name} destroyed ${defenderCiv.name}'s ${b.buildingType}`, this.tick)
+          }
+          this.particles.spawn(bPos.x, bPos.y, 8, '#ff4400', 1.5)
+          this.em.removeEntity(buildingId)
+        }
+
+        break // One building per soldier per tick
       }
     }
   }
