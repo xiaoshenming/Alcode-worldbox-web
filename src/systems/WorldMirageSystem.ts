@@ -1,30 +1,30 @@
-// World Mirage System (v3.50) - Mirages appear in desert/sand areas
-// Mirages confuse creatures, causing them to wander toward illusions
+// World Mirage System (v3.126) - Desert mirages that confuse travelers
+// Mirages appear in hot sandy areas and can mislead creatures
 
-import { EntityManager, PositionComponent } from '../ecs/Entity'
 import { World } from '../game/World'
-import { TileType } from '../utils/Constants'
+import { EntityManager } from '../ecs/Entity'
 
-export type MirageType = 'oasis' | 'city' | 'mountain' | 'forest'
+export type MirageType = 'oasis' | 'city' | 'lake' | 'mountain'
 
 export interface Mirage {
   id: number
   x: number
   y: number
-  type: MirageType
-  intensity: number    // 0-100 visibility
-  lureRadius: number   // how far it attracts
+  mirageType: MirageType
+  intensity: number
   duration: number
-  startTick: number
+  creaturesDeceived: number
+  tick: number
 }
 
-const CHECK_INTERVAL = 1200
-const MIRAGE_CHANCE = 0.005
+const CHECK_INTERVAL = 3600
+const SPAWN_CHANCE = 0.003
 const MAX_MIRAGES = 8
-const FADE_RATE = 0.08
-const LURE_STRENGTH = 0.3
 
-const TYPES: MirageType[] = ['oasis', 'city', 'mountain', 'forest']
+const TYPES: MirageType[] = ['oasis', 'city', 'lake', 'mountain']
+const TYPE_INTENSITY: Record<MirageType, number> = {
+  oasis: 70, city: 50, lake: 80, mountain: 40,
+}
 
 export class WorldMirageSystem {
   private mirages: Mirage[] = []
@@ -35,59 +35,37 @@ export class WorldMirageSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const w = world.width
-    const h = world.height
-
-    // Spawn mirages on sand tiles
-    if (this.mirages.length < MAX_MIRAGES && Math.random() < MIRAGE_CHANCE) {
-      const x = Math.floor(Math.random() * w)
-      const y = Math.floor(Math.random() * h)
+    if (this.mirages.length < MAX_MIRAGES && Math.random() < SPAWN_CHANCE) {
+      const x = Math.floor(Math.random() * world.width)
+      const y = Math.floor(Math.random() * world.height)
       const tile = world.getTile(x, y)
 
-      if (tile === TileType.SAND) {
+      if (tile != null && tile === 2) {
+        const mt = TYPES[Math.floor(Math.random() * TYPES.length)]
         this.mirages.push({
           id: this.nextId++,
-          x,
-          y,
-          type: TYPES[Math.floor(Math.random() * TYPES.length)],
-          intensity: 60 + Math.random() * 40,
-          lureRadius: 10 + Math.random() * 15,
-          duration: 1500 + Math.random() * 2500,
-          startTick: tick,
+          x, y,
+          mirageType: mt,
+          intensity: TYPE_INTENSITY[mt],
+          duration: 20000 + Math.floor(Math.random() * 40000),
+          creaturesDeceived: 0,
+          tick,
         })
       }
     }
 
-    // Update mirages and lure creatures
-    for (const mirage of this.mirages) {
-      const elapsed = tick - mirage.startTick
-      mirage.intensity -= FADE_RATE * CHECK_INTERVAL
-
-      // Lure nearby creatures toward mirage
-      if (mirage.intensity > 20) {
-        const creatures = em.getEntitiesWithComponents('position')
-        for (const eid of creatures) {
-          const pos = em.getComponent<PositionComponent>(eid, 'position')
-          if (!pos) continue
-
-          const dx = mirage.x - pos.x
-          const dy = mirage.y - pos.y
-          const dist = Math.sqrt(dx * dx + dy * dy)
-
-          if (dist < mirage.lureRadius && dist > 1) {
-            // Gently pull creature toward mirage
-            pos.x += (dx / dist) * LURE_STRENGTH
-            pos.y += (dy / dist) * LURE_STRENGTH
-          }
-        }
+    for (const m of this.mirages) {
+      const age = tick - m.tick
+      m.intensity = Math.max(0, TYPE_INTENSITY[m.mirageType] * (1 - age / m.duration))
+      if (m.intensity > 20 && Math.random() < 0.01) {
+        m.creaturesDeceived++
       }
     }
 
-    // Remove faded mirages
-    this.mirages = this.mirages.filter(m => m.intensity > 5)
+    for (let i = this.mirages.length - 1; i >= 0; i--) {
+      if (this.mirages[i].intensity <= 0) this.mirages.splice(i, 1)
+    }
   }
 
-  getMirages(): Mirage[] {
-    return this.mirages
-  }
+  getMirages(): readonly Mirage[] { return this.mirages }
 }

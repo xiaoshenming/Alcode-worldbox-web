@@ -361,6 +361,9 @@ import { WorldObsidianSystem } from '../systems/WorldObsidianSystem'
 import { CreatureRangerSystem } from '../systems/CreatureRangerSystem'
 import { WorldCoralReefGrowthSystem } from '../systems/WorldCoralReefGrowthSystem'
 import { CreatureRunnerSystem } from '../systems/CreatureRunnerSystem'
+import { CreatureJesterSystem } from '../systems/CreatureJesterSystem'
+import { WorldPetrifiedForestSystem } from '../systems/WorldPetrifiedForestSystem'
+import { CreatureNomadSystem } from '../systems/CreatureNomadSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -723,6 +726,9 @@ export class Game {
   private creatureRanger!: CreatureRangerSystem
   private worldCoralReefGrowth!: WorldCoralReefGrowthSystem
   private creatureRunner!: CreatureRunnerSystem
+  private creatureJester!: CreatureJesterSystem
+  private worldPetrifiedForest!: WorldPetrifiedForestSystem
+  private creatureNomad!: CreatureNomadSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1236,6 +1242,9 @@ export class Game {
     this.creatureRanger = new CreatureRangerSystem()
     this.worldCoralReefGrowth = new WorldCoralReefGrowthSystem()
     this.creatureRunner = new CreatureRunnerSystem()
+    this.creatureJester = new CreatureJesterSystem()
+    this.worldPetrifiedForest = new WorldPetrifiedForestSystem()
+    this.creatureNomad = new CreatureNomadSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2869,6 +2878,12 @@ export class Game {
         this.worldCoralReefGrowth.update(this.tickRate, this.world, this.em, this.world.tick)
         // Creature runners (v3.125) - long-distance messengers
         this.creatureRunner.update(this.tickRate, this.em, this.world.tick)
+        // Creature jesters (v3.127) - court entertainers
+        this.creatureJester.update(this.tickRate, this.em, this.world.tick)
+        // World petrified forests (v3.128) - ancient stone trees
+        this.worldPetrifiedForest.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature nomads (v3.129) - migrating tribes
+        this.creatureNomad.update(this.tickRate, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
