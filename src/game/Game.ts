@@ -1335,6 +1335,34 @@ export class Game {
             })
           }
           this.fortificationRenderer.updateFortifications(forts)
+          // Siege-formation linkage: auto-trigger sieges when civs are at war
+          for (const [civId, civ] of this.civManager.civilizations) {
+            for (const [otherId, rel] of civ.relations) {
+              if (rel < -50 && !this.siegeWarfare.getSiegeAt(0, 0)) {
+                const other = this.civManager.civilizations.get(otherId)
+                if (other && other.buildings.length > 0 && civ.population > 5) {
+                  const targetPos = this.em.getComponent<PositionComponent>(other.buildings[0], 'position')
+                  if (targetPos) {
+                    const existingSiege = this.siegeWarfare.getActiveSieges().find(
+                      s => s.attackerCivId === civId && s.defenderCivId === otherId
+                    )
+                    if (!existingSiege) {
+                      this.siegeWarfare.startSiege(civId, otherId, Math.floor(targetPos.x), Math.floor(targetPos.y), Math.min(20, civ.population))
+                      // Auto-form army into wedge formation for siege
+                      const soldiers = this.em.getEntitiesWithComponents('position', 'creature', 'civMember')
+                        .filter(id => {
+                          const cm = this.em.getComponent(id, 'civMember') as any
+                          return cm?.civId === civId
+                        }).slice(0, 12)
+                      if (soldiers.length >= 3 && !this.formationSystem.getFormationForEntity(soldiers[0])) {
+                        this.formationSystem.createFormation(civId, 'wedge', soldiers)
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
         // Update trade route visualization from caravan data
         if (this.world.tick % 120 === 0) {
