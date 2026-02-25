@@ -1,0 +1,74 @@
+// Diplomatic Census System (v3.28) - Civilizations conduct population censuses
+// Census data influences diplomatic power and resource allocation
+
+import { EntityManager } from '../ecs/Entity'
+
+export interface Census {
+  id: number
+  civId: number
+  population: number
+  warriors: number
+  workers: number
+  elders: number
+  growthRate: number   // percentage
+  tick: number
+}
+
+const CHECK_INTERVAL = 2000
+const CENSUS_CHANCE = 0.04
+const MAX_RECORDS = 50
+
+export class DiplomaticCensusSystem {
+  private records: Census[] = []
+  private nextId = 1
+  private lastCheck = 0
+
+  update(dt: number, em: EntityManager, civManager: any, tick: number): void {
+    if (tick - this.lastCheck < CHECK_INTERVAL) return
+    this.lastCheck = tick
+
+    this.conductCensus(civManager, tick)
+    this.cleanup()
+  }
+
+  private conductCensus(civManager: any, tick: number): void {
+    if (!civManager?.civilizations) return
+
+    for (const civ of civManager.civilizations) {
+      if (Math.random() > CENSUS_CHANCE) continue
+      if (this.records.length >= MAX_RECORDS) break
+
+      const pop = civ.population || 0
+      const prevCensus = this.getLatestCensus(civ.id)
+      const growthRate = prevCensus
+        ? ((pop - prevCensus.population) / Math.max(1, prevCensus.population)) * 100
+        : 0
+
+      this.records.push({
+        id: this.nextId++,
+        civId: civ.id,
+        population: pop,
+        warriors: Math.floor(pop * (0.1 + Math.random() * 0.2)),
+        workers: Math.floor(pop * (0.3 + Math.random() * 0.3)),
+        elders: Math.floor(pop * (0.05 + Math.random() * 0.1)),
+        growthRate,
+        tick,
+      })
+    }
+  }
+
+  private cleanup(): void {
+    if (this.records.length > MAX_RECORDS) {
+      this.records.sort((a, b) => b.tick - a.tick)
+      this.records.length = MAX_RECORDS
+    }
+  }
+
+  getRecords(): Census[] { return this.records }
+  getLatestCensus(civId: number): Census | undefined {
+    return this.records.filter(r => r.civId === civId).sort((a, b) => b.tick - a.tick)[0]
+  }
+  getCivHistory(civId: number): Census[] {
+    return this.records.filter(r => r.civId === civId).sort((a, b) => a.tick - b.tick)
+  }
+}

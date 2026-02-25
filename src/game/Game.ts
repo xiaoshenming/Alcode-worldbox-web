@@ -273,6 +273,11 @@ import { CreatureExileSystem } from '../systems/CreatureExileSystem'
 import { WorldHotSpringSystem } from '../systems/WorldHotSpringSystem'
 import { CreatureNicknameSystem } from '../systems/CreatureNicknameSystem'
 import { WorldEclipseSystem } from '../systems/WorldEclipseSystem'
+import { CreatureGrudgeSystem } from '../systems/CreatureGrudgeSystem'
+import { WorldSinkholeSystem } from '../systems/WorldSinkholeSystem'
+import { DiplomaticCensusSystem } from '../systems/DiplomaticCensusSystem'
+import { CreatureSleepwalkSystem } from '../systems/CreatureSleepwalkSystem'
+import { WorldRainbowSystem } from '../systems/WorldRainbowSystem'
 
 export class Game {
   private world: World
@@ -548,6 +553,11 @@ export class Game {
   private worldHotSpring!: WorldHotSpringSystem
   private creatureNickname!: CreatureNicknameSystem
   private worldEclipse!: WorldEclipseSystem
+  private creatureGrudge!: CreatureGrudgeSystem
+  private worldSinkhole!: WorldSinkholeSystem
+  private diplomaticCensus!: DiplomaticCensusSystem
+  private creatureSleepwalk!: CreatureSleepwalkSystem
+  private worldRainbow!: WorldRainbowSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -974,6 +984,11 @@ export class Game {
     this.worldHotSpring = new WorldHotSpringSystem()
     this.creatureNickname = new CreatureNicknameSystem()
     this.worldEclipse = new WorldEclipseSystem()
+    this.creatureGrudge = new CreatureGrudgeSystem()
+    this.worldSinkhole = new WorldSinkholeSystem()
+    this.diplomaticCensus = new DiplomaticCensusSystem()
+    this.creatureSleepwalk = new CreatureSleepwalkSystem()
+    this.worldRainbow = new WorldRainbowSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2417,6 +2432,16 @@ export class Game {
         this.creatureNickname.update(this.tickRate, this.em, this.world.tick)
         // World eclipses (v3.25) - celestial events affect creatures
         this.worldEclipse.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature grudges (v3.26) - creatures hold grudges and seek revenge
+        this.creatureGrudge.update(this.tickRate, this.em, this.world.tick)
+        // World sinkholes (v3.27) - ground collapses forming dangerous pits
+        this.worldSinkhole.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic census (v3.28) - civilizations track population data
+        this.diplomaticCensus.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // Creature sleepwalking (v3.29) - creatures wander at night
+        this.creatureSleepwalk.update(this.tickRate, this.em, this.world.tick)
+        // World rainbows (v3.30) - rainbows boost morale after rain
+        this.worldRainbow.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
