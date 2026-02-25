@@ -591,6 +591,21 @@ import { DiplomaticAbsolutionSystem } from '../systems/DiplomaticAbsolutionSyste
 import { CreatureFerruleMakersSystem } from '../systems/CreatureFerruleMakersSystem'
 import { WorldDeflationHollowSystem } from '../systems/WorldDeflationHollowSystem'
 import { DiplomaticExonerationSystem } from '../systems/DiplomaticExonerationSystem'
+import { CreatureGrommetMakersSystem } from '../systems/CreatureGrommetMakersSystem'
+import { WorldZeugenSystem } from '../systems/WorldZeugenSystem'
+import { DiplomaticReprieveSystem } from '../systems/DiplomaticReprieveSystem'
+import { CreatureBobbinMakersSystem } from '../systems/CreatureBobbinMakersSystem'
+import { WorldInlierSystem } from '../systems/WorldInlierSystem'
+import { DiplomaticDispensationSystem } from '../systems/DiplomaticDispensationSystem'
+import { CreatureSpindleMakersSystem } from '../systems/CreatureSpindleMakersSystem'
+import { WorldOutlierSystem } from '../systems/WorldOutlierSystem'
+import { DiplomaticRemissionSystem } from '../systems/DiplomaticRemissionSystem'
+import { CreatureShuttleMakersSystem } from '../systems/CreatureShuttleMakersSystem'
+import { WorldTafoniSystem } from '../systems/WorldTafoniSystem'
+import { DiplomaticAcquittalSystem } from '../systems/DiplomaticAcquittalSystem'
+import { CreatureBobbinLaceMakersSystem } from '../systems/CreatureBobbinLaceMakersSystem'
+import { WorldRockPedestalSystem } from '../systems/WorldRockPedestalSystem'
+import { DiplomaticImmunitySystem } from '../systems/DiplomaticImmunitySystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1183,6 +1198,21 @@ export class Game {
   private creatureFerruleMakers!: CreatureFerruleMakersSystem
   private worldDeflationHollow!: WorldDeflationHollowSystem
   private diplomaticExoneration!: DiplomaticExonerationSystem
+  private creatureGrommetMakers!: CreatureGrommetMakersSystem
+  private worldZeugen!: WorldZeugenSystem
+  private diplomaticReprieve!: DiplomaticReprieveSystem
+  private creatureBobbinMakers!: CreatureBobbinMakersSystem
+  private worldInlier!: WorldInlierSystem
+  private diplomaticDispensation!: DiplomaticDispensationSystem
+  private creatureSpindleMakers!: CreatureSpindleMakersSystem
+  private worldOutlier!: WorldOutlierSystem
+  private diplomaticRemission!: DiplomaticRemissionSystem
+  private creatureShuttleMakers!: CreatureShuttleMakersSystem
+  private worldTafoni!: WorldTafoniSystem
+  private diplomaticAcquittal!: DiplomaticAcquittalSystem
+  private creatureBobbinLaceMakers!: CreatureBobbinLaceMakersSystem
+  private worldRockPedestal!: WorldRockPedestalSystem
+  private diplomaticImmunity!: DiplomaticImmunitySystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1926,6 +1956,21 @@ export class Game {
     this.creatureFerruleMakers = new CreatureFerruleMakersSystem()
     this.worldDeflationHollow = new WorldDeflationHollowSystem()
     this.diplomaticExoneration = new DiplomaticExonerationSystem()
+    this.creatureGrommetMakers = new CreatureGrommetMakersSystem()
+    this.worldZeugen = new WorldZeugenSystem()
+    this.diplomaticReprieve = new DiplomaticReprieveSystem()
+    this.creatureBobbinMakers = new CreatureBobbinMakersSystem()
+    this.worldInlier = new WorldInlierSystem()
+    this.diplomaticDispensation = new DiplomaticDispensationSystem()
+    this.creatureSpindleMakers = new CreatureSpindleMakersSystem()
+    this.worldOutlier = new WorldOutlierSystem()
+    this.diplomaticRemission = new DiplomaticRemissionSystem()
+    this.creatureShuttleMakers = new CreatureShuttleMakersSystem()
+    this.worldTafoni = new WorldTafoniSystem()
+    this.diplomaticAcquittal = new DiplomaticAcquittalSystem()
+    this.creatureBobbinLaceMakers = new CreatureBobbinLaceMakersSystem()
+    this.worldRockPedestal = new WorldRockPedestalSystem()
+    this.diplomaticImmunity = new DiplomaticImmunitySystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -4021,6 +4066,36 @@ export class Game {
         this.worldDeflationHollow.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic exoneration (v3.385) - exoneration proceedings
         this.diplomaticExoneration.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature grommet makers (v3.386) - grommet crafting artisans
+        this.creatureGrommetMakers.update(this.tickRate, this.em, this.world.tick)
+        // World zeugens (v3.387) - mushroom rock formations
+        this.worldZeugen.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic reprieve (v3.388) - reprieve grants
+        this.diplomaticReprieve.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature bobbin makers (v3.389) - bobbin crafting artisans
+        this.creatureBobbinMakers.update(this.tickRate, this.em, this.world.tick)
+        // World inliers (v3.390) - geological inlier formations
+        this.worldInlier.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic dispensation (v3.391) - dispensation grants
+        this.diplomaticDispensation.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature spindle makers (v3.392) - spindle crafting artisans
+        this.creatureSpindleMakers.update(this.tickRate, this.em, this.world.tick)
+        // World outliers (v3.393) - geological outlier formations
+        this.worldOutlier.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic remission (v3.394) - remission of penalties
+        this.diplomaticRemission.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature shuttle makers (v3.395) - shuttle crafting artisans
+        this.creatureShuttleMakers.update(this.tickRate, this.em, this.world.tick)
+        // World tafoni (v3.396) - honeycomb weathering formations
+        this.worldTafoni.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic acquittal (v3.397) - acquittal verdicts
+        this.diplomaticAcquittal.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature bobbin lace makers (v3.398) - bobbin lace artisans
+        this.creatureBobbinLaceMakers.update(this.tickRate, this.em, this.world.tick)
+        // World rock pedestals (v3.399) - rock pedestal formations
+        this.worldRockPedestal.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic immunity (v3.400) - immunity agreements
+        this.diplomaticImmunity.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
