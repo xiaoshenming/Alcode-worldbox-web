@@ -1,30 +1,30 @@
-// Creature Gilders System (v3.335) - Gold leaf craftsmen
-// Artisans who apply thin layers of gold to surfaces for decoration
+// Creature Furriers System (v3.332) - Fur trading craftsmen
+// Artisans who process, treat, and craft garments from animal pelts
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
 
-export type GildingMethod = 'water' | 'oil' | 'fire' | 'mercury'
+export type FurType = 'fox' | 'beaver' | 'mink' | 'ermine'
 
-export interface Gilder {
+export interface Furrier {
   id: number
   entityId: number
   skill: number
-  piecesGilded: number
-  gildingMethod: GildingMethod
-  leafThinness: number
+  peltsProcessed: number
+  furType: FurType
+  tanningQuality: number
   reputation: number
   tick: number
 }
 
-const CHECK_INTERVAL = 1440
+const CHECK_INTERVAL = 1420
 const CRAFT_CHANCE = 0.005
 const MAX_MAKERS = 30
-const SKILL_GROWTH = 0.057
+const SKILL_GROWTH = 0.061
 
-const METHODS: GildingMethod[] = ['water', 'oil', 'fire', 'mercury']
+const FUR_TYPES: FurType[] = ['fox', 'beaver', 'mink', 'ermine']
 
-export class CreatureGildersSystem {
-  private makers: Gilder[] = []
+export class CreatureFurriersSystem {
+  private makers: Furrier[] = []
   private nextId = 1
   private lastCheck = 0
   private skillMap = new Map<number, number>()
@@ -46,26 +46,26 @@ export class CreatureGildersSystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const methodIdx = Math.min(3, Math.floor(skill / 25))
-      const piecesGilded = 1 + Math.floor(skill / 9)
+      const typeIdx = Math.min(3, Math.floor(skill / 25))
+      const peltsProcessed = 1 + Math.floor(skill / 8)
 
       this.makers.push({
         id: this.nextId++,
         entityId: eid,
         skill,
-        piecesGilded,
-        gildingMethod: METHODS[methodIdx],
-        leafThinness: 14 + skill * 0.7,
-        reputation: 10 + skill * 0.85,
+        peltsProcessed,
+        furType: FUR_TYPES[typeIdx],
+        tanningQuality: 16 + skill * 0.68,
+        reputation: 10 + skill * 0.8,
         tick,
       })
     }
 
-    const cutoff = tick - 52000
+    const cutoff = tick - 54000
     for (let i = this.makers.length - 1; i >= 0; i--) {
       if (this.makers[i].tick < cutoff) this.makers.splice(i, 1)
     }
   }
 
-  getMakers(): Gilder[] { return this.makers }
+  getMakers(): Furrier[] { return this.makers }
 }

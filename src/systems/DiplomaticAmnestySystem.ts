@@ -1,29 +1,32 @@
-// Diplomatic Amnesty System (v3.210) - Nations grant amnesty to prisoners and exiles
-// Amnesty pacts improve goodwill between nations and can ease tensions after conflicts
+// Diplomatic Amnesty System (v3.328) - Amnesty agreements
+// Pardons and forgiveness for past conflicts to enable fresh diplomatic starts
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type AmnestyStatus = 'proposed' | 'active' | 'expired' | 'rejected'
+export type AmnestyScope = 'political' | 'military' | 'economic' | 'universal'
 
-export interface AmnestyPact {
+export interface AmnestyAgreement {
   id: number
-  nationA: number
-  nationB: number
-  status: AmnestyStatus
-  strength: number
-  prisonersReleased: number
-  goodwillBonus: number
-  compliance: number
+  civIdA: number
+  civIdB: number
+  scope: AmnestyScope
+  pardonLevel: number
+  trustRestoration: number
+  publicSupport: number
+  reconciliationProgress: number
+  duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 3000
-const FORM_CHANCE = 0.004
-const MAX_PACTS = 30
+const CHECK_INTERVAL = 2400
+const TREATY_CHANCE = 0.0026
+const MAX_TREATIES = 20
+
+const SCOPES: AmnestyScope[] = ['political', 'military', 'economic', 'universal']
 
 export class DiplomaticAmnestySystem {
-  private pacts: AmnestyPact[] = []
+  private treaties: AmnestyAgreement[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -31,63 +34,40 @@ export class DiplomaticAmnestySystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const nations = this.getNations(em)
-    for (let i = 0; i < nations.length; i++) {
-      for (let j = i + 1; j < nations.length; j++) {
-        if (this.pacts.length >= MAX_PACTS) break
-        if (Math.random() > FORM_CHANCE) continue
+    if (this.treaties.length < MAX_TREATIES && Math.random() < TREATY_CHANCE) {
+      const civA = 1 + Math.floor(Math.random() * 8)
+      const civB = 1 + Math.floor(Math.random() * 8)
+      if (civA === civB) return
 
-        const prisonersReleased = 5 + Math.floor(Math.random() * 30)
-        const goodwillBonus = 10 + Math.random() * 40
-        const compliance = 30 + Math.random() * 40
+      const scope = SCOPES[Math.floor(Math.random() * SCOPES.length)]
 
-        this.pacts.push({
-          id: this.nextId++,
-          nationA: nations[i],
-          nationB: nations[j],
-          status: 'proposed',
-          strength: 20 + Math.random() * 50,
-          prisonersReleased,
-          goodwillBonus,
-          compliance,
-          tick,
-        })
-      }
+      this.treaties.push({
+        id: this.nextId++,
+        civIdA: civA,
+        civIdB: civB,
+        scope,
+        pardonLevel: 15 + Math.random() * 35,
+        trustRestoration: 10 + Math.random() * 30,
+        publicSupport: 30 + Math.random() * 40,
+        reconciliationProgress: 5 + Math.random() * 20,
+        duration: 0,
+        tick,
+      })
     }
 
-    // Proposed pacts may become active or rejected
-    for (const p of this.pacts) {
-      if (p.status === 'proposed') {
-        if (p.compliance > 50 && Math.random() < 0.3) {
-          p.status = 'active'
-        } else if (p.compliance < 30 && Math.random() < 0.2) {
-          p.status = 'rejected'
-        }
-      }
-      if (p.status === 'active') {
-        p.goodwillBonus = Math.min(100, p.goodwillBonus + 0.5)
-        p.compliance = Math.max(0, Math.min(100, p.compliance + (Math.random() - 0.45) * 3))
-        if (tick - p.tick > 30000) {
-          p.status = 'expired'
-        }
-      }
+    for (const treaty of this.treaties) {
+      treaty.duration += 1
+      treaty.pardonLevel = Math.max(5, Math.min(85, treaty.pardonLevel + (Math.random() - 0.45) * 0.12))
+      treaty.trustRestoration = Math.max(5, Math.min(80, treaty.trustRestoration + (Math.random() - 0.46) * 0.11))
+      treaty.publicSupport = Math.max(10, Math.min(95, treaty.publicSupport + (Math.random() - 0.48) * 0.13))
+      treaty.reconciliationProgress = Math.max(2, Math.min(70, treaty.reconciliationProgress + (Math.random() - 0.44) * 0.09))
     }
 
-    const cutoff = tick - 48000
-    for (let i = this.pacts.length - 1; i >= 0; i--) {
-      if ((this.pacts[i].status === 'expired' || this.pacts[i].status === 'rejected') && this.pacts[i].tick < cutoff) {
-        this.pacts.splice(i, 1)
-      }
+    const cutoff = tick - 82000
+    for (let i = this.treaties.length - 1; i >= 0; i--) {
+      if (this.treaties[i].tick < cutoff) this.treaties.splice(i, 1)
     }
   }
 
-  private getNations(em: EntityManager): number[] {
-    const set = new Set<number>()
-    for (const eid of em.getEntitiesWithComponents('creature')) {
-      set.add(eid % 6)
-    }
-    return Array.from(set)
-  }
-
-  getPacts(): readonly AmnestyPact[] { return this.pacts }
+  getTreaties(): AmnestyAgreement[] { return this.treaties }
 }

@@ -1,30 +1,30 @@
-// Creature Chandlers System (v3.243) - Chandlers make candles and soap
-// Craftspeople who produce essential lighting and hygiene products from tallow and wax
+// Creature Chandlers System (v3.326) - Candle making craftsmen
+// Artisans who craft candles from tallow, beeswax, and other materials
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
 
-export type ChandlerProduct = 'tallow_candle' | 'beeswax_candle' | 'soap' | 'perfumed_candle'
+export type WaxType = 'tallow' | 'beeswax' | 'bayberry' | 'spermaceti'
 
 export interface Chandler {
   id: number
   entityId: number
   skill: number
-  itemsMade: number
-  product: ChandlerProduct
-  quality: number
-  burnTime: number
+  candlesMade: number
+  waxType: WaxType
+  burnQuality: number
+  reputation: number
   tick: number
 }
 
 const CHECK_INTERVAL = 1400
-const CRAFT_CHANCE = 0.006
-const MAX_CHANDLERS = 34
-const SKILL_GROWTH = 0.07
+const CRAFT_CHANCE = 0.005
+const MAX_MAKERS = 30
+const SKILL_GROWTH = 0.060
 
-const PRODUCTS: ChandlerProduct[] = ['tallow_candle', 'beeswax_candle', 'soap', 'perfumed_candle']
+const WAX_TYPES: WaxType[] = ['tallow', 'beeswax', 'bayberry', 'spermaceti']
 
 export class CreatureChandlersSystem {
-  private chandlers: Chandler[] = []
+  private makers: Chandler[] = []
   private nextId = 1
   private lastCheck = 0
   private skillMap = new Map<number, number>()
@@ -36,36 +36,36 @@ export class CreatureChandlersSystem {
     const creatures = em.getEntitiesWithComponents('creature', 'position')
 
     for (const eid of creatures) {
-      if (this.chandlers.length >= MAX_CHANDLERS) break
+      if (this.makers.length >= MAX_MAKERS) break
       if (Math.random() > CRAFT_CHANCE) continue
 
       const c = em.getComponent<CreatureComponent>(eid, 'creature')
-      if (!c || c.age < 8) continue
+      if (!c || c.age < 10) continue
 
-      let skill = this.skillMap.get(eid) ?? (2 + Math.random() * 8)
+      let skill = this.skillMap.get(eid) ?? (2 + Math.random() * 7)
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const prodIdx = Math.min(3, Math.floor(skill / 25))
-      const itemsMade = 2 + Math.floor(skill / 10)
+      const typeIdx = Math.min(3, Math.floor(skill / 25))
+      const candlesMade = 1 + Math.floor(skill / 7)
 
-      this.chandlers.push({
+      this.makers.push({
         id: this.nextId++,
         entityId: eid,
         skill,
-        itemsMade,
-        product: PRODUCTS[prodIdx],
-        quality: 20 + skill * 0.7,
-        burnTime: 5 + skill * 0.5,
+        candlesMade,
+        waxType: WAX_TYPES[typeIdx],
+        burnQuality: 18 + skill * 0.65,
+        reputation: 10 + skill * 0.78,
         tick,
       })
     }
 
-    const cutoff = tick - 55000
-    for (let i = this.chandlers.length - 1; i >= 0; i--) {
-      if (this.chandlers[i].tick < cutoff) this.chandlers.splice(i, 1)
+    const cutoff = tick - 53000
+    for (let i = this.makers.length - 1; i >= 0; i--) {
+      if (this.makers[i].tick < cutoff) this.makers.splice(i, 1)
     }
   }
 
-  getChandlers(): Chandler[] { return this.chandlers }
+  getMakers(): Chandler[] { return this.makers }
 }

@@ -1,31 +1,32 @@
-// Diplomatic Arbitration System (v3.215) - Third-party arbitration of disputes
-// When nations cannot resolve their grievances alone, a neutral arbiter steps forward to weigh justice
+// Diplomatic Arbitration System (v3.331) - Arbitration treaties
+// Third-party resolution of disputes through binding arbitration
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type ArbitrationStatus = 'proposed' | 'active' | 'expired' | 'rejected'
+export type ArbitrationType = 'territorial' | 'commercial' | 'military' | 'cultural'
 
-export type DisputeType = 'territorial' | 'trade' | 'cultural' | 'military'
-
-export interface ArbitrationPact {
-  id: number; nationA: number; nationB: number
-  status: ArbitrationStatus; strength: number
-  arbiterNation: number
-  disputeType: DisputeType
-  fairnessScore: number
-  bindingForce: number
+export interface ArbitrationCase {
+  id: number
+  civIdA: number
+  civIdB: number
+  arbitrationType: ArbitrationType
+  fairnessRating: number
+  bindingStrength: number
+  complianceRate: number
+  disputeResolution: number
+  duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 3200
-const FORM_CHANCE = 0.004
-const MAX_PACTS = 28
+const CHECK_INTERVAL = 2380
+const TREATY_CHANCE = 0.0027
+const MAX_CASES = 20
 
-const DISPUTE_TYPES: DisputeType[] = ['territorial', 'trade', 'cultural', 'military']
+const TYPES: ArbitrationType[] = ['territorial', 'commercial', 'military', 'cultural']
 
 export class DiplomaticArbitrationSystem {
-  private pacts: ArbitrationPact[] = []
+  private cases: ArbitrationCase[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -33,51 +34,40 @@ export class DiplomaticArbitrationSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const nations = this.getNations(em)
+    if (this.cases.length < MAX_CASES && Math.random() < TREATY_CHANCE) {
+      const civA = 1 + Math.floor(Math.random() * 8)
+      const civB = 1 + Math.floor(Math.random() * 8)
+      if (civA === civB) return
 
-    for (let i = 0; i < nations.length; i++) {
-      for (let j = i + 1; j < nations.length; j++) {
-        if (this.pacts.length >= MAX_PACTS) break
-        if (Math.random() > FORM_CHANCE) continue
+      const aType = TYPES[Math.floor(Math.random() * TYPES.length)]
 
-        const otherNations = nations.filter((_, idx) => idx !== i && idx !== j)
-        const arbiterNation = otherNations.length > 0
-          ? otherNations[Math.floor(Math.random() * otherNations.length)]
-          : nations[i]
-
-        const disputeType = DISPUTE_TYPES[Math.floor(Math.random() * DISPUTE_TYPES.length)]
-
-        this.pacts.push({
-          id: this.nextId++,
-          nationA: nations[i],
-          nationB: nations[j],
-          status: 'proposed',
-          strength: 20 + Math.random() * 60,
-          arbiterNation,
-          disputeType,
-          fairnessScore: 30 + Math.random() * 70,
-          bindingForce: 10 + Math.random() * 90,
-          tick
-        })
-      }
+      this.cases.push({
+        id: this.nextId++,
+        civIdA: civA,
+        civIdB: civB,
+        arbitrationType: aType,
+        fairnessRating: 30 + Math.random() * 40,
+        bindingStrength: 20 + Math.random() * 45,
+        complianceRate: 35 + Math.random() * 35,
+        disputeResolution: 10 + Math.random() * 25,
+        duration: 0,
+        tick,
+      })
     }
 
-    for (const p of this.pacts) {
-      if (p.status === 'proposed' && Math.random() < 0.3) p.status = 'active'
-      if (p.status === 'active' && tick - p.tick > 30000) p.status = 'expired'
+    for (const c of this.cases) {
+      c.duration += 1
+      c.fairnessRating = Math.max(10, Math.min(90, c.fairnessRating + (Math.random() - 0.47) * 0.12))
+      c.bindingStrength = Math.max(10, Math.min(85, c.bindingStrength + (Math.random() - 0.46) * 0.1))
+      c.complianceRate = Math.max(15, Math.min(95, c.complianceRate + (Math.random() - 0.48) * 0.13))
+      c.disputeResolution = Math.max(5, Math.min(75, c.disputeResolution + (Math.random() - 0.44) * 0.11))
     }
 
-    const cutoff = tick - 49000
-    for (let i = this.pacts.length - 1; i >= 0; i--) {
-      if (this.pacts[i].status === 'expired' && this.pacts[i].tick < cutoff) this.pacts.splice(i, 1)
+    const cutoff = tick - 80000
+    for (let i = this.cases.length - 1; i >= 0; i--) {
+      if (this.cases[i].tick < cutoff) this.cases.splice(i, 1)
     }
   }
 
-  private getNations(em: EntityManager): number[] {
-    const set = new Set<number>()
-    for (const eid of em.getEntitiesWithComponents('creature')) set.add(eid % 6)
-    return Array.from(set)
-  }
-
-  getPacts(): readonly ArbitrationPact[] { return this.pacts }
+  getCases(): ArbitrationCase[] { return this.cases }
 }

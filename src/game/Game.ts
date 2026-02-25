@@ -537,6 +537,16 @@ import { DiplomaticReconciliationSystem } from '../systems/DiplomaticReconciliat
 import { CreatureVinegarMakersSystem } from '../systems/CreatureVinegarMakersSystem'
 import { WorldNunatakSystem } from '../systems/WorldNunatakSystem'
 import { DiplomaticDisarmamentSystem } from '../systems/DiplomaticDisarmamentSystem'
+import { WorldCirqueSystem } from '../systems/WorldCirqueSystem'
+import { CreatureLaceMakersSystem } from '../systems/CreatureLaceMakersSystem'
+import { WorldArroyoSystem } from '../systems/WorldArroyoSystem'
+import { CreatureFurriersSystem } from '../systems/CreatureFurriersSystem'
+import { WorldCouleeSystem } from '../systems/WorldCouleeSystem'
+import { DiplomaticDetenteSystem } from '../systems/DiplomaticDetenteSystem'
+import { WorldDeltaSystem } from '../systems/WorldDeltaSystem'
+import { DiplomaticRapprochementSystem } from '../systems/DiplomaticRapprochementSystem'
+import { CreatureBookbindersSystem } from '../systems/CreatureBookbindersSystem'
+import { WorldEstuarySystem } from '../systems/WorldEstuarySystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1075,6 +1085,16 @@ export class Game {
   private creatureVinegarMakers!: CreatureVinegarMakersSystem
   private worldNunatak!: WorldNunatakSystem
   private diplomaticDisarmament!: DiplomaticDisarmamentSystem
+  private worldCirque!: WorldCirqueSystem
+  private creatureLaceMakers!: CreatureLaceMakersSystem
+  private worldArroyo!: WorldArroyoSystem
+  private creatureFurriers!: CreatureFurriersSystem
+  private worldCoulee!: WorldCouleeSystem
+  private diplomaticDetente!: DiplomaticDetenteSystem
+  private worldDelta!: WorldDeltaSystem
+  private diplomaticRapprochement!: DiplomaticRapprochementSystem
+  private creatureBookbinders!: CreatureBookbindersSystem
+  private worldEstuary!: WorldEstuarySystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1764,6 +1784,16 @@ export class Game {
     this.creatureVinegarMakers = new CreatureVinegarMakersSystem()
     this.worldNunatak = new WorldNunatakSystem()
     this.diplomaticDisarmament = new DiplomaticDisarmamentSystem()
+    this.worldCirque = new WorldCirqueSystem()
+    this.creatureLaceMakers = new CreatureLaceMakersSystem()
+    this.worldArroyo = new WorldArroyoSystem()
+    this.creatureFurriers = new CreatureFurriersSystem()
+    this.worldCoulee = new WorldCouleeSystem()
+    this.diplomaticDetente = new DiplomaticDetenteSystem()
+    this.worldDelta = new WorldDeltaSystem()
+    this.diplomaticRapprochement = new DiplomaticRapprochementSystem()
+    this.creatureBookbinders = new CreatureBookbindersSystem()
+    this.worldEstuary = new WorldEstuarySystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3751,6 +3781,26 @@ export class Game {
         this.worldNunatak.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic disarmament (v3.325) - disarmament treaties
         this.diplomaticDisarmament.update(this.tickRate, this.world, this.em, this.world.tick)
+        // World cirques (v3.327) - glacial cirque formations
+        this.worldCirque.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature lace makers (v3.329) - lace weaving craftsmen
+        this.creatureLaceMakers.update(this.tickRate, this.em, this.world.tick)
+        // World arroyos (v3.330) - dry creek bed formations
+        this.worldArroyo.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature furriers (v3.332) - fur trading craftsmen
+        this.creatureFurriers.update(this.tickRate, this.em, this.world.tick)
+        // World coulees (v3.333) - lava coulee formations
+        this.worldCoulee.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic detente (v3.334) - detente agreements
+        this.diplomaticDetente.update(this.tickRate, this.world, this.em, this.world.tick)
+        // World deltas (v3.336) - river delta formations
+        this.worldDelta.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic rapprochement (v3.337) - rapprochement agreements
+        this.diplomaticRapprochement.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature bookbinders (v3.338) - book binding craftsmen
+        this.creatureBookbinders.update(this.tickRate, this.em, this.world.tick)
+        // World estuaries (v3.339) - estuary formations
+        this.worldEstuary.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate

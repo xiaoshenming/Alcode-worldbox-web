@@ -1,32 +1,32 @@
-// Diplomatic Mediation System (v3.240) - Third-party conflict mediation
-// Neutral civilizations facilitate negotiations between disputing parties
+// Diplomatic Mediation System (v3.340) - Mediation agreements
+// Neutral third-party facilitation to resolve conflicts peacefully
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type ConflictType = 'territorial' | 'economic' | 'cultural' | 'military'
+export type MediationMethod = 'facilitative' | 'evaluative' | 'transformative' | 'narrative'
 
-export interface Mediation {
+export interface MediationCase {
   id: number
-  party1CivId: number
-  party2CivId: number
-  mediatorCivId: number
-  conflictType: ConflictType
-  progress: number
-  trust: number
-  outcome: 'resolved' | 'stalled' | 'failed'
-  sessions: number
+  civIdA: number
+  civIdB: number
+  method: MediationMethod
+  neutrality: number
+  progressRate: number
+  satisfactionA: number
+  satisfactionB: number
+  duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2400
-const MEDIATE_CHANCE = 0.003
-const MAX_MEDIATIONS = 24
+const CHECK_INTERVAL = 2340
+const TREATY_CHANCE = 0.0027
+const MAX_CASES = 20
 
-const CONFLICT_TYPES: ConflictType[] = ['territorial', 'economic', 'cultural', 'military']
+const METHODS: MediationMethod[] = ['facilitative', 'evaluative', 'transformative', 'narrative']
 
 export class DiplomaticMediationSystem {
-  private mediations: Mediation[] = []
+  private cases: MediationCase[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -34,47 +34,40 @@ export class DiplomaticMediationSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    if (this.mediations.length < MAX_MEDIATIONS && Math.random() < MEDIATE_CHANCE) {
-      const party1 = 1 + Math.floor(Math.random() * 8)
-      const party2 = 1 + Math.floor(Math.random() * 8)
-      if (party1 === party2) return
+    if (this.cases.length < MAX_CASES && Math.random() < TREATY_CHANCE) {
+      const civA = 1 + Math.floor(Math.random() * 8)
+      const civB = 1 + Math.floor(Math.random() * 8)
+      if (civA === civB) return
 
-      let mediator = 1 + Math.floor(Math.random() * 8)
-      while (mediator === party1 || mediator === party2) {
-        mediator = 1 + Math.floor(Math.random() * 8)
-      }
+      const method = METHODS[Math.floor(Math.random() * METHODS.length)]
 
-      const conflictType = CONFLICT_TYPES[Math.floor(Math.random() * CONFLICT_TYPES.length)]
-
-      this.mediations.push({
+      this.cases.push({
         id: this.nextId++,
-        party1CivId: party1,
-        party2CivId: party2,
-        mediatorCivId: mediator,
-        conflictType,
-        progress: 5 + Math.random() * 15,
-        trust: 10 + Math.random() * 30,
-        outcome: 'stalled',
-        sessions: 1,
+        civIdA: civA,
+        civIdB: civB,
+        method,
+        neutrality: 40 + Math.random() * 35,
+        progressRate: 5 + Math.random() * 20,
+        satisfactionA: 25 + Math.random() * 35,
+        satisfactionB: 25 + Math.random() * 35,
+        duration: 0,
         tick,
       })
     }
 
-    for (const med of this.mediations) {
-      med.progress = Math.min(100, med.progress + 0.08 + med.trust * 0.002)
-      med.trust = Math.min(100, med.trust + 0.03)
-      med.sessions += Math.random() < 0.01 ? 1 : 0
-
-      if (med.progress >= 90 && med.outcome === 'stalled') {
-        med.outcome = Math.random() < 0.7 ? 'resolved' : 'failed'
-      }
+    for (const c of this.cases) {
+      c.duration += 1
+      c.neutrality = Math.max(20, Math.min(95, c.neutrality + (Math.random() - 0.48) * 0.11))
+      c.progressRate = Math.max(2, Math.min(60, c.progressRate + (Math.random() - 0.45) * 0.12))
+      c.satisfactionA = Math.max(10, Math.min(90, c.satisfactionA + (Math.random() - 0.47) * 0.13))
+      c.satisfactionB = Math.max(10, Math.min(90, c.satisfactionB + (Math.random() - 0.47) * 0.13))
     }
 
-    const cutoff = tick - 75000
-    for (let i = this.mediations.length - 1; i >= 0; i--) {
-      if (this.mediations[i].tick < cutoff) this.mediations.splice(i, 1)
+    const cutoff = tick - 81000
+    for (let i = this.cases.length - 1; i >= 0; i--) {
+      if (this.cases[i].tick < cutoff) this.cases.splice(i, 1)
     }
   }
 
-  getMediations(): Mediation[] { return this.mediations }
+  getCases(): MediationCase[] { return this.cases }
 }
