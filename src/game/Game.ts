@@ -329,6 +329,8 @@ import { WorldFloatingIslandSystem } from '../systems/WorldFloatingIslandSystem'
 import { CreatureCartographySystem } from '../systems/CreatureCartographySystem'
 import { CreatureShapeshiftingSystem } from '../systems/CreatureShapeshiftingSystem'
 import { WorldWhirlwindSystem } from '../systems/WorldWhirlwindSystem'
+import { CreatureRunecraftingSystem } from '../systems/CreatureRunecraftingSystem'
+import { CreatureAstrologySystem } from '../systems/CreatureAstrologySystem'
 
 export class Game {
   private world: World
@@ -660,6 +662,8 @@ export class Game {
   private creatureCartography!: CreatureCartographySystem
   private creatureShapeshifting!: CreatureShapeshiftingSystem
   private worldWhirlwind!: WorldWhirlwindSystem
+  private creatureRunecrafting!: CreatureRunecraftingSystem
+  private creatureAstrology!: CreatureAstrologySystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -1142,6 +1146,8 @@ export class Game {
     this.creatureCartography = new CreatureCartographySystem()
     this.creatureShapeshifting = new CreatureShapeshiftingSystem()
     this.worldWhirlwind = new WorldWhirlwindSystem()
+    this.creatureRunecrafting = new CreatureRunecraftingSystem()
+    this.creatureAstrology = new CreatureAstrologySystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2452,7 +2458,7 @@ export class Game {
         // Creature fashion (v2.43) - fashion trends in civs
         this.creatureFashion.update(this.tickRate, [...this.civManager.civilizations.keys()], this.world.tick)
         // Diplomatic hostages (v2.44) - hostage exchange for peace
-        this.diplomaticHostage.update(this.tickRate, this.civManager, this.world.tick)
+        this.diplomaticHostage.update(this.tickRate, this.em, this.civManager, this.world.tick)
         // World erosion (v2.45) - terrain erosion over time
         this.worldErosion.update(this.tickRate, this.world, this.world.tick)
         // Creature pets (v2.46) - pet adoption and bonding
@@ -2482,7 +2488,7 @@ export class Game {
         // Creature phobias (v2.61) - fears and panic
         this.creaturePhobia.update(this.tickRate, this.em, this.world.tick)
         // World geothermal (v2.62) - hot springs and geysers
-        this.worldGeothermal.update(this.tickRate, this.world, this.world.tick)
+        this.worldGeothermal.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic federations (v2.63) - multi-civ alliances
         this.diplomaticFederation.update(this.tickRate, this.civManager, this.world.tick)
         // Creature art (v2.64) - artistic expression
@@ -2697,6 +2703,16 @@ export class Game {
         this.creatureShapeshifting.update(this.tickRate, this.em, this.world.tick)
         // World whirlwinds (v3.85) - spinning wind phenomena
         this.worldWhirlwind.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature runecrafting (v3.86) - magical rune inscription
+        this.creatureRunecrafting.update(this.tickRate, this.em, this.world.tick)
+        // World geothermal (v3.87) - hot springs and geysers
+        this.worldGeothermal.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic hostages (v3.88) - hostage negotiation
+        this.diplomaticHostage.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // Creature astrology (v3.89) - celestial event readings
+        this.creatureAstrology.update(this.tickRate, this.em, this.world.tick)
+        // World avalanches (v3.90) - mountain snow avalanches
+        this.worldAvalanche.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
