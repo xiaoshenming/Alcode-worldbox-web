@@ -1,131 +1,131 @@
-// Diplomatic Marriage System (v2.54) - Political marriages between civilizations
-// Royal marriages forge alliances, improve relations, and produce heirs
-// Failed marriages can trigger wars
+// Diplomatic Marriage System (v2.88) - Royal marriages between civilizations
+// Marriages forge alliances, produce heirs, and can be annulled causing diplomatic crises
 
-import { EntityManager, EntityId } from '../ecs/Entity'
+import { CivManager } from '../civilization/CivManager'
 
-export type MarriageStatus = 'proposed' | 'accepted' | 'active' | 'dissolved' | 'rejected'
+export type MarriageStatus = 'betrothed' | 'married' | 'annulled' | 'widowed'
 
-export interface DiplomaticMarriage {
+export interface RoyalMarriage {
   id: number
   civA: number
   civB: number
-  entityA: EntityId
-  entityB: EntityId
   status: MarriageStatus
-  alliance: number      // 0-100 alliance strength
-  startedAt: number
-  children: number
+  harmony: number       // 0-100, marriage quality
+  establishedTick: number
+  heirs: number
+  allianceBonus: number // relation bonus while married
 }
 
-const CHECK_INTERVAL = 1000
-const UPDATE_INTERVAL = 600
-const MAX_MARRIAGES = 30
-const PROPOSAL_CHANCE = 0.05
-const ALLIANCE_GAIN = 3
-const CHILD_CHANCE = 0.02
-const DISSOLVE_CHANCE = 0.01
-
-let nextMarriageId = 1
+const CHECK_INTERVAL = 1100
+const MAX_MARRIAGES = 10
+const MARRIAGE_CHANCE = 0.008
+const HEIR_CHANCE = 0.02
+const ANNUL_THRESHOLD = 15
+const HARMONY_DECAY = 0.2
+const ALLIANCE_BONUS = 3
 
 export class DiplomaticMarriageSystem {
-  private marriages: DiplomaticMarriage[] = []
+  private marriages: RoyalMarriage[] = []
+  private nextId = 1
   private lastCheck = 0
-  private lastUpdate = 0
-  private totalMarriages = 0
 
-  update(dt: number, em: EntityManager, civManager: { civilizations: Map<number, any> }, tick: number): void {
-    if (tick - this.lastCheck >= CHECK_INTERVAL) {
-      this.lastCheck = tick
-      this.proposeMarriages(em, civManager, tick)
-    }
-    if (tick - this.lastUpdate >= UPDATE_INTERVAL) {
-      this.lastUpdate = tick
-      this.updateMarriages(em, tick)
-    }
+  update(dt: number, civManager: CivManager, tick: number): void {
+    if (tick - this.lastCheck < CHECK_INTERVAL) return
+    this.lastCheck = tick
+
+    this.arrangeMarriages(civManager, tick)
+    this.updateMarriages(civManager, tick)
+    this.cleanup()
   }
 
-  private proposeMarriages(em: EntityManager, civManager: { civilizations: Map<number, any> }, tick: number): void {
-    if (this.marriages.filter(m => m.status === 'active' || m.status === 'proposed').length >= MAX_MARRIAGES) return
-    const civs = [...civManager.civilizations.entries()]
+  private arrangeMarriages(civManager: CivManager, tick: number): void {
+    if (this.marriages.length >= MAX_MARRIAGES) return
+
+    const civs = Array.from(civManager.civilizations.values())
     if (civs.length < 2) return
 
     for (let i = 0; i < civs.length; i++) {
-      if (Math.random() > PROPOSAL_CHANCE) continue
-      const [civIdA] = civs[i]
-      const j = Math.floor(Math.random() * civs.length)
-      if (j === i) continue
-      const [civIdB] = civs[j]
+      if (Math.random() > MARRIAGE_CHANCE) continue
 
-      // Check no existing marriage between these civs
-      if (this.marriages.some(m => m.status === 'active' && ((m.civA === civIdA && m.civB === civIdB) || (m.civA === civIdB && m.civB === civIdA)))) continue
+      for (let j = i + 1; j < civs.length; j++) {
+        const rel = civs[i].relations.get(civs[j].id) ?? 0
+        // Need positive relations for marriage
+        if (rel < 10) continue
 
-      // Find eligible creatures from each civ
-      const creatures = em.getEntitiesWithComponents('creature', 'civMember')
-      let entityA: EntityId | null = null
-      let entityB: EntityId | null = null
-      for (const id of creatures) {
-        const member = em.getComponent<any>(id, 'civMember')
-        if (!member) continue
-        if (member.civId === civIdA && !entityA) entityA = id
-        if (member.civId === civIdB && !entityB) entityB = id
-        if (entityA && entityB) break
+        // Check not already married
+        const alreadyMarried = this.marriages.some(
+          m => m.status === 'married' &&
+            ((m.civA === civs[i].id && m.civB === civs[j].id) ||
+             (m.civA === civs[j].id && m.civB === civs[i].id))
+        )
+        if (alreadyMarried) continue
+
+        this.marriages.push({
+          id: this.nextId++,
+          civA: civs[i].id,
+          civB: civs[j].id,
+          status: 'married',
+          harmony: 60 + Math.random() * 30,
+          establishedTick: tick,
+          heirs: 0,
+          allianceBonus: ALLIANCE_BONUS,
+        })
+        break
       }
-      if (!entityA || !entityB) continue
-
-      const accepted = Math.random() < 0.6
-      this.marriages.push({
-        id: nextMarriageId++,
-        civA: civIdA,
-        civB: civIdB,
-        entityA,
-        entityB,
-        status: accepted ? 'active' : 'rejected',
-        alliance: accepted ? 30 : 0,
-        startedAt: tick,
-        children: 0,
-      })
-      this.totalMarriages++
-      break
     }
   }
 
-  private updateMarriages(em: EntityManager, tick: number): void {
-    const toRemove: number[] = []
-    for (let i = 0; i < this.marriages.length; i++) {
-      const marriage = this.marriages[i]
-      if (marriage.status !== 'active') {
-        if (tick - marriage.startedAt > 5000) toRemove.push(i)
-        continue
+  private updateMarriages(civManager: CivManager, _tick: number): void {
+    for (const marriage of this.marriages) {
+      if (marriage.status !== 'married') continue
+
+      // Harmony fluctuates
+      marriage.harmony += (Math.random() - 0.55) * 4
+      marriage.harmony = Math.max(0, Math.min(100, marriage.harmony))
+
+      // Produce heirs
+      if (marriage.harmony > 50 && Math.random() < HEIR_CHANCE) {
+        marriage.heirs++
+        marriage.harmony = Math.min(100, marriage.harmony + 5)
       }
 
-      // Check both partners alive
-      const cA = em.getComponent<any>(marriage.entityA, 'creature')
-      const cB = em.getComponent<any>(marriage.entityB, 'creature')
-      if (!cA || !cB) {
-        marriage.status = 'dissolved'
-        continue
+      // Apply alliance bonus to relations
+      const civA = civManager.civilizations.get(marriage.civA)
+      const civB = civManager.civilizations.get(marriage.civB)
+      if (civA && civB) {
+        const relA = civA.relations.get(marriage.civB) ?? 0
+        civA.relations.set(marriage.civB, Math.min(100, relA + marriage.allianceBonus * 0.1))
+        const relB = civB.relations.get(marriage.civA) ?? 0
+        civB.relations.set(marriage.civA, Math.min(100, relB + marriage.allianceBonus * 0.1))
       }
 
-      // Strengthen alliance
-      marriage.alliance = Math.min(100, marriage.alliance + ALLIANCE_GAIN)
-
-      // Chance for children
-      if (Math.random() < CHILD_CHANCE) {
-        marriage.children++
+      // Low harmony can lead to annulment
+      if (marriage.harmony < ANNUL_THRESHOLD && Math.random() < 0.08) {
+        marriage.status = 'annulled'
+        // Annulment damages relations
+        if (civA && civB) {
+          const relA = civA.relations.get(marriage.civB) ?? 0
+          civA.relations.set(marriage.civB, Math.max(-100, relA - 20))
+          const relB = civB.relations.get(marriage.civA) ?? 0
+          civB.relations.set(marriage.civA, Math.max(-100, relB - 20))
+        }
       }
 
-      // Chance to dissolve
-      if (Math.random() < DISSOLVE_CHANCE && marriage.alliance < 40) {
-        marriage.status = 'dissolved'
-      }
-    }
-    for (let i = toRemove.length - 1; i >= 0; i--) {
-      this.marriages.splice(toRemove[i], 1)
+      // Natural harmony decay
+      marriage.harmony = Math.max(0, marriage.harmony - HARMONY_DECAY)
     }
   }
 
-  getMarriages(): DiplomaticMarriage[] { return this.marriages }
-  getActiveMarriages(): DiplomaticMarriage[] { return this.marriages.filter(m => m.status === 'active') }
-  getTotalMarriages(): number { return this.totalMarriages }
+  private cleanup(): void {
+    // Keep only recent annulled/widowed for history
+    const active = this.marriages.filter(m => m.status === 'married' || m.status === 'betrothed')
+    const ended = this.marriages.filter(m => m.status === 'annulled' || m.status === 'widowed')
+    if (ended.length > 15) {
+      this.marriages = [...active, ...ended.slice(-15)]
+    }
+  }
+
+  getMarriages(): RoyalMarriage[] { return this.marriages }
+  getActiveMarriages(): RoyalMarriage[] { return this.marriages.filter(m => m.status === 'married') }
+  getTotalHeirs(): number { return this.marriages.reduce((sum, m) => sum + m.heirs, 0) }
 }

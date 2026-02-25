@@ -241,6 +241,9 @@ import { WorldPetrificationSystem } from '../systems/WorldPetrificationSystem'
 import { WorldMaelstromSystem } from '../systems/WorldMaelstromSystem'
 import { CreatureRivalryDuelSystem } from '../systems/CreatureRivalryDuelSystem'
 import { WorldCoralReefSystem } from '../systems/WorldCoralReefSystem'
+import { WorldSandstormSystem } from '../systems/WorldSandstormSystem'
+import { CreatureCollectionSystem } from '../systems/CreatureCollectionSystem'
+import { WorldRiftSystem } from '../systems/WorldRiftSystem'
 
 export class Game {
   private world: World
@@ -484,6 +487,9 @@ export class Game {
   private worldMaelstrom!: WorldMaelstromSystem
   private creatureRivalryDuel!: CreatureRivalryDuelSystem
   private worldCoralReef!: WorldCoralReefSystem
+  private worldSandstorm!: WorldSandstormSystem
+  private creatureCollection!: CreatureCollectionSystem
+  private worldRift!: WorldRiftSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -878,6 +884,9 @@ export class Game {
     this.worldMaelstrom = new WorldMaelstromSystem()
     this.creatureRivalryDuel = new CreatureRivalryDuelSystem()
     this.worldCoralReef = new WorldCoralReefSystem()
+    this.worldSandstorm = new WorldSandstormSystem()
+    this.creatureCollection = new CreatureCollectionSystem()
+    this.worldRift = new WorldRiftSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2132,7 +2141,7 @@ export class Game {
         // Creature mutation (v2.13) - environmental mutations
         this.creatureMutation.update(this.tickRate, this.em, this.world)
         // Diplomatic marriage (v2.14) - royal marriages
-        this.diplomaticMarriage.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.diplomaticMarriage.update(this.tickRate, this.civManager, this.world.tick)
         // World relics (v2.15) - ancient relics with buffs
         this.worldRelic.update(this.tickRate, this.em, this.world)
         // Creature ancestor worship (v2.16) - ancestor spirits buff descendants
@@ -2257,6 +2266,12 @@ export class Game {
         this.creatureRivalryDuel.update(this.tickRate, this.em, this.world.tick)
         // World coral reef (v2.84) - coral reefs in shallow coastal water
         this.worldCoralReef.update(this.tickRate, this.world, this.world.tick)
+        // World sandstorm (v2.87) - sandstorms in desert regions
+        this.worldSandstorm.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature collection (v2.89) - creatures collect and hoard items
+        this.creatureCollection.update(this.tickRate, this.em, this.world.tick)
+        // World rift (v2.90) - dimensional rifts warp terrain
+        this.worldRift.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate

@@ -1,107 +1,85 @@
-// Creature Dream System (v2.51) - Creatures dream during sleep
-// Dreams influence mood, creativity, and can trigger premonitions
-// Nightmare frequency increases during war or famine
+// Creature Dream System (v2.86) - Creatures dream during rest, affecting mood and behavior
+// Dreams can be prophetic, nightmarish, or nostalgic, influencing next-day actions
 
-import { EntityManager, EntityId } from '../ecs/Entity'
+import { EntityManager, PositionComponent, CreatureComponent } from '../ecs/Entity'
 
-export type DreamType = 'peaceful' | 'nightmare' | 'prophetic' | 'nostalgic' | 'adventure' | 'creative'
+export type DreamType = 'prophetic' | 'nightmare' | 'nostalgic' | 'peaceful' | 'adventure' | 'warning'
 
-export interface CreatureDream {
-  entityId: EntityId
+export interface Dream {
+  id: number
+  creatureId: number
   type: DreamType
-  intensity: number     // 0-100
-  startedAt: number
-  moodEffect: number    // -20 to +20
+  intensity: number    // 0-100
+  moodEffect: number   // -20 to +20
+  tick: number
 }
 
-const CHECK_INTERVAL = 800
-const DREAM_INTERVAL = 500
-const MAX_DREAMS = 80
-const DREAM_CHANCE = 0.05
+const CHECK_INTERVAL = 1200
+const DREAM_CHANCE = 0.03
+const MAX_DREAM_LOG = 60
 
-const DREAM_TYPES: DreamType[] = ['peaceful', 'nightmare', 'prophetic', 'nostalgic', 'adventure', 'creative']
-
-const DREAM_MOOD: Record<DreamType, [number, number]> = {
-  peaceful: [5, 15],
-  nightmare: [-20, -5],
-  prophetic: [0, 10],
-  nostalgic: [-5, 10],
-  adventure: [5, 20],
-  creative: [8, 18],
+const DREAM_WEIGHTS: Record<DreamType, { weight: number; moodMin: number; moodMax: number }> = {
+  prophetic: { weight: 0.1, moodMin: 5, moodMax: 15 },
+  nightmare: { weight: 0.2, moodMin: -20, moodMax: -5 },
+  nostalgic: { weight: 0.2, moodMin: -5, moodMax: 10 },
+  peaceful: { weight: 0.25, moodMin: 5, moodMax: 20 },
+  adventure: { weight: 0.15, moodMin: 0, moodMax: 10 },
+  warning: { weight: 0.1, moodMin: -10, moodMax: 0 },
 }
+
+const DREAM_TYPES = Object.keys(DREAM_WEIGHTS) as DreamType[]
 
 export class CreatureDreamSystem {
-  private dreams: CreatureDream[] = []
+  private dreamLog: Dream[] = []
+  private nextId = 1
   private lastCheck = 0
-  private lastDream = 0
-  private totalDreams = 0
-  private nightmareCount = 0
 
   update(dt: number, em: EntityManager, tick: number): void {
-    if (tick - this.lastCheck >= CHECK_INTERVAL) {
-      this.lastCheck = tick
-      this.generateDreams(em, tick)
-    }
-    if (tick - this.lastDream >= DREAM_INTERVAL) {
-      this.lastDream = tick
-      this.processDreams(em, tick)
-    }
+    if (tick - this.lastCheck < CHECK_INTERVAL) return
+    this.lastCheck = tick
+
+    this.generateDreams(em, tick)
+    this.pruneLog()
   }
 
   private generateDreams(em: EntityManager, tick: number): void {
-    if (this.dreams.length >= MAX_DREAMS) return
-    const creatures = em.getEntitiesWithComponents('creature', 'position')
-    for (const id of creatures) {
+    const entities = em.getEntitiesWithComponents('position', 'creature')
+
+    for (const eid of entities) {
       if (Math.random() > DREAM_CHANCE) continue
-      if (this.dreams.some(d => d.entityId === id)) continue
-      const creature = em.getComponent<any>(id, 'creature')
-      if (!creature) continue
 
-      const isStressed = (creature.hunger != null && creature.hunger > 70) || (creature.mood != null && creature.mood < 30)
-      let type: DreamType
-      if (isStressed && Math.random() < 0.4) {
-        type = 'nightmare'
-      } else {
-        type = DREAM_TYPES[Math.floor(Math.random() * DREAM_TYPES.length)]
-      }
+      const type = this.pickDreamType()
+      const config = DREAM_WEIGHTS[type]
+      const moodEffect = config.moodMin + Math.random() * (config.moodMax - config.moodMin)
 
-      const [minMood, maxMood] = DREAM_MOOD[type]
-      const moodEffect = minMood + Math.floor(Math.random() * (maxMood - minMood + 1))
-
-      this.dreams.push({
-        entityId: id,
+      this.dreamLog.push({
+        id: this.nextId++,
+        creatureId: eid,
         type,
-        intensity: 30 + Math.floor(Math.random() * 70),
-        startedAt: tick,
-        moodEffect,
+        intensity: 20 + Math.random() * 80,
+        moodEffect: Math.round(moodEffect),
+        tick,
       })
-      this.totalDreams++
-      if (type === 'nightmare') this.nightmareCount++
-      if (this.dreams.length >= MAX_DREAMS) break
     }
   }
 
-  private processDreams(em: EntityManager, tick: number): void {
-    const expired: number[] = []
-    for (let i = 0; i < this.dreams.length; i++) {
-      const dream = this.dreams[i]
-      if (tick - dream.startedAt > 1500) {
-        expired.push(i)
-        continue
-      }
-      const creature = em.getComponent<any>(dream.entityId, 'creature')
-      if (!creature) { expired.push(i); continue }
-      if (creature.mood != null) {
-        creature.mood = Math.max(0, Math.min(100, creature.mood + dream.moodEffect * 0.05))
-      }
+  private pickDreamType(): DreamType {
+    const r = Math.random()
+    let cumulative = 0
+    for (const type of DREAM_TYPES) {
+      cumulative += DREAM_WEIGHTS[type].weight
+      if (r <= cumulative) return type
     }
-    for (let i = expired.length - 1; i >= 0; i--) {
-      this.dreams.splice(expired[i], 1)
+    return 'peaceful'
+  }
+
+  private pruneLog(): void {
+    if (this.dreamLog.length > MAX_DREAM_LOG) {
+      this.dreamLog.splice(0, this.dreamLog.length - MAX_DREAM_LOG)
     }
   }
 
-  getDreams(): CreatureDream[] { return this.dreams }
-  getActiveDreams(): CreatureDream[] { return this.dreams }
-  getTotalDreams(): number { return this.totalDreams }
-  getNightmareCount(): number { return this.nightmareCount }
+  getDreamLog(): Dream[] { return this.dreamLog }
+  getRecentDreams(count: number): Dream[] { return this.dreamLog.slice(-count) }
+  getNightmareCount(): number { return this.dreamLog.filter(d => d.type === 'nightmare').length }
 }
