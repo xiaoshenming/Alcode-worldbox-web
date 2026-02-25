@@ -1,38 +1,31 @@
-// World Coral Reef System (v3.57) - Coral reefs grow in shallow warm waters
-// Reefs boost marine biodiversity, protect coastlines, and provide resources
+// World Coral Reef System (v3.92) - Underwater coral reef ecosystems
+// Coral reefs form in shallow waters, boosting biodiversity and marine life
 
-import { EntityManager, PositionComponent } from '../ecs/Entity'
 import { World } from '../game/World'
-import { TileType } from '../utils/Constants'
+import { EntityManager } from '../ecs/Entity'
 
-export type CoralHealth = 'thriving' | 'healthy' | 'stressed' | 'bleached' | 'dead'
+export type CoralType = 'brain' | 'staghorn' | 'fan' | 'table' | 'pillar'
 
 export interface CoralReef {
   id: number
   x: number
   y: number
-  health: CoralHealth
+  type: CoralType
+  health: number
+  growth: number
   biodiversity: number
-  size: number
-  growthRate: number
-  resourceYield: number
-  startTick: number
+  tick: number
 }
 
-const CHECK_INTERVAL = 1300
-const GROW_CHANCE = 0.004
-const MAX_REEFS = 12
-const GROWTH_RATE = 0.03
-const STRESS_THRESHOLD = 40
+const CHECK_INTERVAL = 2000
+const SPAWN_CHANCE = 0.004
+const MAX_REEFS = 40
+const GROWTH_RATE = 0.02
 
-const HEALTH_ORDER: CoralHealth[] = ['thriving', 'healthy', 'stressed', 'bleached', 'dead']
+const CORAL_TYPES: CoralType[] = ['brain', 'staghorn', 'fan', 'table', 'pillar']
 
-const BIODIVERSITY_MAP: Record<CoralHealth, number> = {
-  thriving: 90,
-  healthy: 70,
-  stressed: 40,
-  bleached: 15,
-  dead: 0,
+const BIODIVERSITY_BONUS: Record<CoralType, number> = {
+  brain: 15, staghorn: 25, fan: 20, table: 30, pillar: 10,
 }
 
 export class WorldCoralReefSystem {
@@ -44,25 +37,21 @@ export class WorldCoralReefSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const w = world.width
-    const h = world.height
-
-    // Spawn reefs in shallow water
-    if (this.reefs.length < MAX_REEFS && Math.random() < GROW_CHANCE) {
-      const x = Math.floor(Math.random() * w)
-      const y = Math.floor(Math.random() * h)
+    // Spawn new reefs in shallow water
+    if (this.reefs.length < MAX_REEFS && Math.random() < SPAWN_CHANCE) {
+      const x = Math.floor(Math.random() * world.width)
+      const y = Math.floor(Math.random() * world.height)
       const tile = world.getTile(x, y)
 
-      if (tile === TileType.SHALLOW_WATER) {
+      if (tile === 1 || tile === 2) {
+        const type = CORAL_TYPES[Math.floor(Math.random() * CORAL_TYPES.length)]
         this.reefs.push({
           id: this.nextId++,
-          x, y,
-          health: 'healthy',
-          biodiversity: 50 + Math.random() * 30,
-          size: 1 + Math.floor(Math.random() * 3),
-          growthRate: GROWTH_RATE,
-          resourceYield: 10 + Math.random() * 20,
-          startTick: tick,
+          x, y, type,
+          health: 60 + Math.random() * 40,
+          growth: GROWTH_RATE + Math.random() * 0.02,
+          biodiversity: 20 + BIODIVERSITY_BONUS[type],
+          tick,
         })
       }
     }
@@ -71,31 +60,25 @@ export class WorldCoralReefSystem {
     for (let i = this.reefs.length - 1; i >= 0; i--) {
       const r = this.reefs[i]
 
-      r.size = Math.min(8, r.size + r.growthRate)
-      r.biodiversity = Math.min(100, r.biodiversity + 0.02)
-      r.resourceYield = r.biodiversity * 0.4
+      r.growth = Math.min(1, r.growth + GROWTH_RATE * 0.1)
+      r.biodiversity = Math.min(100, r.biodiversity + r.growth * 0.5)
+      r.health += (Math.random() - 0.45) * 3
+      r.health = Math.max(0, Math.min(100, r.health))
 
+      // Check tile still water
       const tile = world.getTile(r.x, r.y)
-      if (tile !== TileType.SHALLOW_WATER && tile !== TileType.DEEP_WATER) {
-        const hIdx = HEALTH_ORDER.indexOf(r.health)
-        if (hIdx < HEALTH_ORDER.length - 1) {
-          r.health = HEALTH_ORDER[hIdx + 1]
-        }
-      } else if (r.biodiversity > STRESS_THRESHOLD) {
-        const hIdx = HEALTH_ORDER.indexOf(r.health)
-        if (hIdx > 0) r.health = HEALTH_ORDER[hIdx - 1]
+      if (tile !== 1 && tile !== 2) {
+        r.health -= 5
       }
 
-      r.biodiversity = BIODIVERSITY_MAP[r.health] * (0.8 + Math.random() * 0.2)
-
-      if (r.health === 'dead' && tick - r.startTick > 30000) {
+      if (r.health <= 0) {
         this.reefs.splice(i, 1)
       }
     }
   }
 
   getReefs(): readonly CoralReef[] { return this.reefs }
-  getReefAt(x: number, y: number, radius: number): CoralReef | undefined {
-    return this.reefs.find(r => Math.abs(r.x - x) <= radius && Math.abs(r.y - y) <= radius)
+  getReefAt(x: number, y: number): CoralReef | undefined {
+    return this.reefs.find(r => Math.abs(r.x - x) <= 2 && Math.abs(r.y - y) <= 2)
   }
 }

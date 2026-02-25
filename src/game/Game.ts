@@ -331,6 +331,8 @@ import { CreatureShapeshiftingSystem } from '../systems/CreatureShapeshiftingSys
 import { WorldWhirlwindSystem } from '../systems/WorldWhirlwindSystem'
 import { CreatureRunecraftingSystem } from '../systems/CreatureRunecraftingSystem'
 import { CreatureAstrologySystem } from '../systems/CreatureAstrologySystem'
+import { CreatureSummoningSystem } from '../systems/CreatureSummoningSystem'
+import { CreatureAlchemySystem } from '../systems/CreatureAlchemySystem'
 
 export class Game {
   private world: World
@@ -664,6 +666,8 @@ export class Game {
   private worldWhirlwind!: WorldWhirlwindSystem
   private creatureRunecrafting!: CreatureRunecraftingSystem
   private creatureAstrology!: CreatureAstrologySystem
+  private creatureSummoning!: CreatureSummoningSystem
+  private creatureAlchemy!: CreatureAlchemySystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -1148,6 +1152,8 @@ export class Game {
     this.worldWhirlwind = new WorldWhirlwindSystem()
     this.creatureRunecrafting = new CreatureRunecraftingSystem()
     this.creatureAstrology = new CreatureAstrologySystem()
+    this.creatureSummoning = new CreatureSummoningSystem()
+    this.creatureAlchemy = new CreatureAlchemySystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2402,7 +2408,7 @@ export class Game {
         // Creature mutation (v2.13) - environmental mutations
         this.creatureMutation.update(this.tickRate, this.em, this.world)
         // Diplomatic marriage (v2.14) - royal marriages
-        this.diplomaticMarriage.update(this.tickRate, this.civManager, this.world.tick)
+        this.diplomaticMarriage.update(this.tickRate, this.em, this.civManager, this.world.tick)
         // World relics (v2.15) - ancient relics with buffs
         this.worldRelic.update(this.tickRate, this.em, this.world)
         // Creature ancestor worship (v2.16) - ancestor spirits buff descendants
@@ -2713,6 +2719,16 @@ export class Game {
         this.creatureAstrology.update(this.tickRate, this.em, this.world.tick)
         // World avalanches (v3.90) - mountain snow avalanches
         this.worldAvalanche.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature summoning (v3.91) - magical creature summoning
+        this.creatureSummoning.update(this.tickRate, this.em, this.world.tick)
+        // World coral reefs (v3.92) - underwater reef ecosystems
+        this.worldCoralReef.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic marriages (v3.93) - political alliances through marriage
+        this.diplomaticMarriage.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // Creature alchemy (v3.94) - potion brewing
+        this.creatureAlchemy.update(this.tickRate, this.em, this.world.tick)
+        // World meteor showers (v3.95) - falling meteors
+        this.worldMeteorShower.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
