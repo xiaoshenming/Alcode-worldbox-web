@@ -77,6 +77,7 @@ import { TerraformingSystem } from '../systems/TerraformingSystem'
 import { StatisticsTracker } from '../systems/StatisticsTracker'
 import { SpatialHashSystem } from '../systems/SpatialHashSystem'
 import { ObjectPoolSystem } from '../systems/ObjectPoolSystem'
+import { MinimapOverlaySystem } from '../systems/MinimapOverlaySystem'
 
 export class Game {
   private world: World
@@ -156,6 +157,7 @@ export class Game {
   private statisticsTracker: StatisticsTracker
   private spatialHash: SpatialHashSystem
   private objectPool: ObjectPoolSystem
+  private minimapOverlay: MinimapOverlaySystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -379,6 +381,7 @@ export class Game {
     this.statisticsTracker = new StatisticsTracker()
     this.spatialHash = new SpatialHashSystem(16)
     this.objectPool = new ObjectPoolSystem()
+    this.minimapOverlay = new MinimapOverlaySystem()
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
     this.setupParticleEventHooks()
@@ -1301,6 +1304,20 @@ export class Game {
     })
     this.renderer.renderBrushOutline(this.camera, this.input.mouseX, this.input.mouseY, this.powers.getBrushSize())
     this.renderer.renderMinimap(this.world, this.camera, this.em, this.civManager)
+
+    // Minimap overlay (political/population/military modes)
+    {
+      const mCtx = this.minimapCanvas.getContext('2d')
+      if (mCtx) {
+        const politicalData = [...this.civManager.civilizations.values()].map(c => ({
+          color: c.color, territory: new Set([...c.territory].map(t => typeof t === 'string' ? parseInt(t, 10) : t as number))
+        }))
+        this.minimapOverlay.render(mCtx, this.minimapCanvas.width, this.minimapCanvas.height, {
+          political: politicalData, population: [], military: [], resources: [],
+          worldWidth: WORLD_WIDTH, worldHeight: WORLD_HEIGHT
+        })
+      }
+    }
 
     // World event overlays and banners
     const ctx = this.canvas.getContext('2d')!
