@@ -71,6 +71,11 @@ import { WeatherDisasterSystem } from '../systems/WeatherDisasterSystem'
 import { FogOfWarRenderer } from '../systems/FogOfWarRenderer'
 import { FortificationRenderer, CityFortification } from '../systems/FortificationRenderer'
 import { EvolutionSystem } from '../systems/EvolutionSystem'
+import { PopulationSystem } from '../systems/PopulationSystem'
+import { AllianceSystem } from '../systems/AllianceSystem'
+import { TerraformingSystem } from '../systems/TerraformingSystem'
+import { StatisticsTracker } from '../systems/StatisticsTracker'
+import { SpatialHashSystem } from '../systems/SpatialHashSystem'
 
 export class Game {
   private world: World
@@ -144,6 +149,11 @@ export class Game {
   private fogOfWar: FogOfWarRenderer
   private fortificationRenderer: FortificationRenderer
   private evolutionSystem: EvolutionSystem
+  private populationSystem: PopulationSystem
+  private allianceSystem: AllianceSystem
+  private terraformingSystem: TerraformingSystem
+  private statisticsTracker: StatisticsTracker
+  private spatialHash: SpatialHashSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -361,6 +371,11 @@ export class Game {
     this.fogOfWar = new FogOfWarRenderer()
     this.fortificationRenderer = new FortificationRenderer()
     this.evolutionSystem = new EvolutionSystem()
+    this.populationSystem = new PopulationSystem()
+    this.allianceSystem = new AllianceSystem()
+    this.terraformingSystem = new TerraformingSystem()
+    this.statisticsTracker = new StatisticsTracker()
+    this.spatialHash = new SpatialHashSystem(16)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
     this.setupParticleEventHooks()
@@ -532,6 +547,11 @@ export class Game {
     this.fogOfWar = new FogOfWarRenderer()
     this.fortificationRenderer = new FortificationRenderer()
     this.evolutionSystem = new EvolutionSystem()
+    this.populationSystem = new PopulationSystem()
+    this.allianceSystem = new AllianceSystem()
+    this.terraformingSystem = new TerraformingSystem()
+    this.statisticsTracker = new StatisticsTracker()
+    this.spatialHash = new SpatialHashSystem(16)
   }
 
   private setupSpeedControls(): void {
@@ -1167,6 +1187,16 @@ export class Game {
         this.fortificationRenderer.update()
         // Evolution system
         this.evolutionSystem.update(this.em, this.world, this.world.tick)
+        // Population dynamics
+        this.populationSystem.update(this.em, this.world, this.civManager, this.particles, this.world.tick)
+        // Alliance & federation
+        this.allianceSystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
+        // Terraforming visual effects
+        this.terraformingSystem.update(this.world, this.particles, this.world.tick)
+        // Statistics tracking
+        this.statisticsTracker.update(this.world.tick, this.civManager, this.em)
+        // Spatial hash rebuild for efficient queries
+        this.spatialHash.rebuild(this.em)
         // Build fortification data from civilizations
         if (this.world.tick % 120 === 0) {
           const forts: CityFortification[] = []
@@ -1301,6 +1331,9 @@ export class Game {
       const bounds = this.camera.getVisibleBounds()
       this.fortificationRenderer.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, bounds.startX, bounds.startY, bounds.endX, bounds.endY)
     }
+
+    // Terraforming visual effects overlay
+    this.terraformingSystem.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
 
     this.worldEventSystem.renderScreenOverlay(ctx, this.canvas.width, this.canvas.height)
     this.worldEventSystem.renderEventBanner(ctx, this.canvas.width)
