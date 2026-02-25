@@ -233,6 +233,11 @@ import { WorldBeaconSystem } from '../systems/WorldBeaconSystem'
 import { WorldTectonicSystem } from '../systems/WorldTectonicSystem'
 import { CreatureMentorSystem } from '../systems/CreatureMentorSystem'
 import { WorldEchoSystem } from '../systems/WorldEchoSystem'
+import { CreatureTraumaSystem } from '../systems/CreatureTraumaSystem'
+import { WorldOasisSystem } from '../systems/WorldOasisSystem'
+import { DiplomaticCeremonySystem } from '../systems/DiplomaticCeremonySystem'
+import { CreatureMigrationMemorySystem } from '../systems/CreatureMigrationMemorySystem'
+import { WorldPetrificationSystem } from '../systems/WorldPetrificationSystem'
 
 export class Game {
   private world: World
@@ -468,6 +473,11 @@ export class Game {
   private worldTectonic!: WorldTectonicSystem
   private creatureMentor!: CreatureMentorSystem
   private worldEcho!: WorldEchoSystem
+  private creatureTrauma!: CreatureTraumaSystem
+  private worldOasis!: WorldOasisSystem
+  private diplomaticCeremony!: DiplomaticCeremonySystem
+  private creatureMigrationMemory!: CreatureMigrationMemorySystem
+  private worldPetrification!: WorldPetrificationSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -854,6 +864,11 @@ export class Game {
     this.worldTectonic = new WorldTectonicSystem()
     this.creatureMentor = new CreatureMentorSystem()
     this.worldEcho = new WorldEchoSystem()
+    this.creatureTrauma = new CreatureTraumaSystem()
+    this.worldOasis = new WorldOasisSystem()
+    this.diplomaticCeremony = new DiplomaticCeremonySystem()
+    this.creatureMigrationMemory = new CreatureMigrationMemorySystem()
+    this.worldPetrification = new WorldPetrificationSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2217,6 +2232,16 @@ export class Game {
         this.creatureMentor.update(this.tickRate, this.em, this.world.tick)
         // World echoes (v2.75) - sound propagation through the world
         this.worldEcho.update(this.tickRate, this.world, this.world.tick)
+        // Creature trauma (v2.76) - psychological trauma from events
+        this.creatureTrauma.update(this.tickRate, this.em, this.world.tick)
+        // World oases (v2.77) - desert oases formation
+        this.worldOasis.update(this.tickRate, this.world, this.world.tick)
+        // Diplomatic ceremonies (v2.78) - formal civilization ceremonies
+        this.diplomaticCeremony.update(this.tickRate, this.civManager, this.world.tick)
+        // Creature migration memory (v2.79) - habitat memory inheritance
+        this.creatureMigrationMemory.update(this.tickRate, this.em, this.world.tick)
+        // World petrification (v2.80) - magical petrification zones
+        this.worldPetrification.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
