@@ -37,6 +37,11 @@ import { QuestSystem } from '../systems/QuestSystem'
 import { BuildingUpgradeSystem } from '../systems/BuildingUpgradeSystem'
 import { EcosystemSystem } from '../systems/EcosystemSystem'
 import { FogOfWarSystem } from '../systems/FogOfWarSystem'
+import { ReligionSystem } from '../systems/ReligionSystem'
+import { AmbientParticleSystem } from '../systems/AmbientParticleSystem'
+import { CityPlanningSystem } from '../systems/CityPlanningSystem'
+import { ArmySystem } from '../systems/ArmySystem'
+import { EraSystem } from '../systems/EraSystem'
 import { TechTreePanel } from '../ui/TechTreePanel'
 
 export class Game {
@@ -78,6 +83,11 @@ export class Game {
   private buildingUpgradeSystem: BuildingUpgradeSystem
   private ecosystemSystem: EcosystemSystem
   private fogOfWarSystem: FogOfWarSystem
+  private religionSystem: ReligionSystem
+  private ambientParticles: AmbientParticleSystem
+  private cityPlanningSystem: CityPlanningSystem
+  private armySystem: ArmySystem
+  private eraSystem: EraSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -123,6 +133,11 @@ export class Game {
     this.buildingUpgradeSystem = new BuildingUpgradeSystem()
     this.ecosystemSystem = new EcosystemSystem()
     this.fogOfWarSystem = new FogOfWarSystem()
+    this.religionSystem = new ReligionSystem()
+    this.ambientParticles = new AmbientParticleSystem()
+    this.cityPlanningSystem = new CityPlanningSystem()
+    this.armySystem = new ArmySystem()
+    this.eraSystem = new EraSystem()
     this.setupAchievementTracking()
     this.setupParticleEventHooks()
     this.setupSoundEventHooks()
@@ -254,6 +269,11 @@ export class Game {
     this.buildingUpgradeSystem = new BuildingUpgradeSystem()
     this.ecosystemSystem = new EcosystemSystem()
     this.fogOfWarSystem = new FogOfWarSystem()
+    this.religionSystem = new ReligionSystem()
+    this.ambientParticles = new AmbientParticleSystem()
+    this.cityPlanningSystem = new CityPlanningSystem()
+    this.armySystem = new ArmySystem()
+    this.eraSystem = new EraSystem()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
     this.combatSystem.setArtifactSystem(this.artifactSystem)
@@ -832,9 +852,13 @@ export class Game {
         this.questSystem.update(this.em, this.world, this.civManager, this.particles, this.world.tick)
         this.ecosystemSystem.update(this.em, this.world, this.civManager, this.particles, this.world.tick)
         this.fogOfWarSystem.update(this.em, this.world, this.civManager, this.particles, this.world.tick)
+        this.religionSystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
+        this.armySystem.update(this.em, this.civManager, this.world, this.particles, this.world.tick)
+        this.eraSystem.update(this.civManager, this.em, this.particles, this.world.tick, this.timeline)
         if (this.world.tick % 60 === 0) {
           this.diplomacySystem.update(this.civManager, this.world, this.em)
           this.buildingUpgradeSystem.update(this.em, this.civManager, this.world.tick)
+          this.cityPlanningSystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
         }
         // Autosave every 30000 ticks (~8 minutes at 60fps)
         if (this.world.tick > 0 && this.world.tick % 30000 === 0) {
@@ -847,6 +871,12 @@ export class Game {
     }
 
     this.renderer.render(this.world, this.camera, this.em, this.civManager, this.particles, this.weather.fogAlpha, this.resources, this.caravanSystem, this.cropSystem)
+    // Ambient particles (viewport-based)
+    const vpX = this.camera.x / TILE_SIZE
+    const vpY = this.camera.y / TILE_SIZE
+    const vpW = window.innerWidth / (TILE_SIZE * this.camera.zoom)
+    const vpH = window.innerHeight / (TILE_SIZE * this.camera.zoom)
+    this.ambientParticles.update(this.world, this.particles, this.world.tick, vpX, vpY, vpW, vpH)
     this.renderer.renderBrushOutline(this.camera, this.input.mouseX, this.input.mouseY, this.powers.getBrushSize())
     this.renderer.renderMinimap(this.world, this.camera, this.em, this.civManager)
 
