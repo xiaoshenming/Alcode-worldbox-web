@@ -7,6 +7,7 @@ import { Toolbar } from '../ui/Toolbar'
 import { InfoPanel } from '../ui/InfoPanel'
 import { EntityManager } from '../ecs/Entity'
 import { AISystem } from '../systems/AISystem'
+import { CombatSystem } from '../systems/CombatSystem'
 import { CreatureFactory } from '../entities/CreatureFactory'
 import { CivManager } from '../civilization/CivManager'
 
@@ -21,6 +22,7 @@ export class Game {
 
   em: EntityManager
   private aiSystem: AISystem
+  private combatSystem: CombatSystem
   creatureFactory: CreatureFactory
   civManager: CivManager
 
@@ -41,9 +43,10 @@ export class Game {
     this.input = new Input(this.canvas, this.camera)
 
     this.em = new EntityManager()
-    this.aiSystem = new AISystem(this.em, this.world)
     this.creatureFactory = new CreatureFactory(this.em)
     this.civManager = new CivManager(this.em, this.world)
+    this.aiSystem = new AISystem(this.em, this.world)
+    this.combatSystem = new CombatSystem(this.em, this.civManager)
 
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager)
     this.toolbar = new Toolbar('toolbar', this.powers)
@@ -110,6 +113,7 @@ export class Game {
       while (this.accumulator >= this.tickRate) {
         this.world.update()
         this.aiSystem.update()
+        this.combatSystem.update()
         this.civManager.update()
         this.accumulator -= this.tickRate
       }
