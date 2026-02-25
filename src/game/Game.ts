@@ -106,6 +106,12 @@ import { GeneticDisplaySystem } from '../systems/GeneticDisplaySystem'
 import { LODRenderSystem } from '../systems/LODRenderSystem'
 import { BuildingVarietySystem } from '../systems/BuildingVarietySystem'
 import { HistoryReplaySystem } from '../systems/HistoryReplaySystem'
+import { SeasonVisualSystem } from '../systems/SeasonVisualSystem'
+import { TradeFleetSystem } from '../systems/TradeFleetSystem'
+import { WorldDashboardSystem } from '../systems/WorldDashboardSystem'
+import { UnifiedParticleSystem } from '../systems/UnifiedParticleSystem'
+import { MapGenSystem } from '../systems/MapGenSystem'
+import { FlockingSystem } from '../systems/FlockingSystem'
 
 export class Game {
   private world: World
@@ -214,6 +220,12 @@ export class Game {
   private lodRender: LODRenderSystem
   private buildingVariety: BuildingVarietySystem
   private historyReplay: HistoryReplaySystem
+  private seasonVisual: SeasonVisualSystem
+  private tradeFleet: TradeFleetSystem
+  private worldDashboard: WorldDashboardSystem
+  private unifiedParticles: UnifiedParticleSystem
+  private mapGen: MapGenSystem
+  private flocking: FlockingSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -466,6 +478,12 @@ export class Game {
     this.lodRender = new LODRenderSystem()
     this.buildingVariety = new BuildingVarietySystem()
     this.historyReplay = new HistoryReplaySystem()
+    this.seasonVisual = new SeasonVisualSystem()
+    this.tradeFleet = new TradeFleetSystem()
+    this.worldDashboard = new WorldDashboardSystem()
+    this.unifiedParticles = new UnifiedParticleSystem()
+    this.mapGen = new MapGenSystem()
+    this.flocking = new FlockingSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -1442,6 +1460,23 @@ export class Game {
             id, name: c.name, pop: c.population, color: c.color
           }))
         )
+        // Flocking - group behavior and coordinated movement
+        this.flocking.update(this.world.tick, this.em)
+        // Season visual effects - particles and overlays
+        this.seasonVisual.update(this.world.tick, this.seasonSystem.getCurrentSeason(), this.seasonSystem.getTransitionProgress(), !this.world.isDay())
+        // Trade fleet - ship movement along routes
+        this.tradeFleet.update(this.world.tick)
+        // Unified particle system - high-performance particle pool
+        this.unifiedParticles.update(this.world.tick)
+        // World dashboard - population sampling
+        if (this.world.tick % 60 === 0) {
+          const pops: Record<string, number> = {}
+          for (const id of this.em.getEntitiesWithComponents('creature')) {
+            const c = this.em.getComponent<CreatureComponent>(id, 'creature')
+            if (c) pops[c.species] = (pops[c.species] ?? 0) + 1
+          }
+          this.worldDashboard.addPopulationSample(this.world.tick, pops)
+        }
         // Tutorial system - check step conditions
         this.tutorial.update()
         // Build fortification data from civilizations
@@ -1710,6 +1745,9 @@ export class Game {
     this.religionSpread.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
     this.religionSpread.renderTemples(ctx, this.camera.x, this.camera.y, this.camera.zoom, this.em)
 
+    // River rendering with flow animation
+    this.mapGen.renderRivers(ctx, this.camera.x, this.camera.y, this.camera.zoom, this.world.tick)
+
     // Naval combat effects
     this.navalCombat.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
 
@@ -1718,6 +1756,19 @@ export class Game {
 
     // History replay timeline (if active)
     this.historyReplay.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Season visual overlay and particles
+    this.seasonVisual.render(ctx, this.canvas.width, this.canvas.height, this.seasonSystem.getCurrentSeason(), this.seasonSystem.getTransitionProgress(), !this.world.isDay())
+    this.seasonVisual.renderSeasonIndicator(ctx, this.canvas.width - 100, 10, this.seasonSystem.getCurrentSeason(), this.seasonSystem.getSeasonProgress())
+
+    // Trade fleet - ships and routes on water
+    this.tradeFleet.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // Unified particle system
+    this.unifiedParticles.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // World dashboard overlay
+    this.worldDashboard.render(ctx, this.canvas.width, this.canvas.height)
 
     // Tutorial overlay (rendered last for top-most visibility)
     if (this.tutorial.isActive()) {
