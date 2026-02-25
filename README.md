@@ -6,8 +6,8 @@
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![Vite](https://img.shields.io/badge/Vite-6.0-646CFF)
-![Lines](https://img.shields.io/badge/代码量-71k_lines-green)
-![Systems](https://img.shields.io/badge/ECS_Systems-322+-orange)
+![Lines](https://img.shields.io/badge/代码量-72k_lines-green)
+![Systems](https://img.shields.io/badge/ECS_Systems-349+-orange)
 
 ## 快速开始
 
@@ -227,7 +227,7 @@ src/
 │   └── SaveSystem.ts    # 存档系统
 ├── ecs/                 # ECS 框架
 │   └── Entity.ts        # 实体管理
-├── systems/             # 游戏系统 (337 个)
+├── systems/             # 游戏系统 (349 个)
 ├── civilization/        # 文明管理
 ├── entities/            # 实体工厂
 ├── ui/                  # UI 组件 (8 个)
@@ -246,14 +246,14 @@ src/
 - 热路径零 GC（对象池复用）
 - 空间索引加速范围查询
 
-### 337 个 ECS 系统（按类别）
+### 349 个 ECS 系统（按类别）
 
 <details>
 <summary>点击展开完整系统列表</summary>
 
 **核心模拟** — AISystem, CombatSystem, PopulationSystem, ResourceSystem, EcosystemSystem, MoodSystem
 
-**生物** — CreatureAgingSystem, CreatureEmotionSystem, CreatureMemorySystem, CreaturePersonalitySystem, CreatureSkillSystem, CreatureTamingSystem, CreatureBountySystem, CreatureMutationSystem, CreatureAncestorSystem, CreatureApprenticeSystem, CreatureGuildSystem, CreatureReputationSystem, CreatureHobbySystem, CreatureLanguageSystem, CreatureTradeSkillSystem, CreatureAllianceSystem, CreatureSuperstitionSystem, CreatureAmbitionSystem, CreatureFashionSystem, CreaturePetSystem, CreatureRitualSystem, CreatureDreamSystem, CreatureRivalrySystem, CreatureMentorSystem, CreatureTraumaSystem, CreatureMigrationMemorySystem, CreatureCollectionSystem, CreatureVisionSystem, CreatureForagingSystem, CreatureOathSystem, CreatureLegacySystem, CreatureDivinationSystem, CreatureBeastMasterSystem, CreatureRumorSystem, CreatureNightWatchSystem, CreatureBeekeepingSystem, CreatureTelepathySystem, CreatureGlassblowingSystem, CreaturePremonitionSystem, CreatureHerbalismSystem, CreatureCartographySystem, CreatureShapeshiftingSystem, CreatureRunecraftingSystem, CreatureAstrologySystem, CreatureSummoningSystem, CreatureAlchemySystem, CreatureEnchantingSystem, CreatureBardSystem, CreatureConstellationSystem, CreatureScribeSystem, CreatureMasonrySystem, CreatureOrigamiSystem, CreatureFalconrySystem, CreatureApiarySystem, CreatureCourierSystem, CreatureMosaicSystem, GeneticsSystem, EvolutionSystem, FlockingSystem, AnimalMigrationSystem
+**生物** — CreatureAgingSystem, CreatureEmotionSystem, CreatureMemorySystem, CreaturePersonalitySystem, CreatureSkillSystem, CreatureTamingSystem, CreatureBountySystem, CreatureMutationSystem, CreatureAncestorSystem, CreatureApprenticeSystem, CreatureGuildSystem, CreatureReputationSystem, CreatureHobbySystem, CreatureLanguageSystem, CreatureTradeSkillSystem, CreatureAllianceSystem, CreatureSuperstitionSystem, CreatureAmbitionSystem, CreatureFashionSystem, CreaturePetSystem, CreatureRitualSystem, CreatureDreamSystem, CreatureRivalrySystem, CreatureMentorSystem, CreatureTraumaSystem, CreatureMigrationMemorySystem, CreatureCollectionSystem, CreatureVisionSystem, CreatureForagingSystem, CreatureOathSystem, CreatureLegacySystem, CreatureDivinationSystem, CreatureBeastMasterSystem, CreatureRumorSystem, CreatureNightWatchSystem, CreatureBeekeepingSystem, CreatureTelepathySystem, CreatureGlassblowingSystem, CreaturePremonitionSystem, CreatureHerbalismSystem, CreatureCartographySystem, CreatureShapeshiftingSystem, CreatureRunecraftingSystem, CreatureAstrologySystem, CreatureSummoningSystem, CreatureAlchemySystem, CreatureEnchantingSystem, CreatureBardSystem, CreatureConstellationSystem, CreatureScribeSystem, CreatureMasonrySystem, CreatureOrigamiSystem, CreatureFalconrySystem, CreatureApiarySystem, CreatureCourierSystem, CreatureMosaicSystem, CreatureTattoistSystem, CreatureHeraldSystem, CreaturePuppeteerSystem, CreatureRangerSystem, CreatureRunnerSystem, CreatureJesterSystem, CreatureNomadSystem, GeneticsSystem, EvolutionSystem, FlockingSystem, AnimalMigrationSystem
 
 **文明** — DiplomacySystem, DiplomaticMarriageSystem, DiplomaticSanctionSystem, DiplomaticEspionageSystem, DiplomaticTributeSystem, DiplomaticPropagandaSystem, DiplomaticCouncilSystem, DiplomaticHostageSystem, DiplomaticExileSystem, DiplomaticMarriageSystem, DiplomaticCeremonySystem, DiplomaticAsylumSystem, DiplomaticEmbargoSystem, DiplomaticSuccessionSystem, DiplomaticTradeAgreementSystem, DiplomaticTradeGuildSystem, DiplomaticNavalBlockadeSystem, CultureSystem, ReligionSystem, ReligionSpreadSystem, TechSystem, TradeEconomySystem, EraSystem, EraTransitionSystem, AllianceSystem, EspionageSystem, LoyaltySystem, ReputationSystem, SeasonFestivalSystem
 
@@ -261,7 +261,7 @@ src/
 
 **经济 & 资源** — ResourceScarcitySystem, ResourceFlowSystem, CaravanSystem, TradeFleetSystem, TradeRouteRenderer, MiningSystem, CropSystem
 
-**自然 & 灾害** — DisasterSystem, DisasterChainSystem, DisasterWarningSystem, WeatherSystem, WeatherDisasterSystem, WeatherControlSystem, WorldWeatherFrontSystem, WorldTidalSystem, WorldMagicStormSystem, WorldFertilitySystem, WorldErosionSystem, WorldCrystalFormationSystem, WorldMigrationRouteSystem, WorldVolcanicSystem, WorldAcousticSystem, WorldTectonicSystem, WorldEchoSystem, WorldOasisSystem, WorldPetrificationSystem, WorldSandstormSystem, WorldRiftSystem, WorldAvalancheSystem, WorldWhirlpoolSystem, WorldAuroraStormSystem, WorldMemorialSystem, WorldTidePoolSystem, WorldMeteorShowerSystem, WorldGlacierSystem, WorldPurificationSystem, WorldVolcanicIslandSystem, WorldUndergroundRiverSystem, WorldFloatingIslandSystem, WorldWhirlwindSystem, WorldGeothermalSystem, WorldCoralReefSystem, WorldGeyserFieldSystem, WorldNorthernLightsSystem, WorldMossGrowthSystem, WorldIrrigationSystem, WorldLighthouseSystem, WorldTidewaterSystem, WorldLabyrinthSystem, WorldTerracingSystem, WorldSundialSystem, SeasonSystem, WorldSeasonalDisasterSystem, VolcanoSystem, BloodMoonSystem, PollutionSystem, DiseaseSystem, PlagueMutationSystem, RiverSystem, BiomeEvolutionSystem
+**自然 & 灾害** — DisasterSystem, DisasterChainSystem, DisasterWarningSystem, WeatherSystem, WeatherDisasterSystem, WeatherControlSystem, WorldWeatherFrontSystem, WorldTidalSystem, WorldMagicStormSystem, WorldFertilitySystem, WorldErosionSystem, WorldCrystalFormationSystem, WorldMigrationRouteSystem, WorldVolcanicSystem, WorldAcousticSystem, WorldTectonicSystem, WorldEchoSystem, WorldOasisSystem, WorldPetrificationSystem, WorldSandstormSystem, WorldRiftSystem, WorldAvalancheSystem, WorldWhirlpoolSystem, WorldAuroraStormSystem, WorldMemorialSystem, WorldTidePoolSystem, WorldMeteorShowerSystem, WorldGlacierSystem, WorldPurificationSystem, WorldVolcanicIslandSystem, WorldUndergroundRiverSystem, WorldFloatingIslandSystem, WorldWhirlwindSystem, WorldGeothermalSystem, WorldCoralReefSystem, WorldGeyserFieldSystem, WorldNorthernLightsSystem, WorldMossGrowthSystem, WorldIrrigationSystem, WorldLighthouseSystem, WorldTidewaterSystem, WorldLabyrinthSystem, WorldTerracingSystem, WorldSundialSystem, WorldAqueductSystem, WorldGeoglyphSystem, WorldHotSpringSystem, WorldObsidianSystem, WorldCoralReefGrowthSystem, WorldMirageSystem, WorldPetrifiedForestSystem, WorldBioluminescenceSystem, SeasonSystem, WorldSeasonalDisasterSystem, VolcanoSystem, BloodMoonSystem, PollutionSystem, DiseaseSystem, PlagueMutationSystem, RiverSystem, BiomeEvolutionSystem
 
 **建筑 & 城市** — BuildingUpgradeSystem, BuildingVarietySystem, CityLayoutSystem, CityPlanningSystem, MonumentSystem, WonderSystem, RuinsSystem
 
