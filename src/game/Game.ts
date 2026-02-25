@@ -185,6 +185,11 @@ import { WorldAnomalySystem } from '../systems/WorldAnomalySystem'
 import { CreatureApprenticeSystem } from '../systems/CreatureApprenticeSystem'
 import { DiplomaticSanctionSystem } from '../systems/DiplomaticSanctionSystem'
 import { WorldMythicBeastSystem } from '../systems/WorldMythicBeastSystem'
+import { CreatureGuildSystem } from '../systems/CreatureGuildSystem'
+import { WorldSeasonalDisasterSystem } from '../systems/WorldSeasonalDisasterSystem'
+import { CreatureReputationSystem } from '../systems/CreatureReputationSystem'
+import { DiplomaticEspionageSystem } from '../systems/DiplomaticEspionageSystem'
+import { WorldAncientRuinSystem } from '../systems/WorldAncientRuinSystem'
 
 export class Game {
   private world: World
@@ -372,6 +377,11 @@ export class Game {
   private creatureApprentice!: CreatureApprenticeSystem
   private diplomaticSanction!: DiplomaticSanctionSystem
   private worldMythicBeast!: WorldMythicBeastSystem
+  private creatureGuild!: CreatureGuildSystem
+  private worldSeasonalDisaster!: WorldSeasonalDisasterSystem
+  private creatureReputation!: CreatureReputationSystem
+  private diplomaticEspionage!: DiplomaticEspionageSystem
+  private worldAncientRuin!: WorldAncientRuinSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -703,6 +713,11 @@ export class Game {
     this.creatureApprentice = new CreatureApprenticeSystem()
     this.diplomaticSanction = new DiplomaticSanctionSystem()
     this.worldMythicBeast = new WorldMythicBeastSystem()
+    this.creatureGuild = new CreatureGuildSystem()
+    this.worldSeasonalDisaster = new WorldSeasonalDisasterSystem()
+    this.creatureReputation = new CreatureReputationSystem()
+    this.diplomaticEspionage = new DiplomaticEspionageSystem()
+    this.worldAncientRuin = new WorldAncientRuinSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -1970,6 +1985,16 @@ export class Game {
         this.diplomaticSanction.update(this.tickRate, this.civManager, this.world.tick)
         // World mythic beasts (v2.20) - legendary creatures roam the world
         this.worldMythicBeast.update(this.tickRate, this.em, this.world)
+        // Creature guilds (v2.21) - profession-based guilds
+        this.creatureGuild.update(this.tickRate, this.em, this.world.tick)
+        // World seasonal disasters (v2.22) - season-specific disasters
+        this.worldSeasonalDisaster.update(this.tickRate, this.em, this.world)
+        // Creature reputation (v2.23) - individual reputation tracking
+        this.creatureReputation.update(this.tickRate, this.em, this.world.tick)
+        // Diplomatic espionage (v2.24) - spy missions between civs
+        this.diplomaticEspionage.update(this.tickRate, this.em, [...this.civManager.civilizations.values()] as any, this.world.tick)
+        // World ancient ruins (v2.25) - explorable ruins
+        this.worldAncientRuin.update(this.tickRate, this.em, this.world)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
@@ -2441,6 +2466,21 @@ export class Game {
 
     // World mythic beasts (v2.20)
     this.worldMythicBeast.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // Creature guilds (v2.21)
+    this.creatureGuild.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // World seasonal disasters (v2.22)
+    this.worldSeasonalDisaster.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // Creature reputation (v2.23)
+    this.creatureReputation.render(ctx, this.em, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // Diplomatic espionage (v2.24)
+    this.diplomaticEspionage.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // World ancient ruins (v2.25)
+    this.worldAncientRuin.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
 
     // Screenshot mode toast (v1.66)
     this.screenshotMode.update()
