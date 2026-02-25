@@ -100,6 +100,7 @@ export class Game {
 
     // Reset civilization manager
     this.civManager = new CivManager(this.em, this.world)
+    this.aiSystem = new AISystem(this.em, this.world, this.particles, this.creatureFactory)
     this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles, this.audio)
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
