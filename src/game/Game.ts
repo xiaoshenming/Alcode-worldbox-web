@@ -43,6 +43,11 @@ import { CityPlanningSystem } from '../systems/CityPlanningSystem'
 import { ArmySystem } from '../systems/ArmySystem'
 import { EraSystem } from '../systems/EraSystem'
 import { TechTreePanel } from '../ui/TechTreePanel'
+import { TradeEconomySystem } from '../systems/TradeEconomySystem'
+import { HeroLegendSystem } from '../systems/HeroLegendSystem'
+import { WonderSystem } from '../systems/WonderSystem'
+import { ToastSystem } from '../ui/ToastSystem'
+import { TickBudgetSystem } from '../systems/TickBudgetSystem'
 
 export class Game {
   private world: World
@@ -88,6 +93,11 @@ export class Game {
   private cityPlanningSystem: CityPlanningSystem
   private armySystem: ArmySystem
   private eraSystem: EraSystem
+  private tradeEconomySystem: TradeEconomySystem
+  private heroLegendSystem: HeroLegendSystem
+  private wonderSystem: WonderSystem
+  private toastSystem: ToastSystem
+  private tickBudget: TickBudgetSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -138,6 +148,12 @@ export class Game {
     this.cityPlanningSystem = new CityPlanningSystem()
     this.armySystem = new ArmySystem()
     this.eraSystem = new EraSystem()
+    this.tradeEconomySystem = new TradeEconomySystem()
+    this.heroLegendSystem = new HeroLegendSystem()
+    this.wonderSystem = new WonderSystem()
+    this.toastSystem = new ToastSystem()
+    this.tickBudget = new TickBudgetSystem()
+    this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
     this.setupParticleEventHooks()
     this.setupSoundEventHooks()
@@ -274,6 +290,9 @@ export class Game {
     this.cityPlanningSystem = new CityPlanningSystem()
     this.armySystem = new ArmySystem()
     this.eraSystem = new EraSystem()
+    this.tradeEconomySystem = new TradeEconomySystem()
+    this.heroLegendSystem = new HeroLegendSystem()
+    this.wonderSystem = new WonderSystem()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
     this.combatSystem.setArtifactSystem(this.artifactSystem)
@@ -855,6 +874,9 @@ export class Game {
         this.religionSystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
         this.armySystem.update(this.em, this.civManager, this.world, this.particles, this.world.tick)
         this.eraSystem.update(this.civManager, this.em, this.particles, this.world.tick, this.timeline)
+        this.heroLegendSystem.update(this.em, this.civManager, this.world, this.particles, this.world.tick)
+        this.wonderSystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
+        this.tradeEconomySystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
         if (this.world.tick % 60 === 0) {
           this.diplomacySystem.update(this.civManager, this.world, this.em)
           this.buildingUpgradeSystem.update(this.em, this.civManager, this.world.tick)
@@ -885,6 +907,10 @@ export class Game {
     this.worldEventSystem.renderScreenOverlay(ctx, this.canvas.width, this.canvas.height)
     this.worldEventSystem.renderEventBanner(ctx, this.canvas.width)
     this.worldEventSystem.renderActiveIndicators(ctx, this.canvas.width)
+
+    // Toast notifications
+    this.toastSystem.update()
+    this.toastSystem.render(ctx, this.canvas.width)
 
     if (this.world.tick % 30 === 0) {
       this.infoPanel.update(this.fps)
