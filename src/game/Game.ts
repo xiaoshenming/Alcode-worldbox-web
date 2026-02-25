@@ -60,6 +60,7 @@ import { MiningSystem } from '../systems/MiningSystem'
 import { DisasterChainSystem } from '../systems/DisasterChainSystem'
 import { SeasonSystem } from '../systems/SeasonSystem'
 import { AnimalMigrationSystem } from '../systems/AnimalMigrationSystem'
+import { VolcanoSystem } from '../systems/VolcanoSystem'
 
 export class Game {
   private world: World
@@ -122,6 +123,7 @@ export class Game {
   private disasterChainSystem: DisasterChainSystem
   private seasonSystem: SeasonSystem
   private animalMigration: AnimalMigrationSystem
+  private volcanoSystem: VolcanoSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -325,6 +327,8 @@ export class Game {
     })
     this.seasonSystem = new SeasonSystem()
     this.animalMigration = new AnimalMigrationSystem()
+    this.volcanoSystem = new VolcanoSystem()
+    this.volcanoSystem.autoPlaceVolcanoes(this.world)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
     this.setupParticleEventHooks()
@@ -1093,6 +1097,7 @@ export class Game {
         this.disasterChainSystem.update(this.world.tick)
         this.seasonSystem.update(this.world.tick)
         this.animalMigration.update(this.world.tick, this.em, this.world, this.seasonSystem.getCurrentSeason())
+        this.volcanoSystem.update(this.world.tick, this.world, this.particles)
         // World Chronicle - build narrative history from world state
         {
           const civs = [...this.civManager.civilizations.values()].map(c => ({
