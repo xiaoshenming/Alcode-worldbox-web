@@ -647,6 +647,14 @@ import { WorldSinkhole2System } from '../systems/WorldSinkhole2System'
 import { DiplomaticPardonSystem } from '../systems/DiplomaticPardonSystem'
 import { CreatureDyeingMakersSystem } from '../systems/CreatureDyeingMakersSystem'
 import { DiplomaticArbitration2System } from '../systems/DiplomaticArbitration2System'
+import { CreatureKnittingMakersSystem } from '../systems/CreatureKnittingMakersSystem'
+import { CreatureFeltingMakers2System } from '../systems/CreatureFeltingMakersSystem2'
+import { WorldFumaroleSystem } from '../systems/WorldFumaroleSystem'
+import { CreatureSpinningMakersSystem } from '../systems/CreatureSpinningMakersSystem'
+import { CreatureLoomMakersSystem } from '../systems/CreatureLoomMakersSystem'
+import { WorldHotSpring2System } from '../systems/WorldHotSpringSystem2'
+import { WorldSolfataraSystem } from '../systems/WorldSolfataraSystem'
+import { DiplomaticIntercessionSystem } from '../systems/DiplomaticIntercessionSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1295,6 +1303,14 @@ export class Game {
   private diplomaticPardon!: DiplomaticPardonSystem
   private creatureDyeingMakers!: CreatureDyeingMakersSystem
   private diplomaticArbitration2!: DiplomaticArbitration2System
+  private creatureKnittingMakers!: CreatureKnittingMakersSystem
+  private creatureFeltingMakers2!: CreatureFeltingMakers2System
+  private worldFumarole!: WorldFumaroleSystem
+  private creatureSpinningMakers!: CreatureSpinningMakersSystem
+  private creatureLoomMakers!: CreatureLoomMakersSystem
+  private worldHotSpring2!: WorldHotSpring2System
+  private worldSolfatara!: WorldSolfataraSystem
+  private diplomaticIntercession!: DiplomaticIntercessionSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -2094,6 +2110,14 @@ export class Game {
     this.diplomaticPardon = new DiplomaticPardonSystem()
     this.creatureDyeingMakers = new CreatureDyeingMakersSystem()
     this.diplomaticArbitration2 = new DiplomaticArbitration2System()
+    this.creatureKnittingMakers = new CreatureKnittingMakersSystem()
+    this.creatureFeltingMakers2 = new CreatureFeltingMakers2System()
+    this.worldFumarole = new WorldFumaroleSystem()
+    this.creatureSpinningMakers = new CreatureSpinningMakersSystem()
+    this.creatureLoomMakers = new CreatureLoomMakersSystem()
+    this.worldHotSpring2 = new WorldHotSpring2System()
+    this.worldSolfatara = new WorldSolfataraSystem()
+    this.diplomaticIntercession = new DiplomaticIntercessionSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -4301,6 +4325,22 @@ export class Game {
         this.creatureDyeingMakers.update(this.tickRate, this.em, this.world.tick)
         // Diplomatic arbitration (v3.445) - arbitration diplomacy
         this.diplomaticArbitration2.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature knitting makers (v3.446) - knitting artisans
+        this.creatureKnittingMakers.update(this.tickRate, this.em, this.world.tick)
+        // Creature felting makers 2 (v3.449) - advanced felting artisans
+        this.creatureFeltingMakers2.update(this.tickRate, this.em, this.world.tick)
+        // World fumaroles (v3.450) - volcanic fumarole formations
+        this.worldFumarole.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature spinning makers (v3.452) - spinning artisans
+        this.creatureSpinningMakers.update(this.tickRate, this.em, this.world.tick)
+        // Creature loom makers (v3.455) - loom-weaving artisans
+        this.creatureLoomMakers.update(this.tickRate, this.em, this.world.tick)
+        // World hot springs 2 (v3.456) - hot spring formations
+        this.worldHotSpring2.update(this.tickRate, this.world, this.em, this.world.tick)
+        // World solfataras (v3.459) - solfatara volcanic formations
+        this.worldSolfatara.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic intercession (v3.460) - intercession diplomacy
+        this.diplomaticIntercession.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate

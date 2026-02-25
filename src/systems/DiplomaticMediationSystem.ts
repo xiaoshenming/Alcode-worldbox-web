@@ -1,32 +1,30 @@
-// Diplomatic Mediation System (v3.340) - Mediation agreements
-// Neutral third-party facilitation to resolve conflicts peacefully
+// Diplomatic Mediation System (v3.448) - Mediation diplomacy
+// Third-party civilizations mediating disputes between conflicting parties
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type MediationMethod = 'facilitative' | 'evaluative' | 'transformative' | 'narrative'
+export type MediationOutcome = 'pending' | 'agreement' | 'breakdown' | 'partial'
 
-export interface MediationCase {
+export interface MediationProcess {
   id: number
-  civIdA: number
-  civIdB: number
-  method: MediationMethod
-  neutrality: number
+  mediatorCivId: number
+  disputantA: number
+  disputantB: number
+  outcome: MediationOutcome
+  trustLevel: number
   progressRate: number
-  satisfactionA: number
-  satisfactionB: number
+  fairnessScore: number
   duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2340
-const TREATY_CHANCE = 0.0027
-const MAX_CASES = 20
-
-const METHODS: MediationMethod[] = ['facilitative', 'evaluative', 'transformative', 'narrative']
+const CHECK_INTERVAL = 2540
+const INITIATE_CHANCE = 0.0021
+const MAX_MEDIATIONS = 18
 
 export class DiplomaticMediationSystem {
-  private cases: MediationCase[] = []
+  private mediations: MediationProcess[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -34,40 +32,35 @@ export class DiplomaticMediationSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    if (this.cases.length < MAX_CASES && Math.random() < TREATY_CHANCE) {
-      const civA = 1 + Math.floor(Math.random() * 8)
-      const civB = 1 + Math.floor(Math.random() * 8)
-      if (civA === civB) return
+    if (this.mediations.length < MAX_MEDIATIONS && Math.random() < INITIATE_CHANCE) {
+      const a = 1 + Math.floor(Math.random() * 8)
+      const b = 1 + Math.floor(Math.random() * 8)
+      const mediator = 1 + Math.floor(Math.random() * 8)
+      if (a === b || a === mediator || b === mediator) return
 
-      const method = METHODS[Math.floor(Math.random() * METHODS.length)]
-
-      this.cases.push({
+      this.mediations.push({
         id: this.nextId++,
-        civIdA: civA,
-        civIdB: civB,
-        method,
-        neutrality: 40 + Math.random() * 35,
-        progressRate: 5 + Math.random() * 20,
-        satisfactionA: 25 + Math.random() * 35,
-        satisfactionB: 25 + Math.random() * 35,
+        mediatorCivId: mediator,
+        disputantA: a,
+        disputantB: b,
+        outcome: 'pending',
+        trustLevel: 20 + Math.random() * 30,
+        progressRate: 0.5 + Math.random() * 0.5,
+        fairnessScore: 30 + Math.random() * 40,
         duration: 0,
         tick,
       })
     }
 
-    for (const c of this.cases) {
-      c.duration += 1
-      c.neutrality = Math.max(20, Math.min(95, c.neutrality + (Math.random() - 0.48) * 0.11))
-      c.progressRate = Math.max(2, Math.min(60, c.progressRate + (Math.random() - 0.45) * 0.12))
-      c.satisfactionA = Math.max(10, Math.min(90, c.satisfactionA + (Math.random() - 0.47) * 0.13))
-      c.satisfactionB = Math.max(10, Math.min(90, c.satisfactionB + (Math.random() - 0.47) * 0.13))
+    for (const m of this.mediations) {
+      m.duration++
+      m.trustLevel = Math.min(100, m.trustLevel + 0.02 * m.progressRate)
+      if (m.trustLevel > 75 && Math.random() < 0.03) m.outcome = 'agreement'
+      if (m.trustLevel < 15 && Math.random() < 0.05) m.outcome = 'breakdown'
     }
 
-    const cutoff = tick - 81000
-    for (let i = this.cases.length - 1; i >= 0; i--) {
-      if (this.cases[i].tick < cutoff) this.cases.splice(i, 1)
-    }
+    this.mediations = this.mediations.filter(m => m.outcome === 'pending' || m.duration < 50)
   }
 
-  getCases(): MediationCase[] { return this.cases }
+  getMediations(): MediationProcess[] { return this.mediations }
 }

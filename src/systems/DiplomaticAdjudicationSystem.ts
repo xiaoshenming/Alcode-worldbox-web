@@ -1,31 +1,30 @@
-// Diplomatic Adjudication System (v3.235) - Formal dispute resolution by neutral judges
-// Civilizations submit disputes to impartial adjudicators for binding rulings
+// Diplomatic Adjudication System (v3.454) - Adjudication diplomacy
+// Formal legal proceedings to resolve inter-civilization disputes
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type DisputeType = 'border' | 'trade' | 'resource' | 'succession'
+export type AdjudicationVerdict = 'pending' | 'favor_a' | 'favor_b' | 'split' | 'dismissed'
 
-export interface Adjudication {
+export interface AdjudicationCase {
   id: number
   plaintiffCivId: number
   defendantCivId: number
-  disputeType: DisputeType
-  adjudicatorCivId: number
-  evidence: number
-  ruling: 'plaintiff' | 'defendant' | 'compromise'
-  compliance: number
+  verdict: AdjudicationVerdict
+  evidenceStrength: number
+  legalPrecedent: number
+  publicOpinion: number
+  hearingProgress: number
+  duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2300
-const ADJUDICATE_CHANCE = 0.003
-const MAX_ADJUDICATIONS = 26
-
-const DISPUTE_TYPES: DisputeType[] = ['border', 'trade', 'resource', 'succession']
+const CHECK_INTERVAL = 2580
+const FILE_CHANCE = 0.0019
+const MAX_CASES = 16
 
 export class DiplomaticAdjudicationSystem {
-  private adjudications: Adjudication[] = []
+  private cases: AdjudicationCase[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -33,44 +32,40 @@ export class DiplomaticAdjudicationSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    if (this.adjudications.length < MAX_ADJUDICATIONS && Math.random() < ADJUDICATE_CHANCE) {
-      const plaintiffCivId = 1 + Math.floor(Math.random() * 8)
-      const defendantCivId = 1 + Math.floor(Math.random() * 8)
-      if (plaintiffCivId === defendantCivId) return
+    if (this.cases.length < MAX_CASES && Math.random() < FILE_CHANCE) {
+      const a = 1 + Math.floor(Math.random() * 8)
+      const b = 1 + Math.floor(Math.random() * 8)
+      if (a === b) return
 
-      let adjudicatorCivId = 1 + Math.floor(Math.random() * 8)
-      while (adjudicatorCivId === plaintiffCivId || adjudicatorCivId === defendantCivId) {
-        adjudicatorCivId = 1 + Math.floor(Math.random() * 8)
-      }
-
-      const disputeType = DISPUTE_TYPES[Math.floor(Math.random() * DISPUTE_TYPES.length)]
-      const evidence = 20 + Math.random() * 70
-      const roll = Math.random()
-      const ruling = roll < 0.35 ? 'plaintiff' as const : roll < 0.7 ? 'defendant' as const : 'compromise' as const
-
-      this.adjudications.push({
+      this.cases.push({
         id: this.nextId++,
-        plaintiffCivId,
-        defendantCivId,
-        disputeType,
-        adjudicatorCivId,
-        evidence,
-        ruling,
-        compliance: 40 + Math.random() * 50,
+        plaintiffCivId: a,
+        defendantCivId: b,
+        verdict: 'pending',
+        evidenceStrength: 10 + Math.random() * 40,
+        legalPrecedent: 5 + Math.random() * 30,
+        publicOpinion: 30 + Math.random() * 40,
+        hearingProgress: 0,
+        duration: 0,
         tick,
       })
     }
 
-    const cutoff = tick - 54000
-    for (let i = this.adjudications.length - 1; i >= 0; i--) {
-      if (this.adjudications[i].tick < cutoff) {
-        this.adjudications.splice(i, 1)
+    for (const c of this.cases) {
+      c.duration++
+      c.hearingProgress = Math.min(100, c.hearingProgress + 0.5)
+      c.evidenceStrength = Math.min(100, c.evidenceStrength + 0.02)
+      if (c.hearingProgress > 80 && c.verdict === 'pending') {
+        const roll = Math.random()
+        if (roll < 0.3) c.verdict = 'favor_a'
+        else if (roll < 0.6) c.verdict = 'favor_b'
+        else if (roll < 0.85) c.verdict = 'split'
+        else c.verdict = 'dismissed'
       }
     }
+
+    this.cases = this.cases.filter(c => c.verdict === 'pending' || c.duration < 80)
   }
 
-  getAdjudications(): readonly Adjudication[] { return this.adjudications }
-  getByDispute(type: DisputeType): Adjudication[] {
-    return this.adjudications.filter(a => a.disputeType === type)
-  }
+  getCases(): AdjudicationCase[] { return this.cases }
 }

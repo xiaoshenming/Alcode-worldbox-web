@@ -1,32 +1,30 @@
-// Diplomatic Reconciliation System (v3.427) - Reconciliation diplomacy
-// Formal processes of restoring friendly relations after deep conflicts
+// Diplomatic Reconciliation 2 System (v3.457) - Advanced reconciliation diplomacy
+// Deep reconciliation processes addressing historical grievances between civilizations
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type Reconciliation2Form = 'truth_commission' | 'joint_memorial' | 'cultural_exchange' | 'shared_governance'
+export type ReconciliationStage = 'acknowledgment' | 'dialogue' | 'healing' | 'renewed'
 
-export interface Reconciliation2Process {
+export interface ReconciliationProcess2 {
   id: number
   civIdA: number
   civIdB: number
-  form: Reconciliation2Form
-  healingProgress: number
-  mutualTrust: number
-  publicEngagement: number
-  institutionalBacking: number
+  stage: ReconciliationStage
+  grievanceResolved: number
+  mutualRespect: number
+  culturalExchange: number
+  publicSupport: number
   duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2530
-const PROCEED_CHANCE = 0.0022
-const MAX_PROCESSES = 20
-
-const FORMS: Reconciliation2Form[] = ['truth_commission', 'joint_memorial', 'cultural_exchange', 'shared_governance']
+const CHECK_INTERVAL = 2600
+const INITIATE_CHANCE = 0.0018
+const MAX_PROCESSES = 14
 
 export class DiplomaticReconciliation2System {
-  private processes: Reconciliation2Process[] = []
+  private processes: ReconciliationProcess2[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -34,40 +32,39 @@ export class DiplomaticReconciliation2System {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    if (this.processes.length < MAX_PROCESSES && Math.random() < PROCEED_CHANCE) {
-      const civA = 1 + Math.floor(Math.random() * 8)
-      const civB = 1 + Math.floor(Math.random() * 8)
-      if (civA === civB) return
-
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+    if (this.processes.length < MAX_PROCESSES && Math.random() < INITIATE_CHANCE) {
+      const a = 1 + Math.floor(Math.random() * 8)
+      const b = 1 + Math.floor(Math.random() * 8)
+      if (a === b) return
 
       this.processes.push({
         id: this.nextId++,
-        civIdA: civA,
-        civIdB: civB,
-        form,
-        healingProgress: 15 + Math.random() * 30,
-        mutualTrust: 10 + Math.random() * 25,
-        publicEngagement: 20 + Math.random() * 35,
-        institutionalBacking: 15 + Math.random() * 25,
+        civIdA: a,
+        civIdB: b,
+        stage: 'acknowledgment',
+        grievanceResolved: 0,
+        mutualRespect: 10 + Math.random() * 20,
+        culturalExchange: 5 + Math.random() * 15,
+        publicSupport: 20 + Math.random() * 30,
         duration: 0,
         tick,
       })
     }
 
     for (const p of this.processes) {
-      p.duration += 1
-      p.healingProgress = Math.max(5, Math.min(90, p.healingProgress + (Math.random() - 0.45) * 0.12))
-      p.mutualTrust = Math.max(5, Math.min(80, p.mutualTrust + (Math.random() - 0.47) * 0.11))
-      p.publicEngagement = Math.max(10, Math.min(85, p.publicEngagement + (Math.random() - 0.46) * 0.10))
-      p.institutionalBacking = Math.max(5, Math.min(70, p.institutionalBacking + (Math.random() - 0.48) * 0.09))
+      p.duration++
+      p.mutualRespect = Math.min(100, p.mutualRespect + 0.03)
+      p.culturalExchange = Math.min(100, p.culturalExchange + 0.02)
+      if (p.stage === 'acknowledgment' && p.mutualRespect > 35) p.stage = 'dialogue'
+      if (p.stage === 'dialogue' && p.culturalExchange > 40) p.stage = 'healing'
+      if (p.stage === 'healing' && p.mutualRespect > 70) {
+        p.stage = 'renewed'
+        p.grievanceResolved++
+      }
     }
 
-    const cutoff = tick - 90000
-    for (let i = this.processes.length - 1; i >= 0; i--) {
-      if (this.processes[i].tick < cutoff) this.processes.splice(i, 1)
-    }
+    this.processes = this.processes.filter(p => p.stage !== 'renewed' || p.duration < 100)
   }
 
-  getProcesses(): Reconciliation2Process[] { return this.processes }
+  getProcesses(): ReconciliationProcess2[] { return this.processes }
 }
