@@ -93,10 +93,11 @@ export class AnimalMigrationSystem {
 
     // Find animal clusters (non-civilized creatures)
     const animals: { id: number; x: number; y: number; species: string }[] = []
-    for (const [id, pos] of em.getComponents<PositionComponent>('position')) {
+    for (const id of em.getEntitiesWithComponent('position')) {
+      const pos = em.getComponent<PositionComponent>(id, 'position')!
       const creature = em.getComponent<CreatureComponent>(id, 'creature')
-      if (!creature || creature.civId !== undefined) continue
-      animals.push({ id, x: pos.x, y: pos.y, species: creature.type })
+      if (!creature || creature.isHostile === undefined) continue
+      animals.push({ id, x: pos.x, y: pos.y, species: creature.species })
     }
 
     // Group nearby animals of same species into flocks
