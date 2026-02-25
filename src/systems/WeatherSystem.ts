@@ -90,7 +90,7 @@ export class WeatherSystem {
       for (let i = 0; i < count; i++) {
         const x = Math.random() * WORLD_WIDTH
         const y = Math.random() * WORLD_HEIGHT
-        this.particles.particles.push({
+        this.particles.addParticle({
           x, y: y - 10,
           vx: this.windX * 2,
           vy: 3 + Math.random() * 2,
@@ -122,7 +122,7 @@ export class WeatherSystem {
       for (let i = 0; i < count; i++) {
         const x = Math.random() * WORLD_WIDTH
         const y = Math.random() * WORLD_HEIGHT
-        this.particles.particles.push({
+        this.particles.addParticle({
           x, y: y - 8,
           vx: this.windX + (Math.random() - 0.5) * 0.5,
           vy: 0.5 + Math.random() * 0.8,

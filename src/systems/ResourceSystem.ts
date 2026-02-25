@@ -29,8 +29,11 @@ const RESOURCE_SYMBOLS: Record<ResourceType, string> = {
   gold_ore: '★'
 }
 
+const GRID_CELL_SIZE = 10
+
 export class ResourceSystem {
   nodes: ResourceNode[] = []
+  private grid: Map<string, ResourceNode[]> = new Map()
   private world: World
   private em: EntityManager
   private civManager: CivManager
@@ -44,10 +47,58 @@ export class ResourceSystem {
     this.particles = particles
   }
 
+  private gridKey(x: number, y: number): string {
+    return `${Math.floor(x / GRID_CELL_SIZE)},${Math.floor(y / GRID_CELL_SIZE)}`
+  }
+
+  private addToGrid(node: ResourceNode): void {
+    const key = this.gridKey(node.x, node.y)
+    let cell = this.grid.get(key)
+    if (!cell) {
+      cell = []
+      this.grid.set(key, cell)
+    }
+    cell.push(node)
+  }
+
+  private removeFromGrid(node: ResourceNode): void {
+    const key = this.gridKey(node.x, node.y)
+    const cell = this.grid.get(key)
+    if (!cell) return
+    const idx = cell.indexOf(node)
+    if (idx !== -1) cell.splice(idx, 1)
+    if (cell.length === 0) this.grid.delete(key)
+  }
+
+  getNodesNear(x: number, y: number, range: number): ResourceNode[] {
+    const result: ResourceNode[] = []
+    const minCx = Math.floor((x - range) / GRID_CELL_SIZE)
+    const maxCx = Math.floor((x + range) / GRID_CELL_SIZE)
+    const minCy = Math.floor((y - range) / GRID_CELL_SIZE)
+    const maxCy = Math.floor((y + range) / GRID_CELL_SIZE)
+    const rangeSq = range * range
+
+    for (let cx = minCx; cx <= maxCx; cx++) {
+      for (let cy = minCy; cy <= maxCy; cy++) {
+        const cell = this.grid.get(`${cx},${cy}`)
+        if (!cell) continue
+        for (const node of cell) {
+          const dx = node.x - x
+          const dy = node.y - y
+          if (dx * dx + dy * dy <= rangeSq) {
+            result.push(node)
+          }
+        }
+      }
+    }
+    return result
+  }
+
   init(): void {
     if (this.initialized) return
     this.initialized = true
     this.nodes = []
+    this.grid.clear()
     this.spawnResources()
   }
 
@@ -69,7 +120,9 @@ export class ResourceSystem {
 
       if (type) {
         const maxAmount = type === 'gold_ore' ? 30 : type === 'stone' ? 50 : 40
-        this.nodes.push({ x, y, type, amount: maxAmount, maxAmount })
+        const node: ResourceNode = { x, y, type, amount: maxAmount, maxAmount }
+        this.nodes.push(node)
+        this.addToGrid(node)
       }
     }
   }
@@ -83,8 +136,8 @@ export class ResourceSystem {
       const pos = this.em.getComponent<PositionComponent>(id, 'position')!
       const civMember = this.em.getComponent<CivMemberComponent>(id, 'civMember')!
 
-      for (let i = this.nodes.length - 1; i >= 0; i--) {
-        const node = this.nodes[i]
+      const nearby = this.getNodesNear(pos.x, pos.y, 2)
+      for (const node of nearby) {
         const dx = pos.x - node.x
         const dy = pos.y - node.y
         if (dx * dx + dy * dy > 4) continue
@@ -110,7 +163,9 @@ export class ResourceSystem {
 
         // Depleted
         if (node.amount <= 0) {
-          this.nodes.splice(i, 1)
+          this.removeFromGrid(node)
+          const idx = this.nodes.indexOf(node)
+          if (idx !== -1) this.nodes.splice(idx, 1)
         }
 
         break // One resource per tick per creature
@@ -127,7 +182,9 @@ export class ResourceSystem {
           ? (Math.random() < 0.6 ? 'stone' : 'gold_ore')
           : (Math.random() < 0.5 ? 'tree' : 'berry')
         const maxAmount = type === 'gold_ore' ? 30 : type === 'stone' ? 50 : 40
-        this.nodes.push({ x, y, type, amount: maxAmount, maxAmount })
+        const node: ResourceNode = { x, y, type, amount: maxAmount, maxAmount }
+        this.nodes.push(node)
+        this.addToGrid(node)
       }
     }
   }

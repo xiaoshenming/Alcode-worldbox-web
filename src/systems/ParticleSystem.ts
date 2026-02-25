@@ -1,4 +1,4 @@
-// Simple particle system for visual effects
+// Pooled particle system for visual effects
 
 export interface Particle {
   x: number
@@ -9,24 +9,58 @@ export interface Particle {
   maxLife: number
   color: string
   size: number
+  active: boolean
 }
 
 export class ParticleSystem {
-  particles: Particle[] = []
+  private pool: Particle[] = []
+  private activeCount: number = 0
+  private readonly MAX_PARTICLES = 500
+
+  // External rendering iterates this — returns only active particles
+  get particles(): Particle[] {
+    return this.pool.slice(0, this.activeCount)
+  }
+
+  private allocate(x: number, y: number, vx: number, vy: number, life: number, maxLife: number, color: string, size: number): void {
+    if (this.activeCount < this.pool.length) {
+      // Reuse inactive slot at the end of active region
+      const p = this.pool[this.activeCount]
+      p.x = x; p.y = y; p.vx = vx; p.vy = vy
+      p.life = life; p.maxLife = maxLife; p.color = color; p.size = size
+      p.active = true
+      this.activeCount++
+    } else if (this.pool.length < this.MAX_PARTICLES) {
+      // Grow pool
+      this.pool.push({ x, y, vx, vy, life, maxLife, color, size, active: true })
+      this.activeCount++
+    } else {
+      // Pool full — overwrite oldest active particle (index 0)
+      const p = this.pool[0]
+      p.x = x; p.y = y; p.vx = vx; p.vy = vy
+      p.life = life; p.maxLife = maxLife; p.color = color; p.size = size
+      p.active = true
+    }
+  }
+
+  // Direct particle add — replaces external .particles.push() usage
+  addParticle(p: { x: number; y: number; vx: number; vy: number; life: number; maxLife: number; color: string; size: number }): void {
+    this.allocate(p.x, p.y, p.vx, p.vy, p.life, p.maxLife, p.color, p.size)
+  }
 
   spawn(x: number, y: number, count: number, color: string, spread: number = 2): void {
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2
       const speed = Math.random() * spread + 0.5
-      this.particles.push({
+      this.allocate(
         x, y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        life: 30 + Math.random() * 30,
-        maxLife: 60,
+        Math.cos(angle) * speed,
+        Math.sin(angle) * speed,
+        30 + Math.random() * 30,
+        60,
         color,
-        size: 1 + Math.random() * 2
-      })
+        1 + Math.random() * 2
+      )
     }
   }
 
@@ -48,29 +82,40 @@ export class ParticleSystem {
 
   spawnRain(x: number, y: number): void {
     for (let i = 0; i < 3; i++) {
-      this.particles.push({
-        x: x + (Math.random() - 0.5) * 20,
+      this.allocate(
+        x + (Math.random() - 0.5) * 20,
         y,
-        vx: 0,
-        vy: 2 + Math.random(),
-        life: 20 + Math.random() * 20,
-        maxLife: 40,
-        color: '#4488ff',
-        size: 1
-      })
+        0,
+        2 + Math.random(),
+        20 + Math.random() * 20,
+        40,
+        '#4488ff',
+        1
+      )
     }
   }
 
   update(): void {
-    for (let i = this.particles.length - 1; i >= 0; i--) {
-      const p = this.particles[i]
+    // Swap-and-pop: iterate active region, swap dead particles to end
+    let i = 0
+    while (i < this.activeCount) {
+      const p = this.pool[i]
       p.x += p.vx
       p.y += p.vy
       p.vy += 0.05 // gravity
       p.life--
 
       if (p.life <= 0) {
-        this.particles.splice(i, 1)
+        p.active = false
+        // Swap with last active particle
+        this.activeCount--
+        if (i < this.activeCount) {
+          this.pool[i] = this.pool[this.activeCount]
+          this.pool[this.activeCount] = p
+        }
+        // Don't increment i — need to process the swapped-in particle
+      } else {
+        i++
       }
     }
   }

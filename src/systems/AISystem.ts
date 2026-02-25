@@ -31,6 +31,15 @@ export class AISystem {
   update(): void {
     const entities = this.em.getEntitiesWithComponents('position', 'ai', 'creature', 'needs')
 
+    // Build spatial hash for fast neighbor lookup (5x5 grid, same as CombatSystem)
+    const grid: Map<string, EntityId[]> = new Map()
+    for (const id of entities) {
+      const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+      const key = `${Math.floor(pos.x / 5)},${Math.floor(pos.y / 5)}`
+      if (!grid.has(key)) grid.set(key, [])
+      grid.get(key)!.push(id)
+    }
+
     for (const id of entities) {
       const pos = this.em.getComponent<PositionComponent>(id, 'position')!
       const ai = this.em.getComponent<AIComponent>(id, 'ai')!
@@ -68,7 +77,7 @@ export class AISystem {
       }
 
       // State machine — threat detection overrides other states
-      const threat = this.findNearbyThreat(id, pos, creature, entities)
+      const threat = this.findNearbyThreat(id, pos, creature, grid)
       if (threat) {
         if (creature.isHostile || creature.species === 'wolf' || creature.species === 'dragon') {
           // Predators attack
@@ -207,10 +216,10 @@ export class AISystem {
     }
 
     // Breeding pass
-    this.updateBreeding(entities)
+    this.updateBreeding(entities, grid)
   }
 
-  private updateBreeding(entities: EntityId[]): void {
+  private updateBreeding(entities: EntityId[], grid: Map<string, EntityId[]>): void {
     const newborns: { species: EntityType; x: number; y: number }[] = []
 
     for (const id of entities) {
@@ -231,23 +240,35 @@ export class AISystem {
         continue
       }
 
-      // Find nearby male of same species
-      for (const otherId of entities) {
-        if (otherId === id) continue
-        if (!this.em.hasComponent(otherId, 'creature')) continue
-        const other = this.em.getComponent<CreatureComponent>(otherId, 'creature')!
-        if (other.species !== creature.species || other.gender !== 'male') continue
-        if (other.age < other.maxAge * 0.2) continue
+      // Find nearby male of same species using spatial hash
+      const cx = Math.floor(pos.x / 5)
+      const cy = Math.floor(pos.y / 5)
+      let found = false
 
-        const otherPos = this.em.getComponent<PositionComponent>(otherId, 'position')!
-        const dx = pos.x - otherPos.x
-        const dy = pos.y - otherPos.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
+      for (let dy = -1; dy <= 1 && !found; dy++) {
+        for (let dx = -1; dx <= 1 && !found; dx++) {
+          const cell = grid.get(`${cx + dx},${cy + dy}`)
+          if (!cell) continue
 
-        if (dist < 3 && Math.random() < 0.005) {
-          newborns.push({ species: creature.species as EntityType, x: pos.x, y: pos.y })
-          this.breedCooldown.set(id, 300)
-          break
+          for (const otherId of cell) {
+            if (otherId === id) continue
+            if (!this.em.hasComponent(otherId, 'creature')) continue
+            const other = this.em.getComponent<CreatureComponent>(otherId, 'creature')!
+            if (other.species !== creature.species || other.gender !== 'male') continue
+            if (other.age < other.maxAge * 0.2) continue
+
+            const otherPos = this.em.getComponent<PositionComponent>(otherId, 'position')!
+            const ddx = pos.x - otherPos.x
+            const ddy = pos.y - otherPos.y
+            const dist = Math.sqrt(ddx * ddx + ddy * ddy)
+
+            if (dist < 3 && Math.random() < 0.005) {
+              newborns.push({ species: creature.species as EntityType, x: pos.x, y: pos.y })
+              this.breedCooldown.set(id, 300)
+              found = true
+              break
+            }
+          }
         }
       }
     }
@@ -342,35 +363,47 @@ export class AISystem {
   }
 
   private findNearbyThreat(
-    id: EntityId, pos: PositionComponent, creature: CreatureComponent, entities: EntityId[]
+    id: EntityId, pos: PositionComponent, creature: CreatureComponent, grid: Map<string, EntityId[]>
   ): { id: EntityId; dist: number } | null {
     const detectRange = creature.isHostile ? 12 : 8
     let closest: { id: EntityId; dist: number } | null = null
 
-    for (const otherId of entities) {
-      if (otherId === id) continue
-      const otherCreature = this.em.getComponent<CreatureComponent>(otherId, 'creature')
-      if (!otherCreature) continue
+    // Query spatial hash: detectRange up to 12, cell size 5, so need radius of 3 cells
+    const cx = Math.floor(pos.x / 5)
+    const cy = Math.floor(pos.y / 5)
+    const cellRadius = Math.ceil(detectRange / 5)
 
-      // Predators look for prey; prey looks for predators
-      if (creature.isHostile || creature.species === 'wolf' || creature.species === 'dragon') {
-        // Predator: target non-hostile, non-same-species
-        if (otherCreature.isHostile && otherCreature.species !== 'sheep') continue
-        if (otherCreature.species === creature.species) continue
-      } else {
-        // Prey: detect hostile creatures nearby
-        if (!otherCreature.isHostile && otherCreature.species !== 'wolf' && otherCreature.species !== 'dragon') continue
-      }
+    for (let dy = -cellRadius; dy <= cellRadius; dy++) {
+      for (let dx = -cellRadius; dx <= cellRadius; dx++) {
+        const cell = grid.get(`${cx + dx},${cy + dy}`)
+        if (!cell) continue
 
-      const otherPos = this.em.getComponent<PositionComponent>(otherId, 'position')
-      if (!otherPos) continue
+        for (const otherId of cell) {
+          if (otherId === id) continue
+          const otherCreature = this.em.getComponent<CreatureComponent>(otherId, 'creature')
+          if (!otherCreature) continue
 
-      const dx = pos.x - otherPos.x
-      const dy = pos.y - otherPos.y
-      const dist = Math.sqrt(dx * dx + dy * dy)
+          // Predators look for prey; prey looks for predators
+          if (creature.isHostile || creature.species === 'wolf' || creature.species === 'dragon') {
+            // Predator: target non-hostile, non-same-species
+            if (otherCreature.isHostile && otherCreature.species !== 'sheep') continue
+            if (otherCreature.species === creature.species) continue
+          } else {
+            // Prey: detect hostile creatures nearby
+            if (!otherCreature.isHostile && otherCreature.species !== 'wolf' && otherCreature.species !== 'dragon') continue
+          }
 
-      if (dist < detectRange && (!closest || dist < closest.dist)) {
-        closest = { id: otherId, dist }
+          const otherPos = this.em.getComponent<PositionComponent>(otherId, 'position')
+          if (!otherPos) continue
+
+          const ddx = pos.x - otherPos.x
+          const ddy = pos.y - otherPos.y
+          const dist = Math.sqrt(ddx * ddx + ddy * ddy)
+
+          if (dist < detectRange && (!closest || dist < closest.dist)) {
+            closest = { id: otherId, dist }
+          }
+        }
       }
     }
 

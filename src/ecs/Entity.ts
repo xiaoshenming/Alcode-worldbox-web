@@ -41,18 +41,41 @@ export class EntityManager {
   getEntitiesWithComponent(type: string): EntityId[] {
     const compMap = this.components.get(type)
     if (!compMap) return []
-    return Array.from(compMap.keys())
+    return [...compMap.keys()]
   }
 
   getEntitiesWithComponents(...types: string[]): EntityId[] {
-    let result: EntityId[] = []
+    if (types.length === 0) return []
+    if (types.length === 1) return this.getEntitiesWithComponent(types[0])
+
+    // Collect component maps, bail early if any type has no entities
+    const maps: Map<EntityId, Component>[] = []
     for (const type of types) {
-      const entities = this.getEntitiesWithComponent(type)
-      if (result.length === 0) {
-        result = entities
-      } else {
-        result = result.filter(id => entities.includes(id))
+      const compMap = this.components.get(type)
+      if (!compMap || compMap.size === 0) return []
+      maps.push(compMap)
+    }
+
+    // Find the smallest map to iterate over
+    let smallestIdx = 0
+    for (let i = 1; i < maps.length; i++) {
+      if (maps[i].size < maps[smallestIdx].size) {
+        smallestIdx = i
       }
+    }
+
+    // Iterate smallest map, check membership in all others via has() — O(1) per check
+    const smallest = maps[smallestIdx]
+    const result: EntityId[] = []
+    for (const id of smallest.keys()) {
+      let hasAll = true
+      for (let i = 0; i < maps.length; i++) {
+        if (i !== smallestIdx && !maps[i].has(id)) {
+          hasAll = false
+          break
+        }
+      }
+      if (hasAll) result.push(id)
     }
     return result
   }
