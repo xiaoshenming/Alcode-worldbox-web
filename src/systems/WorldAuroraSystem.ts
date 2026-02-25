@@ -1,30 +1,31 @@
-// World Aurora System (v3.75) - Northern/southern lights appear in polar regions
-// Auroras boost morale, inspire art, and have mystical effects on magic users
+// World Aurora System (v3.140) - Aurora phenomena in polar regions
+// Aurora intensity and color patterns shift over time
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type AuroraColor = 'green' | 'blue' | 'purple' | 'red' | 'pink' | 'white'
-export type AuroraIntensity = 'faint' | 'moderate' | 'bright' | 'spectacular'
+export type AuroraColorPattern = 'green' | 'purple' | 'blue' | 'multicolor'
 
 export interface AuroraEvent {
   id: number
   x: number
   y: number
+  colorPattern: AuroraColorPattern
+  intensity: number
   width: number
-  color: AuroraColor
-  secondaryColor: AuroraColor
-  intensity: AuroraIntensity
-  moraleBoost: number
+  height: number
+  active: boolean
   tick: number
 }
 
-const CHECK_INTERVAL = 1800
-const AURORA_CHANCE = 0.008
-const MAX_AURORAS = 20
+const CHECK_INTERVAL = 3600
+const SPAWN_CHANCE = 0.003
+const MAX_AURORAS = 8
 
-const COLORS: AuroraColor[] = ['green', 'blue', 'purple', 'red', 'pink', 'white']
-const INTENSITIES: AuroraIntensity[] = ['faint', 'moderate', 'bright', 'spectacular']
+const PATTERNS: AuroraColorPattern[] = ['green', 'purple', 'blue', 'multicolor']
+const PATTERN_INTENSITY: Record<AuroraColorPattern, number> = {
+  green: 50, purple: 65, blue: 55, multicolor: 80,
+}
 
 export class WorldAuroraSystem {
   private auroras: AuroraEvent[] = []
@@ -35,39 +36,43 @@ export class WorldAuroraSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    // Spawn auroras in polar regions (top/bottom of map)
-    if (this.auroras.length < MAX_AURORAS && Math.random() < AURORA_CHANCE) {
+    if (this.auroras.length < MAX_AURORAS && Math.random() < SPAWN_CHANCE) {
       const w = world.width
       const h = world.height
+      // Polar regions: top or bottom 15% of map
       const isPolar = Math.random() < 0.5
-      const y = isPolar ? Math.floor(Math.random() * (h * 0.15)) : h - Math.floor(Math.random() * (h * 0.15))
+      const y = isPolar
+        ? Math.floor(Math.random() * (h * 0.15))
+        : h - Math.floor(Math.random() * (h * 0.15))
       const x = Math.floor(Math.random() * w)
-      const width = 15 + Math.floor(Math.random() * 30)
-
-      const color = COLORS[Math.floor(Math.random() * COLORS.length)]
-      let secondary = COLORS[Math.floor(Math.random() * COLORS.length)]
-      if (secondary === color) secondary = COLORS[(COLORS.indexOf(color) + 1) % COLORS.length]
-
-      const intensityIdx = Math.floor(Math.random() * INTENSITIES.length)
-      const intensity = INTENSITIES[intensityIdx]
+      const pattern = PATTERNS[Math.floor(Math.random() * PATTERNS.length)]
 
       this.auroras.push({
         id: this.nextId++,
-        x, y, width,
-        color,
-        secondaryColor: secondary,
-        intensity,
-        moraleBoost: (intensityIdx + 1) * 5,
+        x, y,
+        colorPattern: pattern,
+        intensity: PATTERN_INTENSITY[pattern],
+        width: 10 + Math.floor(Math.random() * 25),
+        height: 3 + Math.floor(Math.random() * 6),
+        active: true,
         tick,
       })
     }
 
-    // Fade old auroras
-    const cutoff = tick - 15000
-    for (let i = this.auroras.length - 1; i >= 0; i--) {
-      if (this.auroras[i].tick < cutoff) {
-        this.auroras.splice(i, 1)
+    for (const a of this.auroras) {
+      // Intensity oscillates over time
+      a.intensity = PATTERN_INTENSITY[a.colorPattern] *
+        (0.5 + 0.5 * Math.sin(tick * 0.0004 + a.id * 2))
+      // Color pattern can shift for multicolor
+      if (a.colorPattern === 'multicolor' && Math.random() < 0.002) {
+        a.width = Math.min(50, a.width + 1)
       }
+      const age = tick - a.tick
+      if (age > 180000) a.active = false
+    }
+
+    for (let i = this.auroras.length - 1; i >= 0; i--) {
+      if (!this.auroras[i].active) this.auroras.splice(i, 1)
     }
   }
 
