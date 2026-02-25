@@ -172,6 +172,16 @@ export interface InventoryComponent extends Component {
   artifacts: string[]
 }
 
+export interface DiseaseComponent extends Component {
+  type: 'disease'
+  diseaseType: string     // 'plague' | 'fever' | 'blight' | 'pox'
+  severity: number        // 0-100, increases over time
+  duration: number        // ticks since infection
+  contagious: boolean     // can spread to others
+  immune: boolean         // recovered and now immune
+  immuneUntil: number     // tick when immunity expires (for reinfection prevention)
+}
+
 export function getHeroTitle(ability: HeroComponent['ability'], level: number): string {
   if (level >= 5) {
     switch (ability) {

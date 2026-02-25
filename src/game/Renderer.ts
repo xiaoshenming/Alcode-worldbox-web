@@ -1,7 +1,7 @@
 import { TileType, TILE_SIZE } from '../utils/Constants'
 import { World } from './World'
 import { Camera } from './Camera'
-import { EntityManager, PositionComponent, RenderComponent, VelocityComponent, NeedsComponent, AIComponent, CreatureComponent, ArtifactComponent, InventoryComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent, RenderComponent, VelocityComponent, NeedsComponent, AIComponent, CreatureComponent, ArtifactComponent, InventoryComponent, DiseaseComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 import { BuildingComponent, BUILDING_COLORS } from '../civilization/Civilization'
 import { ParticleSystem } from '../systems/ParticleSystem'
@@ -413,6 +413,23 @@ export class Renderer {
           const healthPct = needs.health / 100
           ctx.fillStyle = healthPct > 0.5 ? '#4f4' : healthPct > 0.25 ? '#ff4' : '#f44'
           ctx.fillRect(barX, barY, barWidth * healthPct, barHeight)
+        }
+
+        // Disease indicator
+        const diseaseComp = em.getComponent<DiseaseComponent>(id, 'disease')
+        if (diseaseComp && !diseaseComp.immune && camera.zoom > 0.3) {
+          const pulse = Math.sin(performance.now() * 0.006 + id * 2) * 0.3 + 0.7
+          const dotRadius = Math.max(1.5, 2.5 * camera.zoom) * pulse
+          const dotY = cy - size - 8 * camera.zoom
+          ctx.globalAlpha = pulse * 0.9
+          ctx.fillStyle = diseaseComp.diseaseType === 'plague' ? '#4a0'
+            : diseaseComp.diseaseType === 'fever' ? '#f44'
+            : diseaseComp.diseaseType === 'blight' ? '#8a4'
+            : '#ddd'
+          ctx.beginPath()
+          ctx.arc(cx, dotY, dotRadius, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.globalAlpha = 1
         }
 
         // State icon when zoomed in

@@ -27,6 +27,8 @@ import { TechSystem } from '../systems/TechSystem'
 import { MigrationSystem } from '../systems/MigrationSystem'
 import { EventLog } from '../systems/EventLog'
 import { ArtifactSystem } from '../systems/ArtifactSystem'
+import { DiseaseSystem } from '../systems/DiseaseSystem'
+import { WorldEventSystem } from '../systems/WorldEventSystem'
 
 export class Game {
   private world: World
@@ -56,6 +58,8 @@ export class Game {
   private techSystem: TechSystem
   private migrationSystem!: MigrationSystem
   private artifactSystem: ArtifactSystem
+  private diseaseSystem: DiseaseSystem
+  private worldEventSystem: WorldEventSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -91,6 +95,8 @@ export class Game {
     this.techSystem = new TechSystem()
     this.migrationSystem = new MigrationSystem()
     this.artifactSystem = new ArtifactSystem()
+    this.diseaseSystem = new DiseaseSystem()
+    this.worldEventSystem = new WorldEventSystem()
     this.setupAchievementTracking()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
@@ -201,6 +207,8 @@ export class Game {
     this.techSystem = new TechSystem()
     this.migrationSystem = new MigrationSystem()
     this.artifactSystem = new ArtifactSystem()
+    this.diseaseSystem = new DiseaseSystem()
+    this.worldEventSystem = new WorldEventSystem()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
     this.combatSystem.setArtifactSystem(this.artifactSystem)
@@ -590,6 +598,8 @@ export class Game {
         this.timeline.update(this.world.tick)
         this.artifactSystem.update(this.em, this.world, this.particles, this.world.tick)
         this.artifactSystem.spawnClaimParticles(this.em, this.particles, this.world.tick)
+        this.diseaseSystem.update(this.em, this.world, this.civManager, this.particles)
+        this.worldEventSystem.update(this.em, this.world, this.civManager, this.particles, this.timeline)
         this.particles.update()
         this.accumulator -= this.tickRate
       }
