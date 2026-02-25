@@ -160,6 +160,11 @@ import { PollutionSystem } from '../systems/PollutionSystem'
 import { ProphecySystem } from '../systems/ProphecySystem'
 import { CreatureSkillSystem } from '../systems/CreatureSkillSystem'
 import { WorldNarratorSystem } from '../systems/WorldNarratorSystem'
+import { MythologySystem } from '../systems/MythologySystem'
+import { CreatureTamingSystem } from '../systems/CreatureTamingSystem'
+import { PlagueMutationSystem } from '../systems/PlagueMutationSystem'
+import { MonumentSystem } from '../systems/MonumentSystem'
+import { CreaturePersonalitySystem } from '../systems/CreaturePersonalitySystem'
 
 export class Game {
   private world: World
@@ -322,6 +327,11 @@ export class Game {
   private prophecy!: ProphecySystem
   private creatureSkill!: CreatureSkillSystem
   private worldNarrator!: WorldNarratorSystem
+  private mythology!: MythologySystem
+  private creatureTaming!: CreatureTamingSystem
+  private plagueMutation!: PlagueMutationSystem
+  private monument!: MonumentSystem
+  private creaturePersonality!: CreaturePersonalitySystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -628,6 +638,11 @@ export class Game {
     this.prophecy = new ProphecySystem()
     this.creatureSkill = new CreatureSkillSystem()
     this.worldNarrator = new WorldNarratorSystem()
+    this.mythology = new MythologySystem()
+    this.creatureTaming = new CreatureTamingSystem()
+    this.plagueMutation = new PlagueMutationSystem()
+    this.monument = new MonumentSystem()
+    this.creaturePersonality = new CreaturePersonalitySystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -969,6 +984,11 @@ export class Game {
       if (this.prophecy.handleKeyDown(e)) return
       if (this.creatureSkill.handleKeyDown(e)) return
       if (this.worldNarrator.handleKeyDown(e)) return
+      if (this.mythology.handleKeyDown(e)) return
+      if (this.creatureTaming.handleKeyDown(e)) return
+      if (this.plagueMutation.handleKeyDown(e)) return
+      if (this.monument.handleKeyDown(e)) return
+      if (this.creaturePersonality.handleKeyDown(e)) return
 
       switch (e.key) {
         // Speed controls (plain) / Camera bookmarks (Ctrl=save, Alt=jump)
@@ -1840,6 +1860,16 @@ export class Game {
         this.creatureSkill.update()
         // World narrator (v1.95) - passive update
         this.worldNarrator.update()
+        // Mythology system (v1.96) - generate myths for civs
+        this.mythology.update(this.world.tick, [...this.civManager.civilizations.keys()])
+        // Creature taming (v1.97) - taming progress
+        this.creatureTaming.update(this.world.tick)
+        // Plague mutation (v1.98) - strain evolution
+        this.plagueMutation.update(this.world.tick)
+        // Monument system (v1.99) - build progress and decay
+        this.monument.update(this.world.tick)
+        // Creature personality (v2.00) - trait drift
+        this.creaturePersonality.update(this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
@@ -2248,6 +2278,24 @@ export class Game {
 
     // World narrator panel (v1.95)
     this.worldNarrator.render(ctx)
+
+    // Mythology panel (v1.96)
+    this.mythology.render(ctx)
+
+    // Creature taming panel (v1.97)
+    this.creatureTaming.render(ctx)
+
+    // Plague mutation panel (v1.98)
+    this.plagueMutation.render(ctx)
+
+    // Monument panel (v1.99)
+    this.monument.render(ctx)
+
+    // Monument world icons (v1.99)
+    this.monument.renderWorld(ctx, this.camera.x, this.camera.y, this.camera.zoom, TILE_SIZE)
+
+    // Creature personality panel (v2.00)
+    this.creaturePersonality.render(ctx)
 
     // Screenshot mode toast (v1.66)
     this.screenshotMode.update()
