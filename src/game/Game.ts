@@ -394,6 +394,8 @@ import { WorldThermalVentSystem } from '../systems/WorldThermalVentSystem'
 import { DiplomaticArmisticSystem } from '../systems/DiplomaticArmisticSystem'
 import { CreatureWeaverSystem } from '../systems/CreatureWeaverSystem'
 import { CreatureHerbalistSystem } from '../systems/CreatureHerbalistSystem'
+import { CreatureSentinelSystem } from '../systems/CreatureSentinelSystem'
+import { WorldPeatBogSystem } from '../systems/WorldPeatBogSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -789,6 +791,8 @@ export class Game {
   private diplomaticArmistic!: DiplomaticArmisticSystem
   private creatureWeaver!: CreatureWeaverSystem
   private creatureHerbalist!: CreatureHerbalistSystem
+  private creatureSentinel!: CreatureSentinelSystem
+  private worldPeatBog!: WorldPeatBogSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1335,6 +1339,8 @@ export class Game {
     this.diplomaticArmistic = new DiplomaticArmisticSystem()
     this.creatureWeaver = new CreatureWeaverSystem()
     this.creatureHerbalist = new CreatureHerbalistSystem()
+    this.creatureSentinel = new CreatureSentinelSystem()
+    this.worldPeatBog = new WorldPeatBogSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3034,6 +3040,10 @@ export class Game {
         this.creatureWeaver.update(this.tickRate, this.em, this.world.tick)
         // Creature herbalists (v3.163) - herb gathering and potions
         this.creatureHerbalist.update(this.tickRate, this.em, this.world.tick)
+        // Creature sentinels (v3.166) - watchmen and guards
+        this.creatureSentinel.update(this.tickRate, this.em, this.world.tick)
+        // World peat bogs (v3.167) - waterlogged organic deposits
+        this.worldPeatBog.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
