@@ -1,0 +1,30 @@
+schema: spec-driven
+
+context: |
+  项目：WorldBox Web - 纯前端网页版上帝模拟器
+  技术栈：TypeScript + HTML5 Canvas + Vite（无 React，追求性能）
+  架构：自定义 ECS（Entity-Component-System），tile-based 像素风格
+  当前状态：v0.78，97 个 TS 文件，26000+ 行代码，108 commits
+  构建：npm run build（Vite）
+  类型检查：tsc --noEmit
+  测试：Vitest（待引入）
+  性能目标：1000 实体 @ 60fps，5000 实体 @ 30fps
+  渲染：Canvas 2D，像素精灵，tile-based 地形
+
+rules:
+  proposal:
+    - 评估对现有 ECS 架构的影响
+    - 考虑性能影响（实体数量、渲染开销）
+    - 明确是新系统还是对现有系统的修改
+  specs:
+    - 用 Given/When/Then 格式写场景
+    - 包含性能相关的验收标准
+    - 考虑与现有系统（外交、资源、AI）的交互
+  design:
+    - 说明涉及哪些 ECS 组件和系统
+    - 包含渲染层的变更（如有）
+    - 评估内存和 CPU 影响
+  tasks:
+    - 每个任务对应一个原子 commit
+    - 任务粒度：1-2 小时工作量
+    - 包含类型检查和构建验证步骤
