@@ -561,6 +561,21 @@ import { DiplomaticAccordSystem } from '../systems/DiplomaticAccordSystem'
 import { CreatureIlluminatorsSystem } from '../systems/CreatureIlluminatorsSystem'
 import { WorldGorgeSystem } from '../systems/WorldGorgeSystem'
 import { DiplomaticConcordSystem } from '../systems/DiplomaticConcordSystem'
+import { CreatureBellMakersSystem } from '../systems/CreatureBellMakersSystem'
+import { WorldPlayaSystem } from '../systems/WorldPlayaSystem'
+import { DiplomaticNeutralitySystem } from '../systems/DiplomaticNeutralitySystem'
+import { CreatureCombMakersSystem } from '../systems/CreatureCombMakersSystem'
+import { WorldPedimentSystem } from '../systems/WorldPedimentSystem'
+import { DiplomaticSolidaritySystem } from '../systems/DiplomaticSolidaritySystem'
+import { CreatureNailSmithsSystem } from '../systems/CreatureNailSmithsSystem'
+import { WorldHogbackSystem } from '../systems/WorldHogbackSystem'
+import { DiplomaticReciprocitySystem } from '../systems/DiplomaticReciprocitySystem'
+import { CreaturePinMakersSystem } from '../systems/CreaturePinMakersSystem'
+import { WorldCuestaSystem } from '../systems/WorldCuestaSystem'
+import { DiplomaticBenevolenceSystem } from '../systems/DiplomaticBenevolenceSystem'
+import { CreatureThimbleMakersSystem } from '../systems/CreatureThimbleMakersSystem'
+import { WorldFlatironSystem } from '../systems/WorldFlatironSystem'
+import { DiplomaticClemencySystem } from '../systems/DiplomaticClemencySystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1123,6 +1138,21 @@ export class Game {
   private creatureIlluminators!: CreatureIlluminatorsSystem
   private worldGorge!: WorldGorgeSystem
   private diplomaticConcord!: DiplomaticConcordSystem
+  private creatureBellMakers!: CreatureBellMakersSystem
+  private worldPlaya!: WorldPlayaSystem
+  private diplomaticNeutrality!: DiplomaticNeutralitySystem
+  private creatureCombMakers!: CreatureCombMakersSystem
+  private worldPediment!: WorldPedimentSystem
+  private diplomaticSolidarity!: DiplomaticSolidaritySystem
+  private creatureNailSmiths!: CreatureNailSmithsSystem
+  private worldHogback!: WorldHogbackSystem
+  private diplomaticReciprocity!: DiplomaticReciprocitySystem
+  private creaturePinMakers!: CreaturePinMakersSystem
+  private worldCuesta!: WorldCuestaSystem
+  private diplomaticBenevolence!: DiplomaticBenevolenceSystem
+  private creatureThimbleMakers!: CreatureThimbleMakersSystem
+  private worldFlatiron!: WorldFlatironSystem
+  private diplomaticClemency!: DiplomaticClemencySystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1836,6 +1866,21 @@ export class Game {
     this.creatureIlluminators = new CreatureIlluminatorsSystem()
     this.worldGorge = new WorldGorgeSystem()
     this.diplomaticConcord = new DiplomaticConcordSystem()
+    this.creatureBellMakers = new CreatureBellMakersSystem()
+    this.worldPlaya = new WorldPlayaSystem()
+    this.diplomaticNeutrality = new DiplomaticNeutralitySystem()
+    this.creatureCombMakers = new CreatureCombMakersSystem()
+    this.worldPediment = new WorldPedimentSystem()
+    this.diplomaticSolidarity = new DiplomaticSolidaritySystem()
+    this.creatureNailSmiths = new CreatureNailSmithsSystem()
+    this.worldHogback = new WorldHogbackSystem()
+    this.diplomaticReciprocity = new DiplomaticReciprocitySystem()
+    this.creaturePinMakers = new CreaturePinMakersSystem()
+    this.worldCuesta = new WorldCuestaSystem()
+    this.diplomaticBenevolence = new DiplomaticBenevolenceSystem()
+    this.creatureThimbleMakers = new CreatureThimbleMakersSystem()
+    this.worldFlatiron = new WorldFlatironSystem()
+    this.diplomaticClemency = new DiplomaticClemencySystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3871,6 +3916,36 @@ export class Game {
         this.worldGorge.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic concord (v3.355) - concord treaties
         this.diplomaticConcord.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature bell makers (v3.356) - bell casting craftsmen
+        this.creatureBellMakers.update(this.tickRate, this.em, this.world.tick)
+        // World playas (v3.357) - dry lake bed formations
+        this.worldPlaya.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic neutrality (v3.358) - neutrality declarations
+        this.diplomaticNeutrality.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature comb makers (v3.359) - comb crafting artisans
+        this.creatureCombMakers.update(this.tickRate, this.em, this.world.tick)
+        // World pediments (v3.360) - pediment formations
+        this.worldPediment.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic solidarity (v3.361) - solidarity pacts
+        this.diplomaticSolidarity.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature nail smiths (v3.362) - nail forging craftsmen
+        this.creatureNailSmiths.update(this.tickRate, this.em, this.world.tick)
+        // World hogbacks (v3.363) - hogback ridge formations
+        this.worldHogback.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic reciprocity (v3.364) - reciprocity agreements
+        this.diplomaticReciprocity.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature pin makers (v3.365) - pin crafting artisans
+        this.creaturePinMakers.update(this.tickRate, this.em, this.world.tick)
+        // World cuestas (v3.366) - cuesta formations
+        this.worldCuesta.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic benevolence (v3.367) - benevolence initiatives
+        this.diplomaticBenevolence.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature thimble makers (v3.368) - thimble crafting artisans
+        this.creatureThimbleMakers.update(this.tickRate, this.em, this.world.tick)
+        // World flatirons (v3.369) - flatiron formations
+        this.worldFlatiron.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic clemency (v3.370) - clemency acts
+        this.diplomaticClemency.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
