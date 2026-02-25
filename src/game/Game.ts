@@ -320,6 +320,10 @@ import { CreatureBeekeepingSystem } from '../systems/CreatureBeekeepingSystem'
 import { WorldVolcanicIslandSystem } from '../systems/WorldVolcanicIslandSystem'
 import { DiplomaticTradeGuildSystem } from '../systems/DiplomaticTradeGuildSystem'
 import { CreatureTelepathySystem } from '../systems/CreatureTelepathySystem'
+import { CreatureGlassblowingSystem } from '../systems/CreatureGlassblowingSystem'
+import { WorldUndergroundRiverSystem } from '../systems/WorldUndergroundRiverSystem'
+import { DiplomaticNavalBlockadeSystem } from '../systems/DiplomaticNavalBlockadeSystem'
+import { CreaturePremonitionSystem } from '../systems/CreaturePremonitionSystem'
 
 export class Game {
   private world: World
@@ -642,6 +646,10 @@ export class Game {
   private worldVolcanicIsland!: WorldVolcanicIslandSystem
   private diplomaticTradeGuild!: DiplomaticTradeGuildSystem
   private creatureTelepathy!: CreatureTelepathySystem
+  private creatureGlassblowing!: CreatureGlassblowingSystem
+  private worldUndergroundRiver!: WorldUndergroundRiverSystem
+  private diplomaticNavalBlockade!: DiplomaticNavalBlockadeSystem
+  private creaturePremonition!: CreaturePremonitionSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -1115,6 +1123,10 @@ export class Game {
     this.worldVolcanicIsland = new WorldVolcanicIslandSystem()
     this.diplomaticTradeGuild = new DiplomaticTradeGuildSystem()
     this.creatureTelepathy = new CreatureTelepathySystem()
+    this.creatureGlassblowing = new CreatureGlassblowingSystem()
+    this.worldUndergroundRiver = new WorldUndergroundRiverSystem()
+    this.diplomaticNavalBlockade = new DiplomaticNavalBlockadeSystem()
+    this.creaturePremonition = new CreaturePremonitionSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2652,6 +2664,14 @@ export class Game {
         this.diplomaticTradeGuild.update(this.tickRate, this.em, this.civManager, this.world.tick)
         // Creature telepathy (v3.74) - psychic communication
         this.creatureTelepathy.update(this.tickRate, this.em, this.world.tick)
+        // Creature glassblowing (v3.76) - glass crafting
+        this.creatureGlassblowing.update(this.tickRate, this.em, this.world.tick)
+        // World underground rivers (v3.77) - hidden subterranean waterways
+        this.worldUndergroundRiver.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic naval blockades (v3.78) - port blockades
+        this.diplomaticNavalBlockade.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // Creature premonition (v3.79) - sensing future events
+        this.creaturePremonition.update(this.tickRate, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
