@@ -278,6 +278,11 @@ import { WorldSinkholeSystem } from '../systems/WorldSinkholeSystem'
 import { DiplomaticCensusSystem } from '../systems/DiplomaticCensusSystem'
 import { CreatureSleepwalkSystem } from '../systems/CreatureSleepwalkSystem'
 import { WorldRainbowSystem } from '../systems/WorldRainbowSystem'
+import { CreatureTattooSystem } from '../systems/CreatureTattooSystem'
+import { WorldDustStormSystem } from '../systems/WorldDustStormSystem'
+import { DiplomaticWarReparationSystem } from '../systems/DiplomaticWarReparationSystem'
+import { CreatureClaustrophobiaSystem } from '../systems/CreatureClaustrophobiaSystem'
+import { WorldBioluminescenceSystem } from '../systems/WorldBioluminescenceSystem'
 
 export class Game {
   private world: World
@@ -558,6 +563,11 @@ export class Game {
   private diplomaticCensus!: DiplomaticCensusSystem
   private creatureSleepwalk!: CreatureSleepwalkSystem
   private worldRainbow!: WorldRainbowSystem
+  private creatureTattoo!: CreatureTattooSystem
+  private worldDustStorm!: WorldDustStormSystem
+  private diplomaticWarReparation!: DiplomaticWarReparationSystem
+  private creatureClaustrophobia!: CreatureClaustrophobiaSystem
+  private worldBioluminescence!: WorldBioluminescenceSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -989,6 +999,11 @@ export class Game {
     this.diplomaticCensus = new DiplomaticCensusSystem()
     this.creatureSleepwalk = new CreatureSleepwalkSystem()
     this.worldRainbow = new WorldRainbowSystem()
+    this.creatureTattoo = new CreatureTattooSystem()
+    this.worldDustStorm = new WorldDustStormSystem()
+    this.diplomaticWarReparation = new DiplomaticWarReparationSystem()
+    this.creatureClaustrophobia = new CreatureClaustrophobiaSystem()
+    this.worldBioluminescence = new WorldBioluminescenceSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2442,6 +2457,16 @@ export class Game {
         this.creatureSleepwalk.update(this.tickRate, this.em, this.world.tick)
         // World rainbows (v3.30) - rainbows boost morale after rain
         this.worldRainbow.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature tattoos (v3.31) - creatures earn tattoos as status symbols
+        this.creatureTattoo.update(this.tickRate, this.em, this.world.tick)
+        // World dust storms (v3.32) - massive storms sweep terrain
+        this.worldDustStorm.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic war reparations (v3.33) - losers pay victors after wars
+        this.diplomaticWarReparation.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // Creature claustrophobia (v3.34) - fear of enclosed spaces
+        this.creatureClaustrophobia.update(this.tickRate, this.em, this.world, this.world.tick)
+        // World bioluminescence (v3.35) - glowing organisms in water
+        this.worldBioluminescence.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
