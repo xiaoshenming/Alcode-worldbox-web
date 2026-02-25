@@ -298,6 +298,11 @@ import { WorldGeothermalVentSystem } from '../systems/WorldGeothermalVentSystem'
 import { DiplomaticTariffSystem } from '../systems/DiplomaticTariffSystem'
 import { CreatureHomesicknessSystem } from '../systems/CreatureHomesicknessSystem'
 import { WorldMirageSystem } from '../systems/WorldMirageSystem'
+import { CreatureLullabySystem } from '../systems/CreatureLullabySystem'
+import { WorldSaltFlatSystem } from '../systems/WorldSaltFlatSystem'
+import { DiplomaticMediationSystem } from '../systems/DiplomaticMediationSystem'
+import { CreatureCalligraphySystem } from '../systems/CreatureCalligraphySystem'
+import { WorldFogBankSystem } from '../systems/WorldFogBankSystem'
 
 export class Game {
   private world: World
@@ -598,6 +603,11 @@ export class Game {
   private diplomaticTariff!: DiplomaticTariffSystem
   private creatureHomesickness!: CreatureHomesicknessSystem
   private worldMirage!: WorldMirageSystem
+  private creatureLullaby!: CreatureLullabySystem
+  private worldSaltFlat!: WorldSaltFlatSystem
+  private diplomaticMediation!: DiplomaticMediationSystem
+  private creatureCalligraphy!: CreatureCalligraphySystem
+  private worldFogBank!: WorldFogBankSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -1049,6 +1059,11 @@ export class Game {
     this.diplomaticTariff = new DiplomaticTariffSystem()
     this.creatureHomesickness = new CreatureHomesicknessSystem()
     this.worldMirage = new WorldMirageSystem()
+    this.creatureLullaby = new CreatureLullabySystem()
+    this.worldSaltFlat = new WorldSaltFlatSystem()
+    this.diplomaticMediation = new DiplomaticMediationSystem()
+    this.creatureCalligraphy = new CreatureCalligraphySystem()
+    this.worldFogBank = new WorldFogBankSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2542,6 +2557,16 @@ export class Game {
         this.creatureHomesickness.update(this.tickRate, this.em, this.world.tick)
         // World mirages (v3.50) - desert illusions lure creatures
         this.worldMirage.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature lullabies (v3.51) - adults sing to calm young
+        this.creatureLullaby.update(this.tickRate, this.em, this.world.tick)
+        // World salt flats (v3.52) - salt deposits in arid regions
+        this.worldSaltFlat.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic mediation (v3.53) - third-party conflict resolution
+        this.diplomaticMediation.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // Creature calligraphy (v3.54) - creatures develop writing
+        this.creatureCalligraphy.update(this.tickRate, this.em, this.world.tick)
+        // World fog banks (v3.55) - coastal fog reduces visibility
+        this.worldFogBank.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
