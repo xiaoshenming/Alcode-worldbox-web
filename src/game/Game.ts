@@ -283,6 +283,11 @@ import { WorldDustStormSystem } from '../systems/WorldDustStormSystem'
 import { DiplomaticWarReparationSystem } from '../systems/DiplomaticWarReparationSystem'
 import { CreatureClaustrophobiaSystem } from '../systems/CreatureClaustrophobiaSystem'
 import { WorldBioluminescenceSystem } from '../systems/WorldBioluminescenceSystem'
+import { CreaturePilgrimageSystem } from '../systems/CreaturePilgrimageSystem'
+import { WorldPermafrostSystem } from '../systems/WorldPermafrostSystem'
+import { DiplomaticCulturalExchangeSystem } from '../systems/DiplomaticCulturalExchangeSystem'
+import { CreatureSomniloquySystem } from '../systems/CreatureSomniloquySystem'
+import { WorldTidalWaveSystem } from '../systems/WorldTidalWaveSystem'
 
 export class Game {
   private world: World
@@ -568,6 +573,11 @@ export class Game {
   private diplomaticWarReparation!: DiplomaticWarReparationSystem
   private creatureClaustrophobia!: CreatureClaustrophobiaSystem
   private worldBioluminescence!: WorldBioluminescenceSystem
+  private creaturePilgrimage!: CreaturePilgrimageSystem
+  private worldPermafrost!: WorldPermafrostSystem
+  private diplomaticCulturalExchange!: DiplomaticCulturalExchangeSystem
+  private creatureSomniloquy!: CreatureSomniloquySystem
+  private worldTidalWave!: WorldTidalWaveSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -1004,6 +1014,11 @@ export class Game {
     this.diplomaticWarReparation = new DiplomaticWarReparationSystem()
     this.creatureClaustrophobia = new CreatureClaustrophobiaSystem()
     this.worldBioluminescence = new WorldBioluminescenceSystem()
+    this.creaturePilgrimage = new CreaturePilgrimageSystem()
+    this.worldPermafrost = new WorldPermafrostSystem()
+    this.diplomaticCulturalExchange = new DiplomaticCulturalExchangeSystem()
+    this.creatureSomniloquy = new CreatureSomniloquySystem()
+    this.worldTidalWave = new WorldTidalWaveSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2467,6 +2482,16 @@ export class Game {
         this.creatureClaustrophobia.update(this.tickRate, this.em, this.world, this.world.tick)
         // World bioluminescence (v3.35) - glowing organisms in water
         this.worldBioluminescence.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature pilgrimage (v3.36) - sacred journeys to holy sites
+        this.creaturePilgrimage.update(this.tickRate, this.em, this.world, this.world.tick)
+        // World permafrost (v3.37) - frozen ground in cold regions
+        this.worldPermafrost.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic cultural exchange (v3.38) - civs share culture
+        this.diplomaticCulturalExchange.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // Creature somniloquy (v3.39) - creatures talk in sleep
+        this.creatureSomniloquy.update(this.tickRate, this.em, this.world.tick)
+        // World tidal waves (v3.40) - massive waves crash coastlines
+        this.worldTidalWave.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
