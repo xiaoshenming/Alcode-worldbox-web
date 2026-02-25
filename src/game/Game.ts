@@ -208,6 +208,11 @@ import { WorldFertilitySystem } from '../systems/WorldFertilitySystem'
 import { CreatureFashionSystem } from '../systems/CreatureFashionSystem'
 import { DiplomaticHostageSystem } from '../systems/DiplomaticHostageSystem'
 import { WorldErosionSystem } from '../systems/WorldErosionSystem'
+import { CreaturePetSystem } from '../systems/CreaturePetSystem'
+import { WorldCrystalFormationSystem } from '../systems/WorldCrystalFormationSystem'
+import { CreatureRitualSystem } from '../systems/CreatureRitualSystem'
+import { DiplomaticExileSystem } from '../systems/DiplomaticExileSystem'
+import { WorldMigrationRouteSystem } from '../systems/WorldMigrationRouteSystem'
 
 export class Game {
   private world: World
@@ -418,6 +423,11 @@ export class Game {
   private creatureFashion!: CreatureFashionSystem
   private diplomaticHostage!: DiplomaticHostageSystem
   private worldErosion!: WorldErosionSystem
+  private creaturePet!: CreaturePetSystem
+  private worldCrystalFormation!: WorldCrystalFormationSystem
+  private creatureRitual!: CreatureRitualSystem
+  private diplomaticExile!: DiplomaticExileSystem
+  private worldMigrationRoute!: WorldMigrationRouteSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -776,6 +786,12 @@ export class Game {
     this.diplomaticHostage = new DiplomaticHostageSystem()
     this.worldErosion = new WorldErosionSystem()
     this.worldErosion.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
+    this.creaturePet = new CreaturePetSystem()
+    this.worldCrystalFormation = new WorldCrystalFormationSystem()
+    this.creatureRitual = new CreatureRitualSystem()
+    this.diplomaticExile = new DiplomaticExileSystem()
+    this.worldMigrationRoute = new WorldMigrationRouteSystem()
+    this.worldMigrationRoute.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2089,6 +2105,16 @@ export class Game {
         this.diplomaticHostage.update(this.tickRate, this.em, this.civManager, this.world.tick)
         // World erosion (v2.45) - terrain erosion over time
         this.worldErosion.update(this.tickRate, this.world, this.world.tick)
+        // Creature pets (v2.46) - pet adoption and bonding
+        this.creaturePet.update(this.tickRate, this.em, this.world.tick)
+        // World crystal formations (v2.47) - crystal growth in mountains
+        this.worldCrystalFormation.update(this.tickRate, this.world, this.world.tick)
+        // Creature rituals (v2.48) - group ritual ceremonies
+        this.creatureRitual.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // Diplomatic exile (v2.49) - exile criminals and dissidents
+        this.diplomaticExile.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // World migration routes (v2.50) - seasonal migration paths
+        this.worldMigrationRoute.update(this.tickRate, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
