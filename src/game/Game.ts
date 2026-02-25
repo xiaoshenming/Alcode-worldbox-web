@@ -576,6 +576,21 @@ import { DiplomaticBenevolenceSystem } from '../systems/DiplomaticBenevolenceSys
 import { CreatureThimbleMakersSystem } from '../systems/CreatureThimbleMakersSystem'
 import { WorldFlatironSystem } from '../systems/WorldFlatironSystem'
 import { DiplomaticClemencySystem } from '../systems/DiplomaticClemencySystem'
+import { CreatureAwlMakersSystem } from '../systems/CreatureAwlMakersSystem'
+import { WorldTepuiSystem } from '../systems/WorldTepuiSystem'
+import { DiplomaticMagnanimitySystem } from '../systems/DiplomaticMagnanimitySystem'
+import { CreatureBuckleMakersSystem } from '../systems/CreatureBuckleMakersSystem'
+import { WorldYardangSystem } from '../systems/WorldYardangSystem'
+import { DiplomaticForbearanceSystem } from '../systems/DiplomaticForbearanceSystem'
+import { CreatureClaspMakersSystem } from '../systems/CreatureClaspMakersSystem'
+import { WorldVentifactSystem } from '../systems/WorldVentifactSystem'
+import { DiplomaticLenitySystem } from '../systems/DiplomaticLenitySystem'
+import { CreatureRivetMakersSystem } from '../systems/CreatureRivetMakersSystem'
+import { WorldDreikanterSystem } from '../systems/WorldDreikanterSystem'
+import { DiplomaticAbsolutionSystem } from '../systems/DiplomaticAbsolutionSystem'
+import { CreatureFerruleMakersSystem } from '../systems/CreatureFerruleMakersSystem'
+import { WorldDeflationHollowSystem } from '../systems/WorldDeflationHollowSystem'
+import { DiplomaticExonerationSystem } from '../systems/DiplomaticExonerationSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1153,6 +1168,21 @@ export class Game {
   private creatureThimbleMakers!: CreatureThimbleMakersSystem
   private worldFlatiron!: WorldFlatironSystem
   private diplomaticClemency!: DiplomaticClemencySystem
+  private creatureAwlMakers!: CreatureAwlMakersSystem
+  private worldTepui!: WorldTepuiSystem
+  private diplomaticMagnanimity!: DiplomaticMagnanimitySystem
+  private creatureBuckleMakers!: CreatureBuckleMakersSystem
+  private worldYardang!: WorldYardangSystem
+  private diplomaticForbearance!: DiplomaticForbearanceSystem
+  private creatureClaspMakers!: CreatureClaspMakersSystem
+  private worldVentifact!: WorldVentifactSystem
+  private diplomaticLenity!: DiplomaticLenitySystem
+  private creatureRivetMakers!: CreatureRivetMakersSystem
+  private worldDreikanter!: WorldDreikanterSystem
+  private diplomaticAbsolution!: DiplomaticAbsolutionSystem
+  private creatureFerruleMakers!: CreatureFerruleMakersSystem
+  private worldDeflationHollow!: WorldDeflationHollowSystem
+  private diplomaticExoneration!: DiplomaticExonerationSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1881,6 +1911,21 @@ export class Game {
     this.creatureThimbleMakers = new CreatureThimbleMakersSystem()
     this.worldFlatiron = new WorldFlatironSystem()
     this.diplomaticClemency = new DiplomaticClemencySystem()
+    this.creatureAwlMakers = new CreatureAwlMakersSystem()
+    this.worldTepui = new WorldTepuiSystem()
+    this.diplomaticMagnanimity = new DiplomaticMagnanimitySystem()
+    this.creatureBuckleMakers = new CreatureBuckleMakersSystem()
+    this.worldYardang = new WorldYardangSystem()
+    this.diplomaticForbearance = new DiplomaticForbearanceSystem()
+    this.creatureClaspMakers = new CreatureClaspMakersSystem()
+    this.worldVentifact = new WorldVentifactSystem()
+    this.diplomaticLenity = new DiplomaticLenitySystem()
+    this.creatureRivetMakers = new CreatureRivetMakersSystem()
+    this.worldDreikanter = new WorldDreikanterSystem()
+    this.diplomaticAbsolution = new DiplomaticAbsolutionSystem()
+    this.creatureFerruleMakers = new CreatureFerruleMakersSystem()
+    this.worldDeflationHollow = new WorldDeflationHollowSystem()
+    this.diplomaticExoneration = new DiplomaticExonerationSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3946,6 +3991,36 @@ export class Game {
         this.worldFlatiron.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic clemency (v3.370) - clemency acts
         this.diplomaticClemency.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature awl makers (v3.371) - awl crafting artisans
+        this.creatureAwlMakers.update(this.tickRate, this.em, this.world.tick)
+        // World tepuis (v3.372) - table-top mountain formations
+        this.worldTepui.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic magnanimity (v3.373) - magnanimity gestures
+        this.diplomaticMagnanimity.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature buckle makers (v3.374) - buckle crafting artisans
+        this.creatureBuckleMakers.update(this.tickRate, this.em, this.world.tick)
+        // World yardangs (v3.375) - wind-eroded rock formations
+        this.worldYardang.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic forbearance (v3.376) - forbearance agreements
+        this.diplomaticForbearance.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature clasp makers (v3.377) - clasp crafting artisans
+        this.creatureClaspMakers.update(this.tickRate, this.em, this.world.tick)
+        // World ventifacts (v3.378) - wind-sculpted stones
+        this.worldVentifact.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic lenity (v3.379) - lenity policies
+        this.diplomaticLenity.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature rivet makers (v3.380) - rivet forging artisans
+        this.creatureRivetMakers.update(this.tickRate, this.em, this.world.tick)
+        // World dreikanters (v3.381) - three-edged wind stones
+        this.worldDreikanter.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic absolution (v3.382) - absolution declarations
+        this.diplomaticAbsolution.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature ferrule makers (v3.383) - ferrule crafting artisans
+        this.creatureFerruleMakers.update(this.tickRate, this.em, this.world.tick)
+        // World deflation hollows (v3.384) - wind-eroded depressions
+        this.worldDeflationHollow.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic exoneration (v3.385) - exoneration proceedings
+        this.diplomaticExoneration.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
