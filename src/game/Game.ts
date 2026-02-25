@@ -6,6 +6,7 @@ import { Powers } from './Powers'
 import { Toolbar } from '../ui/Toolbar'
 import { InfoPanel } from '../ui/InfoPanel'
 import { CreaturePanel } from '../ui/CreaturePanel'
+import { EventPanel } from '../ui/EventPanel'
 import { EntityManager, PositionComponent } from '../ecs/Entity'
 import { AISystem } from '../systems/AISystem'
 import { CombatSystem } from '../systems/CombatSystem'
@@ -24,6 +25,7 @@ export class Game {
   private toolbar: Toolbar
   private infoPanel: InfoPanel
   private creaturePanel: CreaturePanel
+  private eventPanel: EventPanel
 
   em: EntityManager
   private aiSystem: AISystem
@@ -66,6 +68,7 @@ export class Game {
     this.toolbar = new Toolbar('toolbar', this.powers)
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
     this.creaturePanel = new CreaturePanel('creaturePanel', this.em, this.civManager)
+    this.eventPanel = new EventPanel('eventPanel')
 
     this.setupSpeedControls()
     this.setupBrushControls()
@@ -287,7 +290,7 @@ export class Game {
       while (this.accumulator >= this.tickRate) {
         this.world.update()
         this.aiSystem.update()
-        this.combatSystem.update()
+        this.combatSystem.update(this.world.tick)
         this.civManager.update()
         this.weather.update()
         this.particles.update()

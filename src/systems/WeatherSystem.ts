@@ -2,6 +2,7 @@ import { World } from '../game/World'
 import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { ParticleSystem } from './ParticleSystem'
 import { EntityManager, NeedsComponent, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { EventLog } from './EventLog'
 
 export type WeatherType = 'clear' | 'rain' | 'snow' | 'storm' | 'fog'
 
@@ -56,7 +57,8 @@ export class WeatherSystem {
     const types: WeatherType[] = ['rain', 'rain', 'snow', 'storm', 'fog']
     this.currentWeather = types[Math.floor(Math.random() * types.length)]
     this.intensity = 0.3 + Math.random() * 0.7
-    this.duration = 600 + Math.floor(Math.random() * 1800) // 10-40 seconds at 60fps
+    this.duration = 600 + Math.floor(Math.random() * 1800)
+    EventLog.log('weather', `${this.getWeatherLabel()} has begun`, this.world.tick)
   }
 
   private applyWeatherEffects(): void {

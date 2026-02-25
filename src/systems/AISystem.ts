@@ -5,6 +5,7 @@ import { ParticleSystem } from './ParticleSystem'
 import { CreatureFactory } from '../entities/CreatureFactory'
 import { EntityType } from '../utils/Constants'
 import { findNextStep, isWalkable } from '../utils/Pathfinding'
+import { EventLog } from './EventLog'
 
 export class AISystem {
   private em: EntityManager
@@ -38,6 +39,7 @@ export class AISystem {
       if (creature.age >= creature.maxAge) {
         const render = this.em.getComponent<RenderComponent>(id, 'render')
         this.particles.spawnDeath(pos.x, pos.y, render ? render.color : '#880000')
+        EventLog.log('death', `${creature.name} (${creature.species}) died of old age`, this.world.tick)
         this.em.removeEntity(id)
         this.breedCooldown.delete(id)
         continue
@@ -53,6 +55,7 @@ export class AISystem {
       if (needs.health <= 0) {
         const render = this.em.getComponent<RenderComponent>(id, 'render')
         this.particles.spawnDeath(pos.x, pos.y, render ? render.color : '#880000')
+        EventLog.log('death', `${creature.name} (${creature.species}) starved to death`, this.world.tick)
         this.em.removeEntity(id)
         continue
       }
@@ -223,7 +226,11 @@ export class AISystem {
     for (const baby of newborns) {
       const babyId = this.factory.spawn(baby.species, baby.x, baby.y)
       const render = this.em.getComponent<RenderComponent>(babyId, 'render')
+      const babyCreature = this.em.getComponent<CreatureComponent>(babyId, 'creature')
       this.particles.spawnBirth(baby.x, baby.y, render ? render.color : '#ffffff')
+      if (babyCreature) {
+        EventLog.log('birth', `${babyCreature.name} (${baby.species}) was born`, this.world.tick)
+      }
     }
   }
 

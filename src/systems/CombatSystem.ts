@@ -3,12 +3,14 @@ import { CivMemberComponent } from '../civilization/Civilization'
 import { CivManager } from '../civilization/CivManager'
 import { ParticleSystem } from './ParticleSystem'
 import { SoundSystem } from './SoundSystem'
+import { EventLog } from './EventLog'
 
 export class CombatSystem {
   private em: EntityManager
   private civManager: CivManager
   private particles: ParticleSystem
   private audio: SoundSystem
+  private tick: number = 0
 
   constructor(em: EntityManager, civManager: CivManager, particles: ParticleSystem, audio: SoundSystem) {
     this.em = em
@@ -17,7 +19,8 @@ export class CombatSystem {
     this.audio = audio
   }
 
-  update(): void {
+  update(tick: number = 0): void {
+    this.tick = tick
     const entities = this.em.getEntitiesWithComponents('position', 'creature', 'needs')
 
     // Spatial hash for fast neighbor lookup
@@ -123,6 +126,12 @@ export class CombatSystem {
   }
 
   private onKill(killerId: EntityId, victimId: EntityId): void {
+    const killerCreature = this.em.getComponent<CreatureComponent>(killerId, 'creature')
+    const victimCreature = this.em.getComponent<CreatureComponent>(victimId, 'creature')
+    if (killerCreature && victimCreature) {
+      EventLog.log('death', `${killerCreature.name} (${killerCreature.species}) killed ${victimCreature.name} (${victimCreature.species})`, this.tick)
+    }
+
     const victimCiv = this.em.getComponent<CivMemberComponent>(victimId, 'civMember')
     if (victimCiv) {
       const civ = this.civManager.civilizations.get(victimCiv.civId)
@@ -146,7 +155,6 @@ export class CombatSystem {
 
     // Killer heals a bit from eating (predators)
     const killerNeeds = this.em.getComponent<NeedsComponent>(killerId, 'needs')
-    const killerCreature = this.em.getComponent<CreatureComponent>(killerId, 'creature')
     if (killerNeeds && killerCreature && killerCreature.isHostile) {
       killerNeeds.hunger = Math.max(0, killerNeeds.hunger - 30)
       killerNeeds.health = Math.min(100, killerNeeds.health + 10)
