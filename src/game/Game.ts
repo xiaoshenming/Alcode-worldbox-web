@@ -15,6 +15,7 @@ import { ParticleSystem } from '../systems/ParticleSystem'
 import { SoundSystem } from '../systems/SoundSystem'
 import { WeatherSystem } from '../systems/WeatherSystem'
 import { ResourceSystem } from '../systems/ResourceSystem'
+import { SaveSystem } from './SaveSystem'
 import { CreatureFactory } from '../entities/CreatureFactory'
 import { CivManager } from '../civilization/CivManager'
 
@@ -105,6 +106,31 @@ export class Game {
         toggleTerritoryBtn.classList.toggle('active', this.renderer.showTerritory)
       })
       toggleTerritoryBtn.classList.add('active')
+    }
+
+    // Save button
+    const saveBtn = document.getElementById('saveBtn')
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => {
+        const ok = SaveSystem.save(this.world, this.em, this.civManager, this.resources)
+        saveBtn.textContent = ok ? 'Saved!' : 'Failed'
+        setTimeout(() => { saveBtn.textContent = 'Save' }, 1500)
+      })
+    }
+
+    // Load button
+    const loadBtn = document.getElementById('loadBtn')
+    if (loadBtn) {
+      loadBtn.addEventListener('click', () => {
+        const ok = SaveSystem.load(this.world, this.em, this.civManager, this.resources)
+        if (ok) {
+          this.world.markFullDirty()
+          loadBtn.textContent = 'Loaded!'
+        } else {
+          loadBtn.textContent = 'No Save'
+        }
+        setTimeout(() => { loadBtn.textContent = 'Load' }, 1500)
+      })
     }
   }
 
