@@ -8,6 +8,7 @@ import { InfoPanel } from '../ui/InfoPanel'
 import { EntityManager } from '../ecs/Entity'
 import { AISystem } from '../systems/AISystem'
 import { CreatureFactory } from '../entities/CreatureFactory'
+import { CivManager } from '../civilization/CivManager'
 
 export class Game {
   private world: World
@@ -18,10 +19,10 @@ export class Game {
   private toolbar: Toolbar
   private infoPanel: InfoPanel
 
-  // ECS
   em: EntityManager
   private aiSystem: AISystem
   creatureFactory: CreatureFactory
+  civManager: CivManager
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -39,14 +40,14 @@ export class Game {
     this.renderer = new Renderer(this.canvas, this.minimapCanvas)
     this.input = new Input(this.canvas, this.camera)
 
-    // ECS setup
     this.em = new EntityManager()
     this.aiSystem = new AISystem(this.em, this.world)
     this.creatureFactory = new CreatureFactory(this.em)
+    this.civManager = new CivManager(this.em, this.world)
 
-    this.powers = new Powers(this.world, this.em, this.creatureFactory)
+    this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager)
     this.toolbar = new Toolbar('toolbar', this.powers)
-    this.infoPanel = new InfoPanel('worldInfo', this.world, this.em)
+    this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
 
     this.setupSpeedControls()
     this.setupBrushControls()
@@ -109,11 +110,12 @@ export class Game {
       while (this.accumulator >= this.tickRate) {
         this.world.update()
         this.aiSystem.update()
+        this.civManager.update()
         this.accumulator -= this.tickRate
       }
     }
 
-    this.renderer.render(this.world, this.camera, this.em)
+    this.renderer.render(this.world, this.camera, this.em, this.civManager)
     this.renderer.renderMinimap(this.world, this.camera)
 
     if (this.world.tick % 30 === 0) {

@@ -2,6 +2,7 @@ import { TileType, EntityType, PowerType, WORLD_WIDTH, WORLD_HEIGHT } from '../u
 import { World } from './World'
 import { EntityManager } from '../ecs/Entity'
 import { CreatureFactory } from '../entities/CreatureFactory'
+import { CivManager } from '../civilization/CivManager'
 
 interface Power {
   type: PowerType
@@ -16,6 +17,7 @@ export class Powers {
   private world: World
   private em: EntityManager
   private factory: CreatureFactory
+  private civManager: CivManager
   private currentPower: Power | null = null
   private brushSize: number = 2
 
@@ -56,10 +58,11 @@ export class Powers {
     { type: PowerType.DISASTER, name: 'Plague', icon: '🦠', action: 'plague' },
   ]
 
-  constructor(world: World, em: EntityManager, factory: CreatureFactory) {
+  constructor(world: World, em: EntityManager, factory: CreatureFactory, civManager: CivManager) {
     this.world = world
     this.em = em
     this.factory = factory
+    this.civManager = civManager
   }
 
   setPower(power: Power | null): void {
@@ -111,7 +114,22 @@ export class Powers {
     const tile = this.world.getTile(x, y)
     // Don't spawn in water or lava
     if (tile === TileType.DEEP_WATER || tile === TileType.SHALLOW_WATER || tile === TileType.LAVA) return
-    this.factory.spawn(this.currentPower!.entityType!, x, y)
+    const entityId = this.factory.spawn(this.currentPower!.entityType!, x, y)
+
+    // Civilized species auto-create/join civilization
+    const species = this.currentPower!.entityType!
+    const civilized = ['human', 'elf', 'dwarf', 'orc']
+    if (civilized.includes(species)) {
+      // Check if there's an existing civ nearby
+      const nearbyCiv = this.civManager.getCivAt(x, y)
+      if (nearbyCiv) {
+        this.civManager.assignToCiv(entityId, nearbyCiv.id)
+      } else {
+        // Create new civilization
+        const civ = this.civManager.createCiv(x, y)
+        this.civManager.assignToCiv(entityId, civ.id, 'leader')
+      }
+    }
   }
 
   private applyNaturePower(x: number, y: number, action: string): void {

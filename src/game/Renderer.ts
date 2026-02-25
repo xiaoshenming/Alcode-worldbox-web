@@ -2,6 +2,8 @@ import { TileType, TILE_SIZE } from '../utils/Constants'
 import { World } from './World'
 import { Camera } from './Camera'
 import { EntityManager, PositionComponent, RenderComponent } from '../ecs/Entity'
+import { CivManager } from '../civilization/CivManager'
+import { BuildingComponent, BUILDING_COLORS } from '../civilization/Civilization'
 
 export class Renderer {
   private canvas: HTMLCanvasElement
@@ -9,6 +11,7 @@ export class Renderer {
   private minimapCanvas: HTMLCanvasElement
   private minimapCtx: CanvasRenderingContext2D
   private waterOffset: number = 0
+  showTerritory: boolean = true
 
   constructor(canvas: HTMLCanvasElement, minimapCanvas: HTMLCanvasElement) {
     this.canvas = canvas
@@ -22,7 +25,7 @@ export class Renderer {
     this.canvas.height = height
   }
 
-  render(world: World, camera: Camera, em?: EntityManager): void {
+  render(world: World, camera: Camera, em?: EntityManager, civManager?: CivManager): void {
     const ctx = this.ctx
     const bounds = camera.getVisibleBounds()
 
@@ -55,7 +58,7 @@ export class Renderer {
           color = `rgb(${Math.min(255, r + wave)}, ${Math.min(255, g + wave)}, ${Math.min(255, b + wave)})`
         }
 
-        // Lava glow animation
+        // Lava glow
         if (tile === TileType.LAVA) {
           const glow = Math.sin(this.waterOffset * 2 + x * 0.8 + y * 0.6) * 20
           const r = Math.min(255, 255 + glow)
@@ -65,17 +68,25 @@ export class Renderer {
 
         ctx.fillStyle = color
         ctx.fillRect(screenX, screenY, tileSize + 0.5, tileSize + 0.5)
+
+        // Territory overlay
+        if (this.showTerritory && civManager) {
+          const civColor = civManager.getCivColor(x, y)
+          if (civColor) {
+            ctx.fillStyle = civColor + '30' // 30 = ~19% opacity
+            ctx.fillRect(screenX, screenY, tileSize + 0.5, tileSize + 0.5)
+          }
+        }
       }
     }
 
-    // Draw entities
+    // Draw entities (buildings + creatures)
     if (em) {
       const entities = em.getEntitiesWithComponents('position', 'render')
       for (const id of entities) {
         const pos = em.getComponent<PositionComponent>(id, 'position')!
         const render = em.getComponent<RenderComponent>(id, 'render')!
 
-        // Check if visible
         if (pos.x < bounds.startX - 1 || pos.x > bounds.endX + 1 ||
             pos.y < bounds.startY - 1 || pos.y > bounds.endY + 1) continue
 
@@ -83,16 +94,27 @@ export class Renderer {
         const screenY = pos.y * TILE_SIZE * camera.zoom + offsetY
         const size = render.size * camera.zoom
 
-        // Draw creature body
-        ctx.fillStyle = render.color
-        ctx.beginPath()
-        ctx.arc(screenX + tileSize / 2, screenY + tileSize / 2, size, 0, Math.PI * 2)
-        ctx.fill()
+        const building = em.getComponent<BuildingComponent>(id, 'building')
 
-        // Draw outline
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)'
-        ctx.lineWidth = 0.5
-        ctx.stroke()
+        if (building) {
+          // Draw building as rectangle
+          const bColor = BUILDING_COLORS[building.buildingType] || render.color
+          const bSize = size * 2
+          ctx.fillStyle = bColor
+          ctx.fillRect(screenX - bSize / 2 + tileSize / 2, screenY - bSize / 2 + tileSize / 2, bSize, bSize)
+          ctx.strokeStyle = render.color // civ color border
+          ctx.lineWidth = 1.5
+          ctx.strokeRect(screenX - bSize / 2 + tileSize / 2, screenY - bSize / 2 + tileSize / 2, bSize, bSize)
+        } else {
+          // Draw creature as circle
+          ctx.fillStyle = render.color
+          ctx.beginPath()
+          ctx.arc(screenX + tileSize / 2, screenY + tileSize / 2, size, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.strokeStyle = 'rgba(0,0,0,0.5)'
+          ctx.lineWidth = 0.5
+          ctx.stroke()
+        }
       }
     }
   }

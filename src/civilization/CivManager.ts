@@ -1,0 +1,245 @@
+import { EntityManager, PositionComponent, EntityId } from '../ecs/Entity'
+import { World } from '../game/World'
+import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
+import { Civilization, createCivilization, BuildingType, BuildingComponent, CivMemberComponent } from './Civilization'
+
+export class CivManager {
+  private em: EntityManager
+  private world: World
+  civilizations: Map<number, Civilization> = new Map()
+  territoryMap: number[][] = [] // civId per tile, 0 = unclaimed
+
+  constructor(em: EntityManager, world: World) {
+    this.em = em
+    this.world = world
+
+    // Init territory map
+    for (let y = 0; y < WORLD_HEIGHT; y++) {
+      this.territoryMap[y] = new Array(WORLD_WIDTH).fill(0)
+    }
+  }
+
+  createCiv(founderX: number, founderY: number): Civilization {
+    const civ = createCivilization()
+    this.civilizations.set(civ.id, civ)
+
+    // Claim initial territory (5x5 around founder)
+    this.claimTerritory(civ.id, founderX, founderY, 3)
+
+    // Build initial hut
+    this.placeBuilding(civ.id, BuildingType.HUT, founderX, founderY)
+
+    return civ
+  }
+
+  assignToCiv(entityId: EntityId, civId: number, role: 'worker' | 'soldier' | 'leader' = 'worker'): void {
+    const civ = this.civilizations.get(civId)
+    if (!civ) return
+
+    this.em.addComponent(entityId, {
+      type: 'civMember',
+      civId,
+      role
+    } as CivMemberComponent)
+
+    civ.population++
+  }
+
+  placeBuilding(civId: number, buildingType: BuildingType, x: number, y: number): EntityId | null {
+    const civ = this.civilizations.get(civId)
+    if (!civ) return null
+
+    const tile = this.world.getTile(x, y)
+    if (tile === TileType.DEEP_WATER || tile === TileType.SHALLOW_WATER || tile === TileType.LAVA) return null
+
+    const id = this.em.createEntity()
+
+    this.em.addComponent(id, {
+      type: 'position',
+      x, y
+    } as PositionComponent)
+
+    this.em.addComponent(id, {
+      type: 'building',
+      buildingType,
+      civId,
+      health: 100,
+      maxHealth: 100,
+      level: 1
+    } as BuildingComponent)
+
+    this.em.addComponent(id, {
+      type: 'render',
+      color: civ.color,
+      size: buildingType === BuildingType.CASTLE ? 5 : buildingType === BuildingType.HUT ? 3 : 4
+    })
+
+    civ.buildings.push(id)
+    return id
+  }
+
+  claimTerritory(civId: number, cx: number, cy: number, radius: number): void {
+    const civ = this.civilizations.get(civId)
+    if (!civ) return
+
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        const x = cx + dx
+        const y = cy + dy
+        if (x < 0 || x >= WORLD_WIDTH || y < 0 || y >= WORLD_HEIGHT) continue
+
+        const tile = this.world.getTile(x, y)
+        if (tile === TileType.DEEP_WATER) continue
+
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        if (dist <= radius) {
+          this.territoryMap[y][x] = civId
+          civ.territory.add(`${x},${y}`)
+        }
+      }
+    }
+  }
+
+  update(): void {
+    for (const [, civ] of this.civilizations) {
+      // Resource gathering
+      this.gatherResources(civ)
+
+      // Auto-build when resources allow
+      this.autoBuild(civ)
+
+      // Expand territory
+      if (civ.population > 5 && Math.random() < 0.005) {
+        this.expandTerritory(civ)
+      }
+
+      // Tech advancement
+      if (civ.resources.gold > 50 * civ.techLevel && Math.random() < 0.001) {
+        civ.techLevel = Math.min(5, civ.techLevel + 1)
+      }
+    }
+  }
+
+  private gatherResources(civ: Civilization): void {
+    // Workers gather resources based on territory tiles
+    const workerCount = this.getWorkerCount(civ.id)
+    if (workerCount === 0) return
+
+    const rate = 0.01 * workerCount
+
+    for (const key of civ.territory) {
+      const [x, y] = key.split(',').map(Number)
+      const tile = this.world.getTile(x, y)
+
+      switch (tile) {
+        case TileType.GRASS:
+          civ.resources.food += rate * 0.02
+          break
+        case TileType.FOREST:
+          civ.resources.wood += rate * 0.02
+          civ.resources.food += rate * 0.01
+          break
+        case TileType.MOUNTAIN:
+          civ.resources.stone += rate * 0.02
+          civ.resources.gold += rate * 0.005
+          break
+      }
+    }
+
+    // Farms produce extra food
+    const farms = civ.buildings.filter(id => {
+      const b = this.em.getComponent<BuildingComponent>(id, 'building')
+      return b && b.buildingType === BuildingType.FARM
+    })
+    civ.resources.food += farms.length * 0.1
+
+    // Population consumes food
+    civ.resources.food -= civ.population * 0.02
+    civ.resources.food = Math.max(0, civ.resources.food)
+  }
+
+  private getWorkerCount(civId: number): number {
+    const members = this.em.getEntitiesWithComponent('civMember')
+    return members.filter(id => {
+      const m = this.em.getComponent<CivMemberComponent>(id, 'civMember')
+      return m && m.civId === civId && m.role === 'worker'
+    }).length
+  }
+
+  private autoBuild(civ: Civilization): void {
+    if (Math.random() > 0.002) return
+
+    // Find a random territory tile to build on
+    const territoryArr = Array.from(civ.territory)
+    if (territoryArr.length === 0) return
+
+    const key = territoryArr[Math.floor(Math.random() * territoryArr.length)]
+    const [x, y] = key.split(',').map(Number)
+
+    // Check if tile is buildable
+    const tile = this.world.getTile(x, y)
+    if (tile === TileType.DEEP_WATER || tile === TileType.SHALLOW_WATER || tile === TileType.LAVA || tile === TileType.MOUNTAIN) return
+
+    // Check no existing building here
+    const hasBuilding = civ.buildings.some(id => {
+      const pos = this.em.getComponent<PositionComponent>(id, 'position')
+      return pos && Math.floor(pos.x) === x && Math.floor(pos.y) === y
+    })
+    if (hasBuilding) return
+
+    // Decide what to build
+    if (civ.resources.food < 20 && civ.resources.wood >= 10) {
+      civ.resources.wood -= 10
+      this.placeBuilding(civ.id, BuildingType.FARM, x, y)
+    } else if (civ.population > 3 && civ.resources.wood >= 20) {
+      civ.resources.wood -= 20
+      this.placeBuilding(civ.id, BuildingType.HOUSE, x, y)
+    } else if (civ.techLevel >= 2 && civ.resources.stone >= 30 && civ.resources.wood >= 20) {
+      civ.resources.stone -= 30
+      civ.resources.wood -= 20
+      this.placeBuilding(civ.id, BuildingType.BARRACKS, x, y)
+    }
+  }
+
+  private expandTerritory(civ: Civilization): void {
+    // Find border tiles and expand outward
+    const border: [number, number][] = []
+
+    for (const key of civ.territory) {
+      const [x, y] = key.split(',').map(Number)
+      const neighbors = [[0, 1], [0, -1], [1, 0], [-1, 0]]
+      for (const [dx, dy] of neighbors) {
+        const nx = x + dx, ny = y + dy
+        if (nx >= 0 && nx < WORLD_WIDTH && ny >= 0 && ny < WORLD_HEIGHT) {
+          if (this.territoryMap[ny][nx] === 0) {
+            border.push([nx, ny])
+          }
+        }
+      }
+    }
+
+    if (border.length === 0) return
+
+    // Claim a few random border tiles
+    const count = Math.min(3, border.length)
+    for (let i = 0; i < count; i++) {
+      const [x, y] = border[Math.floor(Math.random() * border.length)]
+      const tile = this.world.getTile(x, y)
+      if (tile !== TileType.DEEP_WATER) {
+        this.territoryMap[y][x] = civ.id
+        civ.territory.add(`${x},${y}`)
+      }
+    }
+  }
+
+  getCivAt(x: number, y: number): Civilization | null {
+    if (x < 0 || x >= WORLD_WIDTH || y < 0 || y >= WORLD_HEIGHT) return null
+    const civId = this.territoryMap[y][x]
+    return civId ? this.civilizations.get(civId) || null : null
+  }
+
+  getCivColor(x: number, y: number): string | null {
+    const civ = this.getCivAt(x, y)
+    return civ ? civ.color : null
+  }
+}
