@@ -621,6 +621,18 @@ import { DiplomaticCondonationSystem } from '../systems/DiplomaticCondonationSys
 import { CreatureBraidMakersSystem } from '../systems/CreatureBraidMakersSystem'
 import { WorldStoneWindowSystem } from '../systems/WorldStoneWindowSystem'
 import { DiplomaticVindicationSystem } from '../systems/DiplomaticVindicationSystem'
+import { CreatureMacrameMakersSystem } from '../systems/CreatureMacrameMakersSystem'
+import { WorldRockPillarSystem } from '../systems/WorldRockPillarSystem'
+import { DiplomaticRehabilitationSystem } from '../systems/DiplomaticRehabilitationSystem'
+import { CreatureQuiltingMakersSystem } from '../systems/CreatureQuiltingMakersSystem'
+import { CreatureEmbroideryMakersSystem } from '../systems/CreatureEmbroideryMakersSystem'
+import { WorldBlowhole2System } from '../systems/WorldBlowhole2System'
+import { CreatureAppliqueMakersSystem } from '../systems/CreatureAppliqueMakersSystem'
+import { WorldRockShelterSystem } from '../systems/WorldRockShelterSystem'
+import { DiplomaticReconciliation2System } from '../systems/DiplomaticReconciliation2System'
+import { CreatureSmockingMakersSystem } from '../systems/CreatureSmockingMakersSystem'
+import { WorldNaturalTunnelSystem } from '../systems/WorldNaturalTunnelSystem'
+import { DiplomaticAtonementSystem } from '../systems/DiplomaticAtonementSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1243,6 +1255,18 @@ export class Game {
   private creatureBraidMakers!: CreatureBraidMakersSystem
   private worldStoneWindow!: WorldStoneWindowSystem
   private diplomaticVindication!: DiplomaticVindicationSystem
+  private creatureMacrameMakers!: CreatureMacrameMakersSystem
+  private worldRockPillar!: WorldRockPillarSystem
+  private diplomaticRehabilitation!: DiplomaticRehabilitationSystem
+  private creatureQuiltingMakers!: CreatureQuiltingMakersSystem
+  private creatureEmbroideryMakers!: CreatureEmbroideryMakersSystem
+  private worldBlowhole2!: WorldBlowhole2System
+  private creatureAppliqueMakers!: CreatureAppliqueMakersSystem
+  private worldRockShelter!: WorldRockShelterSystem
+  private diplomaticReconciliation2!: DiplomaticReconciliation2System
+  private creatureSmockingMakers!: CreatureSmockingMakersSystem
+  private worldNaturalTunnel!: WorldNaturalTunnelSystem
+  private diplomaticAtonement!: DiplomaticAtonementSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -2016,6 +2040,18 @@ export class Game {
     this.creatureBraidMakers = new CreatureBraidMakersSystem()
     this.worldStoneWindow = new WorldStoneWindowSystem()
     this.diplomaticVindication = new DiplomaticVindicationSystem()
+    this.creatureMacrameMakers = new CreatureMacrameMakersSystem()
+    this.worldRockPillar = new WorldRockPillarSystem()
+    this.diplomaticRehabilitation = new DiplomaticRehabilitationSystem()
+    this.creatureQuiltingMakers = new CreatureQuiltingMakersSystem()
+    this.creatureEmbroideryMakers = new CreatureEmbroideryMakersSystem()
+    this.worldBlowhole2 = new WorldBlowhole2System()
+    this.creatureAppliqueMakers = new CreatureAppliqueMakersSystem()
+    this.worldRockShelter = new WorldRockShelterSystem()
+    this.diplomaticReconciliation2 = new DiplomaticReconciliation2System()
+    this.creatureSmockingMakers = new CreatureSmockingMakersSystem()
+    this.worldNaturalTunnel = new WorldNaturalTunnelSystem()
+    this.diplomaticAtonement = new DiplomaticAtonementSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -4171,6 +4207,30 @@ export class Game {
         this.worldStoneWindow.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic vindication (v3.415) - vindication proceedings
         this.diplomaticVindication.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature macramé makers (v3.416) - macramé knotting artisans
+        this.creatureMacrameMakers.update(this.tickRate, this.em, this.world.tick)
+        // World rock pillars (v3.417) - natural rock pillar formations
+        this.worldRockPillar.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic rehabilitation (v3.418) - rehabilitation diplomacy
+        this.diplomaticRehabilitation.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature quilting makers (v3.419) - quilting artisans
+        this.creatureQuiltingMakers.update(this.tickRate, this.em, this.world.tick)
+        // Creature embroidery makers (v3.422) - embroidery artisans
+        this.creatureEmbroideryMakers.update(this.tickRate, this.em, this.world.tick)
+        // World blowholes (v3.423) - coastal blowhole formations
+        this.worldBlowhole2.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature appliqué makers (v3.425) - appliqué artisans
+        this.creatureAppliqueMakers.update(this.tickRate, this.em, this.world.tick)
+        // World rock shelters (v3.426) - natural rock shelter formations
+        this.worldRockShelter.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic reconciliation (v3.427) - reconciliation diplomacy
+        this.diplomaticReconciliation2.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature smocking makers (v3.428) - smocking artisans
+        this.creatureSmockingMakers.update(this.tickRate, this.em, this.world.tick)
+        // World natural tunnels (v3.429) - natural tunnel formations
+        this.worldNaturalTunnel.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic atonement (v3.430) - atonement diplomacy
+        this.diplomaticAtonement.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
