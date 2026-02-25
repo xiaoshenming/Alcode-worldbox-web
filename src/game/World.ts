@@ -22,6 +22,8 @@ export class World {
 
     this.tiles = []
     this.tileVariants = []
+    this._fullDirty = true
+    this.dirtyRegions.clear()
 
     for (let y = 0; y < this.height; y++) {
       this.tiles[y] = []
@@ -60,10 +62,39 @@ export class World {
     return TileType.GRASS
   }
 
+  // Dirty region tracking for render optimization
+  private dirtyRegions: Set<string> = new Set()
+  private _fullDirty: boolean = true
+
+  markFullDirty(): void {
+    this._fullDirty = true
+  }
+
+  isFullDirty(): boolean {
+    return this._fullDirty
+  }
+
+  clearDirty(): void {
+    this._fullDirty = false
+    this.dirtyRegions.clear()
+  }
+
+  isDirty(): boolean {
+    return this._fullDirty || this.dirtyRegions.size > 0
+  }
+
+  getDirtyRegions(): Set<string> {
+    return this.dirtyRegions
+  }
+
   setTile(x: number, y: number, type: TileType): void {
     if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
       this.tiles[y][x] = type
       this.tileVariants[y][x] = Math.floor(Math.random() * 3)
+      // Mark 16x16 chunk as dirty
+      const cx = Math.floor(x / 16)
+      const cy = Math.floor(y / 16)
+      this.dirtyRegions.add(`${cx},${cy}`)
     }
   }
 
