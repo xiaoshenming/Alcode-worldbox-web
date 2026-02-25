@@ -105,6 +105,9 @@ export class CivManager {
       // Resource gathering
       this.gatherResources(civ)
 
+      // Building effects
+      this.applyBuildingEffects(civ)
+
       // Auto-build when resources allow
       this.autoBuild(civ)
 
@@ -120,6 +123,33 @@ export class CivManager {
 
       // Diplomacy
       this.updateDiplomacy(civ)
+    }
+  }
+
+  private applyBuildingEffects(civ: Civilization): void {
+    for (const id of civ.buildings) {
+      const b = this.em.getComponent<BuildingComponent>(id, 'building')
+      if (!b) continue
+
+      switch (b.buildingType) {
+        case BuildingType.MINE:
+          // Mines produce stone and gold passively
+          civ.resources.stone += 0.05 * b.level
+          civ.resources.gold += 0.02 * b.level
+          break
+        case BuildingType.PORT:
+          // Ports boost gold income through trade
+          civ.resources.gold += 0.04 * b.level
+          // Ports also provide small food bonus (fishing)
+          civ.resources.food += 0.03 * b.level
+          break
+        case BuildingType.CASTLE:
+          // Castle boosts all resource gathering slightly
+          civ.resources.food += 0.02 * b.level
+          civ.resources.wood += 0.02 * b.level
+          civ.resources.stone += 0.02 * b.level
+          break
+      }
     }
   }
 
@@ -302,16 +332,22 @@ export class CivManager {
 
     // Check if tile is buildable
     const tile = this.world.getTile(x, y)
-    if (tile === TileType.DEEP_WATER || tile === TileType.SHALLOW_WATER || tile === TileType.LAVA || tile === TileType.MOUNTAIN) return
+    if (tile === TileType.DEEP_WATER || tile === TileType.SHALLOW_WATER || tile === TileType.LAVA || tile === TileType.MOUNTAIN) {
+      // Mountains allow mines
+      if (tile === TileType.MOUNTAIN && civ.techLevel >= 2 && civ.resources.wood >= 15) {
+        const hasBuilding = this.hasBuildingAt(civ, x, y)
+        if (!hasBuilding) {
+          civ.resources.wood -= 15
+          this.placeBuilding(civ.id, BuildingType.MINE, x, y)
+        }
+      }
+      return
+    }
 
     // Check no existing building here
-    const hasBuilding = civ.buildings.some(id => {
-      const pos = this.em.getComponent<PositionComponent>(id, 'position')
-      return pos && Math.floor(pos.x) === x && Math.floor(pos.y) === y
-    })
-    if (hasBuilding) return
+    if (this.hasBuildingAt(civ, x, y)) return
 
-    // Decide what to build
+    // Decide what to build based on needs and tech
     if (civ.resources.food < 20 && civ.resources.wood >= 10) {
       civ.resources.wood -= 10
       this.placeBuilding(civ.id, BuildingType.FARM, x, y)
@@ -322,7 +358,32 @@ export class CivManager {
       civ.resources.stone -= 30
       civ.resources.wood -= 20
       this.placeBuilding(civ.id, BuildingType.BARRACKS, x, y)
+    } else if (civ.techLevel >= 3 && civ.resources.stone >= 40 && this.countBuildings(civ, BuildingType.TOWER) < 3) {
+      civ.resources.stone -= 40
+      this.placeBuilding(civ.id, BuildingType.TOWER, x, y)
+    } else if (civ.techLevel >= 4 && civ.resources.stone >= 80 && civ.resources.gold >= 30 && this.countBuildings(civ, BuildingType.CASTLE) < 1) {
+      civ.resources.stone -= 80
+      civ.resources.gold -= 30
+      this.placeBuilding(civ.id, BuildingType.CASTLE, x, y)
+    } else if (civ.techLevel >= 2 && tile === TileType.SAND && civ.resources.wood >= 25 && this.countBuildings(civ, BuildingType.PORT) < 2) {
+      // Ports on sand (coastal)
+      civ.resources.wood -= 25
+      this.placeBuilding(civ.id, BuildingType.PORT, x, y)
     }
+  }
+
+  private hasBuildingAt(civ: Civilization, x: number, y: number): boolean {
+    return civ.buildings.some(id => {
+      const pos = this.em.getComponent<PositionComponent>(id, 'position')
+      return pos && Math.floor(pos.x) === x && Math.floor(pos.y) === y
+    })
+  }
+
+  private countBuildings(civ: Civilization, type: BuildingType): number {
+    return civ.buildings.filter(id => {
+      const b = this.em.getComponent<BuildingComponent>(id, 'building')
+      return b && b.buildingType === type
+    }).length
   }
 
   private expandTerritory(civ: Civilization): void {

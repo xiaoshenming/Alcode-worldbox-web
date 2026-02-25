@@ -1,5 +1,5 @@
 import { EntityManager, EntityId, PositionComponent, NeedsComponent, CreatureComponent, RenderComponent, AIComponent } from '../ecs/Entity'
-import { CivMemberComponent } from '../civilization/Civilization'
+import { BuildingComponent, BuildingType, CivMemberComponent } from '../civilization/Civilization'
 import { CivManager } from '../civilization/CivManager'
 import { ParticleSystem } from './ParticleSystem'
 import { SoundSystem } from './SoundSystem'
@@ -87,6 +87,11 @@ export class CombatSystem {
       }
     }
 
+    // Tower defense: towers attack nearby enemies
+    if (tick % 30 === 0) {
+      this.updateTowerDefense(entities, grid)
+    }
+
     // Clean up dead entities
     for (const id of entities) {
       const needs = this.em.getComponent<NeedsComponent>(id, 'needs')
@@ -158,6 +163,63 @@ export class CombatSystem {
     if (killerNeeds && killerCreature && killerCreature.isHostile) {
       killerNeeds.hunger = Math.max(0, killerNeeds.hunger - 30)
       killerNeeds.health = Math.min(100, killerNeeds.health + 10)
+    }
+  }
+
+  private updateTowerDefense(creatures: EntityId[], grid: Map<string, EntityId[]>): void {
+    const towers = this.em.getEntitiesWithComponent('building')
+
+    for (const towerId of towers) {
+      const b = this.em.getComponent<BuildingComponent>(towerId, 'building')
+      if (!b || b.buildingType !== BuildingType.TOWER) continue
+
+      const tPos = this.em.getComponent<PositionComponent>(towerId, 'position')
+      if (!tPos) continue
+
+      const range = 8
+      const cx = Math.floor(tPos.x / 5)
+      const cy = Math.floor(tPos.y / 5)
+
+      // Check nearby creatures
+      for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -2; dx <= 2; dx++) {
+          const cell = grid.get(`${cx + dx},${cy + dy}`)
+          if (!cell) continue
+
+          for (const creatureId of cell) {
+            const cPos = this.em.getComponent<PositionComponent>(creatureId, 'position')
+            if (!cPos) continue
+
+            const ddx = cPos.x - tPos.x
+            const ddy = cPos.y - tPos.y
+            if (ddx * ddx + ddy * ddy > range * range) continue
+
+            // Check if enemy
+            const cCiv = this.em.getComponent<CivMemberComponent>(creatureId, 'civMember')
+            const creature = this.em.getComponent<CreatureComponent>(creatureId, 'creature')
+            if (!creature) continue
+
+            let isEnemy = false
+            if (creature.isHostile || creature.species === 'wolf' || creature.species === 'dragon') {
+              isEnemy = true
+            } else if (cCiv && cCiv.civId !== b.civId) {
+              const towerCiv = this.civManager.civilizations.get(b.civId)
+              if (towerCiv) {
+                const rel = towerCiv.relations.get(cCiv.civId) ?? 0
+                if (rel < -30) isEnemy = true
+              }
+            }
+
+            if (isEnemy) {
+              const needs = this.em.getComponent<NeedsComponent>(creatureId, 'needs')
+              if (needs && needs.health > 0) {
+                needs.health -= 5 * b.level
+                this.particles.spawn(cPos.x, cPos.y, 2, '#ffaa00', 0.5)
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
