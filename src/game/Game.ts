@@ -266,6 +266,9 @@ import { WorldPurificationSystem } from '../systems/WorldPurificationSystem'
 import { CreatureNightWatchSystem } from '../systems/CreatureNightWatchSystem'
 import { CreatureBarterSystem } from '../systems/CreatureBarterSystem'
 import { WorldGeyserSystem } from '../systems/WorldGeyserSystem'
+import { WorldQuicksandSystem } from '../systems/WorldQuicksandSystem'
+import { CreatureIntuitionSystem } from '../systems/CreatureIntuitionSystem'
+import { WorldCometSystem } from '../systems/WorldCometSystem'
 
 export class Game {
   private world: World
@@ -534,6 +537,9 @@ export class Game {
   private creatureNightWatch!: CreatureNightWatchSystem
   private creatureBarter!: CreatureBarterSystem
   private worldGeyser!: WorldGeyserSystem
+  private worldQuicksand!: WorldQuicksandSystem
+  private creatureIntuition!: CreatureIntuitionSystem
+  private worldComet!: WorldCometSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -953,6 +959,9 @@ export class Game {
     this.creatureNightWatch = new CreatureNightWatchSystem()
     this.creatureBarter = new CreatureBarterSystem()
     this.worldGeyser = new WorldGeyserSystem()
+    this.worldQuicksand = new WorldQuicksandSystem()
+    this.creatureIntuition = new CreatureIntuitionSystem()
+    this.worldComet = new WorldCometSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2256,8 +2265,8 @@ export class Game {
         this.worldMagicStorm.update(this.tickRate, this.world.tick)
         // Creature ambitions (v2.38) - personal goals and dreams
         this.creatureAmbition.update(this.tickRate, this.em, this.world.tick)
-        // Diplomatic councils (v2.39) - multi-civ voting bodies
-        this.diplomaticCouncil.update(this.tickRate, this.civManager, this.world.tick)
+        // Diplomatic councils (v3.18) - multi-civ voting councils
+        this.diplomaticCouncil.update(this.tickRate, this.em, this.world.tick)
         // World fertility (v2.40) - soil fertility map
         this.worldFertility.update(this.tickRate, this.world.tiles, this.world.tick)
         // Creature fashion (v2.43) - fashion trends in civs
@@ -2270,8 +2279,8 @@ export class Game {
         this.creaturePet.update(this.tickRate, this.em, this.world.tick)
         // World crystal formations (v2.47) - crystal growth in mountains
         this.worldCrystalFormation.update(this.tickRate, this.world, this.world.tick)
-        // Creature rituals (v2.48) - group ritual ceremonies
-        this.creatureRitual.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // Creature rituals (v3.16) - group ritual ceremonies
+        this.creatureRitual.update(this.tickRate, this.em, this.world.tick)
         // Diplomatic exile (v2.49) - exile criminals and dissidents
         this.diplomaticExile.update(this.tickRate, this.em, this.civManager, this.world.tick)
         // World migration routes (v2.50) - seasonal migration paths
@@ -2382,6 +2391,12 @@ export class Game {
         this.creatureBarter.update(this.tickRate, this.em, this.world.tick)
         // World geysers (v3.12) - periodic geyser eruptions
         this.worldGeyser.update(this.tickRate, this.world, this.em, this.world.tick)
+        // World quicksand (v3.17) - quicksand traps in desert
+        this.worldQuicksand.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature intuition (v3.19) - creatures sense danger and opportunity
+        this.creatureIntuition.update(this.tickRate, this.em, this.world.tick)
+        // World comets (v3.20) - rare comets streak across the sky
+        this.worldComet.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate

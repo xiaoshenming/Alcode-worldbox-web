@@ -1,118 +1,128 @@
-// Creature Ritual System (v2.48) - Creatures perform group rituals
-// Rituals for blessings, harvests, war preparation, and spiritual events
-// Successful rituals provide temporary buffs to participants
+// Creature Ritual System (v3.16) - Creatures hold rituals at special moments
+// Rain dances, harvest feasts, war cries, healing circles affect morale and luck
 
-import { EntityManager, EntityId, PositionComponent } from '../ecs/Entity'
+import { EntityManager, CreatureComponent, PositionComponent, NeedsComponent } from '../ecs/Entity'
 
-export type RitualType = 'harvest' | 'war' | 'blessing' | 'mourning' | 'celebration' | 'summoning'
+export type RitualType = 'rain_dance' | 'harvest_feast' | 'war_cry' | 'healing_circle' | 'moon_prayer' | 'ancestor_worship'
+export type RitualEffect = 'morale_boost' | 'luck' | 'strength' | 'healing' | 'fertility' | 'protection'
 
 export interface Ritual {
   id: number
+  leaderId: number
+  participants: number[]
   type: RitualType
-  civId: number
-  x: number
-  y: number
-  participants: EntityId[]
-  progress: number      // 0-100
-  startedAt: number
-  completed: boolean
-  buffDuration: number
+  progress: number    // 0-100
+  effect: RitualEffect
+  tick: number
 }
 
-const CHECK_INTERVAL = 1000
-const PROGRESS_INTERVAL = 400
-const MAX_RITUALS = 10
-const PROGRESS_PER_TICK = 5
-const BUFF_DURATION = 2000
+const CHECK_INTERVAL = 800
+const RITUAL_CHANCE = 0.012
+const MAX_RITUALS = 40
+const PROGRESS_PER_TICK = 8
 
-const RITUAL_TYPES: RitualType[] = ['harvest', 'war', 'blessing', 'mourning', 'celebration', 'summoning']
+const RITUAL_TYPES: RitualType[] = [
+  'rain_dance', 'harvest_feast', 'war_cry', 'healing_circle', 'moon_prayer', 'ancestor_worship',
+]
 
-let nextRitualId = 1
+const TYPE_EFFECT_MAP: Record<RitualType, RitualEffect> = {
+  rain_dance: 'fertility',
+  harvest_feast: 'morale_boost',
+  war_cry: 'strength',
+  healing_circle: 'healing',
+  moon_prayer: 'luck',
+  ancestor_worship: 'protection',
+}
 
 export class CreatureRitualSystem {
   private rituals: Ritual[] = []
+  private nextId = 1
   private lastCheck = 0
-  private lastProgress = 0
-  private completedCount = 0
 
-  update(dt: number, em: EntityManager, civManager: { civilizations: Map<number, any> }, tick: number): void {
-    if (tick - this.lastCheck >= CHECK_INTERVAL) {
-      this.lastCheck = tick
-      this.initiateRituals(em, civManager, tick)
-    }
-    if (tick - this.lastProgress >= PROGRESS_INTERVAL) {
-      this.lastProgress = tick
-      this.progressRituals(em, tick)
-    }
+  update(dt: number, em: EntityManager, tick: number): void {
+    if (tick - this.lastCheck < CHECK_INTERVAL) return
+    this.lastCheck = tick
+
+    this.initiateRituals(em, tick)
+    this.progressRituals(em)
+    this.pruneCompleted()
   }
 
-  private initiateRituals(em: EntityManager, civManager: { civilizations: Map<number, any> }, tick: number): void {
-    if (this.rituals.filter(r => !r.completed).length >= MAX_RITUALS) return
-    const civs = [...civManager.civilizations.entries()]
-    for (const [civId, civ] of civs) {
-      if (Math.random() > 0.06) continue
-      // Find creatures from this civ near each other
-      const creatures = em.getEntitiesWithComponents('creature', 'position', 'civMember')
-      const civCreatures: { id: EntityId; pos: PositionComponent }[] = []
-      for (const id of creatures) {
-        const member = em.getComponent<any>(id, 'civMember')
-        if (member?.civId !== civId) continue
-        const pos = em.getComponent<PositionComponent>(id, 'position')
-        if (pos) civCreatures.push({ id, pos })
-        if (civCreatures.length >= 8) break
-      }
-      if (civCreatures.length < 3) continue
-      const center = civCreatures[0].pos
-      const nearby = civCreatures.filter(c => {
-        const dx = c.pos.x - center.x, dy = c.pos.y - center.y
-        return dx * dx + dy * dy < 100
-      })
-      if (nearby.length < 3) continue
+  private initiateRituals(em: EntityManager, tick: number): void {
+    if (this.rituals.length >= MAX_RITUALS) return
+    const entities = em.getEntitiesWithComponents('creature')
+    for (const eid of entities) {
+      if (Math.random() > RITUAL_CHANCE) continue
+      const creature = em.getComponent<CreatureComponent>(eid, 'creature')
+      const needs = em.getComponent<NeedsComponent>(eid, 'needs')
+      if (!creature || !needs || needs.health <= 0) continue
+
+      const type = RITUAL_TYPES[Math.floor(Math.random() * RITUAL_TYPES.length)]
+      const nearby = this.findNearbyCreatures(em, eid, 8)
+      if (nearby.length < 2) continue
+
       this.rituals.push({
-        id: nextRitualId++,
-        type: RITUAL_TYPES[Math.floor(Math.random() * RITUAL_TYPES.length)],
-        civId,
-        x: center.x, y: center.y,
-        participants: nearby.map(c => c.id),
+        id: this.nextId++,
+        leaderId: eid,
+        participants: [eid, ...nearby.slice(0, 5)],
+        type,
         progress: 0,
-        startedAt: tick,
-        completed: false,
-        buffDuration: BUFF_DURATION,
+        effect: TYPE_EFFECT_MAP[type],
+        tick,
       })
-      break
+      if (this.rituals.length >= MAX_RITUALS) return
     }
   }
 
-  private progressRituals(em: EntityManager, tick: number): void {
+  private findNearbyCreatures(em: EntityManager, eid: number, radius: number): number[] {
+    const pos = em.getComponent<PositionComponent>(eid, 'position')
+    if (!pos) return []
+    const result: number[] = []
+    const entities = em.getEntitiesWithComponents('creature', 'position')
+    for (const other of entities) {
+      if (other === eid) continue
+      const oPos = em.getComponent<PositionComponent>(other, 'position')
+      if (!oPos) continue
+      const dx = oPos.x - pos.x
+      const dy = oPos.y - pos.y
+      if (dx * dx + dy * dy <= radius * radius) {
+        result.push(other)
+        if (result.length >= 6) break
+      }
+    }
+    return result
+  }
+
+  private progressRituals(em: EntityManager): void {
     for (const ritual of this.rituals) {
-      if (ritual.completed) continue
-      // Check participants still alive
-      ritual.participants = ritual.participants.filter(id => em.getComponent(id, 'creature'))
-      if (ritual.participants.length < 2) {
-        ritual.completed = true
+      if (ritual.progress >= 100) continue
+      // Check leader still alive
+      const leaderNeeds = em.getComponent<NeedsComponent>(ritual.leaderId, 'needs')
+      if (!leaderNeeds || leaderNeeds.health <= 0) {
+        ritual.progress = 100
         continue
       }
-      ritual.progress = Math.min(100, ritual.progress + PROGRESS_PER_TICK + Math.floor(Math.random() * 3))
-      if (ritual.progress >= 100) {
-        ritual.completed = true
-        this.completedCount++
+      ritual.participants = ritual.participants.filter(id => {
+        const n = em.getComponent<NeedsComponent>(id, 'needs')
+        return n && n.health > 0
+      })
+      if (ritual.participants.length < 2) {
+        ritual.progress = 100
+        continue
       }
-    }
-    // Cleanup old completed rituals
-    if (this.rituals.length > 20) {
-      this.rituals = this.rituals.filter(r => !r.completed || tick - r.startedAt < 3000)
+      ritual.progress = Math.min(100, ritual.progress + PROGRESS_PER_TICK + Math.floor(Math.random() * 4))
     }
   }
 
-  getRituals(): Ritual[] {
-    return this.rituals
+  private pruneCompleted(): void {
+    if (this.rituals.length <= MAX_RITUALS) return
+    this.rituals = this.rituals.filter(r => r.progress < 100)
+    if (this.rituals.length > MAX_RITUALS) {
+      this.rituals.splice(0, this.rituals.length - MAX_RITUALS)
+    }
   }
 
-  getActiveRituals(): Ritual[] {
-    return this.rituals.filter(r => !r.completed)
-  }
-
-  getCompletedCount(): number {
-    return this.completedCount
-  }
+  getRituals(): Ritual[] { return this.rituals }
+  getActiveRituals(): Ritual[] { return this.rituals.filter(r => r.progress < 100) }
+  getRitualsByType(type: RitualType): Ritual[] { return this.rituals.filter(r => r.type === type) }
 }
