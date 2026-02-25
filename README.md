@@ -6,8 +6,8 @@
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![Vite](https://img.shields.io/badge/Vite-6.0-646CFF)
-![Lines](https://img.shields.io/badge/代码量-97k_lines-green)
-![Systems](https://img.shields.io/badge/ECS_Systems-546-orange)
+![Lines](https://img.shields.io/badge/代码量-99k_lines-green)
+![Systems](https://img.shields.io/badge/ECS_Systems-561-orange)
 
 ## 快速开始
 
@@ -239,7 +239,7 @@ src/
 │   └── SaveSystem.ts    # 存档系统
 ├── ecs/                 # ECS 框架
 │   └── Entity.ts        # 实体管理
-├── systems/             # 游戏系统 (546 个)
+├── systems/             # 游戏系统 (561 个)
 ├── civilization/        # 文明管理
 ├── entities/            # 实体工厂
 ├── ui/                  # UI 组件 (8 个)
@@ -291,7 +291,7 @@ src/
 
 | 模块 | 文件数 | 代码行数 |
 |------|--------|---------|
-| systems/ | 546 | ~78,000 |
+| systems/ | 561 | ~79,000 |
 | game/ | 8 | ~5,600 |
 | ui/ | 8 | ~1,300 |
 | civilization/ | 2 | ~1,100 |
