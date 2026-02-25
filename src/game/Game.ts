@@ -303,6 +303,9 @@ import { WorldSaltFlatSystem } from '../systems/WorldSaltFlatSystem'
 import { DiplomaticMediationSystem } from '../systems/DiplomaticMediationSystem'
 import { CreatureCalligraphySystem } from '../systems/CreatureCalligraphySystem'
 import { WorldFogBankSystem } from '../systems/WorldFogBankSystem'
+import { CreatureFermentationSystem } from '../systems/CreatureFermentationSystem'
+import { CreatureVentriloquismSystem } from '../systems/CreatureVentriloquismSystem'
+import { WorldDustDevilSystem } from '../systems/WorldDustDevilSystem'
 
 export class Game {
   private world: World
@@ -608,6 +611,9 @@ export class Game {
   private diplomaticMediation!: DiplomaticMediationSystem
   private creatureCalligraphy!: CreatureCalligraphySystem
   private worldFogBank!: WorldFogBankSystem
+  private creatureFermentation!: CreatureFermentationSystem
+  private creatureVentriloquism!: CreatureVentriloquismSystem
+  private worldDustDevil!: WorldDustDevilSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -1064,6 +1070,9 @@ export class Game {
     this.diplomaticMediation = new DiplomaticMediationSystem()
     this.creatureCalligraphy = new CreatureCalligraphySystem()
     this.worldFogBank = new WorldFogBankSystem()
+    this.creatureFermentation = new CreatureFermentationSystem()
+    this.creatureVentriloquism = new CreatureVentriloquismSystem()
+    this.worldDustDevil = new WorldDustDevilSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2442,7 +2451,7 @@ export class Game {
         // Creature rivalry duel (v2.82) - formal duels between rivals
         this.creatureRivalryDuel.update(this.tickRate, this.em, this.world.tick)
         // World coral reef (v2.84) - coral reefs in shallow coastal water
-        this.worldCoralReef.update(this.tickRate, this.world, this.world.tick)
+        this.worldCoralReef.update(this.tickRate, this.world, this.em, this.world.tick)
         // World sandstorm (v2.87) - sandstorms in desert regions
         this.worldSandstorm.update(this.tickRate, this.world, this.em, this.world.tick)
         // Creature collection (v2.89) - creatures collect and hoard items
@@ -2464,7 +2473,7 @@ export class Game {
         // World aurora storm (v2.97) - intense aurora events
         this.worldAuroraStorm.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic embargo (v2.98) - trade embargoes between nations
-        this.diplomaticEmbargo.update(this.tickRate, this.em, this.world.tick)
+        this.diplomaticEmbargo.update(this.tickRate, this.em, this.civManager, this.world.tick)
         // Creature legacy (v2.99) - lasting legacies after death
         this.creatureLegacy.update(this.tickRate, this.em, this.world.tick)
         // World memorial (v3.00) - memorials mark significant events
@@ -2567,6 +2576,12 @@ export class Game {
         this.creatureCalligraphy.update(this.tickRate, this.em, this.world.tick)
         // World fog banks (v3.55) - coastal fog reduces visibility
         this.worldFogBank.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature fermentation (v3.56) - creatures discover brewing
+        this.creatureFermentation.update(this.tickRate, this.em, this.world.tick)
+        // Creature ventriloquism (v3.59) - voice-throwing abilities
+        this.creatureVentriloquism.update(this.tickRate, this.em, this.world.tick)
+        // World dust devils (v3.60) - whirlwinds in arid regions
+        this.worldDustDevil.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate

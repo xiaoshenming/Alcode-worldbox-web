@@ -1,39 +1,37 @@
-// Diplomatic Embargo System (v2.98) - Civilizations impose trade embargoes
-// Embargoes block resource flow between nations, causing economic pressure
+// Diplomatic Embargo System (v3.58) - Civilizations impose trade embargoes
+// Embargoes weaken target economies but can also hurt the imposer
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 
 export type EmbargoSeverity = 'partial' | 'full' | 'blockade'
+export type EmbargoStatus = 'active' | 'weakening' | 'lifted'
 
 export interface Embargo {
   id: number
-  imposerCiv: string
-  targetCiv: string
+  imposerCivId: number
+  targetCivId: number
   severity: EmbargoSeverity
-  reason: string
+  status: EmbargoStatus
+  economicDamage: number
+  selfDamage: number
   duration: number
-  maxDuration: number
-  active: boolean
-  tick: number
+  startTick: number
+  supporterCivIds: number[]
 }
 
-const CHECK_INTERVAL = 1200
-const EMBARGO_CHANCE = 0.015
-const MAX_EMBARGOES = 30
+const CHECK_INTERVAL = 1400
+const EMBARGO_CHANCE = 0.003
+const MAX_EMBARGOES = 12
+const DAMAGE_RATE = 0.05
+const SELF_DAMAGE_RATIO = 0.3
+const WEAKEN_THRESHOLD = 60
 
-const EMBARGO_REASONS = [
-  'territorial_dispute',
-  'trade_imbalance',
-  'war_declaration',
-  'espionage_discovered',
-  'treaty_violation',
-  'resource_competition',
-] as const
+const SEVERITIES: EmbargoSeverity[] = ['partial', 'full', 'blockade']
 
-const SEVERITY_WEIGHTS: Record<EmbargoSeverity, number> = {
-  partial: 0.5,
-  full: 0.35,
-  blockade: 0.15,
+const DAMAGE_MAP: Record<EmbargoSeverity, number> = {
+  partial: 0.4,
+  full: 0.8,
+  blockade: 1.2,
 }
 
 export class DiplomaticEmbargoSystem {
@@ -41,75 +39,65 @@ export class DiplomaticEmbargoSystem {
   private nextId = 1
   private lastCheck = 0
 
-  update(dt: number, em: EntityManager, tick: number): void {
+  update(dt: number, em: EntityManager, civManager: any, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    this.generateEmbargoes(tick)
-    this.evolveEmbargoes()
-    this.cleanup()
-  }
+    if (!civManager?.civilizations) return
+    const civs = civManager.civilizations
+    if (civs.length < 2) return
 
-  private generateEmbargoes(tick: number): void {
-    if (this.embargoes.length >= MAX_EMBARGOES) return
-    if (Math.random() > EMBARGO_CHANCE) return
+    // Start new embargoes
+    if (this.embargoes.length < MAX_EMBARGOES && Math.random() < EMBARGO_CHANCE) {
+      const iA = Math.floor(Math.random() * civs.length)
+      let iB = Math.floor(Math.random() * civs.length)
+      if (iB === iA) iB = (iB + 1) % civs.length
 
-    const civs = ['human', 'elf', 'dwarf', 'orc']
-    const imposer = civs[Math.floor(Math.random() * civs.length)]
-    let target = civs[Math.floor(Math.random() * civs.length)]
-    while (target === imposer) {
-      target = civs[Math.floor(Math.random() * civs.length)]
-    }
+      const severity = SEVERITIES[Math.floor(Math.random() * SEVERITIES.length)]
 
-    const reason = EMBARGO_REASONS[Math.floor(Math.random() * EMBARGO_REASONS.length)]
-    const severity = this.pickSeverity()
-
-    this.embargoes.push({
-      id: this.nextId++,
-      imposerCiv: imposer,
-      targetCiv: target,
-      severity,
-      reason,
-      duration: 0,
-      maxDuration: 3000 + Math.floor(Math.random() * 5000),
-      active: true,
-      tick,
-    })
-  }
-
-  private pickSeverity(): EmbargoSeverity {
-    const r = Math.random()
-    let cum = 0
-    for (const [sev, w] of Object.entries(SEVERITY_WEIGHTS)) {
-      cum += w
-      if (r <= cum) return sev as EmbargoSeverity
-    }
-    return 'partial'
-  }
-
-  private evolveEmbargoes(): void {
-    for (const emb of this.embargoes) {
-      emb.duration++
-      if (emb.duration >= emb.maxDuration) {
-        emb.active = false
+      const supporters: number[] = []
+      for (let i = 0; i < civs.length; i++) {
+        if (i !== iA && i !== iB && Math.random() < 0.3) {
+          supporters.push(civs[i].id)
+        }
       }
-    }
-  }
 
-  private cleanup(): void {
+      this.embargoes.push({
+        id: this.nextId++,
+        imposerCivId: civs[iA].id,
+        targetCivId: civs[iB].id,
+        severity,
+        status: 'active',
+        economicDamage: 0,
+        selfDamage: 0,
+        duration: 3000 + Math.random() * 5000,
+        startTick: tick,
+        supporterCivIds: supporters,
+      })
+    }
+
+    // Update embargoes
     for (let i = this.embargoes.length - 1; i >= 0; i--) {
-      if (!this.embargoes[i].active) {
+      const e = this.embargoes[i]
+      const elapsed = tick - e.startTick
+      const dmgMult = DAMAGE_MAP[e.severity]
+
+      e.economicDamage += DAMAGE_RATE * dmgMult
+      e.selfDamage += DAMAGE_RATE * dmgMult * SELF_DAMAGE_RATIO
+
+      if (elapsed > e.duration * 0.7) {
+        e.status = 'weakening'
+      }
+
+      if (elapsed > e.duration || e.selfDamage > WEAKEN_THRESHOLD) {
+        e.status = 'lifted'
         this.embargoes.splice(i, 1)
       }
     }
   }
 
-  getEmbargoes(): Embargo[] { return this.embargoes }
-  getActiveEmbargoes(): Embargo[] { return this.embargoes.filter(e => e.active) }
-  isEmbargoed(civ1: string, civ2: string): boolean {
-    return this.embargoes.some(e =>
-      e.active && ((e.imposerCiv === civ1 && e.targetCiv === civ2) ||
-                   (e.imposerCiv === civ2 && e.targetCiv === civ1))
-    )
+  getEmbargoes(): readonly Embargo[] { return this.embargoes }
+  getEmbargoesAgainst(civId: number): Embargo[] {
+    return this.embargoes.filter(e => e.targetCivId === civId && e.status === 'active')
   }
 }
