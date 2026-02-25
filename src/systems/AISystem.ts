@@ -57,11 +57,35 @@ export class AISystem {
         continue
       }
 
-      // State machine
-      if (needs.hunger > 70) {
-        ai.state = 'hungry'
-      } else if (ai.state === 'hungry' && needs.hunger < 30) {
-        ai.state = 'idle'
+      // State machine — threat detection overrides other states
+      const threat = this.findNearbyThreat(id, pos, creature, entities)
+      if (threat) {
+        if (creature.isHostile || creature.species === 'wolf' || creature.species === 'dragon') {
+          // Predators attack
+          ai.state = 'attacking'
+          ai.targetEntity = threat.id
+        } else if (needs.health < 60 || creature.damage < 10) {
+          // Weak/injured creatures flee
+          ai.state = 'fleeing'
+          ai.targetEntity = threat.id
+        }
+      }
+
+      // Hunger can override idle/wandering but not combat states
+      if (ai.state !== 'fleeing' && ai.state !== 'attacking') {
+        if (needs.hunger > 70) {
+          ai.state = 'hungry'
+        } else if (ai.state === 'hungry' && needs.hunger < 30) {
+          ai.state = 'idle'
+        }
+      }
+
+      // Clear combat states if target is gone
+      if ((ai.state === 'fleeing' || ai.state === 'attacking') && ai.targetEntity !== null) {
+        if (!this.em.hasComponent(ai.targetEntity, 'position')) {
+          ai.state = 'idle'
+          ai.targetEntity = null
+        }
       }
 
       // Execute behavior based on state
@@ -98,6 +122,51 @@ export class AISystem {
             needs.hunger = Math.max(0, needs.hunger - 0.5)
           }
           break
+
+        case 'fleeing': {
+          if (ai.targetEntity === null) { ai.state = 'idle'; break }
+          const threatPos = this.em.getComponent<PositionComponent>(ai.targetEntity, 'position')
+          if (!threatPos) { ai.state = 'idle'; ai.targetEntity = null; break }
+
+          // Run away from threat
+          const fdx = pos.x - threatPos.x
+          const fdy = pos.y - threatPos.y
+          const fdist = Math.sqrt(fdx * fdx + fdy * fdy)
+
+          if (fdist > 15) {
+            // Safe distance, stop fleeing
+            ai.state = 'idle'
+            ai.targetEntity = null
+          } else {
+            // Flee in opposite direction
+            ai.targetX = pos.x + (fdx / fdist) * 10
+            ai.targetY = pos.y + (fdy / fdist) * 10
+            this.moveTowards(pos, ai, creature, vel)
+          }
+          break
+        }
+
+        case 'attacking': {
+          if (ai.targetEntity === null) { ai.state = 'idle'; break }
+          const preyPos = this.em.getComponent<PositionComponent>(ai.targetEntity, 'position')
+          if (!preyPos) { ai.state = 'idle'; ai.targetEntity = null; break }
+
+          const adx = preyPos.x - pos.x
+          const ady = preyPos.y - pos.y
+          const adist = Math.sqrt(adx * adx + ady * ady)
+
+          if (adist > 20) {
+            // Lost interest, too far
+            ai.state = 'idle'
+            ai.targetEntity = null
+          } else {
+            // Chase prey
+            ai.targetX = preyPos.x
+            ai.targetY = preyPos.y
+            this.moveTowards(pos, ai, creature, vel)
+          }
+          break
+        }
       }
 
       // Clamp position
@@ -200,5 +269,41 @@ export class AISystem {
     }
     // Fallback: stay near current position
     return { x: pos.x, y: pos.y }
+  }
+
+  private findNearbyThreat(
+    id: EntityId, pos: PositionComponent, creature: CreatureComponent, entities: EntityId[]
+  ): { id: EntityId; dist: number } | null {
+    const detectRange = creature.isHostile ? 12 : 8
+    let closest: { id: EntityId; dist: number } | null = null
+
+    for (const otherId of entities) {
+      if (otherId === id) continue
+      const otherCreature = this.em.getComponent<CreatureComponent>(otherId, 'creature')
+      if (!otherCreature) continue
+
+      // Predators look for prey; prey looks for predators
+      if (creature.isHostile || creature.species === 'wolf' || creature.species === 'dragon') {
+        // Predator: target non-hostile, non-same-species
+        if (otherCreature.isHostile && otherCreature.species !== 'sheep') continue
+        if (otherCreature.species === creature.species) continue
+      } else {
+        // Prey: detect hostile creatures nearby
+        if (!otherCreature.isHostile && otherCreature.species !== 'wolf' && otherCreature.species !== 'dragon') continue
+      }
+
+      const otherPos = this.em.getComponent<PositionComponent>(otherId, 'position')
+      if (!otherPos) continue
+
+      const dx = pos.x - otherPos.x
+      const dy = pos.y - otherPos.y
+      const dist = Math.sqrt(dx * dx + dy * dy)
+
+      if (dist < detectRange && (!closest || dist < closest.dist)) {
+        closest = { id: otherId, dist }
+      }
+    }
+
+    return closest
   }
 }

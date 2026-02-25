@@ -92,6 +92,7 @@ export interface AIComponent extends Component {
   state: 'idle' | 'wandering' | 'hungry' | 'fleeing' | 'attacking'
   targetX: number
   targetY: number
+  targetEntity: number | null
   cooldown: number
 }
 

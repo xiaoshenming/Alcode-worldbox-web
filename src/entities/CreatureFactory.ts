@@ -90,6 +90,7 @@ export class CreatureFactory {
       state: 'idle',
       targetX: x,
       targetY: y,
+      targetEntity: null,
       cooldown: 0
     })
 
