@@ -249,6 +249,11 @@ import { WorldAvalancheSystem } from '../systems/WorldAvalancheSystem'
 import { DiplomaticAsylumSystem } from '../systems/DiplomaticAsylumSystem'
 import { CreatureForagingSystem } from '../systems/CreatureForagingSystem'
 import { WorldWhirlpoolSystem } from '../systems/WorldWhirlpoolSystem'
+import { CreatureOathSystem } from '../systems/CreatureOathSystem'
+import { WorldAuroraStormSystem } from '../systems/WorldAuroraStormSystem'
+import { DiplomaticEmbargoSystem } from '../systems/DiplomaticEmbargoSystem'
+import { CreatureLegacySystem } from '../systems/CreatureLegacySystem'
+import { WorldMemorialSystem } from '../systems/WorldMemorialSystem'
 
 export class Game {
   private world: World
@@ -500,6 +505,11 @@ export class Game {
   private diplomaticAsylum!: DiplomaticAsylumSystem
   private creatureForaging!: CreatureForagingSystem
   private worldWhirlpool!: WorldWhirlpoolSystem
+  private creatureOath!: CreatureOathSystem
+  private worldAuroraStorm!: WorldAuroraStormSystem
+  private diplomaticEmbargo!: DiplomaticEmbargoSystem
+  private creatureLegacy!: CreatureLegacySystem
+  private worldMemorial!: WorldMemorialSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -902,6 +912,11 @@ export class Game {
     this.diplomaticAsylum = new DiplomaticAsylumSystem()
     this.creatureForaging = new CreatureForagingSystem()
     this.worldWhirlpool = new WorldWhirlpoolSystem()
+    this.creatureOath = new CreatureOathSystem()
+    this.worldAuroraStorm = new WorldAuroraStormSystem()
+    this.diplomaticEmbargo = new DiplomaticEmbargoSystem()
+    this.creatureLegacy = new CreatureLegacySystem()
+    this.worldMemorial = new WorldMemorialSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2297,6 +2312,16 @@ export class Game {
         this.creatureForaging.update(this.tickRate, this.world, this.em, this.world.tick)
         // World whirlpool (v2.95) - whirlpools in deep water
         this.worldWhirlpool.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature oath (v2.96) - creatures swear binding oaths
+        this.creatureOath.update(this.tickRate, this.em, this.world.tick)
+        // World aurora storm (v2.97) - intense aurora events
+        this.worldAuroraStorm.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic embargo (v2.98) - trade embargoes between nations
+        this.diplomaticEmbargo.update(this.tickRate, this.em, this.world.tick)
+        // Creature legacy (v2.99) - lasting legacies after death
+        this.creatureLegacy.update(this.tickRate, this.em, this.world.tick)
+        // World memorial (v3.00) - memorials mark significant events
+        this.worldMemorial.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
