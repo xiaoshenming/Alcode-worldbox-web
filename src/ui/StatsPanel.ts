@@ -1,6 +1,6 @@
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
-import { Civilization } from '../civilization/Civilization'
+import { Civilization, TECH_TREE } from '../civilization/Civilization'
 
 export class StatsPanel {
   private el: HTMLElement
@@ -110,8 +110,34 @@ export class StatsPanel {
     // Resources line
     const resLine = document.createElement('div')
     resLine.style.cssText = 'font-size:10px;color:#aaa;margin-top:1px'
-    resLine.textContent = `🍖${Math.floor(civ.resources.food)} 🪵${Math.floor(civ.resources.wood)} 🪨${Math.floor(civ.resources.stone)} 💰${Math.floor(civ.resources.gold)} | Tech: ${civ.techLevel} | Land: ${civ.territory.size}`
+    resLine.textContent = `🍖${Math.floor(civ.resources.food)} 🪵${Math.floor(civ.resources.wood)} 🪨${Math.floor(civ.resources.stone)} 💰${Math.floor(civ.resources.gold)} | Land: ${civ.territory.size}`
     row.appendChild(resLine)
+
+    // Tech line
+    const tech = TECH_TREE[civ.techLevel]
+    const techLine = document.createElement('div')
+    techLine.style.cssText = 'font-size:10px;margin-top:2px'
+
+    const techBars = '■'.repeat(civ.techLevel) + '□'.repeat(5 - civ.techLevel)
+    const barsSpan = document.createElement('span')
+    barsSpan.style.color = '#f0c040'
+    barsSpan.textContent = techBars
+    techLine.appendChild(barsSpan)
+
+    const techNameSpan = document.createElement('span')
+    techNameSpan.style.color = '#cca'
+    techNameSpan.textContent = ` ${tech?.name || 'Unknown'}`
+    techLine.appendChild(techNameSpan)
+
+    // Show unlocks
+    if (tech && tech.unlocks.length > 0) {
+      const unlockSpan = document.createElement('span')
+      unlockSpan.style.cssText = 'color:#6a8;font-size:9px;margin-left:4px'
+      unlockSpan.textContent = `[${tech.unlocks.join(', ')}]`
+      techLine.appendChild(unlockSpan)
+    }
+
+    row.appendChild(techLine)
 
     this.el.appendChild(row)
   }

@@ -74,8 +74,16 @@ export class CombatSystem {
         const shouldFight = this.isHostile(creature, civMember, otherCreature, otherCivMember)
 
         if (shouldFight && Math.random() < 0.1) {
-          // Apply damage
-          const damage = creature.damage * (0.5 + Math.random() * 0.5)
+          // Apply damage with tech bonus
+          let damage = creature.damage * (0.5 + Math.random() * 0.5)
+          if (civMember) {
+            const attackerCiv = this.civManager.civilizations.get(civMember.civId)
+            if (attackerCiv) {
+              // Tech level 3+: +20% damage, level 5: additional bonus
+              if (attackerCiv.techLevel >= 5) damage *= 1.4
+              else if (attackerCiv.techLevel >= 3) damage *= 1.2
+            }
+          }
           otherNeeds.health -= damage
           this.audio.playCombat()
 

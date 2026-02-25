@@ -279,7 +279,9 @@ export class CivManager {
     const workerCount = this.getWorkerCount(civ.id)
     if (workerCount === 0) return
 
-    const rate = 0.01 * workerCount
+    // Tech bonuses: level 4 = +30%, level 5 = +50%
+    const techMultiplier = civ.techLevel >= 5 ? 1.5 : civ.techLevel >= 4 ? 1.3 : 1.0
+    const rate = 0.01 * workerCount * techMultiplier
 
     for (const key of civ.territory) {
       const [x, y] = key.split(',').map(Number)

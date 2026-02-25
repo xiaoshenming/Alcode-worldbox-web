@@ -89,6 +89,21 @@ const CIV_COLORS = [
 
 let nextCivId = 1
 
+// Tech tree definitions
+export interface TechInfo {
+  name: string
+  description: string
+  unlocks: string[]
+}
+
+export const TECH_TREE: Record<number, TechInfo> = {
+  1: { name: 'Stone Age', description: 'Basic survival', unlocks: ['Hut', 'Farm'] },
+  2: { name: 'Bronze Age', description: 'Metalworking begins', unlocks: ['Barracks', 'Mine', 'Port'] },
+  3: { name: 'Iron Age', description: 'Advanced warfare', unlocks: ['Tower', '+20% combat damage'] },
+  4: { name: 'Medieval', description: 'Fortification era', unlocks: ['Castle', '+30% gather rate'] },
+  5: { name: 'Renaissance', description: 'Golden age', unlocks: ['+50% all production', '+20% health'] },
+}
+
 export function createCivilization(): Civilization {
   const id = nextCivId++
   return {
