@@ -667,6 +667,17 @@ import { WorldLaharSystem } from '../systems/WorldLaharSystem'
 import { CreatureFullingMakersSystem } from '../systems/CreatureFullingMakersSystem'
 import { WorldPyroclasticFlowSystem } from '../systems/WorldPyroclasticFlowSystem'
 import { DiplomaticEntente2System } from '../systems/DiplomaticEntente2System'
+import { CreatureTatamiMakersSystem } from '../systems/CreatureTatamiMakersSystem'
+import { WorldPhreaticExplosionSystem } from '../systems/WorldPhreaticExplosionSystem'
+import { DiplomaticAccommodationSystem } from '../systems/DiplomaticAccommodationSystem'
+import { CreatureSilkWeaverSystem } from '../systems/CreatureSilkWeaverSystem'
+import { DiplomaticConcordatSystem } from '../systems/DiplomaticConcordatSystem'
+import { WorldMudPotSystem } from '../systems/WorldMudPotSystem'
+import { CreaturePotterSystem } from '../systems/CreaturePotterSystem'
+import { WorldSteamVentSystem } from '../systems/WorldSteamVentSystem'
+import { CreatureBasketWeaverSystem } from '../systems/CreatureBasketWeaverSystem'
+import { WorldTravertineSystem } from '../systems/WorldTravertineSystem'
+import { DiplomaticMutualAidSystem } from '../systems/DiplomaticMutualAidSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1335,6 +1346,17 @@ export class Game {
   private creatureFullingMakers!: CreatureFullingMakersSystem
   private worldPyroclasticFlow!: WorldPyroclasticFlowSystem
   private diplomaticEntente2!: DiplomaticEntente2System
+  private creatureTatamiMakers!: CreatureTatamiMakersSystem
+  private worldPhreaticExplosion!: WorldPhreaticExplosionSystem
+  private diplomaticAccommodation!: DiplomaticAccommodationSystem
+  private creatureSilkWeaver!: CreatureSilkWeaverSystem
+  private diplomaticConcordat!: DiplomaticConcordatSystem
+  private worldMudPot!: WorldMudPotSystem
+  private creaturePotter!: CreaturePotterSystem
+  private worldSteamVent!: WorldSteamVentSystem
+  private creatureBasketWeaver!: CreatureBasketWeaverSystem
+  private worldTravertine!: WorldTravertineSystem
+  private diplomaticMutualAid!: DiplomaticMutualAidSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -2154,6 +2176,17 @@ export class Game {
     this.creatureFullingMakers = new CreatureFullingMakersSystem()
     this.worldPyroclasticFlow = new WorldPyroclasticFlowSystem()
     this.diplomaticEntente2 = new DiplomaticEntente2System()
+    this.creatureTatamiMakers = new CreatureTatamiMakersSystem()
+    this.worldPhreaticExplosion = new WorldPhreaticExplosionSystem()
+    this.diplomaticAccommodation = new DiplomaticAccommodationSystem()
+    this.creatureSilkWeaver = new CreatureSilkWeaverSystem()
+    this.diplomaticConcordat = new DiplomaticConcordatSystem()
+    this.worldMudPot = new WorldMudPotSystem()
+    this.creaturePotter = new CreaturePotterSystem()
+    this.worldSteamVent = new WorldSteamVentSystem()
+    this.creatureBasketWeaver = new CreatureBasketWeaverSystem()
+    this.worldTravertine = new WorldTravertineSystem()
+    this.diplomaticMutualAid = new DiplomaticMutualAidSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -4401,6 +4434,28 @@ export class Game {
         this.worldPyroclasticFlow.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic entente 2 (v3.475) - advanced entente diplomacy
         this.diplomaticEntente2.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature tatami makers (v3.476) - tatami mat artisans
+        this.creatureTatamiMakers.update(this.tickRate, this.em, this.world.tick)
+        // World phreatic explosions (v3.477) - steam-driven eruptions
+        this.worldPhreaticExplosion.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic accommodation (v3.478) - accommodation diplomacy
+        this.diplomaticAccommodation.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature silk weavers (v3.479) - silk weaving artisans
+        this.creatureSilkWeaver.update(this.tickRate, this.em, this.world.tick)
+        // Diplomatic concordat (v3.481) - concordat agreements
+        this.diplomaticConcordat.update(this.tickRate, this.world, this.em, this.world.tick)
+        // World mud pots (v3.483) - bubbling mud formations
+        this.worldMudPot.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature potters (v3.485) - pottery artisans
+        this.creaturePotter.update(this.tickRate, this.em, this.world.tick)
+        // World steam vents (v3.486) - steam vent formations
+        this.worldSteamVent.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature basket weavers (v3.488) - basket weaving artisans
+        this.creatureBasketWeaver.update(this.tickRate, this.em, this.world.tick)
+        // World travertine (v3.489) - travertine mineral formations
+        this.worldTravertine.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic mutual aid (v3.490) - mutual aid agreements
+        this.diplomaticMutualAid.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
