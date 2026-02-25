@@ -458,6 +458,18 @@ import { WorldBarrierIslandSystem } from '../systems/WorldBarrierIslandSystem'
 import { CreatureSawyerSystem } from '../systems/CreatureSawyerSystem'
 import { WorldVolcanicAshPlainSystem } from '../systems/WorldVolcanicAshPlainSystem'
 import { DiplomaticAdjudicationSystem } from '../systems/DiplomaticAdjudicationSystem'
+import { CreatureGildersSystem } from '../systems/CreatureGildersSystem'
+import { CreatureCoopersSystem } from '../systems/CreatureCoopersSystem'
+import { WorldMudFlatSystem } from '../systems/WorldMudFlatSystem'
+import { CreatureThatchersSystem } from '../systems/CreatureThatchersSystem'
+import { WorldCoralAtollSystem } from '../systems/WorldCoralAtollSystem'
+import { CreatureChandlersSystem } from '../systems/CreatureChandlersSystem'
+import { WorldGeothermalSpringSystem } from '../systems/WorldGeothermalSpringSystem'
+import { DiplomaticConciliationSystem } from '../systems/DiplomaticConciliationSystem'
+import { CreatureGlazersSystem } from '../systems/CreatureGlazersSystem'
+import { WorldSinkholePlainSystem } from '../systems/WorldSinkholePlainSystem'
+import { CreaturePlasterersSystem } from '../systems/CreaturePlasterersSystem'
+import { DiplomaticArbitrationTreatySystem } from '../systems/DiplomaticArbitrationTreatySystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -917,6 +929,18 @@ export class Game {
   private creatureSawyer!: CreatureSawyerSystem
   private worldVolcanicAshPlain!: WorldVolcanicAshPlainSystem
   private diplomaticAdjudication!: DiplomaticAdjudicationSystem
+  private creatureGilders!: CreatureGildersSystem
+  private creatureCoopers!: CreatureCoopersSystem
+  private worldMudFlat!: WorldMudFlatSystem
+  private creatureThatchers!: CreatureThatchersSystem
+  private worldCoralAtoll!: WorldCoralAtollSystem
+  private creatureChandlers!: CreatureChandlersSystem
+  private worldGeothermalSpring!: WorldGeothermalSpringSystem
+  private diplomaticConciliation!: DiplomaticConciliationSystem
+  private creatureGlazers!: CreatureGlazersSystem
+  private worldSinkholePlain!: WorldSinkholePlainSystem
+  private creaturePlasterers!: CreaturePlasterersSystem
+  private diplomaticArbitrationTreaty!: DiplomaticArbitrationTreatySystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1527,6 +1551,18 @@ export class Game {
     this.creatureSawyer = new CreatureSawyerSystem()
     this.worldVolcanicAshPlain = new WorldVolcanicAshPlainSystem()
     this.diplomaticAdjudication = new DiplomaticAdjudicationSystem()
+    this.creatureGilders = new CreatureGildersSystem()
+    this.creatureCoopers = new CreatureCoopersSystem()
+    this.worldMudFlat = new WorldMudFlatSystem()
+    this.creatureThatchers = new CreatureThatchersSystem()
+    this.worldCoralAtoll = new WorldCoralAtollSystem()
+    this.creatureChandlers = new CreatureChandlersSystem()
+    this.worldGeothermalSpring = new WorldGeothermalSpringSystem()
+    this.diplomaticConciliation = new DiplomaticConciliationSystem()
+    this.creatureGlazers = new CreatureGlazersSystem()
+    this.worldSinkholePlain = new WorldSinkholePlainSystem()
+    this.creaturePlasterers = new CreaturePlasterersSystem()
+    this.diplomaticArbitrationTreaty = new DiplomaticArbitrationTreatySystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3025,7 +3061,7 @@ export class Game {
         // World salt flats (v3.52) - salt deposits in arid regions
         this.worldSaltFlat.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic mediation (v3.53) - third-party conflict resolution
-        this.diplomaticMediation.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.diplomaticMediation.update(this.tickRate, this.world, this.em, this.world.tick)
         // Creature calligraphy (v3.54) - creatures develop writing
         this.creatureCalligraphy.update(this.tickRate, this.em, this.world.tick)
         // World fog banks (v3.55) - coastal fog reduces visibility
@@ -3354,6 +3390,32 @@ export class Game {
         this.worldVolcanicAshPlain.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic adjudication (v3.235) - dispute resolution
         this.diplomaticAdjudication.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature gilders (v3.236) - gold leaf artisans
+        this.creatureGilders.update(this.tickRate, this.em, this.world.tick)
+        // Creature coopers (v3.238) - barrel crafters
+        this.creatureCoopers.update(this.tickRate, this.em, this.world.tick)
+        // World mud flats (v3.239) - tidal mudflats
+        this.worldMudFlat.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature thatchers (v3.241) - straw roof builders
+        this.creatureThatchers.update(this.tickRate, this.em, this.world.tick)
+        // World coral atolls (v3.242) - ring-shaped reef islands
+        this.worldCoralAtoll.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature chandlers (v3.243) - candle and soap makers
+        this.creatureChandlers.update(this.tickRate, this.em, this.world.tick)
+        // World geothermal springs (v3.244) - hot springs
+        this.worldGeothermalSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic conciliation (v3.245) - post-war reconciliation
+        this.diplomaticConciliation.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature glazers (v3.246) - window glass artisans
+        this.creatureGlazers.update(this.tickRate, this.em, this.world.tick)
+        // World sinkhole plains (v3.247) - karst landscape
+        this.worldSinkholePlain.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature plasterers (v3.248) - wall finish workers
+        this.creaturePlasterers.update(this.tickRate, this.em, this.world.tick)
+        // World peat bogs (v3.249) - acidic wetlands
+        this.worldPeatBog.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic arbitration treaties (v3.250) - binding agreements
+        this.diplomaticArbitrationTreaty.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate

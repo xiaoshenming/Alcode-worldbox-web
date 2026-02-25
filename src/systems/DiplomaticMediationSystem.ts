@@ -1,103 +1,80 @@
-// Diplomatic Mediation System (v3.53) - Third-party civilizations mediate conflicts
-// Successful mediation prevents wars and improves relations between conflicting civs
+// Diplomatic Mediation System (v3.240) - Third-party conflict mediation
+// Neutral civilizations facilitate negotiations between disputing parties
 
+import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type MediationOutcome = 'pending' | 'success' | 'partial' | 'failure'
+export type ConflictType = 'territorial' | 'economic' | 'cultural' | 'military'
 
 export interface Mediation {
   id: number
+  party1CivId: number
+  party2CivId: number
   mediatorCivId: number
-  civAId: number
-  civBId: number
-  outcome: MediationOutcome
-  progress: number     // 0-100
-  trustGain: number    // bonus trust on success
-  startTick: number
-  duration: number
+  conflictType: ConflictType
+  progress: number
+  trust: number
+  outcome: 'resolved' | 'stalled' | 'failed'
+  sessions: number
+  tick: number
 }
 
-const CHECK_INTERVAL = 1500
-const MEDIATION_CHANCE = 0.004
-const MAX_MEDIATIONS = 15
-const PROGRESS_RATE = 0.06
-const SUCCESS_THRESHOLD = 80
+const CHECK_INTERVAL = 2400
+const MEDIATE_CHANCE = 0.003
+const MAX_MEDIATIONS = 24
+
+const CONFLICT_TYPES: ConflictType[] = ['territorial', 'economic', 'cultural', 'military']
 
 export class DiplomaticMediationSystem {
   private mediations: Mediation[] = []
   private nextId = 1
   private lastCheck = 0
 
-  update(dt: number, em: EntityManager, civManager: any, tick: number): void {
+  update(dt: number, world: World, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    if (!civManager?.civilizations) return
-    const civs = civManager.civilizations
-    if (civs.length < 3) return
+    if (this.mediations.length < MAX_MEDIATIONS && Math.random() < MEDIATE_CHANCE) {
+      const party1 = 1 + Math.floor(Math.random() * 8)
+      const party2 = 1 + Math.floor(Math.random() * 8)
+      if (party1 === party2) return
 
-    // Start new mediations
-    if (this.mediations.length < MAX_MEDIATIONS && Math.random() < MEDIATION_CHANCE) {
-      const indices = Array.from({ length: civs.length }, (_, i) => i)
-      // Pick 3 different civs
-      const iA = Math.floor(Math.random() * indices.length)
-      const a = indices.splice(iA, 1)[0]
-      const iB = Math.floor(Math.random() * indices.length)
-      const b = indices.splice(iB, 1)[0]
-      const iM = Math.floor(Math.random() * indices.length)
-      const m = indices[iM]
+      let mediator = 1 + Math.floor(Math.random() * 8)
+      while (mediator === party1 || mediator === party2) {
+        mediator = 1 + Math.floor(Math.random() * 8)
+      }
+
+      const conflictType = CONFLICT_TYPES[Math.floor(Math.random() * CONFLICT_TYPES.length)]
 
       this.mediations.push({
         id: this.nextId++,
-        mediatorCivId: civs[m].id,
-        civAId: civs[a].id,
-        civBId: civs[b].id,
-        outcome: 'pending',
-        progress: 0,
-        trustGain: 10 + Math.random() * 20,
-        startTick: tick,
-        duration: 2500 + Math.random() * 4000,
+        party1CivId: party1,
+        party2CivId: party2,
+        mediatorCivId: mediator,
+        conflictType,
+        progress: 5 + Math.random() * 15,
+        trust: 10 + Math.random() * 30,
+        outcome: 'stalled',
+        sessions: 1,
+        tick,
       })
     }
 
-    // Update mediations
     for (const med of this.mediations) {
-      if (med.outcome !== 'pending') continue
+      med.progress = Math.min(100, med.progress + 0.08 + med.trust * 0.002)
+      med.trust = Math.min(100, med.trust + 0.03)
+      med.sessions += Math.random() < 0.01 ? 1 : 0
 
-      med.progress += PROGRESS_RATE * CHECK_INTERVAL
-
-      // Random setbacks
-      if (Math.random() < 0.02) {
-        med.progress = Math.max(0, med.progress - 10)
-      }
-
-      // Determine outcome
-      const elapsed = tick - med.startTick
-      if (elapsed > med.duration) {
-        if (med.progress >= SUCCESS_THRESHOLD) {
-          med.outcome = 'success'
-        } else if (med.progress >= 50) {
-          med.outcome = 'partial'
-          med.trustGain *= 0.4
-        } else {
-          med.outcome = 'failure'
-          med.trustGain = 0
-        }
+      if (med.progress >= 90 && med.outcome === 'stalled') {
+        med.outcome = Math.random() < 0.7 ? 'resolved' : 'failed'
       }
     }
 
-    // Clean up old mediations
-    const cutoff = tick - 5000
-    this.mediations = this.mediations.filter(
-      m => m.outcome === 'pending' || m.startTick > cutoff
-    )
+    const cutoff = tick - 75000
+    for (let i = this.mediations.length - 1; i >= 0; i--) {
+      if (this.mediations[i].tick < cutoff) this.mediations.splice(i, 1)
+    }
   }
 
-  getMediations(): Mediation[] {
-    return this.mediations
-  }
-
-  getByMediator(civId: number): Mediation[] {
-    return this.mediations.filter(m => m.mediatorCivId === civId)
-  }
+  getMediations(): Mediation[] { return this.mediations }
 }
