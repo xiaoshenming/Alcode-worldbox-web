@@ -306,6 +306,11 @@ import { WorldFogBankSystem } from '../systems/WorldFogBankSystem'
 import { CreatureFermentationSystem } from '../systems/CreatureFermentationSystem'
 import { CreatureVentriloquismSystem } from '../systems/CreatureVentriloquismSystem'
 import { WorldDustDevilSystem } from '../systems/WorldDustDevilSystem'
+import { CreaturePotterySystem } from '../systems/CreaturePotterySystem'
+import { WorldMangroveSystem } from '../systems/WorldMangroveSystem'
+import { DiplomaticPeaceTreatySystem } from '../systems/DiplomaticPeaceTreatySystem'
+import { CreatureEcholocationSystem } from '../systems/CreatureEcholocationSystem'
+import { WorldBallLightningSystem } from '../systems/WorldBallLightningSystem'
 
 export class Game {
   private world: World
@@ -614,6 +619,11 @@ export class Game {
   private creatureFermentation!: CreatureFermentationSystem
   private creatureVentriloquism!: CreatureVentriloquismSystem
   private worldDustDevil!: WorldDustDevilSystem
+  private creaturePottery!: CreaturePotterySystem
+  private worldMangrove!: WorldMangroveSystem
+  private diplomaticPeaceTreaty!: DiplomaticPeaceTreatySystem
+  private creatureEcholocation!: CreatureEcholocationSystem
+  private worldBallLightning!: WorldBallLightningSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -1073,6 +1083,11 @@ export class Game {
     this.creatureFermentation = new CreatureFermentationSystem()
     this.creatureVentriloquism = new CreatureVentriloquismSystem()
     this.worldDustDevil = new WorldDustDevilSystem()
+    this.creaturePottery = new CreaturePotterySystem()
+    this.worldMangrove = new WorldMangroveSystem()
+    this.diplomaticPeaceTreaty = new DiplomaticPeaceTreatySystem()
+    this.creatureEcholocation = new CreatureEcholocationSystem()
+    this.worldBallLightning = new WorldBallLightningSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2582,6 +2597,16 @@ export class Game {
         this.creatureVentriloquism.update(this.tickRate, this.em, this.world.tick)
         // World dust devils (v3.60) - whirlwinds in arid regions
         this.worldDustDevil.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature pottery (v3.61) - creatures craft pottery
+        this.creaturePottery.update(this.tickRate, this.em, this.world.tick)
+        // World mangroves (v3.62) - coastal mangrove forests
+        this.worldMangrove.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic peace treaties (v3.63) - formal peace agreements
+        this.diplomaticPeaceTreaty.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // Creature echolocation (v3.64) - sonar-like sensing
+        this.creatureEcholocation.update(this.tickRate, this.em, this.world.tick)
+        // World ball lightning (v3.65) - rare electrical phenomena
+        this.worldBallLightning.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
