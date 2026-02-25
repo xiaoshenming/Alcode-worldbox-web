@@ -10,7 +10,7 @@ import { CreaturePanel } from '../ui/CreaturePanel'
 import { EventPanel } from '../ui/EventPanel'
 import { StatsPanel } from '../ui/StatsPanel'
 import { ContextMenu, MenuSection } from '../ui/ContextMenu'
-import { EntityManager, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent, CreatureComponent, NeedsComponent, HeroComponent } from '../ecs/Entity'
 import { AISystem } from '../systems/AISystem'
 import { CombatSystem } from '../systems/CombatSystem'
 import { ParticleSystem } from '../systems/ParticleSystem'
@@ -236,6 +236,26 @@ export class Game {
             { icon: '\u26A1', label: 'Smite', action: () => { needs.health = 0 } },
           ]
         })
+
+        // Hero options
+        const hero = this.em.getComponent<HeroComponent>(creatureId, 'hero')
+        if (!hero) {
+          sections[sections.length - 1].items.push({
+            icon: '\u2B50', label: 'Make Hero', action: () => {
+              const abilities: ('warrior'|'ranger'|'healer'|'berserker')[] = ['warrior','ranger','healer','berserker']
+              const ability = abilities[Math.floor(Math.random() * abilities.length)]
+              this.em.addComponent(creatureId, {
+                type: 'hero', level: 1, xp: 0, xpToNext: 30, kills: 0,
+                title: ability.charAt(0).toUpperCase() + ability.slice(1),
+                ability, abilityCooldown: 0
+              } as HeroComponent)
+            }
+          })
+        } else {
+          sections[sections.length - 1].items.push({
+            icon: '\u2B50', label: `Lv.${hero.level} ${hero.title} (${hero.xp}/${hero.xpToNext} XP)`, action: () => {}
+          })
+        }
       }
 
       // Terrain operations

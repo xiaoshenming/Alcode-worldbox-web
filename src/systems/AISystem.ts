@@ -1,4 +1,4 @@
-import { EntityManager, EntityId, PositionComponent, VelocityComponent, NeedsComponent, AIComponent, CreatureComponent, RenderComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent, VelocityComponent, NeedsComponent, AIComponent, CreatureComponent, RenderComponent, HeroComponent } from '../ecs/Entity'
 import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { World } from '../game/World'
 import { ParticleSystem } from './ParticleSystem'
@@ -88,6 +88,20 @@ export class AISystem {
           ai.state = 'fleeing'
           ai.targetEntity = threat.id
         }
+      }
+
+      // Hero behavior adjustments
+      const hero = this.em.getComponent<HeroComponent>(id, 'hero')
+      if (hero) {
+        // Heroes never flee, they fight
+        if (ai.state === 'fleeing') {
+          ai.state = 'attacking'
+        }
+        // Healer ability: heal nearby allies
+        if (hero.ability === 'healer' && hero.abilityCooldown <= 0) {
+          this.heroHeal(id, pos, hero)
+        }
+        if (hero.abilityCooldown > 0) hero.abilityCooldown--
       }
 
       // Hunger can override idle/wandering but not combat states
@@ -362,10 +376,40 @@ export class AISystem {
     return { x: pos.x, y: pos.y }
   }
 
+  private heroHeal(id: EntityId, pos: PositionComponent, hero: HeroComponent): void {
+    const civMember = this.em.getComponent<CivMemberComponent>(id, 'civMember')
+    const entities = this.em.getEntitiesWithComponents('position', 'needs')
+
+    for (const otherId of entities) {
+      if (otherId === id) continue
+      const otherPos = this.em.getComponent<PositionComponent>(otherId, 'position')!
+      const dx = pos.x - otherPos.x
+      const dy = pos.y - otherPos.y
+      if (dx * dx + dy * dy > 25) continue // 5 tile range
+
+      // Only heal same civilization members
+      if (civMember) {
+        const otherCiv = this.em.getComponent<CivMemberComponent>(otherId, 'civMember')
+        if (!otherCiv || otherCiv.civId !== civMember.civId) continue
+      }
+
+      const otherNeeds = this.em.getComponent<NeedsComponent>(otherId, 'needs')!
+      if (otherNeeds.health < 100) {
+        otherNeeds.health = Math.min(100, otherNeeds.health + 15)
+        this.particles.spawn(otherPos.x, otherPos.y, 3, '#00ff88', 0.8)
+        hero.abilityCooldown = 120
+        break // Heal one per activation
+      }
+    }
+  }
+
   private findNearbyThreat(
     id: EntityId, pos: PositionComponent, creature: CreatureComponent, grid: Map<string, EntityId[]>
   ): { id: EntityId; dist: number } | null {
-    const detectRange = creature.isHostile ? 12 : 8
+    let detectRange = creature.isHostile ? 12 : 8
+    // Heroes have doubled detect range
+    const hero = this.em.getComponent<HeroComponent>(id, 'hero')
+    if (hero) detectRange *= 2
     let closest: { id: EntityId; dist: number } | null = null
 
     // Query spatial hash: detectRange up to 12, cell size 5, so need radius of 3 cells

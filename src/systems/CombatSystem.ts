@@ -1,4 +1,4 @@
-import { EntityManager, EntityId, PositionComponent, NeedsComponent, CreatureComponent, RenderComponent, AIComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent, NeedsComponent, CreatureComponent, RenderComponent, AIComponent, HeroComponent, getHeroTitle } from '../ecs/Entity'
 import { BuildingComponent, BuildingType, CivMemberComponent } from '../civilization/Civilization'
 import { CivManager } from '../civilization/CivManager'
 import { ParticleSystem } from './ParticleSystem'
@@ -68,7 +68,11 @@ export class CombatSystem {
         const dy = pos.y - otherPos.y
         const dist = Math.sqrt(dx * dx + dy * dy)
 
-        if (dist > 2) continue // Too far for combat
+        // Hero ranger gets extended range
+        const attackerHero = this.em.getComponent<HeroComponent>(id, 'hero')
+        const combatRange = (attackerHero && attackerHero.ability === 'ranger') ? 3 : 2
+
+        if (dist > combatRange) continue // Too far for combat
 
         // Determine if hostile
         const shouldFight = this.isHostile(creature, civMember, otherCreature, otherCivMember)
@@ -84,6 +88,26 @@ export class CombatSystem {
               else if (attackerCiv.techLevel >= 3) damage *= 1.2
             }
           }
+
+          // Hero damage bonuses
+          if (attackerHero) {
+            switch (attackerHero.ability) {
+              case 'warrior':
+                damage *= 1.5
+                break
+              case 'ranger':
+                damage *= 1.3
+                break
+              case 'berserker': {
+                // Lower health = more damage, up to +100%
+                const hpRatio = needs.health / 100
+                const berserkerBonus = 1 + (1 - hpRatio)
+                damage *= berserkerBonus
+                break
+              }
+            }
+          }
+
           otherNeeds.health -= damage
           this.audio.playCombat()
 
@@ -143,6 +167,48 @@ export class CombatSystem {
     const victimCreature = this.em.getComponent<CreatureComponent>(victimId, 'creature')
     if (killerCreature && victimCreature) {
       EventLog.log('death', `${killerCreature.name} (${killerCreature.species}) killed ${victimCreature.name} (${victimCreature.species})`, this.tick)
+    }
+
+    // Hero XP gain
+    const killerHero = this.em.getComponent<HeroComponent>(killerId, 'hero')
+    if (killerHero && victimCreature) {
+      killerHero.kills++
+      // XP based on victim type
+      const victimHero = this.em.getComponent<HeroComponent>(victimId, 'hero')
+      if (victimCreature.species === 'dragon') {
+        killerHero.xp += 50
+      } else if (victimHero) {
+        killerHero.xp += 25
+      } else {
+        killerHero.xp += 10
+      }
+
+      // Check level up
+      if (killerHero.xp >= killerHero.xpToNext) {
+        killerHero.xp -= killerHero.xpToNext
+        killerHero.level++
+        killerHero.xpToNext = Math.floor(killerHero.xpToNext * 1.5)
+        killerHero.title = getHeroTitle(killerHero.ability, killerHero.level)
+
+        // Stat boosts
+        if (killerCreature) {
+          killerCreature.damage += 3
+          killerCreature.speed += 0.5
+        }
+        const killerNeeds = this.em.getComponent<NeedsComponent>(killerId, 'needs')
+        if (killerNeeds) {
+          killerNeeds.health = 100
+        }
+
+        // Level up particles
+        const killerPos = this.em.getComponent<PositionComponent>(killerId, 'position')
+        if (killerPos) {
+          this.particles.spawn(killerPos.x, killerPos.y, 8, '#ffff00', 1.5)
+          this.particles.spawn(killerPos.x, killerPos.y, 5, '#ffffff', 1.0)
+        }
+
+        EventLog.log('hero', `${killerCreature?.name} leveled up to Lv.${killerHero.level} ${killerHero.title}!`, this.tick)
+      }
     }
 
     const victimCiv = this.em.getComponent<CivMemberComponent>(victimId, 'civMember')

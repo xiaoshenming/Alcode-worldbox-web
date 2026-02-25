@@ -291,6 +291,38 @@ export class Renderer {
           ctx.stroke()
         }
 
+        // Hero aura
+        const heroComp = em.getComponent<any>(id, 'hero')
+        if (heroComp && camera.zoom > 0.3) {
+          const auraColors: Record<string, string> = {
+            warrior: '#ffd700',
+            ranger: '#44ff44',
+            healer: '#ffffff',
+            berserker: '#ff4444'
+          }
+          const auraColor = auraColors[heroComp.ability] || '#ffd700'
+          const pulse = Math.sin(performance.now() * 0.004 + id) * 0.3 + 0.5
+          const spriteSize = tileSize * 1.2
+          const auraRadius = spriteSize * 0.8 + pulse * 3 * camera.zoom
+
+          // Outer glow
+          ctx.strokeStyle = auraColor
+          ctx.globalAlpha = pulse * 0.6
+          ctx.lineWidth = 1.5 * camera.zoom
+          ctx.beginPath()
+          ctx.arc(cx, cy, auraRadius, 0, Math.PI * 2)
+          ctx.stroke()
+
+          // Level stars
+          ctx.globalAlpha = 0.9
+          ctx.fillStyle = '#ffd700'
+          ctx.font = `${Math.max(6, 8 * camera.zoom)}px monospace`
+          ctx.textAlign = 'center'
+          const stars = '★'.repeat(Math.min(heroComp.level, 5))
+          ctx.fillText(stars, cx, cy + spriteSize * 0.7 + 4 * camera.zoom)
+          ctx.globalAlpha = 1
+        }
+
         // Health bar (only when damaged)
         if (needs && needs.health < 100 && camera.zoom > 0.5) {
           const barWidth = size * 3

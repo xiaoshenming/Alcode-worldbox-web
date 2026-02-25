@@ -130,3 +130,39 @@ export interface CreatureComponent extends Component {
   maxAge: number
   gender: 'male' | 'female'
 }
+
+export interface HeroComponent extends Component {
+  type: 'hero'
+  level: number
+  xp: number
+  xpToNext: number
+  kills: number
+  title: string
+  ability: 'warrior' | 'ranger' | 'healer' | 'berserker'
+  abilityCooldown: number
+}
+
+export function getHeroTitle(ability: HeroComponent['ability'], level: number): string {
+  if (level >= 5) {
+    switch (ability) {
+      case 'warrior': return 'Legend'
+      case 'ranger': return 'Deadeye'
+      case 'healer': return 'Archon'
+      case 'berserker': return 'Destroyer'
+    }
+  } else if (level >= 3) {
+    switch (ability) {
+      case 'warrior': return 'Champion'
+      case 'ranger': return 'Sharpshooter'
+      case 'healer': return 'Sage'
+      case 'berserker': return 'Warlord'
+    }
+  } else {
+    switch (ability) {
+      case 'warrior': return 'Warrior'
+      case 'ranger': return 'Ranger'
+      case 'healer': return 'Healer'
+      case 'berserker': return 'Berserker'
+    }
+  }
+}
