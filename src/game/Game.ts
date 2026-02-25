@@ -5,7 +5,8 @@ import { Input } from './Input'
 import { Powers } from './Powers'
 import { Toolbar } from '../ui/Toolbar'
 import { InfoPanel } from '../ui/InfoPanel'
-import { EntityManager } from '../ecs/Entity'
+import { CreaturePanel } from '../ui/CreaturePanel'
+import { EntityManager, PositionComponent } from '../ecs/Entity'
 import { AISystem } from '../systems/AISystem'
 import { CombatSystem } from '../systems/CombatSystem'
 import { ParticleSystem } from '../systems/ParticleSystem'
@@ -21,6 +22,7 @@ export class Game {
   private powers: Powers
   private toolbar: Toolbar
   private infoPanel: InfoPanel
+  private creaturePanel: CreaturePanel
 
   em: EntityManager
   private aiSystem: AISystem
@@ -60,6 +62,7 @@ export class Game {
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
     this.toolbar = new Toolbar('toolbar', this.powers)
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
+    this.creaturePanel = new CreaturePanel('creaturePanel', this.em, this.civManager)
 
     this.setupSpeedControls()
     this.setupBrushControls()
@@ -104,6 +107,7 @@ export class Game {
     this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles, this.audio)
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
+    this.creaturePanel = new CreaturePanel('creaturePanel', this.em, this.civManager)
 
     // Generate new world
     this.world.generate()
@@ -133,6 +137,12 @@ export class Game {
 
   private setupInputCallbacks(): void {
     this.input.setOnMouseDown((x, y) => {
+      // Check if clicking on a creature (when no power selected)
+      if (!this.powers.getPower()) {
+        const clicked = this.findCreatureAt(x, y)
+        this.creaturePanel.select(clicked)
+        return
+      }
       this.powers.apply(x, y)
     })
     this.input.setOnMouseMove((x, y) => {
@@ -140,6 +150,24 @@ export class Game {
         this.powers.applyContinuous(x, y)
       }
     })
+  }
+
+  private findCreatureAt(wx: number, wy: number): number | null {
+    const entities = this.em.getEntitiesWithComponents('position', 'creature')
+    let closest: number | null = null
+    let closestDist = 2 // max click distance in tiles
+
+    for (const id of entities) {
+      const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+      const dx = pos.x - wx
+      const dy = pos.y - wy
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      if (dist < closestDist) {
+        closestDist = dist
+        closest = id
+      }
+    }
+    return closest
   }
 
   private setupResize(): void {
@@ -245,6 +273,7 @@ export class Game {
 
     if (this.world.tick % 30 === 0) {
       this.infoPanel.update(this.fps)
+      this.creaturePanel.update()
     }
 
     requestAnimationFrame(this.loop)
