@@ -11,6 +11,7 @@ import { AISystem } from '../systems/AISystem'
 import { CombatSystem } from '../systems/CombatSystem'
 import { ParticleSystem } from '../systems/ParticleSystem'
 import { SoundSystem } from '../systems/SoundSystem'
+import { WeatherSystem } from '../systems/WeatherSystem'
 import { CreatureFactory } from '../entities/CreatureFactory'
 import { CivManager } from '../civilization/CivManager'
 
@@ -31,6 +32,7 @@ export class Game {
   private audio: SoundSystem
   creatureFactory: CreatureFactory
   civManager: CivManager
+  private weather: WeatherSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -58,6 +60,7 @@ export class Game {
     this.audio = new SoundSystem()
     this.aiSystem = new AISystem(this.em, this.world, this.particles, this.creatureFactory)
     this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles, this.audio)
+    this.weather = new WeatherSystem(this.world, this.particles, this.em)
 
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
     this.toolbar = new Toolbar('toolbar', this.powers)
@@ -105,6 +108,7 @@ export class Game {
     this.civManager = new CivManager(this.em, this.world)
     this.aiSystem = new AISystem(this.em, this.world, this.particles, this.creatureFactory)
     this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles, this.audio)
+    this.weather = new WeatherSystem(this.world, this.particles, this.em)
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
     this.creaturePanel = new CreaturePanel('creaturePanel', this.em, this.civManager)
@@ -285,12 +289,13 @@ export class Game {
         this.aiSystem.update()
         this.combatSystem.update()
         this.civManager.update()
+        this.weather.update()
         this.particles.update()
         this.accumulator -= this.tickRate
       }
     }
 
-    this.renderer.render(this.world, this.camera, this.em, this.civManager, this.particles)
+    this.renderer.render(this.world, this.camera, this.em, this.civManager, this.particles, this.weather.fogAlpha)
     this.renderer.renderBrushOutline(this.camera, this.input.mouseX, this.input.mouseY, this.powers.getBrushSize())
     this.renderer.renderMinimap(this.world, this.camera)
 
@@ -317,6 +322,7 @@ export class Game {
     const icon = isDay ? '☀️' : '🌙'
     const timeStr = isDay ? 'Day' : 'Night'
     const hour = Math.floor(this.world.dayNightCycle * 24)
-    el.textContent = `${icon} ${timeStr} (${hour}:00)`
+    const weatherLabel = this.weather.getWeatherLabel()
+    el.textContent = `${icon} ${timeStr} (${hour}:00) | ${weatherLabel}`
   }
 }

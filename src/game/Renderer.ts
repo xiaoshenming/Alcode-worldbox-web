@@ -40,7 +40,7 @@ export class Renderer {
     this.terrainDirty = true
   }
 
-  render(world: World, camera: Camera, em?: EntityManager, civManager?: CivManager, particles?: ParticleSystem): void {
+  render(world: World, camera: Camera, em?: EntityManager, civManager?: CivManager, particles?: ParticleSystem, fogAlpha?: number): void {
     const ctx = this.ctx
     const bounds = camera.getVisibleBounds()
 
@@ -87,6 +87,12 @@ export class Renderer {
     if (brightness < 1.0) {
       const darkness = 1.0 - brightness
       ctx.fillStyle = `rgba(0, 0, 30, ${darkness})`
+      ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
+    }
+
+    // Fog overlay
+    if (fogAlpha && fogAlpha > 0) {
+      ctx.fillStyle = `rgba(180, 190, 200, ${fogAlpha})`
       ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
     }
   }
