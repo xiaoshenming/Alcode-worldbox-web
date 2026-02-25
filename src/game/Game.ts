@@ -145,6 +145,11 @@ import { MapMarkerSystem } from '../systems/MapMarkerSystem'
 import { TerrainDecorationSystem } from '../systems/TerrainDecorationSystem'
 import { TimeRewindSystem } from '../systems/TimeRewindSystem'
 import { WeatherControlSystem } from '../systems/WeatherControlSystem'
+import { WorldEventTimelineSystem } from '../systems/WorldEventTimelineSystem'
+import { ResourceFlowSystem } from '../systems/ResourceFlowSystem'
+import { CreatureEmotionSystem } from '../systems/CreatureEmotionSystem'
+import { PowerFavoriteSystem } from '../systems/PowerFavoriteSystem'
+import { WorldHeatmapSystem } from '../systems/WorldHeatmapSystem'
 
 export class Game {
   private world: World
@@ -292,6 +297,11 @@ export class Game {
   private terrainDecoration!: TerrainDecorationSystem
   private timeRewind!: TimeRewindSystem
   private weatherControl!: WeatherControlSystem
+  private worldEventTimeline!: WorldEventTimelineSystem
+  private resourceFlow!: ResourceFlowSystem
+  private creatureEmotion!: CreatureEmotionSystem
+  private powerFavorite!: PowerFavoriteSystem
+  private worldHeatmap!: WorldHeatmapSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -583,6 +593,11 @@ export class Game {
     this.terrainDecoration = new TerrainDecorationSystem()
     this.timeRewind = new TimeRewindSystem()
     this.weatherControl = new WeatherControlSystem()
+    this.worldEventTimeline = new WorldEventTimelineSystem()
+    this.resourceFlow = new ResourceFlowSystem()
+    this.creatureEmotion = new CreatureEmotionSystem()
+    this.powerFavorite = new PowerFavoriteSystem()
+    this.worldHeatmap = new WorldHeatmapSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2136,6 +2151,24 @@ export class Game {
 
     // Custom species creator (v1.80)
     this.customSpecies.render(ctx, this.canvas.width, this.canvas.height)
+
+    // World event timeline (v1.81)
+    this.worldEventTimeline.update(this.world.tick)
+    this.worldEventTimeline.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Resource flow visualization (v1.82)
+    this.resourceFlow.update(this.world.tick)
+    this.resourceFlow.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // Creature emotion bubbles (v1.83)
+    this.creatureEmotion.update(this.world.tick)
+
+    // Power favorite bar (v1.84)
+    this.powerFavorite.render(ctx, this.canvas.width, this.canvas.height)
+
+    // World heatmap overlay (v1.85)
+    this.worldHeatmap.update(this.world.tick)
+    this.worldHeatmap.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, this.canvas.width, this.canvas.height)
 
     // Screenshot mode toast (v1.66)
     this.screenshotMode.update()
