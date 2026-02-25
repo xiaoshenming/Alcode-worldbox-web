@@ -606,6 +606,21 @@ import { DiplomaticAcquittalSystem } from '../systems/DiplomaticAcquittalSystem'
 import { CreatureBobbinLaceMakersSystem } from '../systems/CreatureBobbinLaceMakersSystem'
 import { WorldRockPedestalSystem } from '../systems/WorldRockPedestalSystem'
 import { DiplomaticImmunitySystem } from '../systems/DiplomaticImmunitySystem'
+import { CreatureTattingMakersSystem } from '../systems/CreatureTattingMakersSystem'
+import { WorldBalancingRockSystem } from '../systems/WorldBalancingRockSystem'
+import { DiplomaticIndulgenceSystem } from '../systems/DiplomaticIndulgenceSystem'
+import { CreatureNettingMakersSystem } from '../systems/CreatureNettingMakersSystem'
+import { WorldFairyChimneySystem } from '../systems/WorldFairyChimneySystem'
+import { DiplomaticCommutationSystem } from '../systems/DiplomaticCommutationSystem'
+import { CreatureFringeMakersSystem } from '../systems/CreatureFringeMakersSystem'
+import { WorldStoneArchSystem } from '../systems/WorldStoneArchSystem'
+import { DiplomaticMitigationSystem } from '../systems/DiplomaticMitigationSystem'
+import { CreatureTasselMakersSystem } from '../systems/CreatureTasselMakersSystem'
+import { WorldRockBridgeSystem } from '../systems/WorldRockBridgeSystem'
+import { DiplomaticCondonationSystem } from '../systems/DiplomaticCondonationSystem'
+import { CreatureBraidMakersSystem } from '../systems/CreatureBraidMakersSystem'
+import { WorldStoneWindowSystem } from '../systems/WorldStoneWindowSystem'
+import { DiplomaticVindicationSystem } from '../systems/DiplomaticVindicationSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1213,6 +1228,21 @@ export class Game {
   private creatureBobbinLaceMakers!: CreatureBobbinLaceMakersSystem
   private worldRockPedestal!: WorldRockPedestalSystem
   private diplomaticImmunity!: DiplomaticImmunitySystem
+  private creatureTattingMakers!: CreatureTattingMakersSystem
+  private worldBalancingRock!: WorldBalancingRockSystem
+  private diplomaticIndulgence!: DiplomaticIndulgenceSystem
+  private creatureNettingMakers!: CreatureNettingMakersSystem
+  private worldFairyChimney!: WorldFairyChimneySystem
+  private diplomaticCommutation!: DiplomaticCommutationSystem
+  private creatureFringeMakers!: CreatureFringeMakersSystem
+  private worldStoneArch!: WorldStoneArchSystem
+  private diplomaticMitigation!: DiplomaticMitigationSystem
+  private creatureTasselMakers!: CreatureTasselMakersSystem
+  private worldRockBridge!: WorldRockBridgeSystem
+  private diplomaticCondonation!: DiplomaticCondonationSystem
+  private creatureBraidMakers!: CreatureBraidMakersSystem
+  private worldStoneWindow!: WorldStoneWindowSystem
+  private diplomaticVindication!: DiplomaticVindicationSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1971,6 +2001,21 @@ export class Game {
     this.creatureBobbinLaceMakers = new CreatureBobbinLaceMakersSystem()
     this.worldRockPedestal = new WorldRockPedestalSystem()
     this.diplomaticImmunity = new DiplomaticImmunitySystem()
+    this.creatureTattingMakers = new CreatureTattingMakersSystem()
+    this.worldBalancingRock = new WorldBalancingRockSystem()
+    this.diplomaticIndulgence = new DiplomaticIndulgenceSystem()
+    this.creatureNettingMakers = new CreatureNettingMakersSystem()
+    this.worldFairyChimney = new WorldFairyChimneySystem()
+    this.diplomaticCommutation = new DiplomaticCommutationSystem()
+    this.creatureFringeMakers = new CreatureFringeMakersSystem()
+    this.worldStoneArch = new WorldStoneArchSystem()
+    this.diplomaticMitigation = new DiplomaticMitigationSystem()
+    this.creatureTasselMakers = new CreatureTasselMakersSystem()
+    this.worldRockBridge = new WorldRockBridgeSystem()
+    this.diplomaticCondonation = new DiplomaticCondonationSystem()
+    this.creatureBraidMakers = new CreatureBraidMakersSystem()
+    this.worldStoneWindow = new WorldStoneWindowSystem()
+    this.diplomaticVindication = new DiplomaticVindicationSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -4096,6 +4141,36 @@ export class Game {
         this.worldRockPedestal.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic immunity (v3.400) - immunity agreements
         this.diplomaticImmunity.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature tatting makers (v3.401) - tatting lace artisans
+        this.creatureTattingMakers.update(this.tickRate, this.em, this.world.tick)
+        // World balancing rocks (v3.402) - balancing rock formations
+        this.worldBalancingRock.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic indulgence (v3.403) - indulgence grants
+        this.diplomaticIndulgence.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature netting makers (v3.404) - netting artisans
+        this.creatureNettingMakers.update(this.tickRate, this.em, this.world.tick)
+        // World fairy chimneys (v3.405) - fairy chimney formations
+        this.worldFairyChimney.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic commutation (v3.406) - commutation of sentences
+        this.diplomaticCommutation.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature fringe makers (v3.407) - fringe crafting artisans
+        this.creatureFringeMakers.update(this.tickRate, this.em, this.world.tick)
+        // World stone arches (v3.408) - natural stone arch formations
+        this.worldStoneArch.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic mitigation (v3.409) - mitigation measures
+        this.diplomaticMitigation.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature tassel makers (v3.410) - tassel crafting artisans
+        this.creatureTasselMakers.update(this.tickRate, this.em, this.world.tick)
+        // World rock bridges (v3.411) - natural rock bridge formations
+        this.worldRockBridge.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic condonation (v3.412) - condonation policies
+        this.diplomaticCondonation.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature braid makers (v3.413) - braid crafting artisans
+        this.creatureBraidMakers.update(this.tickRate, this.em, this.world.tick)
+        // World stone windows (v3.414) - natural stone window formations
+        this.worldStoneWindow.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic vindication (v3.415) - vindication proceedings
+        this.diplomaticVindication.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
