@@ -342,6 +342,11 @@ import { WorldIrrigationSystem } from '../systems/WorldIrrigationSystem'
 import { CreatureConstellationSystem } from '../systems/CreatureConstellationSystem'
 import { CreatureScribeSystem } from '../systems/CreatureScribeSystem'
 import { WorldLighthouseSystem } from '../systems/WorldLighthouseSystem'
+import { CreatureMasonrySystem } from '../systems/CreatureMasonrySystem'
+import { WorldTidewaterSystem } from '../systems/WorldTidewaterSystem'
+import { CreatureOrigamiSystem } from '../systems/CreatureOrigamiSystem'
+import { WorldLabyrinthSystem } from '../systems/WorldLabyrinthSystem'
+import { CreatureFalconrySystem } from '../systems/CreatureFalconrySystem'
 
 export class Game {
   private world: World
@@ -686,6 +691,11 @@ export class Game {
   private creatureConstellation!: CreatureConstellationSystem
   private creatureScribe!: CreatureScribeSystem
   private worldLighthouse!: WorldLighthouseSystem
+  private creatureMasonry!: CreatureMasonrySystem
+  private worldTidewater!: WorldTidewaterSystem
+  private creatureOrigami!: CreatureOrigamiSystem
+  private worldLabyrinth!: WorldLabyrinthSystem
+  private creatureFalconry!: CreatureFalconrySystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -1181,6 +1191,11 @@ export class Game {
     this.creatureConstellation = new CreatureConstellationSystem()
     this.creatureScribe = new CreatureScribeSystem()
     this.worldLighthouse = new WorldLighthouseSystem()
+    this.creatureMasonry = new CreatureMasonrySystem()
+    this.worldTidewater = new WorldTidewaterSystem()
+    this.creatureOrigami = new CreatureOrigamiSystem()
+    this.worldLabyrinth = new WorldLabyrinthSystem()
+    this.creatureFalconry = new CreatureFalconrySystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2776,6 +2791,16 @@ export class Game {
         this.creatureScribe.update(this.tickRate, this.em, this.world.tick)
         // World lighthouses (v3.105) - coastal navigation aids
         this.worldLighthouse.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature masonry (v3.106) - stone building projects
+        this.creatureMasonry.update(this.tickRate, this.em, this.world.tick)
+        // World tidewater (v3.107) - tidal fluctuations
+        this.worldTidewater.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature origami (v3.108) - paper folding art
+        this.creatureOrigami.update(this.tickRate, this.em, this.world.tick)
+        // World labyrinths (v3.109) - natural maze formations
+        this.worldLabyrinth.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature falconry (v3.110) - trained hunting birds
+        this.creatureFalconry.update(this.tickRate, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
