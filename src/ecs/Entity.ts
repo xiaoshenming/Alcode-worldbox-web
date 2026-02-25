@@ -182,6 +182,22 @@ export interface DiseaseComponent extends Component {
   immuneUntil: number     // tick when immunity expires (for reinfection prevention)
 }
 
+export interface GeneticsComponent extends Component {
+  type: 'genetics'
+  traits: {
+    strength: number      // 0.5-2.0, affects damage
+    vitality: number      // 0.5-2.0, affects max health
+    agility: number       // 0.5-2.0, affects speed
+    fertility: number     // 0.5-2.0, affects breed chance
+    longevity: number     // 0.5-2.0, affects max age
+    intelligence: number  // 0.5-2.0, affects tech contribution
+  }
+  mutations: string[]     // list of active mutation names
+  generation: number      // 0 = original, increments each generation
+  parentA: number | null
+  parentB: number | null
+}
+
 export function getHeroTitle(ability: HeroComponent['ability'], level: number): string {
   if (level >= 5) {
     switch (ability) {

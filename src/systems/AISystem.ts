@@ -1,4 +1,4 @@
-import { EntityManager, EntityId, PositionComponent, VelocityComponent, NeedsComponent, AIComponent, CreatureComponent, RenderComponent, HeroComponent, NomadComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent, VelocityComponent, NeedsComponent, AIComponent, CreatureComponent, RenderComponent, HeroComponent, NomadComponent, GeneticsComponent } from '../ecs/Entity'
 import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { World } from '../game/World'
 import { ParticleSystem } from './ParticleSystem'
@@ -9,6 +9,7 @@ import { EventLog } from './EventLog'
 import { ResourceSystem, ResourceNode } from './ResourceSystem'
 import { CivMemberComponent } from '../civilization/Civilization'
 import { CivManager } from '../civilization/CivManager'
+import { GeneticsSystem } from './GeneticsSystem'
 
 export class AISystem {
   private em: EntityManager
@@ -265,7 +266,7 @@ export class AISystem {
   }
 
   private updateBreeding(entities: EntityId[], grid: Map<string, EntityId[]>): void {
-    const newborns: { species: EntityType; x: number; y: number }[] = []
+    const newborns: { species: EntityType; x: number; y: number; motherId: EntityId; fatherId: EntityId }[] = []
 
     for (const id of entities) {
       if (!this.em.hasComponent(id, 'creature')) continue
@@ -277,6 +278,10 @@ export class AISystem {
       if (creature.age < creature.maxAge * 0.2) continue
       if (needs.health < 50 || needs.hunger > 60) continue
       if (creature.gender !== 'female') continue
+
+      // Fertility trait affects breed chance threshold
+      const motherGenetics = this.em.getComponent<GeneticsComponent>(id, 'genetics')
+      const fertilityMod = motherGenetics ? motherGenetics.traits.fertility : 1.0
 
       // Breed cooldown
       const cd = this.breedCooldown.get(id) ?? 0
@@ -307,8 +312,8 @@ export class AISystem {
             const ddy = pos.y - otherPos.y
             const dist = Math.sqrt(ddx * ddx + ddy * ddy)
 
-            if (dist < 3 && Math.random() < 0.005) {
-              newborns.push({ species: creature.species as EntityType, x: pos.x, y: pos.y })
+            if (dist < 3 && Math.random() < 0.005 * fertilityMod) {
+              newborns.push({ species: creature.species as EntityType, x: pos.x, y: pos.y, motherId: id, fatherId: otherId })
               this.breedCooldown.set(id, 300)
               found = true
               break
@@ -320,11 +325,51 @@ export class AISystem {
 
     for (const baby of newborns) {
       const babyId = this.factory.spawn(baby.species, baby.x, baby.y)
-      const render = this.em.getComponent<RenderComponent>(babyId, 'render')
       const babyCreature = this.em.getComponent<CreatureComponent>(babyId, 'creature')
+
+      // Inherit genetics from parents
+      const motherGenetics = this.em.getComponent<GeneticsComponent>(baby.motherId, 'genetics')
+      const fatherGenetics = this.em.getComponent<GeneticsComponent>(baby.fatherId, 'genetics')
+
+      if (motherGenetics && fatherGenetics) {
+        // Remove the random genetics added by factory spawn
+        this.em.removeComponent(babyId, 'genetics')
+
+        // Inherit from parents
+        const childGenetics = GeneticsSystem.inheritTraits(motherGenetics, fatherGenetics, baby.motherId, baby.fatherId)
+
+        // Attempt mutation
+        const mutationName = GeneticsSystem.mutate(childGenetics)
+
+        this.em.addComponent(babyId, childGenetics)
+
+        // Re-apply traits (reset creature stats to base, then apply inherited traits)
+        // The factory already applied random genetics, so we need to reset and reapply
+        if (babyCreature) {
+          // Reset to species base values before applying inherited genetics
+          const baseSpeed = baby.species === 'dragon' ? 2 : baby.species === 'wolf' ? 1.5 : 1
+          const baseDamage = baby.species === 'dragon' ? 50 : baby.species === 'wolf' ? 10 : 5
+          babyCreature.speed = baseSpeed
+          babyCreature.damage = baseDamage
+          // Re-roll a fresh base maxAge from species range (factory randomized it then scaled)
+          const MAX_AGE: Record<string, [number, number]> = {
+            human: [600, 900], elf: [1200, 2000], dwarf: [800, 1200], orc: [400, 700],
+            sheep: [300, 500], wolf: [400, 600], dragon: [2000, 4000],
+          }
+          const ageRange = MAX_AGE[baby.species] || [500, 800]
+          babyCreature.maxAge = ageRange[0] + Math.random() * (ageRange[1] - ageRange[0])
+        }
+        GeneticsSystem.applyTraits(babyId, this.em)
+
+        if (mutationName && babyCreature) {
+          GeneticsSystem.logMutation(babyCreature.name, baby.species, mutationName, this.world.tick)
+        }
+      }
+
+      const render = this.em.getComponent<RenderComponent>(babyId, 'render')
       this.particles.spawnBirth(baby.x, baby.y, render ? render.color : '#ffffff')
       if (babyCreature) {
-        EventLog.log('birth', `${babyCreature.name} (${baby.species}) was born`, this.world.tick)
+        EventLog.log('birth', `${babyCreature.name} (${baby.species}) was born (gen ${this.em.getComponent<GeneticsComponent>(babyId, 'genetics')?.generation ?? 0})`, this.world.tick)
       }
     }
   }

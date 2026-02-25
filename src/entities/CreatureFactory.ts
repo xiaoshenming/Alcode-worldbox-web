@@ -1,6 +1,7 @@
 import { EntityManager, EntityId, RenderComponent, PositionComponent, CreatureComponent } from '../ecs/Entity'
 import { EntityType } from '../utils/Constants'
 import { generateName } from '../utils/NameGenerator'
+import { GeneticsSystem } from '../systems/GeneticsSystem'
 
 const CREATURE_COLORS: Record<string, string> = {
   human: '#ffcc99',
@@ -93,6 +94,11 @@ export class CreatureFactory {
       targetEntity: null,
       cooldown: 0
     })
+
+    // Genetics — random traits for spawned creatures
+    const genetics = GeneticsSystem.generateRandomTraits()
+    this.em.addComponent(id, genetics)
+    GeneticsSystem.applyTraits(id, this.em)
 
     return id
   }
