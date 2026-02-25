@@ -347,6 +347,11 @@ import { WorldTidewaterSystem } from '../systems/WorldTidewaterSystem'
 import { CreatureOrigamiSystem } from '../systems/CreatureOrigamiSystem'
 import { WorldLabyrinthSystem } from '../systems/WorldLabyrinthSystem'
 import { CreatureFalconrySystem } from '../systems/CreatureFalconrySystem'
+import { CreatureApiarySystem } from '../systems/CreatureApiarySystem'
+import { WorldTerracingSystem } from '../systems/WorldTerracingSystem'
+import { CreatureCourierSystem } from '../systems/CreatureCourierSystem'
+import { CreatureMosaicSystem } from '../systems/CreatureMosaicSystem'
+import { WorldSundialSystem } from '../systems/WorldSundialSystem'
 
 export class Game {
   private world: World
@@ -696,6 +701,11 @@ export class Game {
   private creatureOrigami!: CreatureOrigamiSystem
   private worldLabyrinth!: WorldLabyrinthSystem
   private creatureFalconry!: CreatureFalconrySystem
+  private creatureApiary!: CreatureApiarySystem
+  private worldTerracing!: WorldTerracingSystem
+  private creatureCourier!: CreatureCourierSystem
+  private creatureMosaic!: CreatureMosaicSystem
+  private worldSundial!: WorldSundialSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -1196,6 +1206,11 @@ export class Game {
     this.creatureOrigami = new CreatureOrigamiSystem()
     this.worldLabyrinth = new WorldLabyrinthSystem()
     this.creatureFalconry = new CreatureFalconrySystem()
+    this.creatureApiary = new CreatureApiarySystem()
+    this.worldTerracing = new WorldTerracingSystem()
+    this.creatureCourier = new CreatureCourierSystem()
+    this.creatureMosaic = new CreatureMosaicSystem()
+    this.worldSundial = new WorldSundialSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2801,6 +2816,16 @@ export class Game {
         this.worldLabyrinth.update(this.tickRate, this.world, this.em, this.world.tick)
         // Creature falconry (v3.110) - trained hunting birds
         this.creatureFalconry.update(this.tickRate, this.em, this.world.tick)
+        // Creature apiary (v3.111) - beekeeping and honey
+        this.creatureApiary.update(this.tickRate, this.em, this.world.tick)
+        // World terracing (v3.112) - hillside terrace farming
+        this.worldTerracing.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature couriers (v3.113) - message runners
+        this.creatureCourier.update(this.tickRate, this.em, this.world.tick)
+        // Creature mosaics (v3.114) - decorative art
+        this.creatureMosaic.update(this.tickRate, this.em, this.world.tick)
+        // World sundials (v3.115) - timekeeping monuments
+        this.worldSundial.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
