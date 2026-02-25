@@ -169,6 +169,9 @@ export class Game {
   private waterAnimation: WaterAnimationSystem
   private minimapSystem: MinimapSystem
   private formationSystem: FormationSystem
+  private achievementContent: AchievementContentSystem
+  private chartPanel: ChartPanelSystem
+  private clonePower: ClonePowerSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -397,6 +400,9 @@ export class Game {
     this.waterAnimation = new WaterAnimationSystem()
     this.minimapSystem = new MinimapSystem(this.world.width, this.world.height)
     this.formationSystem = new FormationSystem()
+    this.achievementContent = new AchievementContentSystem()
+    this.chartPanel = new ChartPanelSystem()
+    this.clonePower = new ClonePowerSystem()
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
     this.setupParticleEventHooks()
@@ -1230,6 +1236,64 @@ export class Game {
         }
         // Formation system - army formations and morale
         this.formationSystem.update(this.em, this.world, this.world.tick)
+        // Achievement content - check extended achievements
+        {
+          const achStats: AchContentWorldStats = {
+            totalCreatures: this.em.getEntitiesWithComponents('creature').length,
+            speciesSet: new Set([...this.em.getEntitiesWithComponents('creature')].map(id => this.em.getComponent<CreatureComponent>(id, 'creature')!.species)),
+            maxCityPop: Math.max(0, ...[...this.civManager.civilizations.values()].map(c => c.population)),
+            filledTilePercent: 0, hasIsland: false,
+            totalKills: 0, extinctSpecies: [], scorchedTiles: 0,
+            disastersLast60Ticks: 0, nukeUsed: false,
+            civsMet: this.civManager.civilizations.size,
+            activeTradeRoutes: 0, maxEra: 'stone', peaceTicks: 0,
+            maxTerritoryPercent: 0, totalCombats: 0, shipCount: 0,
+            citiesCaptured: 0, maxHeroLevel: 0, maxArmySize: 0,
+            volcanoEruptions: 0, waterTilesCreatedAtOnce: 0,
+            diseasedCivs: 0, evolutionEvents: 0,
+            coexistSpecies: 0, coexistTicks: 0,
+            totalTicks: this.world.tick, exploredPercent: 0,
+            totalCivs: this.civManager.civilizations.size, totalWars: 0,
+            clonedCreatures: this.clonePower.getCloneCount(),
+            portalPairs: this.portalSystem.getPortals().length / 2,
+          }
+          this.achievementContent.check(achStats)
+        }
+        // Chart panel - record data point every 60 ticks
+        if (this.world.tick % 60 === 0) {
+          let totalTerritory = 0
+          let totalTech = 0
+          let warCount = 0
+          for (const [, civ] of this.civManager.civilizations) {
+            totalTerritory += civ.territory.size
+            totalTech += civ.techLevel
+            for (const [, rel] of civ.relations) { if (rel < -30) warCount++ }
+          }
+          const civCount = this.civManager.civilizations.size
+          this.chartPanel.addDataPoint(this.world.tick, {
+            population: this.em.getEntitiesWithComponents('creature').length,
+            civCount,
+            warCount: Math.floor(warCount / 2),
+            avgTechLevel: civCount > 0 ? totalTech / civCount : 0,
+            totalTerritory,
+          })
+        }
+        // Clone power - degradation updates
+        {
+          const cloneEntities = [...this.em.getEntitiesWithComponents('creature', 'position')].map(id => {
+            const c = this.em.getComponent<CreatureComponent>(id, 'creature')!
+            const needs = this.em.getComponent<NeedsComponent>(id, 'needs')
+            return {
+              id, isClone: this.clonePower.getGeneration(id) > 0,
+              health: needs?.health ?? 100, maxHealth: 100, age: c.age
+            }
+          })
+          const events = this.clonePower.update(this.world.tick, cloneEntities)
+          for (const ev of events) {
+            const needs = this.em.getComponent<NeedsComponent>(ev.id, 'needs')
+            if (needs && ev.type === 'health_loss') needs.health = Math.max(0, needs.health - ev.amount)
+          }
+        }
         // Build fortification data from civilizations
         if (this.world.tick % 120 === 0) {
           const forts: CityFortification[] = []

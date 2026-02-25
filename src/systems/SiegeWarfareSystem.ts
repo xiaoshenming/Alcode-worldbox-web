@@ -1,0 +1,203 @@
+export type SiegeWeaponType = 'battering_ram' | 'catapult' | 'siege_tower' | 'trebuchet';
+
+export interface SiegeData {
+  id: number;
+  attackerCivId: number;
+  defenderCivId: number;
+  targetCityX: number;
+  targetCityY: number;
+  progress: number;
+  startTick: number;
+  siegeWeapons: SiegeWeaponType[];
+  defenderMorale: number;
+  attackerCount: number;
+  resolved: boolean;
+}
+
+export type SiegeOutcome = 'captured' | 'repelled' | 'ongoing';
+
+const WEAPON_POWER: Record<SiegeWeaponType, number> = {
+  battering_ram: 1.5,
+  catapult: 2.0,
+  siege_tower: 1.2,
+  trebuchet: 2.5,
+};
+
+const WEAPON_ICONS: Record<SiegeWeaponType, string> = {
+  battering_ram: '\u{1F6E1}',
+  catapult: '\u{1F4A3}',
+  siege_tower: '\u{1F3F0}',
+  trebuchet: '\u{1F3AF}',
+};
+
+const BASE_WALL_DEFENSE = 5;
+const MORALE_DECAY_BASE = 0.3;
+const MORALE_OUTNUMBER_FACTOR = 0.15;
+const PROGRESS_PER_TICK_BASE = 0.2;
+const MORALE_RETREAT_THRESHOLD = 15;
+const DEFENDER_COUNT_ESTIMATE = 30;
+
+export class SiegeWarfareSystem {
+  private sieges: Map<number, SiegeData> = new Map();
+  private nextId = 1;
+  private particles: { x: number; y: number; life: number; vx: number; vy: number; type: 'fire' | 'smoke' }[] = [];
+
+  startSiege(attackerCivId: number, defenderCivId: number, cityX: number, cityY: number, attackerCount: number): SiegeData {
+    const siege: SiegeData = {
+      id: this.nextId++,
+      attackerCivId,
+      defenderCivId,
+      targetCityX: cityX,
+      targetCityY: cityY,
+      progress: 0,
+      startTick: 0,
+      siegeWeapons: [],
+      defenderMorale: 100,
+      attackerCount: Math.max(1, attackerCount),
+      resolved: false,
+    };
+    this.sieges.set(siege.id, siege);
+    return siege;
+  }
+
+  update(tick: number, _sieges?: SiegeData[]): void {
+    for (const siege of this.sieges.values()) {
+      if (siege.resolved) continue;
+      if (siege.startTick === 0) siege.startTick = tick;
+
+      const weaponPower = siege.siegeWeapons.reduce((sum, w) => sum + WEAPON_POWER[w], 0);
+      const hasTower = siege.siegeWeapons.includes('siege_tower');
+      const wallEffect = hasTower ? BASE_WALL_DEFENSE * 0.3 : BASE_WALL_DEFENSE;
+      const attackStrength = (siege.attackerCount * 0.05) + weaponPower;
+      const progressGain = Math.max(0, (attackStrength - wallEffect) * PROGRESS_PER_TICK_BASE);
+      siege.progress = Math.min(100, siege.progress + progressGain);
+
+      const outnumberRatio = siege.attackerCount / DEFENDER_COUNT_ESTIMATE;
+      const moraleLoss = MORALE_DECAY_BASE + (outnumberRatio > 1 ? (outnumberRatio - 1) * MORALE_OUTNUMBER_FACTOR : 0);
+      const duration = tick - siege.startTick;
+      const fatigueFactor = 1 + duration * 0.002;
+      siege.defenderMorale = Math.max(0, siege.defenderMorale - moraleLoss * fatigueFactor);
+
+      if (siege.progress >= 100 || siege.defenderMorale <= MORALE_RETREAT_THRESHOLD) {
+        siege.resolved = true;
+      }
+
+      if (weaponPower > 0 && Math.random() < 0.3) {
+        this.particles.push({
+          x: siege.targetCityX + (Math.random() - 0.5) * 2,
+          y: siege.targetCityY + (Math.random() - 0.5) * 2,
+          life: 30 + Math.random() * 20,
+          vx: (Math.random() - 0.5) * 0.5,
+          vy: -Math.random() * 0.8,
+          type: Math.random() < 0.5 ? 'fire' : 'smoke',
+        });
+      }
+    }
+
+    this.particles = this.particles.filter(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life--;
+      return p.life > 0;
+    });
+  }
+
+  addSiegeWeapon(siegeId: number, weapon: SiegeWeaponType): boolean {
+    const siege = this.sieges.get(siegeId);
+    if (!siege || siege.resolved) return false;
+    siege.siegeWeapons.push(weapon);
+    return true;
+  }
+
+  getSiegeAt(x: number, y: number): SiegeData | undefined {
+    for (const siege of this.sieges.values()) {
+      if (!siege.resolved && siege.targetCityX === x && siege.targetCityY === y) return siege;
+    }
+    return undefined;
+  }
+
+  getActiveSieges(): SiegeData[] {
+    return [...this.sieges.values()].filter(s => !s.resolved);
+  }
+
+  resolveSiege(siegeId: number): SiegeOutcome {
+    const siege = this.sieges.get(siegeId);
+    if (!siege) return 'ongoing';
+    if (!siege.resolved) return 'ongoing';
+    if (siege.progress >= 100) return 'captured';
+    if (siege.defenderMorale <= MORALE_RETREAT_THRESHOLD) return 'captured';
+    return 'repelled';
+  }
+
+  render(ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number, zoom: number): void {
+    const tileSize = 16 * zoom;
+
+    for (const siege of this.sieges.values()) {
+      if (siege.resolved) continue;
+      const sx = (siege.targetCityX - cameraX) * tileSize;
+      const sy = (siege.targetCityY - cameraY) * tileSize;
+
+      // Progress bar background
+      const barW = tileSize * 2;
+      const barH = 4 * zoom;
+      const barX = sx - barW / 2;
+      const barY = sy - tileSize * 0.8;
+      ctx.fillStyle = '#333';
+      ctx.fillRect(barX, barY, barW, barH);
+
+      // Progress bar fill
+      const fillColor = siege.progress < 50 ? '#e8a820' : siege.progress < 80 ? '#e07020' : '#d02020';
+      ctx.fillStyle = fillColor;
+      ctx.fillRect(barX, barY, barW * (siege.progress / 100), barH);
+
+      // Progress bar border
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(barX, barY, barW, barH);
+
+      // Morale indicator
+      ctx.fillStyle = siege.defenderMorale > 50 ? '#40c040' : siege.defenderMorale > 25 ? '#c0c040' : '#c04040';
+      const moraleW = tileSize * 1.5;
+      const moraleX = sx - moraleW / 2;
+      const moraleY = barY - barH - 2;
+      ctx.fillRect(moraleX, moraleY, moraleW * (siege.defenderMorale / 100), barH * 0.7);
+      ctx.strokeRect(moraleX, moraleY, moraleW, barH * 0.7);
+
+      // Weapon icons
+      const uniqueWeapons = [...new Set(siege.siegeWeapons)];
+      const iconSize = Math.max(8, 10 * zoom);
+      ctx.font = `${iconSize}px serif`;
+      ctx.textAlign = 'center';
+      uniqueWeapons.forEach((w, i) => {
+        const ix = sx - (uniqueWeapons.length * iconSize) / 2 + i * iconSize + iconSize / 2;
+        const iy = sy + tileSize * 0.9;
+        ctx.fillText(WEAPON_ICONS[w], ix, iy);
+      });
+
+      // Siege ring
+      ctx.beginPath();
+      ctx.arc(sx, sy, tileSize * 0.6, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(200, 50, 50, ${0.4 + Math.sin(Date.now() * 0.005) * 0.2})`;
+      ctx.lineWidth = 2 * zoom;
+      ctx.stroke();
+    }
+
+    // Fire and smoke particles
+    for (const p of this.particles) {
+      const px = (p.x - cameraX) * tileSize;
+      const py = (p.y - cameraY) * tileSize;
+      const alpha = p.life / 50;
+      if (p.type === 'fire') {
+        ctx.fillStyle = `rgba(255, ${80 + Math.random() * 80}, 0, ${alpha})`;
+      } else {
+        ctx.fillStyle = `rgba(100, 100, 100, ${alpha * 0.6})`;
+      }
+      const size = (p.type === 'smoke' ? 3 : 2) * zoom;
+      ctx.fillRect(px - size / 2, py - size / 2, size, size);
+    }
+  }
+
+  removeSiege(siegeId: number): void {
+    this.sieges.delete(siegeId);
+  }
+}
