@@ -453,6 +453,11 @@ import { WorldSeaStackSystem } from '../systems/WorldSeaStackSystem'
 import { CreatureFarrierSystem } from '../systems/CreatureFarrierSystem'
 import { WorldPermafrostThawSystem } from '../systems/WorldPermafrostThawSystem'
 import { DiplomaticRatificationSystem } from '../systems/DiplomaticRatificationSystem'
+import { CreatureFullerSystem } from '../systems/CreatureFullerSystem'
+import { WorldBarrierIslandSystem } from '../systems/WorldBarrierIslandSystem'
+import { CreatureSawyerSystem } from '../systems/CreatureSawyerSystem'
+import { WorldVolcanicAshPlainSystem } from '../systems/WorldVolcanicAshPlainSystem'
+import { DiplomaticAdjudicationSystem } from '../systems/DiplomaticAdjudicationSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -907,6 +912,11 @@ export class Game {
   private creatureFarrier!: CreatureFarrierSystem
   private worldPermafrostThaw!: WorldPermafrostThawSystem
   private diplomaticRatification!: DiplomaticRatificationSystem
+  private creatureFuller!: CreatureFullerSystem
+  private worldBarrierIsland!: WorldBarrierIslandSystem
+  private creatureSawyer!: CreatureSawyerSystem
+  private worldVolcanicAshPlain!: WorldVolcanicAshPlainSystem
+  private diplomaticAdjudication!: DiplomaticAdjudicationSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1512,6 +1522,11 @@ export class Game {
     this.creatureFarrier = new CreatureFarrierSystem()
     this.worldPermafrostThaw = new WorldPermafrostThawSystem()
     this.diplomaticRatification = new DiplomaticRatificationSystem()
+    this.creatureFuller = new CreatureFullerSystem()
+    this.worldBarrierIsland = new WorldBarrierIslandSystem()
+    this.creatureSawyer = new CreatureSawyerSystem()
+    this.worldVolcanicAshPlain = new WorldVolcanicAshPlainSystem()
+    this.diplomaticAdjudication = new DiplomaticAdjudicationSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3329,6 +3344,16 @@ export class Game {
         this.worldPermafrostThaw.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic ratification (v3.230) - treaty approval
         this.diplomaticRatification.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature fullers (v3.231) - cloth processing workers
+        this.creatureFuller.update(this.tickRate, this.em, this.world.tick)
+        // World barrier islands (v3.232) - coastal sandy islands
+        this.worldBarrierIsland.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature sawyers (v3.233) - timber cutting workers
+        this.creatureSawyer.update(this.tickRate, this.em, this.world.tick)
+        // World volcanic ash plains (v3.234) - eruption aftermath
+        this.worldVolcanicAshPlain.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic adjudication (v3.235) - dispute resolution
+        this.diplomaticAdjudication.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
