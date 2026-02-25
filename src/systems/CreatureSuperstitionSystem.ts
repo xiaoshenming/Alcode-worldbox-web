@@ -1,95 +1,133 @@
-// Creature Superstition System (v2.36) - Creatures develop superstitions
-// Lucky/unlucky omens based on world events affect creature behavior
-// Superstitions spread within civilizations and persist across generations
+// Creature Superstition System (v2.83) - Creatures develop superstitious beliefs based on events
+// Positive/negative events near landmarks create superstitions that affect creature behavior
 
-import { EntityManager, EntityId, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent, CreatureComponent } from '../ecs/Entity'
 
-export type OmenType = 'lucky_star' | 'blood_moon' | 'rainbow' | 'black_cat' | 'falling_star' | 'eclipse'
-export type SuperstitionEffect = 'courage' | 'fear' | 'productivity' | 'laziness' | 'fertility' | 'caution'
+export type SuperstitionType = 'lucky_spot' | 'cursed_ground' | 'sacred_tree' | 'omen_bird' | 'forbidden_path' | 'blessed_water'
 
 export interface Superstition {
   id: number
-  civId: number
-  omen: OmenType
-  effect: SuperstitionEffect
-  belief: number         // 0-100 how strongly believed
-  origin: number         // tick when formed
-  spreadCount: number    // how many creatures believe
+  type: SuperstitionType
+  x: number
+  y: number
+  radius: number
+  strength: number      // 0-100, how strongly believed
+  originTick: number
+  believers: Set<number>
+  positive: boolean      // lucky vs cursed
+  decayRate: number
 }
 
-const CHECK_INTERVAL = 1000
-const SPREAD_INTERVAL = 800
-const MAX_SUPERSTITIONS = 30
-const BELIEF_DECAY = 0.5
-const BELIEF_GAIN = 2
-const MIN_BELIEF = 5
+const CHECK_INTERVAL = 800
+const MAX_SUPERSTITIONS = 20
+const FORM_CHANCE = 0.015
+const BELIEF_SPREAD_RANGE = 8
+const MIN_STRENGTH = 5
+const MAX_STRENGTH = 100
+const DECAY_BASE = 0.3
 
-const OMEN_LIST: OmenType[] = ['lucky_star', 'blood_moon', 'rainbow', 'black_cat', 'falling_star', 'eclipse']
-const EFFECT_LIST: SuperstitionEffect[] = ['courage', 'fear', 'productivity', 'laziness', 'fertility', 'caution']
+const TYPE_CONFIG: Record<SuperstitionType, { positive: boolean; radius: number }> = {
+  lucky_spot: { positive: true, radius: 3 },
+  cursed_ground: { positive: false, radius: 4 },
+  sacred_tree: { positive: true, radius: 5 },
+  omen_bird: { positive: false, radius: 3 },
+  forbidden_path: { positive: false, radius: 6 },
+  blessed_water: { positive: true, radius: 4 },
+}
 
-let nextSupId = 1
+const TYPES = Object.keys(TYPE_CONFIG) as SuperstitionType[]
 
 export class CreatureSuperstitionSystem {
   private superstitions: Superstition[] = []
+  private nextId = 1
   private lastCheck = 0
-  private lastSpread = 0
 
-  update(dt: number, civIds: number[], tick: number): void {
-    if (tick - this.lastCheck >= CHECK_INTERVAL) {
-      this.lastCheck = tick
-      this.generateSuperstitions(civIds, tick)
-    }
-    if (tick - this.lastSpread >= SPREAD_INTERVAL) {
-      this.lastSpread = tick
-      this.spreadAndDecay()
-    }
+  update(dt: number, em: EntityManager, tick: number): void {
+    if (tick - this.lastCheck < CHECK_INTERVAL) return
+    this.lastCheck = tick
+
+    this.formSuperstitions(em, tick)
+    this.spreadBeliefs(em)
+    this.decaySuperstitions()
+    this.cleanup()
   }
 
-  private generateSuperstitions(civIds: number[], tick: number): void {
+  private formSuperstitions(em: EntityManager, tick: number): void {
     if (this.superstitions.length >= MAX_SUPERSTITIONS) return
-    for (const civId of civIds) {
-      if (Math.random() > 0.05) continue
-      if (this.superstitions.filter(s => s.civId === civId).length >= 5) continue
-      const omen = OMEN_LIST[Math.floor(Math.random() * OMEN_LIST.length)]
-      const effect = EFFECT_LIST[Math.floor(Math.random() * EFFECT_LIST.length)]
-      // Don't duplicate same omen for same civ
-      if (this.superstitions.some(s => s.civId === civId && s.omen === omen)) continue
-      this.superstitions.push({
-        id: nextSupId++,
-        civId,
-        omen,
-        effect,
-        belief: 30 + Math.floor(Math.random() * 40),
-        origin: tick,
-        spreadCount: 1 + Math.floor(Math.random() * 5),
-      })
-      if (this.superstitions.length >= MAX_SUPERSTITIONS) break
-    }
+    if (Math.random() > FORM_CHANCE) return
+
+    const entities = em.getEntitiesWithComponents('position', 'creature')
+    if (entities.length === 0) return
+
+    const idx = Math.floor(Math.random() * entities.length)
+    const eid = entities[idx]
+    const pos = em.getComponent<PositionComponent>(eid, 'position')
+    if (!pos) return
+
+    const tooClose = this.superstitions.some(s => {
+      const dx = s.x - pos.x
+      const dy = s.y - pos.y
+      return dx * dx + dy * dy < 64
+    })
+    if (tooClose) return
+
+    const type = TYPES[Math.floor(Math.random() * TYPES.length)]
+    const config = TYPE_CONFIG[type]
+
+    this.superstitions.push({
+      id: this.nextId++,
+      type,
+      x: pos.x,
+      y: pos.y,
+      radius: config.radius,
+      strength: 30 + Math.random() * 40,
+      originTick: tick,
+      believers: new Set([eid]),
+      positive: config.positive,
+      decayRate: DECAY_BASE + Math.random() * 0.2,
+    })
   }
 
-  private spreadAndDecay(): void {
+  private spreadBeliefs(em: EntityManager): void {
+    const entities = em.getEntitiesWithComponents('position', 'creature')
+
     for (const sup of this.superstitions) {
-      // Spread within civ
-      if (sup.belief > 30 && Math.random() < 0.2) {
-        sup.spreadCount = Math.min(50, sup.spreadCount + 1)
-        sup.belief = Math.min(100, sup.belief + BELIEF_GAIN)
+      for (const eid of entities) {
+        if (sup.believers.has(eid)) continue
+        const pos = em.getComponent<PositionComponent>(eid, 'position')
+        if (!pos) continue
+
+        const dx = sup.x - pos.x
+        const dy = sup.y - pos.y
+        const dist = Math.sqrt(dx * dx + dy * dy)
+
+        if (dist > BELIEF_SPREAD_RANGE) continue
+
+        const adoptChance = (sup.strength / MAX_STRENGTH) * (1 - dist / BELIEF_SPREAD_RANGE) * 0.1
+        if (Math.random() < adoptChance) {
+          sup.believers.add(eid)
+          sup.strength = Math.min(MAX_STRENGTH, sup.strength + 2)
+        }
       }
-      // Natural decay
-      sup.belief = Math.max(0, sup.belief - BELIEF_DECAY)
     }
-    // Remove dead superstitions
-    this.superstitions = this.superstitions.filter(s => s.belief >= MIN_BELIEF)
   }
 
-  getSuperstitions(): Superstition[] {
-    return this.superstitions
+  private decaySuperstitions(): void {
+    for (const sup of this.superstitions) {
+      const believerFactor = Math.max(0.3, 1 - sup.believers.size * 0.05)
+      sup.strength -= sup.decayRate * believerFactor
+    }
   }
 
-  getSuperstitionsForCiv(civId: number): Superstition[] {
-    return this.superstitions.filter(s => s.civId === civId)
+  private cleanup(): void {
+    for (let i = this.superstitions.length - 1; i >= 0; i--) {
+      if (this.superstitions[i].strength < MIN_STRENGTH) {
+        this.superstitions.splice(i, 1)
+      }
+    }
   }
 
-  getSuperstitionCount(): number {
-    return this.superstitions.length
-  }
+  getSuperstitions(): Superstition[] { return this.superstitions }
+  getPositiveSuperstitions(): Superstition[] { return this.superstitions.filter(s => s.positive) }
+  getNegativeSuperstitions(): Superstition[] { return this.superstitions.filter(s => !s.positive) }
 }

@@ -238,6 +238,9 @@ import { WorldOasisSystem } from '../systems/WorldOasisSystem'
 import { DiplomaticCeremonySystem } from '../systems/DiplomaticCeremonySystem'
 import { CreatureMigrationMemorySystem } from '../systems/CreatureMigrationMemorySystem'
 import { WorldPetrificationSystem } from '../systems/WorldPetrificationSystem'
+import { WorldMaelstromSystem } from '../systems/WorldMaelstromSystem'
+import { CreatureRivalryDuelSystem } from '../systems/CreatureRivalryDuelSystem'
+import { WorldCoralReefSystem } from '../systems/WorldCoralReefSystem'
 
 export class Game {
   private world: World
@@ -478,6 +481,9 @@ export class Game {
   private diplomaticCeremony!: DiplomaticCeremonySystem
   private creatureMigrationMemory!: CreatureMigrationMemorySystem
   private worldPetrification!: WorldPetrificationSystem
+  private worldMaelstrom!: WorldMaelstromSystem
+  private creatureRivalryDuel!: CreatureRivalryDuelSystem
+  private worldCoralReef!: WorldCoralReefSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -869,6 +875,9 @@ export class Game {
     this.diplomaticCeremony = new DiplomaticCeremonySystem()
     this.creatureMigrationMemory = new CreatureMigrationMemorySystem()
     this.worldPetrification = new WorldPetrificationSystem()
+    this.worldMaelstrom = new WorldMaelstromSystem()
+    this.creatureRivalryDuel = new CreatureRivalryDuelSystem()
+    this.worldCoralReef = new WorldCoralReefSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2167,7 +2176,7 @@ export class Game {
         // World tidal system (v2.35) - coastal tide cycles
         this.worldTidal.update(this.tickRate, this.world, this.world.tick)
         // Creature superstitions (v2.36) - omens and beliefs
-        this.creatureSuperstition.update(this.tickRate, [...this.civManager.civilizations.keys()], this.world.tick)
+        this.creatureSuperstition.update(this.tickRate, this.em, this.world.tick)
         // World magic storms (v2.37) - arcane storms mutate terrain
         this.worldMagicStorm.update(this.tickRate, this.world.tick)
         // Creature ambitions (v2.38) - personal goals and dreams
@@ -2179,7 +2188,7 @@ export class Game {
         // Creature fashion (v2.43) - fashion trends in civs
         this.creatureFashion.update(this.tickRate, [...this.civManager.civilizations.keys()], this.world.tick)
         // Diplomatic hostages (v2.44) - hostage exchange for peace
-        this.diplomaticHostage.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.diplomaticHostage.update(this.tickRate, this.civManager, this.world.tick)
         // World erosion (v2.45) - terrain erosion over time
         this.worldErosion.update(this.tickRate, this.world, this.world.tick)
         // Creature pets (v2.46) - pet adoption and bonding
@@ -2242,6 +2251,12 @@ export class Game {
         this.creatureMigrationMemory.update(this.tickRate, this.em, this.world.tick)
         // World petrification (v2.80) - magical petrification zones
         this.worldPetrification.update(this.tickRate, this.world, this.em, this.world.tick)
+        // World maelstrom (v2.81) - oceanic maelstroms in deep water
+        this.worldMaelstrom.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature rivalry duel (v2.82) - formal duels between rivals
+        this.creatureRivalryDuel.update(this.tickRate, this.em, this.world.tick)
+        // World coral reef (v2.84) - coral reefs in shallow coastal water
+        this.worldCoralReef.update(this.tickRate, this.world, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
