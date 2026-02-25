@@ -58,6 +58,7 @@ import { CultureSystem } from '../systems/CultureSystem'
 import { MusicSystem } from '../systems/MusicSystem'
 import { MiningSystem } from '../systems/MiningSystem'
 import { DisasterChainSystem } from '../systems/DisasterChainSystem'
+import { SeasonSystem } from '../systems/SeasonSystem'
 
 export class Game {
   private world: World
@@ -118,6 +119,7 @@ export class Game {
   private musicSystem!: MusicSystem
   private miningSystem: MiningSystem
   private disasterChainSystem: DisasterChainSystem
+  private seasonSystem: SeasonSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -319,6 +321,7 @@ export class Game {
         return Math.floor(wars / 2)
       },
     })
+    this.seasonSystem = new SeasonSystem()
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
     this.setupParticleEventHooks()
@@ -1085,6 +1088,7 @@ export class Game {
           this.miningSystem.update(this.world.tick, civData)
         }
         this.disasterChainSystem.update(this.world.tick)
+        this.seasonSystem.update(this.world.tick)
         // World Chronicle - build narrative history from world state
         {
           const civs = [...this.civManager.civilizations.values()].map(c => ({
