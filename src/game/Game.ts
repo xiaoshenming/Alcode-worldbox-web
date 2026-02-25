@@ -220,6 +220,11 @@ import { WorldUndergroundSystem } from '../systems/WorldUndergroundSystem'
 import { DiplomaticBlockadeSystem } from '../systems/DiplomaticBlockadeSystem'
 import { CreatureInventionSystem } from '../systems/CreatureInventionSystem'
 import { WorldAuroraSystem } from '../systems/WorldAuroraSystem'
+import { CreaturePhobiaSystem } from '../systems/CreaturePhobiaSystem'
+import { WorldGeothermalSystem } from '../systems/WorldGeothermalSystem'
+import { DiplomaticFederationSystem } from '../systems/DiplomaticFederationSystem'
+import { CreatureArtSystem } from '../systems/CreatureArtSystem'
+import { WorldMiasmaSystem } from '../systems/WorldMiasmaSystem'
 
 export class Game {
   private world: World
@@ -442,6 +447,11 @@ export class Game {
   private diplomaticBlockade!: DiplomaticBlockadeSystem
   private creatureInvention!: CreatureInventionSystem
   private worldAurora!: WorldAuroraSystem
+  private creaturePhobia!: CreaturePhobiaSystem
+  private worldGeothermal!: WorldGeothermalSystem
+  private diplomaticFederation!: DiplomaticFederationSystem
+  private creatureArt!: CreatureArtSystem
+  private worldMiasma!: WorldMiasmaSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -815,6 +825,11 @@ export class Game {
     this.diplomaticBlockade = new DiplomaticBlockadeSystem()
     this.creatureInvention = new CreatureInventionSystem()
     this.worldAurora = new WorldAuroraSystem()
+    this.creaturePhobia = new CreaturePhobiaSystem()
+    this.worldGeothermal = new WorldGeothermalSystem()
+    this.diplomaticFederation = new DiplomaticFederationSystem()
+    this.creatureArt = new CreatureArtSystem()
+    this.worldMiasma = new WorldMiasmaSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2152,6 +2167,16 @@ export class Game {
         this.creatureInvention.update(this.tickRate, this.em, this.civManager, this.world.tick)
         // World aurora (v2.60) - northern/southern lights
         this.worldAurora.update(this.tickRate, this.em, this.world.tick)
+        // Creature phobias (v2.61) - fears and panic
+        this.creaturePhobia.update(this.tickRate, this.em, this.world.tick)
+        // World geothermal (v2.62) - hot springs and geysers
+        this.worldGeothermal.update(this.tickRate, this.world, this.world.tick)
+        // Diplomatic federations (v2.63) - multi-civ alliances
+        this.diplomaticFederation.update(this.tickRate, this.civManager, this.world.tick)
+        // Creature art (v2.64) - artistic expression
+        this.creatureArt.update(this.tickRate, this.em, this.world.tick)
+        // World miasma (v2.65) - toxic zones
+        this.worldMiasma.update(this.tickRate, this.world, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
