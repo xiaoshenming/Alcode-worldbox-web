@@ -236,6 +236,29 @@ export class Game {
     }
   }
 
+  private renderSelectedHighlight(): void {
+    const id = this.creaturePanel.getSelected()
+    if (!id) return
+    const pos = this.em.getComponent<PositionComponent>(id, 'position')
+    if (!pos) return
+
+    const ctx = this.canvas.getContext('2d')!
+    const tileSize = 8 * this.camera.zoom
+    const offsetX = -this.camera.x * this.camera.zoom
+    const offsetY = -this.camera.y * this.camera.zoom
+    const screenX = pos.x * tileSize + offsetX + tileSize / 2
+    const screenY = pos.y * tileSize + offsetY + tileSize / 2
+    const radius = 6 * this.camera.zoom
+
+    // Pulsing ring
+    const pulse = Math.sin(performance.now() * 0.005) * 0.3 + 0.7
+    ctx.strokeStyle = `rgba(255, 255, 100, ${pulse})`
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.arc(screenX, screenY, radius, 0, Math.PI * 2)
+    ctx.stroke()
+  }
+
   start(): void {
     this.lastTime = performance.now()
     this.loop()
@@ -273,9 +296,27 @@ export class Game {
 
     if (this.world.tick % 30 === 0) {
       this.infoPanel.update(this.fps)
-      this.creaturePanel.update()
     }
 
+    // Real-time creature panel update when selected
+    if (this.creaturePanel.getSelected()) {
+      this.creaturePanel.update()
+      this.renderSelectedHighlight()
+    }
+
+    this.updateDayNightIndicator()
+
     requestAnimationFrame(this.loop)
+  }
+
+  private updateDayNightIndicator(): void {
+    if (this.world.tick % 30 !== 0) return
+    const el = document.getElementById('dayNightIndicator')
+    if (!el) return
+    const isDay = this.world.isDay()
+    const icon = isDay ? '☀️' : '🌙'
+    const timeStr = isDay ? 'Day' : 'Night'
+    const hour = Math.floor(this.world.dayNightCycle * 24)
+    el.textContent = `${icon} ${timeStr} (${hour}:00)`
   }
 }
