@@ -426,6 +426,19 @@ export class CivManager {
     }
   }
 
+  isLandUnclaimed(x: number, y: number, radius: number): boolean {
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        const nx = x + dx
+        const ny = y + dy
+        if (nx < 0 || nx >= WORLD_WIDTH || ny < 0 || ny >= WORLD_HEIGHT) continue
+        if (dx * dx + dy * dy > radius * radius) continue
+        if (this.territoryMap[ny][nx] !== 0) return false
+      }
+    }
+    return true
+  }
+
   getCivAt(x: number, y: number): Civilization | null {
     if (x < 0 || x >= WORLD_WIDTH || y < 0 || y >= WORLD_HEIGHT) return null
     const civId = this.territoryMap[y][x]

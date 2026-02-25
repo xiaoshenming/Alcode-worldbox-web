@@ -73,6 +73,7 @@ export class Game {
     this.weather = new WeatherSystem(this.world, this.particles, this.em)
     this.resources = new ResourceSystem(this.world, this.em, this.civManager, this.particles)
     this.aiSystem.setResourceSystem(this.resources)
+    this.aiSystem.setCivManager(this.civManager)
 
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
     this.toolbar = new Toolbar('toolbar', this.powers)
@@ -152,6 +153,7 @@ export class Game {
     this.weather = new WeatherSystem(this.world, this.particles, this.em)
     this.resources = new ResourceSystem(this.world, this.em, this.civManager, this.particles)
     this.aiSystem.setResourceSystem(this.resources)
+    this.aiSystem.setCivManager(this.civManager)
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
     this.creaturePanel = new CreaturePanel('creaturePanel', this.em, this.civManager)
@@ -430,6 +432,8 @@ export class Game {
     const timeStr = isDay ? 'Day' : 'Night'
     const hour = Math.floor(this.world.dayNightCycle * 24)
     const weatherLabel = this.weather.getWeatherLabel()
-    el.textContent = `${icon} ${timeStr} (${hour}:00) | ${weatherLabel}`
+    const seasonLabels = { spring: '🌱 Spring', summer: '☀️ Summer', autumn: '🍂 Autumn', winter: '❄️ Winter' }
+    const seasonLabel = seasonLabels[this.world.season]
+    el.textContent = `${icon} ${timeStr} (${hour}:00) | ${seasonLabel} | ${weatherLabel}`
   }
 }

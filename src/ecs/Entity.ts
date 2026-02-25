@@ -112,7 +112,7 @@ export interface NeedsComponent extends Component {
 
 export interface AIComponent extends Component {
   type: 'ai'
-  state: 'idle' | 'wandering' | 'hungry' | 'fleeing' | 'attacking'
+  state: 'idle' | 'wandering' | 'hungry' | 'fleeing' | 'attacking' | 'migrating'
   targetX: number
   targetY: number
   targetEntity: number | null
