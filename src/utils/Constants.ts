@@ -26,8 +26,8 @@ export const TILE_COLORS: Record<TileType, string[]> = {
 export enum EntityType {
   HUMAN = 'human',
   ELF = 'elf',
-  DWARF = 'orc',
-  ORC = 'dwarf',
+  DWARF = 'dwarf',
+  ORC = 'orc',
   SHEEP = 'sheep',
   WOLF = 'wolf',
   DRAGON = 'dragon'

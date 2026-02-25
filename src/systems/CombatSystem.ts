@@ -1,14 +1,17 @@
-import { EntityManager, EntityId, PositionComponent, NeedsComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent, NeedsComponent, CreatureComponent, RenderComponent } from '../ecs/Entity'
 import { CivMemberComponent } from '../civilization/Civilization'
 import { CivManager } from '../civilization/CivManager'
+import { ParticleSystem } from './ParticleSystem'
 
 export class CombatSystem {
   private em: EntityManager
   private civManager: CivManager
+  private particles: ParticleSystem
 
-  constructor(em: EntityManager, civManager: CivManager) {
+  constructor(em: EntityManager, civManager: CivManager, particles: ParticleSystem) {
     this.em = em
     this.civManager = civManager
+    this.particles = particles
   }
 
   update(): void {
@@ -80,6 +83,11 @@ export class CombatSystem {
     for (const id of entities) {
       const needs = this.em.getComponent<NeedsComponent>(id, 'needs')
       if (needs && needs.health <= 0) {
+        const pos = this.em.getComponent<PositionComponent>(id, 'position')
+        const render = this.em.getComponent<RenderComponent>(id, 'render')
+        if (pos) {
+          this.particles.spawnDeath(pos.x, pos.y, render ? render.color : '#880000')
+        }
         this.em.removeEntity(id)
       }
     }

@@ -47,11 +47,11 @@ export class Game {
     this.em = new EntityManager()
     this.creatureFactory = new CreatureFactory(this.em)
     this.civManager = new CivManager(this.em, this.world)
-    this.aiSystem = new AISystem(this.em, this.world)
-    this.combatSystem = new CombatSystem(this.em, this.civManager)
     this.particles = new ParticleSystem()
+    this.aiSystem = new AISystem(this.em, this.world, this.particles)
+    this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles)
 
-    this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager)
+    this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles)
     this.toolbar = new Toolbar('toolbar', this.powers)
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
 
@@ -91,8 +91,8 @@ export class Game {
 
     // Reset civilization manager
     this.civManager = new CivManager(this.em, this.world)
-    this.combatSystem = new CombatSystem(this.em, this.civManager)
-    this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager)
+    this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles)
+    this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles)
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
 
     // Generate new world

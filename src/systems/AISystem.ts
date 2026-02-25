@@ -1,14 +1,17 @@
-import { EntityManager, EntityId, PositionComponent, VelocityComponent, NeedsComponent, AIComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent, VelocityComponent, NeedsComponent, AIComponent, CreatureComponent, RenderComponent } from '../ecs/Entity'
 import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { World } from '../game/World'
+import { ParticleSystem } from './ParticleSystem'
 
 export class AISystem {
   private em: EntityManager
   private world: World
+  private particles: ParticleSystem
 
-  constructor(em: EntityManager, world: World) {
+  constructor(em: EntityManager, world: World, particles: ParticleSystem) {
     this.em = em
     this.world = world
+    this.particles = particles
   }
 
   update(): void {
@@ -32,6 +35,8 @@ export class AISystem {
 
       // Check death
       if (needs.health <= 0) {
+        const render = this.em.getComponent<RenderComponent>(id, 'render')
+        this.particles.spawnDeath(pos.x, pos.y, render ? render.color : '#880000')
         this.em.removeEntity(id)
         continue
       }

@@ -1,8 +1,9 @@
 import { TileType, EntityType, PowerType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { World } from './World'
-import { EntityManager } from '../ecs/Entity'
+import { EntityManager, RenderComponent } from '../ecs/Entity'
 import { CreatureFactory } from '../entities/CreatureFactory'
 import { CivManager } from '../civilization/CivManager'
+import { ParticleSystem } from '../systems/ParticleSystem'
 
 interface Power {
   type: PowerType
@@ -18,6 +19,7 @@ export class Powers {
   private em: EntityManager
   private factory: CreatureFactory
   private civManager: CivManager
+  private particles: ParticleSystem
   private currentPower: Power | null = null
   private brushSize: number = 2
 
@@ -58,11 +60,12 @@ export class Powers {
     { type: PowerType.DISASTER, name: 'Plague', icon: '🦠', action: 'plague' },
   ]
 
-  constructor(world: World, em: EntityManager, factory: CreatureFactory, civManager: CivManager) {
+  constructor(world: World, em: EntityManager, factory: CreatureFactory, civManager: CivManager, particles: ParticleSystem) {
     this.world = world
     this.em = em
     this.factory = factory
     this.civManager = civManager
+    this.particles = particles
   }
 
   setPower(power: Power | null): void {
@@ -116,6 +119,10 @@ export class Powers {
     if (tile === TileType.DEEP_WATER || tile === TileType.SHALLOW_WATER || tile === TileType.LAVA) return
     const entityId = this.factory.spawn(this.currentPower!.entityType!, x, y)
 
+    // Birth particle effect
+    const render = this.em.getComponent<RenderComponent>(entityId, 'render')
+    this.particles.spawnBirth(x, y, render ? render.color : '#ffffff')
+
     // Civilized species auto-create/join civilization
     const species = this.currentPower!.entityType!
     const civilized = ['human', 'elf', 'dwarf', 'orc']
@@ -147,6 +154,7 @@ export class Powers {
             }
           }
         }
+        this.particles.spawnRain(x, y)
         break
 
       case 'lightning':
@@ -155,6 +163,7 @@ export class Powers {
         }
         // Kill nearby entities
         this.killEntitiesInRadius(x, y, 2)
+        this.particles.spawnExplosion(x, y)
         break
 
       case 'fire':
@@ -202,6 +211,7 @@ export class Powers {
           }
         }
         this.killEntitiesInRadius(x, y, 5)
+        this.particles.spawnExplosion(x, y)
         break
 
       case 'tornado':
@@ -230,6 +240,7 @@ export class Powers {
           }
         }
         this.killEntitiesInRadius(x, y, 12)
+        this.particles.spawnExplosion(x, y)
         break
 
       case 'blackhole':
