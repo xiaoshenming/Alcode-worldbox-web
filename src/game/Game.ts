@@ -215,6 +215,11 @@ import { DiplomaticExileSystem } from '../systems/DiplomaticExileSystem'
 import { WorldMigrationRouteSystem } from '../systems/WorldMigrationRouteSystem'
 import { WorldVolcanicSystem } from '../systems/WorldVolcanicSystem'
 import { WorldAcousticSystem } from '../systems/WorldAcousticSystem'
+import { CreatureNostalgiaSystem } from '../systems/CreatureNostalgiaSystem'
+import { WorldUndergroundSystem } from '../systems/WorldUndergroundSystem'
+import { DiplomaticBlockadeSystem } from '../systems/DiplomaticBlockadeSystem'
+import { CreatureInventionSystem } from '../systems/CreatureInventionSystem'
+import { WorldAuroraSystem } from '../systems/WorldAuroraSystem'
 
 export class Game {
   private world: World
@@ -432,6 +437,11 @@ export class Game {
   private worldMigrationRoute!: WorldMigrationRouteSystem
   private worldVolcanic!: WorldVolcanicSystem
   private worldAcoustic!: WorldAcousticSystem
+  private creatureNostalgia!: CreatureNostalgiaSystem
+  private worldUnderground!: WorldUndergroundSystem
+  private diplomaticBlockade!: DiplomaticBlockadeSystem
+  private creatureInvention!: CreatureInventionSystem
+  private worldAurora!: WorldAuroraSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -800,6 +810,11 @@ export class Game {
     this.worldVolcanic.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.worldAcoustic = new WorldAcousticSystem()
     this.worldAcoustic.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
+    this.creatureNostalgia = new CreatureNostalgiaSystem()
+    this.worldUnderground = new WorldUndergroundSystem()
+    this.diplomaticBlockade = new DiplomaticBlockadeSystem()
+    this.creatureInvention = new CreatureInventionSystem()
+    this.worldAurora = new WorldAuroraSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2127,6 +2142,16 @@ export class Game {
         this.worldVolcanic.update(this.tickRate, this.world, this.world.tick)
         // World acoustics (v2.55) - sound propagation effects
         this.worldAcoustic.update(this.tickRate, this.em, this.world.tick)
+        // Creature nostalgia (v2.56) - homesickness and birthplace bonds
+        this.creatureNostalgia.update(this.tickRate, this.em, this.world.tick)
+        // World underground (v2.57) - subterranean cave networks
+        this.worldUnderground.update(this.tickRate, this.world, this.world.tick)
+        // Diplomatic blockades (v2.58) - naval/land blockades
+        this.diplomaticBlockade.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // Creature inventions (v2.59) - tools and techniques
+        this.creatureInvention.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // World aurora (v2.60) - northern/southern lights
+        this.worldAurora.update(this.tickRate, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
