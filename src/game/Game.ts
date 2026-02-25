@@ -1144,12 +1144,50 @@ export class Game {
         this.volcanoSystem.update(this.world.tick, this.world, this.particles)
         this.ruinsSystem.update(this.world.tick)
         this.plagueVisual.update()
-        const currentSeason = this.seasonSystem.getCurrentSeason()
-        const weatherMap = { spring: 'rain' as const, summer: 'clear' as const, autumn: 'storm' as const, winter: 'snow' as const }
-        this.weatherDisaster.update(this.world, this.em, this.civManager, this.particles, this.world.tick, currentSeason, weatherMap[currentSeason])
+        // Weather disaster linkage - use actual weather and season
+        {
+          const season = this.seasonSystem.getCurrentSeason()
+          const w = this.weather.currentWeather
+          const weatherForDisaster: 'clear' | 'rain' | 'storm' | 'snow' =
+            w === 'rain' ? 'rain' : w === 'storm' || w === 'tornado' ? 'storm' : w === 'snow' ? 'snow' : 'clear'
+          this.weatherDisaster.update(this.world, this.em, this.civManager, this.particles, this.world.tick, season, weatherForDisaster)
+        }
+        // Era visual sync - track most advanced civ
+        {
+          let maxEra: 'stone' | 'bronze' | 'iron' | 'medieval' | 'renaissance' = 'stone'
+          const eraOrder = ['stone', 'bronze', 'iron', 'medieval', 'renaissance'] as const
+          for (const [civId] of this.civManager.civilizations) {
+            const era = this.eraSystem.getEra(civId)
+            if (eraOrder.indexOf(era) > eraOrder.indexOf(maxEra)) maxEra = era
+          }
+          this.eraVisual.setEra(maxEra)
+        }
         this.eraVisual.update()
         this.fogOfWar.update()
         this.fortificationRenderer.update()
+        // Evolution system
+        this.evolutionSystem.update(this.em, this.world, this.world.tick)
+        // Build fortification data from civilizations
+        if (this.world.tick % 120 === 0) {
+          const forts: CityFortification[] = []
+          for (const [civId, civ] of this.civManager.civilizations) {
+            if (civ.buildings.length === 0) continue
+            const pos = this.em.getComponent<PositionComponent>(civ.buildings[0], 'position')
+            if (!pos) continue
+            const era = this.eraSystem.getEra(civId)
+            const level = era === 'stone' ? 'wooden' as const : era === 'bronze' || era === 'iron' ? 'stone' as const : 'castle' as const
+            const hasWar = [...civ.relations.values()].some(r => r < -30)
+            forts.push({
+              cityId: civ.buildings[0], civId, centerX: Math.floor(pos.x), centerY: Math.floor(pos.y),
+              radius: Math.min(8, 3 + Math.floor(civ.territory.size / 50)),
+              level, health: 100, maxHealth: 100,
+              towerCount: Math.min(4, 1 + Math.floor(civ.techLevel / 2)),
+              hasMoat: era === 'iron' || era === 'medieval' || era === 'renaissance',
+              isUnderAttack: hasWar, color: civ.color
+            })
+          }
+          this.fortificationRenderer.updateFortifications(forts)
+        }
         // Update trade route visualization from caravan data
         if (this.world.tick % 120 === 0) {
           const routes: TradeRoute[] = []
@@ -1241,14 +1279,28 @@ export class Game {
     // Weather disaster overlay
     this.weatherDisaster.renderOverlay(ctx, this.canvas.width, this.canvas.height, this.world.tick)
 
-    // Era visual overlay
+    // Era visual overlay & indicator
     this.eraVisual.renderOverlay(ctx, this.canvas.width, this.canvas.height)
+    this.eraVisual.renderEraIndicator(ctx, this.canvas.width - 160, 10)
 
-    // Fog of war overlay
-    this.fogOfWar.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, 0, 0, this.canvas.width, this.canvas.height, () => 2 as const)
+    // Fog of war overlay - connect to actual FogOfWarSystem
+    {
+      const bounds = this.camera.getVisibleBounds()
+      const firstCivId = this.civManager.civilizations.keys().next().value
+      this.fogOfWar.render(ctx, this.camera.x, this.camera.y, this.camera.zoom,
+        bounds.startX, bounds.startY, bounds.endX, bounds.endY,
+        (x: number, y: number) => {
+          if (firstCivId === undefined) return 2 as const
+          const alpha = this.fogOfWarSystem.getFogAlpha(firstCivId, x, y)
+          return (alpha > 0.6 ? 0 : alpha > 0.2 ? 1 : 2) as 0 | 1 | 2
+        })
+    }
 
     // Fortification rendering
-    this.fortificationRenderer.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, 0, 0, this.canvas.width, this.canvas.height)
+    {
+      const bounds = this.camera.getVisibleBounds()
+      this.fortificationRenderer.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, bounds.startX, bounds.startY, bounds.endX, bounds.endY)
+    }
 
     this.worldEventSystem.renderScreenOverlay(ctx, this.canvas.width, this.canvas.height)
     this.worldEventSystem.renderEventBanner(ctx, this.canvas.width)
