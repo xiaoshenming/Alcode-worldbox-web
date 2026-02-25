@@ -134,9 +134,11 @@
       <input type="range" min="1" max="10" value="2" id="brushSlider">
       <span id="brushValue">2</span>
     </div>
+    <button class="btn" id="statsToggle" style="position:absolute;right:10px;bottom:10px;z-index:201">📊 Stats</button>
   </div>
   <div id="tooltip"></div>
   <div id="eventPanel" class="panel" style="position:fixed;bottom:10px;left:10px;width:320px;max-height:180px;overflow:hidden;z-index:200;font-size:11px;line-height:1.4;pointer-events:none;opacity:0.9"></div>
+  <div id="statsPanel" class="panel" style="position:fixed;top:50%;right:10px;transform:translateY(-50%);width:240px;max-height:400px;overflow-y:auto;z-index:200;font-size:11px;line-height:1.4;display:none"></div>
   <div id="creaturePanel" class="panel" style="position:fixed;top:10px;right:180px;display:none;min-width:180px;z-index:200;font-size:12px;line-height:1.6"></div>
   <script type="module" src="/src/main.ts"></script>
 </body>

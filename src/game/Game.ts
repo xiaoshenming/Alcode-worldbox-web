@@ -7,6 +7,7 @@ import { Toolbar } from '../ui/Toolbar'
 import { InfoPanel } from '../ui/InfoPanel'
 import { CreaturePanel } from '../ui/CreaturePanel'
 import { EventPanel } from '../ui/EventPanel'
+import { StatsPanel } from '../ui/StatsPanel'
 import { EntityManager, PositionComponent } from '../ecs/Entity'
 import { AISystem } from '../systems/AISystem'
 import { CombatSystem } from '../systems/CombatSystem'
@@ -26,6 +27,7 @@ export class Game {
   private infoPanel: InfoPanel
   private creaturePanel: CreaturePanel
   private eventPanel: EventPanel
+  private statsPanel: StatsPanel
 
   em: EntityManager
   private aiSystem: AISystem
@@ -69,6 +71,7 @@ export class Game {
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
     this.creaturePanel = new CreaturePanel('creaturePanel', this.em, this.civManager)
     this.eventPanel = new EventPanel('eventPanel')
+    this.statsPanel = new StatsPanel('statsPanel', this.em, this.civManager)
 
     this.setupSpeedControls()
     this.setupBrushControls()
@@ -304,6 +307,7 @@ export class Game {
 
     if (this.world.tick % 30 === 0) {
       this.infoPanel.update(this.fps)
+      this.statsPanel.update()
     }
 
     // Real-time creature panel update when selected
