@@ -655,6 +655,18 @@ import { CreatureLoomMakersSystem } from '../systems/CreatureLoomMakersSystem'
 import { WorldHotSpring2System } from '../systems/WorldHotSpringSystem2'
 import { WorldSolfataraSystem } from '../systems/WorldSolfataraSystem'
 import { DiplomaticIntercessionSystem } from '../systems/DiplomaticIntercessionSystem'
+import { CreatureNeedleworkMakersSystem } from '../systems/CreatureNeedleworkMakersSystem'
+import { WorldMaarSystem } from '../systems/WorldMaaSystem'
+import { DiplomaticArbitrementSystem } from '../systems/DiplomaticArbitrementSystem'
+import { CreatureWarpingMakersSystem } from '../systems/CreatureWarpingMakersSystem'
+import { DiplomaticCompromiseSystem } from '../systems/DiplomaticCompromiseSystem'
+import { CreatureBobbinWinderSystem } from '../systems/CreatureBobbinWinderSystem'
+import { DiplomaticDetente2System } from '../systems/DiplomaticDetente2System'
+import { CreatureCardingMakersSystem } from '../systems/CreatureCardingMakersSystem'
+import { WorldLaharSystem } from '../systems/WorldLaharSystem'
+import { CreatureFullingMakersSystem } from '../systems/CreatureFullingMakersSystem'
+import { WorldPyroclasticFlowSystem } from '../systems/WorldPyroclasticFlowSystem'
+import { DiplomaticEntente2System } from '../systems/DiplomaticEntente2System'
 export class Game {
   private world: World
   private camera: Camera
@@ -1311,6 +1323,18 @@ export class Game {
   private worldHotSpring2!: WorldHotSpring2System
   private worldSolfatara!: WorldSolfataraSystem
   private diplomaticIntercession!: DiplomaticIntercessionSystem
+  private creatureNeedleworkMakers!: CreatureNeedleworkMakersSystem
+  private worldMaar!: WorldMaarSystem
+  private diplomaticArbitrement!: DiplomaticArbitrementSystem
+  private creatureWarpingMakers!: CreatureWarpingMakersSystem
+  private diplomaticCompromise!: DiplomaticCompromiseSystem
+  private creatureBobbinWinder!: CreatureBobbinWinderSystem
+  private diplomaticDetente2!: DiplomaticDetente2System
+  private creatureCardingMakers!: CreatureCardingMakersSystem
+  private worldLahar!: WorldLaharSystem
+  private creatureFullingMakers!: CreatureFullingMakersSystem
+  private worldPyroclasticFlow!: WorldPyroclasticFlowSystem
+  private diplomaticEntente2!: DiplomaticEntente2System
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -2118,6 +2142,18 @@ export class Game {
     this.worldHotSpring2 = new WorldHotSpring2System()
     this.worldSolfatara = new WorldSolfataraSystem()
     this.diplomaticIntercession = new DiplomaticIntercessionSystem()
+    this.creatureNeedleworkMakers = new CreatureNeedleworkMakersSystem()
+    this.worldMaar = new WorldMaarSystem()
+    this.diplomaticArbitrement = new DiplomaticArbitrementSystem()
+    this.creatureWarpingMakers = new CreatureWarpingMakersSystem()
+    this.diplomaticCompromise = new DiplomaticCompromiseSystem()
+    this.creatureBobbinWinder = new CreatureBobbinWinderSystem()
+    this.diplomaticDetente2 = new DiplomaticDetente2System()
+    this.creatureCardingMakers = new CreatureCardingMakersSystem()
+    this.worldLahar = new WorldLaharSystem()
+    this.creatureFullingMakers = new CreatureFullingMakersSystem()
+    this.worldPyroclasticFlow = new WorldPyroclasticFlowSystem()
+    this.diplomaticEntente2 = new DiplomaticEntente2System()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -4341,6 +4377,30 @@ export class Game {
         this.worldSolfatara.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic intercession (v3.460) - intercession diplomacy
         this.diplomaticIntercession.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature needlework makers (v3.461) - needlework artisans
+        this.creatureNeedleworkMakers.update(this.tickRate, this.em, this.world.tick)
+        // World maars (v3.462) - maar crater formations
+        this.worldMaar.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic arbitrement (v3.463) - arbitrement diplomacy
+        this.diplomaticArbitrement.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature warping makers (v3.464) - warping artisans
+        this.creatureWarpingMakers.update(this.tickRate, this.em, this.world.tick)
+        // Diplomatic compromise (v3.466) - compromise diplomacy
+        this.diplomaticCompromise.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature bobbin winders (v3.467) - bobbin winding artisans
+        this.creatureBobbinWinder.update(this.tickRate, this.em, this.world.tick)
+        // Diplomatic detente 2 (v3.469) - advanced detente diplomacy
+        this.diplomaticDetente2.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature carding makers (v3.470) - carding artisans
+        this.creatureCardingMakers.update(this.tickRate, this.em, this.world.tick)
+        // World lahars (v3.471) - lahar mudflow formations
+        this.worldLahar.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature fulling makers (v3.473) - fulling artisans
+        this.creatureFullingMakers.update(this.tickRate, this.em, this.world.tick)
+        // World pyroclastic flows (v3.474) - pyroclastic flow events
+        this.worldPyroclasticFlow.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic entente 2 (v3.475) - advanced entente diplomacy
+        this.diplomaticEntente2.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate

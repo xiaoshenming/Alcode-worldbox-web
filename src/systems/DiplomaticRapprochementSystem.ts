@@ -1,32 +1,30 @@
-// Diplomatic Rapprochement System (v3.337) - Rapprochement agreements
-// Restoration of cordial relations after periods of hostility or estrangement
+// Diplomatic Rapprochement System (v3.472) - Rapprochement diplomacy
+// Restoration of cordial relations between previously hostile civilizations
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type RapprochementStage = 'overture' | 'dialogue' | 'cooperation' | 'partnership'
+export type RapprochementStage = 'overture' | 'dialogue' | 'warming' | 'normalized'
 
-export interface RapprochementAgreement {
+export interface RapprochementProcess {
   id: number
   civIdA: number
   civIdB: number
   stage: RapprochementStage
-  goodwillLevel: number
-  diplomaticProgress: number
-  economicTies: number
-  culturalBonds: number
+  warmth: number
+  diplomaticCapital: number
+  publicPerception: number
+  tradeResumption: number
   duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2360
-const TREATY_CHANCE = 0.0026
-const MAX_TREATIES = 20
-
-const STAGES: RapprochementStage[] = ['overture', 'dialogue', 'cooperation', 'partnership']
+const CHECK_INTERVAL = 2580
+const INITIATE_CHANCE = 0.0017
+const MAX_PROCESSES = 14
 
 export class DiplomaticRapprochementSystem {
-  private treaties: RapprochementAgreement[] = []
+  private processes: RapprochementProcess[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -34,40 +32,39 @@ export class DiplomaticRapprochementSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    if (this.treaties.length < MAX_TREATIES && Math.random() < TREATY_CHANCE) {
-      const civA = 1 + Math.floor(Math.random() * 8)
-      const civB = 1 + Math.floor(Math.random() * 8)
-      if (civA === civB) return
+    if (this.processes.length < MAX_PROCESSES && Math.random() < INITIATE_CHANCE) {
+      const a = 1 + Math.floor(Math.random() * 8)
+      const b = 1 + Math.floor(Math.random() * 8)
+      if (a === b) return
 
-      const stage = STAGES[Math.floor(Math.random() * STAGES.length)]
-
-      this.treaties.push({
+      this.processes.push({
         id: this.nextId++,
-        civIdA: civA,
-        civIdB: civB,
-        stage,
-        goodwillLevel: 10 + Math.random() * 30,
-        diplomaticProgress: 5 + Math.random() * 25,
-        economicTies: 8 + Math.random() * 22,
-        culturalBonds: 5 + Math.random() * 20,
+        civIdA: a,
+        civIdB: b,
+        stage: 'overture',
+        warmth: 5 + Math.random() * 15,
+        diplomaticCapital: 10 + Math.random() * 20,
+        publicPerception: 20 + Math.random() * 30,
+        tradeResumption: 0,
         duration: 0,
         tick,
       })
     }
 
-    for (const treaty of this.treaties) {
-      treaty.duration += 1
-      treaty.goodwillLevel = Math.max(5, Math.min(85, treaty.goodwillLevel + (Math.random() - 0.44) * 0.13))
-      treaty.diplomaticProgress = Math.max(3, Math.min(80, treaty.diplomaticProgress + (Math.random() - 0.45) * 0.11))
-      treaty.economicTies = Math.max(3, Math.min(70, treaty.economicTies + (Math.random() - 0.46) * 0.1))
-      treaty.culturalBonds = Math.max(2, Math.min(65, treaty.culturalBonds + (Math.random() - 0.47) * 0.09))
+    for (const p of this.processes) {
+      p.duration++
+      p.warmth = Math.min(100, p.warmth + 0.03)
+      p.diplomaticCapital = Math.min(100, p.diplomaticCapital + 0.02)
+      if (p.stage === 'overture' && p.warmth > 25) p.stage = 'dialogue'
+      if (p.stage === 'dialogue' && p.warmth > 50) p.stage = 'warming'
+      if (p.stage === 'warming' && p.warmth > 80) {
+        p.stage = 'normalized'
+        p.tradeResumption = 50 + Math.random() * 50
+      }
     }
 
-    const cutoff = tick - 84000
-    for (let i = this.treaties.length - 1; i >= 0; i--) {
-      if (this.treaties[i].tick < cutoff) this.treaties.splice(i, 1)
-    }
+    this.processes = this.processes.filter(p => p.stage !== 'normalized' || p.duration < 120)
   }
 
-  getTreaties(): RapprochementAgreement[] { return this.treaties }
+  getProcesses(): RapprochementProcess[] { return this.processes }
 }
