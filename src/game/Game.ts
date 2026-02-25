@@ -68,6 +68,7 @@ export class Game {
     this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles, this.audio)
     this.weather = new WeatherSystem(this.world, this.particles, this.em)
     this.resources = new ResourceSystem(this.world, this.em, this.civManager, this.particles)
+    this.aiSystem.setResourceSystem(this.resources)
 
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
     this.toolbar = new Toolbar('toolbar', this.powers)
@@ -119,6 +120,7 @@ export class Game {
     this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles, this.audio)
     this.weather = new WeatherSystem(this.world, this.particles, this.em)
     this.resources = new ResourceSystem(this.world, this.em, this.civManager, this.particles)
+    this.aiSystem.setResourceSystem(this.resources)
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
     this.creaturePanel = new CreaturePanel('creaturePanel', this.em, this.civManager)

@@ -6,6 +6,8 @@ import { CreatureFactory } from '../entities/CreatureFactory'
 import { EntityType } from '../utils/Constants'
 import { findNextStep, isWalkable } from '../utils/Pathfinding'
 import { EventLog } from './EventLog'
+import { ResourceSystem, ResourceNode } from './ResourceSystem'
+import { CivMemberComponent } from '../civilization/Civilization'
 
 export class AISystem {
   private em: EntityManager
@@ -13,12 +15,17 @@ export class AISystem {
   private particles: ParticleSystem
   private factory: CreatureFactory
   private breedCooldown: Map<EntityId, number> = new Map()
+  private resources: ResourceSystem | null = null
 
   constructor(em: EntityManager, world: World, particles: ParticleSystem, factory: CreatureFactory) {
     this.em = em
     this.world = world
     this.particles = particles
     this.factory = factory
+  }
+
+  setResourceSystem(resources: ResourceSystem): void {
+    this.resources = resources
   }
 
   update(): void {
@@ -95,6 +102,17 @@ export class AISystem {
       switch (ai.state) {
         case 'idle':
           if (Math.random() < 0.02) {
+            // Civ members seek resources when idle
+            const civMember = this.em.getComponent<CivMemberComponent>(id, 'civMember')
+            if (civMember && civMember.role === 'worker' && this.resources) {
+              const resNode = this.findNearestResource(pos, null, 25)
+              if (resNode) {
+                ai.state = 'wandering'
+                ai.targetX = resNode.x
+                ai.targetY = resNode.y
+                break
+              }
+            }
             ai.state = 'wandering'
             const target = this.findWalkableTarget(pos, creature, 20)
             ai.targetX = target.x
@@ -110,19 +128,30 @@ export class AISystem {
           break
 
         case 'hungry':
-          // Find food (move to grass/forest tiles)
+          // Find food: prioritize berry resource nodes, fallback to grass/forest
           if (ai.cooldown === 0) {
-            const target = this.findWalkableTarget(pos, creature, 30)
-            ai.targetX = target.x
-            ai.targetY = target.y
+            const berryNode = this.findNearestResource(pos, 'berry', 30)
+            if (berryNode) {
+              ai.targetX = berryNode.x
+              ai.targetY = berryNode.y
+            } else {
+              const target = this.findWalkableTarget(pos, creature, 30)
+              ai.targetX = target.x
+              ai.targetY = target.y
+            }
             ai.cooldown = 60
           }
           this.moveTowards(pos, ai, creature, vel)
 
-          // Eat if on grass/forest
-          const tile = this.world.getTile(Math.floor(pos.x), Math.floor(pos.y))
-          if (tile === TileType.GRASS || tile === TileType.FOREST) {
-            needs.hunger = Math.max(0, needs.hunger - 0.5)
+          // Eat from nearby berry node first
+          if (this.tryEatFromResource(pos, needs)) {
+            // ate from resource node
+          } else {
+            // Fallback: eat if on grass/forest
+            const tile = this.world.getTile(Math.floor(pos.x), Math.floor(pos.y))
+            if (tile === TileType.GRASS || tile === TileType.FOREST) {
+              needs.hunger = Math.max(0, needs.hunger - 0.5)
+            }
           }
           break
 
@@ -262,6 +291,40 @@ export class AISystem {
     const dx = ai.targetX - pos.x
     const dy = ai.targetY - pos.y
     return Math.sqrt(dx * dx + dy * dy) < 1
+  }
+
+  private findNearestResource(pos: PositionComponent, type: string | null, range: number): ResourceNode | null {
+    if (!this.resources) return null
+    let best: ResourceNode | null = null
+    let bestDist = range * range
+
+    for (const node of this.resources.nodes) {
+      if (node.amount <= 0) continue
+      if (type && node.type !== type) continue
+      const dx = node.x - pos.x
+      const dy = node.y - pos.y
+      const dist2 = dx * dx + dy * dy
+      if (dist2 < bestDist) {
+        bestDist = dist2
+        best = node
+      }
+    }
+    return best
+  }
+
+  private tryEatFromResource(pos: PositionComponent, needs: NeedsComponent): boolean {
+    if (!this.resources) return false
+    for (const node of this.resources.nodes) {
+      if (node.type !== 'berry' || node.amount <= 0) continue
+      const dx = pos.x - node.x
+      const dy = pos.y - node.y
+      if (dx * dx + dy * dy < 4) {
+        node.amount -= 1
+        needs.hunger = Math.max(0, needs.hunger - 5)
+        return true
+      }
+    }
+    return false
   }
 
   private findWalkableTarget(pos: PositionComponent, creature: CreatureComponent, range: number): { x: number; y: number } {
