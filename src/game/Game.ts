@@ -205,6 +205,9 @@ import { WorldMagicStormSystem } from '../systems/WorldMagicStormSystem'
 import { CreatureAmbitionSystem } from '../systems/CreatureAmbitionSystem'
 import { DiplomaticCouncilSystem } from '../systems/DiplomaticCouncilSystem'
 import { WorldFertilitySystem } from '../systems/WorldFertilitySystem'
+import { CreatureFashionSystem } from '../systems/CreatureFashionSystem'
+import { DiplomaticHostageSystem } from '../systems/DiplomaticHostageSystem'
+import { WorldErosionSystem } from '../systems/WorldErosionSystem'
 
 export class Game {
   private world: World
@@ -412,6 +415,9 @@ export class Game {
   private creatureAmbition!: CreatureAmbitionSystem
   private diplomaticCouncil!: DiplomaticCouncilSystem
   private worldFertility!: WorldFertilitySystem
+  private creatureFashion!: CreatureFashionSystem
+  private diplomaticHostage!: DiplomaticHostageSystem
+  private worldErosion!: WorldErosionSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -766,6 +772,10 @@ export class Game {
     this.creatureAmbition = new CreatureAmbitionSystem()
     this.diplomaticCouncil = new DiplomaticCouncilSystem()
     this.worldFertility = new WorldFertilitySystem()
+    this.creatureFashion = new CreatureFashionSystem()
+    this.diplomaticHostage = new DiplomaticHostageSystem()
+    this.worldErosion = new WorldErosionSystem()
+    this.worldErosion.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2073,6 +2083,12 @@ export class Game {
         this.diplomaticCouncil.update(this.tickRate, this.civManager, this.world.tick)
         // World fertility (v2.40) - soil fertility map
         this.worldFertility.update(this.tickRate, this.world.tiles, this.world.tick)
+        // Creature fashion (v2.43) - fashion trends in civs
+        this.creatureFashion.update(this.tickRate, [...this.civManager.civilizations.keys()], this.world.tick)
+        // Diplomatic hostages (v2.44) - hostage exchange for peace
+        this.diplomaticHostage.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // World erosion (v2.45) - terrain erosion over time
+        this.worldErosion.update(this.tickRate, this.world, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
