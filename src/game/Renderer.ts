@@ -1,7 +1,7 @@
 import { TileType, TILE_SIZE } from '../utils/Constants'
 import { World } from './World'
 import { Camera } from './Camera'
-import { EntityManager, PositionComponent, RenderComponent, VelocityComponent, NeedsComponent, AIComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent, RenderComponent, VelocityComponent, NeedsComponent, AIComponent, CreatureComponent, ArtifactComponent, InventoryComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 import { BuildingComponent, BUILDING_COLORS } from '../civilization/Civilization'
 import { ParticleSystem } from '../systems/ParticleSystem'
@@ -296,14 +296,64 @@ export class Renderer {
           const spriteSize = tileSize * 1.2
           ctx.drawImage(sprite, cx - spriteSize/2, cy - spriteSize/2, spriteSize, spriteSize)
         } else {
-          // Fallback: draw circle for unknown entities
-          ctx.fillStyle = render.color
-          ctx.beginPath()
-          ctx.arc(cx, cy, size, 0, Math.PI * 2)
-          ctx.fill()
-          ctx.strokeStyle = 'rgba(0,0,0,0.5)'
-          ctx.lineWidth = 0.5
-          ctx.stroke()
+          // Check if this is an unclaimed artifact
+          const artifact = em.getComponent<ArtifactComponent>(id, 'artifact')
+          if (artifact && !artifact.claimed) {
+            // Pulsing golden diamond
+            const time = performance.now()
+            const pulse = Math.sin(time * 0.005 + id * 2) * 0.3 + 0.7
+            const diamondSize = Math.max(3, tileSize * 0.6) * pulse
+            const glowSize = diamondSize * 1.8
+
+            // Outer glow
+            ctx.globalAlpha = pulse * 0.3
+            ctx.fillStyle = artifact.rarity === 'mythic' ? '#ffdd44' : '#ffaa00'
+            ctx.beginPath()
+            ctx.moveTo(cx, cy - glowSize)
+            ctx.lineTo(cx + glowSize * 0.6, cy)
+            ctx.lineTo(cx, cy + glowSize)
+            ctx.lineTo(cx - glowSize * 0.6, cy)
+            ctx.closePath()
+            ctx.fill()
+
+            // Inner diamond
+            ctx.globalAlpha = pulse * 0.9
+            ctx.fillStyle = '#ffd700'
+            ctx.beginPath()
+            ctx.moveTo(cx, cy - diamondSize)
+            ctx.lineTo(cx + diamondSize * 0.6, cy)
+            ctx.lineTo(cx, cy + diamondSize)
+            ctx.lineTo(cx - diamondSize * 0.6, cy)
+            ctx.closePath()
+            ctx.fill()
+
+            // White sparkle center
+            ctx.globalAlpha = pulse
+            ctx.fillStyle = '#ffffff'
+            ctx.beginPath()
+            ctx.arc(cx, cy, diamondSize * 0.2, 0, Math.PI * 2)
+            ctx.fill()
+            ctx.globalAlpha = 1
+
+            // Name label when zoomed in
+            if (camera.zoom > 0.6) {
+              ctx.globalAlpha = 0.85
+              ctx.fillStyle = '#ffd700'
+              ctx.font = `${Math.max(6, 7 * camera.zoom)}px monospace`
+              ctx.textAlign = 'center'
+              ctx.fillText(artifact.name, cx, cy + diamondSize + 6 * camera.zoom)
+              ctx.globalAlpha = 1
+            }
+          } else {
+            // Fallback: draw circle for unknown entities
+            ctx.fillStyle = render.color
+            ctx.beginPath()
+            ctx.arc(cx, cy, size, 0, Math.PI * 2)
+            ctx.fill()
+            ctx.strokeStyle = 'rgba(0,0,0,0.5)'
+            ctx.lineWidth = 0.5
+            ctx.stroke()
+          }
         }
 
         // Hero aura
@@ -336,6 +386,19 @@ export class Renderer {
           const stars = '★'.repeat(Math.min(heroComp.level, 5))
           ctx.fillText(stars, cx, cy + spriteSize * 0.7 + 4 * camera.zoom)
           ctx.globalAlpha = 1
+
+          // Artifact indicator for heroes carrying artifacts
+          const heroInv = em.getComponent<InventoryComponent>(id, 'inventory')
+          if (heroInv && heroInv.artifacts.length > 0 && camera.zoom > 0.4) {
+            const artPulse = Math.sin(performance.now() * 0.003 + id) * 0.2 + 0.8
+            ctx.globalAlpha = artPulse
+            ctx.fillStyle = '#ffd700'
+            ctx.font = `${Math.max(6, 7 * camera.zoom)}px monospace`
+            ctx.textAlign = 'center'
+            const artSymbols = heroInv.artifacts.map(() => '\u25C6').join('')
+            ctx.fillText(artSymbols, cx, cy - spriteSize * 0.7 - 6 * camera.zoom)
+            ctx.globalAlpha = 1
+          }
         }
 
         // Health bar (only when damaged)

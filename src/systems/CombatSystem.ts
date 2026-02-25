@@ -4,6 +4,7 @@ import { CivManager } from '../civilization/CivManager'
 import { ParticleSystem } from './ParticleSystem'
 import { SoundSystem } from './SoundSystem'
 import { EventLog } from './EventLog'
+import { ArtifactSystem, getArtifactCombatBonus, getArtifactBonus } from './ArtifactSystem'
 
 export class CombatSystem {
   private em: EntityManager
@@ -11,12 +12,17 @@ export class CombatSystem {
   private particles: ParticleSystem
   private audio: SoundSystem
   private tick: number = 0
+  private artifactSystem: ArtifactSystem | null = null
 
   constructor(em: EntityManager, civManager: CivManager, particles: ParticleSystem, audio: SoundSystem) {
     this.em = em
     this.civManager = civManager
     this.particles = particles
     this.audio = audio
+  }
+
+  setArtifactSystem(artifactSystem: ArtifactSystem): void {
+    this.artifactSystem = artifactSystem
   }
 
   update(tick: number = 0): void {
@@ -112,6 +118,9 @@ export class CombatSystem {
             }
           }
 
+          // Artifact combat bonus
+          damage *= getArtifactCombatBonus(this.em, id)
+
           otherNeeds.health -= damage
           this.audio.playCombat()
 
@@ -141,6 +150,10 @@ export class CombatSystem {
         const render = this.em.getComponent<RenderComponent>(id, 'render')
         if (pos) {
           this.particles.spawnDeath(pos.x, pos.y, render ? render.color : '#880000')
+        }
+        // Drop artifacts on death
+        if (this.artifactSystem) {
+          this.artifactSystem.dropAllArtifacts(this.em, id)
         }
         this.em.removeEntity(id)
       }
@@ -184,13 +197,16 @@ export class CombatSystem {
       killerHero.kills++
       // XP based on victim type
       const victimHero = this.em.getComponent<HeroComponent>(victimId, 'hero')
+      let xpGain = 10
       if (victimCreature.species === 'dragon') {
-        killerHero.xp += 50
+        xpGain = 50
       } else if (victimHero) {
-        killerHero.xp += 25
-      } else {
-        killerHero.xp += 10
+        xpGain = 25
       }
+
+      // Artifact XP bonus
+      xpGain = Math.floor(xpGain * getArtifactBonus(this.em, killerId, 'xp'))
+      killerHero.xp += xpGain
 
       // Check level up
       if (killerHero.xp >= killerHero.xpToNext) {

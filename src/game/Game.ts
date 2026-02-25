@@ -26,6 +26,7 @@ import { TimelineSystem } from '../systems/TimelineSystem'
 import { TechSystem } from '../systems/TechSystem'
 import { MigrationSystem } from '../systems/MigrationSystem'
 import { EventLog } from '../systems/EventLog'
+import { ArtifactSystem } from '../systems/ArtifactSystem'
 
 export class Game {
   private world: World
@@ -54,6 +55,7 @@ export class Game {
   private timeline: TimelineSystem
   private techSystem: TechSystem
   private migrationSystem!: MigrationSystem
+  private artifactSystem: ArtifactSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -88,9 +90,11 @@ export class Game {
     this.timeline = new TimelineSystem()
     this.techSystem = new TechSystem()
     this.migrationSystem = new MigrationSystem()
+    this.artifactSystem = new ArtifactSystem()
     this.setupAchievementTracking()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
+    this.combatSystem.setArtifactSystem(this.artifactSystem)
 
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
     this.toolbar = new Toolbar('toolbar', this.powers)
@@ -196,8 +200,10 @@ export class Game {
     this.timeline = new TimelineSystem()
     this.techSystem = new TechSystem()
     this.migrationSystem = new MigrationSystem()
+    this.artifactSystem = new ArtifactSystem()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
+    this.combatSystem.setArtifactSystem(this.artifactSystem)
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
     this.creaturePanel = new CreaturePanel('creaturePanel', this.em, this.civManager)
@@ -582,6 +588,8 @@ export class Game {
         this.resources.update()
         this.disasterSystem.update()
         this.timeline.update(this.world.tick)
+        this.artifactSystem.update(this.em, this.world, this.particles, this.world.tick)
+        this.artifactSystem.spawnClaimParticles(this.em, this.particles, this.world.tick)
         this.particles.update()
         this.accumulator -= this.tickRate
       }
