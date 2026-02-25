@@ -150,6 +150,11 @@ import { ResourceFlowSystem } from '../systems/ResourceFlowSystem'
 import { CreatureEmotionSystem } from '../systems/CreatureEmotionSystem'
 import { PowerFavoriteSystem } from '../systems/PowerFavoriteSystem'
 import { WorldHeatmapSystem } from '../systems/WorldHeatmapSystem'
+import { ZoneManagementSystem } from '../systems/ZoneManagementSystem'
+import { CreatureLineageSystem } from '../systems/CreatureLineageSystem'
+import { WorldLawSystem } from '../systems/WorldLawSystem'
+import { MiniGameSystem } from '../systems/MiniGameSystem'
+import { CinematicModeSystem } from '../systems/CinematicModeSystem'
 
 export class Game {
   private world: World
@@ -302,6 +307,11 @@ export class Game {
   private creatureEmotion!: CreatureEmotionSystem
   private powerFavorite!: PowerFavoriteSystem
   private worldHeatmap!: WorldHeatmapSystem
+  private zoneManagement!: ZoneManagementSystem
+  private creatureLineage!: CreatureLineageSystem
+  private worldLaw!: WorldLawSystem
+  private miniGame!: MiniGameSystem
+  private cinematicMode!: CinematicModeSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -598,6 +608,11 @@ export class Game {
     this.creatureEmotion = new CreatureEmotionSystem()
     this.powerFavorite = new PowerFavoriteSystem()
     this.worldHeatmap = new WorldHeatmapSystem()
+    this.zoneManagement = new ZoneManagementSystem()
+    this.creatureLineage = new CreatureLineageSystem()
+    this.worldLaw = new WorldLawSystem()
+    this.miniGame = new MiniGameSystem()
+    this.cinematicMode = new CinematicModeSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2169,6 +2184,23 @@ export class Game {
     // World heatmap overlay (v1.85)
     this.worldHeatmap.update(this.world.tick)
     this.worldHeatmap.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, this.canvas.width, this.canvas.height)
+
+    // Zone management overlay (v1.86)
+    this.zoneManagement.update(this.world.tick)
+    this.zoneManagement.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, this.canvas.width, this.canvas.height)
+
+    // Creature lineage panel (v1.87)
+    this.creatureLineage.render(ctx, this.canvas.width, this.canvas.height)
+
+    // World law panel (v1.88)
+    this.worldLaw.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Mini game events (v1.89)
+    this.miniGame.update(this.world.tick)
+    this.miniGame.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Cinematic mode (v1.90)
+    this.cinematicMode.render(ctx, this.canvas.width, this.canvas.height)
 
     // Screenshot mode toast (v1.66)
     this.screenshotMode.update()
