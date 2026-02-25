@@ -352,7 +352,10 @@ import { WorldTerracingSystem } from '../systems/WorldTerracingSystem'
 import { CreatureCourierSystem } from '../systems/CreatureCourierSystem'
 import { CreatureMosaicSystem } from '../systems/CreatureMosaicSystem'
 import { WorldSundialSystem } from '../systems/WorldSundialSystem'
-
+import { WorldAqueductSystem } from '../systems/WorldAqueductSystem'
+import { CreatureTattoistSystem } from '../systems/CreatureTattoistSystem'
+import { WorldGeoglyphSystem } from '../systems/WorldGeoglyphSystem'
+import { CreatureHeraldSystem } from '../systems/CreatureHeraldSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -706,7 +709,10 @@ export class Game {
   private creatureCourier!: CreatureCourierSystem
   private creatureMosaic!: CreatureMosaicSystem
   private worldSundial!: WorldSundialSystem
-
+  private worldAqueduct!: WorldAqueductSystem
+  private creatureTattoist!: CreatureTattoistSystem
+  private worldGeoglyph!: WorldGeoglyphSystem
+  private creatureHerald!: CreatureHeraldSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1211,6 +1217,10 @@ export class Game {
     this.creatureCourier = new CreatureCourierSystem()
     this.creatureMosaic = new CreatureMosaicSystem()
     this.worldSundial = new WorldSundialSystem()
+    this.worldAqueduct = new WorldAqueductSystem()
+    this.creatureTattoist = new CreatureTattoistSystem()
+    this.worldGeoglyph = new WorldGeoglyphSystem()
+    this.creatureHerald = new CreatureHeraldSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2826,6 +2836,14 @@ export class Game {
         this.creatureMosaic.update(this.tickRate, this.em, this.world.tick)
         // World sundials (v3.115) - timekeeping monuments
         this.worldSundial.update(this.tickRate, this.world, this.em, this.world.tick)
+        // World aqueducts (v3.116) - water transport infrastructure
+        this.worldAqueduct.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature tattoists (v3.117) - symbolic ink markings
+        this.creatureTattoist.update(this.tickRate, this.em, this.world.tick)
+        // World geoglyphs (v3.118) - giant ground drawings
+        this.worldGeoglyph.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature heralds (v3.119) - event announcers
+        this.creatureHerald.update(this.tickRate, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
