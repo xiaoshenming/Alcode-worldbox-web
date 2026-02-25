@@ -259,6 +259,11 @@ import { CreatureDivinationSystem } from '../systems/CreatureDivinationSystem'
 import { DiplomaticSuccessionSystem } from '../systems/DiplomaticSuccessionSystem'
 import { WorldMeteorShowerSystem } from '../systems/WorldMeteorShowerSystem'
 import { CreatureBeastMasterSystem } from '../systems/CreatureBeastMasterSystem'
+import { WorldGlacierSystem } from '../systems/WorldGlacierSystem'
+import { CreatureRumorSystem } from '../systems/CreatureRumorSystem'
+import { DiplomaticTradeAgreementSystem } from '../systems/DiplomaticTradeAgreementSystem'
+import { WorldPurificationSystem } from '../systems/WorldPurificationSystem'
+import { CreatureNightWatchSystem } from '../systems/CreatureNightWatchSystem'
 
 export class Game {
   private world: World
@@ -520,6 +525,11 @@ export class Game {
   private diplomaticSuccession!: DiplomaticSuccessionSystem
   private worldMeteorShower!: WorldMeteorShowerSystem
   private creatureBeastMaster!: CreatureBeastMasterSystem
+  private worldGlacier!: WorldGlacierSystem
+  private creatureRumor!: CreatureRumorSystem
+  private diplomaticTradeAgreement!: DiplomaticTradeAgreementSystem
+  private worldPurification!: WorldPurificationSystem
+  private creatureNightWatch!: CreatureNightWatchSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -932,6 +942,11 @@ export class Game {
     this.diplomaticSuccession = new DiplomaticSuccessionSystem()
     this.worldMeteorShower = new WorldMeteorShowerSystem()
     this.creatureBeastMaster = new CreatureBeastMasterSystem()
+    this.worldGlacier = new WorldGlacierSystem()
+    this.creatureRumor = new CreatureRumorSystem()
+    this.diplomaticTradeAgreement = new DiplomaticTradeAgreementSystem()
+    this.worldPurification = new WorldPurificationSystem()
+    this.creatureNightWatch = new CreatureNightWatchSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2347,6 +2362,16 @@ export class Game {
         this.worldMeteorShower.update(this.tickRate, this.world, this.em, this.world.tick)
         // Creature beast master (v3.05) - creatures tame wild beasts
         this.creatureBeastMaster.update(this.tickRate, this.em, this.world.tick)
+        // World glacier (v3.06) - glaciers reshape terrain
+        this.worldGlacier.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature rumor (v3.07) - rumors spread between creatures
+        this.creatureRumor.update(this.tickRate, this.em, this.world.tick)
+        // Diplomatic trade agreement (v3.08) - formal trade agreements
+        this.diplomaticTradeAgreement.update(this.tickRate, this.em, this.world.tick)
+        // World purification (v3.09) - sacred sites purify land
+        this.worldPurification.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature night watch (v3.10) - sentries guard at night
+        this.creatureNightWatch.update(this.tickRate, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
