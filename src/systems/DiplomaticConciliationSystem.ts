@@ -1,31 +1,32 @@
-// Diplomatic Conciliation System (v3.245) - Reconciliation after conflicts
-// Post-war healing process where civilizations rebuild trust and normalize relations
+// Diplomatic Conciliation System (v3.343) - Conciliation agreements
+// Formal processes to settle disputes through mutual compromise
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type ConciliationType = 'reparations' | 'prisoner_exchange' | 'cultural_exchange' | 'joint_project'
+export type ConciliationApproach = 'compromise' | 'accommodation' | 'collaboration' | 'integration'
 
-export interface Conciliation {
+export interface ConciliationAgreement {
   id: number
-  initiatorCivId: number
-  recipientCivId: number
-  conciliationType: ConciliationType
-  goodwill: number
-  progress: number
-  reparationsPaid: number
-  status: 'active' | 'completed' | 'rejected'
+  civIdA: number
+  civIdB: number
+  approach: ConciliationApproach
+  willingness: number
+  progressRate: number
+  mutualBenefit: number
+  stabilityGain: number
+  duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2500
-const CONCILIATE_CHANCE = 0.003
-const MAX_CONCILIATIONS = 24
+const CHECK_INTERVAL = 2370
+const TREATY_CHANCE = 0.0026
+const MAX_TREATIES = 20
 
-const TYPES: ConciliationType[] = ['reparations', 'prisoner_exchange', 'cultural_exchange', 'joint_project']
+const APPROACHES: ConciliationApproach[] = ['compromise', 'accommodation', 'collaboration', 'integration']
 
 export class DiplomaticConciliationSystem {
-  private conciliations: Conciliation[] = []
+  private treaties: ConciliationAgreement[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -33,41 +34,40 @@ export class DiplomaticConciliationSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    if (this.conciliations.length < MAX_CONCILIATIONS && Math.random() < CONCILIATE_CHANCE) {
-      const initiator = 1 + Math.floor(Math.random() * 8)
-      const recipient = 1 + Math.floor(Math.random() * 8)
-      if (initiator === recipient) return
+    if (this.treaties.length < MAX_TREATIES && Math.random() < TREATY_CHANCE) {
+      const civA = 1 + Math.floor(Math.random() * 8)
+      const civB = 1 + Math.floor(Math.random() * 8)
+      if (civA === civB) return
 
-      const conciliationType = TYPES[Math.floor(Math.random() * TYPES.length)]
+      const approach = APPROACHES[Math.floor(Math.random() * APPROACHES.length)]
 
-      this.conciliations.push({
+      this.treaties.push({
         id: this.nextId++,
-        initiatorCivId: initiator,
-        recipientCivId: recipient,
-        conciliationType,
-        goodwill: 5 + Math.random() * 20,
-        progress: 0,
-        reparationsPaid: conciliationType === 'reparations' ? 10 + Math.random() * 50 : 0,
-        status: 'active',
+        civIdA: civA,
+        civIdB: civB,
+        approach,
+        willingness: 20 + Math.random() * 35,
+        progressRate: 5 + Math.random() * 20,
+        mutualBenefit: 10 + Math.random() * 30,
+        stabilityGain: 8 + Math.random() * 22,
+        duration: 0,
         tick,
       })
     }
 
-    for (const con of this.conciliations) {
-      if (con.status !== 'active') continue
-      con.progress = Math.min(100, con.progress + 0.06 + con.goodwill * 0.003)
-      con.goodwill = Math.min(100, con.goodwill + 0.04)
-
-      if (con.progress >= 95) {
-        con.status = Math.random() < 0.8 ? 'completed' : 'rejected'
-      }
+    for (const treaty of this.treaties) {
+      treaty.duration += 1
+      treaty.willingness = Math.max(10, Math.min(85, treaty.willingness + (Math.random() - 0.46) * 0.12))
+      treaty.progressRate = Math.max(3, Math.min(65, treaty.progressRate + (Math.random() - 0.45) * 0.11))
+      treaty.mutualBenefit = Math.max(5, Math.min(75, treaty.mutualBenefit + (Math.random() - 0.44) * 0.1))
+      treaty.stabilityGain = Math.max(3, Math.min(60, treaty.stabilityGain + (Math.random() - 0.47) * 0.09))
     }
 
-    const cutoff = tick - 78000
-    for (let i = this.conciliations.length - 1; i >= 0; i--) {
-      if (this.conciliations[i].tick < cutoff) this.conciliations.splice(i, 1)
+    const cutoff = tick - 82000
+    for (let i = this.treaties.length - 1; i >= 0; i--) {
+      if (this.treaties[i].tick < cutoff) this.treaties.splice(i, 1)
     }
   }
 
-  getConciliations(): Conciliation[] { return this.conciliations }
+  getTreaties(): ConciliationAgreement[] { return this.treaties }
 }

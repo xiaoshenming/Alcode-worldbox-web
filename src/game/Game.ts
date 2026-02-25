@@ -547,6 +547,20 @@ import { WorldDeltaSystem } from '../systems/WorldDeltaSystem'
 import { DiplomaticRapprochementSystem } from '../systems/DiplomaticRapprochementSystem'
 import { CreatureBookbindersSystem } from '../systems/CreatureBookbindersSystem'
 import { WorldEstuarySystem } from '../systems/WorldEstuarySystem'
+import { CreatureEnamelersSystem } from '../systems/CreatureEnamelersSystem'
+import { WorldWadiSystem } from '../systems/WorldWadiSystem'
+import { CreatureUpholsterersSystem } from '../systems/CreatureUpholsterersSystem'
+import { WorldPeneplainSystem } from '../systems/WorldPeneplainSystem'
+import { DiplomaticAppeasementSystem } from '../systems/DiplomaticAppeasementSystem'
+import { CreatureCalderersSystem } from '../systems/CreatureCalderersSystem'
+import { WorldRavineSystem } from '../systems/WorldRavineSystem'
+import { DiplomaticEntenteSystem } from '../systems/DiplomaticEntenteSystem'
+import { CreatureScrivenersSystem } from '../systems/CreatureScrivenersSystem'
+import { WorldInselbergSystem } from '../systems/WorldInselbergSystem'
+import { DiplomaticAccordSystem } from '../systems/DiplomaticAccordSystem'
+import { CreatureIlluminatorsSystem } from '../systems/CreatureIlluminatorsSystem'
+import { WorldGorgeSystem } from '../systems/WorldGorgeSystem'
+import { DiplomaticConcordSystem } from '../systems/DiplomaticConcordSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1095,6 +1109,20 @@ export class Game {
   private diplomaticRapprochement!: DiplomaticRapprochementSystem
   private creatureBookbinders!: CreatureBookbindersSystem
   private worldEstuary!: WorldEstuarySystem
+  private creatureEnamelers!: CreatureEnamelersSystem
+  private worldWadi!: WorldWadiSystem
+  private creatureUpholsterers!: CreatureUpholsterersSystem
+  private worldPeneplain!: WorldPeneplainSystem
+  private diplomaticAppeasement!: DiplomaticAppeasementSystem
+  private creatureCalderers!: CreatureCalderersSystem
+  private worldRavine!: WorldRavineSystem
+  private diplomaticEntente!: DiplomaticEntenteSystem
+  private creatureScriveners!: CreatureScrivenersSystem
+  private worldInselberg!: WorldInselbergSystem
+  private diplomaticAccord!: DiplomaticAccordSystem
+  private creatureIlluminators!: CreatureIlluminatorsSystem
+  private worldGorge!: WorldGorgeSystem
+  private diplomaticConcord!: DiplomaticConcordSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1794,6 +1822,20 @@ export class Game {
     this.diplomaticRapprochement = new DiplomaticRapprochementSystem()
     this.creatureBookbinders = new CreatureBookbindersSystem()
     this.worldEstuary = new WorldEstuarySystem()
+    this.creatureEnamelers = new CreatureEnamelersSystem()
+    this.worldWadi = new WorldWadiSystem()
+    this.creatureUpholsterers = new CreatureUpholsterersSystem()
+    this.worldPeneplain = new WorldPeneplainSystem()
+    this.diplomaticAppeasement = new DiplomaticAppeasementSystem()
+    this.creatureCalderers = new CreatureCalderersSystem()
+    this.worldRavine = new WorldRavineSystem()
+    this.diplomaticEntente = new DiplomaticEntenteSystem()
+    this.creatureScriveners = new CreatureScrivenersSystem()
+    this.worldInselberg = new WorldInselbergSystem()
+    this.diplomaticAccord = new DiplomaticAccordSystem()
+    this.creatureIlluminators = new CreatureIlluminatorsSystem()
+    this.worldGorge = new WorldGorgeSystem()
+    this.diplomaticConcord = new DiplomaticConcordSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3801,6 +3843,34 @@ export class Game {
         this.creatureBookbinders.update(this.tickRate, this.em, this.world.tick)
         // World estuaries (v3.339) - estuary formations
         this.worldEstuary.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature enamelers (v3.341) - enamel coating craftsmen
+        this.creatureEnamelers.update(this.tickRate, this.em, this.world.tick)
+        // World wadis (v3.342) - dry valley formations
+        this.worldWadi.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature upholsterers (v3.344) - upholstery craftsmen
+        this.creatureUpholsterers.update(this.tickRate, this.em, this.world.tick)
+        // World peneplains (v3.345) - peneplain formations
+        this.worldPeneplain.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic appeasement (v3.346) - appeasement policies
+        this.diplomaticAppeasement.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature calderers (v3.347) - cauldron making craftsmen
+        this.creatureCalderers.update(this.tickRate, this.em, this.world.tick)
+        // World ravines (v3.348) - ravine formations
+        this.worldRavine.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic entente (v3.349) - entente agreements
+        this.diplomaticEntente.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature scriveners (v3.350) - professional scribes
+        this.creatureScriveners.update(this.tickRate, this.em, this.world.tick)
+        // World inselbergs (v3.351) - inselberg formations
+        this.worldInselberg.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic accord (v3.352) - accord agreements
+        this.diplomaticAccord.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature illuminators (v3.353) - manuscript illumination craftsmen
+        this.creatureIlluminators.update(this.tickRate, this.em, this.world.tick)
+        // World gorges (v3.354) - gorge formations
+        this.worldGorge.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic concord (v3.355) - concord treaties
+        this.diplomaticConcord.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
