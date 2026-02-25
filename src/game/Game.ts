@@ -69,7 +69,8 @@ import { WorldDecorationSystem } from '../systems/WorldDecorationSystem'
 import { EraVisualSystem } from '../systems/EraVisualSystem'
 import { WeatherDisasterSystem } from '../systems/WeatherDisasterSystem'
 import { FogOfWarRenderer } from '../systems/FogOfWarRenderer'
-import { FortificationRenderer } from '../systems/FortificationRenderer'
+import { FortificationRenderer, CityFortification } from '../systems/FortificationRenderer'
+import { EvolutionSystem } from '../systems/EvolutionSystem'
 
 export class Game {
   private world: World
@@ -142,6 +143,7 @@ export class Game {
   private weatherDisaster: WeatherDisasterSystem
   private fogOfWar: FogOfWarRenderer
   private fortificationRenderer: FortificationRenderer
+  private evolutionSystem: EvolutionSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -358,6 +360,7 @@ export class Game {
     this.weatherDisaster = new WeatherDisasterSystem()
     this.fogOfWar = new FogOfWarRenderer()
     this.fortificationRenderer = new FortificationRenderer()
+    this.evolutionSystem = new EvolutionSystem()
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
     this.setupParticleEventHooks()
@@ -528,6 +531,7 @@ export class Game {
     this.weatherDisaster = new WeatherDisasterSystem()
     this.fogOfWar = new FogOfWarRenderer()
     this.fortificationRenderer = new FortificationRenderer()
+    this.evolutionSystem = new EvolutionSystem()
   }
 
   private setupSpeedControls(): void {
