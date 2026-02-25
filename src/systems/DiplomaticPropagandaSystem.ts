@@ -1,125 +1,93 @@
-// Diplomatic Propaganda System (v2.34) - Civs spread propaganda
-// Propaganda influences other civs' loyalty and morale
-// Can destabilize enemy civs or boost allied civs
+// Diplomatic Propaganda System (v3.23) - Civilizations spread propaganda
+// Propaganda influences other civs' loyalty and can destabilize enemies
 
-export type PropagandaType = 'fear' | 'glory' | 'prosperity' | 'unity' | 'rebellion'
+import { EntityManager } from '../ecs/Entity'
 
-export interface PropagandaCampaign {
+export type PropagandaMessage = 'glory' | 'fear' | 'prosperity' | 'liberation' | 'unity' | 'divine'
+
+export interface Propaganda {
   id: number
   sourceCivId: number
   targetCivId: number
-  type: PropagandaType
-  intensity: number      // 1-10
-  duration: number       // ticks remaining
+  message: PropagandaMessage
   effectiveness: number  // 0-100
-  startedAt: number
+  tick: number
 }
 
-const CHECK_INTERVAL = 1000
-const EFFECT_INTERVAL = 500
-const MAX_CAMPAIGNS = 20
-const BASE_DURATION = 3000
-const EFFECTIVENESS_GAIN = 2
-const MAX_EFFECTIVENESS = 80
+const CHECK_INTERVAL = 900
+const PROPAGANDA_CHANCE = 0.01
+const MAX_PROPAGANDA = 40
+const DECAY_RATE = 0.3
 
-let nextCampaignId = 1
-
-const PROPAGANDA_TYPES: PropagandaType[] = ['fear', 'glory', 'prosperity', 'unity', 'rebellion']
+const MESSAGES: PropagandaMessage[] = ['glory', 'fear', 'prosperity', 'liberation', 'unity', 'divine']
 
 export class DiplomaticPropagandaSystem {
-  private campaigns: PropagandaCampaign[] = []
+  private propaganda: Propaganda[] = []
+  private nextId = 1
   private lastCheck = 0
-  private lastEffect = 0
 
-  update(dt: number, civManager: { civilizations: Map<number, any> }, tick: number): void {
-    if (tick - this.lastCheck >= CHECK_INTERVAL) {
-      this.lastCheck = tick
-      this.launchCampaigns(civManager, tick)
-    }
-    if (tick - this.lastEffect >= EFFECT_INTERVAL) {
-      this.lastEffect = tick
-      this.applyEffects(civManager)
-      this.cleanupCampaigns()
-    }
+  update(dt: number, em: EntityManager, tick: number): void {
+    if (tick - this.lastCheck < CHECK_INTERVAL) return
+    this.lastCheck = tick
+
+    this.generatePropaganda(tick)
+    this.evolveEffectiveness()
+    this.cleanup()
   }
 
-  private launchCampaigns(civManager: { civilizations: Map<number, any> }, tick: number): void {
-    if (this.campaigns.length >= MAX_CAMPAIGNS) return
-    const civs = [...civManager.civilizations.entries()]
-    for (const [idA, civA] of civs) {
-      if (this.campaigns.length >= MAX_CAMPAIGNS) break
-      if (Math.random() > 0.08) continue
-      // Pick a target
-      for (const [idB, civB] of civs) {
-        if (idA === idB) continue
-        if (this.hasCampaign(idA, idB)) continue
-        const rel = civA.relations?.get(idB) ?? 0
-        // Hostile civs spread fear/rebellion, friendly spread glory/unity
-        let type: PropagandaType
-        if (rel < -20) {
-          type = Math.random() < 0.5 ? 'fear' : 'rebellion'
-        } else if (rel > 20) {
-          type = Math.random() < 0.5 ? 'glory' : 'unity'
-        } else {
-          type = 'prosperity'
-        }
-        const popA = civA.population ?? 0
-        const intensity = Math.min(10, Math.max(1, Math.floor(popA / 5)))
-        this.campaigns.push({
-          id: nextCampaignId++,
-          sourceCivId: idA,
-          targetCivId: idB,
-          type,
-          intensity,
-          duration: BASE_DURATION + Math.floor(Math.random() * 1000),
-          effectiveness: 10 + Math.floor(Math.random() * 20),
-          startedAt: tick,
-        })
-        break
+  private generatePropaganda(tick: number): void {
+    if (this.propaganda.length >= MAX_PROPAGANDA) return
+    if (Math.random() > PROPAGANDA_CHANCE) return
+
+    // Generate propaganda between random civ pairs
+    const sourceCivId = 1 + Math.floor(Math.random() * 10)
+    let targetCivId = 1 + Math.floor(Math.random() * 10)
+    while (targetCivId === sourceCivId) {
+      targetCivId = 1 + Math.floor(Math.random() * 10)
+    }
+
+    // Check if this pair already has active propaganda
+    if (this.hasPropaganda(sourceCivId, targetCivId)) return
+
+    const message = MESSAGES[Math.floor(Math.random() * MESSAGES.length)]
+
+    this.propaganda.push({
+      id: this.nextId++,
+      sourceCivId,
+      targetCivId,
+      message,
+      effectiveness: 10 + Math.random() * 40,
+      tick,
+    })
+  }
+
+  private evolveEffectiveness(): void {
+    for (const p of this.propaganda) {
+      // Effectiveness grows then decays
+      if (p.effectiveness < 70) {
+        p.effectiveness = Math.min(100, p.effectiveness + Math.random() * 2)
+      } else {
+        p.effectiveness = Math.max(0, p.effectiveness - DECAY_RATE)
       }
     }
   }
 
-  private applyEffects(civManager: { civilizations: Map<number, any> }): void {
-    for (const campaign of this.campaigns) {
-      campaign.duration -= EFFECT_INTERVAL
-      campaign.effectiveness = Math.min(MAX_EFFECTIVENESS, campaign.effectiveness + EFFECTIVENESS_GAIN)
-      const target = civManager.civilizations.get(campaign.targetCivId)
-      const source = civManager.civilizations.get(campaign.sourceCivId)
-      if (!target || !source) continue
-      // Apply relation effects based on propaganda type
-      const currentRel = target.relations?.get(campaign.sourceCivId) ?? 0
-      switch (campaign.type) {
-        case 'fear':
-          if (target.relations) target.relations.set(campaign.sourceCivId, Math.max(-100, currentRel - 1))
-          break
-        case 'glory':
-        case 'unity':
-          if (target.relations) target.relations.set(campaign.sourceCivId, Math.min(100, currentRel + 1))
-          break
-        case 'rebellion':
-          // Slight destabilization - no direct effect on relations map
-          break
-        case 'prosperity':
-          if (target.relations) target.relations.set(campaign.sourceCivId, Math.min(100, currentRel + 0.5))
-          break
-      }
+  private cleanup(): void {
+    // Remove ineffective propaganda
+    this.propaganda = this.propaganda.filter(p => p.effectiveness > 1)
+    if (this.propaganda.length > MAX_PROPAGANDA) {
+      this.propaganda.sort((a, b) => b.effectiveness - a.effectiveness)
+      this.propaganda.length = MAX_PROPAGANDA
     }
   }
 
-  private cleanupCampaigns(): void {
-    this.campaigns = this.campaigns.filter(c => c.duration > 0)
+  private hasPropaganda(source: number, target: number): boolean {
+    return this.propaganda.some(p => p.sourceCivId === source && p.targetCivId === target)
   }
 
-  private hasCampaign(source: number, target: number): boolean {
-    return this.campaigns.some(c => c.sourceCivId === source && c.targetCivId === target)
-  }
-
-  getCampaigns(): PropagandaCampaign[] {
-    return this.campaigns
-  }
-
-  getCampaignCount(): number {
-    return this.campaigns.length
+  getPropaganda(): Propaganda[] { return this.propaganda }
+  getPropagandaCount(): number { return this.propaganda.length }
+  getByTarget(civId: number): Propaganda[] {
+    return this.propaganda.filter(p => p.targetCivId === civId)
   }
 }

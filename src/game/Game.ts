@@ -269,6 +269,10 @@ import { WorldGeyserSystem } from '../systems/WorldGeyserSystem'
 import { WorldQuicksandSystem } from '../systems/WorldQuicksandSystem'
 import { CreatureIntuitionSystem } from '../systems/CreatureIntuitionSystem'
 import { WorldCometSystem } from '../systems/WorldCometSystem'
+import { CreatureExileSystem } from '../systems/CreatureExileSystem'
+import { WorldHotSpringSystem } from '../systems/WorldHotSpringSystem'
+import { CreatureNicknameSystem } from '../systems/CreatureNicknameSystem'
+import { WorldEclipseSystem } from '../systems/WorldEclipseSystem'
 
 export class Game {
   private world: World
@@ -540,6 +544,10 @@ export class Game {
   private worldQuicksand!: WorldQuicksandSystem
   private creatureIntuition!: CreatureIntuitionSystem
   private worldComet!: WorldCometSystem
+  private creatureExile!: CreatureExileSystem
+  private worldHotSpring!: WorldHotSpringSystem
+  private creatureNickname!: CreatureNicknameSystem
+  private worldEclipse!: WorldEclipseSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -962,6 +970,10 @@ export class Game {
     this.worldQuicksand = new WorldQuicksandSystem()
     this.creatureIntuition = new CreatureIntuitionSystem()
     this.worldComet = new WorldCometSystem()
+    this.creatureExile = new CreatureExileSystem()
+    this.worldHotSpring = new WorldHotSpringSystem()
+    this.creatureNickname = new CreatureNicknameSystem()
+    this.worldEclipse = new WorldEclipseSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2255,8 +2267,8 @@ export class Game {
         this.worldSacredGrove.update(this.tickRate, this.world, this.world.tick)
         // Creature alliances (v2.33) - personal cross-civ friendships
         this.creatureAlliance.update(this.tickRate, this.em, this.world.tick)
-        // Diplomatic propaganda (v2.34) - influence campaigns
-        this.diplomaticPropaganda.update(this.tickRate, this.civManager, this.world.tick)
+        // Diplomatic propaganda (v3.23) - influence campaigns
+        this.diplomaticPropaganda.update(this.tickRate, this.em, this.world.tick)
         // World tidal system (v2.35) - coastal tide cycles
         this.worldTidal.update(this.tickRate, this.world, this.world.tick)
         // Creature superstitions (v2.36) - omens and beliefs
@@ -2397,6 +2409,14 @@ export class Game {
         this.creatureIntuition.update(this.tickRate, this.em, this.world.tick)
         // World comets (v3.20) - rare comets streak across the sky
         this.worldComet.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature exile (v3.21) - banished creatures become wanderers
+        this.creatureExile.update(this.tickRate, this.em, this.world.tick)
+        // World hot springs (v3.22) - healing springs near mountains
+        this.worldHotSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature nicknames (v3.24) - creatures earn titles from deeds
+        this.creatureNickname.update(this.tickRate, this.em, this.world.tick)
+        // World eclipses (v3.25) - celestial events affect creatures
+        this.worldEclipse.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
