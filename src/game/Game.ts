@@ -448,6 +448,11 @@ import { WorldTidalLagoonSystem } from '../systems/WorldTidalLagoonSystem'
 import { CreatureSaddlerSystem } from '../systems/CreatureSaddlerSystem'
 import { WorldIceShelfSystem } from '../systems/WorldIceShelfSystem'
 import { DiplomaticReferendumSystem } from '../systems/DiplomaticReferendumSystem'
+import { CreatureBookbinderSystem } from '../systems/CreatureBookbinderSystem'
+import { WorldSeaStackSystem } from '../systems/WorldSeaStackSystem'
+import { CreatureFarrierSystem } from '../systems/CreatureFarrierSystem'
+import { WorldPermafrostThawSystem } from '../systems/WorldPermafrostThawSystem'
+import { DiplomaticRatificationSystem } from '../systems/DiplomaticRatificationSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -897,6 +902,11 @@ export class Game {
   private creatureSaddler!: CreatureSaddlerSystem
   private worldIceShelf!: WorldIceShelfSystem
   private diplomaticReferendum!: DiplomaticReferendumSystem
+  private creatureBookbinder!: CreatureBookbinderSystem
+  private worldSeaStack!: WorldSeaStackSystem
+  private creatureFarrier!: CreatureFarrierSystem
+  private worldPermafrostThaw!: WorldPermafrostThawSystem
+  private diplomaticRatification!: DiplomaticRatificationSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1497,6 +1507,11 @@ export class Game {
     this.creatureSaddler = new CreatureSaddlerSystem()
     this.worldIceShelf = new WorldIceShelfSystem()
     this.diplomaticReferendum = new DiplomaticReferendumSystem()
+    this.creatureBookbinder = new CreatureBookbinderSystem()
+    this.worldSeaStack = new WorldSeaStackSystem()
+    this.creatureFarrier = new CreatureFarrierSystem()
+    this.worldPermafrostThaw = new WorldPermafrostThawSystem()
+    this.diplomaticRatification = new DiplomaticRatificationSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3304,6 +3319,16 @@ export class Game {
         this.worldIceShelf.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic referendum (v3.225) - popular vote diplomacy
         this.diplomaticReferendum.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature bookbinders (v3.226) - book binding artisans
+        this.creatureBookbinder.update(this.tickRate, this.em, this.world.tick)
+        // World sea stacks (v3.227) - erosion-carved rock pillars
+        this.worldSeaStack.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature farriers (v3.228) - horseshoe smiths
+        this.creatureFarrier.update(this.tickRate, this.em, this.world.tick)
+        // World permafrost thaw (v3.229) - melting frozen ground
+        this.worldPermafrostThaw.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic ratification (v3.230) - treaty approval
+        this.diplomaticRatification.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
