@@ -428,6 +428,21 @@ import { WorldBioluminescentBaySystem } from '../systems/WorldBioluminescentBayS
 import { CreatureCartographerSystem } from '../systems/CreatureCartographerSystem'
 import { WorldPumiceFieldSystem } from '../systems/WorldPumiceFieldSystem'
 import { DiplomaticTribunalSystem } from '../systems/DiplomaticTribunalSystem'
+import { CreatureRopeMakerSystem } from '../systems/CreatureRopeMakerSystem'
+import { WorldSandstoneArchSystem } from '../systems/WorldSandstoneArchSystem'
+import { CreatureVintnerSystem } from '../systems/CreatureVintnerSystem'
+import { WorldFumaroleFieldSystem } from '../systems/WorldFumaroleFieldSystem'
+import { DiplomaticAmnestySystem } from '../systems/DiplomaticAmnestySystem'
+import { CreatureShipwrightSystem } from '../systems/CreatureShipwrightSystem'
+import { WorldCloudForestSystem } from '../systems/WorldCloudForestSystem'
+import { CreatureDyerSystem } from '../systems/CreatureDyerSystem'
+import { WorldTravertineTerraceSystem } from '../systems/WorldTravertineTerraceSystem'
+import { DiplomaticArbitrationSystem } from '../systems/DiplomaticArbitrationSystem'
+import { CreatureLapidarySystem } from '../systems/CreatureLapidarySystem'
+import { WorldBlackSandBeachSystem } from '../systems/WorldBlackSandBeachSystem'
+import { CreatureLocksmithSystem } from '../systems/CreatureLocksmithSystem'
+import { WorldIceCaveSystem } from '../systems/WorldIceCaveSystem'
+import { DiplomaticPlebisciteSystem } from '../systems/DiplomaticPlebisciteSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -857,6 +872,21 @@ export class Game {
   private creatureCartographer!: CreatureCartographerSystem
   private worldPumiceField!: WorldPumiceFieldSystem
   private diplomaticTribunal!: DiplomaticTribunalSystem
+  private creatureRopeMaker!: CreatureRopeMakerSystem
+  private worldSandstoneArch!: WorldSandstoneArchSystem
+  private creatureVintner!: CreatureVintnerSystem
+  private worldFumaroleField!: WorldFumaroleFieldSystem
+  private diplomaticAmnesty!: DiplomaticAmnestySystem
+  private creatureShipwright!: CreatureShipwrightSystem
+  private worldCloudForest!: WorldCloudForestSystem
+  private creatureDyer!: CreatureDyerSystem
+  private worldTravertineTerrace!: WorldTravertineTerraceSystem
+  private diplomaticArbitration!: DiplomaticArbitrationSystem
+  private creatureLapidary!: CreatureLapidarySystem
+  private worldBlackSandBeach!: WorldBlackSandBeachSystem
+  private creatureLocksmith!: CreatureLocksmithSystem
+  private worldIceCave!: WorldIceCaveSystem
+  private diplomaticPlebiscite!: DiplomaticPlebisciteSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1437,6 +1467,21 @@ export class Game {
     this.creatureCartographer = new CreatureCartographerSystem()
     this.worldPumiceField = new WorldPumiceFieldSystem()
     this.diplomaticTribunal = new DiplomaticTribunalSystem()
+    this.creatureRopeMaker = new CreatureRopeMakerSystem()
+    this.worldSandstoneArch = new WorldSandstoneArchSystem()
+    this.creatureVintner = new CreatureVintnerSystem()
+    this.worldFumaroleField = new WorldFumaroleFieldSystem()
+    this.diplomaticAmnesty = new DiplomaticAmnestySystem()
+    this.creatureShipwright = new CreatureShipwrightSystem()
+    this.worldCloudForest = new WorldCloudForestSystem()
+    this.creatureDyer = new CreatureDyerSystem()
+    this.worldTravertineTerrace = new WorldTravertineTerraceSystem()
+    this.diplomaticArbitration = new DiplomaticArbitrationSystem()
+    this.creatureLapidary = new CreatureLapidarySystem()
+    this.worldBlackSandBeach = new WorldBlackSandBeachSystem()
+    this.creatureLocksmith = new CreatureLocksmithSystem()
+    this.worldIceCave = new WorldIceCaveSystem()
+    this.diplomaticPlebiscite = new DiplomaticPlebisciteSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3204,6 +3249,36 @@ export class Game {
         this.worldPumiceField.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic tribunal (v3.205) - international justice
         this.diplomaticTribunal.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature rope makers (v3.206) - cordage crafting
+        this.creatureRopeMaker.update(this.tickRate, this.em, this.world.tick)
+        // World sandstone arches (v3.207) - desert rock formations
+        this.worldSandstoneArch.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature vintners (v3.208) - wine production
+        this.creatureVintner.update(this.tickRate, this.em, this.world.tick)
+        // World fumarole fields (v3.209) - volcanic steam vents
+        this.worldFumaroleField.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic amnesty (v3.210) - prisoner release
+        this.diplomaticAmnesty.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature shipwrights (v3.211) - vessel building
+        this.creatureShipwright.update(this.tickRate, this.em, this.world.tick)
+        // World cloud forests (v3.212) - misty highlands
+        this.worldCloudForest.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature dyers (v3.213) - textile dyeing
+        this.creatureDyer.update(this.tickRate, this.em, this.world.tick)
+        // World travertine terraces (v3.214) - mineral formations
+        this.worldTravertineTerrace.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic arbitration (v3.215) - dispute resolution
+        this.diplomaticArbitration.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature lapidaries (v3.216) - gem cutting
+        this.creatureLapidary.update(this.tickRate, this.em, this.world.tick)
+        // World black sand beaches (v3.217) - volcanic coastlines
+        this.worldBlackSandBeach.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature locksmiths (v3.218) - lock crafting
+        this.creatureLocksmith.update(this.tickRate, this.em, this.world.tick)
+        // World ice caves (v3.219) - glacial formations
+        this.worldIceCave.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic plebiscite (v3.220) - popular votes
+        this.diplomaticPlebiscite.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
