@@ -175,6 +175,11 @@ import { WorldCorruptionSystem } from '../systems/WorldCorruptionSystem'
 import { CreatureProfessionSystem } from '../systems/CreatureProfessionSystem'
 import { DiplomaticSummitSystem } from '../systems/DiplomaticSummitSystem'
 import { WorldLeyLineSystem } from '../systems/WorldLeyLineSystem'
+import { CreatureBountySystem } from '../systems/CreatureBountySystem'
+import { SeasonFestivalSystem } from '../systems/SeasonFestivalSystem'
+import { CreatureMutationSystem } from '../systems/CreatureMutationSystem'
+import { DiplomaticMarriageSystem } from '../systems/DiplomaticMarriageSystem'
+import { WorldRelicSystem } from '../systems/WorldRelicSystem'
 
 export class Game {
   private world: World
@@ -352,6 +357,11 @@ export class Game {
   private creatureProfession!: CreatureProfessionSystem
   private diplomaticSummit!: DiplomaticSummitSystem
   private worldLeyLine!: WorldLeyLineSystem
+  private creatureBounty!: CreatureBountySystem
+  private seasonFestival!: SeasonFestivalSystem
+  private creatureMutation!: CreatureMutationSystem
+  private diplomaticMarriage!: DiplomaticMarriageSystem
+  private worldRelic!: WorldRelicSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -673,6 +683,11 @@ export class Game {
     this.creatureProfession = new CreatureProfessionSystem()
     this.diplomaticSummit = new DiplomaticSummitSystem()
     this.worldLeyLine = new WorldLeyLineSystem()
+    this.creatureBounty = new CreatureBountySystem()
+    this.seasonFestival = new SeasonFestivalSystem()
+    this.creatureMutation = new CreatureMutationSystem()
+    this.diplomaticMarriage = new DiplomaticMarriageSystem()
+    this.worldRelic = new WorldRelicSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -1920,6 +1935,16 @@ export class Game {
         this.diplomaticSummit.update(this.tickRate, this.civManager, this.world.tick)
         // World ley lines (v2.10) - energy lines on the map
         this.worldLeyLine.update(this.tickRate, this.em, this.world.tick)
+        // Creature bounty (v2.11) - bounty hunting system
+        this.creatureBounty.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // Season festival (v2.12) - seasonal celebrations
+        this.seasonFestival.update(this.tickRate, this.civManager, this.seasonSystem, this.world.tick)
+        // Creature mutation (v2.13) - environmental mutations
+        this.creatureMutation.update(this.tickRate, this.em, this.world)
+        // Diplomatic marriage (v2.14) - royal marriages
+        this.diplomaticMarriage.update(this.tickRate, this.civManager, this.world.tick)
+        // World relics (v2.15) - ancient relics with buffs
+        this.worldRelic.update(this.tickRate, this.em, this.world)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
@@ -2361,6 +2386,21 @@ export class Game {
 
     // World ley lines (v2.10)
     this.worldLeyLine.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // Creature bounty board (v2.11)
+    this.creatureBounty.render(ctx)
+
+    // Season festival notifications (v2.12)
+    this.seasonFestival.render(ctx)
+
+    // Creature mutation notifications (v2.13)
+    this.creatureMutation.render(ctx)
+
+    // Diplomatic marriage panel (v2.14)
+    this.diplomaticMarriage.render(ctx)
+
+    // World relics (v2.15)
+    this.worldRelic.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
 
     // Screenshot mode toast (v1.66)
     this.screenshotMode.update()
