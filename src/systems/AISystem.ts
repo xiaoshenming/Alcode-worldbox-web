@@ -4,6 +4,7 @@ import { World } from '../game/World'
 import { ParticleSystem } from './ParticleSystem'
 import { CreatureFactory } from '../entities/CreatureFactory'
 import { EntityType } from '../utils/Constants'
+import { findNextStep, isWalkable } from '../utils/Pathfinding'
 
 export class AISystem {
   private em: EntityManager
@@ -68,8 +69,9 @@ export class AISystem {
         case 'idle':
           if (Math.random() < 0.02) {
             ai.state = 'wandering'
-            ai.targetX = pos.x + (Math.random() - 0.5) * 20
-            ai.targetY = pos.y + (Math.random() - 0.5) * 20
+            const target = this.findWalkableTarget(pos, creature, 20)
+            ai.targetX = target.x
+            ai.targetY = target.y
           }
           break
 
@@ -83,8 +85,9 @@ export class AISystem {
         case 'hungry':
           // Find food (move to grass/forest tiles)
           if (ai.cooldown === 0) {
-            ai.targetX = pos.x + (Math.random() - 0.5) * 30
-            ai.targetY = pos.y + (Math.random() - 0.5) * 30
+            const target = this.findWalkableTarget(pos, creature, 30)
+            ai.targetX = target.x
+            ai.targetY = target.y
             ai.cooldown = 60
           }
           this.moveTowards(pos, ai, creature, vel)
@@ -156,20 +159,26 @@ export class AISystem {
   }
 
   private moveTowards(pos: PositionComponent, ai: AIComponent, creature: CreatureComponent, vel: VelocityComponent | undefined): void {
-    const dx = ai.targetX - pos.x
-    const dy = ai.targetY - pos.y
-    const dist = Math.sqrt(dx * dx + dy * dy)
+    const canFly = creature.species === 'dragon'
+    const step = findNextStep(this.world, pos.x, pos.y, ai.targetX, ai.targetY, canFly)
 
-    if (dist > 0.5) {
-      const moveX = (dx / dist) * creature.speed * 0.1
-      const moveY = (dy / dist) * creature.speed * 0.1
-      pos.x += moveX
-      pos.y += moveY
+    if (step) {
+      const speed = creature.speed * 0.1
+      const moveX = step.x * speed
+      const moveY = step.y * speed
+      // Normalize diagonal movement
+      const mag = Math.sqrt(step.x * step.x + step.y * step.y)
+      pos.x += (step.x / mag) * speed
+      pos.y += (step.y / mag) * speed
 
       if (vel) {
         vel.vx = moveX
         vel.vy = moveY
       }
+    } else {
+      // Stuck — pick a new random target
+      ai.state = 'idle'
+      ai.cooldown = 30
     }
   }
 
@@ -177,5 +186,19 @@ export class AISystem {
     const dx = ai.targetX - pos.x
     const dy = ai.targetY - pos.y
     return Math.sqrt(dx * dx + dy * dy) < 1
+  }
+
+  private findWalkableTarget(pos: PositionComponent, creature: CreatureComponent, range: number): { x: number; y: number } {
+    const canFly = creature.species === 'dragon'
+    for (let i = 0; i < 10; i++) {
+      const tx = Math.floor(pos.x + (Math.random() - 0.5) * range)
+      const ty = Math.floor(pos.y + (Math.random() - 0.5) * range)
+      const tile = this.world.getTile(tx, ty)
+      if (tile !== null && isWalkable(tile, canFly)) {
+        return { x: tx, y: ty }
+      }
+    }
+    // Fallback: stay near current position
+    return { x: pos.x, y: pos.y }
   }
 }
