@@ -32,6 +32,11 @@ import { WorldEventSystem } from '../systems/WorldEventSystem'
 import { CaravanSystem } from '../systems/CaravanSystem'
 import { DiplomacySystem } from '../systems/DiplomacySystem'
 import { CropSystem } from '../systems/CropSystem'
+import { NavalSystem } from '../systems/NavalSystem'
+import { QuestSystem } from '../systems/QuestSystem'
+import { BuildingUpgradeSystem } from '../systems/BuildingUpgradeSystem'
+import { EcosystemSystem } from '../systems/EcosystemSystem'
+import { FogOfWarSystem } from '../systems/FogOfWarSystem'
 import { TechTreePanel } from '../ui/TechTreePanel'
 
 export class Game {
@@ -68,6 +73,11 @@ export class Game {
   private caravanSystem: CaravanSystem
   private diplomacySystem: DiplomacySystem
   private cropSystem: CropSystem
+  private navalSystem: NavalSystem
+  private questSystem: QuestSystem
+  private buildingUpgradeSystem: BuildingUpgradeSystem
+  private ecosystemSystem: EcosystemSystem
+  private fogOfWarSystem: FogOfWarSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -108,6 +118,11 @@ export class Game {
     this.caravanSystem = new CaravanSystem()
     this.diplomacySystem = new DiplomacySystem()
     this.cropSystem = new CropSystem()
+    this.navalSystem = new NavalSystem()
+    this.questSystem = new QuestSystem()
+    this.buildingUpgradeSystem = new BuildingUpgradeSystem()
+    this.ecosystemSystem = new EcosystemSystem()
+    this.fogOfWarSystem = new FogOfWarSystem()
     this.setupAchievementTracking()
     this.setupParticleEventHooks()
     this.setupSoundEventHooks()
@@ -234,6 +249,11 @@ export class Game {
     this.caravanSystem = new CaravanSystem()
     this.diplomacySystem = new DiplomacySystem()
     this.cropSystem = new CropSystem()
+    this.navalSystem = new NavalSystem()
+    this.questSystem = new QuestSystem()
+    this.buildingUpgradeSystem = new BuildingUpgradeSystem()
+    this.ecosystemSystem = new EcosystemSystem()
+    this.fogOfWarSystem = new FogOfWarSystem()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
     this.combatSystem.setArtifactSystem(this.artifactSystem)
@@ -808,8 +828,13 @@ export class Game {
         this.worldEventSystem.update(this.em, this.world, this.civManager, this.particles, this.timeline)
         this.caravanSystem.update(this.civManager, this.em, this.world, this.particles)
         this.cropSystem.update(this.world, this.civManager, this.em, this.particles)
+        this.navalSystem.update(this.em, this.world, this.civManager, this.particles, this.world.tick)
+        this.questSystem.update(this.em, this.world, this.civManager, this.particles, this.world.tick)
+        this.ecosystemSystem.update(this.em, this.world, this.civManager, this.particles, this.world.tick)
+        this.fogOfWarSystem.update(this.em, this.world, this.civManager, this.particles, this.world.tick)
         if (this.world.tick % 60 === 0) {
           this.diplomacySystem.update(this.civManager, this.world, this.em)
+          this.buildingUpgradeSystem.update(this.em, this.civManager, this.world.tick)
         }
         // Autosave every 30000 ticks (~8 minutes at 60fps)
         if (this.world.tick > 0 && this.world.tick % 30000 === 0) {

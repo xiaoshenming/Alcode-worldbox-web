@@ -198,6 +198,22 @@ export interface GeneticsComponent extends Component {
   parentB: number | null
 }
 
+export interface ShipComponent extends Component {
+  type: 'ship'
+  shipType: 'warship' | 'trader' | 'explorer' | 'fishing'
+  civId: number
+  health: number
+  maxHealth: number
+  speed: number
+  damage: number
+  cargo: { food: number; gold: number; wood: number }
+  crew: number
+  maxCrew: number
+  targetX: number
+  targetY: number
+  state: 'idle' | 'sailing' | 'combat' | 'trading' | 'exploring'
+}
+
 export function getHeroTitle(ability: HeroComponent['ability'], level: number): string {
   if (level >= 5) {
     switch (ability) {

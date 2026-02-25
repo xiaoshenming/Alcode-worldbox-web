@@ -44,7 +44,12 @@ export enum BuildingType {
   CASTLE = 'castle',
   MINE = 'mine',
   PORT = 'port',
-  TEMPLE = 'temple'
+  TEMPLE = 'temple',
+  WALL = 'wall',
+  MARKET = 'market',
+  ACADEMY = 'academy',
+  GRANARY = 'granary',
+  WORKSHOP = 'workshop'
 }
 
 export const BUILDING_COLORS: Record<BuildingType, string> = {
@@ -57,6 +62,11 @@ export const BUILDING_COLORS: Record<BuildingType, string> = {
   [BuildingType.MINE]: '#4A4A4A',
   [BuildingType.PORT]: '#5F9EA0',
   [BuildingType.TEMPLE]: '#DAA0F0',
+  [BuildingType.WALL]: '#7a7a8a',
+  [BuildingType.MARKET]: '#e6a040',
+  [BuildingType.ACADEMY]: '#6080c0',
+  [BuildingType.GRANARY]: '#c0a060',
+  [BuildingType.WORKSHOP]: '#8a6a4a',
 }
 
 export const BUILDING_SIZES: Record<BuildingType, number> = {
@@ -69,6 +79,11 @@ export const BUILDING_SIZES: Record<BuildingType, number> = {
   [BuildingType.MINE]: 2,
   [BuildingType.PORT]: 2,
   [BuildingType.TEMPLE]: 2,
+  [BuildingType.WALL]: 1,
+  [BuildingType.MARKET]: 2,
+  [BuildingType.ACADEMY]: 2,
+  [BuildingType.GRANARY]: 2,
+  [BuildingType.WORKSHOP]: 2,
 }
 
 export interface TradeRoute {

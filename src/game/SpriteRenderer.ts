@@ -411,6 +411,152 @@ const BUILDING_LEVEL_OVERLAYS: Record<number, PixelGrid> = {
 const LEVEL_OVERLAY_PALETTE = ['', '#FFD700']
 
 // ============================================================
+// Ship sprite data (8x8 grids) — 4 types × 4 directions
+// Palette: 0=transparent, 1=hull, 2=deck, 3=sail/mast, 4=accent
+// ============================================================
+const SHIP_PALETTES: Record<string, string[]> = {
+  warship:  ['', '#663333', '#884444', '#cccccc', '#aa3333'],
+  trader:   ['', '#5a4a3a', '#7a6a5a', '#eeddcc', '#33aa66'],
+  explorer: ['', '#3a4a5a', '#5a6a7a', '#aaccee', '#3366aa'],
+  fishing:  ['', '#5a5040', '#7a7060', '#ccbb99', '#6699aa'],
+}
+
+const SHIP_SPRITES: Record<string, SpriteDef> = {
+  // WARSHIP — armored hull, red flag
+  warship: {
+    down: [
+      [0,0,0,3,0,0,0,0],
+      [0,0,0,3,0,0,0,0],
+      [0,0,4,3,4,0,0,0],
+      [0,1,2,2,2,1,0,0],
+      [1,1,2,2,2,1,1,0],
+      [1,2,2,2,2,2,1,0],
+      [0,1,2,2,2,1,0,0],
+      [0,0,1,1,1,0,0,0],
+    ],
+    left: [
+      [0,0,0,0,0,0,0,0],
+      [0,0,3,0,0,0,0,0],
+      [0,0,3,4,0,0,0,0],
+      [0,0,3,0,0,0,0,0],
+      [1,1,2,2,2,1,0,0],
+      [0,1,2,2,2,2,1,0],
+      [0,0,1,1,1,1,0,0],
+      [0,0,0,0,0,0,0,0],
+    ],
+    up: [
+      [0,0,1,1,1,0,0,0],
+      [0,1,2,2,2,1,0,0],
+      [1,2,2,2,2,2,1,0],
+      [1,1,2,2,2,1,1,0],
+      [0,1,2,2,2,1,0,0],
+      [0,0,4,3,4,0,0,0],
+      [0,0,0,3,0,0,0,0],
+      [0,0,0,3,0,0,0,0],
+    ],
+  },
+  // TRADER — wide hull, green flag, cargo visible
+  trader: {
+    down: [
+      [0,0,0,3,0,0,0,0],
+      [0,0,3,3,3,0,0,0],
+      [0,0,4,3,4,0,0,0],
+      [0,1,2,2,2,1,0,0],
+      [1,2,2,4,2,2,1,0],
+      [1,2,2,4,2,2,1,0],
+      [0,1,2,2,2,1,0,0],
+      [0,0,1,1,1,0,0,0],
+    ],
+    left: [
+      [0,0,0,0,0,0,0,0],
+      [0,0,3,0,0,0,0,0],
+      [0,3,3,3,0,0,0,0],
+      [0,0,3,4,0,0,0,0],
+      [1,1,2,2,2,2,0,0],
+      [0,1,2,4,4,2,1,0],
+      [0,0,1,1,1,1,0,0],
+      [0,0,0,0,0,0,0,0],
+    ],
+    up: [
+      [0,0,1,1,1,0,0,0],
+      [0,1,2,2,2,1,0,0],
+      [1,2,2,4,2,2,1,0],
+      [1,2,2,4,2,2,1,0],
+      [0,1,2,2,2,1,0,0],
+      [0,0,4,3,4,0,0,0],
+      [0,0,3,3,3,0,0,0],
+      [0,0,0,3,0,0,0,0],
+    ],
+  },
+  // EXPLORER — sleek hull, blue flag
+  explorer: {
+    down: [
+      [0,0,0,3,0,0,0,0],
+      [0,0,3,3,4,0,0,0],
+      [0,0,0,3,0,0,0,0],
+      [0,0,1,2,1,0,0,0],
+      [0,1,2,2,2,1,0,0],
+      [0,1,2,2,2,1,0,0],
+      [0,0,1,2,1,0,0,0],
+      [0,0,0,1,0,0,0,0],
+    ],
+    left: [
+      [0,0,0,0,0,0,0,0],
+      [0,0,3,0,0,0,0,0],
+      [0,3,3,0,0,0,0,0],
+      [0,4,3,0,0,0,0,0],
+      [0,1,2,2,2,1,0,0],
+      [0,0,1,2,2,1,0,0],
+      [0,0,0,1,1,0,0,0],
+      [0,0,0,0,0,0,0,0],
+    ],
+    up: [
+      [0,0,0,1,0,0,0,0],
+      [0,0,1,2,1,0,0,0],
+      [0,1,2,2,2,1,0,0],
+      [0,1,2,2,2,1,0,0],
+      [0,0,1,2,1,0,0,0],
+      [0,0,0,3,0,0,0,0],
+      [0,0,3,3,4,0,0,0],
+      [0,0,0,3,0,0,0,0],
+    ],
+  },
+  // FISHING — small boat, net detail
+  fishing: {
+    down: [
+      [0,0,0,3,0,0,0,0],
+      [0,0,0,3,4,0,0,0],
+      [0,0,0,3,0,0,0,0],
+      [0,0,1,2,1,0,0,0],
+      [0,1,2,2,2,1,0,0],
+      [0,1,2,2,2,1,0,0],
+      [0,0,1,1,1,0,0,0],
+      [0,0,0,0,0,0,0,0],
+    ],
+    left: [
+      [0,0,0,0,0,0,0,0],
+      [0,0,3,0,0,0,0,0],
+      [0,0,3,4,0,0,0,0],
+      [0,0,3,0,0,0,0,0],
+      [0,1,2,2,1,0,0,0],
+      [0,0,1,2,1,0,0,0],
+      [0,0,0,1,0,0,0,0],
+      [0,0,0,0,0,0,0,0],
+    ],
+    up: [
+      [0,0,0,0,0,0,0,0],
+      [0,0,1,1,1,0,0,0],
+      [0,1,2,2,2,1,0,0],
+      [0,1,2,2,2,1,0,0],
+      [0,0,1,2,1,0,0,0],
+      [0,0,0,3,0,0,0,0],
+      [0,0,0,3,4,0,0,0],
+      [0,0,0,3,0,0,0,0],
+    ],
+  },
+}
+
+// ============================================================
 // SpriteRenderer class
 // ============================================================
 export class SpriteRenderer {
@@ -450,11 +596,24 @@ export class SpriteRenderer {
   }
 
   /**
+   * Get a ship sprite for the given ship type and direction.
+   */
+  getShipSprite(shipType: string, direction: Direction): OffscreenCanvas {
+    const key = `ship_${shipType}_${direction}`
+    const cached = this.spriteCache.get(key)
+    if (cached) return cached
+
+    const fallbackKey = `ship_${shipType}_down`
+    return this.spriteCache.get(fallbackKey) || this.createEmptySprite()
+  }
+
+  /**
    * Generate all sprites and cache them.
    */
   private generateAllSprites(): void {
     this.generateCreatureSprites()
     this.generateBuildingSprites()
+    this.generateShipSprites()
   }
 
   private generateCreatureSprites(): void {
@@ -536,6 +695,39 @@ export class SpriteRenderer {
         // Draw overlay on top
         this.drawPixelArt(canvas, overlay, LEVEL_OVERLAY_PALETTE)
         this.spriteCache.set(`building_${bt}_${lvl}`, canvas)
+      }
+    }
+  }
+
+  private generateShipSprites(): void {
+    const shipTypes = ['warship', 'trader', 'explorer', 'fishing']
+    const shipColors: Record<string, string[]> = {
+      warship: ['#8a4a4a', '#aa3333', '#cc4444', '#666666'],
+      trader: ['#8a7a4a', '#aa9933', '#ccbb44', '#886644'],
+      explorer: ['#4a6a8a', '#3366aa', '#4488cc', '#556666'],
+      fishing: ['#6a8a6a', '#448844', '#66aa66', '#887766'],
+    }
+    for (const st of shipTypes) {
+      const colors = shipColors[st] || ['#888', '#aaa', '#ccc', '#666']
+      for (const dir of ['down', 'up', 'left', 'right'] as const) {
+        const canvas = this.createSprite(8, 8)
+        const ctx = canvas.getContext('2d')!
+        // Simple ship shape
+        ctx.fillStyle = colors[0]
+        if (dir === 'down' || dir === 'up') {
+          ctx.fillRect(2, 1, 4, 6) // hull
+          ctx.fillStyle = colors[1]
+          ctx.fillRect(3, 0, 2, 1) // bow
+          ctx.fillStyle = colors[2]
+          ctx.fillRect(3, 3, 2, 1) // mast
+        } else {
+          ctx.fillRect(1, 2, 6, 4) // hull
+          ctx.fillStyle = colors[1]
+          ctx.fillRect(0, 3, 1, 2) // bow
+          ctx.fillStyle = colors[2]
+          ctx.fillRect(3, 3, 1, 2) // mast
+        }
+        this.spriteCache.set(`ship_${st}_${dir}`, canvas)
       }
     }
   }
