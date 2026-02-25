@@ -165,6 +165,11 @@ import { CreatureTamingSystem } from '../systems/CreatureTamingSystem'
 import { PlagueMutationSystem } from '../systems/PlagueMutationSystem'
 import { MonumentSystem } from '../systems/MonumentSystem'
 import { CreaturePersonalitySystem } from '../systems/CreaturePersonalitySystem'
+import { TradeNegotiationSystem } from '../systems/TradeNegotiationSystem'
+import { CreatureDreamSystem } from '../systems/CreatureDreamSystem'
+import { NaturalDisasterRecoverySystem } from '../systems/NaturalDisasterRecoverySystem'
+import { CreatureFameSystem } from '../systems/CreatureFameSystem'
+import { WorldMigrationWaveSystem } from '../systems/WorldMigrationWaveSystem'
 
 export class Game {
   private world: World
@@ -332,6 +337,11 @@ export class Game {
   private plagueMutation!: PlagueMutationSystem
   private monument!: MonumentSystem
   private creaturePersonality!: CreaturePersonalitySystem
+  private tradeNegotiation!: TradeNegotiationSystem
+  private creatureDream!: CreatureDreamSystem
+  private disasterRecovery!: NaturalDisasterRecoverySystem
+  private creatureFame!: CreatureFameSystem
+  private migrationWave!: WorldMigrationWaveSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -643,6 +653,11 @@ export class Game {
     this.plagueMutation = new PlagueMutationSystem()
     this.monument = new MonumentSystem()
     this.creaturePersonality = new CreaturePersonalitySystem()
+    this.tradeNegotiation = new TradeNegotiationSystem()
+    this.creatureDream = new CreatureDreamSystem()
+    this.disasterRecovery = new NaturalDisasterRecoverySystem()
+    this.creatureFame = new CreatureFameSystem()
+    this.migrationWave = new WorldMigrationWaveSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -1870,6 +1885,16 @@ export class Game {
         this.monument.update(this.world.tick)
         // Creature personality (v2.00) - trait drift
         this.creaturePersonality.update(this.world.tick)
+        // Trade negotiation (v2.01) - civilization trade deals
+        this.tradeNegotiation.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // Creature dream (v2.02) - sleep dreams affect behavior
+        this.creatureDream.update(this.tickRate, this.em)
+        // Disaster recovery (v2.03) - terrain and building restoration
+        this.disasterRecovery.update(this.tickRate, this.world, this.em, this.civManager)
+        // Creature fame (v2.04) - individual reputation tracking
+        this.creatureFame.update(this.tickRate, this.em, this.world.tick)
+        // Migration wave (v2.05) - large-scale population movement
+        this.migrationWave.update(this.tickRate, this.em, this.world, this.civManager)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
