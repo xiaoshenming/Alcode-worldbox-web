@@ -396,6 +396,10 @@ import { CreatureWeaverSystem } from '../systems/CreatureWeaverSystem'
 import { CreatureHerbalistSystem } from '../systems/CreatureHerbalistSystem'
 import { CreatureSentinelSystem } from '../systems/CreatureSentinelSystem'
 import { WorldPeatBogSystem } from '../systems/WorldPeatBogSystem'
+import { CreatureBeekeeperSystem } from '../systems/CreatureBeekeeperSystem'
+import { WorldAtollSystem } from '../systems/WorldAtollSystem'
+import { CreatureLamplighterSystem } from '../systems/CreatureLamplighterSystem'
+import { DiplomaticCeasefireSystem } from '../systems/DiplomaticCeasefireSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -793,6 +797,10 @@ export class Game {
   private creatureHerbalist!: CreatureHerbalistSystem
   private creatureSentinel!: CreatureSentinelSystem
   private worldPeatBog!: WorldPeatBogSystem
+  private creatureBeekeeper!: CreatureBeekeeperSystem
+  private worldAtoll!: WorldAtollSystem
+  private creatureLamplighter!: CreatureLamplighterSystem
+  private diplomaticCeasefire!: DiplomaticCeasefireSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1341,6 +1349,10 @@ export class Game {
     this.creatureHerbalist = new CreatureHerbalistSystem()
     this.creatureSentinel = new CreatureSentinelSystem()
     this.worldPeatBog = new WorldPeatBogSystem()
+    this.creatureBeekeeper = new CreatureBeekeeperSystem()
+    this.worldAtoll = new WorldAtollSystem()
+    this.creatureLamplighter = new CreatureLamplighterSystem()
+    this.diplomaticCeasefire = new DiplomaticCeasefireSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3044,6 +3056,14 @@ export class Game {
         this.creatureSentinel.update(this.tickRate, this.em, this.world.tick)
         // World peat bogs (v3.167) - waterlogged organic deposits
         this.worldPeatBog.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature beekeepers (v3.171) - honey and wax production
+        this.creatureBeekeeper.update(this.tickRate, this.em, this.world.tick)
+        // World atolls (v3.172) - ring-shaped coral islands
+        this.worldAtoll.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature lamplighters (v3.173) - settlement lighting
+        this.creatureLamplighter.update(this.tickRate, this.em, this.world.tick)
+        // Diplomatic ceasefire (v3.175) - temporary peace agreements
+        this.diplomaticCeasefire.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
