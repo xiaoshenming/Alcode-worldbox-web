@@ -522,6 +522,21 @@ import { CreatureBasketWeaversSystem } from '../systems/CreatureBasketWeaversSys
 import { WorldHoodooSystem } from '../systems/WorldHoodooSystem'
 import { CreatureSoapMakersSystem } from '../systems/CreatureSoapMakersSystem'
 import { WorldCenoteSystem } from '../systems/WorldCenoteSystem'
+import { CreatureGlassblowersSystem } from '../systems/CreatureGlassblowersSystem'
+import { WorldMoraineSystem } from '../systems/WorldMoraineSystem'
+import { DiplomaticCoexistenceSystem } from '../systems/DiplomaticCoexistenceSystem'
+import { CreatureParchmentMakersSystem } from '../systems/CreatureParchmentMakersSystem'
+import { WorldBlowholeSystem } from '../systems/WorldBlowholeSystem'
+import { DiplomaticReunificationSystem } from '../systems/DiplomaticReunificationSystem'
+import { CreatureDyersSystem } from '../systems/CreatureDyersSystem'
+import { WorldDrumlinSystem } from '../systems/WorldDrumlinSystem'
+import { DiplomaticNonInterventionSystem } from '../systems/DiplomaticNonInterventionSystem'
+import { CreatureHarnessMakersSystem } from '../systems/CreatureHarnessMakersSystem'
+import { WorldKettleHoleSystem } from '../systems/WorldKettleHoleSystem'
+import { DiplomaticReconciliationSystem } from '../systems/DiplomaticReconciliationSystem'
+import { CreatureVinegarMakersSystem } from '../systems/CreatureVinegarMakersSystem'
+import { WorldNunatakSystem } from '../systems/WorldNunatakSystem'
+import { DiplomaticDisarmamentSystem } from '../systems/DiplomaticDisarmamentSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1045,6 +1060,21 @@ export class Game {
   private worldHoodoo!: WorldHoodooSystem
   private creatureSoapMakers!: CreatureSoapMakersSystem
   private worldCenote!: WorldCenoteSystem
+  private creatureGlassblowers!: CreatureGlassblowersSystem
+  private worldMoraine!: WorldMoraineSystem
+  private diplomaticCoexistence!: DiplomaticCoexistenceSystem
+  private creatureParchmentMakers!: CreatureParchmentMakersSystem
+  private worldBlowhole!: WorldBlowholeSystem
+  private diplomaticReunification!: DiplomaticReunificationSystem
+  private creatureDyers!: CreatureDyersSystem
+  private worldDrumlin!: WorldDrumlinSystem
+  private diplomaticNonIntervention!: DiplomaticNonInterventionSystem
+  private creatureHarnessMakers!: CreatureHarnessMakersSystem
+  private worldKettleHole!: WorldKettleHoleSystem
+  private diplomaticReconciliation!: DiplomaticReconciliationSystem
+  private creatureVinegarMakers!: CreatureVinegarMakersSystem
+  private worldNunatak!: WorldNunatakSystem
+  private diplomaticDisarmament!: DiplomaticDisarmamentSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1719,6 +1749,21 @@ export class Game {
     this.worldHoodoo = new WorldHoodooSystem()
     this.creatureSoapMakers = new CreatureSoapMakersSystem()
     this.worldCenote = new WorldCenoteSystem()
+    this.creatureGlassblowers = new CreatureGlassblowersSystem()
+    this.worldMoraine = new WorldMoraineSystem()
+    this.diplomaticCoexistence = new DiplomaticCoexistenceSystem()
+    this.creatureParchmentMakers = new CreatureParchmentMakersSystem()
+    this.worldBlowhole = new WorldBlowholeSystem()
+    this.diplomaticReunification = new DiplomaticReunificationSystem()
+    this.creatureDyers = new CreatureDyersSystem()
+    this.worldDrumlin = new WorldDrumlinSystem()
+    this.diplomaticNonIntervention = new DiplomaticNonInterventionSystem()
+    this.creatureHarnessMakers = new CreatureHarnessMakersSystem()
+    this.worldKettleHole = new WorldKettleHoleSystem()
+    this.diplomaticReconciliation = new DiplomaticReconciliationSystem()
+    this.creatureVinegarMakers = new CreatureVinegarMakersSystem()
+    this.worldNunatak = new WorldNunatakSystem()
+    this.diplomaticDisarmament = new DiplomaticDisarmamentSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3676,6 +3721,36 @@ export class Game {
         this.creatureSoapMakers.update(this.tickRate, this.em, this.world.tick)
         // World cenotes (v3.309) - natural sinkholes with water
         this.worldCenote.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature glassblowers (v3.311) - glass blowing craftsmen
+        this.creatureGlassblowers.update(this.tickRate, this.em, this.world.tick)
+        // World moraines (v3.312) - glacial moraine formations
+        this.worldMoraine.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic coexistence (v3.313) - peaceful coexistence agreements
+        this.diplomaticCoexistence.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature parchment makers (v3.314) - parchment production craftsmen
+        this.creatureParchmentMakers.update(this.tickRate, this.em, this.world.tick)
+        // World blowholes (v3.315) - coastal blowhole formations
+        this.worldBlowhole.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic reunification (v3.316) - reunification treaties
+        this.diplomaticReunification.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature dyers (v3.317) - fabric dyeing craftsmen
+        this.creatureDyers.update(this.tickRate, this.em, this.world.tick)
+        // World drumlins (v3.318) - glacial drumlin formations
+        this.worldDrumlin.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic non-intervention (v3.319) - non-intervention pacts
+        this.diplomaticNonIntervention.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature harness makers (v3.320) - harness and tack craftsmen
+        this.creatureHarnessMakers.update(this.tickRate, this.em, this.world.tick)
+        // World kettle holes (v3.321) - glacial kettle hole formations
+        this.worldKettleHole.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic reconciliation (v3.322) - post-conflict reconciliation
+        this.diplomaticReconciliation.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature vinegar makers (v3.323) - vinegar production craftsmen
+        this.creatureVinegarMakers.update(this.tickRate, this.em, this.world.tick)
+        // World nunataks (v3.324) - ice field mountain peaks
+        this.worldNunatak.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic disarmament (v3.325) - disarmament treaties
+        this.diplomaticDisarmament.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
