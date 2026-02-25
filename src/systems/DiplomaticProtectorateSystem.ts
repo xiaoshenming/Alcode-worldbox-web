@@ -1,32 +1,32 @@
-// Diplomatic Protectorate System (v3.290) - Protectorate relationships
-// Agreements where a stronger civilization provides protection to a weaker one
+// Diplomatic Protectorate System (v3.493) - Protectorate relations
+// Formal protection agreements where stronger civilizations shield weaker ones
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type ProtectorateType = 'military' | 'economic' | 'cultural' | 'full'
+export type ProtectorateForm = 'military_shield' | 'economic_patronage' | 'cultural_guardianship' | 'territorial_guarantee'
 
-export interface ProtectorateAgreement {
+export interface ProtectorateRelation {
   id: number
-  protectorCivId: number
-  protectedCivId: number
-  protectorateType: ProtectorateType
-  autonomy: number
-  protectionLevel: number
+  civIdA: number
+  civIdB: number
+  form: ProtectorateForm
+  protectionStrength: number
+  autonomyLevel: number
   tributeRate: number
-  satisfaction: number
+  loyaltyBond: number
   duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2600
-const TREATY_CHANCE = 0.0025
-const MAX_AGREEMENTS = 18
+const CHECK_INTERVAL = 2530
+const PROCEED_CHANCE = 0.0021
+const MAX_RELATIONS = 17
 
-const TYPES: ProtectorateType[] = ['military', 'economic', 'cultural', 'full']
+const FORMS: ProtectorateForm[] = ['military_shield', 'economic_patronage', 'cultural_guardianship', 'territorial_guarantee']
 
 export class DiplomaticProtectorateSystem {
-  private agreements: ProtectorateAgreement[] = []
+  private relations: ProtectorateRelation[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -34,40 +34,40 @@ export class DiplomaticProtectorateSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    if (this.agreements.length < MAX_AGREEMENTS && Math.random() < TREATY_CHANCE) {
-      const protector = 1 + Math.floor(Math.random() * 8)
-      const protected_ = 1 + Math.floor(Math.random() * 8)
-      if (protector === protected_) return
+    if (this.relations.length < MAX_RELATIONS && Math.random() < PROCEED_CHANCE) {
+      const civA = 1 + Math.floor(Math.random() * 8)
+      const civB = 1 + Math.floor(Math.random() * 8)
+      if (civA === civB) return
 
-      const pType = TYPES[Math.floor(Math.random() * TYPES.length)]
+      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
 
-      this.agreements.push({
+      this.relations.push({
         id: this.nextId++,
-        protectorCivId: protector,
-        protectedCivId: protected_,
-        protectorateType: pType,
-        autonomy: pType === 'full' ? 15 + Math.random() * 25 : 40 + Math.random() * 35,
-        protectionLevel: 40 + Math.random() * 40,
-        tributeRate: 5 + Math.random() * 20,
-        satisfaction: 30 + Math.random() * 40,
+        civIdA: civA,
+        civIdB: civB,
+        form,
+        protectionStrength: 25 + Math.random() * 40,
+        autonomyLevel: 20 + Math.random() * 35,
+        tributeRate: 15 + Math.random() * 30,
+        loyaltyBond: 10 + Math.random() * 25,
         duration: 0,
         tick,
       })
     }
 
-    for (const agreement of this.agreements) {
-      agreement.duration += 1
-      agreement.autonomy = Math.max(5, Math.min(80, agreement.autonomy + (Math.random() - 0.48) * 0.15))
-      agreement.protectionLevel = Math.max(10, Math.min(100, agreement.protectionLevel + (Math.random() - 0.5) * 0.12))
-      agreement.satisfaction = Math.max(5, Math.min(100, agreement.satisfaction + (Math.random() - 0.5) * 0.18))
-      agreement.tributeRate = Math.max(2, Math.min(30, agreement.tributeRate + (Math.random() - 0.5) * 0.08))
+    for (const r of this.relations) {
+      r.duration += 1
+      r.protectionStrength = Math.max(10, Math.min(90, r.protectionStrength + (Math.random() - 0.47) * 0.12))
+      r.autonomyLevel = Math.max(10, Math.min(85, r.autonomyLevel + (Math.random() - 0.5) * 0.11))
+      r.tributeRate = Math.max(5, Math.min(75, r.tributeRate + (Math.random() - 0.45) * 0.10))
+      r.loyaltyBond = Math.max(5, Math.min(65, r.loyaltyBond + (Math.random() - 0.44) * 0.09))
     }
 
-    const cutoff = tick - 85000
-    for (let i = this.agreements.length - 1; i >= 0; i--) {
-      if (this.agreements[i].tick < cutoff) this.agreements.splice(i, 1)
+    const cutoff = tick - 93000
+    for (let i = this.relations.length - 1; i >= 0; i--) {
+      if (this.relations[i].tick < cutoff) this.relations.splice(i, 1)
     }
   }
 
-  getAgreements(): ProtectorateAgreement[] { return this.agreements }
+  getRelations(): ProtectorateRelation[] { return this.relations }
 }

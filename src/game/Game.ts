@@ -678,6 +678,16 @@ import { WorldSteamVentSystem } from '../systems/WorldSteamVentSystem'
 import { CreatureBasketWeaverSystem } from '../systems/CreatureBasketWeaverSystem'
 import { WorldTravertineSystem } from '../systems/WorldTravertineSystem'
 import { DiplomaticMutualAidSystem } from '../systems/DiplomaticMutualAidSystem'
+import { WorldGeyseriteSystem } from '../systems/WorldGeyseriteSystem'
+import { WorldSinterSystem } from '../systems/WorldSinterSystem'
+import { CreatureHornworkerSystem } from '../systems/CreatureHornworkerSystem'
+import { WorldTufaSystem } from '../systems/WorldTufaSystem'
+import { CreatureScabbardMakerSystem } from '../systems/CreatureScabbardMakerSystem'
+import { WorldSiliceousSinterSystem } from '../systems/WorldSiliceousSinterSystem'
+import { DiplomaticDominionSystem } from '../systems/DiplomaticDominionSystem'
+import { CreatureQuiverMakerSystem } from '../systems/CreatureQuiverMakerSystem'
+import { WorldHotPoolSystem } from '../systems/WorldHotPoolSystem'
+import { DiplomaticCommonwealthSystem } from '../systems/DiplomaticCommonwealthSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1357,6 +1367,16 @@ export class Game {
   private creatureBasketWeaver!: CreatureBasketWeaverSystem
   private worldTravertine!: WorldTravertineSystem
   private diplomaticMutualAid!: DiplomaticMutualAidSystem
+  private worldGeyserite!: WorldGeyseriteSystem
+  private worldSinter!: WorldSinterSystem
+  private creatureHornworker!: CreatureHornworkerSystem
+  private worldTufa!: WorldTufaSystem
+  private creatureScabbardMaker!: CreatureScabbardMakerSystem
+  private worldSiliceousSinter!: WorldSiliceousSinterSystem
+  private diplomaticDominion!: DiplomaticDominionSystem
+  private creatureQuiverMaker!: CreatureQuiverMakerSystem
+  private worldHotPool!: WorldHotPoolSystem
+  private diplomaticCommonwealth!: DiplomaticCommonwealthSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -2187,6 +2207,16 @@ export class Game {
     this.creatureBasketWeaver = new CreatureBasketWeaverSystem()
     this.worldTravertine = new WorldTravertineSystem()
     this.diplomaticMutualAid = new DiplomaticMutualAidSystem()
+    this.worldGeyserite = new WorldGeyseriteSystem()
+    this.worldSinter = new WorldSinterSystem()
+    this.creatureHornworker = new CreatureHornworkerSystem()
+    this.worldTufa = new WorldTufaSystem()
+    this.creatureScabbardMaker = new CreatureScabbardMakerSystem()
+    this.worldSiliceousSinter = new WorldSiliceousSinterSystem()
+    this.diplomaticDominion = new DiplomaticDominionSystem()
+    this.creatureQuiverMaker = new CreatureQuiverMakerSystem()
+    this.worldHotPool = new WorldHotPoolSystem()
+    this.diplomaticCommonwealth = new DiplomaticCommonwealthSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -4456,6 +4486,26 @@ export class Game {
         this.worldTravertine.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic mutual aid (v3.490) - mutual aid agreements
         this.diplomaticMutualAid.update(this.tickRate, this.world, this.em, this.world.tick)
+        // World geyserite (v3.492) - geyserite mineral deposits
+        this.worldGeyserite.update(this.tickRate, this.world, this.em, this.world.tick)
+        // World sinter (v3.495) - sinter mineral formations
+        this.worldSinter.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature hornworkers (v3.497) - horn crafting artisans
+        this.creatureHornworker.update(this.tickRate, this.em, this.world.tick)
+        // World tufa (v3.498) - tufa tower formations
+        this.worldTufa.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature scabbard makers (v3.500) - scabbard crafting artisans
+        this.creatureScabbardMaker.update(this.tickRate, this.em, this.world.tick)
+        // World siliceous sinter (v3.501) - siliceous sinter deposits
+        this.worldSiliceousSinter.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic dominion (v3.502) - dominion relations
+        this.diplomaticDominion.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature quiver makers (v3.503) - quiver crafting artisans
+        this.creatureQuiverMaker.update(this.tickRate, this.em, this.world.tick)
+        // World hot pools (v3.504) - hot pool formations
+        this.worldHotPool.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic commonwealth (v3.505) - commonwealth unions
+        this.diplomaticCommonwealth.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate

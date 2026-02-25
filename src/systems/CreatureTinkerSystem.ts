@@ -1,83 +1,51 @@
-// Creature Tinker System (v3.188) - Wandering tinkers repair tools and structures
-// Tinkers travel between settlements mending broken items for trade goods
+// Creature Tinker System (v3.494) - Tinker artisans
+// Itinerant crafters repairing and mending metal household items
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
-
-export type TinkerSpecialty = 'metal' | 'wood' | 'leather' | 'ceramic'
+import { EntityManager } from '../ecs/Entity'
 
 export interface Tinker {
   id: number
   entityId: number
-  skill: number
-  itemsRepaired: number
-  toolsOwned: number
-  specialty: TinkerSpecialty
-  wandering: boolean
+  metalRepair: number
+  solderingSkill: number
+  resourcefulness: number
+  outputQuality: number
   tick: number
 }
 
-const CHECK_INTERVAL = 1300
-const TINKER_CHANCE = 0.005
-const MAX_TINKERS = 50
-const SKILL_GROWTH = 0.09
-
-const SPECIALTIES: TinkerSpecialty[] = ['metal', 'wood', 'leather', 'ceramic']
+const CHECK_INTERVAL = 2610
+const RECRUIT_CHANCE = 0.0015
+const MAX_TINKERS = 10
 
 export class CreatureTinkerSystem {
   private tinkers: Tinker[] = []
   private nextId = 1
   private lastCheck = 0
-  private skillMap = new Map<number, number>()
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const creatures = em.getEntitiesWithComponents('creature', 'position')
-
-    for (const eid of creatures) {
-      if (this.tinkers.length >= MAX_TINKERS) break
-      if (Math.random() > TINKER_CHANCE) continue
-
-      const c = em.getComponent<CreatureComponent>(eid, 'creature')
-      if (!c || c.age < 12) continue
-
-      let skill = this.skillMap.get(eid) ?? (4 + Math.random() * 10)
-      skill = Math.min(100, skill + SKILL_GROWTH)
-      this.skillMap.set(eid, skill)
-
-      const specialty = SPECIALTIES[Math.floor(Math.random() * SPECIALTIES.length)]
-      const itemsRepaired = Math.floor(skill / 10)
-      const toolsOwned = 1 + Math.floor(skill / 30)
-
+    if (this.tinkers.length < MAX_TINKERS && Math.random() < RECRUIT_CHANCE) {
       this.tinkers.push({
         id: this.nextId++,
-        entityId: eid,
-        skill,
-        itemsRepaired,
-        toolsOwned,
-        specialty,
-        wandering: Math.random() < 0.6,
+        entityId: Math.floor(Math.random() * 500),
+        metalRepair: 10 + Math.random() * 25,
+        solderingSkill: 15 + Math.random() * 20,
+        resourcefulness: 5 + Math.random() * 20,
+        outputQuality: 10 + Math.random() * 25,
         tick,
       })
     }
 
-    // Wandering tinkers move on after a while
     for (const t of this.tinkers) {
-      if (t.wandering && Math.random() < 0.02) {
-        t.itemsRepaired += Math.floor(t.skill / 15)
-      }
+      t.metalRepair = Math.min(100, t.metalRepair + 0.02)
+      t.resourcefulness = Math.min(100, t.resourcefulness + 0.015)
+      t.outputQuality = Math.min(100, t.outputQuality + 0.01)
     }
 
-    // Expire old tinker records
-    const cutoff = tick - 40000
-    for (let i = this.tinkers.length - 1; i >= 0; i--) {
-      if (this.tinkers[i].tick < cutoff) {
-        this.tinkers.splice(i, 1)
-      }
-    }
+    this.tinkers = this.tinkers.filter(t => t.metalRepair > 4)
   }
 
-  getTinkers(): readonly Tinker[] { return this.tinkers }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
+  getTinkers(): Tinker[] { return this.tinkers }
 }

@@ -1,31 +1,32 @@
-// Diplomatic Federation System (v3.300) - Federal union agreements
-// Treaties forming federal unions where civilizations share governance
+// Diplomatic Federation System (v3.496) - Federation agreements
+// Unions of civilizations sharing governance while retaining sovereignty
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type FederationType = 'political' | 'economic' | 'military' | 'cultural'
+export type FederationForm = 'political_union' | 'economic_federation' | 'military_league' | 'cultural_federation'
 
-export interface FederationTreaty {
+export interface FederationAgreement {
   id: number
-  memberCivIds: number[]
-  federationType: FederationType
-  centralAuthority: number
+  civIdA: number
+  civIdB: number
+  form: FederationForm
+  integrationLevel: number
+  sharedGovernance: number
   memberAutonomy: number
-  cohesion: number
-  prosperity: number
+  collectiveStrength: number
   duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2600
-const TREATY_CHANCE = 0.002
-const MAX_FEDERATIONS = 12
+const CHECK_INTERVAL = 2500
+const PROCEED_CHANCE = 0.0022
+const MAX_AGREEMENTS = 16
 
-const TYPES: FederationType[] = ['political', 'economic', 'military', 'cultural']
+const FORMS: FederationForm[] = ['political_union', 'economic_federation', 'military_league', 'cultural_federation']
 
 export class DiplomaticFederationSystem {
-  private federations: FederationTreaty[] = []
+  private agreements: FederationAgreement[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -33,43 +34,40 @@ export class DiplomaticFederationSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    if (this.federations.length < MAX_FEDERATIONS && Math.random() < TREATY_CHANCE) {
-      const numMembers = 2 + Math.floor(Math.random() * 3)
-      const members: number[] = []
-      for (let m = 0; m < numMembers; m++) {
-        const cId = 1 + Math.floor(Math.random() * 8)
-        if (!members.includes(cId)) members.push(cId)
-      }
-      if (members.length < 2) return
+    if (this.agreements.length < MAX_AGREEMENTS && Math.random() < PROCEED_CHANCE) {
+      const civA = 1 + Math.floor(Math.random() * 8)
+      const civB = 1 + Math.floor(Math.random() * 8)
+      if (civA === civB) return
 
-      const fType = TYPES[Math.floor(Math.random() * TYPES.length)]
+      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
 
-      this.federations.push({
+      this.agreements.push({
         id: this.nextId++,
-        memberCivIds: members,
-        federationType: fType,
-        centralAuthority: 20 + Math.random() * 40,
-        memberAutonomy: 30 + Math.random() * 40,
-        cohesion: 40 + Math.random() * 30,
-        prosperity: 20 + Math.random() * 30,
+        civIdA: civA,
+        civIdB: civB,
+        form,
+        integrationLevel: 25 + Math.random() * 40,
+        sharedGovernance: 20 + Math.random() * 35,
+        memberAutonomy: 15 + Math.random() * 30,
+        collectiveStrength: 10 + Math.random() * 25,
         duration: 0,
         tick,
       })
     }
 
-    for (const fed of this.federations) {
-      fed.duration += 1
-      fed.cohesion = Math.max(10, Math.min(100, fed.cohesion + (Math.random() - 0.5) * 0.15))
-      fed.prosperity = Math.max(5, Math.min(80, fed.prosperity + (Math.random() - 0.45) * 0.12))
-      fed.centralAuthority = Math.max(10, Math.min(80, fed.centralAuthority + (Math.random() - 0.5) * 0.1))
-      fed.memberAutonomy = Math.max(10, Math.min(80, fed.memberAutonomy + (Math.random() - 0.5) * 0.1))
+    for (const a of this.agreements) {
+      a.duration += 1
+      a.integrationLevel = Math.max(10, Math.min(90, a.integrationLevel + (Math.random() - 0.47) * 0.12))
+      a.sharedGovernance = Math.max(10, Math.min(85, a.sharedGovernance + (Math.random() - 0.5) * 0.11))
+      a.memberAutonomy = Math.max(5, Math.min(75, a.memberAutonomy + (Math.random() - 0.45) * 0.10))
+      a.collectiveStrength = Math.max(5, Math.min(65, a.collectiveStrength + (Math.random() - 0.44) * 0.09))
     }
 
-    const cutoff = tick - 90000
-    for (let i = this.federations.length - 1; i >= 0; i--) {
-      if (this.federations[i].tick < cutoff) this.federations.splice(i, 1)
+    const cutoff = tick - 94000
+    for (let i = this.agreements.length - 1; i >= 0; i--) {
+      if (this.agreements[i].tick < cutoff) this.agreements.splice(i, 1)
     }
   }
 
-  getFederations(): FederationTreaty[] { return this.federations }
+  getAgreements(): FederationAgreement[] { return this.agreements }
 }

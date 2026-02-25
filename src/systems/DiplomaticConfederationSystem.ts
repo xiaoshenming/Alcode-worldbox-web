@@ -1,31 +1,32 @@
-// Diplomatic Confederation System (v3.305) - Loose alliance confederations
-// Loose associations of sovereign civilizations cooperating on shared interests
+// Diplomatic Confederation System (v3.499) - Confederation pacts
+// Loose alliances of sovereign civilizations for common purposes
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type ConfederationPurpose = 'defense' | 'trade' | 'cultural' | 'territorial'
+export type ConfederationForm = 'defense_league' | 'trade_bloc' | 'cultural_alliance' | 'resource_compact'
 
-export interface Confederation {
+export interface ConfederationPact {
   id: number
-  memberCivIds: number[]
-  purpose: ConfederationPurpose
-  sovereignty: number
-  cooperation: number
-  sharedResources: number
-  stability: number
+  civIdA: number
+  civIdB: number
+  form: ConfederationForm
+  cohesionLevel: number
+  sovereigntyPreserved: number
+  commonPurpose: number
+  decisionConsensus: number
   duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2500
-const FORM_CHANCE = 0.002
-const MAX_CONFEDERATIONS = 14
+const CHECK_INTERVAL = 2540
+const PROCEED_CHANCE = 0.0021
+const MAX_PACTS = 17
 
-const PURPOSES: ConfederationPurpose[] = ['defense', 'trade', 'cultural', 'territorial']
+const FORMS: ConfederationForm[] = ['defense_league', 'trade_bloc', 'cultural_alliance', 'resource_compact']
 
 export class DiplomaticConfederationSystem {
-  private confederations: Confederation[] = []
+  private pacts: ConfederationPact[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -33,43 +34,40 @@ export class DiplomaticConfederationSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    if (this.confederations.length < MAX_CONFEDERATIONS && Math.random() < FORM_CHANCE) {
-      const numMembers = 2 + Math.floor(Math.random() * 4)
-      const members: number[] = []
-      for (let m = 0; m < numMembers; m++) {
-        const cId = 1 + Math.floor(Math.random() * 8)
-        if (!members.includes(cId)) members.push(cId)
-      }
-      if (members.length < 2) return
+    if (this.pacts.length < MAX_PACTS && Math.random() < PROCEED_CHANCE) {
+      const civA = 1 + Math.floor(Math.random() * 8)
+      const civB = 1 + Math.floor(Math.random() * 8)
+      if (civA === civB) return
 
-      const purpose = PURPOSES[Math.floor(Math.random() * PURPOSES.length)]
+      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
 
-      this.confederations.push({
+      this.pacts.push({
         id: this.nextId++,
-        memberCivIds: members,
-        purpose,
-        sovereignty: 60 + Math.random() * 30,
-        cooperation: 30 + Math.random() * 35,
-        sharedResources: 10 + Math.random() * 25,
-        stability: 35 + Math.random() * 35,
+        civIdA: civA,
+        civIdB: civB,
+        form,
+        cohesionLevel: 25 + Math.random() * 40,
+        sovereigntyPreserved: 20 + Math.random() * 35,
+        commonPurpose: 15 + Math.random() * 30,
+        decisionConsensus: 10 + Math.random() * 25,
         duration: 0,
         tick,
       })
     }
 
-    for (const conf of this.confederations) {
-      conf.duration += 1
-      conf.cooperation = Math.max(10, Math.min(90, conf.cooperation + (Math.random() - 0.5) * 0.15))
-      conf.stability = Math.max(10, Math.min(90, conf.stability + (Math.random() - 0.5) * 0.12))
-      conf.sharedResources = Math.max(5, Math.min(50, conf.sharedResources + (Math.random() - 0.45) * 0.1))
-      conf.sovereignty = Math.max(40, Math.min(95, conf.sovereignty + (Math.random() - 0.5) * 0.08))
+    for (const p of this.pacts) {
+      p.duration += 1
+      p.cohesionLevel = Math.max(10, Math.min(90, p.cohesionLevel + (Math.random() - 0.47) * 0.12))
+      p.sovereigntyPreserved = Math.max(10, Math.min(85, p.sovereigntyPreserved + (Math.random() - 0.5) * 0.11))
+      p.commonPurpose = Math.max(5, Math.min(75, p.commonPurpose + (Math.random() - 0.45) * 0.10))
+      p.decisionConsensus = Math.max(5, Math.min(65, p.decisionConsensus + (Math.random() - 0.44) * 0.09))
     }
 
-    const cutoff = tick - 88000
-    for (let i = this.confederations.length - 1; i >= 0; i--) {
-      if (this.confederations[i].tick < cutoff) this.confederations.splice(i, 1)
+    const cutoff = tick - 95000
+    for (let i = this.pacts.length - 1; i >= 0; i--) {
+      if (this.pacts[i].tick < cutoff) this.pacts.splice(i, 1)
     }
   }
 
-  getConfederations(): Confederation[] { return this.confederations }
+  getPacts(): ConfederationPact[] { return this.pacts }
 }
