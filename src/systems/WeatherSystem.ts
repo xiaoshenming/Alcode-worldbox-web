@@ -54,8 +54,28 @@ export class WeatherSystem {
   }
 
   private startRandomWeather(): void {
-    const types: WeatherType[] = ['rain', 'rain', 'snow', 'storm', 'fog']
-    this.currentWeather = types[Math.floor(Math.random() * types.length)]
+    // Season-aware weather type selection
+    const season = this.world.getSeason()
+    let types: WeatherType[]
+    switch (season) {
+      case 'winter':
+        types = ['snow', 'snow', 'snow', 'fog', 'rain']
+        break
+      case 'spring':
+        types = ['rain', 'rain', 'rain', 'storm', 'fog']
+        break
+      case 'summer':
+        types = ['clear', 'clear', 'rain', 'storm', 'fog']
+        break
+      case 'autumn':
+        types = ['fog', 'fog', 'rain', 'rain', 'snow']
+        break
+      default:
+        types = ['rain', 'rain', 'snow', 'storm', 'fog']
+    }
+    const picked = types[Math.floor(Math.random() * types.length)]
+    if (picked === 'clear') return // summer clear = no weather event
+    this.currentWeather = picked
     this.intensity = 0.3 + Math.random() * 0.7
     this.duration = 600 + Math.floor(Math.random() * 1800)
     EventLog.log('weather', `${this.getWeatherLabel()} has begun`, this.world.tick)

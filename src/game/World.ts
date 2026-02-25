@@ -1,6 +1,8 @@
 import { TileType, TILE_COLORS, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { Noise } from '../utils/Noise'
 
+export type Season = 'spring' | 'summer' | 'autumn' | 'winter'
+
 export class World {
   tiles: TileType[][] = []
   tileVariants: number[][] = [] // For color variation
@@ -9,6 +11,14 @@ export class World {
   tick: number = 0
   dayNightCycle: number = 0.25 // 0-1, 0=midnight, 0.25=dawn, 0.5=noon, 0.75=dusk
   private readonly dayLength: number = 3600 // ticks per full day
+
+  // Season system
+  season: Season = 'spring'
+  seasonProgress: number = 0 // 0-1 progress within current season
+  yearTick: number = 0
+  private readonly seasonLength: number = 7200 // ticks per season (2 day-night cycles)
+  private readonly yearLength: number = 7200 * 4 // full year
+  private lastSeason: Season = 'spring' // track season changes for dirty marking
 
   constructor(width: number = WORLD_WIDTH, height: number = WORLD_HEIGHT) {
     this.width = width
@@ -109,12 +119,71 @@ export class World {
     const tile = this.getTile(x, y)
     if (tile === null) return '#000'
     const variant = this.tileVariants[y]?.[x] ?? 0
-    return TILE_COLORS[tile][variant]
+    const base = TILE_COLORS[tile][variant]
+
+    // Apply seasonal tint to grass and forest only
+    if (this.season === 'summer') return base
+    if (tile !== TileType.GRASS && tile !== TileType.FOREST) return base
+
+    let tint: string
+    let alpha: number
+    if (this.season === 'spring') {
+      tint = '#88ff88'
+      alpha = 0.15
+    } else if (this.season === 'autumn') {
+      tint = tile === TileType.FOREST ? '#dd4422' : '#cc8833'
+      alpha = 0.25
+    } else {
+      // winter
+      tint = '#ccddee'
+      alpha = 0.2
+    }
+
+    return this.blendColors(base, tint, alpha)
+  }
+
+  private blendColors(base: string, tint: string, alpha: number): string {
+    const br = parseInt(base.slice(1, 3), 16)
+    const bg = parseInt(base.slice(3, 5), 16)
+    const bb = parseInt(base.slice(5, 7), 16)
+    const tr = parseInt(tint.slice(1, 3), 16)
+    const tg = parseInt(tint.slice(3, 5), 16)
+    const tb = parseInt(tint.slice(5, 7), 16)
+    const r = Math.round(br + (tr - br) * alpha)
+    const g = Math.round(bg + (tg - bg) * alpha)
+    const b = Math.round(bb + (tb - bb) * alpha)
+    return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)
+  }
+
+  getSeason(): Season {
+    return this.season
+  }
+
+  getSeasonMultiplier(): number {
+    switch (this.season) {
+      case 'spring': return 1.1
+      case 'summer': return 1.0
+      case 'autumn': return 0.9
+      case 'winter': return 0.7
+    }
   }
 
   update(): void {
     this.tick++
     this.dayNightCycle = (this.tick % this.dayLength) / this.dayLength
+
+    // Season tracking
+    this.yearTick = this.tick % this.yearLength
+    const seasonIndex = Math.floor(this.yearTick / this.seasonLength)
+    const seasons: Season[] = ['spring', 'summer', 'autumn', 'winter']
+    this.season = seasons[seasonIndex]
+    this.seasonProgress = (this.yearTick % this.seasonLength) / this.seasonLength
+
+    // Mark world dirty when season changes so tiles re-render with new tint
+    if (this.season !== this.lastSeason) {
+      this.lastSeason = this.season
+      this._fullDirty = true
+    }
   }
 
   // Returns brightness multiplier: 1.0 = full day, 0.3 = night
