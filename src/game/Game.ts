@@ -316,6 +316,10 @@ import { WorldCrystalCaveSystem } from '../systems/WorldCrystalCaveSystem'
 import { DiplomaticTradeSanctionSystem } from '../systems/DiplomaticTradeSanctionSystem'
 import { CreatureMimicrySystem } from '../systems/CreatureMimicrySystem'
 import { WorldWaterspoutSystem } from '../systems/WorldWaterspoutSystem'
+import { CreatureBeekeepingSystem } from '../systems/CreatureBeekeepingSystem'
+import { WorldVolcanicIslandSystem } from '../systems/WorldVolcanicIslandSystem'
+import { DiplomaticTradeGuildSystem } from '../systems/DiplomaticTradeGuildSystem'
+import { CreatureTelepathySystem } from '../systems/CreatureTelepathySystem'
 
 export class Game {
   private world: World
@@ -634,6 +638,10 @@ export class Game {
   private diplomaticTradeSanction!: DiplomaticTradeSanctionSystem
   private creatureMimicry!: CreatureMimicrySystem
   private worldWaterspout!: WorldWaterspoutSystem
+  private creatureBeekeeping!: CreatureBeekeepingSystem
+  private worldVolcanicIsland!: WorldVolcanicIslandSystem
+  private diplomaticTradeGuild!: DiplomaticTradeGuildSystem
+  private creatureTelepathy!: CreatureTelepathySystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -1103,6 +1111,10 @@ export class Game {
     this.diplomaticTradeSanction = new DiplomaticTradeSanctionSystem()
     this.creatureMimicry = new CreatureMimicrySystem()
     this.worldWaterspout = new WorldWaterspoutSystem()
+    this.creatureBeekeeping = new CreatureBeekeepingSystem()
+    this.worldVolcanicIsland = new WorldVolcanicIslandSystem()
+    this.diplomaticTradeGuild = new DiplomaticTradeGuildSystem()
+    this.creatureTelepathy = new CreatureTelepathySystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2632,6 +2644,14 @@ export class Game {
         this.creatureMimicry.update(this.tickRate, this.em, this.world.tick)
         // World waterspouts (v3.70) - ocean tornado phenomena
         this.worldWaterspout.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature beekeeping (v3.71) - honey production and apiaries
+        this.creatureBeekeeping.update(this.tickRate, this.em, this.world.tick)
+        // World volcanic islands (v3.72) - new islands emerge from ocean
+        this.worldVolcanicIsland.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic trade guilds (v3.73) - economic alliances
+        this.diplomaticTradeGuild.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // Creature telepathy (v3.74) - psychic communication
+        this.creatureTelepathy.update(this.tickRate, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate

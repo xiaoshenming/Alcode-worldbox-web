@@ -1,36 +1,33 @@
-// World Aurora System (v3.15) - Auroras appear in the sky under certain conditions
-// Auroras bring inspiration, fear, calm, or energy to creatures
+// World Aurora System (v3.75) - Northern/southern lights appear in polar regions
+// Auroras boost morale, inspire art, and have mystical effects on magic users
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type AuroraColor = 'green' | 'blue' | 'purple' | 'red' | 'pink'
-export type AuroraEffect = 'inspiration' | 'fear' | 'calm' | 'energy'
+export type AuroraColor = 'green' | 'blue' | 'purple' | 'red' | 'pink' | 'white'
+export type AuroraIntensity = 'faint' | 'moderate' | 'bright' | 'spectacular'
 
-export interface Aurora {
+export interface AuroraEvent {
   id: number
-  intensity: number   // 0-100
+  x: number
+  y: number
+  width: number
   color: AuroraColor
-  startTick: number
-  duration: number
-  effect: AuroraEffect
+  secondaryColor: AuroraColor
+  intensity: AuroraIntensity
+  moraleBoost: number
+  tick: number
 }
 
-const CHECK_INTERVAL = 1000
+const CHECK_INTERVAL = 1800
 const AURORA_CHANCE = 0.008
-const MAX_AURORAS = 5
+const MAX_AURORAS = 20
 
-const COLOR_EFFECTS: Record<AuroraColor, AuroraEffect> = {
-  green: 'calm',
-  blue: 'inspiration',
-  purple: 'energy',
-  red: 'fear',
-  pink: 'calm',
-}
-const COLORS = Object.keys(COLOR_EFFECTS) as AuroraColor[]
+const COLORS: AuroraColor[] = ['green', 'blue', 'purple', 'red', 'pink', 'white']
+const INTENSITIES: AuroraIntensity[] = ['faint', 'moderate', 'bright', 'spectacular']
 
 export class WorldAuroraSystem {
-  private auroras: Aurora[] = []
+  private auroras: AuroraEvent[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -38,47 +35,41 @@ export class WorldAuroraSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    this.spawnAuroras(tick)
-    this.evolveAuroras(tick)
-    this.cleanup(tick)
-  }
+    // Spawn auroras in polar regions (top/bottom of map)
+    if (this.auroras.length < MAX_AURORAS && Math.random() < AURORA_CHANCE) {
+      const w = world.width
+      const h = world.height
+      const isPolar = Math.random() < 0.5
+      const y = isPolar ? Math.floor(Math.random() * (h * 0.15)) : h - Math.floor(Math.random() * (h * 0.15))
+      const x = Math.floor(Math.random() * w)
+      const width = 15 + Math.floor(Math.random() * 30)
 
-  private spawnAuroras(tick: number): void {
-    if (this.auroras.length >= MAX_AURORAS) return
-    if (Math.random() > AURORA_CHANCE) return
+      const color = COLORS[Math.floor(Math.random() * COLORS.length)]
+      let secondary = COLORS[Math.floor(Math.random() * COLORS.length)]
+      if (secondary === color) secondary = COLORS[(COLORS.indexOf(color) + 1) % COLORS.length]
 
-    const color = COLORS[Math.floor(Math.random() * COLORS.length)]
-    this.auroras.push({
-      id: this.nextId++,
-      intensity: 30 + Math.random() * 70,
-      color,
-      startTick: tick,
-      duration: 2000 + Math.floor(Math.random() * 4000),
-      effect: COLOR_EFFECTS[color],
-    })
-  }
+      const intensityIdx = Math.floor(Math.random() * INTENSITIES.length)
+      const intensity = INTENSITIES[intensityIdx]
 
-  private evolveAuroras(tick: number): void {
-    for (const a of this.auroras) {
-      const elapsed = tick - a.startTick
-      const halfLife = a.duration * 0.5
-      // Intensity peaks at midpoint then fades
-      if (elapsed < halfLife) {
-        a.intensity = Math.min(100, a.intensity + Math.random() * 2)
-      } else {
-        a.intensity = Math.max(0, a.intensity - Math.random() * 3)
+      this.auroras.push({
+        id: this.nextId++,
+        x, y, width,
+        color,
+        secondaryColor: secondary,
+        intensity,
+        moraleBoost: (intensityIdx + 1) * 5,
+        tick,
+      })
+    }
+
+    // Fade old auroras
+    const cutoff = tick - 15000
+    for (let i = this.auroras.length - 1; i >= 0; i--) {
+      if (this.auroras[i].tick < cutoff) {
+        this.auroras.splice(i, 1)
       }
     }
   }
 
-  private cleanup(tick: number): void {
-    this.auroras = this.auroras.filter(a =>
-      tick - a.startTick < a.duration && a.intensity > 0
-    )
-  }
-
-  getAuroras(): Aurora[] { return this.auroras }
-  getActiveAuroras(): Aurora[] {
-    return this.auroras.filter(a => a.intensity > 10)
-  }
+  getAuroras(): readonly AuroraEvent[] { return this.auroras }
 }
