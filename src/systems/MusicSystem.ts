@@ -103,11 +103,8 @@ export class MusicSystem {
     return src
   }
 
-  // --- Ambient layers ---
-
   private startAmbientLayers(): void {
     const ctx = this.ctx!
-
     // Wind: filtered white noise
     this.windSource = this.makeNoiseSource()
     this.windFilter = ctx.createBiquadFilter()
@@ -120,7 +117,6 @@ export class MusicSystem {
     this.windFilter.connect(windGain)
     windGain.connect(this.ambientGain!)
     this.windSource.start()
-
     // Water: very low frequency filtered noise
     this.waterSource = this.makeNoiseSource()
     this.waterFilter = ctx.createBiquadFilter()
@@ -133,7 +129,6 @@ export class MusicSystem {
     this.waterFilter.connect(waterGain)
     waterGain.connect(this.ambientGain!)
     this.waterSource.start()
-
     // Rain: prepared but silent until needed
     this.rainSource = this.makeNoiseSource()
     this.rainFilter = ctx.createBiquadFilter()
@@ -188,8 +183,6 @@ export class MusicSystem {
     osc.stop(now + 0.3)
   }
 
-  // --- Music generation ---
-
   private getActiveFadeGain(): GainNode {
     return this.activeFade === 'A' ? this.fadeGainA! : this.fadeGainB!
   }
@@ -204,8 +197,7 @@ export class MusicSystem {
     const t = this.nextBarTime
     const dur = config.barDuration
     const fadeGain = this.getActiveFadeGain()
-
-    // Play chord tones
+    // Chord tones
     for (const freq of chord) {
       const osc = ctx.createOscillator()
       const g = ctx.createGain()
@@ -219,7 +211,6 @@ export class MusicSystem {
       osc.start(t)
       osc.stop(t + dur)
     }
-
     // Drum hits (noise bursts)
     const beats = this.currentMood === 'war' ? 8 : this.currentMood === 'night' ? 2 : 4
     const beatLen = dur / beats
@@ -238,7 +229,6 @@ export class MusicSystem {
       src.start(bt)
       src.stop(bt + 0.1)
     }
-
     // Melody: pick 2-4 random notes from scale
     const noteCount = 2 + Math.floor(Math.random() * 3)
     for (let i = 0; i < noteCount; i++) {
@@ -266,11 +256,8 @@ export class MusicSystem {
     const ctx = this.ctx
     const now = ctx.currentTime
     const fadeDur = 2.0
-
-    // Fade out current, fade in next
     const outGain = this.activeFade === 'A' ? this.fadeGainA! : this.fadeGainB!
     const inGain = this.activeFade === 'A' ? this.fadeGainB! : this.fadeGainA!
-
     outGain.gain.setValueAtTime(outGain.gain.value, now)
     outGain.gain.linearRampToValueAtTime(0, now + fadeDur)
     inGain.gain.setValueAtTime(inGain.gain.value, now)
@@ -281,8 +268,6 @@ export class MusicSystem {
     this.barIndex = 0
   }
 
-  // --- Public API ---
-
   update(gameState: {
     isNight: boolean
     atWar: boolean
@@ -292,7 +277,6 @@ export class MusicSystem {
   }): void {
     const ctx = this.getCtx()
     if (ctx.state === 'suspended') return
-
     // Determine target mood from game state
     let mood: Mood = 'peaceful'
     if (gameState.isEpic) mood = 'epic'
@@ -304,7 +288,6 @@ export class MusicSystem {
       this.targetMood = mood
       this.crossfadeToNewMood()
     }
-
     // Schedule upcoming bars
     if (!this.started) {
       this.nextBarTime = ctx.currentTime + 0.1
@@ -313,20 +296,17 @@ export class MusicSystem {
     while (this.nextBarTime < ctx.currentTime + 2) {
       this.scheduleBar()
     }
-
     // Bird chirps (daytime, random interval)
     const now = ctx.currentTime
     if (!gameState.isNight && now - this.lastBirdTime > 2 + Math.random() * 5) {
       this.playBirdChirp()
       this.lastBirdTime = now
     }
-
     // Insect chirps (nighttime)
     if (gameState.isNight && now - this.lastInsectTime > 1.5 + Math.random() * 3) {
       this.playInsectChirp()
       this.lastInsectTime = now
     }
-
     // Rain layer volume
     if (this.rainGainNode) {
       const target = gameState.isRaining ? 0.2 : 0

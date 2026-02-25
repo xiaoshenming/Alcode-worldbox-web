@@ -208,7 +208,7 @@ export class MiningSystem {
         dep.reserves = Math.max(0, dep.reserves - dep.productionRate)
 
         if (dep.reserves <= 0) {
-          EventLog.log('economy',
+          EventLog.log('trade',
             `${ORE_NAMES[dep.type]} mine at (${dep.x},${dep.y}) has been depleted`, tick)
         }
       }
@@ -249,7 +249,7 @@ export class MiningSystem {
     if (Math.random() < chance) {
       deposit.discovered = true
       deposit.discoveredBy = civId
-      EventLog.log('economy',
+      EventLog.log('trade',
         `Discovered ${ORE_NAMES[deposit.type]} deposit (${deposit.size}) at (${x},${y})!`, 0)
       return deposit
     }
@@ -262,7 +262,7 @@ export class MiningSystem {
     if (deposit.reserves <= 0) return false
 
     deposit.mineBuilt = true
-    EventLog.log('economy',
+    EventLog.log('trade',
       `Mine built on ${ORE_NAMES[deposit.type]} deposit at (${deposit.x},${deposit.y})`, 0)
     return true
   }
