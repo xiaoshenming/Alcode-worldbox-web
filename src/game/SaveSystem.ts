@@ -6,6 +6,19 @@ import { ResourceSystem, ResourceNode } from '../systems/ResourceSystem'
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 
 const SAVE_KEY = 'worldbox_save'
+const SLOT_PREFIX = 'worldbox_slot_'
+const AUTO_SAVE_KEY = 'worldbox_autosave'
+const META_KEY = 'worldbox_save_meta'
+const MAX_SLOTS = 3
+
+export interface SaveSlotMeta {
+  slot: number | 'auto'
+  label: string
+  timestamp: number
+  tick: number
+  population: number
+  civCount: number
+}
 
 interface SaveData {
   version: number
@@ -45,7 +58,11 @@ interface SavedCiv {
 }
 
 export class SaveSystem {
-  static save(world: World, em: EntityManager, civManager: CivManager, resources: ResourceSystem): boolean {
+  private static getSlotKey(slot: number | 'auto'): string {
+    return slot === 'auto' ? AUTO_SAVE_KEY : `${SLOT_PREFIX}${slot}`
+  }
+
+  static save(world: World, em: EntityManager, civManager: CivManager, resources: ResourceSystem, slot: number | 'auto' = 'auto'): boolean {
     try {
       const data: SaveData = {
         version: 1,
@@ -59,7 +76,25 @@ export class SaveSystem {
       }
 
       const json = JSON.stringify(data)
-      localStorage.setItem(SAVE_KEY, json)
+      const key = SaveSystem.getSlotKey(slot)
+      localStorage.setItem(key, json)
+
+      // Also keep legacy key working
+      if (slot !== 'auto') {
+        localStorage.setItem(SAVE_KEY, json)
+      }
+
+      // Update metadata
+      const meta: SaveSlotMeta = {
+        slot,
+        label: slot === 'auto' ? 'Autosave' : `Slot ${slot}`,
+        timestamp: Date.now(),
+        tick: world.tick,
+        population: em.getEntitiesWithComponents('position', 'creature').length,
+        civCount: civManager.civilizations.size,
+      }
+      SaveSystem.updateMeta(slot, meta)
+
       return true
     } catch (e) {
       console.error('Save failed:', e)
@@ -67,13 +102,26 @@ export class SaveSystem {
     }
   }
 
-  static hasSave(): boolean {
+  static hasSave(slot?: number | 'auto'): boolean {
+    if (slot !== undefined) {
+      return localStorage.getItem(SaveSystem.getSlotKey(slot)) !== null
+    }
+    // Check any slot
+    if (localStorage.getItem(AUTO_SAVE_KEY)) return true
+    for (let i = 1; i <= MAX_SLOTS; i++) {
+      if (localStorage.getItem(`${SLOT_PREFIX}${i}`)) return true
+    }
     return localStorage.getItem(SAVE_KEY) !== null
   }
 
-  static load(world: World, em: EntityManager, civManager: CivManager, resources: ResourceSystem): boolean {
+  static load(world: World, em: EntityManager, civManager: CivManager, resources: ResourceSystem, slot?: number | 'auto'): boolean {
     try {
-      const json = localStorage.getItem(SAVE_KEY)
+      let json: string | null = null
+      if (slot !== undefined) {
+        json = localStorage.getItem(SaveSystem.getSlotKey(slot))
+      } else {
+        json = localStorage.getItem(SAVE_KEY)
+      }
       if (!json) return false
 
       const data: SaveData = JSON.parse(json)
@@ -150,8 +198,36 @@ export class SaveSystem {
     }
   }
 
-  static deleteSave(): void {
-    localStorage.removeItem(SAVE_KEY)
+  static deleteSave(slot?: number | 'auto'): void {
+    if (slot !== undefined) {
+      localStorage.removeItem(SaveSystem.getSlotKey(slot))
+      SaveSystem.removeMeta(slot)
+    } else {
+      localStorage.removeItem(SAVE_KEY)
+    }
+  }
+
+  static getAllSlotMeta(): SaveSlotMeta[] {
+    try {
+      const raw = localStorage.getItem(META_KEY)
+      if (!raw) return []
+      return JSON.parse(raw) as SaveSlotMeta[]
+    } catch { return [] }
+  }
+
+  private static updateMeta(slot: number | 'auto', meta: SaveSlotMeta): void {
+    const all = SaveSystem.getAllSlotMeta().filter(m => m.slot !== slot)
+    all.push(meta)
+    localStorage.setItem(META_KEY, JSON.stringify(all))
+  }
+
+  private static removeMeta(slot: number | 'auto'): void {
+    const all = SaveSystem.getAllSlotMeta().filter(m => m.slot !== slot)
+    localStorage.setItem(META_KEY, JSON.stringify(all))
+  }
+
+  static getSlotCount(): number {
+    return MAX_SLOTS
   }
 
   private static serializeEntities(em: EntityManager): SavedEntity[] {

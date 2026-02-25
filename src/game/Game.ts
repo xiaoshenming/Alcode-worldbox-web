@@ -17,7 +17,7 @@ import { ParticleSystem } from '../systems/ParticleSystem'
 import { SoundSystem } from '../systems/SoundSystem'
 import { WeatherSystem } from '../systems/WeatherSystem'
 import { ResourceSystem } from '../systems/ResourceSystem'
-import { SaveSystem } from './SaveSystem'
+import { SaveSystem, SaveSlotMeta } from './SaveSystem'
 import { CreatureFactory } from '../entities/CreatureFactory'
 import { CivManager } from '../civilization/CivManager'
 import { AchievementSystem, WorldStats } from '../systems/AchievementSystem'
@@ -108,6 +108,7 @@ export class Game {
     this.cropSystem = new CropSystem()
     this.setupAchievementTracking()
     this.setupParticleEventHooks()
+    this.setupSoundEventHooks()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
     this.combatSystem.setArtifactSystem(this.artifactSystem)
@@ -152,28 +153,19 @@ export class Game {
       toggleTerritoryBtn.classList.add('active')
     }
 
-    // Save button
+    // Save button - opens save panel
     const saveBtn = document.getElementById('saveBtn')
     if (saveBtn) {
       saveBtn.addEventListener('click', () => {
-        const ok = SaveSystem.save(this.world, this.em, this.civManager, this.resources)
-        saveBtn.textContent = ok ? 'Saved!' : 'Failed'
-        setTimeout(() => { saveBtn.textContent = 'Save' }, 1500)
+        this.showSaveLoadPanel('save')
       })
     }
 
-    // Load button
+    // Load button - opens load panel
     const loadBtn = document.getElementById('loadBtn')
     if (loadBtn) {
       loadBtn.addEventListener('click', () => {
-        const ok = SaveSystem.load(this.world, this.em, this.civManager, this.resources)
-        if (ok) {
-          this.world.markFullDirty()
-          loadBtn.textContent = 'Loaded!'
-        } else {
-          loadBtn.textContent = 'No Save'
-        }
-        setTimeout(() => { loadBtn.textContent = 'Load' }, 1500)
+        this.showSaveLoadPanel('load')
       })
     }
 
@@ -369,7 +361,11 @@ export class Game {
 
   private setupKeyboard(): void {
     window.addEventListener('keydown', (e) => {
+      // Ignore shortcuts when typing in inputs
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+
       switch (e.key) {
+        // Speed controls
         case '1': this.setSpeed(1); break
         case '2': this.setSpeed(2); break
         case '3': this.setSpeed(5); break
@@ -382,6 +378,96 @@ export class Game {
         case 'R':
           this.resetWorld()
           break
+
+        // Tool category switching: Q/W/E/D
+        case 'q':
+        case 'Q':
+          this.toolbar.setCategory('terrain')
+          break
+        case 'w':
+        case 'W':
+          this.toolbar.setCategory('creature')
+          break
+        case 'e':
+        case 'E':
+          this.toolbar.setCategory('nature')
+          break
+        case 'd':
+        case 'D':
+          this.toolbar.setCategory('disaster')
+          break
+
+        // Brush size: [ and ]
+        case '[': {
+          const slider = document.getElementById('brushSlider') as HTMLInputElement
+          if (slider) {
+            const val = Math.max(1, parseInt(slider.value) - 1)
+            slider.value = String(val)
+            slider.dispatchEvent(new Event('input'))
+          }
+          break
+        }
+        case ']': {
+          const slider = document.getElementById('brushSlider') as HTMLInputElement
+          if (slider) {
+            const val = Math.min(10, parseInt(slider.value) + 1)
+            slider.value = String(val)
+            slider.dispatchEvent(new Event('input'))
+          }
+          break
+        }
+
+        // Quick save/load: Ctrl+S / Ctrl+L
+        case 's':
+        case 'S':
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault()
+            this.showSaveLoadPanel('save')
+          }
+          break
+        case 'l':
+        case 'L':
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault()
+            this.showSaveLoadPanel('load')
+          }
+          break
+
+        // Toggle mute: M
+        case 'm':
+        case 'M': {
+          const muted = this.audio.toggleMute()
+          const muteBtn = document.getElementById('muteBtn')
+          if (muteBtn) muteBtn.textContent = muted ? '🔇' : '🔊'
+          break
+        }
+
+        // Toggle territory: T
+        case 't':
+        case 'T': {
+          this.renderer.showTerritory = !this.renderer.showTerritory
+          const terBtn = document.getElementById('toggleTerritoryBtn')
+          if (terBtn) terBtn.classList.toggle('active', this.renderer.showTerritory)
+          break
+        }
+
+        // Escape: close panels / deselect tool
+        case 'Escape': {
+          const savePanel = document.getElementById('saveLoadPanel')
+          const achPanel = document.getElementById('achievementsPanel')
+          const tlPanel = document.getElementById('timelinePanel')
+          if (savePanel?.style.display !== 'none' && savePanel?.style.display) {
+            savePanel.style.display = 'none'
+          } else if (achPanel?.style.display !== 'none' && achPanel?.style.display) {
+            achPanel.style.display = 'none'
+          } else if (tlPanel?.style.display !== 'none' && tlPanel?.style.display) {
+            tlPanel.style.display = 'none'
+          } else {
+            this.powers.setPower(null as any)
+            this.toolbar.clearSelection()
+          }
+          break
+        }
       }
     })
   }
@@ -569,6 +655,22 @@ export class Game {
     })
   }
 
+  /** Play contextual sound effects based on game events */
+  private setupSoundEventHooks(): void {
+    let lastAchievementCount = 0
+    EventLog.onEvent((e) => {
+      if (e.type === 'building') this.audio.playBuild()
+      if (e.type === 'peace' || e.type === 'diplomacy') this.audio.playDiplomacy()
+      if (e.type === 'trade') this.audio.playTrade()
+      // Check for new achievements
+      const current = this.achievements.getProgress().unlocked
+      if (current > lastAchievementCount) {
+        this.audio.playAchievement()
+        lastAchievementCount = current
+      }
+    })
+  }
+
   /** Spawn hero trails and mutation auras each tick */
   private updateVisualEffects(): void {
     // Hero trails — every 3rd tick to avoid particle spam
@@ -670,6 +772,10 @@ export class Game {
         if (this.world.tick % 60 === 0) {
           this.diplomacySystem.update(this.civManager, this.world, this.em)
         }
+        // Autosave every 30000 ticks (~8 minutes at 60fps)
+        if (this.world.tick > 0 && this.world.tick % 30000 === 0) {
+          SaveSystem.save(this.world, this.em, this.civManager, this.resources, 'auto')
+        }
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
@@ -720,5 +826,96 @@ export class Game {
     const seasonLabels = { spring: '🌱 Spring', summer: '☀️ Summer', autumn: '🍂 Autumn', winter: '❄️ Winter' }
     const seasonLabel = seasonLabels[this.world.season]
     el.textContent = `${icon} ${timeStr} (${hour}:00) | ${seasonLabel} | ${weatherLabel}`
+  }
+
+  private showSaveLoadPanel(mode: 'save' | 'load'): void {
+    let panel = document.getElementById('saveLoadPanel')
+    if (panel) { panel.remove(); return }
+
+    panel = document.createElement('div')
+    panel.id = 'saveLoadPanel'
+    panel.className = 'panel'
+    Object.assign(panel.style, {
+      position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+      width: '320px', zIndex: '350', fontSize: '12px', lineHeight: '1.8', padding: '12px'
+    })
+
+    const titleEl = document.createElement('div')
+    titleEl.style.cssText = 'font-weight:bold;font-size:14px;margin-bottom:8px;text-align:center'
+    titleEl.textContent = mode === 'save' ? 'Save Game' : 'Load Game'
+    panel.appendChild(titleEl)
+
+    const metas = SaveSystem.getAllSlotMeta()
+    const slots: Array<number | 'auto'> = ['auto', 1, 2, 3]
+
+    for (const slot of slots) {
+      const meta = metas.find(m => m.slot === slot)
+      const label = slot === 'auto' ? 'Autosave' : `Slot ${slot}`
+      const hasSave = SaveSystem.hasSave(slot)
+      const info = meta
+        ? `${new Date(meta.timestamp).toLocaleString()} | Pop: ${meta.population} | Civs: ${meta.civCount}`
+        : (hasSave ? 'Save data found' : 'Empty')
+
+      const row = document.createElement('div')
+      row.style.cssText = 'display:flex;align-items:center;gap:6px;margin:4px 0;padding:4px;background:rgba(255,255,255,0.05);border-radius:4px'
+
+      const infoDiv = document.createElement('div')
+      infoDiv.style.flex = '1'
+      const labelEl2 = document.createElement('div')
+      labelEl2.style.fontWeight = 'bold'
+      labelEl2.textContent = label
+      const detailEl = document.createElement('div')
+      detailEl.style.cssText = 'opacity:0.6;font-size:10px'
+      detailEl.textContent = info
+      infoDiv.appendChild(labelEl2)
+      infoDiv.appendChild(detailEl)
+      row.appendChild(infoDiv)
+
+      if (mode === 'save' && slot !== 'auto') {
+        const btn = document.createElement('button')
+        btn.textContent = 'Save'
+        btn.style.cssText = 'padding:2px 8px;cursor:pointer'
+        btn.addEventListener('click', () => {
+          const ok = SaveSystem.save(this.world, this.em, this.civManager, this.resources, slot)
+          btn.textContent = ok ? 'Saved!' : 'Failed'
+          setTimeout(() => panel!.remove(), 800)
+        })
+        row.appendChild(btn)
+      } else if (mode === 'load' && hasSave) {
+        const loadBtn = document.createElement('button')
+        loadBtn.textContent = 'Load'
+        loadBtn.style.cssText = 'padding:2px 8px;cursor:pointer'
+        loadBtn.addEventListener('click', () => {
+          const ok = SaveSystem.load(this.world, this.em, this.civManager, this.resources, slot)
+          if (ok) this.world.markFullDirty()
+          loadBtn.textContent = ok ? 'Loaded!' : 'Failed'
+          setTimeout(() => panel!.remove(), 800)
+        })
+        row.appendChild(loadBtn)
+        if (slot !== 'auto') {
+          const delBtn = document.createElement('button')
+          delBtn.textContent = 'Del'
+          delBtn.style.cssText = 'padding:2px 8px;cursor:pointer;color:#f66'
+          delBtn.addEventListener('click', () => {
+            SaveSystem.deleteSave(slot)
+            panel!.remove()
+            this.showSaveLoadPanel(mode)
+          })
+          row.appendChild(delBtn)
+        }
+      }
+      panel.appendChild(row)
+    }
+
+    const closeRow = document.createElement('div')
+    closeRow.style.cssText = 'text-align:center;margin-top:8px'
+    const closeBtn = document.createElement('button')
+    closeBtn.textContent = 'Close'
+    closeBtn.style.cssText = 'padding:2px 16px;cursor:pointer'
+    closeBtn.addEventListener('click', () => panel!.remove())
+    closeRow.appendChild(closeBtn)
+    panel.appendChild(closeRow)
+
+    document.body.appendChild(panel)
   }
 }
