@@ -122,14 +122,16 @@ import { PerformanceMonitorSystem } from '../systems/PerformanceMonitorSystem'
 import { WorldSeedSystem } from '../systems/WorldSeedSystem'
 import { KeybindSystem } from '../systems/KeybindSystem'
 import { WorldExportSystem } from '../systems/WorldExportSystem'
+import { BattleReplaySystem } from '../systems/BattleReplaySystem'
+import { EvolutionVisualSystem } from '../systems/EvolutionVisualSystem'
+import { AchievementPopupSystem } from '../systems/AchievementPopupSystem'
+import { MinimapEnhancedSystem } from '../systems/MinimapEnhancedSystem'
+import { AmbientSoundMixer } from '../systems/AmbientSoundMixer'
 import { ScreenshotModeSystem } from '../systems/ScreenshotModeSystem'
 import { EntitySearchSystem } from '../systems/EntitySearchSystem'
 import { WorldStatsOverviewSystem } from '../systems/WorldStatsOverviewSystem'
 import { NotificationCenterSystem } from '../systems/NotificationCenterSystem'
 import { SandboxSettingsSystem } from '../systems/SandboxSettingsSystem'
-import { NotificationCenterSystem } from '../systems/NotificationCenterSystem'
-import { SandboxSettingsSystem } from '../systems/SandboxSettingsSystem'
-import { ScreenshotModeSystem } from '../systems/ScreenshotModeSystem'
 
 export class Game {
   private world: World
@@ -247,6 +249,11 @@ export class Game {
   private eventNotification: EventNotificationSystem
   private editorEnhanced: EditorEnhancedSystem
   private fogEnhanced: FogOfWarEnhanced
+  private battleReplay: BattleReplaySystem
+  private evolutionVisual: EvolutionVisualSystem
+  private achievementPopup: AchievementPopupSystem
+  private minimapEnhanced: MinimapEnhancedSystem
+  private ambientSound: AmbientSoundMixer
   private mapGen!: MapGenSystem
   private flocking!: FlockingSystem
   private autoSave!: AutoSaveSystem
@@ -254,9 +261,11 @@ export class Game {
   private worldSeed!: WorldSeedSystem
   private keybindSystem!: KeybindSystem
   private worldExport!: WorldExportSystem
+  private screenshotMode!: ScreenshotModeSystem
+  private entitySearch!: EntitySearchSystem
+  private worldStatsOverview!: WorldStatsOverviewSystem
   private notificationCenter!: NotificationCenterSystem
   private sandboxSettings!: SandboxSettingsSystem
-  private screenshotMode!: ScreenshotModeSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -518,6 +527,11 @@ export class Game {
     this.eventNotification = new EventNotificationSystem()
     this.editorEnhanced = new EditorEnhancedSystem()
     this.fogEnhanced = new FogOfWarEnhanced()
+    this.battleReplay = new BattleReplaySystem()
+    this.evolutionVisual = new EvolutionVisualSystem()
+    this.achievementPopup = new AchievementPopupSystem()
+    this.minimapEnhanced = new MinimapEnhancedSystem()
+    this.ambientSound = new AmbientSoundMixer()
     this.mapGen = new MapGenSystem()
     this.flocking = new FlockingSystem()
     this.autoSave = new AutoSaveSystem()
@@ -525,9 +539,11 @@ export class Game {
     this.worldSeed = new WorldSeedSystem()
     this.keybindSystem = new KeybindSystem()
     this.worldExport = new WorldExportSystem()
+    this.screenshotMode = new ScreenshotModeSystem()
+    this.entitySearch = new EntitySearchSystem()
+    this.worldStatsOverview = new WorldStatsOverviewSystem()
     this.notificationCenter = new NotificationCenterSystem()
     this.sandboxSettings = new SandboxSettingsSystem()
-    this.screenshotMode = new ScreenshotModeSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -1564,6 +1580,23 @@ export class Game {
           })
           this.fogEnhanced.updateVision(this.world.tick, units, [])
         }
+        // Battle replay system
+        this.battleReplay.update(this.world.tick)
+        // Evolution visual system
+        this.evolutionVisual.update(this.world.tick)
+        // Achievement popup system
+        this.achievementPopup.update(this.world.tick)
+        // Minimap enhanced system
+        this.minimapEnhanced.update(this.world.tick)
+        // Ambient sound mixer
+        this.ambientSound.update(this.world.tick, {
+          isNight: !this.world.isDay(),
+          season: this.seasonSystem.getCurrentSeason(),
+          weather: this.weather.currentWeather ?? 'clear',
+          nearestBattleDist: 999,
+          nearestCityDist: 999,
+          cameraZoom: this.camera.zoom
+        })
             const c = this.em.getComponent<CreatureComponent>(id, 'creature')
             if (c) pops[c.species] = (pops[c.species] ?? 0) + 1
           }
@@ -1662,6 +1695,10 @@ export class Game {
         this.autoSave.update(this.world.tick, this.world, this.em, this.civManager, this.resources)
         // Notification center fade-out
         this.notificationCenter.update(this.world.tick)
+        // World stats overview sampling (v1.68)
+        this.worldStatsOverview.update(this.world.tick, this.em, this.civManager)
+        // Screenshot mode state (v1.66)
+        this.screenshotMode.update()
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
@@ -1875,6 +1912,25 @@ export class Game {
       const bounds = this.camera.getVisibleBounds()
       this.fogEnhanced.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, bounds.startX, bounds.startY, bounds.endX, bounds.endY)
     }
+
+    // Battle replay overlay
+    if (this.battleReplay.isReplaying()) {
+      this.battleReplay.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+      this.battleReplay.renderControls(ctx, this.canvas.width, this.canvas.height)
+      this.battleReplay.renderStats(ctx, this.canvas.width, this.canvas.height)
+    }
+
+    // Evolution visual panel
+    this.evolutionVisual.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Achievement popup and progress
+    this.achievementPopup.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Minimap enhanced overlay
+    this.minimapEnhanced.render(ctx, this.canvas.width - 160, this.canvas.height - 160, 150, 150, this.camera.x, this.camera.y, this.canvas.width, this.canvas.height)
+
+    // Ambient sound volume indicator
+    this.ambientSound.renderVolumeIndicator(ctx, 10, this.canvas.height - 80)
     // Unified particle system
     this.unifiedParticles.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
 
@@ -1929,10 +1985,15 @@ export class Game {
     // World export progress overlay (v1.65)
     this.worldExport.render(ctx, this.canvas.width, this.canvas.height)
 
-    // Notification center (v1.66)
+    // World stats overview (v1.68)
+    this.worldStatsOverview.render(ctx, this.canvas.width, this.canvas.height)
+
+    this.entitySearch.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Notification center (v1.69)
     this.notificationCenter.render(ctx, this.canvas.width, this.canvas.height)
 
-    // Sandbox settings panel (v1.66)
+    // Sandbox settings panel (v1.70)
     this.sandboxSettings.render(ctx, this.canvas.width, this.canvas.height)
 
     // Screenshot mode toast (v1.66)
