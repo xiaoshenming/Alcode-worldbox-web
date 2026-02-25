@@ -149,6 +149,11 @@ export class Powers {
     }
   }
 
+  /** Public method to trigger a nature/disaster action from external callers (e.g. context menu) */
+  applyAction(action: string, x: number, y: number): void {
+    this.applyNaturePower(x, y, action)
+  }
+
   private applyNaturePower(x: number, y: number, action: string): void {
     const half = Math.floor(this.brushSize)
 

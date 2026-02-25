@@ -8,6 +8,8 @@ export class Input {
   private onMouseDown: InputCallback | null = null
   private onMouseMove: InputCallback | null = null
   private onMouseUp: InputCallback | null = null
+  private onRightClick: ((wx: number, wy: number, screenX: number, screenY: number) => void) | null = null
+  private rightClickStart: { x: number; y: number } | null = null
   mouseX: number = 0
   mouseY: number = 0
   worldX: number = 0
@@ -27,8 +29,13 @@ export class Input {
       this.isMouseDown = true
       this.mouseButton = e.button
 
-      if (e.button === 1 || e.button === 2) {
-        // Middle or right click = pan
+      if (e.button === 2) {
+        // Right click: record start for click detection, also start drag
+        this.rightClickStart = { x: e.clientX, y: e.clientY }
+        this.camera.startDrag(e.clientX, e.clientY)
+        e.preventDefault()
+      } else if (e.button === 1) {
+        // Middle click = pan
         this.camera.startDrag(e.clientX, e.clientY)
         e.preventDefault()
       } else if (e.button === 0 && this.onMouseDown) {
@@ -50,6 +57,17 @@ export class Input {
     this.canvas.addEventListener('mouseup', (e) => {
       this.isMouseDown = false
       this.camera.endDrag()
+
+      // Right-click detection: if didn't move, trigger right-click callback
+      if (e.button === 2 && this.rightClickStart && this.onRightClick) {
+        const dx = e.clientX - this.rightClickStart.x
+        const dy = e.clientY - this.rightClickStart.y
+        if (Math.sqrt(dx * dx + dy * dy) < 5) {
+          this.updatePosition(e.clientX, e.clientY)
+          this.onRightClick(this.worldX, this.worldY, e.clientX, e.clientY)
+        }
+      }
+      this.rightClickStart = null
 
       if (this.onMouseUp) {
         this.onMouseUp(this.worldX, this.worldY, e.button)
@@ -129,5 +147,9 @@ export class Input {
 
   setOnMouseUp(callback: InputCallback): void {
     this.onMouseUp = callback
+  }
+
+  setOnRightClick(callback: (wx: number, wy: number, screenX: number, screenY: number) => void): void {
+    this.onRightClick = callback
   }
 }

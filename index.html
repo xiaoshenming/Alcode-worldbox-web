@@ -106,6 +106,43 @@
       z-index: 1000;
       display: none;
     }
+    #contextMenu {
+      position: fixed;
+      background: rgba(15,15,30,0.97);
+      border: 2px solid #4a4a6a;
+      border-radius: 8px;
+      padding: 4px 0;
+      color: #fff;
+      font-size: 13px;
+      z-index: 2000;
+      display: none;
+      min-width: 160px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    #contextMenu .ctx-item {
+      padding: 6px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s;
+    }
+    #contextMenu .ctx-item:hover {
+      background: rgba(100,140,200,0.25);
+    }
+    #contextMenu .ctx-divider {
+      height: 1px;
+      background: #3a3a5a;
+      margin: 4px 8px;
+    }
+    #contextMenu .ctx-header {
+      padding: 4px 14px;
+      font-size: 11px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
   </style>
 </head>
 <body>
@@ -139,6 +176,7 @@
     <button class="btn" id="statsToggle" style="position:absolute;right:10px;bottom:10px;z-index:201">📊 Stats</button>
   </div>
   <div id="tooltip"></div>
+  <div id="contextMenu"></div>
   <div id="eventPanel" class="panel" style="position:fixed;bottom:10px;left:10px;width:320px;max-height:180px;overflow:hidden;z-index:200;font-size:11px;line-height:1.4;pointer-events:none;opacity:0.9"></div>
   <div id="statsPanel" class="panel" style="position:fixed;top:50%;right:10px;transform:translateY(-50%);width:240px;max-height:400px;overflow-y:auto;z-index:200;font-size:11px;line-height:1.4;display:none"></div>
   <div id="creaturePanel" class="panel" style="position:fixed;top:10px;right:180px;display:none;min-width:180px;z-index:200;font-size:12px;line-height:1.6"></div>

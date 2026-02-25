@@ -3,12 +3,14 @@ import { Camera } from './Camera'
 import { Renderer } from './Renderer'
 import { Input } from './Input'
 import { Powers } from './Powers'
+import { EntityType } from '../utils/Constants'
 import { Toolbar } from '../ui/Toolbar'
 import { InfoPanel } from '../ui/InfoPanel'
 import { CreaturePanel } from '../ui/CreaturePanel'
 import { EventPanel } from '../ui/EventPanel'
 import { StatsPanel } from '../ui/StatsPanel'
-import { EntityManager, PositionComponent } from '../ecs/Entity'
+import { ContextMenu, MenuSection } from '../ui/ContextMenu'
+import { EntityManager, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
 import { AISystem } from '../systems/AISystem'
 import { CombatSystem } from '../systems/CombatSystem'
 import { ParticleSystem } from '../systems/ParticleSystem'
@@ -30,6 +32,7 @@ export class Game {
   private creaturePanel: CreaturePanel
   private eventPanel: EventPanel
   private statsPanel: StatsPanel
+  private contextMenu: ContextMenu
 
   em: EntityManager
   private aiSystem: AISystem
@@ -77,10 +80,12 @@ export class Game {
     this.creaturePanel = new CreaturePanel('creaturePanel', this.em, this.civManager)
     this.eventPanel = new EventPanel('eventPanel')
     this.statsPanel = new StatsPanel('statsPanel', this.em, this.civManager)
+    this.contextMenu = new ContextMenu('contextMenu')
 
     this.setupSpeedControls()
     this.setupBrushControls()
     this.setupInputCallbacks()
+    this.setupContextMenu()
     this.setupResize()
     this.setupToolbarButtons()
     this.setupKeyboard()
@@ -210,6 +215,48 @@ export class Game {
       }
     }
     return closest
+  }
+
+  private setupContextMenu(): void {
+    const tileNames = ['Deep Water', 'Shallow Water', 'Sand', 'Grass', 'Forest', 'Mountain', 'Snow', 'Lava']
+
+    this.input.setOnRightClick((wx, wy, screenX, screenY) => {
+      const sections: MenuSection[] = []
+
+      // Check if clicked on a creature
+      const creatureId = this.findCreatureAt(wx, wy)
+      if (creatureId !== null) {
+        const creature = this.em.getComponent<CreatureComponent>(creatureId, 'creature')!
+        const needs = this.em.getComponent<NeedsComponent>(creatureId, 'needs')!
+        sections.push({
+          header: `${creature.name} (${creature.species})`,
+          items: [
+            { icon: '\u{1F50D}', label: 'Inspect', action: () => this.creaturePanel.select(creatureId) },
+            { icon: '\u{1F49A}', label: 'Heal', action: () => { needs.health = 100; needs.hunger = 0 } },
+            { icon: '\u26A1', label: 'Smite', action: () => { needs.health = 0 } },
+          ]
+        })
+      }
+
+      // Terrain operations
+      const tile = this.world.getTile(Math.floor(wx), Math.floor(wy))
+      if (tile !== null) {
+        sections.push({
+          header: `Tile: ${tileNames[tile]} (${Math.floor(wx)}, ${Math.floor(wy)})`,
+          items: [
+            { icon: '\u{1F464}', label: 'Spawn Human', action: () => this.creatureFactory.spawn(EntityType.HUMAN, wx, wy) },
+            { icon: '\u{1F43A}', label: 'Spawn Wolf', action: () => this.creatureFactory.spawn(EntityType.WOLF, wx, wy) },
+            { icon: '\u{1F409}', label: 'Spawn Dragon', action: () => this.creatureFactory.spawn(EntityType.DRAGON, wx, wy) },
+            { icon: '\u26A1', label: 'Lightning', action: () => this.powers.applyAction('lightning', wx, wy) },
+            { icon: '\u2604\uFE0F', label: 'Meteor', action: () => this.powers.applyAction('meteor', wx, wy) },
+          ]
+        })
+      }
+
+      if (sections.length > 0) {
+        this.contextMenu.show(screenX, screenY, sections)
+      }
+    })
   }
 
   private setupResize(): void {
