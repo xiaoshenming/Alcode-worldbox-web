@@ -1,6 +1,7 @@
 import { TileType, TILE_SIZE } from '../utils/Constants'
 import { World } from './World'
 import { Camera } from './Camera'
+import { EntityManager, PositionComponent, RenderComponent } from '../ecs/Entity'
 
 export class Renderer {
   private canvas: HTMLCanvasElement
@@ -21,22 +22,20 @@ export class Renderer {
     this.canvas.height = height
   }
 
-  render(world: World, camera: Camera): void {
+  render(world: World, camera: Camera, em?: EntityManager): void {
     const ctx = this.ctx
     const bounds = camera.getVisibleBounds()
 
-    // Clear
     ctx.fillStyle = '#0a0a1a'
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
 
-    // Water animation offset
     this.waterOffset += 0.02
 
-    // Draw tiles
     const tileSize = TILE_SIZE * camera.zoom
     const offsetX = -camera.x * camera.zoom
     const offsetY = -camera.y * camera.zoom
 
+    // Draw tiles
     for (let y = bounds.startY; y < bounds.endY; y++) {
       for (let x = bounds.startX; x < bounds.endX; x++) {
         const tile = world.getTile(x, y)
@@ -45,10 +44,9 @@ export class Renderer {
         const screenX = x * TILE_SIZE * camera.zoom + offsetX
         const screenY = y * TILE_SIZE * camera.zoom + offsetY
 
-        // Get base color
         let color = world.getColor(x, y)
 
-        // Water animation effect
+        // Water animation
         if (tile === TileType.DEEP_WATER || tile === TileType.SHALLOW_WATER) {
           const wave = Math.sin(this.waterOffset + x * 0.5 + y * 0.3) * 10
           const r = parseInt(color.slice(1, 3), 16)
@@ -57,8 +55,44 @@ export class Renderer {
           color = `rgb(${Math.min(255, r + wave)}, ${Math.min(255, g + wave)}, ${Math.min(255, b + wave)})`
         }
 
+        // Lava glow animation
+        if (tile === TileType.LAVA) {
+          const glow = Math.sin(this.waterOffset * 2 + x * 0.8 + y * 0.6) * 20
+          const r = Math.min(255, 255 + glow)
+          const g = Math.min(255, 68 + glow * 2)
+          color = `rgb(${r}, ${g}, 0)`
+        }
+
         ctx.fillStyle = color
         ctx.fillRect(screenX, screenY, tileSize + 0.5, tileSize + 0.5)
+      }
+    }
+
+    // Draw entities
+    if (em) {
+      const entities = em.getEntitiesWithComponents('position', 'render')
+      for (const id of entities) {
+        const pos = em.getComponent<PositionComponent>(id, 'position')!
+        const render = em.getComponent<RenderComponent>(id, 'render')!
+
+        // Check if visible
+        if (pos.x < bounds.startX - 1 || pos.x > bounds.endX + 1 ||
+            pos.y < bounds.startY - 1 || pos.y > bounds.endY + 1) continue
+
+        const screenX = pos.x * TILE_SIZE * camera.zoom + offsetX
+        const screenY = pos.y * TILE_SIZE * camera.zoom + offsetY
+        const size = render.size * camera.zoom
+
+        // Draw creature body
+        ctx.fillStyle = render.color
+        ctx.beginPath()
+        ctx.arc(screenX + tileSize / 2, screenY + tileSize / 2, size, 0, Math.PI * 2)
+        ctx.fill()
+
+        // Draw outline
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)'
+        ctx.lineWidth = 0.5
+        ctx.stroke()
       }
     }
   }
@@ -67,11 +101,9 @@ export class Renderer {
     const ctx = this.minimapCtx
     const scale = this.minimapCanvas.width / world.width
 
-    // Clear
     ctx.fillStyle = '#000'
     ctx.fillRect(0, 0, this.minimapCanvas.width, this.minimapCanvas.height)
 
-    // Draw tiles (skip every other for performance)
     for (let y = 0; y < world.height; y += 2) {
       for (let x = 0; x < world.width; x += 2) {
         ctx.fillStyle = world.getColor(x, y)
@@ -79,7 +111,6 @@ export class Renderer {
       }
     }
 
-    // Draw viewport rectangle
     const bounds = camera.getVisibleBounds()
     ctx.strokeStyle = '#fff'
     ctx.lineWidth = 1

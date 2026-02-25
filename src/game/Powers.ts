@@ -1,6 +1,7 @@
 import { TileType, EntityType, PowerType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { World } from './World'
-import { Camera } from './Camera'
+import { EntityManager } from '../ecs/Entity'
+import { CreatureFactory } from '../entities/CreatureFactory'
 
 interface Power {
   type: PowerType
@@ -8,10 +9,13 @@ interface Power {
   icon: string
   tileType?: TileType
   entityType?: EntityType
+  action?: string
 }
 
 export class Powers {
   private world: World
+  private em: EntityManager
+  private factory: CreatureFactory
   private currentPower: Power | null = null
   private brushSize: number = 2
 
@@ -37,26 +41,28 @@ export class Powers {
   ]
 
   readonly naturePowers: Power[] = [
-    { type: PowerType.NATURE, name: 'Rain', icon: '🌧️' },
-    { type: PowerType.NATURE, name: 'Lightning', icon: '⚡' },
-    { type: PowerType.NATURE, name: 'Fire', icon: '🔥' },
-    { type: PowerType.NATURE, name: 'Earthquake', icon: '🌋' },
-    { type: PowerType.NATURE, name: 'Meteor', icon: '☄️' },
-    { type: PowerType.NATURE, name: 'Tornado', icon: '🌪️' },
+    { type: PowerType.NATURE, name: 'Rain', icon: '🌧️', action: 'rain' },
+    { type: PowerType.NATURE, name: 'Lightning', icon: '⚡', action: 'lightning' },
+    { type: PowerType.NATURE, name: 'Fire', icon: '🔥', action: 'fire' },
+    { type: PowerType.NATURE, name: 'Earthquake', icon: '🌋', action: 'earthquake' },
+    { type: PowerType.NATURE, name: 'Meteor', icon: '☄️', action: 'meteor' },
+    { type: PowerType.NATURE, name: 'Tornado', icon: '🌪️', action: 'tornado' },
   ]
 
   readonly disasterPowers: Power[] = [
-    { type: PowerType.DISASTER, name: 'Nuke', icon: '☢️' },
-    { type: PowerType.DISASTER, name: 'Black Hole', icon: '🕳️' },
-    { type: PowerType.DISASTER, name: 'Acid Rain', icon: '☠️' },
-    { type: PowerType.DISASTER, name: 'Plague', icon: '🦠' },
+    { type: PowerType.DISASTER, name: 'Nuke', icon: '☢️', action: 'nuke' },
+    { type: PowerType.DISASTER, name: 'Black Hole', icon: '🕳️', action: 'blackhole' },
+    { type: PowerType.DISASTER, name: 'Acid Rain', icon: '☠️', action: 'acidrain' },
+    { type: PowerType.DISASTER, name: 'Plague', icon: '🦠', action: 'plague' },
   ]
 
-  constructor(world: World) {
+  constructor(world: World, em: EntityManager, factory: CreatureFactory) {
     this.world = world
+    this.em = em
+    this.factory = factory
   }
 
-  setPower(power: Power): void {
+  setPower(power: Power | null): void {
     this.currentPower = power
   }
 
@@ -71,24 +77,190 @@ export class Powers {
   apply(x: number, y: number): void {
     if (!this.currentPower) return
 
-    const half = Math.floor(this.brushSize / 2)
+    if (this.currentPower.tileType !== undefined) {
+      this.applyTerrain(x, y)
+    } else if (this.currentPower.entityType) {
+      this.spawnCreature(x, y)
+    } else if (this.currentPower.action) {
+      this.applyNaturePower(x, y, this.currentPower.action)
+    }
+  }
 
+  applyContinuous(x: number, y: number): void {
+    if (!this.currentPower) return
+    if (this.currentPower.tileType !== undefined) {
+      this.applyTerrain(x, y)
+    }
+    // Creatures only spawn on click, not drag
+  }
+
+  private applyTerrain(x: number, y: number): void {
+    const half = Math.floor(this.brushSize / 2)
     for (let dy = -half; dy <= half; dy++) {
       for (let dx = -half; dx <= half; dx++) {
         const tx = x + dx
         const ty = y + dy
-
-        if (tx < 0 || tx >= WORLD_WIDTH || ty < 0 || ty >= WORLD_HEIGHT) continue
-
-        if (this.currentPower.tileType !== undefined) {
-          this.world.setTile(tx, ty, this.currentPower.tileType)
+        if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
+          this.world.setTile(tx, ty, this.currentPower!.tileType!)
         }
       }
     }
   }
 
-  applyContinuous(x: number, y: number): void {
-    // For brush painting while dragging
-    this.apply(x, y)
+  private spawnCreature(x: number, y: number): void {
+    const tile = this.world.getTile(x, y)
+    // Don't spawn in water or lava
+    if (tile === TileType.DEEP_WATER || tile === TileType.SHALLOW_WATER || tile === TileType.LAVA) return
+    this.factory.spawn(this.currentPower!.entityType!, x, y)
+  }
+
+  private applyNaturePower(x: number, y: number, action: string): void {
+    const half = Math.floor(this.brushSize)
+
+    switch (action) {
+      case 'rain':
+        for (let dy = -half * 3; dy <= half * 3; dy++) {
+          for (let dx = -half * 3; dx <= half * 3; dx++) {
+            const tx = x + dx, ty = y + dy
+            if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
+              const tile = this.world.getTile(tx, ty)
+              if (tile === TileType.SAND && Math.random() < 0.3) this.world.setTile(tx, ty, TileType.GRASS)
+              if (tile === TileType.GRASS && Math.random() < 0.1) this.world.setTile(tx, ty, TileType.FOREST)
+            }
+          }
+        }
+        break
+
+      case 'lightning':
+        if (Math.random() < 0.5) {
+          this.world.setTile(x, y, TileType.LAVA)
+        }
+        // Kill nearby entities
+        this.killEntitiesInRadius(x, y, 2)
+        break
+
+      case 'fire':
+        for (let dy = -half; dy <= half; dy++) {
+          for (let dx = -half; dx <= half; dx++) {
+            const tx = x + dx, ty = y + dy
+            if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
+              const tile = this.world.getTile(tx, ty)
+              if (tile === TileType.FOREST || tile === TileType.GRASS) {
+                if (Math.random() < 0.4) this.world.setTile(tx, ty, TileType.SAND)
+              }
+            }
+          }
+        }
+        this.killEntitiesInRadius(x, y, half)
+        break
+
+      case 'earthquake':
+        for (let dy = -half * 2; dy <= half * 2; dy++) {
+          for (let dx = -half * 2; dx <= half * 2; dx++) {
+            const tx = x + dx, ty = y + dy
+            if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
+              if (Math.random() < 0.2) {
+                const tile = this.world.getTile(tx, ty)
+                if (tile === TileType.MOUNTAIN) this.world.setTile(tx, ty, TileType.SAND)
+                else if (tile === TileType.GRASS) this.world.setTile(tx, ty, TileType.MOUNTAIN)
+              }
+            }
+          }
+        }
+        this.killEntitiesInRadius(x, y, half * 2)
+        break
+
+      case 'meteor':
+        // Create crater
+        for (let dy = -4; dy <= 4; dy++) {
+          for (let dx = -4; dx <= 4; dx++) {
+            const dist = Math.sqrt(dx * dx + dy * dy)
+            const tx = x + dx, ty = y + dy
+            if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
+              if (dist < 2) this.world.setTile(tx, ty, TileType.LAVA)
+              else if (dist < 3) this.world.setTile(tx, ty, TileType.MOUNTAIN)
+              else if (dist < 4) this.world.setTile(tx, ty, TileType.SAND)
+            }
+          }
+        }
+        this.killEntitiesInRadius(x, y, 5)
+        break
+
+      case 'tornado':
+        for (let i = 0; i < 20; i++) {
+          const angle = Math.random() * Math.PI * 2
+          const dist = Math.random() * 5
+          const tx = Math.floor(x + Math.cos(angle) * dist)
+          const ty = Math.floor(y + Math.sin(angle) * dist)
+          if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
+            this.world.setTile(tx, ty, TileType.SAND)
+          }
+        }
+        this.killEntitiesInRadius(x, y, 5)
+        break
+
+      case 'nuke':
+        for (let dy = -10; dy <= 10; dy++) {
+          for (let dx = -10; dx <= 10; dx++) {
+            const dist = Math.sqrt(dx * dx + dy * dy)
+            const tx = x + dx, ty = y + dy
+            if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
+              if (dist < 3) this.world.setTile(tx, ty, TileType.LAVA)
+              else if (dist < 6) this.world.setTile(tx, ty, TileType.SAND)
+              else if (dist < 10 && Math.random() < 0.5) this.world.setTile(tx, ty, TileType.SAND)
+            }
+          }
+        }
+        this.killEntitiesInRadius(x, y, 12)
+        break
+
+      case 'blackhole':
+        for (let dy = -8; dy <= 8; dy++) {
+          for (let dx = -8; dx <= 8; dx++) {
+            const dist = Math.sqrt(dx * dx + dy * dy)
+            const tx = x + dx, ty = y + dy
+            if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
+              if (dist < 8) this.world.setTile(tx, ty, TileType.DEEP_WATER)
+            }
+          }
+        }
+        this.killEntitiesInRadius(x, y, 10)
+        break
+
+      case 'acidrain':
+        for (let dy = -half * 4; dy <= half * 4; dy++) {
+          for (let dx = -half * 4; dx <= half * 4; dx++) {
+            const tx = x + dx, ty = y + dy
+            if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
+              const tile = this.world.getTile(tx, ty)
+              if (Math.random() < 0.15) {
+                if (tile === TileType.FOREST) this.world.setTile(tx, ty, TileType.GRASS)
+                else if (tile === TileType.GRASS) this.world.setTile(tx, ty, TileType.SAND)
+              }
+            }
+          }
+        }
+        this.killEntitiesInRadius(x, y, half * 2, 0.3)
+        break
+
+      case 'plague':
+        this.killEntitiesInRadius(x, y, half * 5, 0.5)
+        break
+    }
+  }
+
+  private killEntitiesInRadius(cx: number, cy: number, radius: number, chance: number = 1): void {
+    const entities = this.em.getEntitiesWithComponent('position')
+    for (const id of entities) {
+      const pos = this.em.getComponent<any>(id, 'position')
+      if (!pos) continue
+      const dx = pos.x - cx
+      const dy = pos.y - cy
+      if (Math.sqrt(dx * dx + dy * dy) < radius) {
+        if (Math.random() < chance) {
+          this.em.removeEntity(id)
+        }
+      }
+    }
   }
 }

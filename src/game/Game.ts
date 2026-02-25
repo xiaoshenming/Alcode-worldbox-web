@@ -5,6 +5,9 @@ import { Input } from './Input'
 import { Powers } from './Powers'
 import { Toolbar } from '../ui/Toolbar'
 import { InfoPanel } from '../ui/InfoPanel'
+import { EntityManager } from '../ecs/Entity'
+import { AISystem } from '../systems/AISystem'
+import { CreatureFactory } from '../entities/CreatureFactory'
 
 export class Game {
   private world: World
@@ -15,12 +18,17 @@ export class Game {
   private toolbar: Toolbar
   private infoPanel: InfoPanel
 
+  // ECS
+  em: EntityManager
+  private aiSystem: AISystem
+  creatureFactory: CreatureFactory
+
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
   private lastTime: number = 0
   private accumulator: number = 0
-  private readonly tickRate: number = 1000 / 60 // 60 ticks per second
+  private readonly tickRate: number = 1000 / 60
 
   constructor() {
     this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement
@@ -30,16 +38,20 @@ export class Game {
     this.camera = new Camera(window.innerWidth, window.innerHeight)
     this.renderer = new Renderer(this.canvas, this.minimapCanvas)
     this.input = new Input(this.canvas, this.camera)
-    this.powers = new Powers(this.world)
+
+    // ECS setup
+    this.em = new EntityManager()
+    this.aiSystem = new AISystem(this.em, this.world)
+    this.creatureFactory = new CreatureFactory(this.em)
+
+    this.powers = new Powers(this.world, this.em, this.creatureFactory)
     this.toolbar = new Toolbar('toolbar', this.powers)
-    this.infoPanel = new InfoPanel('worldInfo', this.world)
+    this.infoPanel = new InfoPanel('worldInfo', this.world, this.em)
 
     this.setupSpeedControls()
     this.setupBrushControls()
     this.setupInputCallbacks()
     this.setupResize()
-
-    // Initial resize
     this.renderer.resize(window.innerWidth, window.innerHeight)
   }
 
@@ -58,7 +70,6 @@ export class Game {
   private setupBrushControls(): void {
     const slider = document.getElementById('brushSlider') as HTMLInputElement
     const value = document.getElementById('brushValue') as HTMLElement
-
     slider.addEventListener('input', () => {
       const size = parseInt(slider.value)
       this.powers.setBrushSize(size)
@@ -70,7 +81,6 @@ export class Game {
     this.input.setOnMouseDown((x, y) => {
       this.powers.apply(x, y)
     })
-
     this.input.setOnMouseMove((x, y) => {
       if (this.input.isMouseDown && this.input.mouseButton === 0) {
         this.powers.applyContinuous(x, y)
@@ -94,21 +104,18 @@ export class Game {
     const delta = now - this.lastTime
     this.lastTime = now
 
-    // Update game logic at fixed tick rate
     if (this.speed > 0) {
       this.accumulator += delta * this.speed
-
       while (this.accumulator >= this.tickRate) {
         this.world.update()
+        this.aiSystem.update()
         this.accumulator -= this.tickRate
       }
     }
 
-    // Render every frame
-    this.renderer.render(this.world, this.camera)
+    this.renderer.render(this.world, this.camera, this.em)
     this.renderer.renderMinimap(this.world, this.camera)
 
-    // Update info panel every 30 frames
     if (this.world.tick % 30 === 0) {
       this.infoPanel.update()
     }
