@@ -52,13 +52,11 @@ export class WeatherDisasterSystem {
       const elapsed = tick - d.startTick
 
       if (elapsed >= d.duration) {
-        // Disaster expired - restore terrain
         this.expireDisaster(d, world, tick)
         this.activeDisasters.splice(i, 1)
         continue
       }
 
-      // Apply ongoing effects
       this.applyOngoingEffects(d, world, em, civManager, particles, tick)
     }
   }
@@ -75,7 +73,6 @@ export class WeatherDisasterSystem {
   ): void {
     for (const d of this.activeDisasters) {
       const elapsed = tick - d.startTick
-      // Fade in over first 60 ticks, fade out over last 60 ticks
       const fadeIn = Math.min(1, elapsed / 60)
       const fadeOut = Math.min(1, (d.duration - elapsed) / 60)
       const alpha = fadeIn * fadeOut * d.intensity
@@ -107,7 +104,6 @@ export class WeatherDisasterSystem {
     season: 'spring' | 'summer' | 'autumn' | 'winter',
     weather: 'clear' | 'rain' | 'storm' | 'snow'
   ): void {
-    // Don't stack same disaster type
     const activeTypes = new Set(this.activeDisasters.map(d => d.type))
 
     // Blizzard: winter + storm/snow, 5% chance
@@ -171,7 +167,6 @@ export class WeatherDisasterSystem {
     newType: TileType
   ): void {
     const key = `${x},${y}`
-    // Only record the first original value per tile
     if (!disaster.originalTiles.has(key)) {
       const current = world.getTile(x, y)
       if (current !== null) {
@@ -183,16 +178,10 @@ export class WeatherDisasterSystem {
 
   // --- Trigger handlers ---
 
-  private triggerBlizzard(
-    world: World,
-    em: EntityManager,
-    particles: ParticleSystem,
-    tick: number
-  ): void {
+  private triggerBlizzard(world: World, em: EntityManager, particles: ParticleSystem, tick: number): void {
     const disaster = this.createDisaster('blizzard', tick)
     const area = disaster.affectedArea!
 
-    // Convert grass/forest to snow, freeze shallow water
     for (let dy = -area.radius; dy <= area.radius; dy++) {
       for (let dx = -area.radius; dx <= area.radius; dx++) {
         const tx = area.x + dx
@@ -201,7 +190,6 @@ export class WeatherDisasterSystem {
         if (!this.isInArea(tx, ty, area)) continue
 
         const tile = world.getTile(tx, ty)
-        // Higher chance near center
         const dist = Math.sqrt(dx * dx + dy * dy) / area.radius
         const chance = (1 - dist) * disaster.intensity
 
@@ -210,13 +198,11 @@ export class WeatherDisasterSystem {
         } else if (tile === TileType.FOREST && Math.random() < chance * 0.4) {
           this.setTileWithRecord(world, disaster, tx, ty, TileType.SNOW)
         } else if (tile === TileType.SHALLOW_WATER && Math.random() < chance * 0.5) {
-          // Freeze water - use SNOW to represent ice
           this.setTileWithRecord(world, disaster, tx, ty, TileType.SNOW)
         }
       }
     }
 
-    // Initial burst of snow particles
     for (let i = 0; i < 20; i++) {
       const px = area.x + (Math.random() - 0.5) * area.radius * 2
       const py = area.y + (Math.random() - 0.5) * area.radius * 2
@@ -224,27 +210,19 @@ export class WeatherDisasterSystem {
         x: px, y: py,
         vx: (Math.random() - 0.5) * 2,
         vy: 0.5 + Math.random() * 0.5,
-        life: 40 + Math.random() * 30,
-        maxLife: 70,
-        color: '#ffffff',
-        size: 1 + Math.random()
+        life: 40 + Math.random() * 30, maxLife: 70,
+        color: '#ffffff', size: 1 + Math.random()
       })
     }
 
     this.activeDisasters.push(disaster)
-    EventLog.log('disaster', `A fierce blizzard strikes the land!`, tick)
+    EventLog.log('disaster', 'A fierce blizzard strikes the land!', tick)
   }
 
-  private triggerDrought(
-    world: World,
-    em: EntityManager,
-    particles: ParticleSystem,
-    tick: number
-  ): void {
+  private triggerDrought(world: World, em: EntityManager, particles: ParticleSystem, tick: number): void {
     const disaster = this.createDisaster('drought', tick)
     const area = disaster.affectedArea!
 
-    // Shrink water, wither forests
     for (let dy = -area.radius; dy <= area.radius; dy++) {
       for (let dx = -area.radius; dx <= area.radius; dx++) {
         const tx = area.x + dx
@@ -265,19 +243,13 @@ export class WeatherDisasterSystem {
     }
 
     this.activeDisasters.push(disaster)
-    EventLog.log('disaster', `A severe drought grips the region!`, tick)
+    EventLog.log('disaster', 'A severe drought grips the region!', tick)
   }
 
-  private triggerFlood(
-    world: World,
-    em: EntityManager,
-    particles: ParticleSystem,
-    tick: number
-  ): void {
+  private triggerFlood(world: World, em: EntityManager, particles: ParticleSystem, tick: number): void {
     const disaster = this.createDisaster('flood', tick)
     const area = disaster.affectedArea!
 
-    // Expand water into low-lying grass
     for (let dy = -area.radius; dy <= area.radius; dy++) {
       for (let dx = -area.radius; dx <= area.radius; dx++) {
         const tx = area.x + dx
@@ -289,12 +261,10 @@ export class WeatherDisasterSystem {
         const dist = Math.sqrt(dx * dx + dy * dy) / area.radius
         const chance = (1 - dist) * disaster.intensity
 
-        // Grass near water becomes shallow water
         if (tile === TileType.GRASS && Math.random() < chance * 0.3) {
-          // Check if adjacent to water
-          const hasAdjacentWater = this.hasAdjacentTileType(world, tx, ty, TileType.SHALLOW_WATER)
+          const hasWater = this.hasAdjacentTileType(world, tx, ty, TileType.SHALLOW_WATER)
             || this.hasAdjacentTileType(world, tx, ty, TileType.DEEP_WATER)
-          if (hasAdjacentWater || Math.random() < 0.1) {
+          if (hasWater || Math.random() < 0.1) {
             this.setTileWithRecord(world, disaster, tx, ty, TileType.SHALLOW_WATER)
           }
         } else if (tile === TileType.SAND && Math.random() < chance * 0.2) {
@@ -316,7 +286,6 @@ export class WeatherDisasterSystem {
       }
     }
 
-    // Muddy water particles
     for (let i = 0; i < 15; i++) {
       const px = area.x + (Math.random() - 0.5) * area.radius * 2
       const py = area.y + (Math.random() - 0.5) * area.radius * 2
@@ -324,27 +293,19 @@ export class WeatherDisasterSystem {
         x: px, y: py,
         vx: (Math.random() - 0.5) * 0.8,
         vy: (Math.random() - 0.5) * 0.8,
-        life: 30 + Math.random() * 20,
-        maxLife: 50,
-        color: '#8B7355',
-        size: 1 + Math.random() * 0.5
+        life: 30 + Math.random() * 20, maxLife: 50,
+        color: '#8B7355', size: 1 + Math.random() * 0.5
       })
     }
 
     this.activeDisasters.push(disaster)
-    EventLog.log('disaster', `Flooding! Rivers overflow their banks!`, tick)
+    EventLog.log('disaster', 'Flooding! Rivers overflow their banks!', tick)
   }
 
-  private triggerHeatwave(
-    world: World,
-    em: EntityManager,
-    particles: ParticleSystem,
-    tick: number
-  ): void {
+  private triggerHeatwave(world: World, em: EntityManager, particles: ParticleSystem, tick: number): void {
     const disaster = this.createDisaster('heatwave', tick)
     const area = disaster.affectedArea!
 
-    // Sand expands into grass
     for (let dy = -area.radius; dy <= area.radius; dy++) {
       for (let dx = -area.radius; dx <= area.radius; dx++) {
         const tx = area.x + dx
@@ -365,7 +326,7 @@ export class WeatherDisasterSystem {
     }
 
     this.activeDisasters.push(disaster)
-    EventLog.log('disaster', `An extreme heat wave scorches the land!`, tick)
+    EventLog.log('disaster', 'An extreme heat wave scorches the land!', tick)
   }
 
   // --- Ongoing effects ---
@@ -378,106 +339,302 @@ export class WeatherDisasterSystem {
     particles: ParticleSystem,
     tick: number
   ): void {
-    // Apply effects every 30 ticks
-    if (tick % 30 !== 0) return
+    const elapsed = tick - disaster.startTick
+    switch (disaster.type) {
+      case 'blizzard':
+        this.applyBlizzardEffects(disaster, world, em, particles, tick, elapsed)
+        break
+      case 'drought':
+        this.applyDroughtEffects(disaster, world, em, particles, tick, elapsed)
+        break
+      case 'flood':
+        this.applyFloodEffects(disaster, world, em, civManager, particles, tick, elapsed)
+        break
+      case 'heatwave':
+        this.applyHeatwaveEffects(disaster, world, em, particles, tick, elapsed)
+        break
+    }
+  }
 
+  private applyBlizzardEffects(
+    disaster: ActiveWeatherDisaster, world: World, em: EntityManager,
+    particles: ParticleSystem, tick: number, elapsed: number
+  ): void {
     const area = disaster.affectedArea
-    const creatureEntities = em.getEntitiesWithComponents('position', 'creature', 'needs')
 
-    for (const id of creatureEntities) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
-      if (!this.isInArea(pos.x, pos.y, area)) continue
+    // Slow creatures 50% and increase hunger 30% every 60 ticks
+    if (elapsed % 60 === 0) {
+      const entities = em.getEntitiesWithComponents('position', 'needs', 'creature')
+      for (const id of entities) {
+        const pos = em.getComponent<PositionComponent>(id, 'position')!
+        if (!this.isInArea(pos.x, pos.y, area)) continue
 
-      const needs = em.getComponent<NeedsComponent>(id, 'needs')!
+        const creature = em.getComponent<CreatureComponent>(id, 'creature')!
+        const needs = em.getComponent<NeedsComponent>(id, 'needs')!
 
-      switch (disaster.type) {
-        case 'blizzard':
-          // Cold damage, increased hunger
-          needs.hunger = Math.max(0, needs.hunger - 3 * disaster.intensity)
-          needs.health = Math.max(0, needs.health - 1 * disaster.intensity)
-          break
-        case 'drought':
-          // Thirst and hunger
-          needs.hunger = Math.max(0, needs.hunger - 2 * disaster.intensity)
-          break
-        case 'flood':
-          // Slow movement, minor health damage
-          needs.health = Math.max(0, needs.health - 1.5 * disaster.intensity)
-          break
-        case 'heatwave':
-          // Exhaustion
-          needs.hunger = Math.max(0, needs.hunger - 2.5 * disaster.intensity)
-          needs.health = Math.max(0, needs.health - 0.5 * disaster.intensity)
-          break
+        // Gradual speed reduction (approaches 50% over time)
+        creature.speed = Math.max(0.1, creature.speed * 0.98)
+        // Hunger increases 30% faster
+        needs.hunger = Math.min(100, needs.hunger + 0.4 * disaster.intensity)
+        // Cold damage (dragons immune)
+        if (creature.species !== 'dragon') {
+          needs.health -= 0.3 * disaster.intensity
+        }
       }
     }
 
-    // Ongoing particles
-    if (area) {
-      const count = Math.floor(3 * disaster.intensity)
+    // Snow particles (capped at ~30 active per disaster)
+    if (elapsed % 4 === 0 && area) {
+      const count = Math.min(6, Math.floor(disaster.intensity * 8))
       for (let i = 0; i < count; i++) {
         const px = area.x + (Math.random() - 0.5) * area.radius * 2
         const py = area.y + (Math.random() - 0.5) * area.radius * 2
+        particles.addParticle({
+          x: px, y: py - 5,
+          vx: (Math.random() - 0.5) * 1.5 + Math.sin(tick * 0.02) * 0.5,
+          vy: 0.3 + Math.random() * 0.5,
+          life: 30 + Math.random() * 25, maxLife: 55,
+          color: Math.random() < 0.7 ? '#ffffff' : '#ddeeff',
+          size: 0.6 + Math.random() * 0.8
+        })
+      }
+    }
 
-        switch (disaster.type) {
-          case 'blizzard':
-            particles.addParticle({
-              x: px, y: py, vx: -1 + Math.random() * 0.5, vy: 0.3 + Math.random() * 0.3,
-              life: 30, maxLife: 30, color: '#e8e8ff', size: 1
-            })
-            break
-          case 'drought':
-            particles.addParticle({
-              x: px, y: py, vx: (Math.random() - 0.5) * 0.3, vy: -0.2 - Math.random() * 0.3,
-              life: 25, maxLife: 25, color: '#d4a04088', size: 1.5
-            })
-            break
-          case 'flood':
-            particles.addParticle({
-              x: px, y: py, vx: (Math.random() - 0.5) * 0.6, vy: (Math.random() - 0.5) * 0.6,
-              life: 20, maxLife: 20, color: '#5588aa88', size: 1.2
-            })
-            break
-          case 'heatwave':
-            particles.addParticle({
-              x: px, y: py, vx: (Math.random() - 0.5) * 0.2, vy: -0.4 - Math.random() * 0.3,
-              life: 20, maxLife: 20, color: '#ff660044', size: 2
-            })
-            break
+    // Gradually freeze more tiles
+    if (elapsed % 180 === 0 && area) {
+      const tx = area.x + Math.floor((Math.random() - 0.5) * area.radius * 2)
+      const ty = area.y + Math.floor((Math.random() - 0.5) * area.radius * 2)
+      if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT && this.isInArea(tx, ty, area)) {
+        const tile = world.getTile(tx, ty)
+        if (tile === TileType.GRASS || tile === TileType.SHALLOW_WATER) {
+          this.setTileWithRecord(world, disaster, tx, ty, TileType.SNOW)
         }
       }
     }
   }
 
-  private expireDisaster(disaster: ActiveWeatherDisaster, world: World, tick: number): void {
-    // Restore original tiles
-    for (const [key, tileType] of disaster.originalTiles) {
-      const [xs, ys] = key.split(',')
-      const x = parseInt(xs)
-      const y = parseInt(ys)
-      // Partial restoration — some changes persist
-      if (Math.random() < 0.7) {
-        world.setTile(x, y, tileType)
+  private applyDroughtEffects(
+    disaster: ActiveWeatherDisaster, world: World, em: EntityManager,
+    particles: ParticleSystem, tick: number, elapsed: number
+  ): void {
+    const area = disaster.affectedArea
+
+    // Crop yield halved = more hunger
+    if (elapsed % 60 === 0) {
+      const entities = em.getEntitiesWithComponents('position', 'needs', 'creature')
+      for (const id of entities) {
+        const pos = em.getComponent<PositionComponent>(id, 'position')!
+        if (!this.isInArea(pos.x, pos.y, area)) continue
+        const needs = em.getComponent<NeedsComponent>(id, 'needs')!
+        needs.hunger = Math.min(100, needs.hunger + 0.3 * disaster.intensity)
       }
     }
-    EventLog.log('disaster', `The ${DISASTER_NAMES[disaster.type]} has subsided.`, tick)
+
+    // Gradually dry out more tiles
+    if (elapsed % 240 === 0 && area) {
+      const tx = area.x + Math.floor((Math.random() - 0.5) * area.radius * 2)
+      const ty = area.y + Math.floor((Math.random() - 0.5) * area.radius * 2)
+      if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT && this.isInArea(tx, ty, area)) {
+        const tile = world.getTile(tx, ty)
+        if (tile === TileType.SHALLOW_WATER && Math.random() < 0.3) {
+          this.setTileWithRecord(world, disaster, tx, ty, TileType.SAND)
+        } else if (tile === TileType.FOREST && Math.random() < 0.2) {
+          this.setTileWithRecord(world, disaster, tx, ty, TileType.GRASS)
+        }
+      }
+    }
+
+    // Spontaneous fire on forest tiles
+    if (elapsed % 300 === 0 && area) {
+      const tx = area.x + Math.floor((Math.random() - 0.5) * area.radius * 2)
+      const ty = area.y + Math.floor((Math.random() - 0.5) * area.radius * 2)
+      if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT && this.isInArea(tx, ty, area)) {
+        const tile = world.getTile(tx, ty)
+        if (tile === TileType.FOREST && Math.random() < 0.15 * disaster.intensity) {
+          this.setTileWithRecord(world, disaster, tx, ty, TileType.SAND)
+          particles.spawnExplosion(tx, ty)
+          EventLog.log('disaster', 'Drought sparks a wildfire!', tick)
+        }
+      }
+    }
+
+    // Heat shimmer particles
+    if (elapsed % 8 === 0 && area) {
+      const count = Math.min(4, Math.floor(disaster.intensity * 5))
+      for (let i = 0; i < count; i++) {
+        const px = area.x + (Math.random() - 0.5) * area.radius * 2
+        const py = area.y + (Math.random() - 0.5) * area.radius * 2
+        particles.addParticle({
+          x: px, y: py,
+          vx: (Math.random() - 0.5) * 0.2,
+          vy: -0.2 - Math.random() * 0.3,
+          life: 20 + Math.random() * 15, maxLife: 35,
+          color: Math.random() < 0.5 ? '#cc9944' : '#aa7733',
+          size: 0.5 + Math.random() * 0.4
+        })
+      }
+    }
+
+    if (elapsed % 600 === 0 && elapsed > 0) {
+      EventLog.log('disaster', 'The drought continues... the land cracks and withers.', tick)
+    }
+  }
+
+  private applyFloodEffects(
+    disaster: ActiveWeatherDisaster, world: World, em: EntityManager,
+    civManager: CivManager, particles: ParticleSystem, tick: number, elapsed: number
+  ): void {
+    const area = disaster.affectedArea
+
+    // Damage creatures standing in floodwater
+    if (elapsed % 60 === 0) {
+      const entities = em.getEntitiesWithComponents('position', 'needs', 'creature')
+      for (const id of entities) {
+        const pos = em.getComponent<PositionComponent>(id, 'position')!
+        if (!this.isInArea(pos.x, pos.y, area)) continue
+        const tile = world.getTile(Math.floor(pos.x), Math.floor(pos.y))
+        if (tile === TileType.SHALLOW_WATER) {
+          const needs = em.getComponent<NeedsComponent>(id, 'needs')!
+          const creature = em.getComponent<CreatureComponent>(id, 'creature')!
+          creature.speed = Math.max(0.1, creature.speed * 0.97)
+          needs.health -= 0.2 * disaster.intensity
+        }
+      }
+    }
+
+    // Water continues to spread
+    if (elapsed % 200 === 0 && area) {
+      const tx = area.x + Math.floor((Math.random() - 0.5) * area.radius * 2)
+      const ty = area.y + Math.floor((Math.random() - 0.5) * area.radius * 2)
+      if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT && this.isInArea(tx, ty, area)) {
+        const tile = world.getTile(tx, ty)
+        if (tile === TileType.GRASS && this.hasAdjacentTileType(world, tx, ty, TileType.SHALLOW_WATER)) {
+          if (Math.random() < 0.25 * disaster.intensity) {
+            this.setTileWithRecord(world, disaster, tx, ty, TileType.SHALLOW_WATER)
+          }
+        }
+      }
+    }
+
+    // Ongoing building damage
+    if (elapsed % 300 === 0) {
+      const buildingEntities = em.getEntitiesWithComponents('position', 'building')
+      for (const id of buildingEntities) {
+        const pos = em.getComponent<PositionComponent>(id, 'position')!
+        if (!this.isInArea(pos.x, pos.y, area)) continue
+        const building = em.getComponent<BuildingComponent>(id, 'building')!
+        if (building.level <= 1) {
+          building.health -= Math.floor(10 * disaster.intensity)
+        }
+      }
+    }
+
+    // Muddy water particles
+    if (elapsed % 6 === 0 && area) {
+      const count = Math.min(5, Math.floor(disaster.intensity * 6))
+      for (let i = 0; i < count; i++) {
+        const px = area.x + (Math.random() - 0.5) * area.radius * 2
+        const py = area.y + (Math.random() - 0.5) * area.radius * 2
+        particles.addParticle({
+          x: px, y: py,
+          vx: (Math.random() - 0.5) * 0.6,
+          vy: (Math.random() - 0.5) * 0.6,
+          life: 25 + Math.random() * 15, maxLife: 40,
+          color: Math.random() < 0.6 ? '#6688aa' : '#8B7355',
+          size: 0.6 + Math.random() * 0.5
+        })
+      }
+    }
+  }
+
+  private applyHeatwaveEffects(
+    disaster: ActiveWeatherDisaster, world: World, em: EntityManager,
+    particles: ParticleSystem, tick: number, elapsed: number
+  ): void {
+    const area = disaster.affectedArea
+
+    // Double stamina consumption
+    if (elapsed % 60 === 0) {
+      const entities = em.getEntitiesWithComponents('position', 'needs', 'creature')
+      for (const id of entities) {
+        const pos = em.getComponent<PositionComponent>(id, 'position')!
+        if (!this.isInArea(pos.x, pos.y, area)) continue
+        const creature = em.getComponent<CreatureComponent>(id, 'creature')!
+        const needs = em.getComponent<NeedsComponent>(id, 'needs')!
+        if (creature.species !== 'dragon') {
+          needs.health -= 0.4 * disaster.intensity
+          needs.hunger = Math.min(100, needs.hunger + 0.3 * disaster.intensity)
+        }
+      }
+    }
+
+    // Sand expansion
+    if (elapsed % 300 === 0 && area) {
+      const tx = area.x + Math.floor((Math.random() - 0.5) * area.radius * 2)
+      const ty = area.y + Math.floor((Math.random() - 0.5) * area.radius * 2)
+      if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT && this.isInArea(tx, ty, area)) {
+        const tile = world.getTile(tx, ty)
+        if (tile === TileType.GRASS && this.hasAdjacentTileType(world, tx, ty, TileType.SAND)) {
+          if (Math.random() < 0.2 * disaster.intensity) {
+            this.setTileWithRecord(world, disaster, tx, ty, TileType.SAND)
+          }
+        }
+      }
+    }
+
+    // Rising heat particles
+    if (elapsed % 10 === 0 && area) {
+      const count = Math.min(3, Math.floor(disaster.intensity * 4))
+      for (let i = 0; i < count; i++) {
+        const px = area.x + (Math.random() - 0.5) * area.radius * 2
+        const py = area.y + (Math.random() - 0.5) * area.radius * 2
+        particles.addParticle({
+          x: px, y: py,
+          vx: (Math.random() - 0.5) * 0.2,
+          vy: -0.3 - Math.random() * 0.3,
+          life: 20 + Math.random() * 15, maxLife: 35,
+          color: Math.random() < 0.5 ? '#ff6633' : '#ff4411',
+          size: 0.5 + Math.random() * 0.4
+        })
+      }
+    }
+  }
+
+  // --- Disaster expiration ---
+
+  private expireDisaster(disaster: ActiveWeatherDisaster, world: World, tick: number): void {
+    for (const [key, originalType] of disaster.originalTiles) {
+      const [xStr, yStr] = key.split(',')
+      const x = parseInt(xStr, 10)
+      const y = parseInt(yStr, 10)
+      if (x >= 0 && x < WORLD_WIDTH && y >= 0 && y < WORLD_HEIGHT) {
+        world.setTile(x, y, originalType)
+      }
+    }
+    disaster.originalTiles.clear()
+    EventLog.log('disaster', `The ${DISASTER_NAMES[disaster.type]} has ended.`, tick)
   }
 
   // --- Render overlays ---
 
   private renderBlizzardOverlay(
-    ctx: CanvasRenderingContext2D,
-    width: number,
-    height: number,
-    tick: number,
-    alpha: number
+    ctx: CanvasRenderingContext2D, width: number, height: number, tick: number, alpha: number
   ): void {
-    // White-blue tint
-    ctx.fillStyle = `rgba(200, 220, 255, ${alpha * 0.15})`
+    // White vignette frost on screen edges
+    const gradient = ctx.createRadialGradient(
+      width / 2, height / 2, Math.min(width, height) * 0.25,
+      width / 2, height / 2, Math.min(width, height) * 0.7
+    )
+    gradient.addColorStop(0, 'rgba(200, 220, 255, 0)')
+    gradient.addColorStop(0.7, `rgba(200, 220, 255, ${alpha * 0.15})`)
+    gradient.addColorStop(1, `rgba(220, 235, 255, ${alpha * 0.4})`)
+    ctx.fillStyle = gradient
     ctx.fillRect(0, 0, width, height)
 
-    // Animated snow streaks
-    ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.3})`
+    // Frost crystal streaks on corners
+    ctx.save()
+    ctx.globalAlpha = alpha * 0.3
+    ctx.strokeStyle = '#ccddff'
     ctx.lineWidth = 1
     const streakCount = Math.floor(30 * alpha)
     for (let i = 0; i < streakCount; i++) {
@@ -488,63 +645,85 @@ export class WeatherDisasterSystem {
       ctx.lineTo(x - 8, y + 12)
       ctx.stroke()
     }
+    ctx.restore()
   }
 
   private renderDroughtOverlay(
-    ctx: CanvasRenderingContext2D,
-    width: number,
-    height: number,
-    tick: number,
-    alpha: number
+    ctx: CanvasRenderingContext2D, width: number, height: number, tick: number, alpha: number
   ): void {
-    // Warm yellow-brown tint
+    // Yellow-brown sepia tint
     ctx.fillStyle = `rgba(180, 140, 60, ${alpha * 0.1})`
     ctx.fillRect(0, 0, width, height)
 
-    // Heat shimmer effect
-    const shimmer = Math.sin(tick * 0.05) * 0.03
-    ctx.fillStyle = `rgba(255, 200, 50, ${(alpha * 0.05) + shimmer})`
-    ctx.fillRect(0, 0, width, height)
+    // Heat wave distortion (sin wave horizontal lines)
+    ctx.save()
+    ctx.globalAlpha = alpha * 0.06
+    ctx.strokeStyle = '#ffcc66'
+    ctx.lineWidth = 1
+    const waveCount = 8
+    for (let i = 0; i < waveCount; i++) {
+      const baseY = (height / waveCount) * i + Math.sin(tick * 0.03 + i) * 3
+      ctx.beginPath()
+      ctx.moveTo(0, baseY)
+      for (let x = 0; x < width; x += 10) {
+        const offsetY = Math.sin((x + tick * 2) * 0.02 + i * 0.5) * 2
+        ctx.lineTo(x, baseY + offsetY)
+      }
+      ctx.stroke()
+    }
+    ctx.restore()
   }
 
   private renderFloodOverlay(
-    ctx: CanvasRenderingContext2D,
-    width: number,
-    height: number,
-    alpha: number
+    ctx: CanvasRenderingContext2D, width: number, height: number, alpha: number
   ): void {
-    // Blue water tint
-    ctx.fillStyle = `rgba(60, 100, 180, ${alpha * 0.12})`
+    // Blue gradient from bottom
+    const gradient = ctx.createLinearGradient(0, height * 0.6, 0, height)
+    gradient.addColorStop(0, 'rgba(40, 80, 140, 0)')
+    gradient.addColorStop(0.5, `rgba(40, 80, 140, ${alpha * 0.08})`)
+    gradient.addColorStop(1, `rgba(30, 60, 120, ${alpha * 0.2})`)
+    ctx.fillStyle = gradient
     ctx.fillRect(0, 0, width, height)
   }
 
   private renderHeatwaveOverlay(
-    ctx: CanvasRenderingContext2D,
-    width: number,
-    height: number,
-    tick: number,
-    alpha: number
+    ctx: CanvasRenderingContext2D, width: number, height: number, tick: number, alpha: number
   ): void {
-    // Red-orange heat tint
-    ctx.fillStyle = `rgba(255, 100, 30, ${alpha * 0.08})`
+    // Orange-red edge vignette
+    const gradient = ctx.createRadialGradient(
+      width / 2, height / 2, Math.min(width, height) * 0.3,
+      width / 2, height / 2, Math.min(width, height) * 0.7
+    )
+    gradient.addColorStop(0, 'rgba(255, 100, 50, 0)')
+    gradient.addColorStop(0.8, `rgba(255, 100, 50, ${alpha * 0.06})`)
+    gradient.addColorStop(1, `rgba(255, 60, 20, ${alpha * 0.15})`)
+    ctx.fillStyle = gradient
     ctx.fillRect(0, 0, width, height)
 
-    // Pulsing heat effect
-    const pulse = (Math.sin(tick * 0.08) + 1) * 0.5
-    ctx.fillStyle = `rgba(255, 50, 0, ${alpha * 0.04 * pulse})`
-    ctx.fillRect(0, 0, width, height)
+    // Wavy heat distortion lines
+    ctx.save()
+    ctx.globalAlpha = alpha * 0.05
+    ctx.strokeStyle = '#ff8844'
+    ctx.lineWidth = 1.5
+    for (let i = 0; i < 6; i++) {
+      const baseY = height * 0.2 + (height * 0.6 / 6) * i
+      ctx.beginPath()
+      ctx.moveTo(0, baseY)
+      for (let x = 0; x < width; x += 8) {
+        const wave = Math.sin((x + tick * 3) * 0.025 + i * 0.7) * 3
+        ctx.lineTo(x, baseY + wave)
+      }
+      ctx.stroke()
+    }
+    ctx.restore()
   }
 
-  // --- Helpers ---
+  // --- Utility ---
 
-  private hasAdjacentTileType(world: World, x: number, y: number, type: TileType): boolean {
-    const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]]
-    for (const [dx, dy] of dirs) {
-      const nx = x + dx
-      const ny = y + dy
-      if (nx >= 0 && nx < WORLD_WIDTH && ny >= 0 && ny < WORLD_HEIGHT) {
-        if (world.getTile(nx, ny) === type) return true
-      }
+  private hasAdjacentTileType(world: World, x: number, y: number, tileType: TileType): boolean {
+    const offsets = [[-1, 0], [1, 0], [0, -1], [0, 1]]
+    for (const [ox, oy] of offsets) {
+      if (world.getTile(x + ox, y + oy) === tileType) return true
     }
     return false
   }
