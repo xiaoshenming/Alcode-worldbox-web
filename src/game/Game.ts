@@ -200,6 +200,11 @@ import { WorldSacredGroveSystem } from '../systems/WorldSacredGroveSystem'
 import { CreatureAllianceSystem } from '../systems/CreatureAllianceSystem'
 import { DiplomaticPropagandaSystem } from '../systems/DiplomaticPropagandaSystem'
 import { WorldTidalSystem } from '../systems/WorldTidalSystem'
+import { CreatureSuperstitionSystem } from '../systems/CreatureSuperstitionSystem'
+import { WorldMagicStormSystem } from '../systems/WorldMagicStormSystem'
+import { CreatureAmbitionSystem } from '../systems/CreatureAmbitionSystem'
+import { DiplomaticCouncilSystem } from '../systems/DiplomaticCouncilSystem'
+import { WorldFertilitySystem } from '../systems/WorldFertilitySystem'
 
 export class Game {
   private world: World
@@ -402,6 +407,11 @@ export class Game {
   private creatureAlliance!: CreatureAllianceSystem
   private diplomaticPropaganda!: DiplomaticPropagandaSystem
   private worldTidal!: WorldTidalSystem
+  private creatureSuperstition!: CreatureSuperstitionSystem
+  private worldMagicStorm!: WorldMagicStormSystem
+  private creatureAmbition!: CreatureAmbitionSystem
+  private diplomaticCouncil!: DiplomaticCouncilSystem
+  private worldFertility!: WorldFertilitySystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -750,6 +760,12 @@ export class Game {
     this.diplomaticPropaganda = new DiplomaticPropagandaSystem()
     this.worldTidal = new WorldTidalSystem()
     this.worldTidal.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
+    this.creatureSuperstition = new CreatureSuperstitionSystem()
+    this.worldMagicStorm = new WorldMagicStormSystem()
+    this.worldMagicStorm.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
+    this.creatureAmbition = new CreatureAmbitionSystem()
+    this.diplomaticCouncil = new DiplomaticCouncilSystem()
+    this.worldFertility = new WorldFertilitySystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2047,6 +2063,16 @@ export class Game {
         this.diplomaticPropaganda.update(this.tickRate, this.civManager, this.world.tick)
         // World tidal system (v2.35) - coastal tide cycles
         this.worldTidal.update(this.tickRate, this.world, this.world.tick)
+        // Creature superstitions (v2.36) - omens and beliefs
+        this.creatureSuperstition.update(this.tickRate, [...this.civManager.civilizations.keys()], this.world.tick)
+        // World magic storms (v2.37) - arcane storms mutate terrain
+        this.worldMagicStorm.update(this.tickRate, this.world.tick)
+        // Creature ambitions (v2.38) - personal goals and dreams
+        this.creatureAmbition.update(this.tickRate, this.em, this.world.tick)
+        // Diplomatic councils (v2.39) - multi-civ voting bodies
+        this.diplomaticCouncil.update(this.tickRate, this.civManager, this.world.tick)
+        // World fertility (v2.40) - soil fertility map
+        this.worldFertility.update(this.tickRate, this.world.tiles, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
