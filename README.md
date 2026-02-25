@@ -6,8 +6,8 @@
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![Vite](https://img.shields.io/badge/Vite-6.0-646CFF)
-![Lines](https://img.shields.io/badge/代码量-61k_lines-green)
-![Systems](https://img.shields.io/badge/ECS_Systems-229+-orange)
+![Lines](https://img.shields.io/badge/代码量-64k_lines-green)
+![Systems](https://img.shields.io/badge/ECS_Systems-258+-orange)
 
 ## 快速开始
 
@@ -74,6 +74,11 @@ npm run preview
 - **谣言系统** — 谣言在生物间传播，关于危险、宝藏、背叛等话题逐渐失真
 - **驯兽师系统** — 生物专精驯服野兽，建立战骑、驮兽、侦察兽等纽带
 - **守夜系统** — 生物轮流守夜保护村庄，提升警觉技能
+- **物物交换** — 生物之间用多余资源交换所需物品，公平性影响关系
+- **恐惧症系统** — 生物对水、火、黑暗等产生恐惧，影响移动和决策
+- **直觉系统** — 高智慧生物预感危险或机遇，提前做出反应
+- **绰号系统** — 根据行为和成就获得"勇者""智者""流浪者"等绰号
+- **流放系统** — 犯罪或叛变的生物被文明流放，成为流浪者或加入其他文明
 
 ### 文明演化
 
@@ -133,6 +138,9 @@ npm run preview
 - **珊瑚礁** — 浅水海岸线生长珊瑚礁，吸引海洋生物，可能白化退化
 - **沙尘暴** — 沙漠区域形成沙暴，推动生物、改变地形
 - **次元裂隙** — 维度裂缝撕裂世界，扭曲地形、吸引或排斥生物
+- **流沙陷阱** — 沙漠地形中出现流沙，困住经过的生物，需要救援
+- **彗星天象** — 稀有彗星划过天空，带来资源雨、预兆或变异效果
+- **日食月食** — 周期性天文现象，引发恐慌、崇拜或力量涌动
 
 ## 操作指南
 
