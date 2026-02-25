@@ -482,6 +482,20 @@ import { WorldKarstTowerSystem } from '../systems/WorldKarstTowerSystem'
 import { CreatureFletchersSystem } from '../systems/CreatureFletchersSystem'
 import { WorldAlluvialFanSystem } from '../systems/WorldAlluvialFanSystem'
 import { DiplomaticReparationSystem } from '../systems/DiplomaticReparationSystem'
+import { CreatureWainwrightsSystem } from '../systems/CreatureWainwrightsSystem'
+import { WorldBayouSystem } from '../systems/WorldBayouSystem'
+import { CreatureCuriersSystem } from '../systems/CreatureCuriersSystem'
+import { WorldCinderConeSystem } from '../systems/WorldCinderConeSystem'
+import { DiplomaticRestitutionSystem } from '../systems/DiplomaticRestitutionSystem'
+import { CreatureHornersSystem } from '../systems/CreatureHornersSystem'
+import { WorldFjordSystem } from '../systems/WorldFjordSystem'
+import { CreatureNailersSystem } from '../systems/CreatureNailersSystem'
+import { WorldBadlandsSystem } from '../systems/WorldBadlandsSystem'
+import { DiplomaticIndemnitySystem } from '../systems/DiplomaticIndemnitySystem'
+import { CreatureReedCuttersSystem } from '../systems/CreatureReedCuttersSystem'
+import { WorldMesaSystem } from '../systems/WorldMesaSystem'
+import { CreaturePottersSystem } from '../systems/CreaturePottersSystem'
+import { DiplomaticAnnexationSystem } from '../systems/DiplomaticAnnexationSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -965,6 +979,20 @@ export class Game {
   private creatureFletchers!: CreatureFletchersSystem
   private worldAlluvialFan!: WorldAlluvialFanSystem
   private diplomaticReparation!: DiplomaticReparationSystem
+  private creatureWainwrights!: CreatureWainwrightsSystem
+  private worldBayou!: WorldBayouSystem
+  private creatureCuriers!: CreatureCuriersSystem
+  private worldCinderCone!: WorldCinderConeSystem
+  private diplomaticRestitution!: DiplomaticRestitutionSystem
+  private creatureHorners!: CreatureHornersSystem
+  private worldFjord!: WorldFjordSystem
+  private creatureNailers!: CreatureNailersSystem
+  private worldBadlands!: WorldBadlandsSystem
+  private diplomaticIndemnity!: DiplomaticIndemnitySystem
+  private creatureReedCutters!: CreatureReedCuttersSystem
+  private worldMesa!: WorldMesaSystem
+  private creaturePotters!: CreaturePottersSystem
+  private diplomaticAnnexation!: DiplomaticAnnexationSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1599,6 +1627,20 @@ export class Game {
     this.creatureFletchers = new CreatureFletchersSystem()
     this.worldAlluvialFan = new WorldAlluvialFanSystem()
     this.diplomaticReparation = new DiplomaticReparationSystem()
+    this.creatureWainwrights = new CreatureWainwrightsSystem()
+    this.worldBayou = new WorldBayouSystem()
+    this.creatureCuriers = new CreatureCuriersSystem()
+    this.worldCinderCone = new WorldCinderConeSystem()
+    this.diplomaticRestitution = new DiplomaticRestitutionSystem()
+    this.creatureHorners = new CreatureHornersSystem()
+    this.worldFjord = new WorldFjordSystem()
+    this.creatureNailers = new CreatureNailersSystem()
+    this.worldBadlands = new WorldBadlandsSystem()
+    this.diplomaticIndemnity = new DiplomaticIndemnitySystem()
+    this.creatureReedCutters = new CreatureReedCuttersSystem()
+    this.worldMesa = new WorldMesaSystem()
+    this.creaturePotters = new CreaturePottersSystem()
+    this.diplomaticAnnexation = new DiplomaticAnnexationSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3476,6 +3518,34 @@ export class Game {
         this.worldAlluvialFan.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic reparation (v3.265) - war reparation agreements
         this.diplomaticReparation.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature wainwrights (v3.266) - wagon and cart builders
+        this.creatureWainwrights.update(this.tickRate, this.em, this.world.tick)
+        // World bayous (v3.267) - slow-moving marshy waterways
+        this.worldBayou.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature curiers (v3.268) - leather curers
+        this.creatureCuriers.update(this.tickRate, this.em, this.world.tick)
+        // World cinder cones (v3.269) - volcanic cinder cones
+        this.worldCinderCone.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic restitution (v3.270) - property restitution
+        this.diplomaticRestitution.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature horners (v3.271) - horn and antler craftsmen
+        this.creatureHorners.update(this.tickRate, this.em, this.world.tick)
+        // World fjords (v3.272) - glacially carved inlets
+        this.worldFjord.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature nailers (v3.273) - nail makers
+        this.creatureNailers.update(this.tickRate, this.em, this.world.tick)
+        // World badlands (v3.274) - eroded arid terrain
+        this.worldBadlands.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic indemnity (v3.275) - damage compensation
+        this.diplomaticIndemnity.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature reed cutters (v3.276) - reed harvesters
+        this.creatureReedCutters.update(this.tickRate, this.em, this.world.tick)
+        // World mesas (v3.277) - flat-topped landforms
+        this.worldMesa.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature potters (v3.278) - clay pottery craftsmen
+        this.creaturePotters.update(this.tickRate, this.em, this.world.tick)
+        // Diplomatic annexation (v3.280) - territorial annexation
+        this.diplomaticAnnexation.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate

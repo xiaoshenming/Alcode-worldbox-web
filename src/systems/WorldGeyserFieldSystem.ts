@@ -1,30 +1,26 @@
-// World Geyser Field System (v3.97) - Large-scale geothermal eruption zones
-// Geyser fields form near mountains, cycle through pressure states, and affect terrain
+// World Geyser Field System (v3.279) - Geothermal geyser clusters
+// Areas with multiple geysers erupting hot water and steam at regular intervals
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
-
-export type GeyserState = 'dormant' | 'building' | 'erupting' | 'cooling'
+import { TileType } from '../utils/Constants'
 
 export interface GeyserField {
   id: number
   x: number
   y: number
-  state: GeyserState
-  pressure: number
   radius: number
-  lastEruption: number
+  geyserCount: number
+  eruptionFrequency: number
+  waterTemperature: number
+  mineralDeposits: number
+  steamOutput: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2000
-const SPAWN_CHANCE = 0.003
-const MAX_FIELDS = 20
-const PRESSURE_RATE = 0.8
-const ERUPTION_THRESHOLD = 90
-const COOLING_RATE = 1.5
-
-const STATES: GeyserState[] = ['dormant', 'building', 'erupting', 'cooling']
+const CHECK_INTERVAL = 2600
+const FORM_CHANCE = 0.0018
+const MAX_FIELDS = 14
 
 export class WorldGeyserFieldSystem {
   private fields: GeyserField[] = []
@@ -35,56 +31,40 @@ export class WorldGeyserFieldSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    // Spawn near mountains
-    if (this.fields.length < MAX_FIELDS && Math.random() < SPAWN_CHANCE) {
-      const x = Math.floor(Math.random() * world.width)
-      const y = Math.floor(Math.random() * world.height)
+    if (this.fields.length < MAX_FIELDS && Math.random() < FORM_CHANCE) {
+      const w = world.width
+      const h = world.height
+      const x = 10 + Math.floor(Math.random() * (w - 20))
+      const y = 10 + Math.floor(Math.random() * (h - 20))
       const tile = world.getTile(x, y)
 
-      if (tile != null && tile >= 5) {
+      if (tile === TileType.MOUNTAIN || tile === TileType.SAND) {
         this.fields.push({
           id: this.nextId++,
           x, y,
-          state: 'dormant',
-          pressure: Math.random() * 30,
           radius: 3 + Math.floor(Math.random() * 5),
-          lastEruption: 0,
+          geyserCount: 2 + Math.floor(Math.random() * 6),
+          eruptionFrequency: 10 + Math.random() * 40,
+          waterTemperature: 80 + Math.random() * 20,
+          mineralDeposits: 15 + Math.random() * 35,
+          steamOutput: 20 + Math.random() * 50,
           tick,
         })
       }
     }
 
-    // Update state machine
-    for (const f of this.fields) {
-      switch (f.state) {
-        case 'dormant':
-          f.pressure += PRESSURE_RATE * 0.3
-          if (f.pressure > 40) f.state = 'building'
-          break
-        case 'building':
-          f.pressure += PRESSURE_RATE
-          if (f.pressure >= ERUPTION_THRESHOLD) {
-            f.state = 'erupting'
-            f.lastEruption = tick
-          }
-          break
-        case 'erupting':
-          f.pressure = Math.max(0, f.pressure - 5)
-          if (f.pressure <= 10) f.state = 'cooling'
-          break
-        case 'cooling':
-          f.pressure = Math.max(0, f.pressure - COOLING_RATE)
-          if (f.pressure <= 0) f.state = 'dormant'
-          break
-      }
+    for (const field of this.fields) {
+      field.eruptionFrequency = Math.max(5, Math.min(60, field.eruptionFrequency + (Math.random() - 0.5) * 0.3))
+      field.waterTemperature = Math.max(60, Math.min(100, field.waterTemperature + (Math.random() - 0.5) * 0.2))
+      field.mineralDeposits = Math.min(80, field.mineralDeposits + 0.006)
+      field.steamOutput = Math.max(10, Math.min(80, field.steamOutput + (Math.random() - 0.5) * 0.25))
     }
 
-    // Remove very old fields
-    const cutoff = tick - 120000
+    const cutoff = tick - 90000
     for (let i = this.fields.length - 1; i >= 0; i--) {
       if (this.fields[i].tick < cutoff) this.fields.splice(i, 1)
     }
   }
 
-  getFields(): readonly GeyserField[] { return this.fields }
+  getFields(): GeyserField[] { return this.fields }
 }
