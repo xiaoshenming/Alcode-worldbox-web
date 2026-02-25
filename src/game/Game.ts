@@ -100,6 +100,9 @@ import { ResourceScarcitySystem } from '../systems/ResourceScarcitySystem'
 import { LegendaryBattleSystem } from '../systems/LegendaryBattleSystem'
 import { WorldBorderSystem } from '../systems/WorldBorderSystem'
 import { EnhancedTooltipSystem } from '../systems/EnhancedTooltipSystem'
+import { NavalCombatSystem } from '../systems/NavalCombatSystem'
+import { ReligionSpreadSystem } from '../systems/ReligionSpreadSystem'
+import { GeneticDisplaySystem } from '../systems/GeneticDisplaySystem'
 
 export class Game {
   private world: World
@@ -202,6 +205,9 @@ export class Game {
   private legendaryBattle: LegendaryBattleSystem
   private worldBorder: WorldBorderSystem
   private enhancedTooltip: EnhancedTooltipSystem
+  private navalCombat: NavalCombatSystem
+  private religionSpread: ReligionSpreadSystem
+  private geneticDisplay: GeneticDisplaySystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -448,6 +454,9 @@ export class Game {
     this.legendaryBattle = new LegendaryBattleSystem()
     this.worldBorder = new WorldBorderSystem()
     this.enhancedTooltip = new EnhancedTooltipSystem()
+    this.navalCombat = new NavalCombatSystem()
+    this.religionSpread = new ReligionSpreadSystem()
+    this.geneticDisplay = new GeneticDisplaySystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -1387,6 +1396,10 @@ export class Game {
         this.legendaryBattle.update(this.world.tick, this.em, this.civManager)
         // World border - animate edge effects
         this.worldBorder.update(this.world.tick)
+        // Naval combat - ship battles and boarding
+        this.navalCombat.update(this.world.tick, this.em, this.civManager)
+        // Religion spread - faith influence from temples
+        this.religionSpread.update(this.world.tick, this.em, this.civManager)
         // Tutorial system - check step conditions
         this.tutorial.update()
         // Build fortification data from civilizations
@@ -1650,6 +1663,13 @@ export class Game {
       const bounds = this.camera.getVisibleBounds()
       this.worldBorder.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, bounds.startX, bounds.startY, bounds.endX, bounds.endY)
     }
+
+    // Religion spread visualization
+    this.religionSpread.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+    this.religionSpread.renderTemples(ctx, this.camera.x, this.camera.y, this.camera.zoom, this.em)
+
+    // Naval combat effects
+    this.navalCombat.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
 
     // Tutorial overlay (rendered last for top-most visibility)
     if (this.tutorial.isActive()) {
