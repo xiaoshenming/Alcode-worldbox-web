@@ -916,10 +916,6 @@ export class Game {
           e.preventDefault()
           this.setSpeed(this.speed === 0 ? 1 : 0)
           break
-        case 'r':
-        case 'R':
-          this.resetWorld()
-          break
 
         // Tool category switching: Q/W/E/D
         case 'q':
@@ -1039,10 +1035,13 @@ export class Game {
           if (!e.ctrlKey && !e.metaKey) this.minimapMode.cycleMode()
           break
 
-        // History replay toggle
+        // History replay toggle / Reset world (Ctrl+R)
         case 'r':
         case 'R':
-          if (!e.ctrlKey && !e.metaKey) {
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault()
+            this.resetWorld()
+          } else {
             if (this.historyReplay.isReplaying()) this.historyReplay.stopReplay()
             else this.historyReplay.startReplay()
           }
