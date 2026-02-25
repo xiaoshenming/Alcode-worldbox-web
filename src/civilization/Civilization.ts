@@ -116,6 +116,9 @@ export interface Civilization {
     completed: string[]         // list of completed tech names
     researchRate: number        // base research speed
   }
+  treaties: number[]        // treaty IDs this civ is part of
+  embassies: { civId: number; x: number; y: number }[]
+  diplomaticStance: 'peaceful' | 'neutral' | 'aggressive' | 'isolationist'
 }
 
 // Components
@@ -311,6 +314,9 @@ export function createCivilization(): Civilization {
       progress: 0,
       completed: [],
       researchRate: 1.0
-    }
+    },
+    treaties: [],
+    embassies: [],
+    diplomaticStance: 'neutral'
   }
 }

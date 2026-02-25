@@ -39,6 +39,9 @@ interface SavedCiv {
   taxRate?: number
   revoltTimer?: number
   research?: { currentTech: string | null; progress: number; completed: string[]; researchRate: number }
+  treaties?: number[]
+  embassies?: { civId: number; x: number; y: number }[]
+  diplomaticStance?: 'peaceful' | 'neutral' | 'aggressive' | 'isolationist'
 }
 
 export class SaveSystem {
@@ -114,6 +117,9 @@ export class SaveSystem {
           taxRate: sc.taxRate ?? 1,
           revoltTimer: sc.revoltTimer ?? 0,
           research: sc.research ?? { currentTech: null, progress: 0, completed: [], researchRate: 1.0 },
+          treaties: sc.treaties ?? [],
+          embassies: sc.embassies ?? [],
+          diplomaticStance: sc.diplomaticStance ?? 'neutral',
         }
         civManager.civilizations.set(civ.id, civ)
       }
