@@ -609,6 +609,12 @@ export class Game {
     this.renderer.renderBrushOutline(this.camera, this.input.mouseX, this.input.mouseY, this.powers.getBrushSize())
     this.renderer.renderMinimap(this.world, this.camera, this.em, this.civManager)
 
+    // World event overlays and banners
+    const ctx = this.canvas.getContext('2d')!
+    this.worldEventSystem.renderScreenOverlay(ctx, this.canvas.width, this.canvas.height)
+    this.worldEventSystem.renderEventBanner(ctx, this.canvas.width)
+    this.worldEventSystem.renderActiveIndicators(ctx, this.canvas.width)
+
     if (this.world.tick % 30 === 0) {
       this.infoPanel.update(this.fps)
       this.statsPanel.update()
