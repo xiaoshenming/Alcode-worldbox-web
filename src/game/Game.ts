@@ -136,6 +136,15 @@ import { MiniMapModeSystem } from '../systems/MiniMapModeSystem'
 import { CameraBookmarkSystem } from '../systems/CameraBookmarkSystem'
 import { EntityInspectorSystem } from '../systems/EntityInspectorSystem'
 import { SpeedIndicatorSystem } from '../systems/SpeedIndicatorSystem'
+import { AchievementProgressSystem } from '../systems/AchievementProgressSystem'
+import { CameraAnimationSystem } from '../systems/CameraAnimationSystem'
+import { CityLayoutSystem } from '../systems/CityLayoutSystem'
+import { CustomSpeciesSystem } from '../systems/CustomSpeciesSystem'
+import { EraTransitionSystem } from '../systems/EraTransitionSystem'
+import { MapMarkerSystem } from '../systems/MapMarkerSystem'
+import { TerrainDecorationSystem } from '../systems/TerrainDecorationSystem'
+import { TimeRewindSystem } from '../systems/TimeRewindSystem'
+import { WeatherControlSystem } from '../systems/WeatherControlSystem'
 
 export class Game {
   private world: World
@@ -274,6 +283,15 @@ export class Game {
   private cameraBookmarks!: CameraBookmarkSystem
   private entityInspector!: EntityInspectorSystem
   private speedIndicator!: SpeedIndicatorSystem
+  private achievementProgress!: AchievementProgressSystem
+  private cameraAnimation!: CameraAnimationSystem
+  private cityLayout!: CityLayoutSystem
+  private customSpecies!: CustomSpeciesSystem
+  private eraTransition!: EraTransitionSystem
+  private mapMarker!: MapMarkerSystem
+  private terrainDecoration!: TerrainDecorationSystem
+  private timeRewind!: TimeRewindSystem
+  private weatherControl!: WeatherControlSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -556,6 +574,15 @@ export class Game {
     this.cameraBookmarks = new CameraBookmarkSystem()
     this.entityInspector = new EntityInspectorSystem()
     this.speedIndicator = new SpeedIndicatorSystem()
+    this.achievementProgress = new AchievementProgressSystem()
+    this.cameraAnimation = new CameraAnimationSystem()
+    this.cityLayout = new CityLayoutSystem()
+    this.customSpecies = new CustomSpeciesSystem()
+    this.eraTransition = new EraTransitionSystem()
+    this.mapMarker = new MapMarkerSystem()
+    this.terrainDecoration = new TerrainDecorationSystem()
+    this.timeRewind = new TimeRewindSystem()
+    this.weatherControl = new WeatherControlSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2065,6 +2092,50 @@ export class Game {
     // Speed indicator HUD (v1.70)
     this.speedIndicator.update(this.speed)
     this.speedIndicator.render(ctx, this.canvas.width, this.canvas.height, this.speed)
+
+    // Achievement progress tracker (v1.76)
+    this.achievementProgress.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Camera animation system (v1.76)
+    const camAnim = this.cameraAnimation.update(
+      this.world.tick, this.camera.x, this.camera.y, this.camera.zoom
+    )
+    this.cameraAnimation.render(ctx, this.canvas.width, this.canvas.height)
+
+    // City layout system (v1.77)
+    this.cityLayout.update(this.world.tick)
+    this.cityLayout.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // Era transition system (v1.77)
+    this.eraTransition.update(this.world.tick)
+    this.eraTransition.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Terrain decoration system (v1.78)
+    this.terrainDecoration.update(this.world.tick)
+    {
+      const startTX = Math.floor(this.camera.x / TILE_SIZE)
+      const startTY = Math.floor(this.camera.y / TILE_SIZE)
+      const endTX = Math.ceil((this.camera.x + this.canvas.width / this.camera.zoom) / TILE_SIZE)
+      const endTY = Math.ceil((this.camera.y + this.canvas.height / this.camera.zoom) / TILE_SIZE)
+      this.terrainDecoration.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, startTX, startTY, endTX, endTY)
+    }
+
+    // Map marker system (v1.78)
+    this.mapMarker.update(this.world.tick)
+    this.mapMarker.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // Time rewind system (v1.79)
+    const popCount = this.em.getAllEntities().length
+    const civCount = this.civManager.civilizations.size
+    this.timeRewind.update(this.world.tick, popCount, civCount)
+    this.timeRewind.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Weather control panel (v1.79)
+    this.weatherControl.update(this.world.tick)
+    this.weatherControl.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Custom species creator (v1.80)
+    this.customSpecies.render(ctx, this.canvas.width, this.canvas.height)
 
     // Screenshot mode toast (v1.66)
     this.screenshotMode.update()
