@@ -110,8 +110,18 @@ import { SeasonVisualSystem } from '../systems/SeasonVisualSystem'
 import { TradeFleetSystem } from '../systems/TradeFleetSystem'
 import { WorldDashboardSystem } from '../systems/WorldDashboardSystem'
 import { UnifiedParticleSystem } from '../systems/UnifiedParticleSystem'
+import { WeatherParticleSystem } from '../systems/WeatherParticleSystem'
+import { DiplomacyVisualSystem } from '../systems/DiplomacyVisualSystem'
+import { EventNotificationSystem } from '../systems/EventNotificationSystem'
+import { EditorEnhancedSystem } from '../systems/EditorEnhancedSystem'
+import { FogOfWarEnhanced } from '../systems/FogOfWarEnhanced'
 import { MapGenSystem } from '../systems/MapGenSystem'
 import { FlockingSystem } from '../systems/FlockingSystem'
+import { AutoSaveSystem } from '../systems/AutoSaveSystem'
+import { PerformanceMonitorSystem } from '../systems/PerformanceMonitorSystem'
+import { WorldSeedSystem } from '../systems/WorldSeedSystem'
+import { KeybindSystem } from '../systems/KeybindSystem'
+import { WorldExportSystem } from '../systems/WorldExportSystem'
 
 export class Game {
   private world: World
@@ -224,8 +234,18 @@ export class Game {
   private tradeFleet: TradeFleetSystem
   private worldDashboard: WorldDashboardSystem
   private unifiedParticles: UnifiedParticleSystem
-  private mapGen: MapGenSystem
-  private flocking: FlockingSystem
+  private weatherParticles: WeatherParticleSystem
+  private diplomacyVisual: DiplomacyVisualSystem
+  private eventNotification: EventNotificationSystem
+  private editorEnhanced: EditorEnhancedSystem
+  private fogEnhanced: FogOfWarEnhanced
+  private mapGen!: MapGenSystem
+  private flocking!: FlockingSystem
+  private autoSave!: AutoSaveSystem
+  private perfMonitor!: PerformanceMonitorSystem
+  private worldSeed!: WorldSeedSystem
+  private keybindSystem!: KeybindSystem
+  private worldExport!: WorldExportSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -482,8 +502,18 @@ export class Game {
     this.tradeFleet = new TradeFleetSystem()
     this.worldDashboard = new WorldDashboardSystem()
     this.unifiedParticles = new UnifiedParticleSystem()
+    this.weatherParticles = new WeatherParticleSystem()
+    this.diplomacyVisual = new DiplomacyVisualSystem()
+    this.eventNotification = new EventNotificationSystem()
+    this.editorEnhanced = new EditorEnhancedSystem()
+    this.fogEnhanced = new FogOfWarEnhanced()
     this.mapGen = new MapGenSystem()
     this.flocking = new FlockingSystem()
+    this.autoSave = new AutoSaveSystem()
+    this.perfMonitor = new PerformanceMonitorSystem()
+    this.worldSeed = new WorldSeedSystem()
+    this.keybindSystem = new KeybindSystem()
+    this.worldExport = new WorldExportSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -1472,6 +1502,28 @@ export class Game {
         if (this.world.tick % 60 === 0) {
           const pops: Record<string, number> = {}
           for (const id of this.em.getEntitiesWithComponents('creature')) {
+        // Weather particles - rain, snow, storm effects
+        this.weatherParticles.setWeather(this.weather.currentWeather === 'rain' ? 'rain' : this.weather.currentWeather === 'storm' || this.weather.currentWeather === 'tornado' ? 'storm' : this.weather.currentWeather === 'snow' ? 'snow' : 'clear')
+        this.weatherParticles.update(this.world.tick, 0.5, 0)
+        // Diplomacy visual - update civ relation data
+        if (this.world.tick % 120 === 0) {
+          const civData = [...this.civManager.civilizations.entries()].map(([id, c]) => {
+            const pos = c.buildings.length > 0 ? this.em.getComponent<PositionComponent>(c.buildings[0], 'position') : null
+            return { id, name: c.name, color: c.color, capitalX: pos?.x ?? 0, capitalY: pos?.y ?? 0, relations: c.relations }
+          })
+          this.diplomacyVisual.updateCivData(civData)
+        }
+        this.diplomacyVisual.update(this.world.tick)
+        // Event notification - update indicators
+        this.eventNotification.update(this.world.tick, this.camera.x, this.camera.y, this.canvas.width, this.canvas.height, this.camera.zoom)
+        // Enhanced fog of war
+        if (this.world.tick % 10 === 0) {
+          const units = [...this.em.getEntitiesWithComponents('creature', 'position')].map(id => {
+            const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+            return { x: Math.floor(pos.x), y: Math.floor(pos.y), visionRange: 8 }
+          })
+          this.fogEnhanced.updateVision(this.world.tick, units, [])
+        }
             const c = this.em.getComponent<CreatureComponent>(id, 'creature')
             if (c) pops[c.species] = (pops[c.species] ?? 0) + 1
           }
@@ -1566,10 +1618,8 @@ export class Game {
           this.buildingUpgradeSystem.update(this.em, this.civManager, this.world.tick)
           this.cityPlanningSystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
         }
-        // Autosave every 30000 ticks (~8 minutes at 60fps)
-        if (this.world.tick > 0 && this.world.tick % 30000 === 0) {
-          SaveSystem.save(this.world, this.em, this.civManager, this.resources, 'auto')
-        }
+        // AutoSave system (replaces old tick-based autosave)
+        this.autoSave.update(this.world.tick, this.world, this.em, this.civManager, this.resources)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
@@ -1764,6 +1814,25 @@ export class Game {
     // Trade fleet - ships and routes on water
     this.tradeFleet.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
 
+
+    // Weather particle effects overlay
+    this.weatherParticles.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Diplomacy visual - relation lines and event bubbles
+    this.diplomacyVisual.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+    this.diplomacyVisual.renderPanel(ctx, this.canvas.width, this.canvas.height)
+
+    // Event notification - edge indicators and ticker
+    this.eventNotification.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Editor enhanced - brush preview and grid
+    this.editorEnhanced.renderGrid(ctx, this.camera.x, this.camera.y, this.camera.zoom, 0, 0, this.canvas.width, this.canvas.height)
+
+    // Enhanced fog of war
+    if (this.fogEnhanced.isEnabled()) {
+      const bounds = this.camera.getVisibleBounds()
+      this.fogEnhanced.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, bounds.startX, bounds.startY, bounds.endX, bounds.endY)
+    }
     // Unified particle system
     this.unifiedParticles.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
 
@@ -1796,6 +1865,27 @@ export class Game {
     }
 
     this.updateDayNightIndicator()
+
+    // Performance monitor update + render (v1.62)
+    this.perfMonitor.update(
+      this.accumulator > 0 ? this.tickRate / 1000 : 1 / 60,
+      this.em.getAllEntities().length,
+      this.world.tick,
+      this.speed
+    )
+    this.perfMonitor.render(ctx)
+
+    // AutoSave indicator (v1.61)
+    this.autoSave.render(ctx)
+
+    // World seed display (v1.63)
+    this.worldSeed.render(ctx, this.canvas.width)
+
+    // Keybind panel overlay (v1.64)
+    this.keybindSystem.render(ctx, this.canvas.width, this.canvas.height)
+
+    // World export progress overlay (v1.65)
+    this.worldExport.render(ctx, this.canvas.width, this.canvas.height)
 
     requestAnimationFrame(this.loop)
   }
