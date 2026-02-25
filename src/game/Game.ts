@@ -180,6 +180,11 @@ import { SeasonFestivalSystem } from '../systems/SeasonFestivalSystem'
 import { CreatureMutationSystem } from '../systems/CreatureMutationSystem'
 import { DiplomaticMarriageSystem } from '../systems/DiplomaticMarriageSystem'
 import { WorldRelicSystem } from '../systems/WorldRelicSystem'
+import { CreatureAncestorSystem } from '../systems/CreatureAncestorSystem'
+import { WorldAnomalySystem } from '../systems/WorldAnomalySystem'
+import { CreatureApprenticeSystem } from '../systems/CreatureApprenticeSystem'
+import { DiplomaticSanctionSystem } from '../systems/DiplomaticSanctionSystem'
+import { WorldMythicBeastSystem } from '../systems/WorldMythicBeastSystem'
 
 export class Game {
   private world: World
@@ -362,6 +367,11 @@ export class Game {
   private creatureMutation!: CreatureMutationSystem
   private diplomaticMarriage!: DiplomaticMarriageSystem
   private worldRelic!: WorldRelicSystem
+  private creatureAncestor!: CreatureAncestorSystem
+  private worldAnomaly!: WorldAnomalySystem
+  private creatureApprentice!: CreatureApprenticeSystem
+  private diplomaticSanction!: DiplomaticSanctionSystem
+  private worldMythicBeast!: WorldMythicBeastSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -688,6 +698,11 @@ export class Game {
     this.creatureMutation = new CreatureMutationSystem()
     this.diplomaticMarriage = new DiplomaticMarriageSystem()
     this.worldRelic = new WorldRelicSystem()
+    this.creatureAncestor = new CreatureAncestorSystem()
+    this.worldAnomaly = new WorldAnomalySystem()
+    this.creatureApprentice = new CreatureApprenticeSystem()
+    this.diplomaticSanction = new DiplomaticSanctionSystem()
+    this.worldMythicBeast = new WorldMythicBeastSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -1945,6 +1960,16 @@ export class Game {
         this.diplomaticMarriage.update(this.tickRate, this.civManager, this.world.tick)
         // World relics (v2.15) - ancient relics with buffs
         this.worldRelic.update(this.tickRate, this.em, this.world)
+        // Creature ancestor worship (v2.16) - ancestor spirits buff descendants
+        this.creatureAncestor.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // World anomalies (v2.17) - strange anomalies warp terrain and creatures
+        this.worldAnomaly.update(this.tickRate, this.em, this.world)
+        // Creature apprentice (v2.18) - master-apprentice mentoring
+        this.creatureApprentice.update(this.tickRate, this.em, this.world.tick)
+        // Diplomatic sanctions (v2.19) - economic sanctions between civs
+        this.diplomaticSanction.update(this.tickRate, this.civManager, this.world.tick)
+        // World mythic beasts (v2.20) - legendary creatures roam the world
+        this.worldMythicBeast.update(this.tickRate, this.em, this.world)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
@@ -2401,6 +2426,21 @@ export class Game {
 
     // World relics (v2.15)
     this.worldRelic.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // Creature ancestor spirits (v2.16)
+    this.creatureAncestor.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // World anomalies (v2.17)
+    this.worldAnomaly.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // Creature apprentice links (v2.18)
+    this.creatureApprentice.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, this.em)
+
+    // Diplomatic sanctions panel (v2.19)
+    this.diplomaticSanction.render(ctx)
+
+    // World mythic beasts (v2.20)
+    this.worldMythicBeast.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
 
     // Screenshot mode toast (v1.66)
     this.screenshotMode.update()
