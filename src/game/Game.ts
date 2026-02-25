@@ -170,6 +170,11 @@ import { CreatureDreamSystem } from '../systems/CreatureDreamSystem'
 import { NaturalDisasterRecoverySystem } from '../systems/NaturalDisasterRecoverySystem'
 import { CreatureFameSystem } from '../systems/CreatureFameSystem'
 import { WorldMigrationWaveSystem } from '../systems/WorldMigrationWaveSystem'
+import { CreatureRivalrySystem } from '../systems/CreatureRivalrySystem'
+import { WorldCorruptionSystem } from '../systems/WorldCorruptionSystem'
+import { CreatureProfessionSystem } from '../systems/CreatureProfessionSystem'
+import { DiplomaticSummitSystem } from '../systems/DiplomaticSummitSystem'
+import { WorldLeyLineSystem } from '../systems/WorldLeyLineSystem'
 
 export class Game {
   private world: World
@@ -342,6 +347,11 @@ export class Game {
   private disasterRecovery!: NaturalDisasterRecoverySystem
   private creatureFame!: CreatureFameSystem
   private migrationWave!: WorldMigrationWaveSystem
+  private creatureRivalry!: CreatureRivalrySystem
+  private worldCorruption!: WorldCorruptionSystem
+  private creatureProfession!: CreatureProfessionSystem
+  private diplomaticSummit!: DiplomaticSummitSystem
+  private worldLeyLine!: WorldLeyLineSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -658,6 +668,11 @@ export class Game {
     this.disasterRecovery = new NaturalDisasterRecoverySystem()
     this.creatureFame = new CreatureFameSystem()
     this.migrationWave = new WorldMigrationWaveSystem()
+    this.creatureRivalry = new CreatureRivalrySystem()
+    this.worldCorruption = new WorldCorruptionSystem()
+    this.creatureProfession = new CreatureProfessionSystem()
+    this.diplomaticSummit = new DiplomaticSummitSystem()
+    this.worldLeyLine = new WorldLeyLineSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -1895,6 +1910,16 @@ export class Game {
         this.creatureFame.update(this.tickRate, this.em, this.world.tick)
         // Migration wave (v2.05) - large-scale population movement
         this.migrationWave.update(this.tickRate, this.em, this.world, this.civManager)
+        // Creature rivalry (v2.06) - persistent hatred between creatures
+        this.creatureRivalry.update(this.tickRate, this.em)
+        // World corruption (v2.07) - evil forces corrupt terrain
+        this.worldCorruption.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature profession (v2.08) - job assignment system
+        this.creatureProfession.update(this.tickRate, this.em, this.world.tick)
+        // Diplomatic summit (v2.09) - multi-party negotiations
+        this.diplomaticSummit.update(this.tickRate, this.civManager, this.world.tick)
+        // World ley lines (v2.10) - energy lines on the map
+        this.worldLeyLine.update(this.tickRate, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
@@ -2321,6 +2346,21 @@ export class Game {
 
     // Creature personality panel (v2.00)
     this.creaturePersonality.render(ctx)
+
+    // Creature rivalry panel (v2.06)
+    this.creatureRivalry.render(ctx)
+
+    // World corruption overlay (v2.07)
+    this.worldCorruption.renderOverlay(ctx, this.camera.x, this.camera.y, this.camera.zoom, TILE_SIZE)
+
+    // Creature profession panel (v2.08)
+    this.creatureProfession.render(ctx)
+
+    // Diplomatic summit notification (v2.09)
+    this.diplomaticSummit.render(ctx)
+
+    // World ley lines (v2.10)
+    this.worldLeyLine.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
 
     // Screenshot mode toast (v1.66)
     this.screenshotMode.update()
