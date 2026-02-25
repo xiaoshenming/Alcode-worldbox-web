@@ -1,7 +1,7 @@
 import { EntityManager, PositionComponent, EntityId } from '../ecs/Entity'
 import { World } from '../game/World'
 import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
-import { Civilization, createCivilization, BuildingType, BuildingComponent, CivMemberComponent } from './Civilization'
+import { Civilization, createCivilization, BuildingType, BuildingComponent, CivMemberComponent, RELIGION_NAMES } from './Civilization'
 import { EventLog } from '../systems/EventLog'
 
 export class CivManager {
@@ -136,6 +136,12 @@ export class CivManager {
         this.updateTradeRoutes(civ)
       }
       this.applyTradeIncome(civ)
+
+      // Religion
+      this.updateReligion(civ)
+
+      // Happiness & revolt
+      this.updateHappiness(civ)
     }
   }
 
@@ -413,6 +419,12 @@ export class CivManager {
       // Ports on sand (coastal)
       civ.resources.wood -= 25 * costMult
       this.placeBuilding(civ.id, BuildingType.PORT, x, y)
+    } else if (civ.techLevel >= 2 && civ.resources.stone >= 25 * costMult && civ.resources.gold >= 10 * costMult && this.countBuildings(civ, BuildingType.TEMPLE) < 2) {
+      // Temples
+      civ.resources.stone -= 25 * costMult
+      civ.resources.gold -= 10 * costMult
+      this.placeBuilding(civ.id, BuildingType.TEMPLE, x, y)
+      EventLog.log('building', `${civ.name} built a temple to ${RELIGION_NAMES[civ.religion.type]}`, 0)
     }
   }
 
@@ -507,6 +519,197 @@ export class CivManager {
       default:
         return 1.0
     }
+  }
+
+  private updateHappiness(civ: Civilization): void {
+    // Base happiness factors
+    let delta = 0
+
+    // Food surplus = happy, shortage = unhappy
+    if (civ.resources.food > civ.population * 2) delta += 0.02
+    else if (civ.resources.food < civ.population * 0.5) delta -= 0.05
+    else if (civ.resources.food < civ.population) delta -= 0.02
+
+    // Tax impact: higher tax = less happy
+    const taxPenalty = [0, -0.01, -0.03, -0.06][civ.taxRate] ?? 0
+    delta += taxPenalty
+
+    // Tax generates gold
+    const taxIncome = [0, 0.02, 0.05, 0.1][civ.taxRate] ?? 0
+    civ.resources.gold += taxIncome * civ.population
+
+    // Houses boost happiness
+    const houses = civ.buildings.filter(id => {
+      const b = this.em.getComponent<BuildingComponent>(id, 'building')
+      return b && b.buildingType === BuildingType.HOUSE
+    }).length
+    if (houses * 3 >= civ.population) delta += 0.01 // enough housing
+
+    // Temples boost happiness via faith
+    if (civ.religion.faith > 50) delta += 0.01
+
+    // At war = unhappy
+    for (const [, rel] of civ.relations) {
+      if (rel <= -50) { delta -= 0.02; break }
+    }
+
+    // Active blessing bonus
+    if (civ.religion.blessing === 'fertility') delta += 0.015
+
+    // Apply delta
+    civ.happiness = Math.max(0, Math.min(100, civ.happiness + delta))
+
+    // Revolt check
+    if (civ.revoltTimer > 0) {
+      civ.revoltTimer--
+    } else if (civ.happiness < 20 && civ.population > 2 && Math.random() < 0.002) {
+      this.triggerRevolt(civ)
+      civ.revoltTimer = 1000 // cooldown before next revolt
+    }
+  }
+
+  private triggerRevolt(civ: Civilization): void {
+    // Some members leave the civilization
+    const members = this.em.getEntitiesWithComponent('civMember')
+    const civMembers = members.filter(id => {
+      const m = this.em.getComponent<CivMemberComponent>(id, 'civMember')
+      return m && m.civId === civ.id && m.role !== 'leader'
+    })
+
+    const revolters = Math.min(Math.ceil(civMembers.length * 0.3), civMembers.length)
+    for (let i = 0; i < revolters; i++) {
+      const idx = Math.floor(Math.random() * civMembers.length)
+      const id = civMembers[idx]
+      this.em.removeComponent(id, 'civMember')
+      civ.population = Math.max(0, civ.population - 1)
+      civMembers.splice(idx, 1)
+    }
+
+    // Revolt damages some buildings
+    if (civ.buildings.length > 0 && Math.random() < 0.3) {
+      const bIdx = Math.floor(Math.random() * civ.buildings.length)
+      const bId = civ.buildings[bIdx]
+      const b = this.em.getComponent<BuildingComponent>(bId, 'building')
+      if (b) {
+        b.health = Math.max(0, b.health - 40)
+        if (b.health <= 0) {
+          this.em.removeEntity(bId)
+          civ.buildings.splice(bIdx, 1)
+        }
+      }
+    }
+
+    // Happiness rebounds slightly after revolt
+    civ.happiness = Math.min(100, civ.happiness + 15)
+
+    EventLog.log('war', `Revolt in ${civ.name}! ${revolters} citizens left, happiness was ${Math.round(civ.happiness)}%`, 0)
+  }
+
+  private updateReligion(civ: Civilization): void {
+    // Count temples
+    civ.religion.temples = civ.buildings.filter(id => {
+      const b = this.em.getComponent<BuildingComponent>(id, 'building')
+      return b && b.buildingType === BuildingType.TEMPLE
+    }).length
+
+    // Faith grows with temples, slowly decays without
+    if (civ.religion.temples > 0) {
+      civ.religion.faith = Math.min(100, civ.religion.faith + 0.01 * civ.religion.temples)
+    } else {
+      civ.religion.faith = Math.max(0, civ.religion.faith - 0.005)
+    }
+
+    // Blessing timer countdown
+    if (civ.religion.blessingTimer > 0) {
+      civ.religion.blessingTimer--
+      if (civ.religion.blessingTimer <= 0) {
+        civ.religion.blessing = null
+      }
+    }
+
+    // Random divine events at high faith
+    if (civ.religion.faith > 60 && !civ.religion.blessing && Math.random() < 0.001) {
+      this.grantBlessing(civ)
+    }
+
+    // Curse at very low faith with temples (angered gods)
+    if (civ.religion.faith < 10 && civ.religion.temples > 0 && Math.random() < 0.0005) {
+      this.applyCurse(civ)
+    }
+
+    // Apply passive temple effects
+    this.applyTempleEffects(civ)
+  }
+
+  private grantBlessing(civ: Civilization): void {
+    const blessings: [string, string][] = [
+      ['harvest', 'Divine Harvest - bonus food production'],
+      ['shield', 'Divine Shield - reduced combat damage taken'],
+      ['wisdom', 'Divine Wisdom - faster tech advancement'],
+      ['fertility', 'Divine Fertility - increased birth rate'],
+      ['gold', 'Divine Fortune - bonus gold income'],
+    ]
+    const [type, desc] = blessings[Math.floor(Math.random() * blessings.length)]
+    civ.religion.blessing = type
+    civ.religion.blessingTimer = 3000 // ~50 seconds at normal speed
+    EventLog.log('building', `${RELIGION_NAMES[civ.religion.type]}: ${civ.name} received ${desc}`, 0)
+  }
+
+  private applyCurse(civ: Civilization): void {
+    // Curses: lose some resources or population health
+    const curseType = Math.random()
+    if (curseType < 0.33) {
+      civ.resources.food = Math.max(0, civ.resources.food - 20)
+      EventLog.log('disaster', `${RELIGION_NAMES[civ.religion.type]} cursed ${civ.name} - famine!`, 0)
+    } else if (curseType < 0.66) {
+      civ.resources.gold = Math.max(0, civ.resources.gold - 15)
+      EventLog.log('disaster', `${RELIGION_NAMES[civ.religion.type]} cursed ${civ.name} - gold withered!`, 0)
+    } else {
+      civ.resources.wood = Math.max(0, civ.resources.wood - 15)
+      civ.resources.stone = Math.max(0, civ.resources.stone - 10)
+      EventLog.log('disaster', `${RELIGION_NAMES[civ.religion.type]} cursed ${civ.name} - resources crumbled!`, 0)
+    }
+  }
+
+  private applyTempleEffects(civ: Civilization): void {
+    if (civ.religion.temples === 0) return
+    const faithMult = civ.religion.faith / 100
+
+    // Passive: temples generate small gold (tithes)
+    civ.resources.gold += 0.01 * civ.religion.temples * faithMult
+
+    // Active blessing bonuses
+    if (civ.religion.blessing) {
+      switch (civ.religion.blessing) {
+        case 'harvest':
+          civ.resources.food += 0.05 * faithMult
+          break
+        case 'gold':
+          civ.resources.gold += 0.03 * faithMult
+          break
+        case 'wisdom':
+          // Tech advancement boost handled via getCultureBonus extension
+          break
+      }
+    }
+  }
+
+  getReligionCombatBonus(civId: number): number {
+    const civ = this.civilizations.get(civId)
+    if (!civ) return 1.0
+    if (civ.religion.blessing === 'shield') {
+      return 1.0 + 0.15 * (civ.religion.faith / 100)
+    }
+    return 1.0
+  }
+
+  getReligionTechBonus(civId: number): number {
+    const civ = this.civilizations.get(civId)
+    if (!civ) return 1.0
+    if (civ.religion.blessing === 'wisdom') {
+      return 1.0 + 0.3 * (civ.religion.faith / 100)
+    }
+    return 1.0
   }
 
   private updateTradeRoutes(civ: Civilization): void {

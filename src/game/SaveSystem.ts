@@ -1,7 +1,7 @@
 import { World } from './World'
 import { EntityManager, EntityId, PositionComponent, VelocityComponent, RenderComponent, NeedsComponent, AIComponent, CreatureComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
-import { Civilization, BuildingComponent, CivMemberComponent, BuildingType, CultureTrait } from '../civilization/Civilization'
+import { Civilization, BuildingComponent, CivMemberComponent, BuildingType, CultureTrait, ReligionType } from '../civilization/Civilization'
 import { ResourceSystem, ResourceNode } from '../systems/ResourceSystem'
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 
@@ -34,6 +34,10 @@ interface SavedCiv {
   relations: [number, number][]
   tradeRoutes?: { partnerId: number; fromPort: { x: number; y: number }; toPort: { x: number; y: number }; active: boolean; income: number }[]
   culture?: { trait: string; strength: number }
+  religion?: { type: string; faith: number; temples: number; blessing: string | null; blessingTimer: number }
+  happiness?: number
+  taxRate?: number
+  revoltTimer?: number
 }
 
 export class SaveSystem {
@@ -104,6 +108,10 @@ export class SaveSystem {
           relations: new Map(sc.relations),
           tradeRoutes: sc.tradeRoutes ?? [],
           culture: sc.culture ? { trait: sc.culture.trait as CultureTrait, strength: sc.culture.strength } : { trait: 'warrior' as CultureTrait, strength: 0 },
+          religion: sc.religion ? { type: sc.religion.type as ReligionType, faith: sc.religion.faith, temples: sc.religion.temples ?? 0, blessing: sc.religion.blessing ?? null, blessingTimer: sc.religion.blessingTimer ?? 0 } : { type: 'sun' as ReligionType, faith: 5, temples: 0, blessing: null, blessingTimer: 0 },
+          happiness: sc.happiness ?? 70,
+          taxRate: sc.taxRate ?? 1,
+          revoltTimer: sc.revoltTimer ?? 0,
         }
         civManager.civilizations.set(civ.id, civ)
       }
@@ -176,6 +184,10 @@ export class SaveSystem {
         relations: Array.from(civ.relations.entries()),
         tradeRoutes: civ.tradeRoutes,
         culture: civ.culture,
+        religion: civ.religion,
+        happiness: civ.happiness,
+        taxRate: civ.taxRate,
+        revoltTimer: civ.revoltTimer,
       })
     }
     return result

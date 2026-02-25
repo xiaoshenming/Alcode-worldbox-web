@@ -1,6 +1,6 @@
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
-import { Civilization, TECH_TREE, CULTURE_ICONS } from '../civilization/Civilization'
+import { Civilization, TECH_TREE, CULTURE_ICONS, RELIGION_ICONS, RELIGION_NAMES } from '../civilization/Civilization'
 
 export class StatsPanel {
   private el: HTMLElement
@@ -154,6 +154,46 @@ export class StatsPanel {
     strengthValSpan.textContent = `${strengthFill} ${Math.round(civ.culture.strength)}%`
     cultureLine.appendChild(strengthValSpan)
     row.appendChild(cultureLine)
+
+    // Religion line
+    const relLine = document.createElement('div')
+    relLine.style.cssText = 'font-size:10px;margin-top:2px'
+    const relIcon = RELIGION_ICONS[civ.religion.type]
+    const faithBar = Math.round(civ.religion.faith / 10)
+    const faithFill = '■'.repeat(faithBar) + '□'.repeat(10 - faithBar)
+    const relSpan = document.createElement('span')
+    relSpan.style.color = '#e0c0f0'
+    relSpan.textContent = `${relIcon} ${RELIGION_NAMES[civ.religion.type]}`
+    relLine.appendChild(relSpan)
+    const faithSpan = document.createElement('span')
+    faithSpan.style.cssText = 'color:#c0a0e0;margin-left:6px;font-size:9px'
+    faithSpan.textContent = `${faithFill} ${Math.round(civ.religion.faith)}%`
+    relLine.appendChild(faithSpan)
+    if (civ.religion.blessing) {
+      const blessSpan = document.createElement('span')
+      blessSpan.style.cssText = 'color:#ffd700;margin-left:4px;font-size:9px'
+      blessSpan.textContent = `✨${civ.religion.blessing}`
+      relLine.appendChild(blessSpan)
+    }
+    row.appendChild(relLine)
+
+    // Happiness line
+    const happyLine = document.createElement('div')
+    happyLine.style.cssText = 'font-size:10px;margin-top:2px'
+    const happyBar = Math.round(civ.happiness / 10)
+    const happyFill = '■'.repeat(happyBar) + '□'.repeat(10 - happyBar)
+    const happyColor = civ.happiness > 60 ? '#8f8' : civ.happiness > 30 ? '#ff8' : '#f88'
+    const happyIcon = civ.happiness > 60 ? '😊' : civ.happiness > 30 ? '😐' : '😠'
+    const taxLabels = ['None', 'Low', 'Medium', 'High']
+    const happySpan = document.createElement('span')
+    happySpan.style.color = happyColor
+    happySpan.textContent = `${happyIcon} ${happyFill} ${Math.round(civ.happiness)}%`
+    happyLine.appendChild(happySpan)
+    const taxSpan = document.createElement('span')
+    taxSpan.style.cssText = 'color:#aaa;margin-left:6px;font-size:9px'
+    taxSpan.textContent = `Tax: ${taxLabels[civ.taxRate]}`
+    happyLine.appendChild(taxSpan)
+    row.appendChild(happyLine)
 
     this.el.appendChild(row)
   }

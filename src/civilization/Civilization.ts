@@ -3,6 +3,27 @@ import { Component, EntityId } from '../ecs/Entity'
 // Culture traits
 export type CultureTrait = 'warrior' | 'merchant' | 'scholar' | 'nature' | 'builder'
 
+// Religion types
+export type ReligionType = 'sun' | 'moon' | 'earth' | 'storm' | 'ancestor'
+
+export const RELIGION_NAMES: Record<ReligionType, string> = {
+  sun: 'Solar Faith',
+  moon: 'Lunar Order',
+  earth: 'Earth Cult',
+  storm: 'Storm Worship',
+  ancestor: 'Ancestor Spirits'
+}
+
+export const RELIGION_ICONS: Record<ReligionType, string> = {
+  sun: '☀️',
+  moon: '🌙',
+  earth: '🌍',
+  storm: '⛈️',
+  ancestor: '👻'
+}
+
+export const RELIGION_TYPES: ReligionType[] = ['sun', 'moon', 'earth', 'storm', 'ancestor']
+
 export const CULTURE_TRAITS: CultureTrait[] = ['warrior', 'merchant', 'scholar', 'nature', 'builder']
 
 export const CULTURE_ICONS: Record<CultureTrait, string> = {
@@ -22,7 +43,8 @@ export enum BuildingType {
   TOWER = 'tower',
   CASTLE = 'castle',
   MINE = 'mine',
-  PORT = 'port'
+  PORT = 'port',
+  TEMPLE = 'temple'
 }
 
 export const BUILDING_COLORS: Record<BuildingType, string> = {
@@ -34,6 +56,7 @@ export const BUILDING_COLORS: Record<BuildingType, string> = {
   [BuildingType.CASTLE]: '#B8860B',
   [BuildingType.MINE]: '#4A4A4A',
   [BuildingType.PORT]: '#5F9EA0',
+  [BuildingType.TEMPLE]: '#DAA0F0',
 }
 
 export const BUILDING_SIZES: Record<BuildingType, number> = {
@@ -45,6 +68,7 @@ export const BUILDING_SIZES: Record<BuildingType, number> = {
   [BuildingType.CASTLE]: 3,
   [BuildingType.MINE]: 2,
   [BuildingType.PORT]: 2,
+  [BuildingType.TEMPLE]: 2,
 }
 
 export interface TradeRoute {
@@ -76,6 +100,16 @@ export interface Civilization {
     trait: CultureTrait
     strength: number // 0-100, grows over time
   }
+  religion: {
+    type: ReligionType
+    faith: number      // 0-100, grows with temples
+    temples: number    // count of temples
+    blessing: string | null  // active blessing effect
+    blessingTimer: number    // ticks remaining on blessing
+  }
+  happiness: number      // 0-100, affects productivity and revolt chance
+  taxRate: number        // 0-3 (none/low/medium/high), generates gold but reduces happiness
+  revoltTimer: number    // ticks until next revolt check
 }
 
 // Components
@@ -146,6 +180,16 @@ export function createCivilization(): Civilization {
     culture: {
       trait: CULTURE_TRAITS[Math.floor(Math.random() * CULTURE_TRAITS.length)],
       strength: 10
-    }
+    },
+    religion: {
+      type: RELIGION_TYPES[Math.floor(Math.random() * RELIGION_TYPES.length)],
+      faith: 5,
+      temples: 0,
+      blessing: null,
+      blessingTimer: 0
+    },
+    happiness: 70,
+    taxRate: 1,
+    revoltTimer: 0
   }
 }
