@@ -190,6 +190,11 @@ import { WorldSeasonalDisasterSystem } from '../systems/WorldSeasonalDisasterSys
 import { CreatureReputationSystem } from '../systems/CreatureReputationSystem'
 import { DiplomaticEspionageSystem } from '../systems/DiplomaticEspionageSystem'
 import { WorldAncientRuinSystem } from '../systems/WorldAncientRuinSystem'
+import { CreatureHobbySystem } from '../systems/CreatureHobbySystem'
+import { WorldNaturalWonderSystem } from '../systems/WorldNaturalWonderSystem'
+import { CreatureLanguageSystem } from '../systems/CreatureLanguageSystem'
+import { DiplomaticTributeSystem } from '../systems/DiplomaticTributeSystem'
+import { WorldWeatherFrontSystem } from '../systems/WorldWeatherFrontSystem'
 
 export class Game {
   private world: World
@@ -382,6 +387,11 @@ export class Game {
   private creatureReputation!: CreatureReputationSystem
   private diplomaticEspionage!: DiplomaticEspionageSystem
   private worldAncientRuin!: WorldAncientRuinSystem
+  private creatureHobby!: CreatureHobbySystem
+  private worldNaturalWonder!: WorldNaturalWonderSystem
+  private creatureLanguage!: CreatureLanguageSystem
+  private diplomaticTribute!: DiplomaticTributeSystem
+  private worldWeatherFront!: WorldWeatherFrontSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -718,6 +728,12 @@ export class Game {
     this.creatureReputation = new CreatureReputationSystem()
     this.diplomaticEspionage = new DiplomaticEspionageSystem()
     this.worldAncientRuin = new WorldAncientRuinSystem()
+    this.creatureHobby = new CreatureHobbySystem()
+    this.worldNaturalWonder = new WorldNaturalWonderSystem()
+    this.creatureLanguage = new CreatureLanguageSystem()
+    this.diplomaticTribute = new DiplomaticTributeSystem()
+    this.worldWeatherFront = new WorldWeatherFrontSystem()
+    this.worldWeatherFront.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -1995,6 +2011,16 @@ export class Game {
         this.diplomaticEspionage.update(this.tickRate, this.em, [...this.civManager.civilizations.values()] as any, this.world.tick)
         // World ancient ruins (v2.25) - explorable ruins
         this.worldAncientRuin.update(this.tickRate, this.em, this.world)
+        // Creature hobbies (v2.26) - creatures develop hobbies
+        this.creatureHobby.update(this.tickRate, this.em, this.world.tick)
+        // World natural wonders (v2.27) - natural wonders provide area buffs
+        this.worldNaturalWonder.update(this.tickRate, this.em, this.world)
+        // Creature language (v2.28) - language evolution affects diplomacy
+        this.creatureLanguage.update(this.tickRate, [...this.civManager.civilizations.keys()], this.world.tick)
+        // Diplomatic tribute (v2.29) - weaker civs pay tribute
+        this.diplomaticTribute.update(this.tickRate, this.civManager, this.world.tick)
+        // World weather fronts (v2.30) - moving weather fronts
+        this.worldWeatherFront.update(this.tickRate, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
