@@ -56,7 +56,44 @@ export class Game {
     this.setupBrushControls()
     this.setupInputCallbacks()
     this.setupResize()
+    this.setupToolbarButtons()
     this.renderer.resize(window.innerWidth, window.innerHeight)
+  }
+
+  private setupToolbarButtons(): void {
+    // New World button
+    const newWorldBtn = document.getElementById('newWorldBtn')
+    if (newWorldBtn) {
+      newWorldBtn.addEventListener('click', () => {
+        this.resetWorld()
+      })
+    }
+
+    // Toggle Territory button
+    const toggleTerritoryBtn = document.getElementById('toggleTerritoryBtn')
+    if (toggleTerritoryBtn) {
+      toggleTerritoryBtn.addEventListener('click', () => {
+        this.renderer.showTerritory = !this.renderer.showTerritory
+        toggleTerritoryBtn.classList.toggle('active', this.renderer.showTerritory)
+      })
+      toggleTerritoryBtn.classList.add('active')
+    }
+  }
+
+  private resetWorld(): void {
+    // Clear all entities
+    for (const id of this.em.getAllEntities()) {
+      this.em.removeEntity(id)
+    }
+
+    // Reset civilization manager
+    this.civManager = new CivManager(this.em, this.world)
+    this.combatSystem = new CombatSystem(this.em, this.civManager)
+    this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager)
+    this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
+
+    // Generate new world
+    this.world.generate()
   }
 
   private setupSpeedControls(): void {

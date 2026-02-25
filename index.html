@@ -9,7 +9,8 @@
     body {
       background: #1a1a2e;
       overflow: hidden;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      user-select: none;
     }
     #gameCanvas {
       display: block;
@@ -22,44 +23,88 @@
       z-index: 100;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
+      max-height: calc(100vh - 20px);
+      overflow-y: auto;
     }
     .panel {
-      background: rgba(0,0,0,0.8);
-      border: 2px solid #4a4a6a;
-      border-radius: 8px;
+      background: rgba(15,15,30,0.95);
+      border: 2px solid #3a3a5a;
+      border-radius: 10px;
       padding: 10px;
       color: #fff;
-      font-size: 14px;
+      font-size: 13px;
+      backdrop-filter: blur(10px);
+    }
+    .title {
+      font-size: 18px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 5px;
     }
     .toolbar {
       display: flex;
       flex-wrap: wrap;
       gap: 5px;
-      max-width: 300px;
+      max-width: 320px;
     }
     .btn {
-      background: #2a2a4a;
+      background: linear-gradient(145deg, #2a2a4a, #1a1a3a);
       border: 1px solid #4a4a6a;
-      color: #fff;
+      color: #ccc;
       padding: 8px 12px;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
       font-size: 12px;
       transition: all 0.2s;
+      white-space: nowrap;
     }
-    .btn:hover { background: #3a3a5a; }
-    .btn.active { background: #4a6a9a; border-color: #6a8aba; }
-    .info { font-size: 12px; color: #aaa; }
+    .btn:hover {
+      background: linear-gradient(145deg, #3a3a5a, #2a2a4a);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .btn.active {
+      background: linear-gradient(145deg, #4a6a9a, #3a5a8a);
+      border-color: #6a8aba;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(100,140,200,0.3);
+    }
+    .info { font-size: 12px; color: #888; line-height: 1.5; }
+    .civ-badge { padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 4px; }
     #speedControls { display: flex; gap: 5px; }
+    #brushSize { display: flex; align-items: center; gap: 8px; }
+    #brushSize input { width: 80px; }
     #minimap {
       position: fixed;
       bottom: 10px;
       right: 10px;
-      width: 150px;
-      height: 150px;
-      border: 2px solid #4a4a6a;
-      border-radius: 4px;
+      width: 160px;
+      height: 160px;
+      border: 2px solid #3a3a5a;
+      border-radius: 8px;
+      background: #000;
+    }
+    .category-label {
+      font-size: 11px;
+      color: #666;
+      margin: 8px 0 4px 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    #tooltip {
+      position: fixed;
+      background: rgba(0,0,0,0.9);
+      border: 1px solid #4a4a6a;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 12px;
+      pointer-events: none;
+      z-index: 1000;
+      display: none;
     }
   </style>
 </head>
@@ -68,21 +113,27 @@
   <canvas id="minimap"></canvas>
   <div id="ui">
     <div class="panel">
-      <div class="info">WorldBox Web v0.1</div>
+      <div class="title">🌍 WorldBox Web</div>
       <div id="worldInfo" class="info"></div>
+    </div>
+    <div class="panel">
+      <button class="btn" id="newWorldBtn">🗺️ New World</button>
+      <button class="btn" id="toggleTerritoryBtn">🏴 Territory</button>
     </div>
     <div class="panel toolbar" id="toolbar"></div>
     <div class="panel" id="speedControls">
-      <button class="btn" data-speed="0">⏸</button>
-      <button class="btn active" data-speed="1">1x</button>
-      <button class="btn" data-speed="2">2x</button>
-      <button class="btn" data-speed="5">5x</button>
+      <button class="btn" data-speed="0">⏸️</button>
+      <button class="btn active" data-speed="1">▶️ 1x</button>
+      <button class="btn" data-speed="2">⏩ 2x</button>
+      <button class="btn" data-speed="5">⏩ 5x</button>
     </div>
     <div class="panel" id="brushSize">
-      Brush: <input type="range" min="1" max="10" value="2" id="brushSlider">
+      <span>🖌️ Brush:</span>
+      <input type="range" min="1" max="10" value="2" id="brushSlider">
       <span id="brushValue">2</span>
     </div>
   </div>
+  <div id="tooltip"></div>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
