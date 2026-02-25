@@ -66,6 +66,10 @@ import { TradeRouteRenderer, TradeRoute } from '../systems/TradeRouteRenderer'
 import { RuinsSystem } from '../systems/RuinsSystem'
 import { PlagueVisualSystem } from '../systems/PlagueVisualSystem'
 import { WorldDecorationSystem } from '../systems/WorldDecorationSystem'
+import { EraVisualSystem } from '../systems/EraVisualSystem'
+import { WeatherDisasterSystem } from '../systems/WeatherDisasterSystem'
+import { FogOfWarRenderer } from '../systems/FogOfWarRenderer'
+import { FortificationRenderer } from '../systems/FortificationRenderer'
 
 export class Game {
   private world: World
@@ -134,6 +138,10 @@ export class Game {
   private ruinsSystem: RuinsSystem
   private plagueVisual: PlagueVisualSystem
   private worldDecorations: WorldDecorationSystem
+  private eraVisual: EraVisualSystem
+  private weatherDisaster: WeatherDisasterSystem
+  private fogOfWar: FogOfWarRenderer
+  private fortificationRenderer: FortificationRenderer
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -346,6 +354,10 @@ export class Game {
     this.plagueVisual = new PlagueVisualSystem()
     this.worldDecorations = new WorldDecorationSystem()
     this.worldDecorations.generate(this.world.tiles, WORLD_WIDTH, WORLD_HEIGHT)
+    this.eraVisual = new EraVisualSystem()
+    this.weatherDisaster = new WeatherDisasterSystem()
+    this.fogOfWar = new FogOfWarRenderer()
+    this.fortificationRenderer = new FortificationRenderer()
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
     this.setupParticleEventHooks()
@@ -512,6 +524,10 @@ export class Game {
     this.plagueVisual = new PlagueVisualSystem()
     this.worldDecorations = new WorldDecorationSystem()
     this.worldDecorations.generate(this.world.tiles, WORLD_WIDTH, WORLD_HEIGHT)
+    this.eraVisual = new EraVisualSystem()
+    this.weatherDisaster = new WeatherDisasterSystem()
+    this.fogOfWar = new FogOfWarRenderer()
+    this.fortificationRenderer = new FortificationRenderer()
   }
 
   private setupSpeedControls(): void {
@@ -1124,6 +1140,12 @@ export class Game {
         this.volcanoSystem.update(this.world.tick, this.world, this.particles)
         this.ruinsSystem.update(this.world.tick)
         this.plagueVisual.update()
+        const currentSeason = this.seasonSystem.getCurrentSeason()
+        const weatherMap = { spring: 'rain' as const, summer: 'clear' as const, autumn: 'storm' as const, winter: 'snow' as const }
+        this.weatherDisaster.update(this.world, this.em, this.civManager, this.particles, this.world.tick, currentSeason, weatherMap[currentSeason])
+        this.eraVisual.update()
+        this.fogOfWar.update()
+        this.fortificationRenderer.update()
         // Update trade route visualization from caravan data
         if (this.world.tick % 120 === 0) {
           const routes: TradeRoute[] = []
@@ -1211,6 +1233,18 @@ export class Game {
 
     // Plague visual overlay
     this.plagueVisual.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // Weather disaster overlay
+    this.weatherDisaster.renderOverlay(ctx, this.canvas.width, this.canvas.height, this.world.tick)
+
+    // Era visual overlay
+    this.eraVisual.renderOverlay(ctx, this.canvas.width, this.canvas.height)
+
+    // Fog of war overlay
+    this.fogOfWar.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, 0, 0, this.canvas.width, this.canvas.height, () => 2 as const)
+
+    // Fortification rendering
+    this.fortificationRenderer.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, 0, 0, this.canvas.width, this.canvas.height)
 
     this.worldEventSystem.renderScreenOverlay(ctx, this.canvas.width, this.canvas.height)
     this.worldEventSystem.renderEventBanner(ctx, this.canvas.width)
