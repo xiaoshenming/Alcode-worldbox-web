@@ -26,6 +26,21 @@ export class InfoPanel {
         civInfo += `<span style="color:${civ.color}">■</span> ${civ.name} (${civ.population}) `
       }
       civInfo += '</div>'
+
+      // Diplomacy relations
+      if (civCount > 1) {
+        civInfo += '<div style="margin-top:4px;font-size:10px;color:#aaa">'
+        const civArr = Array.from(this.civManager.civilizations.values())
+        for (let i = 0; i < civArr.length; i++) {
+          for (let j = i + 1; j < civArr.length; j++) {
+            const rel = civArr[i].relations.get(civArr[j].id) ?? 0
+            const label = this.civManager.getRelationLabel(rel)
+            const relColor = rel > 50 ? '#2ecc71' : rel > 20 ? '#8bc34a' : rel > -20 ? '#888' : rel > -50 ? '#e67e22' : '#e74c3c'
+            civInfo += `<span style="color:${civArr[i].color}">■</span>-<span style="color:${civArr[j].color}">■</span> <span style="color:${relColor}">${label} (${Math.round(rel)})</span> `
+          }
+        }
+        civInfo += '</div>'
+      }
     }
 
     this.element.innerHTML = `

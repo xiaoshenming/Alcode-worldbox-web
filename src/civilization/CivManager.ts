@@ -117,7 +117,131 @@ export class CivManager {
       if (civ.resources.gold > 50 * civ.techLevel && Math.random() < 0.001) {
         civ.techLevel = Math.min(5, civ.techLevel + 1)
       }
+
+      // Diplomacy
+      this.updateDiplomacy(civ)
     }
+  }
+
+  private updateDiplomacy(civ: Civilization): void {
+    for (const [otherId, otherCiv] of this.civilizations) {
+      if (otherId === civ.id) continue
+
+      let relation = civ.relations.get(otherId) ?? 0
+
+      // Natural drift: relations slowly move toward 0
+      if (Math.random() < 0.01) {
+        relation += relation > 0 ? -0.5 : relation < 0 ? 0.5 : 0
+      }
+
+      // Neighboring civs develop opinions based on proximity
+      if (Math.random() < 0.005) {
+        const bordering = this.areBordering(civ, otherCiv)
+        if (bordering) {
+          // Bordering civs with similar tech levels tend toward alliance
+          const techDiff = Math.abs(civ.techLevel - otherCiv.techLevel)
+          if (techDiff <= 1) {
+            relation += 1
+          } else {
+            relation -= 0.5
+          }
+        }
+      }
+
+      // Alliance formation: relation > 50
+      // War declaration: relation < -50 (already handled by CombatSystem)
+
+      // Allied trade: share resources
+      if (relation > 50 && Math.random() < 0.01) {
+        this.tradeResources(civ, otherCiv)
+      }
+
+      // Hostile territory attack: steal border tiles
+      if (relation < -50 && Math.random() < 0.003) {
+        this.attackTerritory(civ, otherCiv)
+      }
+
+      civ.relations.set(otherId, Math.max(-100, Math.min(100, relation)))
+    }
+  }
+
+  private areBordering(a: Civilization, b: Civilization): boolean {
+    for (const key of a.territory) {
+      const [x, y] = key.split(',').map(Number)
+      const neighbors = [[0, 1], [0, -1], [1, 0], [-1, 0]]
+      for (const [dx, dy] of neighbors) {
+        const nx = x + dx, ny = y + dy
+        if (nx >= 0 && nx < WORLD_WIDTH && ny >= 0 && ny < WORLD_HEIGHT) {
+          if (this.territoryMap[ny][nx] === b.id) return true
+        }
+      }
+    }
+    return false
+  }
+
+  private tradeResources(a: Civilization, b: Civilization): void {
+    // Each civ shares surplus of their strongest resource
+    const tradeAmount = 2
+    if (a.resources.food > 30 && b.resources.food < 15) {
+      a.resources.food -= tradeAmount
+      b.resources.food += tradeAmount
+    }
+    if (b.resources.wood > 30 && a.resources.wood < 15) {
+      b.resources.wood -= tradeAmount
+      a.resources.wood += tradeAmount
+    }
+    if (a.resources.stone > 30 && b.resources.stone < 15) {
+      a.resources.stone -= tradeAmount
+      b.resources.stone += tradeAmount
+    }
+    // Trade improves relations slightly
+    const rel = a.relations.get(b.id) ?? 0
+    a.relations.set(b.id, Math.min(100, rel + 1))
+    b.relations.set(a.id, Math.min(100, (b.relations.get(a.id) ?? 0) + 1))
+  }
+
+  private attackTerritory(attacker: Civilization, defender: Civilization): void {
+    // Find border tiles between the two civs and steal some
+    const contested: [number, number][] = []
+
+    for (const key of defender.territory) {
+      const [x, y] = key.split(',').map(Number)
+      const neighbors = [[0, 1], [0, -1], [1, 0], [-1, 0]]
+      for (const [dx, dy] of neighbors) {
+        const nx = x + dx, ny = y + dy
+        if (nx >= 0 && nx < WORLD_WIDTH && ny >= 0 && ny < WORLD_HEIGHT) {
+          if (this.territoryMap[ny][nx] === attacker.id) {
+            contested.push([x, y])
+            break
+          }
+        }
+      }
+    }
+
+    if (contested.length === 0) return
+
+    // Steal 1-2 tiles
+    const count = Math.min(2, contested.length)
+    for (let i = 0; i < count; i++) {
+      const [x, y] = contested[Math.floor(Math.random() * contested.length)]
+      const key = `${x},${y}`
+      defender.territory.delete(key)
+      attacker.territory.add(key)
+      this.territoryMap[y][x] = attacker.id
+    }
+
+    // Worsen relations further
+    const rel = attacker.relations.get(defender.id) ?? 0
+    attacker.relations.set(defender.id, Math.max(-100, rel - 2))
+    defender.relations.set(attacker.id, Math.max(-100, (defender.relations.get(attacker.id) ?? 0) - 5))
+  }
+
+  getRelationLabel(value: number): string {
+    if (value > 50) return 'Allied'
+    if (value > 20) return 'Friendly'
+    if (value > -20) return 'Neutral'
+    if (value > -50) return 'Hostile'
+    return 'At War'
   }
 
   private gatherResources(civ: Civilization): void {
