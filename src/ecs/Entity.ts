@@ -101,4 +101,8 @@ export interface CreatureComponent extends Component {
   speed: number
   damage: number
   isHostile: boolean
+  name: string
+  age: number
+  maxAge: number
+  gender: 'male' | 'female'
 }

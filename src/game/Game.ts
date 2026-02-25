@@ -54,7 +54,7 @@ export class Game {
     this.civManager = new CivManager(this.em, this.world)
     this.particles = new ParticleSystem()
     this.audio = new SoundSystem()
-    this.aiSystem = new AISystem(this.em, this.world, this.particles)
+    this.aiSystem = new AISystem(this.em, this.world, this.particles, this.creatureFactory)
     this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles, this.audio)
 
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)

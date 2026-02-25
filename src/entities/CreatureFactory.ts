@@ -1,5 +1,6 @@
 import { EntityManager, EntityId, RenderComponent, PositionComponent, CreatureComponent } from '../ecs/Entity'
 import { EntityType } from '../utils/Constants'
+import { generateName } from '../utils/NameGenerator'
 
 const CREATURE_COLORS: Record<string, string> = {
   human: '#ffcc99',
@@ -19,6 +20,16 @@ const CREATURE_SIZES: Record<string, number> = {
   sheep: 3,
   wolf: 3,
   dragon: 6,
+}
+
+const MAX_AGE: Record<string, [number, number]> = {
+  human: [600, 900],
+  elf: [1200, 2000],
+  dwarf: [800, 1200],
+  orc: [400, 700],
+  sheep: [300, 500],
+  wolf: [400, 600],
+  dragon: [2000, 4000],
 }
 
 export class CreatureFactory {
@@ -52,12 +63,18 @@ export class CreatureFactory {
 
     // Creature
     const isHostile = ['wolf', 'orc', 'dragon'].includes(type)
+    const ageRange = MAX_AGE[type] || [500, 800]
+    const maxAge = ageRange[0] + Math.random() * (ageRange[1] - ageRange[0])
     this.em.addComponent(id, {
       type: 'creature',
       species: type,
       speed: type === 'dragon' ? 2 : type === 'wolf' ? 1.5 : 1,
       damage: type === 'dragon' ? 50 : type === 'wolf' ? 10 : 5,
-      isHostile
+      isHostile,
+      name: generateName(type),
+      age: 0,
+      maxAge,
+      gender: Math.random() < 0.5 ? 'male' : 'female'
     })
 
     // Needs
