@@ -155,6 +155,11 @@ import { CreatureLineageSystem } from '../systems/CreatureLineageSystem'
 import { WorldLawSystem } from '../systems/WorldLawSystem'
 import { MiniGameSystem } from '../systems/MiniGameSystem'
 import { CinematicModeSystem } from '../systems/CinematicModeSystem'
+import { CreatureMemorySystem } from '../systems/CreatureMemorySystem'
+import { PollutionSystem } from '../systems/PollutionSystem'
+import { ProphecySystem } from '../systems/ProphecySystem'
+import { CreatureSkillSystem } from '../systems/CreatureSkillSystem'
+import { WorldNarratorSystem } from '../systems/WorldNarratorSystem'
 
 export class Game {
   private world: World
@@ -312,6 +317,11 @@ export class Game {
   private worldLaw!: WorldLawSystem
   private miniGame!: MiniGameSystem
   private cinematicMode!: CinematicModeSystem
+  private creatureMemory!: CreatureMemorySystem
+  private pollution!: PollutionSystem
+  private prophecy!: ProphecySystem
+  private creatureSkill!: CreatureSkillSystem
+  private worldNarrator!: WorldNarratorSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -613,6 +623,11 @@ export class Game {
     this.worldLaw = new WorldLawSystem()
     this.miniGame = new MiniGameSystem()
     this.cinematicMode = new CinematicModeSystem()
+    this.creatureMemory = new CreatureMemorySystem()
+    this.pollution = new PollutionSystem()
+    this.prophecy = new ProphecySystem()
+    this.creatureSkill = new CreatureSkillSystem()
+    this.worldNarrator = new WorldNarratorSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -947,6 +962,13 @@ export class Game {
     window.addEventListener('keydown', (e) => {
       // Ignore shortcuts when typing in inputs
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+
+      // Delegate to v1.91-v1.95 systems (Shift+ combos)
+      if (this.creatureMemory.handleKeyDown(e)) return
+      if (this.pollution.handleKeyDown(e)) return
+      if (this.prophecy.handleKeyDown(e)) return
+      if (this.creatureSkill.handleKeyDown(e)) return
+      if (this.worldNarrator.handleKeyDown(e)) return
 
       switch (e.key) {
         // Speed controls (plain) / Camera bookmarks (Ctrl=save, Alt=jump)
@@ -1808,6 +1830,16 @@ export class Game {
         this.worldStatsOverview.update(this.world.tick, this.em, this.civManager)
         // Screenshot mode state (v1.66)
         this.screenshotMode.update()
+        // Creature memory decay (v1.91)
+        this.creatureMemory.update(this.world.tick)
+        // Pollution diffusion and decay (v1.92)
+        this.pollution.update(this.world.tiles)
+        // Prophecy generation and fulfillment (v1.93)
+        this.prophecy.update(this.world.tick, this.civManager.civilizations.size)
+        // Creature skill system (v1.94) - passive update
+        this.creatureSkill.update()
+        // World narrator (v1.95) - passive update
+        this.worldNarrator.update()
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
@@ -2201,6 +2233,21 @@ export class Game {
 
     // Cinematic mode (v1.90)
     this.cinematicMode.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Pollution overlay (v1.92)
+    this.pollution.renderOverlay(ctx, this.camera.x, this.camera.y, this.camera.zoom, TILE_SIZE)
+
+    // Creature memory panel (v1.91)
+    this.creatureMemory.render(ctx)
+
+    // Prophecy panel (v1.93)
+    this.prophecy.render(ctx, this.world.tick)
+
+    // Creature skill panel (v1.94)
+    this.creatureSkill.render(ctx)
+
+    // World narrator panel (v1.95)
+    this.worldNarrator.render(ctx)
 
     // Screenshot mode toast (v1.66)
     this.screenshotMode.update()
