@@ -103,6 +103,18 @@ export class Renderer {
     }
   }
 
+  // Terrain edge transition priority (higher = draws over lower)
+  private static readonly TERRAIN_PRIORITY: Record<number, number> = {
+    [TileType.DEEP_WATER]: 0,
+    [TileType.SHALLOW_WATER]: 1,
+    [TileType.SAND]: 2,
+    [TileType.GRASS]: 3,
+    [TileType.FOREST]: 4,
+    [TileType.MOUNTAIN]: 5,
+    [TileType.SNOW]: 6,
+    [TileType.LAVA]: 7,
+  }
+
   private renderTerrainToCache(
     world: World, camera: Camera, bounds: any,
     tileSize: number, offsetX: number, offsetY: number,
@@ -113,7 +125,9 @@ export class Renderer {
     ctx.fillRect(0, 0, this.terrainCanvas.width, this.terrainCanvas.height)
 
     const tileSizeCeil = tileSize + 0.5
+    const edgeSize = Math.max(1, tileSize * 0.3)
 
+    // Pass 1: base tiles
     for (let y = bounds.startY; y < bounds.endY; y++) {
       for (let x = bounds.startX; x < bounds.endX; x++) {
         const tile = world.getTile(x, y)
@@ -132,11 +146,59 @@ export class Renderer {
         }
 
         ctx.fillRect(screenX, screenY, tileSizeCeil, tileSizeCeil)
+      }
+    }
 
-        // Territory overlay
-        if (this.showTerritory && civManager) {
+    // Pass 2: edge transitions (blend neighboring tile colors at borders)
+    if (tileSize >= 3) {
+      ctx.globalAlpha = 0.35
+      for (let y = bounds.startY; y < bounds.endY; y++) {
+        for (let x = bounds.startX; x < bounds.endX; x++) {
+          const tile = world.getTile(x, y)
+          if (tile === null) continue
+          const myPri = Renderer.TERRAIN_PRIORITY[tile] ?? 0
+
+          const screenX = x * TILE_SIZE * camera.zoom + offsetX
+          const screenY = y * TILE_SIZE * camera.zoom + offsetY
+
+          // Check 4 neighbors: top, bottom, left, right
+          const neighbors: [number, number, number, number, number, number][] = [
+            // neighborTile check: dx, dy, drawX, drawY, drawW, drawH
+          ]
+          const top = world.getTile(x, y - 1)
+          const bottom = world.getTile(x, y + 1)
+          const left = world.getTile(x - 1, y)
+          const right = world.getTile(x + 1, y)
+
+          if (top !== null && top !== tile && (Renderer.TERRAIN_PRIORITY[top] ?? 0) > myPri) {
+            ctx.fillStyle = world.getColor(x, y - 1)
+            ctx.fillRect(screenX, screenY, tileSizeCeil, edgeSize)
+          }
+          if (bottom !== null && bottom !== tile && (Renderer.TERRAIN_PRIORITY[bottom] ?? 0) > myPri) {
+            ctx.fillStyle = world.getColor(x, y + 1)
+            ctx.fillRect(screenX, screenY + tileSizeCeil - edgeSize, tileSizeCeil, edgeSize)
+          }
+          if (left !== null && left !== tile && (Renderer.TERRAIN_PRIORITY[left] ?? 0) > myPri) {
+            ctx.fillStyle = world.getColor(x - 1, y)
+            ctx.fillRect(screenX, screenY, edgeSize, tileSizeCeil)
+          }
+          if (right !== null && right !== tile && (Renderer.TERRAIN_PRIORITY[right] ?? 0) > myPri) {
+            ctx.fillStyle = world.getColor(x + 1, y)
+            ctx.fillRect(screenX + tileSizeCeil - edgeSize, screenY, edgeSize, tileSizeCeil)
+          }
+        }
+      }
+      ctx.globalAlpha = 1
+    }
+
+    // Pass 3: territory overlay
+    if (this.showTerritory && civManager) {
+      for (let y = bounds.startY; y < bounds.endY; y++) {
+        for (let x = bounds.startX; x < bounds.endX; x++) {
           const civColor = civManager.getCivColor(x, y)
           if (civColor) {
+            const screenX = x * TILE_SIZE * camera.zoom + offsetX
+            const screenY = y * TILE_SIZE * camera.zoom + offsetY
             ctx.fillStyle = civColor + '30'
             ctx.fillRect(screenX, screenY, tileSizeCeil, tileSizeCeil)
           }
