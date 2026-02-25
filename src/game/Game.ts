@@ -10,7 +10,7 @@ import { CreaturePanel } from '../ui/CreaturePanel'
 import { EventPanel } from '../ui/EventPanel'
 import { StatsPanel } from '../ui/StatsPanel'
 import { ContextMenu, MenuSection } from '../ui/ContextMenu'
-import { EntityManager, PositionComponent, CreatureComponent, NeedsComponent, HeroComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent, CreatureComponent, NeedsComponent, HeroComponent, VelocityComponent, GeneticsComponent } from '../ecs/Entity'
 import { AISystem } from '../systems/AISystem'
 import { CombatSystem } from '../systems/CombatSystem'
 import { ParticleSystem } from '../systems/ParticleSystem'
@@ -107,6 +107,7 @@ export class Game {
     this.diplomacySystem = new DiplomacySystem()
     this.cropSystem = new CropSystem()
     this.setupAchievementTracking()
+    this.setupParticleEventHooks()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
     this.combatSystem.setArtifactSystem(this.artifactSystem)
@@ -548,6 +549,58 @@ export class Game {
     })
   }
 
+  /** Hook into EventLog to trigger celebration fireworks on treaty signing */
+  private setupParticleEventHooks(): void {
+    EventLog.onEvent((e) => {
+      if (e.type === 'peace' && e.message.includes('signed')) {
+        // Spawn fireworks at a random territory tile of a signing civ
+        for (const [, civ] of this.civManager.civilizations) {
+          if (e.message.includes(civ.name) && civ.territory.size > 0) {
+            const keys = Array.from(civ.territory)
+            const key = keys[Math.floor(Math.random() * keys.length)]
+            const [tx, ty] = key.split(',').map(Number)
+            const colors = ['#ffd700', '#ff4488', '#44ddff', '#44ff88']
+            const color = colors[Math.floor(Math.random() * colors.length)]
+            this.particles.spawnFirework(tx, ty, color)
+            break
+          }
+        }
+      }
+    })
+  }
+
+  /** Spawn hero trails and mutation auras each tick */
+  private updateVisualEffects(): void {
+    // Hero trails — every 3rd tick to avoid particle spam
+    if (this.world.tick % 3 === 0) {
+      const heroes = this.em.getEntitiesWithComponents('position', 'hero', 'velocity')
+      for (const id of heroes) {
+        const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+        const vel = this.em.getComponent<VelocityComponent>(id, 'velocity')!
+        // Only trail when actually moving
+        if (Math.abs(vel.vx) > 0.01 || Math.abs(vel.vy) > 0.01) {
+          const hero = this.em.getComponent<HeroComponent>(id, 'hero')!
+          const trailColors: Record<string, string> = {
+            warrior: '#ffd700', ranger: '#44ff44', healer: '#aaaaff', berserker: '#ff4444'
+          }
+          this.particles.spawnTrail(pos.x, pos.y, trailColors[hero.ability] || '#ffd700')
+        }
+      }
+    }
+
+    // Mutation auras — every 10th tick
+    if (this.world.tick % 10 === 0) {
+      const mutants = this.em.getEntitiesWithComponents('position', 'genetics')
+      for (const id of mutants) {
+        const gen = this.em.getComponent<GeneticsComponent>(id, 'genetics')!
+        if (gen.mutations.length > 0) {
+          const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+          this.particles.spawnAura(pos.x, pos.y, '#d4f', 0.6)
+        }
+      }
+    }
+  }
+
   private gatherWorldStats(): WorldStats {
     const creatures = this.em.getEntitiesWithComponents('position', 'creature')
     const heroes = this.em.getEntitiesWithComponents('hero')
@@ -617,6 +670,7 @@ export class Game {
         if (this.world.tick % 60 === 0) {
           this.diplomacySystem.update(this.civManager, this.world, this.em)
         }
+        this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
       }

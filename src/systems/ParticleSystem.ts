@@ -95,6 +95,71 @@ export class ParticleSystem {
     }
   }
 
+  /** Firework burst — particles radiate outward from center, used for celebrations */
+  spawnFirework(x: number, y: number, color: string): void {
+    const count = 16
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2
+      const speed = 1.5 + Math.random() * 1.5
+      this.allocate(
+        x, y,
+        Math.cos(angle) * speed,
+        Math.sin(angle) * speed - 1, // slight upward bias
+        40 + Math.random() * 20,
+        60,
+        color,
+        1.5 + Math.random() * 1.5
+      )
+    }
+    // Inner sparkle ring
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2 + 0.3
+      this.allocate(
+        x, y,
+        Math.cos(angle) * 0.8,
+        Math.sin(angle) * 0.8 - 0.5,
+        25 + Math.random() * 15,
+        40,
+        '#ffffff',
+        1 + Math.random()
+      )
+    }
+  }
+
+  /** Trail effect — small fading dot behind a moving entity */
+  spawnTrail(x: number, y: number, color: string): void {
+    this.allocate(
+      x + (Math.random() - 0.5) * 0.3,
+      y + (Math.random() - 0.5) * 0.3,
+      (Math.random() - 0.5) * 0.2,
+      (Math.random() - 0.5) * 0.2,
+      12 + Math.random() * 8,
+      20,
+      color,
+      1 + Math.random() * 0.8
+    )
+  }
+
+  /** Aura effect — ring of faint particles orbiting a position */
+  spawnAura(x: number, y: number, color: string, radius: number): void {
+    const count = 3
+    const baseAngle = performance.now() * 0.002
+    for (let i = 0; i < count; i++) {
+      const angle = baseAngle + (i / count) * Math.PI * 2
+      const px = x + Math.cos(angle) * radius
+      const py = y + Math.sin(angle) * radius
+      this.allocate(
+        px, py,
+        (Math.random() - 0.5) * 0.1,
+        (Math.random() - 0.5) * 0.1,
+        10 + Math.random() * 6,
+        16,
+        color,
+        0.8 + Math.random() * 0.5
+      )
+    }
+  }
+
   update(): void {
     // Swap-and-pop: iterate active region, swap dead particles to end
     let i = 0

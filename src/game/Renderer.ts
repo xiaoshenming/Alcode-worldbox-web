@@ -265,195 +265,227 @@ export class Renderer {
     const ctx = this.ctx
     const entities = em.getEntitiesWithComponents('position', 'render')
 
+    // --- Batch pass: group simple fallback entities by color to reduce fillStyle switches ---
+    const buildingBatch: number[] = []
+    const creatureBatch: number[] = []
+    const artifactBatch: number[] = []
+    const fallbackByColor: Map<string, { id: number; cx: number; cy: number; size: number }[]> = new Map()
+
     for (const id of entities) {
       const pos = em.getComponent<PositionComponent>(id, 'position')!
       const render = em.getComponent<RenderComponent>(id, 'render')!
 
+      // Viewport culling
       if (pos.x < bounds.startX - 1 || pos.x > bounds.endX + 1 ||
           pos.y < bounds.startY - 1 || pos.y > bounds.endY + 1) continue
 
+      const building = em.getComponent<BuildingComponent>(id, 'building')
+      if (building) {
+        buildingBatch.push(id)
+      } else if (em.getComponent<CreatureComponent>(id, 'creature')) {
+        creatureBatch.push(id)
+      } else {
+        const artifact = em.getComponent<ArtifactComponent>(id, 'artifact')
+        if (artifact && !artifact.claimed) {
+          artifactBatch.push(id)
+        } else {
+          // Fallback circles — batch by color
+          const screenX = pos.x * TILE_SIZE * camera.zoom + offsetX
+          const screenY = pos.y * TILE_SIZE * camera.zoom + offsetY
+          const cx = screenX + tileSize / 2
+          const cy = screenY + tileSize / 2
+          const size = render.size * camera.zoom
+          let bucket = fallbackByColor.get(render.color)
+          if (!bucket) { bucket = []; fallbackByColor.set(render.color, bucket) }
+          bucket.push({ id, cx, cy, size })
+        }
+      }
+    }
+
+    // Draw buildings
+    for (const id of buildingBatch) {
+      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const building = em.getComponent<BuildingComponent>(id, 'building')!
+      const screenX = pos.x * TILE_SIZE * camera.zoom + offsetX
+      const screenY = pos.y * TILE_SIZE * camera.zoom + offsetY
+      const sprite = this.sprites.getBuildingSprite(building.buildingType, building.level)
+      const bSize = tileSize * 1.5
+      ctx.drawImage(sprite, screenX + tileSize/2 - bSize/2, screenY + tileSize/2 - bSize/2, bSize, bSize)
+    }
+
+    // Draw creatures (sprites + overlays)
+    for (const id of creatureBatch) {
+      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const render = em.getComponent<RenderComponent>(id, 'render')!
       const screenX = pos.x * TILE_SIZE * camera.zoom + offsetX
       const screenY = pos.y * TILE_SIZE * camera.zoom + offsetY
       const size = render.size * camera.zoom
+      const cx = screenX + tileSize / 2
+      const cy = screenY + tileSize / 2
 
-      const building = em.getComponent<BuildingComponent>(id, 'building')
+      const vel = em.getComponent<VelocityComponent>(id, 'velocity')
+      let direction: 'up' | 'down' | 'left' | 'right' = 'down'
+      if (vel) direction = SpriteRenderer.directionFromVelocity(vel.vx, vel.vy)
 
-      if (building) {
-        const sprite = this.sprites.getBuildingSprite(building.buildingType, building.level)
-        const bSize = tileSize * 1.5
-        ctx.drawImage(sprite, screenX + tileSize/2 - bSize/2, screenY + tileSize/2 - bSize/2, bSize, bSize)
-      } else {
-        const cx = screenX + tileSize / 2
-        const cy = screenY + tileSize / 2
+      const creature = em.getComponent<CreatureComponent>(id, 'creature')!
+      const sprite = this.sprites.getCreatureSprite(creature.species, direction)
+      const spriteSize = tileSize * 1.2
+      ctx.drawImage(sprite, cx - spriteSize/2, cy - spriteSize/2, spriteSize, spriteSize)
 
-        const needs = em.getComponent<NeedsComponent>(id, 'needs')
-        const ai = em.getComponent<AIComponent>(id, 'ai')
-        const vel = em.getComponent<VelocityComponent>(id, 'velocity')
-
-        // Determine facing direction from velocity
-        let direction: 'up' | 'down' | 'left' | 'right' = 'down'
-        if (vel) {
-          direction = SpriteRenderer.directionFromVelocity(vel.vx, vel.vy)
+      // Hero aura
+      const heroComp = em.getComponent<any>(id, 'hero')
+      if (heroComp && camera.zoom > 0.3) {
+        const auraColors: Record<string, string> = {
+          warrior: '#ffd700', ranger: '#44ff44', healer: '#ffffff', berserker: '#ff4444'
         }
+        const auraColor = auraColors[heroComp.ability] || '#ffd700'
+        const pulse = Math.sin(performance.now() * 0.004 + id) * 0.3 + 0.5
+        const auraRadius = spriteSize * 0.8 + pulse * 3 * camera.zoom
 
-        // Creature sprite
-        const creature = em.getComponent<CreatureComponent>(id, 'creature')
-        if (creature) {
-          const sprite = this.sprites.getCreatureSprite(creature.species, direction)
-          const spriteSize = tileSize * 1.2
-          ctx.drawImage(sprite, cx - spriteSize/2, cy - spriteSize/2, spriteSize, spriteSize)
-        } else {
-          // Check if this is an unclaimed artifact
-          const artifact = em.getComponent<ArtifactComponent>(id, 'artifact')
-          if (artifact && !artifact.claimed) {
-            // Pulsing golden diamond
-            const time = performance.now()
-            const pulse = Math.sin(time * 0.005 + id * 2) * 0.3 + 0.7
-            const diamondSize = Math.max(3, tileSize * 0.6) * pulse
-            const glowSize = diamondSize * 1.8
+        ctx.strokeStyle = auraColor
+        ctx.globalAlpha = pulse * 0.6
+        ctx.lineWidth = 1.5 * camera.zoom
+        ctx.beginPath()
+        ctx.arc(cx, cy, auraRadius, 0, Math.PI * 2)
+        ctx.stroke()
 
-            // Outer glow
-            ctx.globalAlpha = pulse * 0.3
-            ctx.fillStyle = artifact.rarity === 'mythic' ? '#ffdd44' : '#ffaa00'
-            ctx.beginPath()
-            ctx.moveTo(cx, cy - glowSize)
-            ctx.lineTo(cx + glowSize * 0.6, cy)
-            ctx.lineTo(cx, cy + glowSize)
-            ctx.lineTo(cx - glowSize * 0.6, cy)
-            ctx.closePath()
-            ctx.fill()
+        ctx.globalAlpha = 0.9
+        ctx.fillStyle = '#ffd700'
+        ctx.font = `${Math.max(6, 8 * camera.zoom)}px monospace`
+        ctx.textAlign = 'center'
+        const stars = '\u2605'.repeat(Math.min(heroComp.level, 5))
+        ctx.fillText(stars, cx, cy + spriteSize * 0.7 + 4 * camera.zoom)
+        ctx.globalAlpha = 1
 
-            // Inner diamond
-            ctx.globalAlpha = pulse * 0.9
-            ctx.fillStyle = '#ffd700'
-            ctx.beginPath()
-            ctx.moveTo(cx, cy - diamondSize)
-            ctx.lineTo(cx + diamondSize * 0.6, cy)
-            ctx.lineTo(cx, cy + diamondSize)
-            ctx.lineTo(cx - diamondSize * 0.6, cy)
-            ctx.closePath()
-            ctx.fill()
-
-            // White sparkle center
-            ctx.globalAlpha = pulse
-            ctx.fillStyle = '#ffffff'
-            ctx.beginPath()
-            ctx.arc(cx, cy, diamondSize * 0.2, 0, Math.PI * 2)
-            ctx.fill()
-            ctx.globalAlpha = 1
-
-            // Name label when zoomed in
-            if (camera.zoom > 0.6) {
-              ctx.globalAlpha = 0.85
-              ctx.fillStyle = '#ffd700'
-              ctx.font = `${Math.max(6, 7 * camera.zoom)}px monospace`
-              ctx.textAlign = 'center'
-              ctx.fillText(artifact.name, cx, cy + diamondSize + 6 * camera.zoom)
-              ctx.globalAlpha = 1
-            }
-          } else {
-            // Fallback: draw circle for unknown entities
-            ctx.fillStyle = render.color
-            ctx.beginPath()
-            ctx.arc(cx, cy, size, 0, Math.PI * 2)
-            ctx.fill()
-            ctx.strokeStyle = 'rgba(0,0,0,0.5)'
-            ctx.lineWidth = 0.5
-            ctx.stroke()
-          }
-        }
-
-        // Hero aura
-        const heroComp = em.getComponent<any>(id, 'hero')
-        if (heroComp && camera.zoom > 0.3) {
-          const auraColors: Record<string, string> = {
-            warrior: '#ffd700',
-            ranger: '#44ff44',
-            healer: '#ffffff',
-            berserker: '#ff4444'
-          }
-          const auraColor = auraColors[heroComp.ability] || '#ffd700'
-          const pulse = Math.sin(performance.now() * 0.004 + id) * 0.3 + 0.5
-          const spriteSize = tileSize * 1.2
-          const auraRadius = spriteSize * 0.8 + pulse * 3 * camera.zoom
-
-          // Outer glow
-          ctx.strokeStyle = auraColor
-          ctx.globalAlpha = pulse * 0.6
-          ctx.lineWidth = 1.5 * camera.zoom
-          ctx.beginPath()
-          ctx.arc(cx, cy, auraRadius, 0, Math.PI * 2)
-          ctx.stroke()
-
-          // Level stars
-          ctx.globalAlpha = 0.9
+        const heroInv = em.getComponent<InventoryComponent>(id, 'inventory')
+        if (heroInv && heroInv.artifacts.length > 0 && camera.zoom > 0.4) {
+          const artPulse = Math.sin(performance.now() * 0.003 + id) * 0.2 + 0.8
+          ctx.globalAlpha = artPulse
           ctx.fillStyle = '#ffd700'
-          ctx.font = `${Math.max(6, 8 * camera.zoom)}px monospace`
+          ctx.font = `${Math.max(6, 7 * camera.zoom)}px monospace`
           ctx.textAlign = 'center'
-          const stars = '★'.repeat(Math.min(heroComp.level, 5))
-          ctx.fillText(stars, cx, cy + spriteSize * 0.7 + 4 * camera.zoom)
-          ctx.globalAlpha = 1
-
-          // Artifact indicator for heroes carrying artifacts
-          const heroInv = em.getComponent<InventoryComponent>(id, 'inventory')
-          if (heroInv && heroInv.artifacts.length > 0 && camera.zoom > 0.4) {
-            const artPulse = Math.sin(performance.now() * 0.003 + id) * 0.2 + 0.8
-            ctx.globalAlpha = artPulse
-            ctx.fillStyle = '#ffd700'
-            ctx.font = `${Math.max(6, 7 * camera.zoom)}px monospace`
-            ctx.textAlign = 'center'
-            const artSymbols = heroInv.artifacts.map(() => '\u25C6').join('')
-            ctx.fillText(artSymbols, cx, cy - spriteSize * 0.7 - 6 * camera.zoom)
-            ctx.globalAlpha = 1
-          }
-        }
-
-        // Health bar (only when damaged)
-        if (needs && needs.health < 100 && camera.zoom > 0.5) {
-          const barWidth = size * 3
-          const barHeight = 2 * camera.zoom
-          const barX = cx - barWidth / 2
-          const barY = cy - size - 4 * camera.zoom
-
-          ctx.fillStyle = 'rgba(0,0,0,0.6)'
-          ctx.fillRect(barX, barY, barWidth, barHeight)
-          const healthPct = needs.health / 100
-          ctx.fillStyle = healthPct > 0.5 ? '#4f4' : healthPct > 0.25 ? '#ff4' : '#f44'
-          ctx.fillRect(barX, barY, barWidth * healthPct, barHeight)
-        }
-
-        // Disease indicator
-        const diseaseComp = em.getComponent<DiseaseComponent>(id, 'disease')
-        if (diseaseComp && !diseaseComp.immune && camera.zoom > 0.3) {
-          const pulse = Math.sin(performance.now() * 0.006 + id * 2) * 0.3 + 0.7
-          const dotRadius = Math.max(1.5, 2.5 * camera.zoom) * pulse
-          const dotY = cy - size - 8 * camera.zoom
-          ctx.globalAlpha = pulse * 0.9
-          ctx.fillStyle = diseaseComp.diseaseType === 'plague' ? '#4a0'
-            : diseaseComp.diseaseType === 'fever' ? '#f44'
-            : diseaseComp.diseaseType === 'blight' ? '#8a4'
-            : '#ddd'
-          ctx.beginPath()
-          ctx.arc(cx, dotY, dotRadius, 0, Math.PI * 2)
-          ctx.fill()
+          const artSymbols = heroInv.artifacts.map(() => '\u25C6').join('')
+          ctx.fillText(artSymbols, cx, cy - spriteSize * 0.7 - 6 * camera.zoom)
           ctx.globalAlpha = 1
         }
+      }
 
-        // State icon when zoomed in
-        if (ai && camera.zoom > 0.8) {
-          let icon = ''
-          switch (ai.state) {
-            case 'hungry': icon = '!'; break
-            case 'fleeing': icon = '~'; break
-            case 'attacking': icon = 'x'; break
-          }
-          if (icon) {
-            ctx.fillStyle = ai.state === 'attacking' ? '#f44' : ai.state === 'fleeing' ? '#4af' : '#ff4'
-            ctx.font = `${Math.max(8, 10 * camera.zoom)}px monospace`
-            ctx.textAlign = 'center'
-            ctx.fillText(icon, cx, cy - size - 6 * camera.zoom)
-          }
+      // Health bar (only when damaged)
+      const needs = em.getComponent<NeedsComponent>(id, 'needs')
+      if (needs && needs.health < 100 && camera.zoom > 0.5) {
+        const barWidth = size * 3
+        const barHeight = 2 * camera.zoom
+        const barX = cx - barWidth / 2
+        const barY = cy - size - 4 * camera.zoom
+
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'
+        ctx.fillRect(barX, barY, barWidth, barHeight)
+        const healthPct = needs.health / 100
+        ctx.fillStyle = healthPct > 0.5 ? '#4f4' : healthPct > 0.25 ? '#ff4' : '#f44'
+        ctx.fillRect(barX, barY, barWidth * healthPct, barHeight)
+      }
+
+      // Disease indicator
+      const diseaseComp = em.getComponent<DiseaseComponent>(id, 'disease')
+      if (diseaseComp && !diseaseComp.immune && camera.zoom > 0.3) {
+        const pulse = Math.sin(performance.now() * 0.006 + id * 2) * 0.3 + 0.7
+        const dotRadius = Math.max(1.5, 2.5 * camera.zoom) * pulse
+        const dotY = cy - size - 8 * camera.zoom
+        ctx.globalAlpha = pulse * 0.9
+        ctx.fillStyle = diseaseComp.diseaseType === 'plague' ? '#4a0'
+          : diseaseComp.diseaseType === 'fever' ? '#f44'
+          : diseaseComp.diseaseType === 'blight' ? '#8a4'
+          : '#ddd'
+        ctx.beginPath()
+        ctx.arc(cx, dotY, dotRadius, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.globalAlpha = 1
+      }
+
+      // State icon when zoomed in
+      const ai = em.getComponent<AIComponent>(id, 'ai')
+      if (ai && camera.zoom > 0.8) {
+        let icon = ''
+        switch (ai.state) {
+          case 'hungry': icon = '!'; break
+          case 'fleeing': icon = '~'; break
+          case 'attacking': icon = 'x'; break
         }
+        if (icon) {
+          ctx.fillStyle = ai.state === 'attacking' ? '#f44' : ai.state === 'fleeing' ? '#4af' : '#ff4'
+          ctx.font = `${Math.max(8, 10 * camera.zoom)}px monospace`
+          ctx.textAlign = 'center'
+          ctx.fillText(icon, cx, cy - size - 6 * camera.zoom)
+        }
+      }
+    }
+
+    // Draw artifacts
+    const time = performance.now()
+    for (const id of artifactBatch) {
+      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const artifact = em.getComponent<ArtifactComponent>(id, 'artifact')!
+      const screenX = pos.x * TILE_SIZE * camera.zoom + offsetX
+      const screenY = pos.y * TILE_SIZE * camera.zoom + offsetY
+      const cx = screenX + tileSize / 2
+      const cy = screenY + tileSize / 2
+
+      const pulse = Math.sin(time * 0.005 + id * 2) * 0.3 + 0.7
+      const diamondSize = Math.max(3, tileSize * 0.6) * pulse
+      const glowSize = diamondSize * 1.8
+
+      ctx.globalAlpha = pulse * 0.3
+      ctx.fillStyle = artifact.rarity === 'mythic' ? '#ffdd44' : '#ffaa00'
+      ctx.beginPath()
+      ctx.moveTo(cx, cy - glowSize)
+      ctx.lineTo(cx + glowSize * 0.6, cy)
+      ctx.lineTo(cx, cy + glowSize)
+      ctx.lineTo(cx - glowSize * 0.6, cy)
+      ctx.closePath()
+      ctx.fill()
+
+      ctx.globalAlpha = pulse * 0.9
+      ctx.fillStyle = '#ffd700'
+      ctx.beginPath()
+      ctx.moveTo(cx, cy - diamondSize)
+      ctx.lineTo(cx + diamondSize * 0.6, cy)
+      ctx.lineTo(cx, cy + diamondSize)
+      ctx.lineTo(cx - diamondSize * 0.6, cy)
+      ctx.closePath()
+      ctx.fill()
+
+      ctx.globalAlpha = pulse
+      ctx.fillStyle = '#ffffff'
+      ctx.beginPath()
+      ctx.arc(cx, cy, diamondSize * 0.2, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.globalAlpha = 1
+
+      if (camera.zoom > 0.6) {
+        ctx.globalAlpha = 0.85
+        ctx.fillStyle = '#ffd700'
+        ctx.font = `${Math.max(6, 7 * camera.zoom)}px monospace`
+        ctx.textAlign = 'center'
+        ctx.fillText(artifact.name, cx, cy + diamondSize + 6 * camera.zoom)
+        ctx.globalAlpha = 1
+      }
+    }
+
+    // Draw fallback entities batched by color (minimizes fillStyle switches)
+    for (const [color, bucket] of fallbackByColor) {
+      ctx.fillStyle = color
+      for (const { cx, cy, size } of bucket) {
+        ctx.beginPath()
+        ctx.arc(cx, cy, size, 0, Math.PI * 2)
+        ctx.fill()
+      }
+      // Single stroke pass per color group
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)'
+      ctx.lineWidth = 0.5
+      for (const { cx, cy, size } of bucket) {
+        ctx.beginPath()
+        ctx.arc(cx, cy, size, 0, Math.PI * 2)
+        ctx.stroke()
       }
     }
   }
@@ -538,17 +570,33 @@ export class Renderer {
     const tileSize = TILE_SIZE * camera.zoom
     const offsetX = -camera.x * camera.zoom
     const offsetY = -camera.y * camera.zoom
+    const canvasW = this.canvas.width
+    const canvasH = this.canvas.height
+
+    // Batch particles by color to reduce fillStyle switches
+    const byColor: Map<string, { sx: number; sy: number; r: number; alpha: number }[]> = new Map()
 
     for (const p of particles.particles) {
       const screenX = p.x * tileSize + offsetX + tileSize / 2
       const screenY = p.y * tileSize + offsetY + tileSize / 2
-      const alpha = p.life / p.maxLife
 
-      ctx.globalAlpha = alpha
-      ctx.fillStyle = p.color
-      ctx.beginPath()
-      ctx.arc(screenX, screenY, p.size * camera.zoom, 0, Math.PI * 2)
-      ctx.fill()
+      // Viewport culling — skip particles outside screen
+      if (screenX < -10 || screenX > canvasW + 10 || screenY < -10 || screenY > canvasH + 10) continue
+
+      const alpha = p.life / p.maxLife
+      let bucket = byColor.get(p.color)
+      if (!bucket) { bucket = []; byColor.set(p.color, bucket) }
+      bucket.push({ sx: screenX, sy: screenY, r: p.size * camera.zoom, alpha })
+    }
+
+    for (const [color, bucket] of byColor) {
+      ctx.fillStyle = color
+      for (const { sx, sy, r, alpha } of bucket) {
+        ctx.globalAlpha = alpha
+        ctx.beginPath()
+        ctx.arc(sx, sy, r, 0, Math.PI * 2)
+        ctx.fill()
+      }
     }
     ctx.globalAlpha = 1
   }
