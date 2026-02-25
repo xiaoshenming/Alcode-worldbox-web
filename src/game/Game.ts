@@ -3,7 +3,7 @@ import { Camera } from './Camera'
 import { Renderer } from './Renderer'
 import { Input } from './Input'
 import { Powers } from './Powers'
-import { EntityType } from '../utils/Constants'
+import { EntityType, TILE_SIZE } from '../utils/Constants'
 import { Toolbar } from '../ui/Toolbar'
 import { InfoPanel } from '../ui/InfoPanel'
 import { CreaturePanel } from '../ui/CreaturePanel'
@@ -92,6 +92,7 @@ export class Game {
     this.setupKeyboard()
     this.setupTooltip()
     this.setupMuteButton()
+    this.setupMinimapClick()
     this.renderer.resize(window.innerWidth, window.innerHeight)
   }
 
@@ -347,6 +348,25 @@ export class Game {
     }
   }
 
+  private setupMinimapClick(): void {
+    this.minimapCanvas.addEventListener('click', (e) => {
+      const rect = this.minimapCanvas.getBoundingClientRect()
+      const mx = e.clientX - rect.left
+      const my = e.clientY - rect.top
+
+      // Convert minimap coords to world tile coords
+      const scale = this.minimapCanvas.width / this.world.width
+      const worldTileX = mx / scale
+      const worldTileY = my / scale
+
+      // Center camera on clicked world position
+      const halfViewW = (window.innerWidth / this.camera.zoom) / 2
+      const halfViewH = (window.innerHeight / this.camera.zoom) / 2
+      this.camera.x = worldTileX * TILE_SIZE - halfViewW
+      this.camera.y = worldTileY * TILE_SIZE - halfViewH
+    })
+  }
+
   private renderSelectedHighlight(): void {
     const id = this.creaturePanel.getSelected()
     if (!id) return
@@ -405,7 +425,7 @@ export class Game {
 
     this.renderer.render(this.world, this.camera, this.em, this.civManager, this.particles, this.weather.fogAlpha, this.resources)
     this.renderer.renderBrushOutline(this.camera, this.input.mouseX, this.input.mouseY, this.powers.getBrushSize())
-    this.renderer.renderMinimap(this.world, this.camera)
+    this.renderer.renderMinimap(this.world, this.camera, this.em, this.civManager)
 
     if (this.world.tick % 30 === 0) {
       this.infoPanel.update(this.fps)

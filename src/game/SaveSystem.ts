@@ -1,7 +1,7 @@
 import { World } from './World'
 import { EntityManager, EntityId, PositionComponent, VelocityComponent, RenderComponent, NeedsComponent, AIComponent, CreatureComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
-import { Civilization, BuildingComponent, CivMemberComponent, BuildingType } from '../civilization/Civilization'
+import { Civilization, BuildingComponent, CivMemberComponent, BuildingType, CultureTrait } from '../civilization/Civilization'
 import { ResourceSystem, ResourceNode } from '../systems/ResourceSystem'
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 
@@ -33,6 +33,7 @@ interface SavedCiv {
   techLevel: number
   relations: [number, number][]
   tradeRoutes?: { partnerId: number; fromPort: { x: number; y: number }; toPort: { x: number; y: number }; active: boolean; income: number }[]
+  culture?: { trait: string; strength: number }
 }
 
 export class SaveSystem {
@@ -102,6 +103,7 @@ export class SaveSystem {
           techLevel: sc.techLevel,
           relations: new Map(sc.relations),
           tradeRoutes: sc.tradeRoutes ?? [],
+          culture: sc.culture ? { trait: sc.culture.trait as CultureTrait, strength: sc.culture.strength } : { trait: 'warrior' as CultureTrait, strength: 0 },
         }
         civManager.civilizations.set(civ.id, civ)
       }
@@ -173,6 +175,7 @@ export class SaveSystem {
         techLevel: civ.techLevel,
         relations: Array.from(civ.relations.entries()),
         tradeRoutes: civ.tradeRoutes,
+        culture: civ.culture,
       })
     }
     return result
