@@ -38,6 +38,10 @@ export class EntityManager {
     return this.components.get(type)?.has(id) ?? false
   }
 
+  removeComponent(id: EntityId, type: string): void {
+    this.components.get(type)?.delete(id)
+  }
+
   getEntitiesWithComponent(type: string): EntityId[] {
     const compMap = this.components.get(type)
     if (!compMap) return []
