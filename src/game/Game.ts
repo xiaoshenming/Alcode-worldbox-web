@@ -244,6 +244,11 @@ import { WorldCoralReefSystem } from '../systems/WorldCoralReefSystem'
 import { WorldSandstormSystem } from '../systems/WorldSandstormSystem'
 import { CreatureCollectionSystem } from '../systems/CreatureCollectionSystem'
 import { WorldRiftSystem } from '../systems/WorldRiftSystem'
+import { CreatureVisionSystem } from '../systems/CreatureVisionSystem'
+import { WorldAvalancheSystem } from '../systems/WorldAvalancheSystem'
+import { DiplomaticAsylumSystem } from '../systems/DiplomaticAsylumSystem'
+import { CreatureForagingSystem } from '../systems/CreatureForagingSystem'
+import { WorldWhirlpoolSystem } from '../systems/WorldWhirlpoolSystem'
 
 export class Game {
   private world: World
@@ -490,6 +495,11 @@ export class Game {
   private worldSandstorm!: WorldSandstormSystem
   private creatureCollection!: CreatureCollectionSystem
   private worldRift!: WorldRiftSystem
+  private creatureVision!: CreatureVisionSystem
+  private worldAvalanche!: WorldAvalancheSystem
+  private diplomaticAsylum!: DiplomaticAsylumSystem
+  private creatureForaging!: CreatureForagingSystem
+  private worldWhirlpool!: WorldWhirlpoolSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -887,6 +897,11 @@ export class Game {
     this.worldSandstorm = new WorldSandstormSystem()
     this.creatureCollection = new CreatureCollectionSystem()
     this.worldRift = new WorldRiftSystem()
+    this.creatureVision = new CreatureVisionSystem()
+    this.worldAvalanche = new WorldAvalancheSystem()
+    this.diplomaticAsylum = new DiplomaticAsylumSystem()
+    this.creatureForaging = new CreatureForagingSystem()
+    this.worldWhirlpool = new WorldWhirlpoolSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2272,6 +2287,16 @@ export class Game {
         this.creatureCollection.update(this.tickRate, this.em, this.world.tick)
         // World rift (v2.90) - dimensional rifts warp terrain
         this.worldRift.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature vision (v2.91) - vision range affects exploration and combat
+        this.creatureVision.update(this.tickRate, this.world, this.em, this.world.tick)
+        // World avalanche (v2.92) - avalanches in snowy mountain regions
+        this.worldAvalanche.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic asylum (v2.93) - persecuted creatures seek asylum
+        this.diplomaticAsylum.update(this.tickRate, this.em, this.world.tick)
+        // Creature foraging (v2.94) - creatures forage for wild food
+        this.creatureForaging.update(this.tickRate, this.world, this.em, this.world.tick)
+        // World whirlpool (v2.95) - whirlpools in deep water
+        this.worldWhirlpool.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
