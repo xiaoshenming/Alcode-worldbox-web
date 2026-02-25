@@ -20,6 +20,10 @@ import { ResourceSystem } from '../systems/ResourceSystem'
 import { SaveSystem } from './SaveSystem'
 import { CreatureFactory } from '../entities/CreatureFactory'
 import { CivManager } from '../civilization/CivManager'
+import { AchievementSystem, WorldStats } from '../systems/AchievementSystem'
+import { DisasterSystem } from '../systems/DisasterSystem'
+import { TimelineSystem } from '../systems/TimelineSystem'
+import { EventLog } from '../systems/EventLog'
 
 export class Game {
   private world: World
@@ -43,6 +47,9 @@ export class Game {
   civManager: CivManager
   private weather: WeatherSystem
   private resources: ResourceSystem
+  private achievements: AchievementSystem
+  private disasterSystem: DisasterSystem
+  private timeline: TimelineSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -72,6 +79,10 @@ export class Game {
     this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles, this.audio)
     this.weather = new WeatherSystem(this.world, this.particles, this.em)
     this.resources = new ResourceSystem(this.world, this.em, this.civManager, this.particles)
+    this.achievements = new AchievementSystem()
+    this.disasterSystem = new DisasterSystem(this.world, this.particles, this.em)
+    this.timeline = new TimelineSystem()
+    this.setupAchievementTracking()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
 
@@ -139,6 +150,28 @@ export class Game {
         setTimeout(() => { loadBtn.textContent = 'Load' }, 1500)
       })
     }
+
+    // Achievements button
+    const achievementsBtn = document.getElementById('achievementsBtn')
+    const achievementsPanel = document.getElementById('achievementsPanel')
+    if (achievementsBtn && achievementsPanel) {
+      achievementsBtn.addEventListener('click', () => {
+        const visible = achievementsPanel.style.display !== 'none'
+        achievementsPanel.style.display = visible ? 'none' : 'block'
+        if (!visible) this.renderAchievementsPanel()
+      })
+    }
+
+    // Timeline button
+    const timelineBtn = document.getElementById('timelineBtn')
+    const timelinePanel = document.getElementById('timelinePanel')
+    if (timelineBtn && timelinePanel) {
+      timelineBtn.addEventListener('click', () => {
+        const visible = timelinePanel.style.display !== 'none'
+        timelinePanel.style.display = visible ? 'none' : 'block'
+        if (!visible) this.renderTimelinePanel()
+      })
+    }
   }
 
   private resetWorld(): void {
@@ -153,6 +186,8 @@ export class Game {
     this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles, this.audio)
     this.weather = new WeatherSystem(this.world, this.particles, this.em)
     this.resources = new ResourceSystem(this.world, this.em, this.civManager, this.particles)
+    this.disasterSystem = new DisasterSystem(this.world, this.particles, this.em)
+    this.timeline = new TimelineSystem()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
@@ -390,6 +425,123 @@ export class Game {
     ctx.stroke()
   }
 
+  private renderAchievementsPanel(): void {
+    const panel = document.getElementById('achievementsPanel')
+    if (!panel) return
+    const all = this.achievements.getAll()
+    const progress = this.achievements.getProgress()
+    let html = `<div class="title">\u{1F3C6} Achievements (${progress.unlocked}/${progress.total})</div>`
+    html += '<div style="display:flex;flex-direction:column;gap:4px">'
+    for (const a of all) {
+      const opacity = a.unlocked ? '1' : '0.35'
+      const bg = a.unlocked ? 'rgba(100,140,200,0.15)' : 'rgba(40,40,60,0.3)'
+      const check = a.unlocked ? '\u2705' : '\u{1F512}'
+      html += `<div style="opacity:${opacity};background:${bg};padding:6px 10px;border-radius:6px;display:flex;align-items:center;gap:8px">`
+      html += `<span style="font-size:18px">${a.icon}</span>`
+      html += `<div><div style="font-weight:bold;font-size:12px">${a.name} ${check}</div>`
+      html += `<div style="font-size:10px;color:#888">${a.description}</div></div></div>`
+    }
+    html += '</div>'
+    panel.innerHTML = html
+  }
+
+  private updateAchievementsButton(): void {
+    const btn = document.getElementById('achievementsBtn')
+    if (btn) {
+      const p = this.achievements.getProgress()
+      btn.textContent = `\u{1F3C6} ${p.unlocked}/${p.total}`
+    }
+  }
+
+  private renderTimelinePanel(): void {
+    const panel = document.getElementById('timelinePanel')
+    if (!panel) return
+
+    const era = this.timeline.getCurrentEra()
+    const progress = this.timeline.getEraProgress(this.world.tick)
+    const age = this.timeline.getWorldAge(this.world.tick)
+    const eras = this.timeline.getEraDefinitions()
+    const history = this.timeline.getHistory()
+
+    let html = `<div style="font-weight:bold;margin-bottom:8px;font-size:13px;border-bottom:1px solid #555;padding-bottom:4px">`
+    html += `\u{1F30D} World Timeline - ${age}</div>`
+
+    // Era progress bar
+    html += `<div style="margin-bottom:8px">`
+    html += `<div style="font-size:11px;color:${era.color};margin-bottom:3px">Current Era: ${era.name}</div>`
+    html += `<div style="background:#222;border-radius:4px;height:8px;overflow:hidden">`
+    html += `<div style="background:${era.color};height:100%;width:${Math.round(progress * 100)}%;transition:width 0.3s"></div></div>`
+
+    // Era markers
+    html += `<div style="display:flex;gap:2px;margin-top:4px">`
+    for (let i = 0; i < eras.length; i++) {
+      const e = eras[i]
+      const active = i <= era.index
+      html += `<div style="flex:1;height:4px;border-radius:2px;background:${active ? e.color : '#333'}" title="${e.name}"></div>`
+    }
+    html += `</div></div>`
+
+    // Historical events (most recent first)
+    html += `<div style="color:#aaa;font-size:10px;margin-bottom:3px">HISTORICAL EVENTS</div>`
+    html += `<div style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:3px">`
+    const recent = history.slice(-20).reverse()
+    const typeIcons: Record<string, string> = {
+      era_change: '\u{1F451}', war: '\u2694\uFE0F', disaster: '\u{1F30B}',
+      achievement: '\u{1F3C6}', founding: '\u{1F3F0}', collapse: '\u{1F4A5}'
+    }
+    for (const ev of recent) {
+      const icon = typeIcons[ev.type] || '\u{1F4DC}'
+      const yr = this.timeline.getWorldAge(ev.tick)
+      html += `<div style="font-size:10px;padding:2px 4px;background:rgba(40,40,60,0.4);border-radius:3px">`
+      html += `<span style="color:#666">${yr}</span> ${icon} ${ev.description}</div>`
+    }
+    html += `</div>`
+
+    panel.innerHTML = html
+  }
+
+  private setupAchievementTracking(): void {
+    EventLog.onEvent((e) => {
+      if (e.type === 'death') this.achievements.recordDeath()
+      if (e.type === 'birth') this.achievements.recordBirth()
+      if (e.type === 'war') {
+        this.achievements.recordWar()
+        this.timeline.recordEvent(this.world.tick, 'war', e.message)
+      }
+      if (e.type === 'combat') this.achievements.recordKill()
+      if (e.type === 'disaster') this.timeline.recordEvent(this.world.tick, 'disaster', e.message)
+      if (e.type === 'building' && e.message.includes('founded')) this.timeline.recordEvent(this.world.tick, 'founding', e.message)
+    })
+  }
+
+  private gatherWorldStats(): WorldStats {
+    const creatures = this.em.getEntitiesWithComponents('position', 'creature')
+    const heroes = this.em.getEntitiesWithComponents('hero')
+    const buildings = this.em.getEntitiesWithComponents('building')
+    let maxPop = 0
+    let maxTech = 0
+    let tradeRoutes = 0
+    for (const [, civ] of this.civManager.civilizations) {
+      if (civ.population > maxPop) maxPop = civ.population
+      if (civ.techLevel > maxTech) maxTech = civ.techLevel
+      tradeRoutes += civ.tradeRoutes.length
+    }
+    return {
+      totalPopulation: creatures.length,
+      totalCivs: this.civManager.civilizations.size,
+      totalBuildings: buildings.length,
+      totalDeaths: 0, // tracked incrementally
+      totalBirths: 0,
+      totalWars: 0,
+      maxTechLevel: maxTech,
+      maxCivPopulation: maxPop,
+      worldTick: this.world.tick,
+      totalKills: 0,
+      heroCount: heroes.length,
+      tradeRouteCount: tradeRoutes
+    }
+  }
+
   start(): void {
     this.lastTime = performance.now()
     this.loop()
@@ -418,6 +570,8 @@ export class Game {
         this.civManager.update()
         this.weather.update()
         this.resources.update()
+        this.disasterSystem.update()
+        this.timeline.update(this.world.tick)
         this.particles.update()
         this.accumulator -= this.tickRate
       }
@@ -430,7 +584,13 @@ export class Game {
     if (this.world.tick % 30 === 0) {
       this.infoPanel.update(this.fps)
       this.statsPanel.update()
+      this.achievements.updateStats(this.gatherWorldStats())
+      this.updateAchievementsButton()
     }
+
+    // Achievement notifications
+    this.achievements.updateNotifications()
+    this.achievements.renderNotifications(this.canvas.getContext('2d')!, this.canvas.width)
 
     // Real-time creature panel update when selected
     if (this.creaturePanel.getSelected()) {
