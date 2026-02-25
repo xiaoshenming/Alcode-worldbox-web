@@ -88,6 +88,11 @@ import { ClonePowerSystem } from '../systems/ClonePowerSystem'
 import { SiegeWarfareSystem } from '../systems/SiegeWarfareSystem'
 import { TutorialSystem } from '../systems/TutorialSystem'
 import { RenderCullingSystem } from '../systems/RenderCullingSystem'
+import { ReputationSystem } from '../systems/ReputationSystem'
+import { SiegeSystem } from '../systems/SiegeSystem'
+import { DisasterWarningSystem } from '../systems/DisasterWarningSystem'
+import { MoodSystem } from '../systems/MoodSystem'
+import { WorldAgeSystem } from '../systems/WorldAgeSystem'
 
 export class Game {
   private world: World
@@ -178,6 +183,11 @@ export class Game {
   private siegeWarfare: SiegeWarfareSystem
   private tutorial: TutorialSystem
   private renderCulling: RenderCullingSystem
+  private reputationSystem: ReputationSystem
+  private siegeSystem: SiegeSystem
+  private disasterWarning: DisasterWarningSystem
+  private moodSystem: MoodSystem
+  private worldAge: WorldAgeSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -412,6 +422,11 @@ export class Game {
     this.siegeWarfare = new SiegeWarfareSystem()
     this.tutorial = new TutorialSystem()
     this.renderCulling = new RenderCullingSystem()
+    this.reputationSystem = new ReputationSystem()
+    this.siegeSystem = new SiegeSystem()
+    this.disasterWarning = new DisasterWarningSystem()
+    this.moodSystem = new MoodSystem()
+    this.worldAge = new WorldAgeSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -595,6 +610,11 @@ export class Game {
     this.siegeWarfare = new SiegeWarfareSystem()
     this.tutorial = new TutorialSystem()
     this.renderCulling = new RenderCullingSystem()
+    this.reputationSystem = new ReputationSystem()
+    this.siegeSystem = new SiegeSystem()
+    this.disasterWarning = new DisasterWarningSystem()
+    this.moodSystem = new MoodSystem()
+    this.worldAge = new WorldAgeSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
   }
 
@@ -1313,6 +1333,16 @@ export class Game {
         }
         // Siege warfare - update active sieges
         this.siegeWarfare.update(this.world.tick)
+        // Reputation system - track civ reputation from actions
+        this.reputationSystem.update(this.world.tick, this.civManager, this.em)
+        // Enhanced siege system - battering rams, siege towers, wall breaching
+        this.siegeSystem.update(this.world.tick, this.em, this.civManager, this.world)
+        // Disaster warning system - omens and tremors before disasters
+        this.disasterWarning.update(this.world.tick)
+        // Mood system - creature happiness affects productivity
+        this.moodSystem.update(this.world.tick, this.em, this.world, this.civManager, this.weather.currentWeather, this.spatialHash)
+        // World age system - epoch progression and terrain drift
+        this.worldAge.update(this.world.tick, this.world)
         // Tutorial system - check step conditions
         this.tutorial.update()
         // Build fortification data from civilizations
@@ -1545,6 +1575,26 @@ export class Game {
 
     // Siege warfare visual effects
     this.siegeWarfare.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // World age epoch color overlay
+    {
+      const overlay = this.worldAge.getColorOverlay()
+      if (overlay.a > 0) {
+        ctx.fillStyle = `rgba(${overlay.r},${overlay.g},${overlay.b},${overlay.a})`
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
+      }
+    }
+
+    // Disaster warning visual effects - screen shake and darkening
+    {
+      const effects = this.disasterWarning.getVisualEffects()
+      for (const effect of effects) {
+        if (effect.kind === 'SkyDarken') {
+          ctx.fillStyle = `rgba(0,0,0,${effect.intensity * 0.4})`
+          ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
+        }
+      }
+    }
 
     // Tutorial overlay (rendered last for top-most visibility)
     if (this.tutorial.isActive()) {
