@@ -195,6 +195,11 @@ import { WorldNaturalWonderSystem } from '../systems/WorldNaturalWonderSystem'
 import { CreatureLanguageSystem } from '../systems/CreatureLanguageSystem'
 import { DiplomaticTributeSystem } from '../systems/DiplomaticTributeSystem'
 import { WorldWeatherFrontSystem } from '../systems/WorldWeatherFrontSystem'
+import { CreatureTradeSkillSystem } from '../systems/CreatureTradeSkillSystem'
+import { WorldSacredGroveSystem } from '../systems/WorldSacredGroveSystem'
+import { CreatureAllianceSystem } from '../systems/CreatureAllianceSystem'
+import { DiplomaticPropagandaSystem } from '../systems/DiplomaticPropagandaSystem'
+import { WorldTidalSystem } from '../systems/WorldTidalSystem'
 
 export class Game {
   private world: World
@@ -392,6 +397,11 @@ export class Game {
   private creatureLanguage!: CreatureLanguageSystem
   private diplomaticTribute!: DiplomaticTributeSystem
   private worldWeatherFront!: WorldWeatherFrontSystem
+  private creatureTradeSkill!: CreatureTradeSkillSystem
+  private worldSacredGrove!: WorldSacredGroveSystem
+  private creatureAlliance!: CreatureAllianceSystem
+  private diplomaticPropaganda!: DiplomaticPropagandaSystem
+  private worldTidal!: WorldTidalSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -734,6 +744,12 @@ export class Game {
     this.diplomaticTribute = new DiplomaticTributeSystem()
     this.worldWeatherFront = new WorldWeatherFrontSystem()
     this.worldWeatherFront.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
+    this.creatureTradeSkill = new CreatureTradeSkillSystem()
+    this.worldSacredGrove = new WorldSacredGroveSystem()
+    this.creatureAlliance = new CreatureAllianceSystem()
+    this.diplomaticPropaganda = new DiplomaticPropagandaSystem()
+    this.worldTidal = new WorldTidalSystem()
+    this.worldTidal.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2021,6 +2037,16 @@ export class Game {
         this.diplomaticTribute.update(this.tickRate, this.civManager, this.world.tick)
         // World weather fronts (v2.30) - moving weather fronts
         this.worldWeatherFront.update(this.tickRate, this.world.tick)
+        // Creature trade skills (v2.31) - trade skill development
+        this.creatureTradeSkill.update(this.tickRate, this.em, this.world.tick)
+        // World sacred groves (v2.32) - spiritual groves with blessings
+        this.worldSacredGrove.update(this.tickRate, this.world, this.world.tick)
+        // Creature alliances (v2.33) - personal cross-civ friendships
+        this.creatureAlliance.update(this.tickRate, this.em, this.world.tick)
+        // Diplomatic propaganda (v2.34) - influence campaigns
+        this.diplomaticPropaganda.update(this.tickRate, this.civManager, this.world.tick)
+        // World tidal system (v2.35) - coastal tide cycles
+        this.worldTidal.update(this.tickRate, this.world, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
