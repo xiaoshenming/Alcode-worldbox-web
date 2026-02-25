@@ -377,6 +377,21 @@ import { WorldMagneticFieldSystem } from '../systems/WorldMagneticFieldSystem'
 import { CreatureCheeseAgerSystem } from '../systems/CreatureCheeseAgerSystem'
 import { WorldSinkholePrevSystem } from '../systems/WorldSinkholePrevSystem'
 import { DiplomaticRansomSystem } from '../systems/DiplomaticRansomSystem'
+import { CreatureSoapMakerSystem } from '../systems/CreatureSoapMakerSystem'
+import { WorldDewFormationSystem } from '../systems/WorldDewFormationSystem'
+import { CreatureGamblerSystem } from '../systems/CreatureGamblerSystem'
+import { WorldSandDuneSystem } from '../systems/WorldSandDuneSystem'
+import { DiplomaticWarReparationsSystem } from '../systems/DiplomaticWarReparationsSystem'
+import { CreatureGladiatorSystem } from '../systems/CreatureGladiatorSystem'
+import { WorldTideFlatSystem } from '../systems/WorldTideFlatSystem'
+import { CreatureMushroomForagerSystem } from '../systems/CreatureMushroomForagerSystem'
+import { WorldIceSheetSystem } from '../systems/WorldIceSheetSystem'
+import { DiplomaticNonAggressionSystem } from '../systems/DiplomaticNonAggressionSystem'
+import { CreatureTrapperSystem } from '../systems/CreatureTrapperSystem'
+import { WorldCoralSpawningSystem } from '../systems/WorldCoralSpawningSystem'
+import { CreatureAstronomerSystem } from '../systems/CreatureAstronomerSystem'
+import { WorldThermalVentSystem } from '../systems/WorldThermalVentSystem'
+import { DiplomaticArmisticSystem } from '../systems/DiplomaticArmisticSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -755,6 +770,21 @@ export class Game {
   private creatureCheeseAger!: CreatureCheeseAgerSystem
   private worldSinkholePrev!: WorldSinkholePrevSystem
   private diplomaticRansom!: DiplomaticRansomSystem
+  private creatureSoapMaker!: CreatureSoapMakerSystem
+  private worldDewFormation!: WorldDewFormationSystem
+  private creatureGambler!: CreatureGamblerSystem
+  private worldSandDune!: WorldSandDuneSystem
+  private diplomaticWarReparations!: DiplomaticWarReparationsSystem
+  private creatureGladiator!: CreatureGladiatorSystem
+  private worldTideFlat!: WorldTideFlatSystem
+  private creatureMushroomForager!: CreatureMushroomForagerSystem
+  private worldIceSheet!: WorldIceSheetSystem
+  private diplomaticNonAggression!: DiplomaticNonAggressionSystem
+  private creatureTrapper!: CreatureTrapperSystem
+  private worldCoralSpawning!: WorldCoralSpawningSystem
+  private creatureAstronomer!: CreatureAstronomerSystem
+  private worldThermalVent!: WorldThermalVentSystem
+  private diplomaticArmistic!: DiplomaticArmisticSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1284,6 +1314,21 @@ export class Game {
     this.creatureCheeseAger = new CreatureCheeseAgerSystem()
     this.worldSinkholePrev = new WorldSinkholePrevSystem()
     this.diplomaticRansom = new DiplomaticRansomSystem()
+    this.creatureSoapMaker = new CreatureSoapMakerSystem()
+    this.worldDewFormation = new WorldDewFormationSystem()
+    this.creatureGambler = new CreatureGamblerSystem()
+    this.worldSandDune = new WorldSandDuneSystem()
+    this.diplomaticWarReparations = new DiplomaticWarReparationsSystem()
+    this.creatureGladiator = new CreatureGladiatorSystem()
+    this.worldTideFlat = new WorldTideFlatSystem()
+    this.creatureMushroomForager = new CreatureMushroomForagerSystem()
+    this.worldIceSheet = new WorldIceSheetSystem()
+    this.diplomaticNonAggression = new DiplomaticNonAggressionSystem()
+    this.creatureTrapper = new CreatureTrapperSystem()
+    this.worldCoralSpawning = new WorldCoralSpawningSystem()
+    this.creatureAstronomer = new CreatureAstronomerSystem()
+    this.worldThermalVent = new WorldThermalVentSystem()
+    this.diplomaticArmistic = new DiplomaticArmisticSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2949,6 +2994,36 @@ export class Game {
         this.worldSinkholePrev.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic ransom (v3.145) - prisoner negotiation
         this.diplomaticRansom.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature soap makers (v3.146) - soap crafting
+        this.creatureSoapMaker.update(this.tickRate, this.em, this.world.tick)
+        // World dew formation (v3.147) - moisture cycles
+        this.worldDewFormation.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature gamblers (v3.148) - wealth redistribution
+        this.creatureGambler.update(this.tickRate, this.em, this.world.tick)
+        // World sand dune (v3.149) - dune migration
+        this.worldSandDune.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic war reparations (v3.150) - post-war payments
+        this.diplomaticWarReparations.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature gladiators (v3.151) - arena combat
+        this.creatureGladiator.update(this.tickRate, this.em, this.world.tick)
+        // World tide flat (v3.152) - intertidal zones
+        this.worldTideFlat.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature mushroom foragers (v3.153) - fungal gathering
+        this.creatureMushroomForager.update(this.tickRate, this.em, this.world.tick)
+        // World ice sheet (v3.154) - glacial expansion
+        this.worldIceSheet.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic non-aggression (v3.155) - peace pacts
+        this.diplomaticNonAggression.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature trappers (v3.156) - hunting traps
+        this.creatureTrapper.update(this.tickRate, this.em, this.world.tick)
+        // World coral spawning (v3.157) - reef reproduction
+        this.worldCoralSpawning.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature astronomers (v3.158) - star observation
+        this.creatureAstronomer.update(this.tickRate, this.em, this.world.tick)
+        // World thermal vent (v3.159) - deep sea vents
+        this.worldThermalVent.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic armistice (v3.160) - ceasefire agreements
+        this.diplomaticArmistic.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
