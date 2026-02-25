@@ -1,6 +1,6 @@
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
-import { Civilization, TECH_TREE } from '../civilization/Civilization'
+import { Civilization, TECH_TREE, CULTURE_ICONS } from '../civilization/Civilization'
 
 export class StatsPanel {
   private el: HTMLElement
@@ -138,6 +138,22 @@ export class StatsPanel {
     }
 
     row.appendChild(techLine)
+
+    // Culture line
+    const cultureLine = document.createElement('div')
+    cultureLine.style.cssText = 'font-size:10px;margin-top:2px'
+    const cultureIcon = CULTURE_ICONS[civ.culture.trait]
+    const strengthBar = Math.round(civ.culture.strength / 10)
+    const strengthFill = '■'.repeat(strengthBar) + '□'.repeat(10 - strengthBar)
+    const strengthSpan = document.createElement('span')
+    strengthSpan.style.color = '#c0a0e0'
+    strengthSpan.textContent = `${cultureIcon} ${civ.culture.trait}`
+    cultureLine.appendChild(strengthSpan)
+    const strengthValSpan = document.createElement('span')
+    strengthValSpan.style.cssText = 'color:#a080c0;margin-left:6px;font-size:9px'
+    strengthValSpan.textContent = `${strengthFill} ${Math.round(civ.culture.strength)}%`
+    cultureLine.appendChild(strengthValSpan)
+    row.appendChild(cultureLine)
 
     this.el.appendChild(row)
   }

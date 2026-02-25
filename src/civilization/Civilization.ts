@@ -1,5 +1,18 @@
 import { Component, EntityId } from '../ecs/Entity'
 
+// Culture traits
+export type CultureTrait = 'warrior' | 'merchant' | 'scholar' | 'nature' | 'builder'
+
+export const CULTURE_TRAITS: CultureTrait[] = ['warrior', 'merchant', 'scholar', 'nature', 'builder']
+
+export const CULTURE_ICONS: Record<CultureTrait, string> = {
+  warrior: '⚔️',
+  merchant: '💰',
+  scholar: '📚',
+  nature: '🌿',
+  builder: '🏗️',
+}
+
 // Building types
 export enum BuildingType {
   HUT = 'hut',
@@ -59,6 +72,10 @@ export interface Civilization {
   techLevel: number // 1-5
   relations: Map<number, number> // civId -> relation (-100 to 100)
   tradeRoutes: TradeRoute[]
+  culture: {
+    trait: CultureTrait
+    strength: number // 0-100, grows over time
+  }
 }
 
 // Components
@@ -125,6 +142,10 @@ export function createCivilization(): Civilization {
     resources: { food: 50, wood: 30, stone: 10, gold: 0 },
     techLevel: 1,
     relations: new Map(),
-    tradeRoutes: []
+    tradeRoutes: [],
+    culture: {
+      trait: CULTURE_TRAITS[Math.floor(Math.random() * CULTURE_TRAITS.length)],
+      strength: 10
+    }
   }
 }
