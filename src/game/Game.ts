@@ -103,6 +103,9 @@ import { EnhancedTooltipSystem } from '../systems/EnhancedTooltipSystem'
 import { NavalCombatSystem } from '../systems/NavalCombatSystem'
 import { ReligionSpreadSystem } from '../systems/ReligionSpreadSystem'
 import { GeneticDisplaySystem } from '../systems/GeneticDisplaySystem'
+import { LODRenderSystem } from '../systems/LODRenderSystem'
+import { BuildingVarietySystem } from '../systems/BuildingVarietySystem'
+import { HistoryReplaySystem } from '../systems/HistoryReplaySystem'
 
 export class Game {
   private world: World
@@ -208,6 +211,9 @@ export class Game {
   private navalCombat: NavalCombatSystem
   private religionSpread: ReligionSpreadSystem
   private geneticDisplay: GeneticDisplaySystem
+  private lodRender: LODRenderSystem
+  private buildingVariety: BuildingVarietySystem
+  private historyReplay: HistoryReplaySystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -457,6 +463,9 @@ export class Game {
     this.navalCombat = new NavalCombatSystem()
     this.religionSpread = new ReligionSpreadSystem()
     this.geneticDisplay = new GeneticDisplaySystem()
+    this.lodRender = new LODRenderSystem()
+    this.buildingVariety = new BuildingVarietySystem()
+    this.historyReplay = new HistoryReplaySystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -889,8 +898,27 @@ export class Game {
           this.helpOverlay.toggle()
           break
 
+        // History replay toggle
+        case 'r':
+        case 'R':
+          if (!e.ctrlKey && !e.metaKey) {
+            if (this.historyReplay.isReplaying()) this.historyReplay.stopReplay()
+            else this.historyReplay.startReplay()
+          }
+          break
+        case 'ArrowLeft':
+          if (this.historyReplay.isReplaying()) this.historyReplay.step(-1)
+          break
+        case 'ArrowRight':
+          if (this.historyReplay.isReplaying()) this.historyReplay.step(1)
+          break
+
         // Escape: close panels / deselect tool
         case 'Escape': {
+          if (this.historyReplay.isReplaying()) {
+            this.historyReplay.stopReplay()
+            break
+          }
           if (this.helpOverlay.isVisible()) {
             this.helpOverlay.toggle()
             break
@@ -1400,6 +1428,20 @@ export class Game {
         this.navalCombat.update(this.world.tick, this.em, this.civManager)
         // Religion spread - faith influence from temples
         this.religionSpread.update(this.world.tick, this.em, this.civManager)
+        // LOD render - update detail level based on zoom
+        this.lodRender.update(this.camera)
+        // Building variety - update building health/decay
+        this.buildingVariety.update(this.world.tick, this.em)
+        // History replay - record world snapshot
+        this.historyReplay.recordSnapshot(
+          this.world.tick,
+          this.em.getEntitiesWithComponent('creature').length,
+          this.civManager.civilizations.size,
+          0, [], // wars and events simplified
+          [...this.civManager.civilizations.entries()].map(([id, c]) => ({
+            id, name: c.name, pop: c.population, color: c.color
+          }))
+        )
         // Tutorial system - check step conditions
         this.tutorial.update()
         // Build fortification data from civilizations
@@ -1670,6 +1712,12 @@ export class Game {
 
     // Naval combat effects
     this.navalCombat.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // Building variety rendering
+    this.buildingVariety.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, this.em)
+
+    // History replay timeline (if active)
+    this.historyReplay.render(ctx, this.canvas.width, this.canvas.height)
 
     // Tutorial overlay (rendered last for top-most visibility)
     if (this.tutorial.isActive()) {
