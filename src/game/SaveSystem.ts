@@ -32,6 +32,7 @@ interface SavedCiv {
   resources: { food: number; wood: number; stone: number; gold: number }
   techLevel: number
   relations: [number, number][]
+  tradeRoutes?: { partnerId: number; fromPort: { x: number; y: number }; toPort: { x: number; y: number }; active: boolean; income: number }[]
 }
 
 export class SaveSystem {
@@ -100,6 +101,7 @@ export class SaveSystem {
           resources: { ...sc.resources },
           techLevel: sc.techLevel,
           relations: new Map(sc.relations),
+          tradeRoutes: sc.tradeRoutes ?? [],
         }
         civManager.civilizations.set(civ.id, civ)
       }
@@ -170,6 +172,7 @@ export class SaveSystem {
         resources: { ...civ.resources },
         techLevel: civ.techLevel,
         relations: Array.from(civ.relations.entries()),
+        tradeRoutes: civ.tradeRoutes,
       })
     }
     return result

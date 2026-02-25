@@ -86,6 +86,11 @@ export class Renderer {
       this.renderEntities(em, camera, bounds, tileSize, offsetX, offsetY)
     }
 
+    // Trade routes
+    if (civManager) {
+      this.renderTradeRoutes(civManager, camera)
+    }
+
     // Draw particles
     if (particles) {
       this.renderParticles(particles, camera)
@@ -399,6 +404,54 @@ export class Renderer {
       ctx.fill()
     }
     ctx.globalAlpha = 1
+  }
+
+  private renderTradeRoutes(civManager: CivManager, camera: Camera): void {
+    const ctx = this.ctx
+    const routes = civManager.getAllTradeRoutes()
+    const tileSize = TILE_SIZE * camera.zoom
+    const offsetX = -camera.x * camera.zoom
+    const offsetY = -camera.y * camera.zoom
+    const time = performance.now() * 0.001
+
+    for (const route of routes) {
+      const x1 = route.from.x * tileSize + offsetX + tileSize / 2
+      const y1 = route.from.y * tileSize + offsetY + tileSize / 2
+      const x2 = route.to.x * tileSize + offsetX + tileSize / 2
+      const y2 = route.to.y * tileSize + offsetY + tileSize / 2
+
+      // Dashed line
+      ctx.strokeStyle = route.color
+      ctx.globalAlpha = 0.4
+      ctx.lineWidth = 1.5 * camera.zoom
+      ctx.setLineDash([4 * camera.zoom, 4 * camera.zoom])
+      ctx.beginPath()
+      ctx.moveTo(x1, y1)
+      ctx.lineTo(x2, y2)
+      ctx.stroke()
+      ctx.setLineDash([])
+
+      // Animated dot moving along the route (trade caravan)
+      const t = (time * 0.3) % 1
+      const dotX = x1 + (x2 - x1) * t
+      const dotY = y1 + (y2 - y1) * t
+      ctx.globalAlpha = 0.8
+      ctx.fillStyle = '#ffd700'
+      ctx.beginPath()
+      ctx.arc(dotX, dotY, 2 * camera.zoom, 0, Math.PI * 2)
+      ctx.fill()
+
+      // Return trip dot
+      const t2 = (time * 0.3 + 0.5) % 1
+      const dot2X = x1 + (x2 - x1) * t2
+      const dot2Y = y1 + (y2 - y1) * t2
+      ctx.fillStyle = '#ffaa00'
+      ctx.beginPath()
+      ctx.arc(dot2X, dot2Y, 2 * camera.zoom, 0, Math.PI * 2)
+      ctx.fill()
+
+      ctx.globalAlpha = 1
+    }
   }
 
   renderBrushOutline(camera: Camera, mouseX: number, mouseY: number, brushSize: number): void {

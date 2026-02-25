@@ -2,6 +2,7 @@ import { EntityManager, PositionComponent, EntityId } from '../ecs/Entity'
 import { World } from '../game/World'
 import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { Civilization, createCivilization, BuildingType, BuildingComponent, CivMemberComponent } from './Civilization'
+import { EventLog } from '../systems/EventLog'
 
 export class CivManager {
   private em: EntityManager
@@ -123,6 +124,12 @@ export class CivManager {
 
       // Diplomacy
       this.updateDiplomacy(civ)
+
+      // Trade routes
+      if (Math.random() < 0.01) {
+        this.updateTradeRoutes(civ)
+      }
+      this.applyTradeIncome(civ)
     }
   }
 
@@ -428,5 +435,68 @@ export class CivManager {
   getCivColor(x: number, y: number): string | null {
     const civ = this.getCivAt(x, y)
     return civ ? civ.color : null
+  }
+
+  private updateTradeRoutes(civ: Civilization): void {
+    for (const [otherId, otherCiv] of this.civilizations) {
+      if (otherId === civ.id) continue
+      const relation = civ.relations.get(otherId) ?? 0
+      const existingIdx = civ.tradeRoutes.findIndex(r => r.partnerId === otherId)
+
+      const myPort = this.findPort(civ)
+      const theirPort = this.findPort(otherCiv)
+
+      if (relation > 20 && myPort && theirPort && existingIdx === -1) {
+        // Establish trade route
+        const avgTech = (civ.techLevel + otherCiv.techLevel) / 2
+        civ.tradeRoutes.push({
+          partnerId: otherId,
+          fromPort: myPort,
+          toPort: theirPort,
+          active: true,
+          income: avgTech * 0.03
+        })
+        EventLog.log('trade', `${civ.name} established trade with ${otherCiv.name}`, 0)
+      } else if (existingIdx !== -1 && (relation < -10 || !myPort || !theirPort)) {
+        // Break trade route
+        civ.tradeRoutes.splice(existingIdx, 1)
+        EventLog.log('trade', `${civ.name} lost trade route with ${otherCiv.name}`, 0)
+      }
+    }
+  }
+
+  private findPort(civ: Civilization): { x: number; y: number } | null {
+    for (const id of civ.buildings) {
+      const b = this.em.getComponent<BuildingComponent>(id, 'building')
+      const pos = this.em.getComponent<PositionComponent>(id, 'position')
+      if (b && b.buildingType === BuildingType.PORT && pos) {
+        return { x: pos.x, y: pos.y }
+      }
+    }
+    return null
+  }
+
+  private applyTradeIncome(civ: Civilization): void {
+    for (const route of civ.tradeRoutes) {
+      if (!route.active) continue
+      civ.resources.gold += route.income
+      civ.resources.food += route.income * 0.5
+      // Trade also improves relations
+      if (Math.random() < 0.001) {
+        const rel = civ.relations.get(route.partnerId) ?? 0
+        civ.relations.set(route.partnerId, Math.min(100, rel + 0.5))
+      }
+    }
+  }
+
+  getAllTradeRoutes(): { from: { x: number; y: number }; to: { x: number; y: number }; color: string }[] {
+    const routes: { from: { x: number; y: number }; to: { x: number; y: number }; color: string }[] = []
+    for (const [, civ] of this.civilizations) {
+      for (const route of civ.tradeRoutes) {
+        if (!route.active) continue
+        routes.push({ from: route.fromPort, to: route.toPort, color: civ.color })
+      }
+    }
+    return routes
   }
 }

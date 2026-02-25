@@ -34,6 +34,14 @@ export const BUILDING_SIZES: Record<BuildingType, number> = {
   [BuildingType.PORT]: 2,
 }
 
+export interface TradeRoute {
+  partnerId: number      // 贸易伙伴文明 ID
+  fromPort: { x: number; y: number }  // 己方港口位置
+  toPort: { x: number; y: number }    // 对方港口位置
+  active: boolean
+  income: number         // 每 tick 收入
+}
+
 // Civilization data
 export interface Civilization {
   id: number
@@ -50,6 +58,7 @@ export interface Civilization {
   }
   techLevel: number // 1-5
   relations: Map<number, number> // civId -> relation (-100 to 100)
+  tradeRoutes: TradeRoute[]
 }
 
 // Components
@@ -115,6 +124,7 @@ export function createCivilization(): Civilization {
     buildings: [],
     resources: { food: 50, wood: 30, stone: 10, gold: 0 },
     techLevel: 1,
-    relations: new Map()
+    relations: new Map(),
+    tradeRoutes: []
   }
 }
