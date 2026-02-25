@@ -311,6 +311,11 @@ import { WorldMangroveSystem } from '../systems/WorldMangroveSystem'
 import { DiplomaticPeaceTreatySystem } from '../systems/DiplomaticPeaceTreatySystem'
 import { CreatureEcholocationSystem } from '../systems/CreatureEcholocationSystem'
 import { WorldBallLightningSystem } from '../systems/WorldBallLightningSystem'
+import { CreatureWeavingSystem } from '../systems/CreatureWeavingSystem'
+import { WorldCrystalCaveSystem } from '../systems/WorldCrystalCaveSystem'
+import { DiplomaticTradeSanctionSystem } from '../systems/DiplomaticTradeSanctionSystem'
+import { CreatureMimicrySystem } from '../systems/CreatureMimicrySystem'
+import { WorldWaterspoutSystem } from '../systems/WorldWaterspoutSystem'
 
 export class Game {
   private world: World
@@ -624,6 +629,11 @@ export class Game {
   private diplomaticPeaceTreaty!: DiplomaticPeaceTreatySystem
   private creatureEcholocation!: CreatureEcholocationSystem
   private worldBallLightning!: WorldBallLightningSystem
+  private creatureWeaving!: CreatureWeavingSystem
+  private worldCrystalCave!: WorldCrystalCaveSystem
+  private diplomaticTradeSanction!: DiplomaticTradeSanctionSystem
+  private creatureMimicry!: CreatureMimicrySystem
+  private worldWaterspout!: WorldWaterspoutSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -1088,6 +1098,11 @@ export class Game {
     this.diplomaticPeaceTreaty = new DiplomaticPeaceTreatySystem()
     this.creatureEcholocation = new CreatureEcholocationSystem()
     this.worldBallLightning = new WorldBallLightningSystem()
+    this.creatureWeaving = new CreatureWeavingSystem()
+    this.worldCrystalCave = new WorldCrystalCaveSystem()
+    this.diplomaticTradeSanction = new DiplomaticTradeSanctionSystem()
+    this.creatureMimicry = new CreatureMimicrySystem()
+    this.worldWaterspout = new WorldWaterspoutSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2607,6 +2622,16 @@ export class Game {
         this.creatureEcholocation.update(this.tickRate, this.em, this.world.tick)
         // World ball lightning (v3.65) - rare electrical phenomena
         this.worldBallLightning.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature weaving (v3.66) - textile crafting
+        this.creatureWeaving.update(this.tickRate, this.em, this.world.tick)
+        // World crystal caves (v3.67) - underground crystal formations
+        this.worldCrystalCave.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic trade sanctions (v3.68) - targeted trade restrictions
+        this.diplomaticTradeSanction.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // Creature mimicry (v3.69) - species mimicry for survival
+        this.creatureMimicry.update(this.tickRate, this.em, this.world.tick)
+        // World waterspouts (v3.70) - ocean tornado phenomena
+        this.worldWaterspout.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
