@@ -213,6 +213,8 @@ import { WorldCrystalFormationSystem } from '../systems/WorldCrystalFormationSys
 import { CreatureRitualSystem } from '../systems/CreatureRitualSystem'
 import { DiplomaticExileSystem } from '../systems/DiplomaticExileSystem'
 import { WorldMigrationRouteSystem } from '../systems/WorldMigrationRouteSystem'
+import { WorldVolcanicSystem } from '../systems/WorldVolcanicSystem'
+import { WorldAcousticSystem } from '../systems/WorldAcousticSystem'
 
 export class Game {
   private world: World
@@ -428,6 +430,8 @@ export class Game {
   private creatureRitual!: CreatureRitualSystem
   private diplomaticExile!: DiplomaticExileSystem
   private worldMigrationRoute!: WorldMigrationRouteSystem
+  private worldVolcanic!: WorldVolcanicSystem
+  private worldAcoustic!: WorldAcousticSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -792,6 +796,10 @@ export class Game {
     this.diplomaticExile = new DiplomaticExileSystem()
     this.worldMigrationRoute = new WorldMigrationRouteSystem()
     this.worldMigrationRoute.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
+    this.worldVolcanic = new WorldVolcanicSystem()
+    this.worldVolcanic.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
+    this.worldAcoustic = new WorldAcousticSystem()
+    this.worldAcoustic.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2022,7 +2030,7 @@ export class Game {
         // Trade negotiation (v2.01) - civilization trade deals
         this.tradeNegotiation.update(this.tickRate, this.em, this.civManager, this.world.tick)
         // Creature dream (v2.02) - sleep dreams affect behavior
-        this.creatureDream.update(this.tickRate, this.em)
+        this.creatureDream.update(this.tickRate, this.em, this.world.tick)
         // Disaster recovery (v2.03) - terrain and building restoration
         this.disasterRecovery.update(this.tickRate, this.world, this.em, this.civManager)
         // Creature fame (v2.04) - individual reputation tracking
@@ -2030,7 +2038,7 @@ export class Game {
         // Migration wave (v2.05) - large-scale population movement
         this.migrationWave.update(this.tickRate, this.em, this.world, this.civManager)
         // Creature rivalry (v2.06) - persistent hatred between creatures
-        this.creatureRivalry.update(this.tickRate, this.em)
+        this.creatureRivalry.update(this.tickRate, this.em, this.world.tick)
         // World corruption (v2.07) - evil forces corrupt terrain
         this.worldCorruption.update(this.tickRate, this.world, this.em, this.world.tick)
         // Creature profession (v2.08) - job assignment system
@@ -2046,7 +2054,7 @@ export class Game {
         // Creature mutation (v2.13) - environmental mutations
         this.creatureMutation.update(this.tickRate, this.em, this.world)
         // Diplomatic marriage (v2.14) - royal marriages
-        this.diplomaticMarriage.update(this.tickRate, this.civManager, this.world.tick)
+        this.diplomaticMarriage.update(this.tickRate, this.em, this.civManager, this.world.tick)
         // World relics (v2.15) - ancient relics with buffs
         this.worldRelic.update(this.tickRate, this.em, this.world)
         // Creature ancestor worship (v2.16) - ancestor spirits buff descendants
@@ -2115,6 +2123,10 @@ export class Game {
         this.diplomaticExile.update(this.tickRate, this.em, this.civManager, this.world.tick)
         // World migration routes (v2.50) - seasonal migration paths
         this.worldMigrationRoute.update(this.tickRate, this.world.tick)
+        // World volcanic activity (v2.52) - volcano eruptions and lava
+        this.worldVolcanic.update(this.tickRate, this.world, this.world.tick)
+        // World acoustics (v2.55) - sound propagation effects
+        this.worldAcoustic.update(this.tickRate, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
@@ -2542,8 +2554,6 @@ export class Game {
     // Creature personality panel (v2.00)
     this.creaturePersonality.render(ctx)
 
-    // Creature rivalry panel (v2.06)
-    this.creatureRivalry.render(ctx)
 
     // World corruption overlay (v2.07)
     this.worldCorruption.renderOverlay(ctx, this.camera.x, this.camera.y, this.camera.zoom, TILE_SIZE)
@@ -2566,8 +2576,6 @@ export class Game {
     // Creature mutation notifications (v2.13)
     this.creatureMutation.render(ctx)
 
-    // Diplomatic marriage panel (v2.14)
-    this.diplomaticMarriage.render(ctx)
 
     // World relics (v2.15)
     this.worldRelic.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
