@@ -288,6 +288,11 @@ import { WorldPermafrostSystem } from '../systems/WorldPermafrostSystem'
 import { DiplomaticCulturalExchangeSystem } from '../systems/DiplomaticCulturalExchangeSystem'
 import { CreatureSomniloquySystem } from '../systems/CreatureSomniloquySystem'
 import { WorldTidalWaveSystem } from '../systems/WorldTidalWaveSystem'
+import { CreatureOmenBeliefSystem } from '../systems/CreatureOmenBeliefSystem'
+import { WorldMudslideSystem } from '../systems/WorldMudslideSystem'
+import { DiplomaticPledgeSystem } from '../systems/DiplomaticPledgeSystem'
+import { CreatureAmbidextritySystem } from '../systems/CreatureAmbidextritySystem'
+import { WorldKelpForestSystem } from '../systems/WorldKelpForestSystem'
 
 export class Game {
   private world: World
@@ -578,6 +583,11 @@ export class Game {
   private diplomaticCulturalExchange!: DiplomaticCulturalExchangeSystem
   private creatureSomniloquy!: CreatureSomniloquySystem
   private worldTidalWave!: WorldTidalWaveSystem
+  private creatureOmenBelief!: CreatureOmenBeliefSystem
+  private worldMudslide!: WorldMudslideSystem
+  private diplomaticPledge!: DiplomaticPledgeSystem
+  private creatureAmbidextrity!: CreatureAmbidextritySystem
+  private worldKelpForest!: WorldKelpForestSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -1019,6 +1029,11 @@ export class Game {
     this.diplomaticCulturalExchange = new DiplomaticCulturalExchangeSystem()
     this.creatureSomniloquy = new CreatureSomniloquySystem()
     this.worldTidalWave = new WorldTidalWaveSystem()
+    this.creatureOmenBelief = new CreatureOmenBeliefSystem()
+    this.worldMudslide = new WorldMudslideSystem()
+    this.diplomaticPledge = new DiplomaticPledgeSystem()
+    this.creatureAmbidextrity = new CreatureAmbidextritySystem()
+    this.worldKelpForest = new WorldKelpForestSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2492,6 +2507,16 @@ export class Game {
         this.creatureSomniloquy.update(this.tickRate, this.em, this.world.tick)
         // World tidal waves (v3.40) - massive waves crash coastlines
         this.worldTidalWave.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature omen beliefs (v3.41) - creatures interpret events as omens
+        this.creatureOmenBelief.update(this.tickRate, this.em, this.world.tick)
+        // World mudslides (v3.42) - rain triggers mudslides on mountains
+        this.worldMudslide.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic pledges (v3.43) - civs make binding pledges
+        this.diplomaticPledge.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // Creature ambidextrity (v3.44) - dual-hand proficiency
+        this.creatureAmbidextrity.update(this.tickRate, this.em, this.world.tick)
+        // World kelp forests (v3.45) - underwater kelp grows in shallows
+        this.worldKelpForest.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
