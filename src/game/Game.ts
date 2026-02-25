@@ -337,6 +337,11 @@ import { CreatureEnchantingSystem } from '../systems/CreatureEnchantingSystem'
 import { WorldGeyserFieldSystem } from '../systems/WorldGeyserFieldSystem'
 import { CreatureBardSystem } from '../systems/CreatureBardSystem'
 import { WorldNorthernLightsSystem } from '../systems/WorldNorthernLightsSystem'
+import { WorldMossGrowthSystem } from '../systems/WorldMossGrowthSystem'
+import { WorldIrrigationSystem } from '../systems/WorldIrrigationSystem'
+import { CreatureConstellationSystem } from '../systems/CreatureConstellationSystem'
+import { CreatureScribeSystem } from '../systems/CreatureScribeSystem'
+import { WorldLighthouseSystem } from '../systems/WorldLighthouseSystem'
 
 export class Game {
   private world: World
@@ -676,6 +681,11 @@ export class Game {
   private worldGeyserField!: WorldGeyserFieldSystem
   private creatureBard!: CreatureBardSystem
   private worldNorthernLights!: WorldNorthernLightsSystem
+  private worldMossGrowth!: WorldMossGrowthSystem
+  private worldIrrigation!: WorldIrrigationSystem
+  private creatureConstellation!: CreatureConstellationSystem
+  private creatureScribe!: CreatureScribeSystem
+  private worldLighthouse!: WorldLighthouseSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -1166,6 +1176,11 @@ export class Game {
     this.worldGeyserField = new WorldGeyserFieldSystem()
     this.creatureBard = new CreatureBardSystem()
     this.worldNorthernLights = new WorldNorthernLightsSystem()
+    this.worldMossGrowth = new WorldMossGrowthSystem()
+    this.worldIrrigation = new WorldIrrigationSystem()
+    this.creatureConstellation = new CreatureConstellationSystem()
+    this.creatureScribe = new CreatureScribeSystem()
+    this.worldLighthouse = new WorldLighthouseSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2751,6 +2766,16 @@ export class Game {
         this.creatureBard.update(this.tickRate, this.em, this.world.tick)
         // World northern lights (v3.100) - polar aurora displays
         this.worldNorthernLights.update(this.tickRate, this.world, this.em, this.world.tick)
+        // World moss growth (v3.101) - moss spreads on damp surfaces
+        this.worldMossGrowth.update(this.tickRate, this.world, this.em, this.world.tick)
+        // World irrigation (v3.102) - water channels for farmland
+        this.worldIrrigation.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature constellations (v3.103) - stargazing bonuses
+        this.creatureConstellation.update(this.tickRate, this.em, this.world.tick)
+        // Creature scribes (v3.104) - history recording
+        this.creatureScribe.update(this.tickRate, this.em, this.world.tick)
+        // World lighthouses (v3.105) - coastal navigation aids
+        this.worldLighthouse.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
