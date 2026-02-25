@@ -333,6 +333,10 @@ import { CreatureRunecraftingSystem } from '../systems/CreatureRunecraftingSyste
 import { CreatureAstrologySystem } from '../systems/CreatureAstrologySystem'
 import { CreatureSummoningSystem } from '../systems/CreatureSummoningSystem'
 import { CreatureAlchemySystem } from '../systems/CreatureAlchemySystem'
+import { CreatureEnchantingSystem } from '../systems/CreatureEnchantingSystem'
+import { WorldGeyserFieldSystem } from '../systems/WorldGeyserFieldSystem'
+import { CreatureBardSystem } from '../systems/CreatureBardSystem'
+import { WorldNorthernLightsSystem } from '../systems/WorldNorthernLightsSystem'
 
 export class Game {
   private world: World
@@ -668,6 +672,10 @@ export class Game {
   private creatureAstrology!: CreatureAstrologySystem
   private creatureSummoning!: CreatureSummoningSystem
   private creatureAlchemy!: CreatureAlchemySystem
+  private creatureEnchanting!: CreatureEnchantingSystem
+  private worldGeyserField!: WorldGeyserFieldSystem
+  private creatureBard!: CreatureBardSystem
+  private worldNorthernLights!: WorldNorthernLightsSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -1154,6 +1162,10 @@ export class Game {
     this.creatureAstrology = new CreatureAstrologySystem()
     this.creatureSummoning = new CreatureSummoningSystem()
     this.creatureAlchemy = new CreatureAlchemySystem()
+    this.creatureEnchanting = new CreatureEnchantingSystem()
+    this.worldGeyserField = new WorldGeyserFieldSystem()
+    this.creatureBard = new CreatureBardSystem()
+    this.worldNorthernLights = new WorldNorthernLightsSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2729,6 +2741,16 @@ export class Game {
         this.creatureAlchemy.update(this.tickRate, this.em, this.world.tick)
         // World meteor showers (v3.95) - falling meteors
         this.worldMeteorShower.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature enchanting (v3.96) - magical item enchantment
+        this.creatureEnchanting.update(this.tickRate, this.em, this.world.tick)
+        // World geyser fields (v3.97) - geothermal eruption zones
+        this.worldGeyserField.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic tribute (v3.98) - vassal tribute payments
+        this.diplomaticTribute.update(this.tickRate, this.em, this.world.tick)
+        // Creature bards (v3.99) - musical morale boosting
+        this.creatureBard.update(this.tickRate, this.em, this.world.tick)
+        // World northern lights (v3.100) - polar aurora displays
+        this.worldNorthernLights.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate

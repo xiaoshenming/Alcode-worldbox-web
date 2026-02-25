@@ -1,29 +1,30 @@
-// Diplomatic Tribute System (v3.13) - Weaker civilizations pay tribute to stronger ones
-// Tribute improves relations; refusal may trigger war
+// Diplomatic Tribute System (v3.98) - Weaker nations pay tribute for protection
+// Power disparity drives vassal-overlord relationships with varying tribute types
 
 import { EntityManager } from '../ecs/Entity'
 
-export type TributeResource = 'food' | 'wood' | 'stone' | 'gold' | 'gem'
+export type TributeType = 'gold' | 'food' | 'military' | 'technology' | 'artifacts'
 
-export interface Tribute {
+export interface TributeAgreement {
   id: number
-  vassalCivId: string
-  overlordCivId: string
+  type: TributeType
+  vassal: string
+  overlord: string
   amount: number
-  resource: TributeResource
-  duration: number
+  satisfaction: number
   tick: number
 }
 
-const CHECK_INTERVAL = 800
-const TRIBUTE_CHANCE = 0.015
-const MAX_TRIBUTES = 50
+const CHECK_INTERVAL = 2500
+const TRIBUTE_CHANCE = 0.002
+const MAX_TRIBUTES = 40
+const SATISFACTION_DECAY = 0.3
 
-const RESOURCES: TributeResource[] = ['food', 'wood', 'stone', 'gold', 'gem']
+const TRIBUTE_TYPES: TributeType[] = ['gold', 'food', 'military', 'technology', 'artifacts']
 const CIVS = ['human', 'elf', 'dwarf', 'orc']
 
 export class DiplomaticTributeSystem {
-  private tributes: Tribute[] = []
+  private agreements: TributeAgreement[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -31,54 +32,52 @@ export class DiplomaticTributeSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    this.formTributes(tick)
-    this.ageTributes()
-    this.pruneExpired()
-  }
+    // Form new tribute agreements between mismatched powers
+    if (this.agreements.length < MAX_TRIBUTES && Math.random() < TRIBUTE_CHANCE) {
+      const vassal = CIVS[Math.floor(Math.random() * CIVS.length)]
+      let overlord = CIVS[Math.floor(Math.random() * CIVS.length)]
+      while (overlord === vassal) {
+        overlord = CIVS[Math.floor(Math.random() * CIVS.length)]
+      }
 
-  private formTributes(tick: number): void {
-    if (this.tributes.length >= MAX_TRIBUTES) return
-    if (Math.random() > TRIBUTE_CHANCE) return
-
-    const vassal = CIVS[Math.floor(Math.random() * CIVS.length)]
-    let overlord = CIVS[Math.floor(Math.random() * CIVS.length)]
-    while (overlord === vassal) {
-      overlord = CIVS[Math.floor(Math.random() * CIVS.length)]
+      // Avoid duplicate agreements
+      const exists = this.agreements.some(
+        a => a.vassal === vassal && a.overlord === overlord
+      )
+      if (!exists) {
+        const type = TRIBUTE_TYPES[Math.floor(Math.random() * TRIBUTE_TYPES.length)]
+        this.agreements.push({
+          id: this.nextId++,
+          type,
+          vassal,
+          overlord,
+          amount: 10 + Math.floor(Math.random() * 50),
+          satisfaction: 50 + Math.random() * 50,
+          tick,
+        })
+      }
     }
 
-    const resource = RESOURCES[Math.floor(Math.random() * RESOURCES.length)]
-
-    this.tributes.push({
-      id: this.nextId++,
-      vassalCivId: vassal,
-      overlordCivId: overlord,
-      amount: 10 + Math.floor(Math.random() * 90),
-      resource,
-      duration: 0,
-      tick,
-    })
-  }
-
-  private ageTributes(): void {
-    for (const t of this.tributes) {
-      t.duration++
-      // Tribute amount decays as vassal resists over time
-      t.amount = Math.max(0, t.amount - Math.random() * 0.5)
+    // Update satisfaction -- vassals grow resentful over time
+    for (const a of this.agreements) {
+      a.satisfaction = Math.max(0, a.satisfaction - SATISFACTION_DECAY)
+      // Overlord satisfaction rises with tribute amount
+      if (Math.random() < 0.1) {
+        a.amount = Math.max(1, a.amount + Math.floor((Math.random() - 0.6) * 5))
+      }
     }
-  }
 
-  private pruneExpired(): void {
-    // Remove tributes that have been depleted or very old
-    this.tributes = this.tributes.filter(t =>
-      t.amount > 0 && t.duration < 5000
-    )
-    if (this.tributes.length > MAX_TRIBUTES) {
-      this.tributes.splice(0, this.tributes.length - MAX_TRIBUTES)
+    // Remove broken agreements (satisfaction depleted or very old)
+    for (let i = this.agreements.length - 1; i >= 0; i--) {
+      const a = this.agreements[i]
+      if (a.satisfaction <= 0 || tick - a.tick > 80000) {
+        this.agreements.splice(i, 1)
+      }
     }
   }
 
-  getTributes(): Tribute[] { return this.tributes }
-  getActiveTributes(): Tribute[] {
-    return this.tributes.filter(t => t.amount > 0)
+  getAgreements(): readonly TributeAgreement[] { return this.agreements }
+  getVassalAgreements(civ: string): TributeAgreement[] {
+    return this.agreements.filter(a => a.vassal === civ)
   }
 }
