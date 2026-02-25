@@ -3,7 +3,7 @@ import { World } from './World'
 import { Camera } from './Camera'
 import { EntityManager, PositionComponent, RenderComponent, VelocityComponent, NeedsComponent, AIComponent, CreatureComponent, ArtifactComponent, InventoryComponent, DiseaseComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
-import { BuildingComponent, BUILDING_COLORS } from '../civilization/Civilization'
+import { BuildingComponent, BuildingType, BUILDING_COLORS } from '../civilization/Civilization'
 import { ParticleSystem } from '../systems/ParticleSystem'
 import { ResourceSystem } from '../systems/ResourceSystem'
 import { CaravanSystem, Caravan } from '../systems/CaravanSystem'
@@ -17,6 +17,7 @@ export class Renderer {
   private minimapCtx: CanvasRenderingContext2D
   private waterOffset: number = 0
   showTerritory: boolean = true
+  minimapMode: 'normal' | 'territory' | 'heatmap' = 'normal'
   private sprites: SpriteRenderer
 
   // Offscreen terrain cache
@@ -850,7 +851,8 @@ export class Renderer {
 
     // Territory overlay (sample every 3rd tile for performance)
     if (civManager) {
-      ctx.globalAlpha = 0.3
+      const territoryAlpha = this.minimapMode === 'territory' ? 0.5 : 0.3
+      ctx.globalAlpha = territoryAlpha
       for (let y = 0; y < world.height; y += 3) {
         for (let x = 0; x < world.width; x += 3) {
           const civId = civManager.territoryMap[y]?.[x]
@@ -866,8 +868,65 @@ export class Renderer {
       ctx.globalAlpha = 1
     }
 
-    // Entity dots
+    // Heatmap overlay
+    if (this.minimapMode === 'heatmap' && em) {
+      const gridSize = 10
+      const gridW = Math.ceil(world.width / gridSize)
+      const gridH = Math.ceil(world.height / gridSize)
+      const density: number[][] = []
+      for (let gy = 0; gy < gridH; gy++) {
+        density[gy] = []
+        for (let gx = 0; gx < gridW; gx++) {
+          density[gy][gx] = 0
+        }
+      }
+      const entities = em.getEntitiesWithComponents('position')
+      for (const id of entities) {
+        const pos = em.getComponent<PositionComponent>(id, 'position')!
+        const gx = Math.floor(pos.x / gridSize)
+        const gy = Math.floor(pos.y / gridSize)
+        if (gx >= 0 && gx < gridW && gy >= 0 && gy < gridH) {
+          density[gy][gx]++
+        }
+      }
+      ctx.globalAlpha = 0.5
+      for (let gy = 0; gy < gridH; gy++) {
+        for (let gx = 0; gx < gridW; gx++) {
+          const count = density[gy][gx]
+          if (count === 0) {
+            ctx.fillStyle = '#003'
+          } else if (count <= 3) {
+            ctx.fillStyle = '#0a0'
+          } else if (count <= 8) {
+            ctx.fillStyle = '#aa0'
+          } else {
+            ctx.fillStyle = '#f00'
+          }
+          ctx.fillRect(gx * gridSize * scale, gy * gridSize * scale, gridSize * scale, gridSize * scale)
+        }
+      }
+      ctx.globalAlpha = 1
+    }
+
+    // Building icons
     if (em) {
+      const buildings = em.getEntitiesWithComponents('position', 'building')
+      for (const id of buildings) {
+        const pos = em.getComponent<PositionComponent>(id, 'position')!
+        const building = em.getComponent<BuildingComponent>(id, 'building')!
+        if (building.buildingType === BuildingType.CASTLE) {
+          ctx.fillStyle = '#fff'
+        } else if (building.buildingType === BuildingType.BARRACKS) {
+          ctx.fillStyle = '#f44'
+        } else {
+          ctx.fillStyle = '#a86'
+        }
+        ctx.fillRect(pos.x * scale - 1, pos.y * scale - 1, 3, 3)
+      }
+    }
+
+    // Entity dots
+    if (em && this.minimapMode !== 'heatmap') {
       const entities = em.getEntitiesWithComponents('position', 'render')
       const skip = entities.length > 200 ? 2 : 1
       for (let i = 0; i < entities.length; i += skip) {

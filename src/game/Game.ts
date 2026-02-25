@@ -131,6 +131,7 @@ export class Game {
     this.setupTooltip()
     this.setupMuteButton()
     this.setupMinimapClick()
+    this.setupMinimapModeBtn()
     this.renderer.resize(window.innerWidth, window.innerHeight)
   }
 
@@ -190,6 +191,14 @@ export class Game {
         if (!visible) this.renderTimelinePanel()
       })
     }
+
+    // Stats button
+    const statsBtn = document.getElementById('statsBtn')
+    if (statsBtn) {
+      statsBtn.addEventListener('click', () => {
+        this.statsPanel.toggle()
+      })
+    }
   }
 
   private resetWorld(): void {
@@ -220,6 +229,7 @@ export class Game {
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
     this.creaturePanel = new CreaturePanel('creaturePanel', this.em, this.civManager)
+    this.statsPanel = new StatsPanel('statsPanel', this.em, this.civManager)
 
     // Generate new world
     this.world.generate()
@@ -458,6 +468,8 @@ export class Game {
           const tlPanel = document.getElementById('timelinePanel')
           if (savePanel?.style.display !== 'none' && savePanel?.style.display) {
             savePanel.style.display = 'none'
+          } else if (this.statsPanel.isVisible()) {
+            this.statsPanel.hide()
           } else if (achPanel?.style.display !== 'none' && achPanel?.style.display) {
             achPanel.style.display = 'none'
           } else if (tlPanel?.style.display !== 'none' && tlPanel?.style.display) {
@@ -520,6 +532,19 @@ export class Game {
       const halfViewH = (window.innerHeight / this.camera.zoom) / 2
       this.camera.x = worldTileX * TILE_SIZE - halfViewW
       this.camera.y = worldTileY * TILE_SIZE - halfViewH
+    })
+  }
+
+  private setupMinimapModeBtn(): void {
+    const btn = document.getElementById('minimapModeBtn')
+    if (!btn) return
+    const modes: Array<'normal' | 'territory' | 'heatmap'> = ['normal', 'territory', 'heatmap']
+    const labels: Record<string, string> = { normal: 'Normal', territory: 'Territory', heatmap: 'Heatmap' }
+    btn.addEventListener('click', () => {
+      const idx = modes.indexOf(this.renderer.minimapMode)
+      const next = modes[(idx + 1) % modes.length]
+      this.renderer.minimapMode = next
+      btn.textContent = labels[next]
     })
   }
 
@@ -794,7 +819,7 @@ export class Game {
 
     if (this.world.tick % 30 === 0) {
       this.infoPanel.update(this.fps)
-      this.statsPanel.update()
+      this.statsPanel.update(this.world.tick)
       this.achievements.updateStats(this.gatherWorldStats())
       this.updateAchievementsButton()
     }

@@ -210,6 +210,7 @@
   </div>
   <canvas id="gameCanvas"></canvas>
   <canvas id="minimap"></canvas>
+  <button id="minimapModeBtn" style="position:fixed;bottom:5px;right:155px;z-index:100;font-size:10px;padding:2px 6px">Normal</button>
   <div id="ui">
     <div class="panel">
       <div class="title">🌍 WorldBox Web</div>
@@ -224,6 +225,7 @@
       <button class="btn" id="muteBtn">🔊</button>
       <button class="btn" id="achievementsBtn">🏆 0/24</button>
       <button class="btn" id="timelineBtn">📜 Timeline</button>
+      <button class="btn" id="statsBtn">📊 Stats</button>
     </div>
     <div class="panel toolbar" id="toolbar"></div>
     <div class="panel" id="speedControls">
@@ -242,7 +244,7 @@
   <div id="tooltip"></div>
   <div id="contextMenu"></div>
   <div id="eventPanel" class="panel" style="position:fixed;bottom:10px;left:10px;width:320px;max-height:180px;overflow:hidden;z-index:200;font-size:11px;line-height:1.4;pointer-events:none;opacity:0.9"></div>
-  <div id="statsPanel" class="panel" style="position:fixed;top:50%;right:10px;transform:translateY(-50%);width:240px;max-height:400px;overflow-y:auto;z-index:200;font-size:11px;line-height:1.4;display:none"></div>
+  <div id="statsPanel" class="panel" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:380px;max-height:500px;overflow-y:auto;z-index:300;font-size:12px;line-height:1.6;display:none;padding:10px"></div>
   <div id="achievementsPanel" class="panel" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:360px;max-height:500px;overflow-y:auto;z-index:300;font-size:12px;line-height:1.6;display:none"></div>
   <div id="timelinePanel" class="panel" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:380px;max-height:500px;overflow-y:auto;z-index:300;font-size:12px;line-height:1.6;display:none"></div>
   <div id="creaturePanel" class="panel" style="position:fixed;top:10px;right:180px;display:none;min-width:180px;z-index:200;font-size:12px;line-height:1.6"></div>

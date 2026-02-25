@@ -78,4 +78,27 @@ export class Toolbar {
       this.container.appendChild(powersDiv)
     }
   }
+
+  setCategory(category: string): void {
+    const map: Record<string, PowerType> = {
+      terrain: PowerType.TERRAIN,
+      creature: PowerType.CREATURE,
+      nature: PowerType.NATURE,
+      disaster: PowerType.DISASTER,
+    }
+    const pt = map[category]
+    if (pt !== undefined && pt !== this.activeCategory) {
+      this.activeCategory = pt
+      this.activeButton = null
+      this.powers.setPower(null as any)
+      this.render()
+    }
+  }
+
+  clearSelection(): void {
+    if (this.activeButton) {
+      this.activeButton.classList.remove('active')
+      this.activeButton = null
+    }
+  }
 }
