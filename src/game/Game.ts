@@ -9,6 +9,7 @@ import { EntityManager } from '../ecs/Entity'
 import { AISystem } from '../systems/AISystem'
 import { CombatSystem } from '../systems/CombatSystem'
 import { ParticleSystem } from '../systems/ParticleSystem'
+import { SoundSystem } from '../systems/SoundSystem'
 import { CreatureFactory } from '../entities/CreatureFactory'
 import { CivManager } from '../civilization/CivManager'
 
@@ -25,6 +26,7 @@ export class Game {
   private aiSystem: AISystem
   private combatSystem: CombatSystem
   particles: ParticleSystem
+  private audio: SoundSystem
   creatureFactory: CreatureFactory
   civManager: CivManager
 
@@ -51,10 +53,11 @@ export class Game {
     this.creatureFactory = new CreatureFactory(this.em)
     this.civManager = new CivManager(this.em, this.world)
     this.particles = new ParticleSystem()
+    this.audio = new SoundSystem()
     this.aiSystem = new AISystem(this.em, this.world, this.particles)
-    this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles)
+    this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles, this.audio)
 
-    this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles)
+    this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
     this.toolbar = new Toolbar('toolbar', this.powers)
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
 
@@ -65,6 +68,7 @@ export class Game {
     this.setupToolbarButtons()
     this.setupKeyboard()
     this.setupTooltip()
+    this.setupMuteButton()
     this.renderer.resize(window.innerWidth, window.innerHeight)
   }
 
@@ -96,8 +100,8 @@ export class Game {
 
     // Reset civilization manager
     this.civManager = new CivManager(this.em, this.world)
-    this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles)
-    this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles)
+    this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles, this.audio)
+    this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
 
     // Generate new world
@@ -191,6 +195,16 @@ export class Game {
     this.canvas.addEventListener('mouseleave', () => {
       tooltip.style.display = 'none'
     })
+  }
+
+  private setupMuteButton(): void {
+    const btn = document.getElementById('muteBtn')
+    if (btn) {
+      btn.addEventListener('click', () => {
+        const muted = this.audio.toggleMute()
+        btn.textContent = muted ? '🔇' : '🔊'
+      })
+    }
   }
 
   start(): void {

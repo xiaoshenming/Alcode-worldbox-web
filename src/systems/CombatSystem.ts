@@ -2,16 +2,19 @@ import { EntityManager, EntityId, PositionComponent, NeedsComponent, CreatureCom
 import { CivMemberComponent } from '../civilization/Civilization'
 import { CivManager } from '../civilization/CivManager'
 import { ParticleSystem } from './ParticleSystem'
+import { SoundSystem } from './SoundSystem'
 
 export class CombatSystem {
   private em: EntityManager
   private civManager: CivManager
   private particles: ParticleSystem
+  private audio: SoundSystem
 
-  constructor(em: EntityManager, civManager: CivManager, particles: ParticleSystem) {
+  constructor(em: EntityManager, civManager: CivManager, particles: ParticleSystem, audio: SoundSystem) {
     this.em = em
     this.civManager = civManager
     this.particles = particles
+    this.audio = audio
   }
 
   update(): void {
@@ -71,9 +74,11 @@ export class CombatSystem {
           // Apply damage
           const damage = creature.damage * (0.5 + Math.random() * 0.5)
           otherNeeds.health -= damage
+          this.audio.playCombat()
 
           if (otherNeeds.health <= 0) {
             this.onKill(id, otherId)
+            this.audio.playDeath()
           }
         }
       }

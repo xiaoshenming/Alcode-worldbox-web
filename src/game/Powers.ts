@@ -4,6 +4,7 @@ import { EntityManager, RenderComponent } from '../ecs/Entity'
 import { CreatureFactory } from '../entities/CreatureFactory'
 import { CivManager } from '../civilization/CivManager'
 import { ParticleSystem } from '../systems/ParticleSystem'
+import { SoundSystem } from '../systems/SoundSystem'
 
 interface Power {
   type: PowerType
@@ -60,12 +61,15 @@ export class Powers {
     { type: PowerType.DISASTER, name: 'Plague', icon: '🦠', action: 'plague' },
   ]
 
-  constructor(world: World, em: EntityManager, factory: CreatureFactory, civManager: CivManager, particles: ParticleSystem) {
+  private audio: SoundSystem
+
+  constructor(world: World, em: EntityManager, factory: CreatureFactory, civManager: CivManager, particles: ParticleSystem, audio: SoundSystem) {
     this.world = world
     this.em = em
     this.factory = factory
     this.civManager = civManager
     this.particles = particles
+    this.audio = audio
   }
 
   setPower(power: Power | null): void {
@@ -115,6 +119,7 @@ export class Powers {
         }
       }
     }
+    this.audio.playTerrain()
   }
 
   private spawnCreature(x: number, y: number): void {
@@ -122,6 +127,7 @@ export class Powers {
     // Don't spawn in water or lava
     if (tile === TileType.DEEP_WATER || tile === TileType.SHALLOW_WATER || tile === TileType.LAVA) return
     const entityId = this.factory.spawn(this.currentPower!.entityType!, x, y)
+    this.audio.playSpawn()
 
     // Birth particle effect
     const render = this.em.getComponent<RenderComponent>(entityId, 'render')
@@ -159,6 +165,7 @@ export class Powers {
           }
         }
         this.particles.spawnRain(x, y)
+        this.audio.playRain()
         break
 
       case 'lightning':
@@ -168,6 +175,7 @@ export class Powers {
         // Kill nearby entities
         this.killEntitiesInRadius(x, y, 2)
         this.particles.spawnExplosion(x, y)
+        this.audio.playExplosion()
         break
 
       case 'fire':
@@ -183,6 +191,7 @@ export class Powers {
           }
         }
         this.killEntitiesInRadius(x, y, half)
+        this.audio.playExplosion()
         break
 
       case 'earthquake':
@@ -199,6 +208,7 @@ export class Powers {
           }
         }
         this.killEntitiesInRadius(x, y, half * 2)
+        this.audio.playExplosion()
         break
 
       case 'meteor':
@@ -216,6 +226,7 @@ export class Powers {
         }
         this.killEntitiesInRadius(x, y, 5)
         this.particles.spawnExplosion(x, y)
+        this.audio.playExplosion()
         break
 
       case 'tornado':
@@ -229,6 +240,7 @@ export class Powers {
           }
         }
         this.killEntitiesInRadius(x, y, 5)
+        this.audio.playExplosion()
         break
 
       case 'nuke':
@@ -245,6 +257,7 @@ export class Powers {
         }
         this.killEntitiesInRadius(x, y, 12)
         this.particles.spawnExplosion(x, y)
+        this.audio.playExplosion()
         break
 
       case 'blackhole':
@@ -258,6 +271,7 @@ export class Powers {
           }
         }
         this.killEntitiesInRadius(x, y, 10)
+        this.audio.playExplosion()
         break
 
       case 'acidrain':
@@ -274,10 +288,12 @@ export class Powers {
           }
         }
         this.killEntitiesInRadius(x, y, half * 2, 0.3)
+        this.audio.playRain()
         break
 
       case 'plague':
         this.killEntitiesInRadius(x, y, half * 5, 0.5)
+        this.audio.playDeath()
         break
     }
   }
