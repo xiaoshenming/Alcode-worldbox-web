@@ -496,6 +496,20 @@ import { CreatureReedCuttersSystem } from '../systems/CreatureReedCuttersSystem'
 import { WorldMesaSystem } from '../systems/WorldMesaSystem'
 import { CreaturePottersSystem } from '../systems/CreaturePottersSystem'
 import { DiplomaticAnnexationSystem } from '../systems/DiplomaticAnnexationSystem'
+import { CreatureRopeMakersSystem } from '../systems/CreatureRopeMakersSystem'
+import { WorldButtesSystem } from '../systems/WorldButtesSystem'
+import { CreatureBellFoundersSystem } from '../systems/CreatureBellFoundersSystem'
+import { WorldCanyonSystem } from '../systems/WorldCanyonSystem'
+import { DiplomaticSecessionSystem } from '../systems/DiplomaticSecessionSystem'
+import { CreatureQuarrymenSystem } from '../systems/CreatureQuarrymenSystem'
+import { WorldArchipelagoSystem } from '../systems/WorldArchipelagoSystem'
+import { CreatureFeltersSystem } from '../systems/CreatureFeltersSystem'
+import { WorldRiftValleySystem } from '../systems/WorldRiftValleySystem'
+import { CreatureLimeburnersSystem } from '../systems/CreatureLimeburnersSystem'
+import { WorldCalderaSystem } from '../systems/WorldCalderaSystem'
+import { CreatureWheelersSystem } from '../systems/CreatureWheelersSystem'
+import { WorldEscarpmentSystem } from '../systems/WorldEscarpmentSystem'
+import { DiplomaticNeutralizationSystem } from '../systems/DiplomaticNeutralizationSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -993,6 +1007,20 @@ export class Game {
   private worldMesa!: WorldMesaSystem
   private creaturePotters!: CreaturePottersSystem
   private diplomaticAnnexation!: DiplomaticAnnexationSystem
+  private creatureRopeMakers!: CreatureRopeMakersSystem
+  private worldButtes!: WorldButtesSystem
+  private creatureBellFounders!: CreatureBellFoundersSystem
+  private worldCanyon!: WorldCanyonSystem
+  private diplomaticSecession!: DiplomaticSecessionSystem
+  private creatureQuarrymen!: CreatureQuarrymenSystem
+  private worldArchipelago!: WorldArchipelagoSystem
+  private creatureFelters!: CreatureFeltersSystem
+  private worldRiftValley!: WorldRiftValleySystem
+  private creatureLimeburners!: CreatureLimeburnersSystem
+  private worldCaldera!: WorldCalderaSystem
+  private creatureWheelers!: CreatureWheelersSystem
+  private worldEscarpment!: WorldEscarpmentSystem
+  private diplomaticNeutralization!: DiplomaticNeutralizationSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1641,6 +1669,20 @@ export class Game {
     this.worldMesa = new WorldMesaSystem()
     this.creaturePotters = new CreaturePottersSystem()
     this.diplomaticAnnexation = new DiplomaticAnnexationSystem()
+    this.creatureRopeMakers = new CreatureRopeMakersSystem()
+    this.worldButtes = new WorldButtesSystem()
+    this.creatureBellFounders = new CreatureBellFoundersSystem()
+    this.worldCanyon = new WorldCanyonSystem()
+    this.diplomaticSecession = new DiplomaticSecessionSystem()
+    this.creatureQuarrymen = new CreatureQuarrymenSystem()
+    this.worldArchipelago = new WorldArchipelagoSystem()
+    this.creatureFelters = new CreatureFeltersSystem()
+    this.worldRiftValley = new WorldRiftValleySystem()
+    this.creatureLimeburners = new CreatureLimeburnersSystem()
+    this.worldCaldera = new WorldCalderaSystem()
+    this.creatureWheelers = new CreatureWheelersSystem()
+    this.worldEscarpment = new WorldEscarpmentSystem()
+    this.diplomaticNeutralization = new DiplomaticNeutralizationSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3546,6 +3588,34 @@ export class Game {
         this.creaturePotters.update(this.tickRate, this.em, this.world.tick)
         // Diplomatic annexation (v3.280) - territorial annexation
         this.diplomaticAnnexation.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature rope makers (v3.281) - rope and cordage craftsmen
+        this.creatureRopeMakers.update(this.tickRate, this.em, this.world.tick)
+        // World buttes (v3.282) - isolated flat-topped hills
+        this.worldButtes.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature bell founders (v3.283) - bell casting craftsmen
+        this.creatureBellFounders.update(this.tickRate, this.em, this.world.tick)
+        // World canyons (v3.284) - deep river-carved gorges
+        this.worldCanyon.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic secession (v3.285) - territorial secession
+        this.diplomaticSecession.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature quarrymen (v3.286) - stone quarry workers
+        this.creatureQuarrymen.update(this.tickRate, this.em, this.world.tick)
+        // World archipelagos (v3.287) - island chain formations
+        this.worldArchipelago.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature felters (v3.288) - felt making craftsmen
+        this.creatureFelters.update(this.tickRate, this.em, this.world.tick)
+        // World rift valleys (v3.289) - tectonic rift valleys
+        this.worldRiftValley.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature limeburners (v3.291) - lime kiln operators
+        this.creatureLimeburners.update(this.tickRate, this.em, this.world.tick)
+        // World calderas (v3.292) - volcanic caldera formations
+        this.worldCaldera.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature wheelers (v3.293) - wheel makers
+        this.creatureWheelers.update(this.tickRate, this.em, this.world.tick)
+        // World escarpments (v3.294) - steep cliff faces
+        this.worldEscarpment.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic neutralization (v3.295) - neutrality agreements
+        this.diplomaticNeutralization.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate

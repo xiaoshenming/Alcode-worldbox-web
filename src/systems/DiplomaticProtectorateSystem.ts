@@ -1,92 +1,73 @@
-// Diplomatic Protectorate System (v3.180) - Powerful civilizations protect weaker ones
-// Protector civs offer military protection in exchange for tribute and influence
+// Diplomatic Protectorate System (v3.290) - Protectorate relationships
+// Agreements where a stronger civilization provides protection to a weaker one
 
+import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export interface Protectorate {
+export type ProtectorateType = 'military' | 'economic' | 'cultural' | 'full'
+
+export interface ProtectorateAgreement {
   id: number
   protectorCivId: number
   protectedCivId: number
-  tributeRate: number
+  protectorateType: ProtectorateType
   autonomy: number
-  stability: number
+  protectionLevel: number
+  tributeRate: number
+  satisfaction: number
   duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 3600
-const FORM_CHANCE = 0.004
-const MAX_PROTECTORATES = 8
+const CHECK_INTERVAL = 2600
+const TREATY_CHANCE = 0.0025
+const MAX_AGREEMENTS = 18
+
+const TYPES: ProtectorateType[] = ['military', 'economic', 'cultural', 'full']
 
 export class DiplomaticProtectorateSystem {
-  private protectorates: Protectorate[] = []
+  private agreements: ProtectorateAgreement[] = []
   private nextId = 1
   private lastCheck = 0
 
-  update(dt: number, world: any, em: EntityManager, tick: number): void {
+  update(dt: number, world: World, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    // Form new protectorate relationships
-    if (this.protectorates.length < MAX_PROTECTORATES && Math.random() < FORM_CHANCE) {
-      const civs = em.getEntitiesWithComponent('civilization')
-      if (civs.length >= 2) {
-        const protector = civs[Math.floor(Math.random() * civs.length)]
-        const candidates = civs.filter(c => c !== protector)
-        const protected_ = candidates[Math.floor(Math.random() * candidates.length)]
-        const alreadyExists = this.protectorates.some(
-          p => p.protectorCivId === protector && p.protectedCivId === protected_
-        )
-        if (!alreadyExists) {
-          this.protectorates.push({
-            id: this.nextId++,
-            protectorCivId: protector,
-            protectedCivId: protected_,
-            tributeRate: 0.05 + Math.random() * 0.15,
-            autonomy: 0.5 + Math.random() * 0.4,
-            stability: 0.6 + Math.random() * 0.3,
-            duration: 0, tick,
-          })
-        }
-      }
+    if (this.agreements.length < MAX_AGREEMENTS && Math.random() < TREATY_CHANCE) {
+      const protector = 1 + Math.floor(Math.random() * 8)
+      const protected_ = 1 + Math.floor(Math.random() * 8)
+      if (protector === protected_) return
+
+      const pType = TYPES[Math.floor(Math.random() * TYPES.length)]
+
+      this.agreements.push({
+        id: this.nextId++,
+        protectorCivId: protector,
+        protectedCivId: protected_,
+        protectorateType: pType,
+        autonomy: pType === 'full' ? 15 + Math.random() * 25 : 40 + Math.random() * 35,
+        protectionLevel: 40 + Math.random() * 40,
+        tributeRate: 5 + Math.random() * 20,
+        satisfaction: 30 + Math.random() * 40,
+        duration: 0,
+        tick,
+      })
     }
 
-    for (const p of this.protectorates) {
-      p.duration++
-
-      // Stability fluctuates based on tribute and autonomy balance
-      const tension = p.tributeRate / (p.autonomy + 0.01)
-      if (tension > 0.5 && Math.random() < 0.03) {
-        p.stability = Math.max(0, p.stability - 0.05)
-      }
-
-      // Autonomy erodes over time as protector exerts influence
-      if (Math.random() < 0.01) {
-        p.autonomy = Math.max(0.1, p.autonomy - 0.02)
-        p.tributeRate = Math.min(0.5, p.tributeRate + 0.005)
-      }
-
-      // Stability recovers when autonomy is respected
-      if (p.autonomy > 0.6 && Math.random() < 0.015) {
-        p.stability = Math.min(1, p.stability + 0.03)
-      }
-
-      // Long-lasting protectorates become more stable
-      if (p.duration > 20 && Math.random() < 0.008) {
-        p.stability = Math.min(1, p.stability + 0.02)
-      }
+    for (const agreement of this.agreements) {
+      agreement.duration += 1
+      agreement.autonomy = Math.max(5, Math.min(80, agreement.autonomy + (Math.random() - 0.48) * 0.15))
+      agreement.protectionLevel = Math.max(10, Math.min(100, agreement.protectionLevel + (Math.random() - 0.5) * 0.12))
+      agreement.satisfaction = Math.max(5, Math.min(100, agreement.satisfaction + (Math.random() - 0.5) * 0.18))
+      agreement.tributeRate = Math.max(2, Math.min(30, agreement.tributeRate + (Math.random() - 0.5) * 0.08))
     }
 
-    // Dissolve unstable protectorates
-    const aliveCivs = new Set(em.getEntitiesWithComponent('civilization'))
-    for (let i = this.protectorates.length - 1; i >= 0; i--) {
-      const p = this.protectorates[i]
-      const civGone = !aliveCivs.has(p.protectorCivId) || !aliveCivs.has(p.protectedCivId)
-      if (civGone || (p.stability < 0.1 && Math.random() < 0.05)) {
-        this.protectorates.splice(i, 1)
-      }
+    const cutoff = tick - 85000
+    for (let i = this.agreements.length - 1; i >= 0; i--) {
+      if (this.agreements[i].tick < cutoff) this.agreements.splice(i, 1)
     }
   }
 
-  getProtectorates(): readonly Protectorate[] { return this.protectorates }
+  getAgreements(): ProtectorateAgreement[] { return this.agreements }
 }
