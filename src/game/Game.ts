@@ -85,6 +85,9 @@ import { FormationSystem } from '../systems/FormationSystem'
 import { AchievementContentSystem, WorldStats as AchContentWorldStats } from '../systems/AchievementContentSystem'
 import { ChartPanelSystem } from '../systems/ChartPanelSystem'
 import { ClonePowerSystem } from '../systems/ClonePowerSystem'
+import { SiegeWarfareSystem } from '../systems/SiegeWarfareSystem'
+import { TutorialSystem } from '../systems/TutorialSystem'
+import { RenderCullingSystem } from '../systems/RenderCullingSystem'
 
 export class Game {
   private world: World
@@ -172,6 +175,9 @@ export class Game {
   private achievementContent: AchievementContentSystem
   private chartPanel: ChartPanelSystem
   private clonePower: ClonePowerSystem
+  private siegeWarfare: SiegeWarfareSystem
+  private tutorial: TutorialSystem
+  private renderCulling: RenderCullingSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -403,6 +409,10 @@ export class Game {
     this.achievementContent = new AchievementContentSystem()
     this.chartPanel = new ChartPanelSystem()
     this.clonePower = new ClonePowerSystem()
+    this.siegeWarfare = new SiegeWarfareSystem()
+    this.tutorial = new TutorialSystem()
+    this.renderCulling = new RenderCullingSystem()
+    this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
     this.setupParticleEventHooks()
@@ -582,6 +592,10 @@ export class Game {
     this.achievementContent = new AchievementContentSystem()
     this.chartPanel = new ChartPanelSystem()
     this.clonePower = new ClonePowerSystem()
+    this.siegeWarfare = new SiegeWarfareSystem()
+    this.tutorial = new TutorialSystem()
+    this.renderCulling = new RenderCullingSystem()
+    this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
   }
 
   private setupSpeedControls(): void {
@@ -1297,6 +1311,10 @@ export class Game {
             if (needs && ev.type === 'health_loss') needs.health = Math.max(0, needs.health - ev.amount)
           }
         }
+        // Siege warfare - update active sieges
+        this.siegeWarfare.update(this.world.tick)
+        // Tutorial system - check step conditions
+        this.tutorial.update()
         // Build fortification data from civilizations
         if (this.world.tick % 120 === 0) {
           const forts: CityFortification[] = []
@@ -1365,6 +1383,9 @@ export class Game {
         this.accumulator -= this.tickRate
       }
     }
+
+    // Update render culling viewport
+    this.renderCulling.setViewport(this.camera.x, this.camera.y, window.innerWidth, window.innerHeight, this.camera.zoom)
 
     this.renderer.render(this.world, this.camera, this.em, this.civManager, this.particles, this.weather.fogAlpha, this.resources, this.caravanSystem, this.cropSystem)
 
@@ -1493,6 +1514,14 @@ export class Game {
 
     // Formation overlay
     this.formationSystem.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // Siege warfare visual effects
+    this.siegeWarfare.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // Tutorial overlay (rendered last for top-most visibility)
+    if (this.tutorial.isActive()) {
+      this.tutorial.render(ctx, this.canvas.width, this.canvas.height)
+    }
 
     if (this.world.tick % 30 === 0) {
       this.infoPanel.update(this.fps)
