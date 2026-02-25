@@ -1,7 +1,7 @@
 import { TileType, TILE_SIZE } from '../utils/Constants'
 import { World } from './World'
 import { Camera } from './Camera'
-import { EntityManager, PositionComponent, RenderComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent, RenderComponent, VelocityComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 import { BuildingComponent, BUILDING_COLORS } from '../civilization/Civilization'
 import { ParticleSystem } from '../systems/ParticleSystem'
@@ -107,14 +107,30 @@ export class Renderer {
           ctx.lineWidth = 1.5
           ctx.strokeRect(screenX - bSize / 2 + tileSize / 2, screenY - bSize / 2 + tileSize / 2, bSize, bSize)
         } else {
-          // Draw creature as circle
+          // Draw creature as circle with direction indicator
+          const cx = screenX + tileSize / 2
+          const cy = screenY + tileSize / 2
           ctx.fillStyle = render.color
           ctx.beginPath()
-          ctx.arc(screenX + tileSize / 2, screenY + tileSize / 2, size, 0, Math.PI * 2)
+          ctx.arc(cx, cy, size, 0, Math.PI * 2)
           ctx.fill()
           ctx.strokeStyle = 'rgba(0,0,0,0.5)'
           ctx.lineWidth = 0.5
           ctx.stroke()
+
+          // Direction triangle based on velocity
+          const vel = em.getComponent<VelocityComponent>(id, 'velocity')
+          if (vel && (vel.vx !== 0 || vel.vy !== 0)) {
+            const angle = Math.atan2(vel.vy, vel.vx)
+            const triSize = size * 0.8
+            ctx.fillStyle = 'rgba(255,255,255,0.7)'
+            ctx.beginPath()
+            ctx.moveTo(cx + Math.cos(angle) * (size + triSize * 0.5), cy + Math.sin(angle) * (size + triSize * 0.5))
+            ctx.lineTo(cx + Math.cos(angle + 2.4) * triSize, cy + Math.sin(angle + 2.4) * triSize)
+            ctx.lineTo(cx + Math.cos(angle - 2.4) * triSize, cy + Math.sin(angle - 2.4) * triSize)
+            ctx.closePath()
+            ctx.fill()
+          }
         }
       }
     }
@@ -137,6 +153,14 @@ export class Renderer {
         ctx.fill()
       }
       ctx.globalAlpha = 1
+    }
+
+    // Day/night overlay
+    const brightness = world.getDayBrightness()
+    if (brightness < 1.0) {
+      const darkness = 1.0 - brightness
+      ctx.fillStyle = `rgba(0, 0, 30, ${darkness})`
+      ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
     }
   }
 

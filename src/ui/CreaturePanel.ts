@@ -1,4 +1,4 @@
-import { EntityManager, EntityId, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent, CreatureComponent, NeedsComponent, AIComponent } from '../ecs/Entity'
 import { CivMemberComponent } from '../civilization/Civilization'
 import { CivManager } from '../civilization/CivManager'
 
@@ -41,6 +41,7 @@ export class CreaturePanel {
     }
 
     const civMember = this.em.getComponent<CivMemberComponent>(this.selectedId, 'civMember')
+    const ai = this.em.getComponent<AIComponent>(this.selectedId, 'ai')
     let civName = 'None'
     if (civMember) {
       const civ = this.civManager.civilizations.get(civMember.civId)
@@ -62,6 +63,10 @@ export class CreaturePanel {
     this.addRow('Age', `${ageYears} / ${Math.floor(creature.maxAge)}`)
     this.addBarRow('Health', needs.health, 100, '#4a4')
     this.addBarRow('Hunger', needs.hunger, 100, '#a44')
+    if (ai) {
+      const stateIcons: Record<string, string> = { idle: '😴', wandering: '🚶', hungry: '🍖', fleeing: '😨', attacking: '⚔️' }
+      this.addRow('State', `${stateIcons[ai.state] || ''} ${ai.state}`)
+    }
     this.addRow('Civ', civName)
     this.addRow('Pos', `(${Math.floor(pos.x)}, ${Math.floor(pos.y)})`)
   }
