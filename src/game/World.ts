@@ -7,6 +7,8 @@ export class World {
   width: number
   height: number
   tick: number = 0
+  dayNightCycle: number = 0.25 // 0-1, 0=midnight, 0.25=dawn, 0.5=noon, 0.75=dusk
+  private readonly dayLength: number = 3600 // ticks per full day
 
   constructor(width: number = WORLD_WIDTH, height: number = WORLD_HEIGHT) {
     this.width = width
@@ -81,5 +83,19 @@ export class World {
 
   update(): void {
     this.tick++
+    this.dayNightCycle = (this.tick % this.dayLength) / this.dayLength
+  }
+
+  // Returns brightness multiplier: 1.0 = full day, 0.3 = night
+  getDayBrightness(): number {
+    // Map cycle to brightness using sine curve
+    // 0.5 (noon) = brightest, 0.0 (midnight) = darkest
+    const angle = this.dayNightCycle * Math.PI * 2
+    const raw = Math.sin(angle - Math.PI / 2) // -1 at midnight, +1 at noon
+    return 0.3 + (raw + 1) * 0.35 // range: 0.3 to 1.0
+  }
+
+  isDay(): boolean {
+    return this.dayNightCycle > 0.2 && this.dayNightCycle < 0.8
   }
 }
