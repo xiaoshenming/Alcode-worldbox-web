@@ -82,6 +82,9 @@ import { PortalSystem } from '../systems/PortalSystem'
 import { WaterAnimationSystem } from '../systems/WaterAnimationSystem'
 import { MinimapSystem } from '../systems/MinimapSystem'
 import { FormationSystem } from '../systems/FormationSystem'
+import { AchievementContentSystem, WorldStats as AchContentWorldStats } from '../systems/AchievementContentSystem'
+import { ChartPanelSystem } from '../systems/ChartPanelSystem'
+import { ClonePowerSystem } from '../systems/ClonePowerSystem'
 
 export class Game {
   private world: World
