@@ -76,6 +76,7 @@ import { AllianceSystem } from '../systems/AllianceSystem'
 import { TerraformingSystem } from '../systems/TerraformingSystem'
 import { StatisticsTracker } from '../systems/StatisticsTracker'
 import { SpatialHashSystem } from '../systems/SpatialHashSystem'
+import { ObjectPoolSystem } from '../systems/ObjectPoolSystem'
 
 export class Game {
   private world: World
@@ -154,6 +155,7 @@ export class Game {
   private terraformingSystem: TerraformingSystem
   private statisticsTracker: StatisticsTracker
   private spatialHash: SpatialHashSystem
+  private objectPool: ObjectPoolSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -376,6 +378,7 @@ export class Game {
     this.terraformingSystem = new TerraformingSystem()
     this.statisticsTracker = new StatisticsTracker()
     this.spatialHash = new SpatialHashSystem(16)
+    this.objectPool = new ObjectPoolSystem()
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
     this.setupParticleEventHooks()
@@ -1197,6 +1200,8 @@ export class Game {
         this.statisticsTracker.update(this.world.tick, this.civManager, this.em)
         // Spatial hash rebuild for efficient queries
         this.spatialHash.rebuild(this.em)
+        // Object pool maintenance
+        this.objectPool.update(this.tickRate / 1000)
         // Build fortification data from civilizations
         if (this.world.tick % 120 === 0) {
           const forts: CityFortification[] = []
