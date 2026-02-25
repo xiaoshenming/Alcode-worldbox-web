@@ -78,6 +78,10 @@ import { StatisticsTracker } from '../systems/StatisticsTracker'
 import { SpatialHashSystem } from '../systems/SpatialHashSystem'
 import { ObjectPoolSystem } from '../systems/ObjectPoolSystem'
 import { MinimapOverlaySystem } from '../systems/MinimapOverlaySystem'
+import { PortalSystem } from '../systems/PortalSystem'
+import { WaterAnimationSystem } from '../systems/WaterAnimationSystem'
+import { MinimapSystem } from '../systems/MinimapSystem'
+import { FormationSystem } from '../systems/FormationSystem'
 
 export class Game {
   private world: World
@@ -158,6 +162,10 @@ export class Game {
   private spatialHash: SpatialHashSystem
   private objectPool: ObjectPoolSystem
   private minimapOverlay: MinimapOverlaySystem
+  private portalSystem: PortalSystem
+  private waterAnimation: WaterAnimationSystem
+  private minimapSystem: MinimapSystem
+  private formationSystem: FormationSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -382,6 +390,10 @@ export class Game {
     this.spatialHash = new SpatialHashSystem(16)
     this.objectPool = new ObjectPoolSystem()
     this.minimapOverlay = new MinimapOverlaySystem()
+    this.portalSystem = new PortalSystem()
+    this.waterAnimation = new WaterAnimationSystem()
+    this.minimapSystem = new MinimapSystem(this.world.width, this.world.height)
+    this.formationSystem = new FormationSystem()
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
     this.setupParticleEventHooks()
@@ -1205,6 +1217,16 @@ export class Game {
         this.spatialHash.rebuild(this.em)
         // Object pool maintenance
         this.objectPool.update(this.tickRate / 1000)
+        // Portal teleportation
+        this.portalSystem.update(this.em, this.world.tick)
+        // Water animation update
+        this.waterAnimation.update(this.world.tick, this.world)
+        // Enhanced minimap update
+        if (this.world.tick % 30 === 0) {
+          this.minimapSystem.update(this.world, this.civManager, this.em, this.world.tick)
+        }
+        // Formation system - army formations and morale
+        this.formationSystem.update(this.em, this.world, this.world.tick)
         // Build fortification data from civilizations
         if (this.world.tick % 120 === 0) {
           const forts: CityFortification[] = []
@@ -1276,6 +1298,13 @@ export class Game {
 
     this.renderer.render(this.world, this.camera, this.em, this.civManager, this.particles, this.weather.fogAlpha, this.resources, this.caravanSystem, this.cropSystem)
 
+    // Water animation overlay (waves, reflections, foam)
+    {
+      const bounds = this.camera.getVisibleBounds()
+      const ctx = this.canvas.getContext('2d')!
+      this.waterAnimation.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, bounds.startX, bounds.startY, bounds.endX, bounds.endY, this.world, this.world.dayNightCycle)
+    }
+
     // World decorations (flowers, rocks, etc.)
     {
       const bounds = this.camera.getVisibleBounds()
@@ -1319,6 +1348,12 @@ export class Game {
       }
     }
 
+    // Portal rendering (rotating rings, glow effects)
+    this.portalSystem.render(this.canvas.getContext('2d')!, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // Formation rendering (outlines, morale bars)
+    this.formationSystem.render(this.canvas.getContext('2d')!, this.camera.x, this.camera.y, this.camera.zoom)
+
     // World event overlays and banners
     const ctx = this.canvas.getContext('2d')!
 
@@ -1356,6 +1391,9 @@ export class Game {
 
     // Terraforming visual effects overlay
     this.terraformingSystem.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
+
+    // Portal visual effects
+    this.portalSystem.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
 
     this.worldEventSystem.renderScreenOverlay(ctx, this.canvas.width, this.canvas.height)
     this.worldEventSystem.renderEventBanner(ctx, this.canvas.width)
