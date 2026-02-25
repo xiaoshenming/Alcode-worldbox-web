@@ -80,6 +80,10 @@ export class Powers {
     this.brushSize = size
   }
 
+  getBrushSize(): number {
+    return this.brushSize
+  }
+
   apply(x: number, y: number): void {
     if (!this.currentPower) return
 

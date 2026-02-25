@@ -15,7 +15,7 @@ export class InfoPanel {
     this.civManager = civManager
   }
 
-  update(): void {
+  update(fps: number = 0): void {
     const entityCount = this.em.getAllEntities().length
     const civCount = this.civManager.civilizations.size
 
@@ -29,7 +29,7 @@ export class InfoPanel {
     }
 
     this.element.innerHTML = `
-      <div>Map: ${this.world.width}x${this.world.height} | Tick: ${this.world.tick} | Entities: ${entityCount} | Civs: ${civCount}</div>
+      <div>FPS: ${fps} | Map: ${this.world.width}x${this.world.height} | Tick: ${this.world.tick} | Entities: ${entityCount} | Civs: ${civCount}</div>
       ${civInfo}
     `
   }

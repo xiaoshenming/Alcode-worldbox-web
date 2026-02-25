@@ -34,6 +34,9 @@ export class Game {
   private lastTime: number = 0
   private accumulator: number = 0
   private readonly tickRate: number = 1000 / 60
+  private fps: number = 0
+  private frameCount: number = 0
+  private fpsTime: number = 0
 
   constructor() {
     this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement
@@ -60,6 +63,8 @@ export class Game {
     this.setupInputCallbacks()
     this.setupResize()
     this.setupToolbarButtons()
+    this.setupKeyboard()
+    this.setupTooltip()
     this.renderer.resize(window.innerWidth, window.innerHeight)
   }
 
@@ -138,6 +143,56 @@ export class Game {
     })
   }
 
+  private setSpeed(speed: number): void {
+    this.speed = speed
+    const buttons = document.querySelectorAll('#speedControls .btn')
+    buttons.forEach(b => {
+      const s = parseInt((b as HTMLElement).dataset.speed || '1')
+      b.classList.toggle('active', s === speed)
+    })
+  }
+
+  private setupKeyboard(): void {
+    window.addEventListener('keydown', (e) => {
+      switch (e.key) {
+        case '1': this.setSpeed(1); break
+        case '2': this.setSpeed(2); break
+        case '3': this.setSpeed(5); break
+        case '4': this.setSpeed(0); break
+        case ' ':
+          e.preventDefault()
+          this.setSpeed(this.speed === 0 ? 1 : 0)
+          break
+        case 'r':
+        case 'R':
+          this.resetWorld()
+          break
+      }
+    })
+  }
+
+  private setupTooltip(): void {
+    const tooltip = document.getElementById('tooltip')!
+    const tileNames = ['Deep Water', 'Shallow Water', 'Sand', 'Grass', 'Forest', 'Mountain', 'Snow', 'Lava']
+
+    this.canvas.addEventListener('mousemove', (e) => {
+      const world = this.camera.screenToWorld(e.clientX, e.clientY)
+      const tile = this.world.getTile(world.x, world.y)
+      if (tile !== null) {
+        tooltip.style.display = 'block'
+        tooltip.style.left = (e.clientX + 15) + 'px'
+        tooltip.style.top = (e.clientY + 15) + 'px'
+        tooltip.textContent = `${tileNames[tile]} (${world.x}, ${world.y})`
+      } else {
+        tooltip.style.display = 'none'
+      }
+    })
+
+    this.canvas.addEventListener('mouseleave', () => {
+      tooltip.style.display = 'none'
+    })
+  }
+
   start(): void {
     this.lastTime = performance.now()
     this.loop()
@@ -147,6 +202,15 @@ export class Game {
     const now = performance.now()
     const delta = now - this.lastTime
     this.lastTime = now
+
+    // FPS tracking
+    this.frameCount++
+    this.fpsTime += delta
+    if (this.fpsTime >= 1000) {
+      this.fps = this.frameCount
+      this.frameCount = 0
+      this.fpsTime = 0
+    }
 
     if (this.speed > 0) {
       this.accumulator += delta * this.speed
@@ -161,10 +225,11 @@ export class Game {
     }
 
     this.renderer.render(this.world, this.camera, this.em, this.civManager, this.particles)
+    this.renderer.renderBrushOutline(this.camera, this.input.mouseX, this.input.mouseY, this.powers.getBrushSize())
     this.renderer.renderMinimap(this.world, this.camera)
 
     if (this.world.tick % 30 === 0) {
-      this.infoPanel.update()
+      this.infoPanel.update(this.fps)
     }
 
     requestAnimationFrame(this.loop)

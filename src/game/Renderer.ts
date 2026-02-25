@@ -140,6 +140,26 @@ export class Renderer {
     }
   }
 
+  renderBrushOutline(camera: Camera, mouseX: number, mouseY: number, brushSize: number): void {
+    const ctx = this.ctx
+    const world = camera.screenToWorld(mouseX, mouseY)
+    const tileSize = TILE_SIZE * camera.zoom
+    const offsetX = -camera.x * camera.zoom
+    const offsetY = -camera.y * camera.zoom
+
+    const centerX = world.x * tileSize + offsetX + tileSize / 2
+    const centerY = world.y * tileSize + offsetY + tileSize / 2
+    const radius = (brushSize / 2) * tileSize
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)'
+    ctx.lineWidth = 1.5
+    ctx.setLineDash([4, 4])
+    ctx.beginPath()
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
+    ctx.stroke()
+    ctx.setLineDash([])
+  }
+
   renderMinimap(world: World, camera: Camera): void {
     const ctx = this.minimapCtx
     const scale = this.minimapCanvas.width / world.width
