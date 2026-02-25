@@ -1,11 +1,12 @@
 import { TileType, TILE_SIZE } from '../utils/Constants'
 import { World } from './World'
 import { Camera } from './Camera'
-import { EntityManager, PositionComponent, RenderComponent, VelocityComponent, NeedsComponent, AIComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent, RenderComponent, VelocityComponent, NeedsComponent, AIComponent, CreatureComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 import { BuildingComponent, BUILDING_COLORS } from '../civilization/Civilization'
 import { ParticleSystem } from '../systems/ParticleSystem'
 import { ResourceSystem } from '../systems/ResourceSystem'
+import { SpriteRenderer } from './SpriteRenderer'
 
 export class Renderer {
   private canvas: HTMLCanvasElement
@@ -14,6 +15,7 @@ export class Renderer {
   private minimapCtx: CanvasRenderingContext2D
   private waterOffset: number = 0
   showTerritory: boolean = true
+  private sprites: SpriteRenderer
 
   // Offscreen terrain cache
   private terrainCanvas: OffscreenCanvas
@@ -31,6 +33,7 @@ export class Renderer {
 
     this.terrainCanvas = new OffscreenCanvas(canvas.width || 1920, canvas.height || 1080)
     this.terrainCtx = this.terrainCanvas.getContext('2d')!
+    this.sprites = new SpriteRenderer()
   }
 
   resize(width: number, height: number): void {
@@ -254,28 +257,39 @@ export class Renderer {
       const building = em.getComponent<BuildingComponent>(id, 'building')
 
       if (building) {
-        const bColor = BUILDING_COLORS[building.buildingType] || render.color
-        const bSize = size * 2
-        ctx.fillStyle = bColor
-        ctx.fillRect(screenX - bSize / 2 + tileSize / 2, screenY - bSize / 2 + tileSize / 2, bSize, bSize)
-        ctx.strokeStyle = render.color
-        ctx.lineWidth = 1.5
-        ctx.strokeRect(screenX - bSize / 2 + tileSize / 2, screenY - bSize / 2 + tileSize / 2, bSize, bSize)
+        const sprite = this.sprites.getBuildingSprite(building.buildingType, building.level)
+        const bSize = tileSize * 1.5
+        ctx.drawImage(sprite, screenX + tileSize/2 - bSize/2, screenY + tileSize/2 - bSize/2, bSize, bSize)
       } else {
         const cx = screenX + tileSize / 2
         const cy = screenY + tileSize / 2
 
         const needs = em.getComponent<NeedsComponent>(id, 'needs')
         const ai = em.getComponent<AIComponent>(id, 'ai')
+        const vel = em.getComponent<VelocityComponent>(id, 'velocity')
 
-        // Creature body
-        ctx.fillStyle = render.color
-        ctx.beginPath()
-        ctx.arc(cx, cy, size, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)'
-        ctx.lineWidth = 0.5
-        ctx.stroke()
+        // Determine facing direction from velocity
+        let direction: 'up' | 'down' | 'left' | 'right' = 'down'
+        if (vel) {
+          direction = SpriteRenderer.directionFromVelocity(vel.vx, vel.vy)
+        }
+
+        // Creature sprite
+        const creature = em.getComponent<CreatureComponent>(id, 'creature')
+        if (creature) {
+          const sprite = this.sprites.getCreatureSprite(creature.species, direction)
+          const spriteSize = tileSize * 1.2
+          ctx.drawImage(sprite, cx - spriteSize/2, cy - spriteSize/2, spriteSize, spriteSize)
+        } else {
+          // Fallback: draw circle for unknown entities
+          ctx.fillStyle = render.color
+          ctx.beginPath()
+          ctx.arc(cx, cy, size, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.strokeStyle = 'rgba(0,0,0,0.5)'
+          ctx.lineWidth = 0.5
+          ctx.stroke()
+        }
 
         // Health bar (only when damaged)
         if (needs && needs.health < 100 && camera.zoom > 0.5) {
@@ -305,20 +319,6 @@ export class Renderer {
             ctx.textAlign = 'center'
             ctx.fillText(icon, cx, cy - size - 6 * camera.zoom)
           }
-        }
-
-        // Direction triangle
-        const vel = em.getComponent<VelocityComponent>(id, 'velocity')
-        if (vel && (vel.vx !== 0 || vel.vy !== 0)) {
-          const angle = Math.atan2(vel.vy, vel.vx)
-          const triSize = size * 0.8
-          ctx.fillStyle = 'rgba(255,255,255,0.7)'
-          ctx.beginPath()
-          ctx.moveTo(cx + Math.cos(angle) * (size + triSize * 0.5), cy + Math.sin(angle) * (size + triSize * 0.5))
-          ctx.lineTo(cx + Math.cos(angle + 2.4) * triSize, cy + Math.sin(angle + 2.4) * triSize)
-          ctx.lineTo(cx + Math.cos(angle - 2.4) * triSize, cy + Math.sin(angle - 2.4) * triSize)
-          ctx.closePath()
-          ctx.fill()
         }
       }
     }
