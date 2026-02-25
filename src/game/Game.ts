@@ -443,6 +443,11 @@ import { WorldBlackSandBeachSystem } from '../systems/WorldBlackSandBeachSystem'
 import { CreatureLocksmithSystem } from '../systems/CreatureLocksmithSystem'
 import { WorldIceCaveSystem } from '../systems/WorldIceCaveSystem'
 import { DiplomaticPlebisciteSystem } from '../systems/DiplomaticPlebisciteSystem'
+import { CreatureRugmakerSystem } from '../systems/CreatureRugmakerSystem'
+import { WorldTidalLagoonSystem } from '../systems/WorldTidalLagoonSystem'
+import { CreatureSaddlerSystem } from '../systems/CreatureSaddlerSystem'
+import { WorldIceShelfSystem } from '../systems/WorldIceShelfSystem'
+import { DiplomaticReferendumSystem } from '../systems/DiplomaticReferendumSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -887,6 +892,11 @@ export class Game {
   private creatureLocksmith!: CreatureLocksmithSystem
   private worldIceCave!: WorldIceCaveSystem
   private diplomaticPlebiscite!: DiplomaticPlebisciteSystem
+  private creatureRugmaker!: CreatureRugmakerSystem
+  private worldTidalLagoon!: WorldTidalLagoonSystem
+  private creatureSaddler!: CreatureSaddlerSystem
+  private worldIceShelf!: WorldIceShelfSystem
+  private diplomaticReferendum!: DiplomaticReferendumSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1482,6 +1492,11 @@ export class Game {
     this.creatureLocksmith = new CreatureLocksmithSystem()
     this.worldIceCave = new WorldIceCaveSystem()
     this.diplomaticPlebiscite = new DiplomaticPlebisciteSystem()
+    this.creatureRugmaker = new CreatureRugmakerSystem()
+    this.worldTidalLagoon = new WorldTidalLagoonSystem()
+    this.creatureSaddler = new CreatureSaddlerSystem()
+    this.worldIceShelf = new WorldIceShelfSystem()
+    this.diplomaticReferendum = new DiplomaticReferendumSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3279,6 +3294,16 @@ export class Game {
         this.worldIceCave.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic plebiscite (v3.220) - popular votes
         this.diplomaticPlebiscite.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature rugmakers (v3.221) - rug weaving artisans
+        this.creatureRugmaker.update(this.tickRate, this.em, this.world.tick)
+        // World tidal lagoons (v3.222) - coastal brackish lagoons
+        this.worldTidalLagoon.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature saddlers (v3.223) - leather saddle crafters
+        this.creatureSaddler.update(this.tickRate, this.em, this.world.tick)
+        // World ice shelves (v3.224) - floating glacial platforms
+        this.worldIceShelf.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic referendum (v3.225) - popular vote diplomacy
+        this.diplomaticReferendum.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
