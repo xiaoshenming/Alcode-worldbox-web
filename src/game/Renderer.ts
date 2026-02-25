@@ -6,6 +6,7 @@ import { CivManager } from '../civilization/CivManager'
 import { BuildingComponent, BUILDING_COLORS } from '../civilization/Civilization'
 import { ParticleSystem } from '../systems/ParticleSystem'
 import { ResourceSystem } from '../systems/ResourceSystem'
+import { CaravanSystem, Caravan } from '../systems/CaravanSystem'
 import { SpriteRenderer } from './SpriteRenderer'
 
 export class Renderer {
@@ -44,7 +45,7 @@ export class Renderer {
     this.terrainDirty = true
   }
 
-  render(world: World, camera: Camera, em?: EntityManager, civManager?: CivManager, particles?: ParticleSystem, fogAlpha?: number, resources?: ResourceSystem): void {
+  render(world: World, camera: Camera, em?: EntityManager, civManager?: CivManager, particles?: ParticleSystem, fogAlpha?: number, resources?: ResourceSystem, caravanSystem?: CaravanSystem): void {
     const ctx = this.ctx
     const bounds = camera.getVisibleBounds()
 
@@ -96,9 +97,9 @@ export class Renderer {
       this.renderWarBorders(civManager, camera, bounds, tileSize, offsetX, offsetY)
     }
 
-    // Trade routes
+    // Trade routes and caravans
     if (civManager) {
-      this.renderTradeRoutes(civManager, camera)
+      this.renderTradeRoutes(civManager, camera, caravanSystem)
     }
 
     // Draw particles
@@ -496,52 +497,94 @@ export class Renderer {
     ctx.globalAlpha = 1
   }
 
-  private renderTradeRoutes(civManager: CivManager, camera: Camera): void {
+  private renderTradeRoutes(civManager: CivManager, camera: Camera, caravanSystem?: CaravanSystem): void {
+    if (!this.showTerritory) return
+
     const ctx = this.ctx
-    const routes = civManager.getAllTradeRoutes()
     const tileSize = TILE_SIZE * camera.zoom
     const offsetX = -camera.x * camera.zoom
     const offsetY = -camera.y * camera.zoom
     const time = performance.now() * 0.001
 
+    // Draw trade route dashed lines
+    const routes = civManager.getAllTradeRoutes()
     for (const route of routes) {
       const x1 = route.from.x * tileSize + offsetX + tileSize / 2
       const y1 = route.from.y * tileSize + offsetY + tileSize / 2
       const x2 = route.to.x * tileSize + offsetX + tileSize / 2
       const y2 = route.to.y * tileSize + offsetY + tileSize / 2
 
-      // Dashed line
+      // Animated dashed line
+      const dashOffset = time * 8 * camera.zoom
       ctx.strokeStyle = route.color
-      ctx.globalAlpha = 0.4
+      ctx.globalAlpha = 0.3
       ctx.lineWidth = 1.5 * camera.zoom
       ctx.setLineDash([4 * camera.zoom, 4 * camera.zoom])
+      ctx.lineDashOffset = -dashOffset
       ctx.beginPath()
       ctx.moveTo(x1, y1)
       ctx.lineTo(x2, y2)
       ctx.stroke()
       ctx.setLineDash([])
+      ctx.lineDashOffset = 0
 
-      // Animated dot moving along the route (trade caravan)
-      const t = (time * 0.3) % 1
-      const dotX = x1 + (x2 - x1) * t
-      const dotY = y1 + (y2 - y1) * t
-      ctx.globalAlpha = 0.8
-      ctx.fillStyle = '#ffd700'
-      ctx.beginPath()
-      ctx.arc(dotX, dotY, 2 * camera.zoom, 0, Math.PI * 2)
-      ctx.fill()
-
-      // Return trip dot
-      const t2 = (time * 0.3 + 0.5) % 1
-      const dot2X = x1 + (x2 - x1) * t2
-      const dot2Y = y1 + (y2 - y1) * t2
-      ctx.fillStyle = '#ffaa00'
-      ctx.beginPath()
-      ctx.arc(dot2X, dot2Y, 2 * camera.zoom, 0, Math.PI * 2)
-      ctx.fill()
-
-      ctx.globalAlpha = 1
+      // Port markers (small diamonds at endpoints)
+      ctx.globalAlpha = 0.6
+      ctx.fillStyle = route.color
+      const markerSize = 2.5 * camera.zoom
+      for (const [px, py] of [[x1, y1], [x2, y2]]) {
+        ctx.beginPath()
+        ctx.moveTo(px, py - markerSize)
+        ctx.lineTo(px + markerSize, py)
+        ctx.lineTo(px, py + markerSize)
+        ctx.lineTo(px - markerSize, py)
+        ctx.closePath()
+        ctx.fill()
+      }
     }
+
+    // Draw caravans from CaravanSystem
+    if (caravanSystem) {
+      const caravans = caravanSystem.getCaravans()
+      for (const c of caravans) {
+        const screenX = c.x * tileSize + offsetX + tileSize / 2
+        const screenY = c.y * tileSize + offsetY + tileSize / 2
+
+        // Trail particles (3 fading dots behind the caravan)
+        const dx = c.returning
+          ? c.fromPort.x - c.toPort.x
+          : c.toPort.x - c.fromPort.x
+        const dy = c.returning
+          ? c.fromPort.y - c.toPort.y
+          : c.toPort.y - c.fromPort.y
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1
+        const nx = dx / dist
+        const ny = dy / dist
+
+        for (let t = 1; t <= 3; t++) {
+          const trailX = screenX - nx * t * 2.5 * camera.zoom
+          const trailY = screenY - ny * t * 2.5 * camera.zoom
+          ctx.globalAlpha = 0.4 - t * 0.1
+          ctx.fillStyle = c.color
+          ctx.beginPath()
+          ctx.arc(trailX, trailY, (1.5 - t * 0.3) * camera.zoom, 0, Math.PI * 2)
+          ctx.fill()
+        }
+
+        // Caravan body (3x3 pixel square)
+        const size = 1.5 * camera.zoom
+        ctx.globalAlpha = 0.9
+        ctx.fillStyle = c.returning ? '#ffaa00' : '#ffd700'
+        ctx.fillRect(screenX - size, screenY - size, size * 2, size * 2)
+
+        // Dark outline
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)'
+        ctx.lineWidth = 0.5
+        ctx.strokeRect(screenX - size, screenY - size, size * 2, size * 2)
+      }
+    }
+
+    ctx.globalAlpha = 1
   }
 
   private renderBattleEffects(

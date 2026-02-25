@@ -29,6 +29,7 @@ import { EventLog } from '../systems/EventLog'
 import { ArtifactSystem } from '../systems/ArtifactSystem'
 import { DiseaseSystem } from '../systems/DiseaseSystem'
 import { WorldEventSystem } from '../systems/WorldEventSystem'
+import { CaravanSystem } from '../systems/CaravanSystem'
 
 export class Game {
   private world: World
@@ -60,6 +61,7 @@ export class Game {
   private artifactSystem: ArtifactSystem
   private diseaseSystem: DiseaseSystem
   private worldEventSystem: WorldEventSystem
+  private caravanSystem: CaravanSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -97,6 +99,7 @@ export class Game {
     this.artifactSystem = new ArtifactSystem()
     this.diseaseSystem = new DiseaseSystem()
     this.worldEventSystem = new WorldEventSystem()
+    this.caravanSystem = new CaravanSystem()
     this.setupAchievementTracking()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
@@ -209,6 +212,7 @@ export class Game {
     this.artifactSystem = new ArtifactSystem()
     this.diseaseSystem = new DiseaseSystem()
     this.worldEventSystem = new WorldEventSystem()
+    this.caravanSystem = new CaravanSystem()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
     this.combatSystem.setArtifactSystem(this.artifactSystem)
@@ -600,12 +604,13 @@ export class Game {
         this.artifactSystem.spawnClaimParticles(this.em, this.particles, this.world.tick)
         this.diseaseSystem.update(this.em, this.world, this.civManager, this.particles)
         this.worldEventSystem.update(this.em, this.world, this.civManager, this.particles, this.timeline)
+        this.caravanSystem.update(this.civManager, this.em, this.world, this.particles)
         this.particles.update()
         this.accumulator -= this.tickRate
       }
     }
 
-    this.renderer.render(this.world, this.camera, this.em, this.civManager, this.particles, this.weather.fogAlpha, this.resources)
+    this.renderer.render(this.world, this.camera, this.em, this.civManager, this.particles, this.weather.fogAlpha, this.resources, this.caravanSystem)
     this.renderer.renderBrushOutline(this.camera, this.input.mouseX, this.input.mouseY, this.powers.getBrushSize())
     this.renderer.renderMinimap(this.world, this.camera, this.em, this.civManager)
 
