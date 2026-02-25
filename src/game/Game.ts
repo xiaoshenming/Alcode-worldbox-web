@@ -293,6 +293,11 @@ import { WorldMudslideSystem } from '../systems/WorldMudslideSystem'
 import { DiplomaticPledgeSystem } from '../systems/DiplomaticPledgeSystem'
 import { CreatureAmbidextritySystem } from '../systems/CreatureAmbidextritySystem'
 import { WorldKelpForestSystem } from '../systems/WorldKelpForestSystem'
+import { CreatureHandicraftSystem } from '../systems/CreatureHandicraftSystem'
+import { WorldGeothermalVentSystem } from '../systems/WorldGeothermalVentSystem'
+import { DiplomaticTariffSystem } from '../systems/DiplomaticTariffSystem'
+import { CreatureHomesicknessSystem } from '../systems/CreatureHomesicknessSystem'
+import { WorldMirageSystem } from '../systems/WorldMirageSystem'
 
 export class Game {
   private world: World
@@ -588,6 +593,11 @@ export class Game {
   private diplomaticPledge!: DiplomaticPledgeSystem
   private creatureAmbidextrity!: CreatureAmbidextritySystem
   private worldKelpForest!: WorldKelpForestSystem
+  private creatureHandicraft!: CreatureHandicraftSystem
+  private worldGeothermalVent!: WorldGeothermalVentSystem
+  private diplomaticTariff!: DiplomaticTariffSystem
+  private creatureHomesickness!: CreatureHomesicknessSystem
+  private worldMirage!: WorldMirageSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -1034,6 +1044,11 @@ export class Game {
     this.diplomaticPledge = new DiplomaticPledgeSystem()
     this.creatureAmbidextrity = new CreatureAmbidextritySystem()
     this.worldKelpForest = new WorldKelpForestSystem()
+    this.creatureHandicraft = new CreatureHandicraftSystem()
+    this.worldGeothermalVent = new WorldGeothermalVentSystem()
+    this.diplomaticTariff = new DiplomaticTariffSystem()
+    this.creatureHomesickness = new CreatureHomesicknessSystem()
+    this.worldMirage = new WorldMirageSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2517,6 +2532,16 @@ export class Game {
         this.creatureAmbidextrity.update(this.tickRate, this.em, this.world.tick)
         // World kelp forests (v3.45) - underwater kelp grows in shallows
         this.worldKelpForest.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature handicrafts (v3.46) - creatures craft items
+        this.creatureHandicraft.update(this.tickRate, this.em, this.world.tick)
+        // World geothermal vents (v3.47) - underwater heat vents
+        this.worldGeothermalVent.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic tariffs (v3.48) - trade tariffs between civs
+        this.diplomaticTariff.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        // Creature homesickness (v3.49) - creatures long for home
+        this.creatureHomesickness.update(this.tickRate, this.em, this.world.tick)
+        // World mirages (v3.50) - desert illusions lure creatures
+        this.worldMirage.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
