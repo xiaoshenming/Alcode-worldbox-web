@@ -579,6 +579,9 @@ export class Game {
     this.terraformingSystem = new TerraformingSystem()
     this.statisticsTracker = new StatisticsTracker()
     this.spatialHash = new SpatialHashSystem(16)
+    this.achievementContent = new AchievementContentSystem()
+    this.chartPanel = new ChartPanelSystem()
+    this.clonePower = new ClonePowerSystem()
   }
 
   private setupSpeedControls(): void {
@@ -1469,6 +1472,27 @@ export class Game {
     // Toast notifications
     this.toastSystem.update()
     this.toastSystem.render(ctx, this.canvas.width)
+
+    // Chart panel overlay
+    if (this.chartPanel.isVisible) {
+      this.chartPanel.render(ctx, this.canvas.width - 420, 60, 400, 250)
+    }
+
+    // Clone power visual effects
+    {
+      const clonePositions = [...this.em.getEntitiesWithComponents('position', 'creature')]
+        .filter(id => this.clonePower.getGeneration(id) > 0)
+        .map(id => {
+          const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+          return { x: pos.x, y: pos.y, generation: this.clonePower.getGeneration(id) }
+        })
+      if (clonePositions.length > 0) {
+        this.clonePower.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, clonePositions)
+      }
+    }
+
+    // Formation overlay
+    this.formationSystem.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
 
     if (this.world.tick % 30 === 0) {
       this.infoPanel.update(this.fps)
