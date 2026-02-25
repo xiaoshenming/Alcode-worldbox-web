@@ -61,6 +61,11 @@ import { DisasterChainSystem } from '../systems/DisasterChainSystem'
 import { SeasonSystem } from '../systems/SeasonSystem'
 import { AnimalMigrationSystem } from '../systems/AnimalMigrationSystem'
 import { VolcanoSystem } from '../systems/VolcanoSystem'
+import { RiverSystem } from '../systems/RiverSystem'
+import { TradeRouteRenderer, TradeRoute } from '../systems/TradeRouteRenderer'
+import { RuinsSystem } from '../systems/RuinsSystem'
+import { PlagueVisualSystem } from '../systems/PlagueVisualSystem'
+import { WorldDecorationSystem } from '../systems/WorldDecorationSystem'
 
 export class Game {
   private world: World
@@ -124,6 +129,11 @@ export class Game {
   private seasonSystem: SeasonSystem
   private animalMigration: AnimalMigrationSystem
   private volcanoSystem!: VolcanoSystem
+  private riverSystem: RiverSystem
+  private tradeRouteRenderer: TradeRouteRenderer
+  private ruinsSystem: RuinsSystem
+  private plagueVisual: PlagueVisualSystem
+  private worldDecorations: WorldDecorationSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -329,6 +339,13 @@ export class Game {
     this.animalMigration = new AnimalMigrationSystem()
     this.volcanoSystem = new VolcanoSystem()
     this.volcanoSystem.autoPlaceVolcanoes(this.world)
+    this.riverSystem = new RiverSystem()
+    this.riverSystem.generateRivers(this.world.tiles, WORLD_WIDTH, WORLD_HEIGHT)
+    this.tradeRouteRenderer = new TradeRouteRenderer()
+    this.ruinsSystem = new RuinsSystem()
+    this.plagueVisual = new PlagueVisualSystem()
+    this.worldDecorations = new WorldDecorationSystem()
+    this.worldDecorations.generate(this.world.tiles, WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
     this.setupParticleEventHooks()
@@ -488,6 +505,13 @@ export class Game {
     // Generate new world
     this.world.generate()
     this.miningSystem.generateOreMap(this.world.tiles)
+    this.riverSystem = new RiverSystem()
+    this.riverSystem.generateRivers(this.world.tiles, WORLD_WIDTH, WORLD_HEIGHT)
+    this.tradeRouteRenderer = new TradeRouteRenderer()
+    this.ruinsSystem = new RuinsSystem()
+    this.plagueVisual = new PlagueVisualSystem()
+    this.worldDecorations = new WorldDecorationSystem()
+    this.worldDecorations.generate(this.world.tiles, WORLD_WIDTH, WORLD_HEIGHT)
   }
 
   private setupSpeedControls(): void {
@@ -1098,6 +1122,27 @@ export class Game {
         this.seasonSystem.update(this.world.tick)
         this.animalMigration.update(this.world.tick, this.em, this.world, this.seasonSystem.getCurrentSeason())
         this.volcanoSystem.update(this.world.tick, this.world, this.particles)
+        this.ruinsSystem.update(this.world.tick)
+        this.plagueVisual.update()
+        // Update trade route visualization from caravan data
+        if (this.world.tick % 120 === 0) {
+          const routes: TradeRoute[] = []
+          for (const [, civ] of this.civManager.civilizations) {
+            for (const [otherId, rel] of civ.relations) {
+              if (rel > 10) {
+                const other = this.civManager.civilizations.get(otherId)
+                if (other && civ.buildings.length > 0 && other.buildings.length > 0) {
+                  const p1 = this.em.getComponent<PositionComponent>(civ.buildings[0], 'position')
+                  const p2 = this.em.getComponent<PositionComponent>(other.buildings[0], 'position')
+                  if (p1 && p2) {
+                    routes.push({ fromX: Math.floor(p1.x), fromY: Math.floor(p1.y), toX: Math.floor(p2.x), toY: Math.floor(p2.y), volume: Math.min(100, rel), active: true })
+                  }
+                }
+              }
+            }
+          }
+          this.tradeRouteRenderer.setRoutes(routes)
+        }
         // World Chronicle - build narrative history from world state
         {
           const civs = [...this.civManager.civilizations.values()].map(c => ({
@@ -1128,6 +1173,15 @@ export class Game {
     }
 
     this.renderer.render(this.world, this.camera, this.em, this.civManager, this.particles, this.weather.fogAlpha, this.resources, this.caravanSystem, this.cropSystem)
+
+    // World decorations (flowers, rocks, etc.)
+    {
+      const bounds = this.camera.getVisibleBounds()
+      this.worldDecorations.render(this.canvas.getContext('2d')!, this.camera.x, this.camera.y, this.camera.zoom, bounds.startX, bounds.startY, bounds.endX, bounds.endY)
+    }
+
+    // Trade route overlay
+    this.tradeRouteRenderer.render(this.canvas.getContext('2d')!, this.camera.x, this.camera.y, this.camera.zoom)
     // Ambient particles (viewport-based)
     const vpX = this.camera.x / TILE_SIZE
     const vpY = this.camera.y / TILE_SIZE
@@ -1154,6 +1208,9 @@ export class Game {
 
     // Day/night lighting overlay
     this.dayNightRenderer.render(ctx, this.canvas.width, this.canvas.height, this.world.dayNightCycle, this.world.isDay())
+
+    // Plague visual overlay
+    this.plagueVisual.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
 
     this.worldEventSystem.renderScreenOverlay(ctx, this.canvas.width, this.canvas.height)
     this.worldEventSystem.renderEventBanner(ctx, this.canvas.width)
