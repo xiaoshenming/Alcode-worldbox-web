@@ -1,76 +1,51 @@
-// Creature Fletcher System (v3.191) - Fletchers craft arrows and bows for hunters and armies
-// Skilled fletchers produce higher quality projectiles with better accuracy
+// Creature Fletcher System (v3.506) - Arrow fletching artisans
+// Skilled workers crafting arrow fletchings for ranged combat
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
-
-export type ArrowType = 'broadhead' | 'bodkin' | 'fire' | 'blunt'
+import { EntityManager } from '../ecs/Entity'
 
 export interface Fletcher {
   id: number
   entityId: number
-  skill: number
-  arrowsCrafted: number
-  bowsMade: number
-  arrowType: ArrowType
-  accuracy: number
+  featherCutting: number
+  shaftBinding: number
+  flightTuning: number
+  outputQuality: number
   tick: number
 }
 
-const CHECK_INTERVAL = 1100
-const CRAFT_CHANCE = 0.006
-const MAX_FLETCHERS = 55
-const SKILL_GROWTH = 0.08
-
-const ARROW_TYPES: ArrowType[] = ['broadhead', 'bodkin', 'fire', 'blunt']
+const CHECK_INTERVAL = 2550
+const RECRUIT_CHANCE = 0.0016
+const MAX_FLETCHERS = 10
 
 export class CreatureFletcherSystem {
   private fletchers: Fletcher[] = []
   private nextId = 1
   private lastCheck = 0
-  private skillMap = new Map<number, number>()
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const creatures = em.getEntitiesWithComponents('creature', 'position')
-
-    for (const eid of creatures) {
-      if (this.fletchers.length >= MAX_FLETCHERS) break
-      if (Math.random() > CRAFT_CHANCE) continue
-
-      const c = em.getComponent<CreatureComponent>(eid, 'creature')
-      if (!c || c.age < 10) continue
-
-      let skill = this.skillMap.get(eid) ?? (3 + Math.random() * 11)
-      skill = Math.min(100, skill + SKILL_GROWTH)
-      this.skillMap.set(eid, skill)
-
-      const arrowType = ARROW_TYPES[Math.floor(Math.random() * ARROW_TYPES.length)]
-      const arrowsCrafted = 5 + Math.floor(skill / 5)
-      const bowsMade = Math.floor(skill / 25)
-      const accuracy = 20 + skill * 0.7 + Math.random() * 10
-
+    if (this.fletchers.length < MAX_FLETCHERS && Math.random() < RECRUIT_CHANCE) {
       this.fletchers.push({
         id: this.nextId++,
-        entityId: eid,
-        skill,
-        arrowsCrafted,
-        bowsMade,
-        arrowType,
-        accuracy: Math.min(100, accuracy),
+        entityId: Math.floor(Math.random() * 500),
+        featherCutting: 10 + Math.random() * 25,
+        shaftBinding: 15 + Math.random() * 20,
+        flightTuning: 5 + Math.random() * 20,
+        outputQuality: 10 + Math.random() * 25,
         tick,
       })
     }
 
-    const cutoff = tick - 42000
-    for (let i = this.fletchers.length - 1; i >= 0; i--) {
-      if (this.fletchers[i].tick < cutoff) {
-        this.fletchers.splice(i, 1)
-      }
+    for (const f of this.fletchers) {
+      f.featherCutting = Math.min(100, f.featherCutting + 0.02)
+      f.flightTuning = Math.min(100, f.flightTuning + 0.015)
+      f.outputQuality = Math.min(100, f.outputQuality + 0.01)
     }
+
+    this.fletchers = this.fletchers.filter(f => f.featherCutting > 4)
   }
 
-  getFletchers(): readonly Fletcher[] { return this.fletchers }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
+  getFletchers(): Fletcher[] { return this.fletchers }
 }

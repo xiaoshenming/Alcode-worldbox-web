@@ -1,28 +1,29 @@
-// Diplomatic Sovereignty System (v3.260) - Sovereignty recognition agreements
-// Civilizations formally recognize each other's territorial sovereignty and autonomy
+// Diplomatic Sovereignty System (v3.508) - Sovereignty recognition
+// Agreements between civilizations to recognize each other's sovereign rights
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type SovereigntyType = 'full' | 'limited' | 'conditional' | 'mutual'
+export type SovereigntyForm = 'territorial_sovereignty' | 'political_independence' | 'economic_autonomy' | 'cultural_self_determination'
 
 export interface SovereigntyAgreement {
   id: number
-  recognizerCivId: number
-  recognizedCivId: number
-  sovereigntyType: SovereigntyType
-  legitimacy: number
-  stabilityBonus: number
-  territorialClarity: number
+  civIdA: number
+  civIdB: number
+  form: SovereigntyForm
+  recognitionLevel: number
+  respectIndex: number
+  nonInterference: number
+  mutualBenefit: number
   duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2500
-const TREATY_CHANCE = 0.003
-const MAX_AGREEMENTS = 24
+const CHECK_INTERVAL = 2520
+const PROCEED_CHANCE = 0.0023
+const MAX_AGREEMENTS = 18
 
-const TYPES: SovereigntyType[] = ['full', 'limited', 'conditional', 'mutual']
+const FORMS: SovereigntyForm[] = ['territorial_sovereignty', 'political_independence', 'economic_autonomy', 'cultural_self_determination']
 
 export class DiplomaticSovereigntySystem {
   private agreements: SovereigntyAgreement[] = []
@@ -33,34 +34,36 @@ export class DiplomaticSovereigntySystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    if (this.agreements.length < MAX_AGREEMENTS && Math.random() < TREATY_CHANCE) {
-      const rec = 1 + Math.floor(Math.random() * 8)
-      const recd = 1 + Math.floor(Math.random() * 8)
-      if (rec === recd) return
+    if (this.agreements.length < MAX_AGREEMENTS && Math.random() < PROCEED_CHANCE) {
+      const civA = 1 + Math.floor(Math.random() * 8)
+      const civB = 1 + Math.floor(Math.random() * 8)
+      if (civA === civB) return
 
-      const sType = TYPES[Math.floor(Math.random() * TYPES.length)]
+      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
 
       this.agreements.push({
         id: this.nextId++,
-        recognizerCivId: rec,
-        recognizedCivId: recd,
-        sovereigntyType: sType,
-        legitimacy: 35 + Math.random() * 45,
-        stabilityBonus: 10 + Math.random() * 30,
-        territorialClarity: 30 + Math.random() * 40,
+        civIdA: civA,
+        civIdB: civB,
+        form,
+        recognitionLevel: 25 + Math.random() * 40,
+        respectIndex: 20 + Math.random() * 35,
+        nonInterference: 15 + Math.random() * 30,
+        mutualBenefit: 10 + Math.random() * 25,
         duration: 0,
         tick,
       })
     }
 
-    for (const agreement of this.agreements) {
-      agreement.duration += 1
-      agreement.legitimacy = Math.max(20, Math.min(100, agreement.legitimacy + (Math.random() - 0.45) * 0.12))
-      agreement.stabilityBonus = Math.min(60, agreement.stabilityBonus + 0.01)
-      agreement.territorialClarity = Math.max(15, Math.min(100, agreement.territorialClarity + (Math.random() - 0.48) * 0.1))
+    for (const a of this.agreements) {
+      a.duration += 1
+      a.recognitionLevel = Math.max(10, Math.min(90, a.recognitionLevel + (Math.random() - 0.47) * 0.12))
+      a.respectIndex = Math.max(10, Math.min(85, a.respectIndex + (Math.random() - 0.5) * 0.11))
+      a.nonInterference = Math.max(5, Math.min(75, a.nonInterference + (Math.random() - 0.45) * 0.10))
+      a.mutualBenefit = Math.max(5, Math.min(65, a.mutualBenefit + (Math.random() - 0.44) * 0.09))
     }
 
-    const cutoff = tick - 80000
+    const cutoff = tick - 92000
     for (let i = this.agreements.length - 1; i >= 0; i--) {
       if (this.agreements[i].tick < cutoff) this.agreements.splice(i, 1)
     }

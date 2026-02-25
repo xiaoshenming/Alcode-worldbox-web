@@ -1,76 +1,51 @@
-// Creature Wheelwright System (v3.193) - Wheelwrights build and repair wheels for carts and mills
-// Essential for trade routes and agricultural processing
+// Creature Wheelwright System (v3.512) - Wheel crafting artisans
+// Skilled workers building and repairing wheels for carts and wagons
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
-
-export type WheelType = 'cart' | 'mill' | 'war' | 'ceremonial'
+import { EntityManager } from '../ecs/Entity'
 
 export interface Wheelwright {
   id: number
   entityId: number
-  skill: number
-  wheelsBuilt: number
-  repairsDone: number
-  wheelType: WheelType
-  durability: number
+  woodBending: number
+  spokeFitting: number
+  rimShaping: number
+  outputQuality: number
   tick: number
 }
 
-const CHECK_INTERVAL = 1300
-const CRAFT_CHANCE = 0.005
-const MAX_WHEELWRIGHTS = 45
-const SKILL_GROWTH = 0.08
-
-const WHEEL_TYPES: WheelType[] = ['cart', 'mill', 'war', 'ceremonial']
+const CHECK_INTERVAL = 2620
+const RECRUIT_CHANCE = 0.0014
+const MAX_WHEELWRIGHTS = 10
 
 export class CreatureWheelwrightSystem {
   private wheelwrights: Wheelwright[] = []
   private nextId = 1
   private lastCheck = 0
-  private skillMap = new Map<number, number>()
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const creatures = em.getEntitiesWithComponents('creature', 'position')
-
-    for (const eid of creatures) {
-      if (this.wheelwrights.length >= MAX_WHEELWRIGHTS) break
-      if (Math.random() > CRAFT_CHANCE) continue
-
-      const c = em.getComponent<CreatureComponent>(eid, 'creature')
-      if (!c || c.age < 14) continue
-
-      let skill = this.skillMap.get(eid) ?? (5 + Math.random() * 10)
-      skill = Math.min(100, skill + SKILL_GROWTH)
-      this.skillMap.set(eid, skill)
-
-      const wheelType = WHEEL_TYPES[Math.floor(Math.random() * WHEEL_TYPES.length)]
-      const wheelsBuilt = 1 + Math.floor(skill / 15)
-      const repairsDone = Math.floor(skill / 8)
-      const durability = 30 + skill * 0.6 + Math.random() * 10
-
+    if (this.wheelwrights.length < MAX_WHEELWRIGHTS && Math.random() < RECRUIT_CHANCE) {
       this.wheelwrights.push({
         id: this.nextId++,
-        entityId: eid,
-        skill,
-        wheelsBuilt,
-        repairsDone,
-        wheelType,
-        durability: Math.min(100, durability),
+        entityId: Math.floor(Math.random() * 500),
+        woodBending: 10 + Math.random() * 25,
+        spokeFitting: 15 + Math.random() * 20,
+        rimShaping: 5 + Math.random() * 20,
+        outputQuality: 10 + Math.random() * 25,
         tick,
       })
     }
 
-    const cutoff = tick - 44000
-    for (let i = this.wheelwrights.length - 1; i >= 0; i--) {
-      if (this.wheelwrights[i].tick < cutoff) {
-        this.wheelwrights.splice(i, 1)
-      }
+    for (const w of this.wheelwrights) {
+      w.woodBending = Math.min(100, w.woodBending + 0.02)
+      w.rimShaping = Math.min(100, w.rimShaping + 0.015)
+      w.outputQuality = Math.min(100, w.outputQuality + 0.01)
     }
+
+    this.wheelwrights = this.wheelwrights.filter(w => w.woodBending > 4)
   }
 
-  getWheelwrights(): readonly Wheelwright[] { return this.wheelwrights }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
+  getWheelwrights(): Wheelwright[] { return this.wheelwrights }
 }

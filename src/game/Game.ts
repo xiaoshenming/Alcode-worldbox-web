@@ -688,6 +688,18 @@ import { DiplomaticDominionSystem } from '../systems/DiplomaticDominionSystem'
 import { CreatureQuiverMakerSystem } from '../systems/CreatureQuiverMakerSystem'
 import { WorldHotPoolSystem } from '../systems/WorldHotPoolSystem'
 import { DiplomaticCommonwealthSystem } from '../systems/DiplomaticCommonwealthSystem'
+import { WorldGeothermalPoolSystem } from '../systems/WorldGeothermalPoolSystem'
+import { CreatureStringMakerSystem } from '../systems/CreatureStringMakerSystem'
+import { WorldFumarolicFieldSystem } from '../systems/WorldFumarolicFieldSystem'
+import { DiplomaticHegemonySystem } from '../systems/DiplomaticHegemonySystem'
+import { WorldMineralSpringSystem } from '../systems/WorldMineralSpringSystem'
+import { DiplomaticSuzeraintySystem } from '../systems/DiplomaticSuzeraintySystem'
+import { CreatureRopeWalkerSystem } from '../systems/CreatureRopeWalkerSystem'
+import { WorldThermalSpringSystem } from '../systems/WorldThermalSpringSystem'
+import { DiplomaticAutonomySystem } from '../systems/DiplomaticAutonomySystem'
+import { CreatureHarnessmakerSystem } from '../systems/CreatureHarnessmakerSystem'
+import { WorldSodaSpringSystem } from '../systems/WorldSodaSpringSystem'
+import { DiplomaticVassalageSystem } from '../systems/DiplomaticVassalageSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1377,6 +1389,18 @@ export class Game {
   private creatureQuiverMaker!: CreatureQuiverMakerSystem
   private worldHotPool!: WorldHotPoolSystem
   private diplomaticCommonwealth!: DiplomaticCommonwealthSystem
+  private worldGeothermalPool!: WorldGeothermalPoolSystem
+  private creatureStringMaker!: CreatureStringMakerSystem
+  private worldFumarolicField!: WorldFumarolicFieldSystem
+  private diplomaticHegemony!: DiplomaticHegemonySystem
+  private worldMineralSpring!: WorldMineralSpringSystem
+  private diplomaticSuzerainty!: DiplomaticSuzeraintySystem
+  private creatureRopeWalker!: CreatureRopeWalkerSystem
+  private worldThermalSpring!: WorldThermalSpringSystem
+  private diplomaticAutonomy!: DiplomaticAutonomySystem
+  private creatureHarnessmaker!: CreatureHarnessmakerSystem
+  private worldSodaSpring!: WorldSodaSpringSystem
+  private diplomaticVassalage!: DiplomaticVassalageSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -2217,6 +2241,18 @@ export class Game {
     this.creatureQuiverMaker = new CreatureQuiverMakerSystem()
     this.worldHotPool = new WorldHotPoolSystem()
     this.diplomaticCommonwealth = new DiplomaticCommonwealthSystem()
+    this.worldGeothermalPool = new WorldGeothermalPoolSystem()
+    this.creatureStringMaker = new CreatureStringMakerSystem()
+    this.worldFumarolicField = new WorldFumarolicFieldSystem()
+    this.diplomaticHegemony = new DiplomaticHegemonySystem()
+    this.worldMineralSpring = new WorldMineralSpringSystem()
+    this.diplomaticSuzerainty = new DiplomaticSuzeraintySystem()
+    this.creatureRopeWalker = new CreatureRopeWalkerSystem()
+    this.worldThermalSpring = new WorldThermalSpringSystem()
+    this.diplomaticAutonomy = new DiplomaticAutonomySystem()
+    this.creatureHarnessmaker = new CreatureHarnessmakerSystem()
+    this.worldSodaSpring = new WorldSodaSpringSystem()
+    this.diplomaticVassalage = new DiplomaticVassalageSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -4506,6 +4542,36 @@ export class Game {
         this.worldHotPool.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic commonwealth (v3.505) - commonwealth unions
         this.diplomaticCommonwealth.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature fletchers (v3.506) - arrow fletching artisans
+        this.creatureFletcher.update(this.tickRate, this.em, this.world.tick)
+        // World geothermal pools (v3.507) - geothermal pool formations
+        this.worldGeothermalPool.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic sovereignty (v3.508) - sovereignty recognition
+        this.diplomaticSovereignty.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature string makers (v3.509) - string crafting artisans
+        this.creatureStringMaker.update(this.tickRate, this.em, this.world.tick)
+        // World fumarolic fields (v3.510) - fumarolic field formations
+        this.worldFumarolicField.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic hegemony (v3.511) - hegemonic influence
+        this.diplomaticHegemony.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature wheelwrights (v3.512) - wheel crafting artisans
+        this.creatureWheelwright.update(this.tickRate, this.em, this.world.tick)
+        // World mineral springs (v3.513) - mineral spring formations
+        this.worldMineralSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic suzerainty (v3.514) - suzerainty relations
+        this.diplomaticSuzerainty.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature rope walkers (v3.515) - rope crafting artisans
+        this.creatureRopeWalker.update(this.tickRate, this.em, this.world.tick)
+        // World thermal springs (v3.516) - thermal spring formations
+        this.worldThermalSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic autonomy (v3.517) - autonomy agreements
+        this.diplomaticAutonomy.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature harnessmakers (v3.518) - harness crafting artisans
+        this.creatureHarnessmaker.update(this.tickRate, this.em, this.world.tick)
+        // World soda springs (v3.519) - soda spring formations
+        this.worldSodaSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic vassalage (v3.520) - vassalage relations
+        this.diplomaticVassalage.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
