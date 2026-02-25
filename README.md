@@ -6,8 +6,8 @@
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![Vite](https://img.shields.io/badge/Vite-6.0-646CFF)
-![Lines](https://img.shields.io/badge/代码量-105k_lines-green)
-![Systems](https://img.shields.io/badge/ECS_Systems-632-orange)
+![Lines](https://img.shields.io/badge/代码量-108k_lines-green)
+![Systems](https://img.shields.io/badge/ECS_Systems-652-orange)
 
 ## 快速开始
 
@@ -291,14 +291,14 @@ src/
 
 | 模块 | 文件数 | 代码行数 |
 |------|--------|---------|
-| systems/ | 606 | ~82,000 |
-| game/ | 8 | ~5,600 |
+| systems/ | 652 | ~85,000 |
+| game/ | 8 | ~5,800 |
 | ui/ | 8 | ~1,300 |
 | civilization/ | 2 | ~1,100 |
 | utils/ | 4 | ~330 |
 | ecs/ | 1 | ~240 |
 | entities/ | 1 | ~105 |
-| **合计** | **337** | **~93,000** |
+| **合计** | **676** | **~96,000** |
 
 ## 浏览器兼容性
 
