@@ -122,6 +122,14 @@ import { PerformanceMonitorSystem } from '../systems/PerformanceMonitorSystem'
 import { WorldSeedSystem } from '../systems/WorldSeedSystem'
 import { KeybindSystem } from '../systems/KeybindSystem'
 import { WorldExportSystem } from '../systems/WorldExportSystem'
+import { ScreenshotModeSystem } from '../systems/ScreenshotModeSystem'
+import { EntitySearchSystem } from '../systems/EntitySearchSystem'
+import { WorldStatsOverviewSystem } from '../systems/WorldStatsOverviewSystem'
+import { NotificationCenterSystem } from '../systems/NotificationCenterSystem'
+import { SandboxSettingsSystem } from '../systems/SandboxSettingsSystem'
+import { NotificationCenterSystem } from '../systems/NotificationCenterSystem'
+import { SandboxSettingsSystem } from '../systems/SandboxSettingsSystem'
+import { ScreenshotModeSystem } from '../systems/ScreenshotModeSystem'
 
 export class Game {
   private world: World
@@ -246,6 +254,9 @@ export class Game {
   private worldSeed!: WorldSeedSystem
   private keybindSystem!: KeybindSystem
   private worldExport!: WorldExportSystem
+  private notificationCenter!: NotificationCenterSystem
+  private sandboxSettings!: SandboxSettingsSystem
+  private screenshotMode!: ScreenshotModeSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -514,6 +525,9 @@ export class Game {
     this.worldSeed = new WorldSeedSystem()
     this.keybindSystem = new KeybindSystem()
     this.worldExport = new WorldExportSystem()
+    this.notificationCenter = new NotificationCenterSystem()
+    this.sandboxSettings = new SandboxSettingsSystem()
+    this.screenshotMode = new ScreenshotModeSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -946,6 +960,24 @@ export class Game {
           this.helpOverlay.toggle()
           break
 
+        // Notification history: N
+        case 'n':
+        case 'N':
+          if (!e.ctrlKey && !e.metaKey) this.notificationCenter.toggleHistory()
+          break
+
+        // Sandbox settings: P
+        case 'p':
+        case 'P':
+          if (!e.ctrlKey && !e.metaKey) this.sandboxSettings.togglePanel()
+          break
+
+        // Screenshot: F12
+        case 'F12':
+          e.preventDefault()
+          this.screenshotMode.enterScreenshotMode(1)
+          break
+
         // History replay toggle
         case 'r':
         case 'R':
@@ -963,6 +995,14 @@ export class Game {
 
         // Escape: close panels / deselect tool
         case 'Escape': {
+          if (this.sandboxSettings.isPanelOpen()) {
+            this.sandboxSettings.togglePanel()
+            break
+          }
+          if (this.notificationCenter.isHistoryOpen()) {
+            this.notificationCenter.toggleHistory()
+            break
+          }
           if (this.historyReplay.isReplaying()) {
             this.historyReplay.stopReplay()
             break
@@ -1620,6 +1660,8 @@ export class Game {
         }
         // AutoSave system (replaces old tick-based autosave)
         this.autoSave.update(this.world.tick, this.world, this.em, this.civManager, this.resources)
+        // Notification center fade-out
+        this.notificationCenter.update(this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
@@ -1886,6 +1928,21 @@ export class Game {
 
     // World export progress overlay (v1.65)
     this.worldExport.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Notification center (v1.66)
+    this.notificationCenter.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Sandbox settings panel (v1.66)
+    this.sandboxSettings.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Screenshot mode toast (v1.66)
+    this.screenshotMode.update()
+    this.screenshotMode.render(ctx, this.canvas.width, this.canvas.height)
+
+    // Screenshot capture (after all rendering, before rAF)
+    if (this.screenshotMode.isActive()) {
+      this.screenshotMode.captureAndDownload(this.canvas)
+    }
 
     requestAnimationFrame(this.loop)
   }
