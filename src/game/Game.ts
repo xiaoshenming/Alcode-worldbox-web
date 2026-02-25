@@ -254,6 +254,11 @@ import { WorldAuroraStormSystem } from '../systems/WorldAuroraStormSystem'
 import { DiplomaticEmbargoSystem } from '../systems/DiplomaticEmbargoSystem'
 import { CreatureLegacySystem } from '../systems/CreatureLegacySystem'
 import { WorldMemorialSystem } from '../systems/WorldMemorialSystem'
+import { WorldTidePoolSystem } from '../systems/WorldTidePoolSystem'
+import { CreatureDivinationSystem } from '../systems/CreatureDivinationSystem'
+import { DiplomaticSuccessionSystem } from '../systems/DiplomaticSuccessionSystem'
+import { WorldMeteorShowerSystem } from '../systems/WorldMeteorShowerSystem'
+import { CreatureBeastMasterSystem } from '../systems/CreatureBeastMasterSystem'
 
 export class Game {
   private world: World
@@ -510,6 +515,11 @@ export class Game {
   private diplomaticEmbargo!: DiplomaticEmbargoSystem
   private creatureLegacy!: CreatureLegacySystem
   private worldMemorial!: WorldMemorialSystem
+  private worldTidePool!: WorldTidePoolSystem
+  private creatureDivination!: CreatureDivinationSystem
+  private diplomaticSuccession!: DiplomaticSuccessionSystem
+  private worldMeteorShower!: WorldMeteorShowerSystem
+  private creatureBeastMaster!: CreatureBeastMasterSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -917,6 +927,11 @@ export class Game {
     this.diplomaticEmbargo = new DiplomaticEmbargoSystem()
     this.creatureLegacy = new CreatureLegacySystem()
     this.worldMemorial = new WorldMemorialSystem()
+    this.worldTidePool = new WorldTidePoolSystem()
+    this.creatureDivination = new CreatureDivinationSystem()
+    this.diplomaticSuccession = new DiplomaticSuccessionSystem()
+    this.worldMeteorShower = new WorldMeteorShowerSystem()
+    this.creatureBeastMaster = new CreatureBeastMasterSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2322,6 +2337,16 @@ export class Game {
         this.creatureLegacy.update(this.tickRate, this.em, this.world.tick)
         // World memorial (v3.00) - memorials mark significant events
         this.worldMemorial.update(this.tickRate, this.world, this.em, this.world.tick)
+        // World tide pool (v3.01) - tide pools along coastlines
+        this.worldTidePool.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature divination (v3.02) - creatures practice divination
+        this.creatureDivination.update(this.tickRate, this.em, this.world.tick)
+        // Diplomatic succession (v3.03) - leadership succession crises
+        this.diplomaticSuccession.update(this.tickRate, this.em, this.world.tick)
+        // World meteor shower (v3.04) - meteor showers deposit minerals
+        this.worldMeteorShower.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature beast master (v3.05) - creatures tame wild beasts
+        this.creatureBeastMaster.update(this.tickRate, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
