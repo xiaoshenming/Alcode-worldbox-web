@@ -48,6 +48,11 @@ import { HeroLegendSystem } from '../systems/HeroLegendSystem'
 import { WonderSystem } from '../systems/WonderSystem'
 import { ToastSystem } from '../ui/ToastSystem'
 import { TickBudgetSystem } from '../systems/TickBudgetSystem'
+import { LoyaltySystem } from '../systems/LoyaltySystem'
+import { BiomeEvolutionSystem } from '../systems/BiomeEvolutionSystem'
+import { EspionageSystem } from '../systems/EspionageSystem'
+import { DayNightRenderer } from '../systems/DayNightRenderer'
+import { GodPowerSystem } from '../systems/GodPowerSystem'
 
 export class Game {
   private world: World
@@ -98,6 +103,11 @@ export class Game {
   private wonderSystem: WonderSystem
   private toastSystem: ToastSystem
   private tickBudget: TickBudgetSystem
+  private loyaltySystem: LoyaltySystem
+  private biomeEvolution: BiomeEvolutionSystem
+  private espionageSystem: EspionageSystem
+  private dayNightRenderer: DayNightRenderer
+  private godPowerSystem: GodPowerSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -153,6 +163,11 @@ export class Game {
     this.wonderSystem = new WonderSystem()
     this.toastSystem = new ToastSystem()
     this.tickBudget = new TickBudgetSystem()
+    this.loyaltySystem = new LoyaltySystem()
+    this.biomeEvolution = new BiomeEvolutionSystem()
+    this.espionageSystem = new EspionageSystem()
+    this.dayNightRenderer = new DayNightRenderer()
+    this.godPowerSystem = new GodPowerSystem()
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
     this.setupParticleEventHooks()
@@ -293,6 +308,10 @@ export class Game {
     this.tradeEconomySystem = new TradeEconomySystem()
     this.heroLegendSystem = new HeroLegendSystem()
     this.wonderSystem = new WonderSystem()
+    this.loyaltySystem = new LoyaltySystem()
+    this.biomeEvolution = new BiomeEvolutionSystem()
+    this.espionageSystem = new EspionageSystem()
+    this.godPowerSystem = new GodPowerSystem()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
     this.combatSystem.setArtifactSystem(this.artifactSystem)
@@ -877,6 +896,10 @@ export class Game {
         this.heroLegendSystem.update(this.em, this.civManager, this.world, this.particles, this.world.tick)
         this.wonderSystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
         this.tradeEconomySystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
+        this.loyaltySystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
+        this.biomeEvolution.update(this.world, this.civManager, this.em, this.particles, this.world.tick)
+        this.espionageSystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
+        this.godPowerSystem.update(this.world, this.em, this.civManager, this.particles, this.world.tick)
         if (this.world.tick % 60 === 0) {
           this.diplomacySystem.update(this.civManager, this.world, this.em)
           this.buildingUpgradeSystem.update(this.em, this.civManager, this.world.tick)
@@ -904,6 +927,10 @@ export class Game {
 
     // World event overlays and banners
     const ctx = this.canvas.getContext('2d')!
+
+    // Day/night lighting overlay
+    this.dayNightRenderer.render(ctx, this.canvas.width, this.canvas.height, this.world.dayNightCycle, this.world.isDay())
+
     this.worldEventSystem.renderScreenOverlay(ctx, this.canvas.width, this.canvas.height)
     this.worldEventSystem.renderEventBanner(ctx, this.canvas.width)
     this.worldEventSystem.renderActiveIndicators(ctx, this.canvas.width)
