@@ -392,6 +392,8 @@ import { WorldCoralSpawningSystem } from '../systems/WorldCoralSpawningSystem'
 import { CreatureAstronomerSystem } from '../systems/CreatureAstronomerSystem'
 import { WorldThermalVentSystem } from '../systems/WorldThermalVentSystem'
 import { DiplomaticArmisticSystem } from '../systems/DiplomaticArmisticSystem'
+import { CreatureWeaverSystem } from '../systems/CreatureWeaverSystem'
+import { CreatureHerbalistSystem } from '../systems/CreatureHerbalistSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -785,6 +787,8 @@ export class Game {
   private creatureAstronomer!: CreatureAstronomerSystem
   private worldThermalVent!: WorldThermalVentSystem
   private diplomaticArmistic!: DiplomaticArmisticSystem
+  private creatureWeaver!: CreatureWeaverSystem
+  private creatureHerbalist!: CreatureHerbalistSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1329,6 +1333,8 @@ export class Game {
     this.creatureAstronomer = new CreatureAstronomerSystem()
     this.worldThermalVent = new WorldThermalVentSystem()
     this.diplomaticArmistic = new DiplomaticArmisticSystem()
+    this.creatureWeaver = new CreatureWeaverSystem()
+    this.creatureHerbalist = new CreatureHerbalistSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3024,6 +3030,10 @@ export class Game {
         this.worldThermalVent.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic armistice (v3.160) - ceasefire agreements
         this.diplomaticArmistic.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature weavers (v3.161) - textile crafting
+        this.creatureWeaver.update(this.tickRate, this.em, this.world.tick)
+        // Creature herbalists (v3.163) - herb gathering and potions
+        this.creatureHerbalist.update(this.tickRate, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
