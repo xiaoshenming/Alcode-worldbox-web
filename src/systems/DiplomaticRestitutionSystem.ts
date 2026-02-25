@@ -1,29 +1,29 @@
-// Diplomatic Restitution System (v3.270) - Property and territory restitution
-// Agreements to return seized assets, lands, or cultural artifacts between civilizations
+// Diplomatic Restitution System (v3.421) - Restitution diplomacy
+// Return of territory, resources, or rights as part of diplomatic settlement
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type RestitutionType = 'territorial' | 'cultural' | 'economic' | 'prisoners'
+export type RestitutionForm = 'territorial_return' | 'resource_compensation' | 'rights_restoration' | 'cultural_repatriation'
 
 export interface RestitutionAgreement {
   id: number
-  claimantCivId: number
-  holderCivId: number
-  restitutionType: RestitutionType
-  itemsToReturn: number
-  itemsReturned: number
-  compliance: number
-  tension: number
+  civIdA: number
+  civIdB: number
+  form: RestitutionForm
+  complianceRate: number
+  fairnessIndex: number
+  publicApproval: number
+  enforcementStrength: number
   duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2400
-const TREATY_CHANCE = 0.003
-const MAX_AGREEMENTS = 22
+const CHECK_INTERVAL = 2490
+const PROCEED_CHANCE = 0.0022
+const MAX_AGREEMENTS = 20
 
-const TYPES: RestitutionType[] = ['territorial', 'cultural', 'economic', 'prisoners']
+const FORMS: RestitutionForm[] = ['territorial_return', 'resource_compensation', 'rights_restoration', 'cultural_repatriation']
 
 export class DiplomaticRestitutionSystem {
   private agreements: RestitutionAgreement[] = []
@@ -34,37 +34,36 @@ export class DiplomaticRestitutionSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    if (this.agreements.length < MAX_AGREEMENTS && Math.random() < TREATY_CHANCE) {
-      const claimant = 1 + Math.floor(Math.random() * 8)
-      const holder = 1 + Math.floor(Math.random() * 8)
-      if (claimant === holder) return
+    if (this.agreements.length < MAX_AGREEMENTS && Math.random() < PROCEED_CHANCE) {
+      const civA = 1 + Math.floor(Math.random() * 8)
+      const civB = 1 + Math.floor(Math.random() * 8)
+      if (civA === civB) return
 
-      const rType = TYPES[Math.floor(Math.random() * TYPES.length)]
+      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
 
       this.agreements.push({
         id: this.nextId++,
-        claimantCivId: claimant,
-        holderCivId: holder,
-        restitutionType: rType,
-        itemsToReturn: 5 + Math.floor(Math.random() * 20),
-        itemsReturned: 0,
-        compliance: 30 + Math.random() * 40,
-        tension: 30 + Math.random() * 40,
+        civIdA: civA,
+        civIdB: civB,
+        form,
+        complianceRate: 25 + Math.random() * 35,
+        fairnessIndex: 20 + Math.random() * 30,
+        publicApproval: 15 + Math.random() * 35,
+        enforcementStrength: 10 + Math.random() * 25,
         duration: 0,
         tick,
       })
     }
 
-    for (const agreement of this.agreements) {
-      agreement.duration += 1
-      if (Math.random() < agreement.compliance * 0.005) {
-        agreement.itemsReturned = Math.min(agreement.itemsToReturn, agreement.itemsReturned + 1)
-      }
-      agreement.compliance = Math.max(5, Math.min(100, agreement.compliance + (Math.random() - 0.45) * 0.2))
-      agreement.tension = Math.max(5, Math.min(100, agreement.tension + (Math.random() - 0.5) * 0.15))
+    for (const a of this.agreements) {
+      a.duration += 1
+      a.complianceRate = Math.max(10, Math.min(85, a.complianceRate + (Math.random() - 0.47) * 0.11))
+      a.fairnessIndex = Math.max(10, Math.min(80, a.fairnessIndex + (Math.random() - 0.48) * 0.10))
+      a.publicApproval = Math.max(5, Math.min(85, a.publicApproval + (Math.random() - 0.46) * 0.12))
+      a.enforcementStrength = Math.max(5, Math.min(70, a.enforcementStrength + (Math.random() - 0.45) * 0.09))
     }
 
-    const cutoff = tick - 82000
+    const cutoff = tick - 86000
     for (let i = this.agreements.length - 1; i >= 0; i--) {
       if (this.agreements[i].tick < cutoff) this.agreements.splice(i, 1)
     }

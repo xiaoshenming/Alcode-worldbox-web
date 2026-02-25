@@ -1,29 +1,29 @@
-// Diplomatic Reparation System (v3.265) - War reparation agreements
-// Post-conflict agreements where defeated civilizations pay compensation to victors
+// Diplomatic Reparation System (v3.424) - Reparation diplomacy
+// Compensation payments and amends between civilizations after conflicts
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type ReparationType = 'monetary' | 'territorial' | 'resource' | 'labor'
+export type ReparationForm = 'war_indemnity' | 'resource_transfer' | 'labor_service' | 'symbolic_amends'
 
 export interface ReparationAgreement {
   id: number
-  payerCivId: number
-  receiverCivId: number
-  reparationType: ReparationType
-  totalOwed: number
-  amountPaid: number
-  resentment: number
-  enforcementLevel: number
+  civIdA: number
+  civIdB: number
+  form: ReparationForm
+  paymentProgress: number
+  debtRemaining: number
+  resentmentLevel: number
+  complianceRate: number
   duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2500
-const TREATY_CHANCE = 0.003
-const MAX_AGREEMENTS = 24
+const CHECK_INTERVAL = 2510
+const PROCEED_CHANCE = 0.0023
+const MAX_AGREEMENTS = 20
 
-const TYPES: ReparationType[] = ['monetary', 'territorial', 'resource', 'labor']
+const FORMS: ReparationForm[] = ['war_indemnity', 'resource_transfer', 'labor_service', 'symbolic_amends']
 
 export class DiplomaticReparationSystem {
   private agreements: ReparationAgreement[] = []
@@ -34,36 +34,36 @@ export class DiplomaticReparationSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    if (this.agreements.length < MAX_AGREEMENTS && Math.random() < TREATY_CHANCE) {
-      const payer = 1 + Math.floor(Math.random() * 8)
-      const receiver = 1 + Math.floor(Math.random() * 8)
-      if (payer === receiver) return
+    if (this.agreements.length < MAX_AGREEMENTS && Math.random() < PROCEED_CHANCE) {
+      const civA = 1 + Math.floor(Math.random() * 8)
+      const civB = 1 + Math.floor(Math.random() * 8)
+      if (civA === civB) return
 
-      const rType = TYPES[Math.floor(Math.random() * TYPES.length)]
+      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
 
       this.agreements.push({
         id: this.nextId++,
-        payerCivId: payer,
-        receiverCivId: receiver,
-        reparationType: rType,
-        totalOwed: 100 + Math.random() * 500,
-        amountPaid: 0,
-        resentment: 40 + Math.random() * 40,
-        enforcementLevel: 30 + Math.random() * 50,
+        civIdA: civA,
+        civIdB: civB,
+        form,
+        paymentProgress: 5 + Math.random() * 20,
+        debtRemaining: 40 + Math.random() * 50,
+        resentmentLevel: 20 + Math.random() * 35,
+        complianceRate: 25 + Math.random() * 30,
         duration: 0,
         tick,
       })
     }
 
-    for (const agreement of this.agreements) {
-      agreement.duration += 1
-      const payment = Math.random() * 0.5
-      agreement.amountPaid = Math.min(agreement.totalOwed, agreement.amountPaid + payment)
-      agreement.resentment = Math.max(5, Math.min(100, agreement.resentment + (Math.random() - 0.4) * 0.15))
-      agreement.enforcementLevel = Math.max(10, Math.min(100, agreement.enforcementLevel + (Math.random() - 0.5) * 0.1))
+    for (const a of this.agreements) {
+      a.duration += 1
+      a.paymentProgress = Math.max(0, Math.min(100, a.paymentProgress + (Math.random() - 0.4) * 0.13))
+      a.debtRemaining = Math.max(0, a.debtRemaining - 0.00008)
+      a.resentmentLevel = Math.max(5, Math.min(80, a.resentmentLevel + (Math.random() - 0.52) * 0.11))
+      a.complianceRate = Math.max(10, Math.min(85, a.complianceRate + (Math.random() - 0.47) * 0.10))
     }
 
-    const cutoff = tick - 80000
+    const cutoff = tick - 89000
     for (let i = this.agreements.length - 1; i >= 0; i--) {
       if (this.agreements[i].tick < cutoff) this.agreements.splice(i, 1)
     }
