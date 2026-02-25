@@ -5,6 +5,7 @@ import { EntityManager, PositionComponent, RenderComponent, VelocityComponent, N
 import { CivManager } from '../civilization/CivManager'
 import { BuildingComponent, BUILDING_COLORS } from '../civilization/Civilization'
 import { ParticleSystem } from '../systems/ParticleSystem'
+import { ResourceSystem } from '../systems/ResourceSystem'
 
 export class Renderer {
   private canvas: HTMLCanvasElement
@@ -40,7 +41,7 @@ export class Renderer {
     this.terrainDirty = true
   }
 
-  render(world: World, camera: Camera, em?: EntityManager, civManager?: CivManager, particles?: ParticleSystem, fogAlpha?: number): void {
+  render(world: World, camera: Camera, em?: EntityManager, civManager?: CivManager, particles?: ParticleSystem, fogAlpha?: number, resources?: ResourceSystem): void {
     const ctx = this.ctx
     const bounds = camera.getVisibleBounds()
 
@@ -71,6 +72,11 @@ export class Renderer {
 
     // Water shimmer overlay (lightweight)
     this.renderWaterShimmer(world, bounds, tileSize, offsetX, offsetY)
+
+    // Draw resource nodes
+    if (resources) {
+      this.renderResources(resources, camera, bounds, tileSize, offsetX, offsetY)
+    }
 
     // Draw entities
     if (em) {
@@ -254,6 +260,31 @@ export class Renderer {
         }
       }
     }
+  }
+
+  private renderResources(
+    resources: ResourceSystem, camera: Camera, bounds: any,
+    tileSize: number, offsetX: number, offsetY: number
+  ): void {
+    const ctx = this.ctx
+    const fontSize = Math.max(6, Math.floor(tileSize * 1.2))
+    ctx.font = `${fontSize}px monospace`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+
+    for (const node of resources.nodes) {
+      if (node.x < bounds.startX - 1 || node.x > bounds.endX + 1 ||
+          node.y < bounds.startY - 1 || node.y > bounds.endY + 1) continue
+
+      const screenX = node.x * tileSize + offsetX + tileSize / 2
+      const screenY = node.y * tileSize + offsetY + tileSize / 2
+      const alpha = 0.5 + (node.amount / node.maxAmount) * 0.5
+
+      ctx.globalAlpha = alpha
+      ctx.fillStyle = resources.getColor(node.type)
+      ctx.fillText(resources.getSymbol(node.type), screenX, screenY)
+    }
+    ctx.globalAlpha = 1
   }
 
   private renderParticles(particles: ParticleSystem, camera: Camera): void {

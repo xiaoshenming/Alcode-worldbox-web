@@ -14,6 +14,7 @@ import { CombatSystem } from '../systems/CombatSystem'
 import { ParticleSystem } from '../systems/ParticleSystem'
 import { SoundSystem } from '../systems/SoundSystem'
 import { WeatherSystem } from '../systems/WeatherSystem'
+import { ResourceSystem } from '../systems/ResourceSystem'
 import { CreatureFactory } from '../entities/CreatureFactory'
 import { CivManager } from '../civilization/CivManager'
 
@@ -37,6 +38,7 @@ export class Game {
   creatureFactory: CreatureFactory
   civManager: CivManager
   private weather: WeatherSystem
+  private resources: ResourceSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -65,6 +67,7 @@ export class Game {
     this.aiSystem = new AISystem(this.em, this.world, this.particles, this.creatureFactory)
     this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles, this.audio)
     this.weather = new WeatherSystem(this.world, this.particles, this.em)
+    this.resources = new ResourceSystem(this.world, this.em, this.civManager, this.particles)
 
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
     this.toolbar = new Toolbar('toolbar', this.powers)
@@ -115,6 +118,7 @@ export class Game {
     this.aiSystem = new AISystem(this.em, this.world, this.particles, this.creatureFactory)
     this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles, this.audio)
     this.weather = new WeatherSystem(this.world, this.particles, this.em)
+    this.resources = new ResourceSystem(this.world, this.em, this.civManager, this.particles)
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
     this.creaturePanel = new CreaturePanel('creaturePanel', this.em, this.civManager)
@@ -296,12 +300,13 @@ export class Game {
         this.combatSystem.update(this.world.tick)
         this.civManager.update()
         this.weather.update()
+        this.resources.update()
         this.particles.update()
         this.accumulator -= this.tickRate
       }
     }
 
-    this.renderer.render(this.world, this.camera, this.em, this.civManager, this.particles, this.weather.fogAlpha)
+    this.renderer.render(this.world, this.camera, this.em, this.civManager, this.particles, this.weather.fogAlpha, this.resources)
     this.renderer.renderBrushOutline(this.camera, this.input.mouseX, this.input.mouseY, this.powers.getBrushSize())
     this.renderer.renderMinimap(this.world, this.camera)
 
