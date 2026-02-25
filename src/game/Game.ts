@@ -324,6 +324,11 @@ import { CreatureGlassblowingSystem } from '../systems/CreatureGlassblowingSyste
 import { WorldUndergroundRiverSystem } from '../systems/WorldUndergroundRiverSystem'
 import { DiplomaticNavalBlockadeSystem } from '../systems/DiplomaticNavalBlockadeSystem'
 import { CreaturePremonitionSystem } from '../systems/CreaturePremonitionSystem'
+import { CreatureHerbalismSystem } from '../systems/CreatureHerbalismSystem'
+import { WorldFloatingIslandSystem } from '../systems/WorldFloatingIslandSystem'
+import { CreatureCartographySystem } from '../systems/CreatureCartographySystem'
+import { CreatureShapeshiftingSystem } from '../systems/CreatureShapeshiftingSystem'
+import { WorldWhirlwindSystem } from '../systems/WorldWhirlwindSystem'
 
 export class Game {
   private world: World
@@ -650,6 +655,11 @@ export class Game {
   private worldUndergroundRiver!: WorldUndergroundRiverSystem
   private diplomaticNavalBlockade!: DiplomaticNavalBlockadeSystem
   private creaturePremonition!: CreaturePremonitionSystem
+  private creatureHerbalism!: CreatureHerbalismSystem
+  private worldFloatingIsland!: WorldFloatingIslandSystem
+  private creatureCartography!: CreatureCartographySystem
+  private creatureShapeshifting!: CreatureShapeshiftingSystem
+  private worldWhirlwind!: WorldWhirlwindSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -1127,6 +1137,11 @@ export class Game {
     this.worldUndergroundRiver = new WorldUndergroundRiverSystem()
     this.diplomaticNavalBlockade = new DiplomaticNavalBlockadeSystem()
     this.creaturePremonition = new CreaturePremonitionSystem()
+    this.creatureHerbalism = new CreatureHerbalismSystem()
+    this.worldFloatingIsland = new WorldFloatingIslandSystem()
+    this.creatureCartography = new CreatureCartographySystem()
+    this.creatureShapeshifting = new CreatureShapeshiftingSystem()
+    this.worldWhirlwind = new WorldWhirlwindSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2672,6 +2687,16 @@ export class Game {
         this.diplomaticNavalBlockade.update(this.tickRate, this.em, this.civManager, this.world.tick)
         // Creature premonition (v3.79) - sensing future events
         this.creaturePremonition.update(this.tickRate, this.em, this.world.tick)
+        // Creature herbalism (v3.81) - medicinal plant knowledge
+        this.creatureHerbalism.update(this.tickRate, this.em, this.world.tick)
+        // World floating islands (v3.82) - magical hovering landmasses
+        this.worldFloatingIsland.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature cartography (v3.83) - map-making skills
+        this.creatureCartography.update(this.tickRate, this.em, this.world.tick)
+        // Creature shapeshifting (v3.84) - magical form changing
+        this.creatureShapeshifting.update(this.tickRate, this.em, this.world.tick)
+        // World whirlwinds (v3.85) - spinning wind phenomena
+        this.worldWhirlwind.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
