@@ -3,7 +3,7 @@ import { Camera } from './Camera'
 import { Renderer } from './Renderer'
 import { Input } from './Input'
 import { Powers } from './Powers'
-import { EntityType, TILE_SIZE } from '../utils/Constants'
+import { EntityType, TILE_SIZE, TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { Toolbar } from '../ui/Toolbar'
 import { InfoPanel } from '../ui/InfoPanel'
 import { CreaturePanel } from '../ui/CreaturePanel'
@@ -53,6 +53,11 @@ import { BiomeEvolutionSystem } from '../systems/BiomeEvolutionSystem'
 import { EspionageSystem } from '../systems/EspionageSystem'
 import { DayNightRenderer } from '../systems/DayNightRenderer'
 import { GodPowerSystem } from '../systems/GodPowerSystem'
+import { WorldChronicleSystem, WorldSnapshot } from '../systems/WorldChronicleSystem'
+import { CultureSystem } from '../systems/CultureSystem'
+import { MusicSystem } from '../systems/MusicSystem'
+import { MiningSystem } from '../systems/MiningSystem'
+import { DisasterChainSystem } from '../systems/DisasterChainSystem'
 
 export class Game {
   private world: World
@@ -108,6 +113,11 @@ export class Game {
   private espionageSystem: EspionageSystem
   private dayNightRenderer: DayNightRenderer
   private godPowerSystem: GodPowerSystem
+  private worldChronicle: WorldChronicleSystem
+  private cultureSystem: CultureSystem
+  private musicSystem!: MusicSystem
+  private miningSystem: MiningSystem
+  private disasterChainSystem: DisasterChainSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -168,6 +178,147 @@ export class Game {
     this.espionageSystem = new EspionageSystem()
     this.dayNightRenderer = new DayNightRenderer()
     this.godPowerSystem = new GodPowerSystem()
+    this.worldChronicle = new WorldChronicleSystem()
+    this.cultureSystem = new CultureSystem()
+    this.musicSystem = new MusicSystem()
+    this.miningSystem = new MiningSystem()
+    this.miningSystem.generateOreMap(this.world.tiles)
+    this.disasterChainSystem = new DisasterChainSystem()
+    this.disasterChainSystem.setCallbacks({
+      triggerEarthquake: (x, y, mag) => {
+        const r = Math.ceil(mag * 0.8)
+        for (let dy = -r; dy <= r; dy++) {
+          for (let dx = -r; dx <= r; dx++) {
+            if (dx * dx + dy * dy > r * r) continue
+            const tx = x + dx, ty = y + dy
+            if (tx < 0 || tx >= WORLD_WIDTH || ty < 0 || ty >= WORLD_HEIGHT) continue
+            if (Math.random() < 0.15) this.world.setTile(tx, ty, TileType.MOUNTAIN)
+          }
+        }
+        this.particles.spawnExplosion(x, y)
+      },
+      triggerTsunami: (x, y, mag) => {
+        const r = Math.ceil(mag * 1.5)
+        for (let dy = -r; dy <= r; dy++) {
+          for (let dx = -r; dx <= r; dx++) {
+            if (dx * dx + dy * dy > r * r) continue
+            const tx = x + dx, ty = y + dy
+            if (tx < 0 || tx >= WORLD_WIDTH || ty < 0 || ty >= WORLD_HEIGHT) continue
+            const tile = this.world.getTile(tx, ty)
+            if (tile === TileType.SAND || tile === TileType.GRASS) {
+              if (Math.random() < 0.3) this.world.setTile(tx, ty, TileType.SHALLOW_WATER)
+            }
+          }
+        }
+        this.particles.spawnRain(x, y)
+      },
+      triggerWildfire: (x, y, _mag) => {
+        for (let dy = -3; dy <= 3; dy++) {
+          for (let dx = -3; dx <= 3; dx++) {
+            const tx = x + dx, ty = y + dy
+            if (tx < 0 || tx >= WORLD_WIDTH || ty < 0 || ty >= WORLD_HEIGHT) continue
+            if (this.world.getTile(tx, ty) === TileType.FOREST && Math.random() < 0.2) {
+              this.world.setTile(tx, ty, TileType.SAND)
+            }
+          }
+        }
+      },
+      triggerDesertification: (x, y, radius) => {
+        for (let dy = -radius; dy <= radius; dy++) {
+          for (let dx = -radius; dx <= radius; dx++) {
+            if (dx * dx + dy * dy > radius * radius) continue
+            const tx = x + dx, ty = y + dy
+            if (tx < 0 || tx >= WORLD_WIDTH || ty < 0 || ty >= WORLD_HEIGHT) continue
+            const tile = this.world.getTile(tx, ty)
+            if ((tile === TileType.GRASS || tile === TileType.FOREST) && Math.random() < 0.15) {
+              this.world.setTile(tx, ty, TileType.SAND)
+            }
+          }
+        }
+      },
+      triggerDiseaseOutbreak: (x, y, _mag) => {
+        const creatures = this.em.getEntitiesWithComponents('position', 'creature', 'needs')
+        for (const id of creatures) {
+          const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+          if (Math.abs(pos.x - x) < 8 && Math.abs(pos.y - y) < 8) {
+            if (Math.random() < 0.3 && !this.em.getComponent(id, 'disease')) {
+              this.em.addComponent(id, { type: 'disease', diseaseType: 'fever', severity: 3, duration: 0, contagious: true, immune: false, immuneUntil: 0 })
+            }
+          }
+        }
+      },
+      triggerBuildingDamage: (x, y, radius, severity) => {
+        const buildings = this.em.getEntitiesWithComponents('position', 'building')
+        for (const id of buildings) {
+          const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+          if (Math.abs(pos.x - x) <= radius && Math.abs(pos.y - y) <= radius) {
+            if (Math.random() < severity) this.em.removeEntity(id)
+          }
+        }
+      },
+      triggerCooling: (_mag) => { /* temperature handled internally */ },
+      triggerCropFailure: (x, y, radius, severity) => {
+        const crops = this.em.getEntitiesWithComponents('position', 'crop')
+        for (const id of crops) {
+          const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+          if (Math.abs(pos.x - x) <= radius && Math.abs(pos.y - y) <= radius) {
+            if (Math.random() < severity) this.em.removeEntity(id)
+          }
+        }
+      },
+      setTileAt: (x, y, stage) => {
+        if (x < 0 || x >= WORLD_WIDTH || y < 0 || y >= WORLD_HEIGHT) return
+        const current = this.world.getTile(x, y)
+        if (stage === 1 && current === TileType.LAVA) this.world.setTile(x, y, TileType.MOUNTAIN)
+        else if (stage === 3 && current === TileType.MOUNTAIN) this.world.setTile(x, y, TileType.GRASS)
+      },
+      isWaterNear: (x, y, radius) => {
+        for (let dy = -radius; dy <= radius; dy += 3) {
+          for (let dx = -radius; dx <= radius; dx += 3) {
+            const tx = x + dx, ty = y + dy
+            if (tx < 0 || tx >= WORLD_WIDTH || ty < 0 || ty >= WORLD_HEIGHT) continue
+            const t = this.world.getTile(tx, ty)
+            if (t === TileType.DEEP_WATER || t === TileType.SHALLOW_WATER) return true
+          }
+        }
+        return false
+      },
+      countForestTiles: () => {
+        let count = 0
+        for (let y = 0; y < WORLD_HEIGHT; y += 4) {
+          for (let x = 0; x < WORLD_WIDTH; x += 4) {
+            if (this.world.getTile(x, y) === TileType.FOREST) count++
+          }
+        }
+        return count * 16
+      },
+      countTotalLand: () => {
+        let count = 0
+        for (let y = 0; y < WORLD_HEIGHT; y += 4) {
+          for (let x = 0; x < WORLD_WIDTH; x += 4) {
+            const t = this.world.getTile(x, y)
+            if (t !== TileType.DEEP_WATER && t !== TileType.SHALLOW_WATER && t !== null) count++
+          }
+        }
+        return count * 16
+      },
+      getSpeciesCounts: () => {
+        const counts = new Map<string, number>()
+        const creatures = this.em.getEntitiesWithComponents('creature')
+        for (const id of creatures) {
+          const c = this.em.getComponent<CreatureComponent>(id, 'creature')!
+          counts.set(c.species, (counts.get(c.species) || 0) + 1)
+        }
+        return counts
+      },
+      countWarZones: () => {
+        let wars = 0
+        for (const [, civ] of this.civManager.civilizations) {
+          if ((civ as any).atWar || (civ as any).wars?.length > 0) wars++
+        }
+        return Math.floor(wars / 2)
+      },
+    })
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
     this.setupParticleEventHooks()
@@ -312,6 +463,9 @@ export class Game {
     this.biomeEvolution = new BiomeEvolutionSystem()
     this.espionageSystem = new EspionageSystem()
     this.godPowerSystem = new GodPowerSystem()
+    this.musicSystem.dispose()
+    this.musicSystem = new MusicSystem()
+    this.miningSystem = new MiningSystem()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
     this.combatSystem.setArtifactSystem(this.artifactSystem)
@@ -323,6 +477,7 @@ export class Game {
 
     // Generate new world
     this.world.generate()
+    this.miningSystem.generateOreMap(this.world.tiles)
   }
 
   private setupSpeedControls(): void {
@@ -537,6 +692,7 @@ export class Game {
         case 'm':
         case 'M': {
           const muted = this.audio.toggleMute()
+        this.musicSystem.setMuted(muted)
           const muteBtn = document.getElementById('muteBtn')
           if (muteBtn) muteBtn.textContent = muted ? '🔇' : '🔊'
           break
@@ -603,6 +759,7 @@ export class Game {
     if (btn) {
       btn.addEventListener('click', () => {
         const muted = this.audio.toggleMute()
+        this.musicSystem.setMuted(muted)
         btn.textContent = muted ? '🔇' : '🔊'
       })
     }
@@ -896,10 +1053,52 @@ export class Game {
         this.heroLegendSystem.update(this.em, this.civManager, this.world, this.particles, this.world.tick)
         this.wonderSystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
         this.tradeEconomySystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
+        // Culture system - cultural spread, trait adoption, language diffusion
+        {
+          const civData = [...this.civManager.civilizations.values()].map(c => {
+            const neighbors: number[] = []
+            const tradePartners: number[] = []
+            for (const [otherId, rel] of c.relations) {
+              if (rel > -20) neighbors.push(otherId)
+              if (rel > 10) tradePartners.push(otherId)
+            }
+            return { id: c.id, neighbors, tradePartners, population: c.population }
+          })
+          this.cultureSystem.update(this.world.tick, civData)
+        }
         this.loyaltySystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
         this.biomeEvolution.update(this.world, this.civManager, this.em, this.particles, this.world.tick)
         this.espionageSystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
         this.godPowerSystem.update(this.world, this.em, this.civManager, this.particles, this.world.tick)
+        // Mining system - build civData from civilizations
+        {
+          const civData = [...this.civManager.civilizations.values()].map(c => {
+            const cities: { x: number; y: number }[] = []
+            for (const bid of c.buildings) {
+              const pos = this.em.getComponent<PositionComponent>(bid, 'position')
+              if (pos) cities.push({ x: Math.floor(pos.x), y: Math.floor(pos.y) })
+            }
+            const creature = this.em.getEntitiesWithComponents('creature', 'civMember')[0]
+            const cc = creature ? this.em.getComponent<CreatureComponent>(creature, 'creature') : null
+            return { id: c.id, cities, techLevel: c.techLevel, race: cc?.species ?? 'human' }
+          })
+          this.miningSystem.update(this.world.tick, civData)
+        }
+        this.disasterChainSystem.update(this.world.tick)
+        // World Chronicle - build narrative history from world state
+        {
+          const civs = [...this.civManager.civilizations.values()].map(c => ({
+            id: c.id, name: c.name, population: c.population, cities: c.buildings.length
+          }))
+          const snapshot: WorldSnapshot = {
+            totalPopulation: civs.reduce((s, c) => s + c.population, 0),
+            totalCities: civs.reduce((s, c) => s + c.cities, 0),
+            activeWars: 0,
+            civilizations: civs,
+            era: this.timeline.getCurrentEra().name,
+          }
+          this.worldChronicle.update(this.world.tick, snapshot)
+        }
         if (this.world.tick % 60 === 0) {
           this.diplomacySystem.update(this.civManager, this.world, this.em)
           this.buildingUpgradeSystem.update(this.em, this.civManager, this.world.tick)
@@ -922,6 +1121,18 @@ export class Game {
     const vpW = window.innerWidth / (TILE_SIZE * this.camera.zoom)
     const vpH = window.innerHeight / (TILE_SIZE * this.camera.zoom)
     this.ambientParticles.update(this.world, this.particles, this.world.tick, vpX, vpY, vpW, vpH)
+    // Dynamic music & ambient sound
+    const hasWar = Array.from(this.civManager.civilizations.values()).some(c => {
+      for (const [, rel] of c.relations) { if (rel < -50) return true }
+      return false
+    })
+    this.musicSystem.update({
+      isNight: !this.world.isDay(),
+      atWar: hasWar,
+      disasterActive: this.disasterSystem.getActiveDisasters().length > 0,
+      isEpic: this.wonderSystem.getActiveWonders().length > 0,
+      isRaining: this.weather.currentWeather === 'rain' || this.weather.currentWeather === 'storm',
+    })
     this.renderer.renderBrushOutline(this.camera, this.input.mouseX, this.input.mouseY, this.powers.getBrushSize())
     this.renderer.renderMinimap(this.world, this.camera, this.em, this.civManager)
 
