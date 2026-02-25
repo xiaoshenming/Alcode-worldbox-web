@@ -123,7 +123,7 @@ export class Game {
   private disasterChainSystem: DisasterChainSystem
   private seasonSystem: SeasonSystem
   private animalMigration: AnimalMigrationSystem
-  private volcanoSystem: VolcanoSystem
+  private volcanoSystem!: VolcanoSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
