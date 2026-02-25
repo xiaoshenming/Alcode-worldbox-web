@@ -264,6 +264,8 @@ import { CreatureRumorSystem } from '../systems/CreatureRumorSystem'
 import { DiplomaticTradeAgreementSystem } from '../systems/DiplomaticTradeAgreementSystem'
 import { WorldPurificationSystem } from '../systems/WorldPurificationSystem'
 import { CreatureNightWatchSystem } from '../systems/CreatureNightWatchSystem'
+import { CreatureBarterSystem } from '../systems/CreatureBarterSystem'
+import { WorldGeyserSystem } from '../systems/WorldGeyserSystem'
 
 export class Game {
   private world: World
@@ -530,6 +532,8 @@ export class Game {
   private diplomaticTradeAgreement!: DiplomaticTradeAgreementSystem
   private worldPurification!: WorldPurificationSystem
   private creatureNightWatch!: CreatureNightWatchSystem
+  private creatureBarter!: CreatureBarterSystem
+  private worldGeyser!: WorldGeyserSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -947,6 +951,8 @@ export class Game {
     this.diplomaticTradeAgreement = new DiplomaticTradeAgreementSystem()
     this.worldPurification = new WorldPurificationSystem()
     this.creatureNightWatch = new CreatureNightWatchSystem()
+    this.creatureBarter = new CreatureBarterSystem()
+    this.worldGeyser = new WorldGeyserSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2231,7 +2237,7 @@ export class Game {
         // Creature language (v2.28) - language evolution affects diplomacy
         this.creatureLanguage.update(this.tickRate, [...this.civManager.civilizations.keys()], this.world.tick)
         // Diplomatic tribute (v2.29) - weaker civs pay tribute
-        this.diplomaticTribute.update(this.tickRate, this.civManager, this.world.tick)
+        this.diplomaticTribute.update(this.tickRate, this.em, this.world.tick)
         // World weather fronts (v2.30) - moving weather fronts
         this.worldWeatherFront.update(this.tickRate, this.world.tick)
         // Creature trade skills (v2.31) - trade skill development
@@ -2283,7 +2289,7 @@ export class Game {
         // Creature inventions (v2.59) - tools and techniques
         this.creatureInvention.update(this.tickRate, this.em, this.civManager, this.world.tick)
         // World aurora (v2.60) - northern/southern lights
-        this.worldAurora.update(this.tickRate, this.em, this.world.tick)
+        this.worldAurora.update(this.tickRate, this.world, this.em, this.world.tick)
         // Creature phobias (v2.61) - fears and panic
         this.creaturePhobia.update(this.tickRate, this.em, this.world.tick)
         // World geothermal (v2.62) - hot springs and geysers
@@ -2372,6 +2378,10 @@ export class Game {
         this.worldPurification.update(this.tickRate, this.world, this.em, this.world.tick)
         // Creature night watch (v3.10) - sentries guard at night
         this.creatureNightWatch.update(this.tickRate, this.em, this.world.tick)
+        // Creature barter (v3.11) - resource trading between creatures
+        this.creatureBarter.update(this.tickRate, this.em, this.world.tick)
+        // World geysers (v3.12) - periodic geyser eruptions
+        this.worldGeyser.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate

@@ -1,111 +1,84 @@
-// World Aurora System (v2.60) - Northern/southern lights appear in polar regions
-// Auroras are visual spectacles that boost creature mood and inspire art
-// Intensity varies with world magnetic activity and season
+// World Aurora System (v3.15) - Auroras appear in the sky under certain conditions
+// Auroras bring inspiration, fear, calm, or energy to creatures
 
+import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type AuroraColor = 'green' | 'blue' | 'purple' | 'red' | 'pink' | 'white'
+export type AuroraColor = 'green' | 'blue' | 'purple' | 'red' | 'pink'
+export type AuroraEffect = 'inspiration' | 'fear' | 'calm' | 'energy'
 
-export interface AuroraEvent {
+export interface Aurora {
   id: number
-  x: number
-  y: number
-  width: number
+  intensity: number   // 0-100
   color: AuroraColor
-  intensity: number    // 0-100
-  moodBoost: number    // 0-15
-  startedAt: number
+  startTick: number
   duration: number
+  effect: AuroraEffect
 }
 
-const CHECK_INTERVAL = 1200
-const MAX_AURORAS = 15
-const AURORA_CHANCE = 0.12
+const CHECK_INTERVAL = 1000
+const AURORA_CHANCE = 0.008
+const MAX_AURORAS = 5
 
-const COLORS: AuroraColor[] = ['green', 'blue', 'purple', 'red', 'pink', 'white']
-
-const COLOR_MOOD: Record<AuroraColor, [number, number]> = {
-  green: [3, 8],
-  blue: [4, 10],
-  purple: [5, 12],
-  red: [2, 6],
-  pink: [6, 12],
-  white: [8, 15],
+const COLOR_EFFECTS: Record<AuroraColor, AuroraEffect> = {
+  green: 'calm',
+  blue: 'inspiration',
+  purple: 'energy',
+  red: 'fear',
+  pink: 'calm',
 }
+const COLORS = Object.keys(COLOR_EFFECTS) as AuroraColor[]
 
 export class WorldAuroraSystem {
-  private auroras: AuroraEvent[] = []
+  private auroras: Aurora[] = []
   private nextId = 1
   private lastCheck = 0
-  private totalEvents = 0
 
-  update(dt: number, em: EntityManager, tick: number): void {
-    if (tick - this.lastCheck >= CHECK_INTERVAL) {
-      this.lastCheck = tick
-      this.generateAuroras(tick)
-      this.expireAuroras(tick)
-      this.applyMoodEffects(em)
-    }
+  update(dt: number, world: World, em: EntityManager, tick: number): void {
+    if (tick - this.lastCheck < CHECK_INTERVAL) return
+    this.lastCheck = tick
+
+    this.spawnAuroras(tick)
+    this.evolveAuroras(tick)
+    this.cleanup(tick)
   }
 
-  private generateAuroras(tick: number): void {
+  private spawnAuroras(tick: number): void {
     if (this.auroras.length >= MAX_AURORAS) return
     if (Math.random() > AURORA_CHANCE) return
 
     const color = COLORS[Math.floor(Math.random() * COLORS.length)]
-    const [minMood, maxMood] = COLOR_MOOD[color]
-
-    // Auroras appear in northern/southern regions (low y or high y)
-    const isNorth = Math.random() < 0.5
-    const y = isNorth ? Math.floor(Math.random() * 30) : 170 + Math.floor(Math.random() * 30)
-    const x = Math.floor(Math.random() * 180) + 10
-
     this.auroras.push({
       id: this.nextId++,
-      x, y,
-      width: 15 + Math.floor(Math.random() * 40),
+      intensity: 30 + Math.random() * 70,
       color,
-      intensity: 30 + Math.floor(Math.random() * 70),
-      moodBoost: minMood + Math.floor(Math.random() * (maxMood - minMood + 1)),
-      startedAt: tick,
+      startTick: tick,
       duration: 2000 + Math.floor(Math.random() * 4000),
+      effect: COLOR_EFFECTS[color],
     })
-    this.totalEvents++
   }
 
-  private expireAuroras(tick: number): void {
-    const expired: number[] = []
-    for (let i = 0; i < this.auroras.length; i++) {
-      if (tick - this.auroras[i].startedAt > this.auroras[i].duration) {
-        expired.push(i)
-      }
-    }
-    for (let i = expired.length - 1; i >= 0; i--) {
-      this.auroras.splice(expired[i], 1)
-    }
-  }
-
-  private applyMoodEffects(em: EntityManager): void {
-    if (this.auroras.length === 0) return
-    const creatures = em.getEntitiesWithComponents('creature', 'position')
-    for (const id of creatures) {
-      const pos = em.getComponent<any>(id, 'position')
-      if (!pos) continue
-      for (const aurora of this.auroras) {
-        const dx = Math.abs(pos.x - aurora.x)
-        const dy = Math.abs(pos.y - aurora.y)
-        if (dx < aurora.width && dy < 15) {
-          const creature = em.getComponent<any>(id, 'creature')
-          if (creature && creature.mood != null) {
-            creature.mood = Math.min(100, creature.mood + aurora.moodBoost * 0.03)
-          }
-          break
-        }
+  private evolveAuroras(tick: number): void {
+    for (const a of this.auroras) {
+      const elapsed = tick - a.startTick
+      const halfLife = a.duration * 0.5
+      // Intensity peaks at midpoint then fades
+      if (elapsed < halfLife) {
+        a.intensity = Math.min(100, a.intensity + Math.random() * 2)
+      } else {
+        a.intensity = Math.max(0, a.intensity - Math.random() * 3)
       }
     }
   }
 
-  getAuroras(): AuroraEvent[] { return this.auroras }
-  getActiveAuroras(): AuroraEvent[] { return this.auroras }
-  getTotalEvents(): number { return this.totalEvents }
+  private cleanup(tick: number): void {
+    this.auroras = this.auroras.filter(a =>
+      tick - a.startTick < a.duration && a.intensity > 0
+    )
+  }
+
+  getAuroras(): Aurora[] { return this.auroras }
+  getActiveAuroras(): Aurora[] {
+    return this.auroras.filter(a => a.intensity > 10)
+  }
 }
