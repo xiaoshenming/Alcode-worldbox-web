@@ -93,6 +93,7 @@ import { SiegeSystem } from '../systems/SiegeSystem'
 import { DisasterWarningSystem } from '../systems/DisasterWarningSystem'
 import { MoodSystem } from '../systems/MoodSystem'
 import { WorldAgeSystem } from '../systems/WorldAgeSystem'
+import { HelpOverlaySystem } from '../systems/HelpOverlaySystem'
 
 export class Game {
   private world: World
@@ -188,6 +189,7 @@ export class Game {
   private disasterWarning: DisasterWarningSystem
   private moodSystem: MoodSystem
   private worldAge: WorldAgeSystem
+  private helpOverlay: HelpOverlaySystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -427,6 +429,7 @@ export class Game {
     this.disasterWarning = new DisasterWarningSystem()
     this.moodSystem = new MoodSystem()
     this.worldAge = new WorldAgeSystem()
+    this.helpOverlay = new HelpOverlaySystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -845,8 +848,21 @@ export class Game {
           break
         }
 
+        case 'h':
+        case 'H':
+          if (!e.ctrlKey && !e.metaKey) this.helpOverlay.toggle()
+          break
+        case 'F1':
+          e.preventDefault()
+          this.helpOverlay.toggle()
+          break
+
         // Escape: close panels / deselect tool
         case 'Escape': {
+          if (this.helpOverlay.isVisible()) {
+            this.helpOverlay.toggle()
+            break
+          }
           const savePanel = document.getElementById('saveLoadPanel')
           const achPanel = document.getElementById('achievementsPanel')
           const tlPanel = document.getElementById('timelinePanel')
