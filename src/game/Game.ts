@@ -225,6 +225,11 @@ import { WorldGeothermalSystem } from '../systems/WorldGeothermalSystem'
 import { DiplomaticFederationSystem } from '../systems/DiplomaticFederationSystem'
 import { CreatureArtSystem } from '../systems/CreatureArtSystem'
 import { WorldMiasmaSystem } from '../systems/WorldMiasmaSystem'
+import { CreatureTotemSystem } from '../systems/CreatureTotemSystem'
+import { WorldFossilSystem } from '../systems/WorldFossilSystem'
+import { DiplomaticSpySystem } from '../systems/DiplomaticSpySystem'
+import { CreatureDanceSystem } from '../systems/CreatureDanceSystem'
+import { WorldBeaconSystem } from '../systems/WorldBeaconSystem'
 
 export class Game {
   private world: World
@@ -452,6 +457,11 @@ export class Game {
   private diplomaticFederation!: DiplomaticFederationSystem
   private creatureArt!: CreatureArtSystem
   private worldMiasma!: WorldMiasmaSystem
+  private creatureTotem!: CreatureTotemSystem
+  private worldFossil!: WorldFossilSystem
+  private diplomaticSpy!: DiplomaticSpySystem
+  private creatureDance!: CreatureDanceSystem
+  private worldBeacon!: WorldBeaconSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -830,6 +840,11 @@ export class Game {
     this.diplomaticFederation = new DiplomaticFederationSystem()
     this.creatureArt = new CreatureArtSystem()
     this.worldMiasma = new WorldMiasmaSystem()
+    this.creatureTotem = new CreatureTotemSystem()
+    this.worldFossil = new WorldFossilSystem()
+    this.diplomaticSpy = new DiplomaticSpySystem()
+    this.creatureDance = new CreatureDanceSystem()
+    this.worldBeacon = new WorldBeaconSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2177,6 +2192,16 @@ export class Game {
         this.creatureArt.update(this.tickRate, this.em, this.world.tick)
         // World miasma (v2.65) - toxic zones
         this.worldMiasma.update(this.tickRate, this.world, this.world.tick)
+        // Creature totems (v2.66) - tribal worship totems
+        this.creatureTotem.update(this.tickRate, this.em, this.world, this.world.tick)
+        // World fossils (v2.67) - buried ancient fossils
+        this.worldFossil.update(this.tickRate, this.world, this.world.tick)
+        // Diplomatic spies (v2.68) - espionage and intelligence
+        this.diplomaticSpy.update(this.tickRate, this.civManager, this.world.tick)
+        // Creature dances (v2.69) - ritual dances
+        this.creatureDance.update(this.tickRate, this.em, this.world.tick)
+        // World beacons (v2.70) - signal beacons and lighthouses
+        this.worldBeacon.update(this.tickRate, this.world, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
