@@ -356,6 +356,11 @@ import { WorldAqueductSystem } from '../systems/WorldAqueductSystem'
 import { CreatureTattoistSystem } from '../systems/CreatureTattoistSystem'
 import { WorldGeoglyphSystem } from '../systems/WorldGeoglyphSystem'
 import { CreatureHeraldSystem } from '../systems/CreatureHeraldSystem'
+import { CreaturePuppeteerSystem } from '../systems/CreaturePuppeteerSystem'
+import { WorldObsidianSystem } from '../systems/WorldObsidianSystem'
+import { CreatureRangerSystem } from '../systems/CreatureRangerSystem'
+import { WorldCoralReefGrowthSystem } from '../systems/WorldCoralReefGrowthSystem'
+import { CreatureRunnerSystem } from '../systems/CreatureRunnerSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -713,6 +718,11 @@ export class Game {
   private creatureTattoist!: CreatureTattoistSystem
   private worldGeoglyph!: WorldGeoglyphSystem
   private creatureHerald!: CreatureHeraldSystem
+  private creaturePuppeteer!: CreaturePuppeteerSystem
+  private worldObsidian!: WorldObsidianSystem
+  private creatureRanger!: CreatureRangerSystem
+  private worldCoralReefGrowth!: WorldCoralReefGrowthSystem
+  private creatureRunner!: CreatureRunnerSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1221,6 +1231,11 @@ export class Game {
     this.creatureTattoist = new CreatureTattoistSystem()
     this.worldGeoglyph = new WorldGeoglyphSystem()
     this.creatureHerald = new CreatureHeraldSystem()
+    this.creaturePuppeteer = new CreaturePuppeteerSystem()
+    this.worldObsidian = new WorldObsidianSystem()
+    this.creatureRanger = new CreatureRangerSystem()
+    this.worldCoralReefGrowth = new WorldCoralReefGrowthSystem()
+    this.creatureRunner = new CreatureRunnerSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -2844,6 +2859,16 @@ export class Game {
         this.worldGeoglyph.update(this.tickRate, this.world, this.em, this.world.tick)
         // Creature heralds (v3.119) - event announcers
         this.creatureHerald.update(this.tickRate, this.em, this.world.tick)
+        // Creature puppeteers (v3.121) - puppet show entertainment
+        this.creaturePuppeteer.update(this.tickRate, this.em, this.world.tick)
+        // World obsidian (v3.122) - volcanic glass deposits
+        this.worldObsidian.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature rangers (v3.123) - territory patrol
+        this.creatureRanger.update(this.tickRate, this.em, this.world.tick)
+        // World coral reef growth (v3.124) - expanding reef ecosystems
+        this.worldCoralReefGrowth.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature runners (v3.125) - long-distance messengers
+        this.creatureRunner.update(this.tickRate, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
