@@ -6,8 +6,8 @@
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![Vite](https://img.shields.io/badge/Vite-6.0-646CFF)
-![Lines](https://img.shields.io/badge/代码量-54k_lines-green)
-![Systems](https://img.shields.io/badge/ECS_Systems-175+-orange)
+![Lines](https://img.shields.io/badge/代码量-55k_lines-green)
+![Systems](https://img.shields.io/badge/ECS_Systems-180+-orange)
 
 ## 快速开始
 
@@ -45,6 +45,7 @@ npm run preview
 - **遗传系统** — 基因遗传、进化、物种变异、基因突变
 - **情感 & 记忆** — 生物有情绪状态和经历记忆
 - **性格 & 技能树** — 个体差异化成长
+- **兴趣爱好** — 钓鱼、绘画、观星、园艺等影响心情和社交
 - **驯化系统** — 驯服野生生物
 - **悬赏系统** — 文明对敌方生物发布悬赏
 
@@ -52,8 +53,8 @@ npm run preview
 
 - **村庄自动扩张** — 建筑升级、城市规划
 - **科技树** — 从石器时代到高级文明
-- **外交系统** — 联盟、战争、间谍活动、联姻外交
-- **宗教 & 文化** — 信仰传播、文化融合、季节节日
+- **外交系统** — 联盟、战争、间谍活动、联姻外交、朝贡体系
+- **宗教 & 文化** — 信仰传播、文化融合、季节节日、语言演化
 - **贸易经济** — 商队、贸易路线、资源流通
 - **时代演进** — 文明自动进入不同纪元
 
@@ -83,6 +84,8 @@ npm run preview
 - **小游戏** — 内嵌互动小游戏
 - **世界法则** — 自定义物理/社会规则
 - **世界遗迹** — 古代遗迹提供区域增益
+- **自然奇观** — 瀑布、水晶洞、世界树等提供区域增益
+- **天气锋面** — 冷锋、暖锋、风暴锋跨地图移动
 
 ## 操作指南
 
@@ -123,7 +126,7 @@ src/
 │   └── SaveSystem.ts    # 存档系统
 ├── ecs/                 # ECS 框架
 │   └── Entity.ts        # 实体管理
-├── systems/             # 游戏系统 (175 个)
+├── systems/             # 游戏系统 (180 个)
 ├── civilization/        # 文明管理
 ├── entities/            # 实体工厂
 ├── ui/                  # UI 组件 (8 个)
@@ -142,22 +145,22 @@ src/
 - 热路径零 GC（对象池复用）
 - 空间索引加速范围查询
 
-### 175 个 ECS 系统（按类别）
+### 180 个 ECS 系统（按类别）
 
 <details>
 <summary>点击展开完整系统列表</summary>
 
 **核心模拟** — AISystem, CombatSystem, PopulationSystem, ResourceSystem, EcosystemSystem, MoodSystem
 
-**生物** — CreatureAgingSystem, CreatureEmotionSystem, CreatureMemorySystem, CreaturePersonalitySystem, CreatureSkillSystem, CreatureTamingSystem, CreatureBountySystem, CreatureMutationSystem, CreatureAncestorSystem, CreatureApprenticeSystem, CreatureGuildSystem, CreatureReputationSystem, GeneticsSystem, EvolutionSystem, FlockingSystem, AnimalMigrationSystem
+**生物** — CreatureAgingSystem, CreatureEmotionSystem, CreatureMemorySystem, CreaturePersonalitySystem, CreatureSkillSystem, CreatureTamingSystem, CreatureBountySystem, CreatureMutationSystem, CreatureAncestorSystem, CreatureApprenticeSystem, CreatureGuildSystem, CreatureReputationSystem, CreatureHobbySystem, CreatureLanguageSystem, GeneticsSystem, EvolutionSystem, FlockingSystem, AnimalMigrationSystem
 
-**文明** — DiplomacySystem, DiplomaticMarriageSystem, DiplomaticSanctionSystem, DiplomaticEspionageSystem, CultureSystem, ReligionSystem, ReligionSpreadSystem, TechSystem, TradeEconomySystem, EraSystem, EraTransitionSystem, AllianceSystem, EspionageSystem, LoyaltySystem, ReputationSystem, SeasonFestivalSystem
+**文明** — DiplomacySystem, DiplomaticMarriageSystem, DiplomaticSanctionSystem, DiplomaticEspionageSystem, DiplomaticTributeSystem, CultureSystem, ReligionSystem, ReligionSpreadSystem, TechSystem, TradeEconomySystem, EraSystem, EraTransitionSystem, AllianceSystem, EspionageSystem, LoyaltySystem, ReputationSystem, SeasonFestivalSystem
 
 **军事** — ArmySystem, FormationSystem, SiegeSystem, SiegeWarfareSystem, NavalSystem, NavalCombatSystem, LegendaryBattleSystem, BattleReplaySystem, FortificationRenderer
 
 **经济 & 资源** — ResourceScarcitySystem, ResourceFlowSystem, CaravanSystem, TradeFleetSystem, TradeRouteRenderer, MiningSystem, CropSystem
 
-**自然 & 灾害** — DisasterSystem, DisasterChainSystem, DisasterWarningSystem, WeatherSystem, WeatherDisasterSystem, WeatherControlSystem, SeasonSystem, WorldSeasonalDisasterSystem, VolcanoSystem, BloodMoonSystem, PollutionSystem, DiseaseSystem, PlagueMutationSystem, RiverSystem, BiomeEvolutionSystem
+**自然 & 灾害** — DisasterSystem, DisasterChainSystem, DisasterWarningSystem, WeatherSystem, WeatherDisasterSystem, WeatherControlSystem, WorldWeatherFrontSystem, SeasonSystem, WorldSeasonalDisasterSystem, VolcanoSystem, BloodMoonSystem, PollutionSystem, DiseaseSystem, PlagueMutationSystem, RiverSystem, BiomeEvolutionSystem
 
 **建筑 & 城市** — BuildingUpgradeSystem, BuildingVarietySystem, CityLayoutSystem, CityPlanningSystem, MonumentSystem, WonderSystem, RuinsSystem
 
@@ -165,7 +168,7 @@ src/
 
 **UI & 工具** — MinimapSystem, MinimapEnhancedSystem, MiniMapModeSystem, MinimapOverlaySystem, HelpOverlaySystem, ChartPanelSystem, EntityInspectorSystem, EntitySearchSystem, EnhancedTooltipSystem, NotificationCenterSystem, WorldDashboardSystem, WorldStatsOverviewSystem, SpeedIndicatorSystem, MapMarkerSystem
 
-**高级特性** — MythologySystem, ProphecySystem, WorldNarratorSystem, CinematicModeSystem, MiniGameSystem, TimeRewindSystem, CustomSpeciesSystem, CreatureLineageSystem, WorldLawSystem, ZoneManagementSystem, HeroLegendSystem, ArtifactSystem, QuestSystem, GodPowerSystem, PortalSystem, ClonePowerSystem, PowerFavoriteSystem, WorldHeatmapSystem, WorldAgeSystem, WorldChronicleSystem, WorldRelicSystem, WorldAnomalySystem, WorldMythicBeastSystem, WorldAncientRuinSystem
+**高级特性** — MythologySystem, ProphecySystem, WorldNarratorSystem, CinematicModeSystem, MiniGameSystem, TimeRewindSystem, CustomSpeciesSystem, CreatureLineageSystem, WorldLawSystem, ZoneManagementSystem, HeroLegendSystem, ArtifactSystem, QuestSystem, GodPowerSystem, PortalSystem, ClonePowerSystem, PowerFavoriteSystem, WorldHeatmapSystem, WorldAgeSystem, WorldChronicleSystem, WorldRelicSystem, WorldAnomalySystem, WorldMythicBeastSystem, WorldAncientRuinSystem, WorldNaturalWonderSystem
 
 **基础设施** — SpatialHashSystem, ObjectPoolSystem, TickBudgetSystem, PerformanceMonitorSystem, AutoSaveSystem, WorldExportSystem, WorldSeedSystem, MapGenSystem, SandboxSettingsSystem, ScreenshotModeSystem, KeybindSystem, CameraAnimationSystem, CameraBookmarkSystem, TutorialSystem, HistoryReplaySystem, WorldEventSystem, WorldEventTimelineSystem, TimelineSystem, EventLog, EventNotificationSystem, StatisticsTracker, SoundSystem, AmbientSoundMixer, MusicSystem, TerraformingSystem, EditorEnhancedSystem, FogOfWarSystem, AchievementSystem, AchievementContentSystem, AchievementPopupSystem, AchievementProgressSystem
 
@@ -175,14 +178,14 @@ src/
 
 | 模块 | 文件数 | 代码行数 |
 |------|--------|---------|
-| systems/ | 175 | ~45,900 |
+| systems/ | 180 | ~46,600 |
 | game/ | 8 | ~5,200 |
 | ui/ | 8 | ~1,300 |
 | civilization/ | 2 | ~1,100 |
 | utils/ | 4 | ~330 |
 | ecs/ | 1 | ~240 |
 | entities/ | 1 | ~105 |
-| **合计** | **195** | **~53,200** |
+| **合计** | **200** | **~54,900** |
 
 ## 浏览器兼容性
 
