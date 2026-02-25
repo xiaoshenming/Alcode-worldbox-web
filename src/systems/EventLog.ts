@@ -1,6 +1,6 @@
 // Global event log for tracking world events
 
-export type EventType = 'birth' | 'death' | 'combat' | 'war' | 'peace' | 'weather' | 'disaster' | 'civ_founded' | 'building' | 'hero' | 'trade'
+export type EventType = 'birth' | 'death' | 'combat' | 'war' | 'peace' | 'weather' | 'disaster' | 'civ_founded' | 'building' | 'hero' | 'trade' | 'tech' | 'artifact'
 
 export interface WorldEvent {
   type: EventType
@@ -20,7 +20,9 @@ const EVENT_COLORS: Record<EventType, string> = {
   civ_founded: '#ff4',
   building: '#ca8',
   hero: '#ff0',
-  trade: '#ffd700'
+  trade: '#ffd700',
+  tech: '#00e5ff',
+  artifact: '#ffaa00'
 }
 
 class EventLogSingleton {

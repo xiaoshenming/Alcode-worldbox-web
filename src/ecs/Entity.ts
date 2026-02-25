@@ -146,6 +146,32 @@ export interface HeroComponent extends Component {
   abilityCooldown: number
 }
 
+export interface NomadComponent extends Component {
+  type: 'nomad'
+  bandId: number        // which nomad band this creature belongs to
+  role: 'leader' | 'follower'
+  origin: { x: number; y: number }  // where they started
+  destination: { x: number; y: number }  // where they're heading
+  journeyTicks: number  // how long they've been traveling
+}
+
+export interface ArtifactComponent extends Component {
+  type: 'artifact'
+  artifactType: string
+  name: string
+  rarity: 'legendary' | 'mythic'
+  effect: string
+  bonusType: 'combat' | 'health' | 'speed' | 'xp' | 'aura' | 'regen'
+  bonusValue: number
+  claimed: boolean
+  claimedBy: number | null
+}
+
+export interface InventoryComponent extends Component {
+  type: 'inventory'
+  artifacts: string[]
+}
+
 export function getHeroTitle(ability: HeroComponent['ability'], level: number): string {
   if (level >= 5) {
     switch (ability) {

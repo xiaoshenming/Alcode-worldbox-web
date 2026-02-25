@@ -38,6 +38,7 @@ interface SavedCiv {
   happiness?: number
   taxRate?: number
   revoltTimer?: number
+  research?: { currentTech: string | null; progress: number; completed: string[]; researchRate: number }
 }
 
 export class SaveSystem {
@@ -112,6 +113,7 @@ export class SaveSystem {
           happiness: sc.happiness ?? 70,
           taxRate: sc.taxRate ?? 1,
           revoltTimer: sc.revoltTimer ?? 0,
+          research: sc.research ?? { currentTech: null, progress: 0, completed: [], researchRate: 1.0 },
         }
         civManager.civilizations.set(civ.id, civ)
       }

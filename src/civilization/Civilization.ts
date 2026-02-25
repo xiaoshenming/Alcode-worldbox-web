@@ -110,6 +110,12 @@ export interface Civilization {
   happiness: number      // 0-100, affects productivity and revolt chance
   taxRate: number        // 0-3 (none/low/medium/high), generates gold but reduces happiness
   revoltTimer: number    // ticks until next revolt check
+  research: {
+    currentTech: string | null  // tech being researched
+    progress: number            // 0-100 research progress
+    completed: string[]         // list of completed tech names
+    researchRate: number        // base research speed
+  }
 }
 
 // Components
@@ -164,6 +170,115 @@ export const TECH_TREE: Record<number, TechInfo> = {
   5: { name: 'Renaissance', description: 'Golden age', unlocks: ['+50% all production', '+20% health'] },
 }
 
+// Individual technology definitions
+export interface Technology {
+  name: string
+  level: number          // which tech level (1-5) this belongs to
+  cost: number           // gold cost to research
+  researchTime: number   // base ticks to complete (100 = ~1.7 seconds at 60fps)
+  description: string
+  effects: TechEffect[]
+}
+
+export interface TechEffect {
+  type: 'food_bonus' | 'gather_speed' | 'unlock_building' | 'research_speed'
+      | 'combat_bonus' | 'health_regen' | 'build_speed' | 'building_hp'
+      | 'gold_income' | 'territory_expansion' | 'research_to_allies'
+      | 'all_building_effects'
+  value: number          // multiplier or flat bonus
+  building?: BuildingType // for unlock_building
+}
+
+export const TECHNOLOGIES: Technology[] = [
+  // Level 1 - Stone Age
+  {
+    name: 'Agriculture', level: 1, cost: 10, researchTime: 200,
+    description: 'Unlocks farms and boosts food production',
+    effects: [
+      { type: 'unlock_building', value: 1, building: BuildingType.FARM },
+      { type: 'food_bonus', value: 0.2 }
+    ]
+  },
+  {
+    name: 'Tool Making', level: 1, cost: 10, researchTime: 180,
+    description: 'Faster resource gathering',
+    effects: [{ type: 'gather_speed', value: 0.15 }]
+  },
+  // Level 2 - Bronze Age
+  {
+    name: 'Bronze Working', level: 2, cost: 25, researchTime: 350,
+    description: 'Unlocks barracks and mines',
+    effects: [
+      { type: 'unlock_building', value: 1, building: BuildingType.BARRACKS },
+      { type: 'unlock_building', value: 1, building: BuildingType.MINE }
+    ]
+  },
+  {
+    name: 'Sailing', level: 2, cost: 30, researchTime: 400,
+    description: 'Unlocks ports for trade',
+    effects: [{ type: 'unlock_building', value: 1, building: BuildingType.PORT }]
+  },
+  {
+    name: 'Writing', level: 2, cost: 20, researchTime: 300,
+    description: 'Increases research speed',
+    effects: [{ type: 'research_speed', value: 0.25 }]
+  },
+  // Level 3 - Iron Age
+  {
+    name: 'Iron Forging', level: 3, cost: 50, researchTime: 500,
+    description: 'Unlocks towers and boosts combat',
+    effects: [
+      { type: 'unlock_building', value: 1, building: BuildingType.TOWER },
+      { type: 'combat_bonus', value: 0.2 }
+    ]
+  },
+  {
+    name: 'Mathematics', level: 3, cost: 40, researchTime: 450,
+    description: 'Faster construction',
+    effects: [{ type: 'build_speed', value: 0.25 }]
+  },
+  {
+    name: 'Medicine', level: 3, cost: 45, researchTime: 450,
+    description: 'Improved health regeneration',
+    effects: [{ type: 'health_regen', value: 0.3 }]
+  },
+  // Level 4 - Medieval
+  {
+    name: 'Fortification', level: 4, cost: 80, researchTime: 600,
+    description: 'Unlocks castles and tougher buildings',
+    effects: [
+      { type: 'unlock_building', value: 1, building: BuildingType.CASTLE },
+      { type: 'building_hp', value: 0.3 }
+    ]
+  },
+  {
+    name: 'Banking', level: 4, cost: 70, researchTime: 550,
+    description: 'Increased gold income',
+    effects: [{ type: 'gold_income', value: 0.3 }]
+  },
+  {
+    name: 'Engineering', level: 4, cost: 75, researchTime: 600,
+    description: 'Faster territory expansion',
+    effects: [{ type: 'territory_expansion', value: 0.3 }]
+  },
+  // Level 5 - Renaissance
+  {
+    name: 'Gunpowder', level: 5, cost: 120, researchTime: 800,
+    description: '+50% combat effectiveness',
+    effects: [{ type: 'combat_bonus', value: 0.5 }]
+  },
+  {
+    name: 'Printing Press', level: 5, cost: 100, researchTime: 700,
+    description: 'Share research progress with allies',
+    effects: [{ type: 'research_to_allies', value: 0.2 }]
+  },
+  {
+    name: 'Architecture', level: 5, cost: 110, researchTime: 750,
+    description: 'All building effects enhanced',
+    effects: [{ type: 'all_building_effects', value: 0.25 }]
+  },
+]
+
 export function createCivilization(): Civilization {
   const id = nextCivId++
   return {
@@ -190,6 +305,12 @@ export function createCivilization(): Civilization {
     },
     happiness: 70,
     taxRate: 1,
-    revoltTimer: 0
+    revoltTimer: 0,
+    research: {
+      currentTech: null,
+      progress: 0,
+      completed: [],
+      researchRate: 1.0
+    }
   }
 }

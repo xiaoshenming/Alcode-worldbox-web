@@ -23,6 +23,8 @@ import { CivManager } from '../civilization/CivManager'
 import { AchievementSystem, WorldStats } from '../systems/AchievementSystem'
 import { DisasterSystem } from '../systems/DisasterSystem'
 import { TimelineSystem } from '../systems/TimelineSystem'
+import { TechSystem } from '../systems/TechSystem'
+import { MigrationSystem } from '../systems/MigrationSystem'
 import { EventLog } from '../systems/EventLog'
 
 export class Game {
@@ -50,6 +52,8 @@ export class Game {
   private achievements: AchievementSystem
   private disasterSystem: DisasterSystem
   private timeline: TimelineSystem
+  private techSystem: TechSystem
+  private migrationSystem!: MigrationSystem
 
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
@@ -82,6 +86,8 @@ export class Game {
     this.achievements = new AchievementSystem()
     this.disasterSystem = new DisasterSystem(this.world, this.particles, this.em)
     this.timeline = new TimelineSystem()
+    this.techSystem = new TechSystem()
+    this.migrationSystem = new MigrationSystem()
     this.setupAchievementTracking()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
@@ -188,6 +194,8 @@ export class Game {
     this.resources = new ResourceSystem(this.world, this.em, this.civManager, this.particles)
     this.disasterSystem = new DisasterSystem(this.world, this.particles, this.em)
     this.timeline = new TimelineSystem()
+    this.techSystem = new TechSystem()
+    this.migrationSystem = new MigrationSystem()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
@@ -566,8 +574,10 @@ export class Game {
       while (this.accumulator >= this.tickRate) {
         this.world.update()
         this.aiSystem.update()
+        this.migrationSystem.update(this.em, this.world, this.civManager, this.particles)
         this.combatSystem.update(this.world.tick)
         this.civManager.update()
+        this.techSystem.update(this.civManager)
         this.weather.update()
         this.resources.update()
         this.disasterSystem.update()

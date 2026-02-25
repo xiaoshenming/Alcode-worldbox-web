@@ -1,4 +1,4 @@
-import { EntityManager, EntityId, PositionComponent, VelocityComponent, NeedsComponent, AIComponent, CreatureComponent, RenderComponent, HeroComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent, VelocityComponent, NeedsComponent, AIComponent, CreatureComponent, RenderComponent, HeroComponent, NomadComponent } from '../ecs/Entity'
 import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { World } from '../game/World'
 import { ParticleSystem } from './ParticleSystem'
@@ -131,21 +131,8 @@ export class AISystem {
       switch (ai.state) {
         case 'idle':
           if (Math.random() < 0.02) {
-            // Migration: unaffiliated civilized creatures may become nomads
-            const civMember = this.em.getComponent<CivMemberComponent>(id, 'civMember')
-            if (!civMember && this.civManager &&
-                (creature.species === 'human' || creature.species === 'elf' ||
-                 creature.species === 'dwarf' || creature.species === 'orc') &&
-                Math.random() < 0.025) {
-              ai.state = 'migrating'
-              ai.cooldown = 300
-              const target = this.findWalkableTarget(pos, creature, 50)
-              ai.targetX = target.x
-              ai.targetY = target.y
-              break
-            }
-
             // Civ members seek resources when idle
+            const civMember = this.em.getComponent<CivMemberComponent>(id, 'civMember')
             if (civMember && civMember.role === 'worker' && this.resources) {
               const resNode = this.findNearestResource(pos, null, 25)
               if (resNode) {
@@ -243,38 +230,26 @@ export class AISystem {
         }
 
         case 'migrating': {
-          // Migrating creatures move faster (1.5x)
+          // Nomad band migration: handled by MigrationSystem for target updates
+          const nomad = this.em.getComponent<NomadComponent>(id, 'nomad')
+          if (nomad) {
+            // Band members move faster (1.5x), MigrationSystem sets their targets
+            const origSpeed = creature.speed
+            creature.speed *= 1.5
+            this.moveTowards(pos, ai, creature, vel)
+            creature.speed = origSpeed
+            break
+          }
+
+          // Legacy fallback: non-band migrating creatures (shouldn't happen often)
           const origSpeed = creature.speed
           creature.speed *= 1.5
           this.moveTowards(pos, ai, creature, vel)
           creature.speed = origSpeed
 
           if (this.reachedTarget(pos, ai)) {
-            const tx = Math.floor(pos.x)
-            const ty = Math.floor(pos.y)
-            const tile = this.world.getTile(tx, ty)
-
-            // Check if this is good unclaimed land far from existing civs
-            if (this.civManager && tile !== null && isWalkable(tile, false) &&
-                tile !== TileType.SHALLOW_WATER && tile !== TileType.SAND &&
-                this.civManager.isLandUnclaimed(tx, ty, 20)) {
-              // Found good land — settle and create a new civilization
-              const civ = this.civManager.createCiv(tx, ty)
-              this.civManager.assignToCiv(id, civ.id, 'leader')
-              ai.state = 'idle'
-              ai.cooldown = 0
-              EventLog.log('civ_founded', `${creature.name} (${creature.species}) founded ${civ.name}`, this.world.tick)
-              this.particles.spawn(pos.x, pos.y, 8, civ.color, 1.5)
-            } else {
-              // Not suitable — pick a new target and keep searching
-              if (ai.cooldown <= 0) {
-                ai.state = 'idle'
-              } else {
-                const target = this.findWalkableTarget(pos, creature, 50)
-                ai.targetX = target.x
-                ai.targetY = target.y
-              }
-            }
+            ai.state = 'idle'
+            ai.cooldown = 0
           }
           break
         }

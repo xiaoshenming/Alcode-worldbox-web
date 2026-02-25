@@ -118,10 +118,7 @@ export class CivManager {
         this.expandTerritory(civ)
       }
 
-      // Tech advancement
-      if (civ.resources.gold > 50 * civ.techLevel && Math.random() < 0.001) {
-        civ.techLevel = Math.min(5, civ.techLevel + 1)
-      }
+      // Tech advancement - handled by TechSystem
 
       // Culture strength grows slowly over time
       if (civ.culture.strength < 100 && Math.random() < 0.005) {
