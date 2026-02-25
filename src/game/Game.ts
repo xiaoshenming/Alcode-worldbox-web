@@ -299,7 +299,6 @@ import { DiplomaticTariffSystem } from '../systems/DiplomaticTariffSystem'
 import { CreatureHomesicknessSystem } from '../systems/CreatureHomesicknessSystem'
 import { WorldMirageSystem } from '../systems/WorldMirageSystem'
 import { CreatureLullabySystem } from '../systems/CreatureLullabySystem'
-import { WorldSaltFlatSystem } from '../systems/WorldSaltFlatSystem'
 import { DiplomaticMediationSystem } from '../systems/DiplomaticMediationSystem'
 import { CreatureCalligraphySystem } from '../systems/CreatureCalligraphySystem'
 import { WorldFogBankSystem } from '../systems/WorldFogBankSystem'
@@ -414,7 +413,6 @@ import { CreatureChandlerSystem } from '../systems/CreatureChandlerSystem'
 import { WorldFrostHollowSystem } from '../systems/WorldFrostHollowSystem'
 import { CreatureTinkerSystem } from '../systems/CreatureTinkerSystem'
 import { WorldBasaltColumnSystem } from '../systems/WorldBasaltColumnSystem'
-import { DiplomaticExtraditionSystem } from '../systems/DiplomaticExtraditionSystem'
 import { CreatureFletcherSystem } from '../systems/CreatureFletcherSystem'
 import { WorldMangroveSwampSystem } from '../systems/WorldMangroveSwampSystem'
 import { CreatureWheelwrightSystem } from '../systems/CreatureWheelwrightSystem'
@@ -422,7 +420,6 @@ import { WorldObsidianFieldSystem } from '../systems/WorldObsidianFieldSystem'
 import { CreatureFalconerSystem } from '../systems/CreatureFalconerSystem'
 import { CreatureEngraverSystem } from '../systems/CreatureEngraverSystem'
 import { WorldLavaTubeSystem } from '../systems/WorldLavaTubeSystem'
-import { DiplomaticSovereigntySystem } from '../systems/DiplomaticSovereigntySystem'
 import { CreatureTannerSystem } from '../systems/CreatureTannerSystem'
 import { WorldBioluminescentBaySystem } from '../systems/WorldBioluminescentBaySystem'
 import { CreatureCartographerSystem } from '../systems/CreatureCartographerSystem'
@@ -470,6 +467,21 @@ import { CreatureGlazersSystem } from '../systems/CreatureGlazersSystem'
 import { WorldSinkholePlainSystem } from '../systems/WorldSinkholePlainSystem'
 import { CreaturePlasterersSystem } from '../systems/CreaturePlasterersSystem'
 import { DiplomaticArbitrationTreatySystem } from '../systems/DiplomaticArbitrationTreatySystem'
+import { CreatureEngraversSystem } from '../systems/CreatureEngraversSystem'
+import { WorldMangroveDeltaSystem } from '../systems/WorldMangroveDeltaSystem'
+import { CreatureWheelwrightsSystem } from '../systems/CreatureWheelwrightsSystem'
+import { WorldSaltFlatSystem } from '../systems/WorldSaltFlatSystem'
+import { DiplomaticExtraditionSystem } from '../systems/DiplomaticExtraditionSystem'
+import { CreaturePerfumersSystem } from '../systems/CreaturePerfumersSystem'
+import { WorldObsidianFlowSystem } from '../systems/WorldObsidianFlowSystem'
+import { CreatureCobblersSystem } from '../systems/CreatureCobblerSystem'
+import { WorldTidalMarshSystem } from '../systems/WorldTidalMarshSystem'
+import { DiplomaticSovereigntySystem } from '../systems/DiplomaticSovereigntySystem'
+import { CreatureAssayersSystem } from '../systems/CreatureAssayersSystem'
+import { WorldKarstTowerSystem } from '../systems/WorldKarstTowerSystem'
+import { CreatureFletchersSystem } from '../systems/CreatureFletchersSystem'
+import { WorldAlluvialFanSystem } from '../systems/WorldAlluvialFanSystem'
+import { DiplomaticReparationSystem } from '../systems/DiplomaticReparationSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -770,7 +782,6 @@ export class Game {
   private creatureHomesickness!: CreatureHomesicknessSystem
   private worldMirage!: WorldMirageSystem
   private creatureLullaby!: CreatureLullabySystem
-  private worldSaltFlat!: WorldSaltFlatSystem
   private diplomaticMediation!: DiplomaticMediationSystem
   private creatureCalligraphy!: CreatureCalligraphySystem
   private worldFogBank!: WorldFogBankSystem
@@ -885,7 +896,6 @@ export class Game {
   private worldFrostHollow!: WorldFrostHollowSystem
   private creatureTinker!: CreatureTinkerSystem
   private worldBasaltColumn!: WorldBasaltColumnSystem
-  private diplomaticExtradition!: DiplomaticExtraditionSystem
   private creatureFletcher!: CreatureFletcherSystem
   private worldMangroveSwamp!: WorldMangroveSwampSystem
   private creatureWheelwright!: CreatureWheelwrightSystem
@@ -893,7 +903,6 @@ export class Game {
   private creatureFalconer!: CreatureFalconerSystem
   private creatureEngraver!: CreatureEngraverSystem
   private worldLavaTube!: WorldLavaTubeSystem
-  private diplomaticSovereignty!: DiplomaticSovereigntySystem
   private creatureTanner!: CreatureTannerSystem
   private worldBioluminescentBay!: WorldBioluminescentBaySystem
   private creatureCartographer!: CreatureCartographerSystem
@@ -941,6 +950,21 @@ export class Game {
   private worldSinkholePlain!: WorldSinkholePlainSystem
   private creaturePlasterers!: CreaturePlasterersSystem
   private diplomaticArbitrationTreaty!: DiplomaticArbitrationTreatySystem
+  private creatureEngravers!: CreatureEngraversSystem
+  private worldMangroveDelta!: WorldMangroveDeltaSystem
+  private creatureWheelwrights!: CreatureWheelwrightsSystem
+  private worldSaltFlat!: WorldSaltFlatSystem
+  private diplomaticExtradition!: DiplomaticExtraditionSystem
+  private creaturePerfumers!: CreaturePerfumersSystem
+  private worldObsidianFlow!: WorldObsidianFlowSystem
+  private creatureCobblers!: CreatureCobblersSystem
+  private worldTidalMarsh!: WorldTidalMarshSystem
+  private diplomaticSovereignty!: DiplomaticSovereigntySystem
+  private creatureAssayers!: CreatureAssayersSystem
+  private worldKarstTower!: WorldKarstTowerSystem
+  private creatureFletchers!: CreatureFletchersSystem
+  private worldAlluvialFan!: WorldAlluvialFanSystem
+  private diplomaticReparation!: DiplomaticReparationSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -1392,7 +1416,6 @@ export class Game {
     this.creatureHomesickness = new CreatureHomesicknessSystem()
     this.worldMirage = new WorldMirageSystem()
     this.creatureLullaby = new CreatureLullabySystem()
-    this.worldSaltFlat = new WorldSaltFlatSystem()
     this.diplomaticMediation = new DiplomaticMediationSystem()
     this.creatureCalligraphy = new CreatureCalligraphySystem()
     this.worldFogBank = new WorldFogBankSystem()
@@ -1507,7 +1530,6 @@ export class Game {
     this.worldFrostHollow = new WorldFrostHollowSystem()
     this.creatureTinker = new CreatureTinkerSystem()
     this.worldBasaltColumn = new WorldBasaltColumnSystem()
-    this.diplomaticExtradition = new DiplomaticExtraditionSystem()
     this.creatureFletcher = new CreatureFletcherSystem()
     this.worldMangroveSwamp = new WorldMangroveSwampSystem()
     this.creatureWheelwright = new CreatureWheelwrightSystem()
@@ -1515,7 +1537,6 @@ export class Game {
     this.creatureFalconer = new CreatureFalconerSystem()
     this.creatureEngraver = new CreatureEngraverSystem()
     this.worldLavaTube = new WorldLavaTubeSystem()
-    this.diplomaticSovereignty = new DiplomaticSovereigntySystem()
     this.creatureTanner = new CreatureTannerSystem()
     this.worldBioluminescentBay = new WorldBioluminescentBaySystem()
     this.creatureCartographer = new CreatureCartographerSystem()
@@ -1563,6 +1584,21 @@ export class Game {
     this.worldSinkholePlain = new WorldSinkholePlainSystem()
     this.creaturePlasterers = new CreaturePlasterersSystem()
     this.diplomaticArbitrationTreaty = new DiplomaticArbitrationTreatySystem()
+    this.creatureEngravers = new CreatureEngraversSystem()
+    this.worldMangroveDelta = new WorldMangroveDeltaSystem()
+    this.creatureWheelwrights = new CreatureWheelwrightsSystem()
+    this.worldSaltFlat = new WorldSaltFlatSystem()
+    this.diplomaticExtradition = new DiplomaticExtraditionSystem()
+    this.creaturePerfumers = new CreaturePerfumersSystem()
+    this.worldObsidianFlow = new WorldObsidianFlowSystem()
+    this.creatureCobblers = new CreatureCobblersSystem()
+    this.worldTidalMarsh = new WorldTidalMarshSystem()
+    this.diplomaticSovereignty = new DiplomaticSovereigntySystem()
+    this.creatureAssayers = new CreatureAssayersSystem()
+    this.worldKarstTower = new WorldKarstTowerSystem()
+    this.creatureFletchers = new CreatureFletchersSystem()
+    this.worldAlluvialFan = new WorldAlluvialFanSystem()
+    this.diplomaticReparation = new DiplomaticReparationSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3058,8 +3094,6 @@ export class Game {
         this.worldMirage.update(this.tickRate, this.world, this.em, this.world.tick)
         // Creature lullabies (v3.51) - adults sing to calm young
         this.creatureLullaby.update(this.tickRate, this.em, this.world.tick)
-        // World salt flats (v3.52) - salt deposits in arid regions
-        this.worldSaltFlat.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic mediation (v3.53) - third-party conflict resolution
         this.diplomaticMediation.update(this.tickRate, this.world, this.em, this.world.tick)
         // Creature calligraphy (v3.54) - creatures develop writing
@@ -3302,8 +3336,6 @@ export class Game {
         this.creatureTinker.update(this.tickRate, this.em, this.world.tick)
         // World basalt columns (v3.189) - volcanic formations
         this.worldBasaltColumn.update(this.tickRate, this.world, this.em, this.world.tick)
-        // Diplomatic extradition (v3.190) - fugitive exchange
-        this.diplomaticExtradition.update(this.tickRate, this.world, this.em, this.world.tick)
         // Creature fletchers (v3.191) - arrow and bow crafting
         this.creatureFletcher.update(this.tickRate, this.em, this.world.tick)
         // World mangrove swamps (v3.192) - coastal ecosystems
@@ -3318,8 +3350,6 @@ export class Game {
         this.creatureEngraver.update(this.tickRate, this.em, this.world.tick)
         // World lava tubes (v3.199) - underground tunnels
         this.worldLavaTube.update(this.tickRate, this.world, this.em, this.world.tick)
-        // Diplomatic sovereignty (v3.200) - territorial claims
-        this.diplomaticSovereignty.update(this.tickRate, this.world, this.em, this.world.tick)
         // Creature tanners (v3.201) - leather processing
         this.creatureTanner.update(this.tickRate, this.em, this.world.tick)
         // World bioluminescent bays (v3.202) - glowing coastal waters
@@ -3416,6 +3446,36 @@ export class Game {
         this.worldPeatBog.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic arbitration treaties (v3.250) - binding agreements
         this.diplomaticArbitrationTreaty.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature engravers (v3.251) - metal and stone carving
+        this.creatureEngravers.update(this.tickRate, this.em, this.world.tick)
+        // World mangrove deltas (v3.252) - coastal wetland forests
+        this.worldMangroveDelta.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature wheelwrights (v3.253) - wheel builders
+        this.creatureWheelwrights.update(this.tickRate, this.em, this.world.tick)
+        // World salt flats (v3.254) - crystallized salt landscapes
+        this.worldSaltFlat.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic extradition (v3.255) - fugitive return treaties
+        this.diplomaticExtradition.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature perfumers (v3.256) - fragrance distillers
+        this.creaturePerfumers.update(this.tickRate, this.em, this.world.tick)
+        // World obsidian flows (v3.257) - volcanic glass formations
+        this.worldObsidianFlow.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature cobblers (v3.258) - footwear crafters
+        this.creatureCobblers.update(this.tickRate, this.em, this.world.tick)
+        // World tidal marshes (v3.259) - coastal salt marshes
+        this.worldTidalMarsh.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic sovereignty (v3.260) - sovereignty recognition
+        this.diplomaticSovereignty.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature assayers (v3.261) - ore purity testers
+        this.creatureAssayers.update(this.tickRate, this.em, this.world.tick)
+        // World karst towers (v3.262) - limestone tower formations
+        this.worldKarstTower.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature fletchers (v3.263) - arrow and bolt crafters
+        this.creatureFletchers.update(this.tickRate, this.em, this.world.tick)
+        // World alluvial fans (v3.264) - sediment fan deposits
+        this.worldAlluvialFan.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic reparation (v3.265) - war reparation agreements
+        this.diplomaticReparation.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate

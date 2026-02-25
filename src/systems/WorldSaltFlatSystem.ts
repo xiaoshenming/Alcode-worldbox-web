@@ -1,35 +1,26 @@
-// World Salt Flat System (v3.52) - Salt flats form in arid regions
-// Salt flats provide salt resources and reflect light creating unique visuals
+// World Salt Flat System (v3.254) - Vast expanses of crystallized salt deposits
+// Arid landscapes where ancient lakes evaporated, leaving behind mineral-rich salt crusts
 
-import { EntityManager } from '../ecs/Entity'
 import { World } from '../game/World'
+import { EntityManager } from '../ecs/Entity'
 import { TileType } from '../utils/Constants'
-
-export type SaltQuality = 'impure' | 'common' | 'refined' | 'pristine'
 
 export interface SaltFlat {
   id: number
   x: number
   y: number
-  quality: SaltQuality
-  size: number         // 1-8
-  saltReserve: number  // 0-100
-  harvestRate: number
-  age: number
+  radius: number
+  crustThickness: number
+  mineralPurity: number
+  reflectivity: number
+  moistureLevel: number
+  hexagonalPatterns: number
   tick: number
 }
 
-const CHECK_INTERVAL = 1300
-const SPAWN_CHANCE = 0.004
-const MAX_FLATS = 40
-const RESERVE_REGEN = 0.01
-
-const HARVEST_MAP: Record<SaltQuality, number> = {
-  impure: 0.5,
-  common: 1.0,
-  refined: 2.0,
-  pristine: 3.5,
-}
+const CHECK_INTERVAL = 2800
+const FORM_CHANCE = 0.002
+const MAX_FLATS = 20
 
 export class WorldSaltFlatSystem {
   private flats: SaltFlat[] = []
@@ -40,61 +31,41 @@ export class WorldSaltFlatSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const w = world.width
-    const h = world.height
-
-    // Spawn salt flats on sand tiles
-    if (this.flats.length < MAX_FLATS && Math.random() < SPAWN_CHANCE) {
-      const x = Math.floor(Math.random() * w)
-      const y = Math.floor(Math.random() * h)
+    if (this.flats.length < MAX_FLATS && Math.random() < FORM_CHANCE) {
+      const w = world.width
+      const h = world.height
+      const x = 10 + Math.floor(Math.random() * (w - 20))
+      const y = 10 + Math.floor(Math.random() * (h - 20))
       const tile = world.getTile(x, y)
 
-      if (tile === TileType.SAND) {
-        if (!this.flats.some(f => f.x === x && f.y === y)) {
-          const quality: SaltQuality = Math.random() < 0.2 ? 'pristine' :
-            Math.random() < 0.4 ? 'refined' :
-            Math.random() < 0.7 ? 'common' : 'impure'
-
-          this.flats.push({
-            id: this.nextId++,
-            x,
-            y,
-            quality,
-            size: 1 + Math.floor(Math.random() * 3),
-            saltReserve: 50 + Math.random() * 50,
-            harvestRate: HARVEST_MAP[quality],
-            age: 0,
-            tick,
-          })
-        }
+      if (tile === TileType.SAND || tile === TileType.GRASS) {
+        this.flats.push({
+          id: this.nextId++,
+          x, y,
+          radius: 5 + Math.floor(Math.random() * 6),
+          crustThickness: 2 + Math.random() * 15,
+          mineralPurity: 40 + Math.random() * 40,
+          reflectivity: 50 + Math.random() * 40,
+          moistureLevel: 5 + Math.random() * 20,
+          hexagonalPatterns: 10 + Math.random() * 50,
+          tick,
+        })
       }
     }
 
-    // Update flats
     for (const flat of this.flats) {
-      flat.age += CHECK_INTERVAL
-      flat.saltReserve = Math.min(100, flat.saltReserve + RESERVE_REGEN * CHECK_INTERVAL)
-
-      // Size grows slowly
-      if (flat.age > 3000 && flat.size < 8) {
-        flat.size += 0.01
-      }
+      flat.crustThickness = Math.min(30, flat.crustThickness + 0.002)
+      flat.mineralPurity = Math.min(95, flat.mineralPurity + 0.005)
+      flat.reflectivity = Math.max(30, Math.min(98, flat.reflectivity + (Math.random() - 0.45) * 0.2))
+      flat.moistureLevel = Math.max(0, Math.min(40, flat.moistureLevel + (Math.random() - 0.55) * 0.3))
+      flat.hexagonalPatterns = Math.min(80, flat.hexagonalPatterns + 0.008)
     }
 
-    // Remove depleted flats
-    this.flats = this.flats.filter(f => f.saltReserve > 1)
+    const cutoff = tick - 92000
+    for (let i = this.flats.length - 1; i >= 0; i--) {
+      if (this.flats[i].tick < cutoff) this.flats.splice(i, 1)
+    }
   }
 
-  getFlats(): SaltFlat[] {
-    return this.flats
-  }
-
-  getNearby(x: number, y: number, radius: number): SaltFlat[] {
-    const r2 = radius * radius
-    return this.flats.filter(f => {
-      const dx = f.x - x
-      const dy = f.y - y
-      return dx * dx + dy * dy <= r2
-    })
-  }
+  getFlats(): SaltFlat[] { return this.flats }
 }

@@ -1,30 +1,31 @@
-// Diplomatic Sovereignty System (v3.200) - Civilizations assert territorial sovereignty
-// Disputes over borders and resources lead to diplomatic negotiations or conflict
+// Diplomatic Sovereignty System (v3.260) - Sovereignty recognition agreements
+// Civilizations formally recognize each other's territorial sovereignty and autonomy
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type SovereigntyClaim = 'territorial' | 'maritime' | 'resource' | 'cultural'
+export type SovereigntyType = 'full' | 'limited' | 'conditional' | 'mutual'
 
-export interface SovereigntyDispute {
+export interface SovereigntyAgreement {
   id: number
-  claimantCivId: number
-  contestedCivId: number
-  claimType: SovereigntyClaim
+  recognizerCivId: number
+  recognizedCivId: number
+  sovereigntyType: SovereigntyType
   legitimacy: number
-  resistance: number
-  resolved: boolean
+  stabilityBonus: number
+  territorialClarity: number
+  duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 5200
-const DISPUTE_CHANCE = 0.003
-const MAX_DISPUTES = 10
+const CHECK_INTERVAL = 2500
+const TREATY_CHANCE = 0.003
+const MAX_AGREEMENTS = 24
 
-const CLAIM_TYPES: SovereigntyClaim[] = ['territorial', 'maritime', 'resource', 'cultural']
+const TYPES: SovereigntyType[] = ['full', 'limited', 'conditional', 'mutual']
 
 export class DiplomaticSovereigntySystem {
-  private disputes: SovereigntyDispute[] = []
+  private agreements: SovereigntyAgreement[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -32,47 +33,38 @@ export class DiplomaticSovereigntySystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    if (this.disputes.length < MAX_DISPUTES && Math.random() < DISPUTE_CHANCE) {
-      const entities = em.getEntitiesWithComponent('creature')
-      if (entities.length >= 2) {
-        const claimant = entities[Math.floor(Math.random() * entities.length)]
-        const contested = entities[Math.floor(Math.random() * entities.length)]
-        if (claimant !== contested) {
-          if (!this.disputes.some(d =>
-            d.claimantCivId === claimant && d.contestedCivId === contested
-          )) {
-            const claimType = CLAIM_TYPES[Math.floor(Math.random() * CLAIM_TYPES.length)]
-            this.disputes.push({
-              id: this.nextId++,
-              claimantCivId: claimant,
-              contestedCivId: contested,
-              claimType,
-              legitimacy: 20 + Math.random() * 50,
-              resistance: 15 + Math.random() * 40,
-              resolved: false,
-              tick,
-            })
-          }
-        }
-      }
+    if (this.agreements.length < MAX_AGREEMENTS && Math.random() < TREATY_CHANCE) {
+      const rec = 1 + Math.floor(Math.random() * 8)
+      const recd = 1 + Math.floor(Math.random() * 8)
+      if (rec === recd) return
+
+      const sType = TYPES[Math.floor(Math.random() * TYPES.length)]
+
+      this.agreements.push({
+        id: this.nextId++,
+        recognizerCivId: rec,
+        recognizedCivId: recd,
+        sovereigntyType: sType,
+        legitimacy: 35 + Math.random() * 45,
+        stabilityBonus: 10 + Math.random() * 30,
+        territorialClarity: 30 + Math.random() * 40,
+        duration: 0,
+        tick,
+      })
     }
 
-    for (const d of this.disputes) {
-      if (d.resolved) continue
-      d.legitimacy = Math.max(0, Math.min(100, d.legitimacy + (Math.random() - 0.45) * 3))
-      d.resistance = Math.max(0, Math.min(100, d.resistance + (Math.random() - 0.5) * 4))
-      if (d.legitimacy >= 90 || d.resistance >= 95 || d.legitimacy <= 5) {
-        d.resolved = true
-      }
+    for (const agreement of this.agreements) {
+      agreement.duration += 1
+      agreement.legitimacy = Math.max(20, Math.min(100, agreement.legitimacy + (Math.random() - 0.45) * 0.12))
+      agreement.stabilityBonus = Math.min(60, agreement.stabilityBonus + 0.01)
+      agreement.territorialClarity = Math.max(15, Math.min(100, agreement.territorialClarity + (Math.random() - 0.48) * 0.1))
     }
 
-    for (let i = this.disputes.length - 1; i >= 0; i--) {
-      const d = this.disputes[i]
-      if (d.resolved || tick - d.tick > 60000) {
-        this.disputes.splice(i, 1)
-      }
+    const cutoff = tick - 80000
+    for (let i = this.agreements.length - 1; i >= 0; i--) {
+      if (this.agreements[i].tick < cutoff) this.agreements.splice(i, 1)
     }
   }
 
-  getDisputes(): readonly SovereigntyDispute[] { return this.disputes }
+  getAgreements(): SovereigntyAgreement[] { return this.agreements }
 }
