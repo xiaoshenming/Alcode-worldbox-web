@@ -6,8 +6,8 @@
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![Vite](https://img.shields.io/badge/Vite-6.0-646CFF)
-![Lines](https://img.shields.io/badge/代码量-~106k_lines-green)
-![Systems](https://img.shields.io/badge/ECS_Systems-813-orange)
+![Lines](https://img.shields.io/badge/代码量-~115k_lines-green)
+![Systems](https://img.shields.io/badge/ECS_Systems-888-orange)
 
 ## 快速开始
 
@@ -239,7 +239,7 @@ src/
 │   └── SaveSystem.ts    # 存档系统
 ├── ecs/                 # ECS 框架
 │   └── Entity.ts        # 实体管理
-├── systems/             # 游戏系统 (698 个)
+├── systems/             # 游戏系统 (888 个)
 ├── civilization/        # 文明管理
 ├── entities/            # 实体工厂
 ├── ui/                  # UI 组件 (8 个)
@@ -258,7 +258,7 @@ src/
 - 热路径零 GC（对象池复用）
 - 空间索引加速范围查询
 
-### 698 个 ECS 系统（按类别）
+### 888 个 ECS 系统（按类别）
 
 <details>
 <summary>点击展开完整系统列表</summary>
