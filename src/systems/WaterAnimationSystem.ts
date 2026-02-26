@@ -48,7 +48,7 @@ export class WaterAnimationSystem {
   private waterCacheCtx: OffscreenCanvasRenderingContext2D | null = null
   private cacheTime: number = -1
   private cacheBounds: { startX: number; startY: number; endX: number; endY: number; camX: number; camY: number; zoom: number } | null = null
-  private readonly CACHE_INTERVAL = 3 // re-render water every N frames
+  private readonly CACHE_INTERVAL = 5 // re-render water every N frames (raised from 3)
   private frameCounter: number = 0
 
   // Static direction arrays to avoid GC in hot paths
@@ -275,23 +275,20 @@ export class WaterAnimationSystem {
     // Day: warm white-yellow glint. Night: cool blue-white glint
     ctx.fillStyle = isDay ? '#fffde0' : '#8ca8ff'
 
-    // Small dot that drifts slightly
+    // Small dot that drifts slightly - use fillRect instead of arc for performance
     const dotSize = sz * 0.18
     const ox = (this.fastSin(tx * 1.3 + time * 0.4) * 0.3 + 0.5) * sz
     const oy = (this.fastSin(ty * 1.7 + time * 0.5 + 2.0) * 0.3 + 0.5) * sz
 
-    ctx.beginPath()
-    ctx.arc(sx + ox, sy + oy, dotSize, 0, Math.PI * 2)
-    ctx.fill()
+    ctx.fillRect(sx + ox - dotSize, sy + oy - dotSize, dotSize * 2, dotSize * 2)
 
     // Secondary smaller glint nearby for sparkle
     if (intensity > 0.5) {
       ctx.globalAlpha = (intensity - 0.5) * 2 * baseBrightness * 0.5
       const ox2 = (this.fastSin(tx * 2.1 + time * 0.3 + 1.0) * 0.25 + 0.5) * sz
       const oy2 = (this.fastSin(ty * 2.5 + time * 0.35 + 3.0) * 0.25 + 0.5) * sz
-      ctx.beginPath()
-      ctx.arc(sx + ox2, sy + oy2, dotSize * 0.6, 0, Math.PI * 2)
-      ctx.fill()
+      const dotSize2 = dotSize * 0.6
+      ctx.fillRect(sx + ox2 - dotSize2, sy + oy2 - dotSize2, dotSize2 * 2, dotSize2 * 2)
     }
 
     ctx.globalAlpha = 1

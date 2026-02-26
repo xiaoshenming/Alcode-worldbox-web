@@ -1,7 +1,7 @@
 /**
  * FogOfWarRenderer — 战争迷雾渲染增强系统
  * 为 FogOfWarSystem 提供渐变边缘、雾气动画、灰度已探索区域和神秘粒子效果。
- * 使用 OffscreenCanvas 缓存迷雾层，每 3 帧更新一次以保证性能。
+ * 使用 OffscreenCanvas 缓存迷雾层，带脏标记避免不必要的重绘。
  */
 
 import { TILE_SIZE, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
@@ -14,10 +14,20 @@ interface MysteryParticle {
   alpha: number
   speed: number
   phase: number
+  active: boolean
 }
 
 const MAX_PARTICLES = 50
-const CACHE_INTERVAL = 3 // 每 3 帧更新一次迷雾缓存
+const CACHE_INTERVAL = 6 // 每 6 帧更新一次迷雾缓存（从 3 提升）
+
+// 预计算 alpha 字符串表，避免热路径字符串拼接
+const FOG_ALPHA_TABLE: string[] = []
+const EXPLORED_STYLE = 'rgba(0,0,0,0.35)'
+const EXPLORED_TINT = 'rgba(60,65,80,0.15)'
+for (let i = 0; i <= 20; i++) {
+  const a = (0.80 + i * 0.01).toFixed(2)
+  FOG_ALPHA_TABLE.push(`rgba(8,8,20,${a})`)
+}
 
 export class FogOfWarRenderer {
   private fogCanvas: OffscreenCanvas | null = null
@@ -26,42 +36,61 @@ export class FogOfWarRenderer {
   private cachedHeight = 0
   private animTime = 0
   private frameCount = 0
+
+  // 对象池化粒子
   private mysteryParticles: MysteryParticle[] = []
+  private activeParticleCount = 0
+
+  // 脏标记
+  private lastCameraX = -1
+  private lastCameraY = -1
+  private lastZoom = -1
+  private fogVersion = 0
+  private lastFogVersion = -1
+  private forceRedraw = true
 
   constructor() {
-    // OffscreenCanvas 在首次 render 时按视口尺寸创建
+    // 预分配粒子池
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      this.mysteryParticles.push({ x: 0, y: 0, alpha: 0, speed: 0, phase: 0, active: false })
+    }
   }
 
-  /** 确保 OffscreenCanvas 尺寸匹配视口 */
+  /** 标记迷雾状态已变化，需要重绘 */
+  markDirty(): void {
+    this.fogVersion++
+  }
+
   private ensureCanvas(w: number, h: number): void {
     if (!this.fogCanvas || this.cachedWidth !== w || this.cachedHeight !== h) {
       this.fogCanvas = new OffscreenCanvas(w, h)
       this.fogCtx = this.fogCanvas.getContext('2d')
       this.cachedWidth = w
       this.cachedHeight = h
+      this.forceRedraw = true
     }
   }
 
-  /** 更新动画状态，每帧调用 */
   update(): void {
-    this.animTime += 0.016 // ~60fps delta
+    this.animTime += 0.016
     this.frameCount++
 
-    // 更新粒子
-    for (let i = this.mysteryParticles.length - 1; i >= 0; i--) {
+    // 更新活跃粒子（用索引遍历，不 splice）
+    this.activeParticleCount = 0
+    for (let i = 0; i < MAX_PARTICLES; i++) {
       const p = this.mysteryParticles[i]
-      // 缓慢飘动
+      if (!p.active) continue
       p.x += Math.sin(this.animTime * p.speed + p.phase) * 0.3
       p.y += Math.cos(this.animTime * p.speed * 0.7 + p.phase) * 0.2
-      // 闪烁：alpha 在 0~1 之间波动后衰减
       p.alpha -= 0.005
       if (p.alpha <= 0) {
-        this.mysteryParticles.splice(i, 1)
+        p.active = false
+      } else {
+        this.activeParticleCount++
       }
     }
   }
 
-  /** 主渲染方法 — 在主 canvas 上绘制迷雾覆盖层 */
   render(
     ctx: CanvasRenderingContext2D,
     cameraX: number,
@@ -77,174 +106,156 @@ export class FogOfWarRenderer {
     const canvasH = ctx.canvas.height
     this.ensureCanvas(canvasW, canvasH)
 
-    const needsRedraw = this.frameCount % CACHE_INTERVAL === 0
+    // 脏标记检查：相机移动、迷雾变化、或定时刷新
+    const cameraChanged = cameraX !== this.lastCameraX || cameraY !== this.lastCameraY || zoom !== this.lastZoom
+    const fogChanged = this.fogVersion !== this.lastFogVersion
+    const timerRedraw = this.frameCount % CACHE_INTERVAL === 0
+
+    const needsRedraw = this.forceRedraw || fogChanged || (cameraChanged && timerRedraw) || (!cameraChanged && timerRedraw)
 
     if (needsRedraw && this.fogCtx) {
+      this.lastCameraX = cameraX
+      this.lastCameraY = cameraY
+      this.lastZoom = zoom
+      this.lastFogVersion = this.fogVersion
+      this.forceRedraw = false
+
       const fc = this.fogCtx
       fc.clearRect(0, 0, canvasW, canvasH)
 
       const tileScreenSize = TILE_SIZE * zoom
 
-      // 遍历可见 tile
       for (let ty = startY; ty <= endY; ty++) {
         for (let tx = startX; tx <= endX; tx++) {
           if (tx < 0 || tx >= WORLD_WIDTH || ty < 0 || ty >= WORLD_HEIGHT) continue
 
           const state = getFogState(tx, ty)
-          if (state === 2) continue // 完全可见，不绘制迷雾
+          if (state === 2) continue
 
           const sx = (tx * TILE_SIZE - cameraX) * zoom
           const sy = (ty * TILE_SIZE - cameraY) * zoom
+          const size = tileScreenSize + 1
 
           if (state === 0) {
-            // 未探索：深色迷雾 + 飘动动画
+            // 未探索：用预计算 alpha 表
             const wave = Math.sin(this.animTime * 0.8 + tx * 0.5 + ty * 0.3) * 0.05
-            const fogAlpha = 0.85 + wave
-            fc.fillStyle = `rgba(8,8,20,${Math.min(1, Math.max(0, fogAlpha))})`
-            fc.fillRect(sx, sy, tileScreenSize + 1, tileScreenSize + 1)
-
-            // 雾气纹理：叠加一层浅色波纹
-            const texWave = Math.sin(this.animTime * 0.5 + tx * 0.7) * Math.cos(this.animTime * 0.3 + ty * 0.6)
-            const texAlpha = 0.03 + texWave * 0.02
-            if (texAlpha > 0) {
-              fc.fillStyle = `rgba(100,120,160,${texAlpha})`
-              fc.fillRect(sx, sy, tileScreenSize + 1, tileScreenSize + 1)
-            }
+            const idx = Math.max(0, Math.min(20, Math.round((wave + 0.05) * 200)))
+            fc.fillStyle = FOG_ALPHA_TABLE[idx]
+            fc.fillRect(sx, sy, size, size)
           } else {
-            // state === 1: 已探索但不可见 — 灰色去饱和叠加
-            // 使用 saturation 混合模式模拟去饱和效果
-            fc.fillStyle = 'rgba(0,0,0,0.35)'
-            fc.fillRect(sx, sy, tileScreenSize + 1, tileScreenSize + 1)
-            // 叠加灰蓝色调实现 desaturated 效果
-            fc.fillStyle = 'rgba(60,65,80,0.15)'
-            fc.fillRect(sx, sy, tileScreenSize + 1, tileScreenSize + 1)
+            // state === 1: 已探索但不可见
+            fc.fillStyle = EXPLORED_STYLE
+            fc.fillRect(sx, sy, size, size)
+            fc.fillStyle = EXPLORED_TINT
+            fc.fillRect(sx, sy, size, size)
           }
         }
       }
 
-      // 渲染渐变边缘
-      this.renderGradientEdges(fc, cameraX, cameraY, zoom, startX, startY, endX, endY, getFogState)
+      // 简化渐变边缘：只用固定 alpha 的半透明矩形代替 createLinearGradient
+      this.renderSimplifiedEdges(fc, cameraX, cameraY, zoom, startX, startY, endX, endY, tileScreenSize, getFogState)
     }
 
-    // 将缓存的迷雾层绘制到主 canvas
     if (this.fogCanvas) {
       ctx.drawImage(this.fogCanvas, 0, 0)
     }
 
-    // 生成新粒子（每帧都可以尝试，粒子本身不受缓存间隔限制）
     this.spawnMysteryParticle(startX, startY, endX, endY, getFogState)
 
-    // 渲染神秘粒子（直接绘制到主 canvas，不缓存）
-    this.renderMysteryParticles(ctx, cameraX, cameraY, zoom)
+    if (this.activeParticleCount > 0) {
+      this.renderMysteryParticles(ctx, cameraX, cameraY, zoom)
+    }
   }
 
-  /** 渲染渐变边缘 — 在迷雾状态不同的相邻 tile 边界处绘制渐变 */
-  private renderGradientEdges(
+  /** 简化的边缘渲染 - 用固定 alpha 矩形代替昂贵的 createLinearGradient */
+  private renderSimplifiedEdges(
     fc: OffscreenCanvasRenderingContext2D,
-    cameraX: number,
-    cameraY: number,
-    zoom: number,
-    startX: number,
-    startY: number,
-    endX: number,
-    endY: number,
+    cameraX: number, cameraY: number, zoom: number,
+    startX: number, startY: number, endX: number, endY: number,
+    tileScreenSize: number,
     getFogState: (x: number, y: number) => FogState
   ): void {
-    const tileScreenSize = TILE_SIZE * zoom
-    const gradientSize = tileScreenSize * 0.6
+    const halfSize = tileScreenSize * 0.3
 
     for (let ty = startY; ty <= endY; ty++) {
       for (let tx = startX; tx <= endX; tx++) {
         if (tx < 0 || tx >= WORLD_WIDTH || ty < 0 || ty >= WORLD_HEIGHT) continue
 
         const state = getFogState(tx, ty)
-        // 只在可见 tile 旁边有迷雾时绘制渐变
         if (state !== 2) continue
 
         const sx = (tx * TILE_SIZE - cameraX) * zoom
         const sy = (ty * TILE_SIZE - cameraY) * zoom
-        const cx = sx + tileScreenSize * 0.5
-        const cy = sy + tileScreenSize * 0.5
 
-        // 检查四个方向的邻居
-        const neighbors: [number, number, number, number, number, number][] = [
-          // [nx, ny, gradX1, gradY1, gradX2, gradY2] — 渐变从 tile 边缘向内
-          [tx, ty - 1, cx, sy, cx, sy + gradientSize],                     // 上
-          [tx, ty + 1, cx, sy + tileScreenSize, cx, sy + tileScreenSize - gradientSize], // 下
-          [tx - 1, ty, sx, cy, sx + gradientSize, cy],                     // 左
-          [tx + 1, ty, sx + tileScreenSize, cy, sx + tileScreenSize - gradientSize, cy], // 右
-        ]
-
-        for (const [nx, ny, gx1, gy1, gx2, gy2] of neighbors) {
-          if (nx < 0 || nx >= WORLD_WIDTH || ny < 0 || ny >= WORLD_HEIGHT) continue
-          const neighborState = getFogState(nx, ny)
-          if (neighborState >= state) continue // 邻居同样可见或更亮，不需要渐变
-
-          // 根据邻居状态决定渐变深度
-          const fogColor = neighborState === 0 ? 'rgba(8,8,20,' : 'rgba(30,32,45,'
-          const maxAlpha = neighborState === 0 ? 0.7 : 0.35
-
-          const grad = fc.createLinearGradient(gx1, gy1, gx2, gy2)
-          grad.addColorStop(0, fogColor + maxAlpha + ')')
-          grad.addColorStop(1, fogColor + '0)')
-
-          fc.fillStyle = grad
-          fc.fillRect(sx, sy, tileScreenSize + 1, tileScreenSize + 1)
+        // 检查四个方向邻居
+        // 上
+        if (ty > 0 && getFogState(tx, ty - 1) < 2) {
+          fc.fillStyle = getFogState(tx, ty - 1) === 0 ? 'rgba(8,8,20,0.3)' : 'rgba(30,32,45,0.15)'
+          fc.fillRect(sx, sy, tileScreenSize + 1, halfSize)
+        }
+        // 下
+        if (ty < WORLD_HEIGHT - 1 && getFogState(tx, ty + 1) < 2) {
+          fc.fillStyle = getFogState(tx, ty + 1) === 0 ? 'rgba(8,8,20,0.3)' : 'rgba(30,32,45,0.15)'
+          fc.fillRect(sx, sy + tileScreenSize - halfSize, tileScreenSize + 1, halfSize)
+        }
+        // 左
+        if (tx > 0 && getFogState(tx - 1, ty) < 2) {
+          fc.fillStyle = getFogState(tx - 1, ty) === 0 ? 'rgba(8,8,20,0.3)' : 'rgba(30,32,45,0.15)'
+          fc.fillRect(sx, sy, halfSize, tileScreenSize + 1)
+        }
+        // 右
+        if (tx < WORLD_WIDTH - 1 && getFogState(tx + 1, ty) < 2) {
+          fc.fillStyle = getFogState(tx + 1, ty) === 0 ? 'rgba(8,8,20,0.3)' : 'rgba(30,32,45,0.15)'
+          fc.fillRect(sx + tileScreenSize - halfSize, sy, halfSize, tileScreenSize + 1)
         }
       }
     }
   }
 
-  /** 渲染神秘粒子 — 未探索区域偶尔闪烁的光点 */
   private renderMysteryParticles(
     ctx: CanvasRenderingContext2D,
     cameraX: number,
     cameraY: number,
     zoom: number
   ): void {
-    if (this.mysteryParticles.length === 0) return
-
     const prev = ctx.globalCompositeOperation
     ctx.globalCompositeOperation = 'lighter'
 
-    for (const p of this.mysteryParticles) {
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      const p = this.mysteryParticles[i]
+      if (!p.active) continue
+
       const screenX = (p.x * TILE_SIZE - cameraX) * zoom
       const screenY = (p.y * TILE_SIZE - cameraY) * zoom
 
-      // 闪烁效果
       const flicker = Math.sin(this.animTime * 4 + p.phase) * 0.3 + 0.7
       const alpha = p.alpha * flicker
-
       if (alpha <= 0) continue
 
       const radius = (1.5 + Math.sin(this.animTime * 2 + p.phase) * 0.5) * zoom
 
-      const grad = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, radius)
-      grad.addColorStop(0, `rgba(180,200,255,${alpha * 0.8})`)
-      grad.addColorStop(0.5, `rgba(120,140,200,${alpha * 0.4})`)
-      grad.addColorStop(1, 'rgba(80,100,160,0)')
+      // 用简单的 fillRect 代替 createRadialGradient
+      const a1 = Math.min(1, alpha * 0.8)
+      ctx.globalAlpha = a1
+      ctx.fillStyle = '#b4c8ff'
+      const dotSize = radius * 0.4
+      ctx.fillRect(screenX - dotSize, screenY - dotSize, dotSize * 2, dotSize * 2)
 
-      ctx.fillStyle = grad
+      ctx.globalAlpha = Math.min(1, alpha * 0.3)
       ctx.fillRect(screenX - radius, screenY - radius, radius * 2, radius * 2)
     }
 
+    ctx.globalAlpha = 1
     ctx.globalCompositeOperation = prev
   }
 
-  /** 在未探索区域生成新的神秘粒子 */
   private spawnMysteryParticle(
-    startX: number,
-    startY: number,
-    endX: number,
-    endY: number,
+    startX: number, startY: number, endX: number, endY: number,
     getFogState: (x: number, y: number) => FogState
   ): void {
-    if (this.mysteryParticles.length >= MAX_PARTICLES) return
-
-    // 每帧约 5% 概率生成一个粒子
+    if (this.activeParticleCount >= MAX_PARTICLES) return
     if (Math.random() > 0.05) return
 
-    // 在可见视口范围内随机选一个 tile
     const rangeX = endX - startX
     const rangeY = endY - startY
     if (rangeX <= 0 || rangeY <= 0) return
@@ -253,16 +264,21 @@ export class FogOfWarRenderer {
     const ty = startY + Math.floor(Math.random() * rangeY)
 
     if (tx < 0 || tx >= WORLD_WIDTH || ty < 0 || ty >= WORLD_HEIGHT) return
-
-    // 只在未探索区域生成
     if (getFogState(tx, ty) !== 0) return
 
-    this.mysteryParticles.push({
-      x: tx + Math.random(),
-      y: ty + Math.random(),
-      alpha: 0.4 + Math.random() * 0.5,
-      speed: 0.5 + Math.random() * 1.5,
-      phase: Math.random() * Math.PI * 2,
-    })
+    // 复用 inactive 粒子槽位
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      const p = this.mysteryParticles[i]
+      if (!p.active) {
+        p.x = tx + Math.random()
+        p.y = ty + Math.random()
+        p.alpha = 0.4 + Math.random() * 0.5
+        p.speed = 0.5 + Math.random() * 1.5
+        p.phase = Math.random() * Math.PI * 2
+        p.active = true
+        this.activeParticleCount++
+        return
+      }
+    }
   }
 }

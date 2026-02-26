@@ -21,6 +21,9 @@ export class World {
   private readonly yearLength: number = 7200 * 4 // full year
   private lastSeason: Season = 'spring' // track season changes for dirty marking
 
+  // Precomputed color cache: key = `${tile}_${variant}_${season}`, max ~96 entries
+  private _colorCache: Map<string, string> = new Map()
+
   constructor(width: number = WORLD_WIDTH, height: number = WORLD_HEIGHT) {
     this.width = width
     this.height = height
@@ -120,10 +123,19 @@ export class World {
     const tile = this.getTile(x, y)
     if (tile === null) return '#000'
     const variant = this.tileVariants[y]?.[x] ?? 0
+
+    // Check cache first (max ~96 combinations: 8 tiles × 3 variants × 4 seasons)
+    const cacheKey = `${tile}_${variant}_${this.season}`
+    const cached = this._colorCache.get(cacheKey)
+    if (cached !== undefined) return cached
+
     const base = TILE_COLORS[tile][variant]
 
     // Summer: no tint
-    if (this.season === 'summer') return base
+    if (this.season === 'summer') {
+      this._colorCache.set(cacheKey, base)
+      return base
+    }
 
     let tint: string | null = null
     let alpha: number = 0
@@ -145,8 +157,9 @@ export class World {
       else if (tile === TileType.MOUNTAIN) { tint = '#dde4ee'; alpha = 0.15 }
     }
 
-    if (!tint) return base
-    return this.blendColors(base, tint, alpha)
+    const result = tint ? this.blendColors(base, tint, alpha) : base
+    this._colorCache.set(cacheKey, result)
+    return result
   }
 
   private blendColors(base: string, tint: string, alpha: number): string {
@@ -194,6 +207,7 @@ export class World {
       EventLog.log('weather', `Season changed to ${seasonNames[this.season]}`, this.tick)
       this.lastSeason = this.season
       this._fullDirty = true
+      this._colorCache.clear()
     }
   }
 

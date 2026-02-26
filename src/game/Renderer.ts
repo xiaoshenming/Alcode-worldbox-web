@@ -40,6 +40,17 @@ export class Renderer {
   private _fallbackByColor: Map<string, { id: number; cx: number; cy: number; size: number }[]> = new Map()
   private _fallbackBucketPool: { id: number; cx: number; cy: number; size: number }[][] = []
 
+  // Static constants for renderWarBorders
+  private static readonly WAR_NEIGHBORS: readonly number[][] = [[0, 1], [0, -1], [1, 0], [-1, 0]]
+  private _warPairs: Set<number> = new Set()
+
+  // Static hero aura colors
+  private static readonly AURA_COLORS: Record<string, string> = {
+    warrior: '#ffd700', ranger: '#44ff44', healer: '#ffffff', berserker: '#ff4444'
+  }
+  private _particleByColor: Map<string, { sx: number; sy: number; r: number; alpha: number }[]> = new Map()
+  private _particleBucketPool: { sx: number; sy: number; r: number; alpha: number }[][] = []
+
   constructor(canvas: HTMLCanvasElement, minimapCanvas: HTMLCanvasElement) {
     this.canvas = canvas
     this.ctx = canvas.getContext('2d')!
@@ -106,11 +117,6 @@ export class Renderer {
     // Draw entities
     if (em) {
       this.renderEntities(em, camera, bounds, tileSize, offsetX, offsetY)
-    }
-
-    // Battle effects (attacking creatures, damaged buildings)
-    if (em && civManager) {
-      this.renderBattleEffects(em, camera, bounds, tileSize, offsetX, offsetY)
     }
 
     // War border overlay
@@ -278,6 +284,7 @@ export class Renderer {
     tileSize: number, offsetX: number, offsetY: number
   ): void {
     const ctx = this.ctx
+    const now = performance.now()
     const entities = em.getEntitiesWithComponents('position', 'render')
 
     // --- Batch pass: group simple fallback entities by color to reduce fillStyle switches ---
@@ -332,6 +339,27 @@ export class Renderer {
       const sprite = this.sprites.getBuildingSprite(building.buildingType, building.level)
       const bSize = tileSize * 1.5
       ctx.drawImage(sprite, screenX + tileSize/2 - bSize/2, screenY + tileSize/2 - bSize/2, bSize, bSize)
+
+      // Damaged building: health bar + red tint (merged from renderBattleEffects)
+      if (building.health < building.maxHealth) {
+        const barWidth = bSize * 0.8
+        const barHeight = Math.max(2, 3 * camera.zoom)
+        const barX = screenX + tileSize / 2 - barWidth / 2
+        const barY = screenY + tileSize / 2 + bSize / 2 + 2 * camera.zoom
+
+        ctx.fillStyle = 'rgba(0,0,0,0.7)'
+        ctx.fillRect(barX, barY, barWidth, barHeight)
+        const hpPct = Math.max(0, building.health / building.maxHealth)
+        ctx.fillStyle = hpPct > 0.5 ? '#ff8800' : '#ff2200'
+        ctx.fillRect(barX, barY, barWidth * hpPct, barHeight)
+
+        // Red tint overlay on heavily damaged building
+        if (hpPct < 0.5) {
+          const flash = Math.sin(performance.now() * 0.006 + id) * 0.1 + 0.15
+          ctx.fillStyle = `rgba(255, 0, 0, ${flash})`
+          ctx.fillRect(screenX + tileSize / 2 - bSize / 2, screenY + tileSize / 2 - bSize / 2, bSize, bSize)
+        }
+      }
     }
 
     // Draw creatures (sprites + overlays)
@@ -356,10 +384,7 @@ export class Renderer {
       // Hero aura
       const heroComp = em.getComponent<any>(id, 'hero')
       if (heroComp && camera.zoom > 0.3) {
-        const auraColors: Record<string, string> = {
-          warrior: '#ffd700', ranger: '#44ff44', healer: '#ffffff', berserker: '#ff4444'
-        }
-        const auraColor = auraColors[heroComp.ability] || '#ffd700'
+        const auraColor = Renderer.AURA_COLORS[heroComp.ability] || '#ffd700'
         const pulse = Math.sin(performance.now() * 0.004 + id) * 0.3 + 0.5
         const auraRadius = spriteSize * 0.8 + pulse * 3 * camera.zoom
 
@@ -385,7 +410,7 @@ export class Renderer {
           ctx.fillStyle = '#ffd700'
           ctx.font = `${Math.max(6, 7 * camera.zoom)}px monospace`
           ctx.textAlign = 'center'
-          const artSymbols = heroInv.artifacts.map(() => '\u25C6').join('')
+          const artSymbols = '\u25C6'.repeat(heroInv.artifacts.length)
           ctx.fillText(artSymbols, cx, cy - spriteSize * 0.7 - 6 * camera.zoom)
           ctx.globalAlpha = 1
         }
@@ -438,6 +463,26 @@ export class Renderer {
           ctx.textAlign = 'center'
           ctx.fillText(icon, cx, cy - size - 6 * camera.zoom)
         }
+      }
+
+      // Attacking creature: red crossed swords spark (merged from renderBattleEffects)
+      if (ai && ai.state === 'attacking' && camera.zoom > 0.3 && camera.zoom <= 0.8) {
+        const sparkSize = Math.max(3, 5 * camera.zoom)
+        const pulse = Math.sin(performance.now() * 0.01 + id * 3) * 0.4 + 0.6
+
+        ctx.globalAlpha = pulse
+        ctx.strokeStyle = '#ff3300'
+        ctx.lineWidth = Math.max(1, 1.5 * camera.zoom)
+
+        const s = sparkSize
+        const sparkY = cy - tileSize * 0.5 - 2 * camera.zoom
+        ctx.beginPath()
+        ctx.moveTo(cx - s, sparkY - s)
+        ctx.lineTo(cx + s, sparkY + s)
+        ctx.moveTo(cx + s, sparkY - s)
+        ctx.lineTo(cx - s, sparkY + s)
+        ctx.stroke()
+        ctx.globalAlpha = 1
       }
     }
 
@@ -495,19 +540,21 @@ export class Renderer {
     // Draw fallback entities batched by color (minimizes fillStyle switches)
     for (const [color, bucket] of fallbackByColor) {
       ctx.fillStyle = color
+      ctx.beginPath()
       for (const { cx, cy, size } of bucket) {
-        ctx.beginPath()
+        ctx.moveTo(cx + size, cy)
         ctx.arc(cx, cy, size, 0, Math.PI * 2)
-        ctx.fill()
       }
+      ctx.fill()
       // Single stroke pass per color group
       ctx.strokeStyle = 'rgba(0,0,0,0.5)'
       ctx.lineWidth = 0.5
+      ctx.beginPath()
       for (const { cx, cy, size } of bucket) {
-        ctx.beginPath()
+        ctx.moveTo(cx + size, cy)
         ctx.arc(cx, cy, size, 0, Math.PI * 2)
-        ctx.stroke()
       }
+      ctx.stroke()
     }
   }
 
@@ -594,8 +641,13 @@ export class Renderer {
     const canvasW = this.canvas.width
     const canvasH = this.canvas.height
 
-    // Batch particles by color to reduce fillStyle switches
-    const byColor: Map<string, { sx: number; sy: number; r: number; alpha: number }[]> = new Map()
+    // Reuse class-level Map and bucket pool to avoid GC allocations
+    for (const bucket of this._particleByColor.values()) {
+      bucket.length = 0
+      this._particleBucketPool.push(bucket)
+    }
+    this._particleByColor.clear()
+    const byColor = this._particleByColor
 
     for (const p of particles.particles) {
       const screenX = p.x * tileSize + offsetX + tileSize / 2
@@ -606,7 +658,7 @@ export class Renderer {
 
       const alpha = p.life / p.maxLife
       let bucket = byColor.get(p.color)
-      if (!bucket) { bucket = []; byColor.set(p.color, bucket) }
+      if (!bucket) { bucket = this._particleBucketPool.pop() || []; byColor.set(p.color, bucket) }
       bucket.push({ sx: screenX, sy: screenY, r: p.size * camera.zoom, alpha })
     }
 
@@ -712,70 +764,12 @@ export class Renderer {
     ctx.globalAlpha = 1
   }
 
+  /** @deprecated Battle effects are now rendered inline in renderEntities to avoid duplicate entity traversal. */
   private renderBattleEffects(
-    em: EntityManager, camera: Camera, bounds: any,
-    tileSize: number, offsetX: number, offsetY: number
+    _em: EntityManager, _camera: Camera, _bounds: any,
+    _tileSize: number, _offsetX: number, _offsetY: number
   ): void {
-    const ctx = this.ctx
-    const time = performance.now()
-
-    const entities = em.getEntitiesWithComponents('position', 'render')
-    for (const id of entities) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
-      if (pos.x < bounds.startX - 1 || pos.x > bounds.endX + 1 ||
-          pos.y < bounds.startY - 1 || pos.y > bounds.endY + 1) continue
-
-      const screenX = pos.x * TILE_SIZE * camera.zoom + offsetX
-      const screenY = pos.y * TILE_SIZE * camera.zoom + offsetY
-
-      const building = em.getComponent<BuildingComponent>(id, 'building')
-      if (building && building.health < building.maxHealth) {
-        // Damaged building: red health bar below
-        const bSize = tileSize * 1.5
-        const barWidth = bSize * 0.8
-        const barHeight = Math.max(2, 3 * camera.zoom)
-        const barX = screenX + tileSize / 2 - barWidth / 2
-        const barY = screenY + tileSize / 2 + bSize / 2 + 2 * camera.zoom
-
-        ctx.fillStyle = 'rgba(0,0,0,0.7)'
-        ctx.fillRect(barX, barY, barWidth, barHeight)
-        const hpPct = Math.max(0, building.health / building.maxHealth)
-        ctx.fillStyle = hpPct > 0.5 ? '#ff8800' : '#ff2200'
-        ctx.fillRect(barX, barY, barWidth * hpPct, barHeight)
-
-        // Red tint overlay on damaged building
-        if (hpPct < 0.5) {
-          const flash = Math.sin(time * 0.006 + id) * 0.1 + 0.15
-          ctx.fillStyle = `rgba(255, 0, 0, ${flash})`
-          ctx.fillRect(screenX + tileSize / 2 - bSize / 2, screenY + tileSize / 2 - bSize / 2, bSize, bSize)
-        }
-        continue
-      }
-
-      // Attacking creature: red spark above
-      const ai = em.getComponent<AIComponent>(id, 'ai')
-      if (ai && ai.state === 'attacking' && camera.zoom > 0.3) {
-        const cx = screenX + tileSize / 2
-        const cy = screenY + tileSize / 2
-        const sparkSize = Math.max(3, 5 * camera.zoom)
-        const pulse = Math.sin(time * 0.01 + id * 3) * 0.4 + 0.6
-
-        ctx.globalAlpha = pulse
-        ctx.strokeStyle = '#ff3300'
-        ctx.lineWidth = Math.max(1, 1.5 * camera.zoom)
-
-        // Draw small crossed swords (X shape)
-        const s = sparkSize
-        const sy = cy - tileSize * 0.5 - 2 * camera.zoom
-        ctx.beginPath()
-        ctx.moveTo(cx - s, sy - s)
-        ctx.lineTo(cx + s, sy + s)
-        ctx.moveTo(cx + s, sy - s)
-        ctx.lineTo(cx - s, sy + s)
-        ctx.stroke()
-        ctx.globalAlpha = 1
-      }
-    }
+    return
   }
 
   private renderWarBorders(
@@ -786,13 +780,14 @@ export class Renderer {
     const tileSizeCeil = tileSize + 0.5
 
     // Build set of warring civ pairs
-    const warPairs: Set<string> = new Set()
+    const warPairs = this._warPairs
+    warPairs.clear()
     for (const [idA, civA] of civManager.civilizations) {
       for (const [idB] of civManager.civilizations) {
         if (idA >= idB) continue
         const relation = civA.relations.get(idB) ?? 0
         if (relation <= -50) {
-          warPairs.add(`${idA}:${idB}`)
+          warPairs.add(idA * 100000 + idB)
         }
       }
     }
@@ -806,16 +801,14 @@ export class Renderer {
         const civId = civManager.territoryMap[y]?.[x]
         if (!civId) continue
 
-        // Check if any neighbor belongs to a warring civ
-        const neighbors = [[0, 1], [0, -1], [1, 0], [-1, 0]]
         let isBorderWar = false
-        for (const [dx, dy] of neighbors) {
+        for (const [dx, dy] of Renderer.WAR_NEIGHBORS) {
           const nx = x + dx, ny = y + dy
           const neighborCivId = civManager.territoryMap[ny]?.[nx]
           if (neighborCivId && neighborCivId !== civId) {
             const lo = Math.min(civId, neighborCivId)
             const hi = Math.max(civId, neighborCivId)
-            if (warPairs.has(`${lo}:${hi}`)) {
+            if (warPairs.has(lo * 100000 + hi)) {
               isBorderWar = true
               break
             }

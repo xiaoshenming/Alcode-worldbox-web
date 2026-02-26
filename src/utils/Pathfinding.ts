@@ -1,6 +1,24 @@
 import { TileType } from './Constants'
 import { World } from '../game/World'
 
+// Static direction arrays to avoid GC in hot paths
+const DIRS_8 = [
+  [0, -1], [0, 1], [-1, 0], [1, 0],
+  [-1, -1], [-1, 1], [1, -1], [1, 1]
+]
+
+// Reusable candidate buffer for findNextStep
+const _candidates = [
+  { x: 0, y: 0 },
+  { x: 0, y: 0 },
+  { x: 0, y: 0 },
+  { x: 0, y: 0 },
+  { x: 0, y: 0 },
+]
+
+// Reusable return object for findNextStep
+const _stepResult = { x: 0, y: 0 }
+
 interface Node {
   x: number
   y: number
@@ -53,11 +71,6 @@ export function findPath(
 
   open.push({ x: sx, y: sy, g: 0, h: h(sx, sy), f: h(sx, sy), parent: null })
 
-  const dirs = [
-    [0, -1], [0, 1], [-1, 0], [1, 0],
-    [-1, -1], [-1, 1], [1, -1], [1, 1]
-  ]
-
   let steps = 0
 
   while (open.length > 0 && steps < maxSteps * 10) {
@@ -85,7 +98,7 @@ export function findPath(
 
     closed.add(key(current.x, current.y))
 
-    for (const [dx, dy] of dirs) {
+    for (const [dx, dy] of DIRS_8) {
       const nx = current.x + dx
       const ny = current.y + dy
 
@@ -137,21 +150,23 @@ export function findNextStep(
   const ndy = dy / dist
 
   // Try direct, then alternatives
-  const candidates = [
-    { x: Math.sign(ndx), y: Math.sign(ndy) },
-    { x: Math.sign(ndx), y: 0 },
-    { x: 0, y: Math.sign(ndy) },
-    { x: -Math.sign(ndy), y: Math.sign(ndx) }, // perpendicular
-    { x: Math.sign(ndy), y: -Math.sign(ndx) },
-  ]
+  const sx = Math.sign(ndx), sy = Math.sign(ndy)
+  _candidates[0].x = sx;  _candidates[0].y = sy
+  _candidates[1].x = sx;  _candidates[1].y = 0
+  _candidates[2].x = 0;   _candidates[2].y = sy
+  _candidates[3].x = -sy; _candidates[3].y = sx  // perpendicular
+  _candidates[4].x = sy;  _candidates[4].y = -sx
 
-  for (const c of candidates) {
+  for (let i = 0; i < 5; i++) {
+    const c = _candidates[i]
     if (c.x === 0 && c.y === 0) continue
     const nx = fx + c.x
     const ny = fy + c.y
     const tile = world.getTile(nx, ny)
     if (tile !== null && isWalkable(tile, canFly)) {
-      return { x: c.x, y: c.y }
+      _stepResult.x = c.x
+      _stepResult.y = c.y
+      return _stepResult
     }
   }
 
