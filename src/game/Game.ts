@@ -1848,7 +1848,8 @@ export class Game {
       triggerDiseaseOutbreak: (x, y, _mag) => {
         const creatures = this.em.getEntitiesWithComponents('position', 'creature', 'needs')
         for (const id of creatures) {
-          const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+          const pos = this.em.getComponent<PositionComponent>(id, 'position')
+          if (!pos) continue
           if (Math.abs(pos.x - x) < 8 && Math.abs(pos.y - y) < 8) {
             if (Math.random() < 0.3 && !this.em.getComponent(id, 'disease')) {
               this.em.addComponent(id, { type: 'disease', diseaseType: 'fever', severity: 3, duration: 0, contagious: true, immune: false, immuneUntil: 0 })
@@ -1859,7 +1860,8 @@ export class Game {
       triggerBuildingDamage: (x, y, radius, severity) => {
         const buildings = this.em.getEntitiesWithComponents('position', 'building')
         for (const id of buildings) {
-          const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+          const pos = this.em.getComponent<PositionComponent>(id, 'position')
+          if (!pos) continue
           if (Math.abs(pos.x - x) <= radius && Math.abs(pos.y - y) <= radius) {
             if (Math.random() < severity) this.em.removeEntity(id)
           }
@@ -1869,7 +1871,8 @@ export class Game {
       triggerCropFailure: (x, y, radius, severity) => {
         const crops = this.em.getEntitiesWithComponents('position', 'crop')
         for (const id of crops) {
-          const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+          const pos = this.em.getComponent<PositionComponent>(id, 'position')
+          if (!pos) continue
           if (Math.abs(pos.x - x) <= radius && Math.abs(pos.y - y) <= radius) {
             if (Math.random() < severity) this.em.removeEntity(id)
           }
@@ -1915,7 +1918,8 @@ export class Game {
         const counts = new Map<string, number>()
         const creatures = this.em.getEntitiesWithComponents('creature')
         for (const id of creatures) {
-          const c = this.em.getComponent<CreatureComponent>(id, 'creature')!
+          const c = this.em.getComponent<CreatureComponent>(id, 'creature')
+          if (!c) continue
           counts.set(c.species, (counts.get(c.species) || 0) + 1)
         }
         return counts
@@ -2984,7 +2988,8 @@ export class Game {
     let closestDist = 2 // max click distance in tiles
 
     for (const id of entities) {
-      const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+      const pos = this.em.getComponent<PositionComponent>(id, 'position')
+      if (!pos) continue
       const dx = pos.x - wx
       const dy = pos.y - wy
       const dist = Math.sqrt(dx * dx + dy * dy)
@@ -3005,8 +3010,9 @@ export class Game {
       // Check if clicked on a creature
       const creatureId = this.findCreatureAt(wx, wy)
       if (creatureId !== null) {
-        const creature = this.em.getComponent<CreatureComponent>(creatureId, 'creature')!
-        const needs = this.em.getComponent<NeedsComponent>(creatureId, 'needs')!
+        const creature = this.em.getComponent<CreatureComponent>(creatureId, 'creature')
+        const needs = this.em.getComponent<NeedsComponent>(creatureId, 'needs')
+        if (!creature || !needs) return
         sections.push({
           header: `${creature.name} (${creature.species})`,
           items: [
@@ -3515,11 +3521,13 @@ export class Game {
     if (this.world.tick % 3 === 0) {
       const heroes = this.em.getEntitiesWithComponents('position', 'hero', 'velocity')
       for (const id of heroes) {
-        const pos = this.em.getComponent<PositionComponent>(id, 'position')!
-        const vel = this.em.getComponent<VelocityComponent>(id, 'velocity')!
+        const pos = this.em.getComponent<PositionComponent>(id, 'position')
+        const vel = this.em.getComponent<VelocityComponent>(id, 'velocity')
+        if (!pos || !vel) continue
         // Only trail when actually moving
         if (Math.abs(vel.vx) > 0.01 || Math.abs(vel.vy) > 0.01) {
-          const hero = this.em.getComponent<HeroComponent>(id, 'hero')!
+          const hero = this.em.getComponent<HeroComponent>(id, 'hero')
+          if (!hero) continue
           const trailColors: Record<string, string> = {
             warrior: '#ffd700', ranger: '#44ff44', healer: '#aaaaff', berserker: '#ff4444'
           }
@@ -3532,10 +3540,11 @@ export class Game {
     if (this.world.tick % 10 === 0) {
       const mutants = this.em.getEntitiesWithComponents('position', 'genetics')
       for (const id of mutants) {
-        const gen = this.em.getComponent<GeneticsComponent>(id, 'genetics')!
+        const gen = this.em.getComponent<GeneticsComponent>(id, 'genetics')
+        if (!gen) continue
         if (gen.mutations.length > 0) {
-          const pos = this.em.getComponent<PositionComponent>(id, 'position')!
-          this.particles.spawnAura(pos.x, pos.y, '#d4f', 0.6)
+          const pos = this.em.getComponent<PositionComponent>(id, 'position')
+          if (pos) this.particles.spawnAura(pos.x, pos.y, '#d4f', 0.6)
         }
       }
     }
@@ -5404,7 +5413,8 @@ export class Game {
       for (const id of this.em.getEntitiesWithComponents('position', 'creature')) {
         const gen = this.clonePower.getGeneration(id)
         if (gen > 0) {
-          const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+          const pos = this.em.getComponent<PositionComponent>(id, 'position')
+          if (!pos) continue
           this._clonePositions.push({ x: pos.x, y: pos.y, generation: gen })
         }
       }
