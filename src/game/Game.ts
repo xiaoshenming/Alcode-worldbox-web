@@ -757,6 +757,21 @@ import { DiplomaticBailiffrySystem } from '../systems/DiplomaticBailiffrySystem'
 import { CreatureRollerSystem } from '../systems/CreatureRollerSystem'
 import { WorldTantalumSpringSystem } from '../systems/WorldTantalumSpringSystem'
 import { DiplomaticSheriffaltySystem } from '../systems/DiplomaticSheriffaltySytem'
+import { CreatureDrawerSystem } from '../systems/CreatureDrawerSystem'
+import { WorldHafniumSpringSystem } from '../systems/WorldHafniumSpringSystem'
+import { DiplomaticCoronerSystem } from '../systems/DiplomaticCoronerSystem'
+import { CreatureSpinnerSystem } from '../systems/CreatureSpinnerSystem'
+import { WorldZirconiumSpringSystem } from '../systems/WorldZirconiumSpringSystem'
+import { DiplomaticEscheatorSystem } from '../systems/DiplomaticEscheatorSystem'
+import { CreatureFurbisherSystem } from '../systems/CreatureFurbisherSystem'
+import { WorldIndiumSpringSystem } from '../systems/WorldIndiumSpringSystem'
+import { DiplomaticAlmonerSystem } from '../systems/DiplomaticAlmonerSystem'
+import { CreatureTinplaterSystem } from '../systems/CreatureTinplaterSystem'
+import { WorldGalliumSpringSystem } from '../systems/WorldGalliumSpringSystem'
+import { DiplomaticPurveyorSystem } from '../systems/DiplomaticPurveyorSystem'
+import { CreatureAnnealerSystem } from '../systems/CreatureAnnealerSystem'
+import { WorldGermaniumSpringSystem } from '../systems/WorldGermaniumSpringSystem'
+import { DiplomaticHarbingerSystem } from '../systems/DiplomaticHarbingerSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1515,6 +1530,21 @@ export class Game {
   private creatureRoller!: CreatureRollerSystem
   private worldTantalumSpring!: WorldTantalumSpringSystem
   private diplomaticSheriffalty!: DiplomaticSheriffaltySystem
+  private creatureDrawer!: CreatureDrawerSystem
+  private worldHafniumSpring!: WorldHafniumSpringSystem
+  private diplomaticCoroner!: DiplomaticCoronerSystem
+  private creatureSpinner!: CreatureSpinnerSystem
+  private worldZirconiumSpring!: WorldZirconiumSpringSystem
+  private diplomaticEscheator!: DiplomaticEscheatorSystem
+  private creatureFurbisher!: CreatureFurbisherSystem
+  private worldIndiumSpring!: WorldIndiumSpringSystem
+  private diplomaticAlmoner!: DiplomaticAlmonerSystem
+  private creatureTinplater!: CreatureTinplaterSystem
+  private worldGalliumSpring!: WorldGalliumSpringSystem
+  private diplomaticPurveyor!: DiplomaticPurveyorSystem
+  private creatureAnnealer!: CreatureAnnealerSystem
+  private worldGermaniumSpring!: WorldGermaniumSpringSystem
+  private diplomaticHarbinger!: DiplomaticHarbingerSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -2424,6 +2454,21 @@ export class Game {
     this.creatureRoller = new CreatureRollerSystem()
     this.worldTantalumSpring = new WorldTantalumSpringSystem()
     this.diplomaticSheriffalty = new DiplomaticSheriffaltySystem()
+    this.creatureDrawer = new CreatureDrawerSystem()
+    this.worldHafniumSpring = new WorldHafniumSpringSystem()
+    this.diplomaticCoroner = new DiplomaticCoronerSystem()
+    this.creatureSpinner = new CreatureSpinnerSystem()
+    this.worldZirconiumSpring = new WorldZirconiumSpringSystem()
+    this.diplomaticEscheator = new DiplomaticEscheatorSystem()
+    this.creatureFurbisher = new CreatureFurbisherSystem()
+    this.worldIndiumSpring = new WorldIndiumSpringSystem()
+    this.diplomaticAlmoner = new DiplomaticAlmonerSystem()
+    this.creatureTinplater = new CreatureTinplaterSystem()
+    this.worldGalliumSpring = new WorldGalliumSpringSystem()
+    this.diplomaticPurveyor = new DiplomaticPurveyorSystem()
+    this.creatureAnnealer = new CreatureAnnealerSystem()
+    this.worldGermaniumSpring = new WorldGermaniumSpringSystem()
+    this.diplomaticHarbinger = new DiplomaticHarbingerSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -4817,6 +4862,21 @@ export class Game {
         this.creatureRoller.update(this.tickRate, this.em, this.world.tick)
         this.worldTantalumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
         this.diplomaticSheriffalty.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureDrawer.update(this.tickRate, this.em, this.world.tick)
+        this.worldHafniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticCoroner.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureSpinner.update(this.tickRate, this.em, this.world.tick)
+        this.worldZirconiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticEscheator.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureFurbisher.update(this.tickRate, this.em, this.world.tick)
+        this.worldIndiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticAlmoner.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureTinplater.update(this.tickRate, this.em, this.world.tick)
+        this.worldGalliumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticPurveyor.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureAnnealer.update(this.tickRate, this.em, this.world.tick)
+        this.worldGermaniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticHarbinger.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate

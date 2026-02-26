@@ -1,5 +1,5 @@
-// Creature Annealer System (v3.602) - Metal annealing artisans
-// Craftspeople who heat-treat metals to reduce hardness and increase ductility
+// Creature Annealer System (v3.638) - Metal annealing specialists
+// Workers who heat-treat metals to reduce hardness and increase ductility
 
 import { EntityManager } from '../ecs/Entity'
 
@@ -7,14 +7,14 @@ export interface Annealer {
   id: number
   entityId: number
   annealingSkill: number
-  temperatureControl: number
+  temperatureCycling: number
   coolingRate: number
-  outputQuality: number
+  grainRefinement: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2780
-const RECRUIT_CHANCE = 0.0014
+const CHECK_INTERVAL = 2860
+const RECRUIT_CHANCE = 0.0015
 const MAX_ANNEALERS = 10
 
 export class CreatureAnnealerSystem {
@@ -31,17 +31,17 @@ export class CreatureAnnealerSystem {
         id: this.nextId++,
         entityId: Math.floor(Math.random() * 500),
         annealingSkill: 10 + Math.random() * 25,
-        temperatureControl: 15 + Math.random() * 20,
+        temperatureCycling: 15 + Math.random() * 20,
         coolingRate: 5 + Math.random() * 20,
-        outputQuality: 10 + Math.random() * 25,
+        grainRefinement: 10 + Math.random() * 25,
         tick,
       })
     }
 
     for (const a of this.annealers) {
       a.annealingSkill = Math.min(100, a.annealingSkill + 0.02)
-      a.temperatureControl = Math.min(100, a.temperatureControl + 0.015)
-      a.outputQuality = Math.min(100, a.outputQuality + 0.01)
+      a.temperatureCycling = Math.min(100, a.temperatureCycling + 0.015)
+      a.grainRefinement = Math.min(100, a.grainRefinement + 0.01)
     }
 
     this.annealers = this.annealers.filter(a => a.annealingSkill > 4)
