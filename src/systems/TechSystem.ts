@@ -211,7 +211,7 @@ export class TechSystem {
 
       const rate = this.getEffectiveResearchRate(civ, civManager)
       // Progress as percentage: each update adds (rate / researchTime) * 100 * ticksBetweenUpdates
-      const progressIncrement = (rate / tech.researchTime) * 100 * 10
+      const progressIncrement = tech.researchTime > 0 ? (rate / tech.researchTime) * 100 * 10 : 0
       civ.research.progress += progressIncrement
 
       // Research complete

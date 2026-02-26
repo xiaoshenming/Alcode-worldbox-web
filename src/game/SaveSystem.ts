@@ -1,7 +1,7 @@
 import { World } from './World'
-import { EntityManager, EntityId, PositionComponent, VelocityComponent, RenderComponent, NeedsComponent, AIComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
-import { Civilization, BuildingComponent, CivMemberComponent, BuildingType, CultureTrait, ReligionType } from '../civilization/Civilization'
+import { Civilization, BuildingComponent, CultureTrait, ReligionType } from '../civilization/Civilization'
 import { ResourceSystem, ResourceNode } from '../systems/ResourceSystem'
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 

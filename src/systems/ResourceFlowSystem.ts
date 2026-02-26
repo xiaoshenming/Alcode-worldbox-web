@@ -203,7 +203,7 @@ export class ResourceFlowSystem {
         const p = this.particles[i];
         p.active = true;
         p.routeId = routeId;
-        p.t = allocated / count;
+        p.t = count > 0 ? allocated / count : 0;
         p.speed = PARTICLE_SPEED + Math.random() * 0.004;
         allocated++;
       }

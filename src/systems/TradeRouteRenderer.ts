@@ -67,6 +67,7 @@ export class TradeRouteRenderer {
       const dx = x2 - x1
       const dy = y2 - y1
       const dist = Math.sqrt(dx * dx + dy * dy)
+      if (dist < 0.001) continue
       const bulge = dist * 0.15
       const cpx = mx + (-dy / dist) * bulge
       const cpy = my + (dx / dist) * bulge

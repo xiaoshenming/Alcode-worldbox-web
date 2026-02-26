@@ -94,6 +94,6 @@ export class Noise {
       frequency *= lacunarity
     }
 
-    return sum / max
+    return max > 0 ? sum / max : 0
   }
 }

@@ -84,7 +84,7 @@ export class PollutionSystem {
   getAveragePollution(): number {
     let sum = 0
     for (let i = 0; i < this.grid.length; i++) sum += this.grid[i]
-    return sum / this.grid.length
+    return this.grid.length > 0 ? sum / this.grid.length : 0
   }
 
   /* ── 更新 ── */

@@ -254,7 +254,7 @@ export class CreatureMemorySystem {
       if (ry + ROW_H < py + HEADER_H || ry > py + PANEL_H) continue
 
       // 行背景
-      const isAccessed = bank!.lastAccessed === m.id
+      const isAccessed = bank?.lastAccessed === m.id
       ctx.fillStyle = isAccessed ? 'rgba(80,80,140,0.4)' : (i % 2 === 0 ? 'rgba(40,40,60,0.3)' : 'rgba(30,30,50,0.3)')
       ctx.fillRect(px + 4, ry, PANEL_W - 8, ROW_H - 2)
 

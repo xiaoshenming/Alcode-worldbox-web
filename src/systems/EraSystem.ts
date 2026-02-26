@@ -66,7 +66,8 @@ export class EraSystem {
   }
 
   getEraInfo(era: EraName): { name: string; displayName: string; color: string; techRequired: number; bonuses: string[] } {
-    const def = ERA_MAP.get(era)!
+    const def = ERA_MAP.get(era)
+    if (!def) return { name: era, displayName: era, color: '#888', techRequired: 0, bonuses: [] }
     return { name: def.name, displayName: def.displayName, color: def.color, techRequired: def.techRequired, bonuses: def.bonuses }
   }
 

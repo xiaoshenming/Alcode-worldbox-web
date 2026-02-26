@@ -191,7 +191,8 @@ export class EraVisualSystem {
   renderEraIndicator(ctx: CanvasRenderingContext2D, x: number, y: number): void {
     if (this.indicatorTimer <= 0) return
 
-    const style = this.styles.get(this.targetEra)!
+    const style = this.styles.get(this.targetEra)
+    if (!style) return
     // Fade out in the last 60 frames
     const fadeFrames = 60
     let alpha = 1.0
@@ -255,8 +256,10 @@ export class EraVisualSystem {
 
   /** Interpolate between current and target era styles during transition. */
   private getCurrentStyle(): EraVisualStyle {
-    const from = this.styles.get(this.currentEra)!
-    const to = this.styles.get(this.targetEra)!
+    const from = this.styles.get(this.currentEra)
+    const to = this.styles.get(this.targetEra)
+
+    if (!from || !to) return (to ?? from ?? this.styles.get('stone'))!
 
     if (this.transitionProgress >= 1.0) return to
     if (this.transitionProgress <= 0) return from

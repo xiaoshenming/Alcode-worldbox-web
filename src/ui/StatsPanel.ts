@@ -192,8 +192,8 @@ export class StatsPanel {
     ctx.lineWidth = 1.5
     ctx.beginPath()
     for (let i = 0; i < this.history.length; i++) {
-      const x = pad + (i / (this.history.length - 1)) * cw
-      const y = pad + ch - (this.history[i].total / maxPop) * ch
+      const x = pad + (this.history.length > 1 ? (i / (this.history.length - 1)) * cw : 0)
+      const y = pad + ch - (maxPop > 0 ? (this.history[i].total / maxPop) * ch : 0)
       if (i === 0) ctx.moveTo(x, y)
       else ctx.lineTo(x, y)
     }
@@ -213,8 +213,8 @@ export class StatsPanel {
       let started = false
       for (let i = 0; i < this.history.length; i++) {
         const pop = this.history[i].byCiv.get(civId) ?? 0
-        const x = pad + (i / (this.history.length - 1)) * cw
-        const y = pad + ch - (pop / maxPop) * ch
+        const x = pad + (this.history.length > 1 ? (i / (this.history.length - 1)) * cw : 0)
+        const y = pad + ch - (maxPop > 0 ? (pop / maxPop) * ch : 0)
         if (!started) { ctx.moveTo(x, y); started = true }
         else ctx.lineTo(x, y)
       }

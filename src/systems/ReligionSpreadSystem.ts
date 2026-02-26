@@ -59,7 +59,7 @@ export class ReligionSpreadSystem {
             if (dx * dx + dy * dy > r * r) continue
             const key = `${Math.floor(pos.x + dx)},${Math.floor(pos.y + dy)}`
             const dist = Math.sqrt(dx * dx + dy * dy)
-            const strength = temple.faithStrength * (1 - dist / r) * temple.level * 0.5
+            const strength = r > 0 ? temple.faithStrength * (1 - dist / r) * temple.level * 0.5 : 0
             const existing = this.faithMap.get(key)
             if (!existing || existing.strength < strength) {
               this.faithMap.set(key, { religion: temple.religion, strength })

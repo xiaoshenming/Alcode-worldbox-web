@@ -85,7 +85,7 @@ export class CreaturePanel {
     barOuter.style.cssText = 'display:inline-block;width:60px;height:8px;background:#333;border-radius:4px;vertical-align:middle'
 
     const barInner = document.createElement('span')
-    const pct = Math.max(0, Math.min(100, (value / max) * 100))
+    const pct = max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0
     barInner.style.cssText = `display:block;width:${pct}%;height:100%;background:${color};border-radius:4px`
 
     barOuter.appendChild(barInner)

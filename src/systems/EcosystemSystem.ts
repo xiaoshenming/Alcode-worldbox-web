@@ -518,7 +518,7 @@ export class EcosystemSystem {
     // Balance: penalize if any single species dominates
     let maxRatio = 0;
     for (const count of this.wildlifeCounts.values()) {
-      const ratio = count / total;
+      const ratio = total > 0 ? count / total : 0;
       if (ratio > maxRatio) maxRatio = ratio;
     }
     const balanceScore = (1 - maxRatio) * 30;

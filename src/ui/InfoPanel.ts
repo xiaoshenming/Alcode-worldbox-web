@@ -51,7 +51,7 @@ export class InfoPanel {
     // 1) Stats line - update only when text changes
     const statsText = `FPS: ${fps} | Map: ${this.world.width}x${this.world.height} | Tick: ${this.world.tick} | Entities: ${entityCount} | Civs: ${civCount}`
     if (statsText !== this.prevStatsText) {
-      this.statsLine!.textContent = statsText
+      if (this.statsLine) this.statsLine.textContent = statsText
       this.prevStatsText = statsText
     }
 
@@ -63,13 +63,14 @@ export class InfoPanel {
     if (civCount > 1 && diplomacyTick !== this.prevDiplomacyTick) {
       this.prevDiplomacyTick = diplomacyTick
       this.updateDiplomacy()
-    } else if (civCount <= 1 && this.diplomacyDiv!.firstChild) {
-      this.diplomacyDiv!.textContent = ''
+    } else if (civCount <= 1 && this.diplomacyDiv?.firstChild) {
+      this.diplomacyDiv.textContent = ''
     }
   }
 
   private updateCivList(civCount: number): void {
-    const civListDiv = this.civListDiv!
+    const civListDiv = this.civListDiv
+    if (!civListDiv) return
     if (civCount === 0) {
       if (civListDiv.firstChild) civListDiv.textContent = ''
       this.prevCivCount = 0
@@ -113,7 +114,8 @@ export class InfoPanel {
   }
 
   private updateDiplomacy(): void {
-    const diplomacyDiv = this.diplomacyDiv!
+    const diplomacyDiv = this.diplomacyDiv
+    if (!diplomacyDiv) return
     const civArr = Array.from(this.civManager.civilizations.values())
     const totalPairs = civArr.length * (civArr.length - 1) / 2
 

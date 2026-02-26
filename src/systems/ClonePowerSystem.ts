@@ -107,9 +107,10 @@ export class ClonePowerSystem {
     const chain: number[] = [entityId];
     let current = entityId;
     while (this.lineage.has(current)) {
-      const parent = this.lineage.get(current)!.sourceId;
-      chain.unshift(parent);
-      current = parent;
+      const entry = this.lineage.get(current)
+      if (!entry) break
+      chain.unshift(entry.sourceId);
+      current = entry.sourceId;
     }
     return chain;
   }

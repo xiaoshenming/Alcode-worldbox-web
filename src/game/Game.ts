@@ -17,7 +17,7 @@ import { ParticleSystem } from '../systems/ParticleSystem'
 import { SoundSystem } from '../systems/SoundSystem'
 import { WeatherSystem } from '../systems/WeatherSystem'
 import { ResourceSystem } from '../systems/ResourceSystem'
-import { SaveSystem, SaveSlotMeta } from './SaveSystem'
+import { SaveSystem } from './SaveSystem'
 import { CreatureFactory } from '../entities/CreatureFactory'
 import { CivManager } from '../civilization/CivManager'
 import { resetCivIdCounter, CivMemberComponent } from '../civilization/Civilization'
@@ -3733,7 +3733,7 @@ export class Game {
         {
           const achStats: AchContentWorldStats = {
             totalCreatures: this.em.getEntitiesWithComponents('creature').length,
-            speciesSet: new Set([...this.em.getEntitiesWithComponents('creature')].map(id => this.em.getComponent<CreatureComponent>(id, 'creature')!.species)),
+            speciesSet: new Set([...this.em.getEntitiesWithComponents('creature')].map(id => this.em.getComponent<CreatureComponent>(id, 'creature')?.species).filter((s): s is string => s !== undefined)),
             maxCityPop: Math.max(0, ...[...this.civManager.civilizations.values()].map(c => c.population)),
             filledTilePercent: 0, hasIsland: false,
             totalKills: 0, extinctSpecies: [], scorchedTiles: 0,

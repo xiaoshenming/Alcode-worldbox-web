@@ -80,7 +80,8 @@ export class TimelineSystem {
     if (this.currentEraIndex >= ERA_DEFINITIONS.length - 1) return 1.0
     const current = ERA_DEFINITIONS[this.currentEraIndex].tickThreshold
     const next = ERA_DEFINITIONS[this.currentEraIndex + 1].tickThreshold
-    return Math.min(1.0, (tick - current) / (next - current))
+    const diff = next - current
+    return diff > 0 ? Math.min(1.0, (tick - current) / diff) : 1.0
   }
 
   getHistory(): HistoricalEvent[] {

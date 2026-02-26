@@ -81,7 +81,7 @@ export class WorldStatsOverviewSystem {
   /** Helper: compute chart point coords from ring buffer */
   private chartPt(i: number, n: number, chartX: number, chartY: number, chartW: number, chartH: number, maxVal: number): [number, number] {
     const idx = n < MAX_HISTORY ? i : (this.histHead + i) % MAX_HISTORY
-    return [chartX + i * (chartW / (n - 1)), chartY + chartH - (this.popHistory[idx] / maxVal) * chartH]
+    return [chartX + (n > 1 ? i * (chartW / (n - 1)) : 0), chartY + chartH - (maxVal > 0 ? (this.popHistory[idx] / maxVal) * chartH : 0)]
   }
 
   /** Render the overlay panel (screen-space, top-right corner). */

@@ -241,7 +241,8 @@ export class ProphecySystem {
     ctx.font = '11px monospace'
     if (isActive) {
       const remaining = p.deadlineTick - tick
-      const pct = Math.max(0, remaining / (p.deadlineTick - p.createdTick))
+      const span = p.deadlineTick - p.createdTick
+      const pct = span > 0 ? Math.max(0, remaining / span) : 0
       ctx.fillStyle = '#aaa'
       ctx.fillText(`概率: ${(p.probability * 100).toFixed(0)}%  剩余: ${remaining > 0 ? remaining : 0} ticks`, px + 40, ry + 42)
       // 进度条

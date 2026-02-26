@@ -100,7 +100,8 @@ export class CityPlanningSystem {
   // --- Resource production ---
 
   private produceResources(civ: Civilization, cl: CityLevel): void {
-    const counts = this.buildingCounts.get(civ.id)!
+    const counts = this.buildingCounts.get(civ.id)
+    if (!counts) return
     const m = cl.multiplier
     const hasGranary = this.has(civ.id, BuildingType.GRANARY)
 

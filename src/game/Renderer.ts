@@ -3,12 +3,12 @@ import { World } from './World'
 import { Camera } from './Camera'
 import { EntityManager, PositionComponent, RenderComponent, VelocityComponent, NeedsComponent, AIComponent, CreatureComponent, ArtifactComponent, InventoryComponent, DiseaseComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
-import { BuildingComponent, BuildingType, BUILDING_COLORS } from '../civilization/Civilization'
+import { BuildingComponent, BuildingType } from '../civilization/Civilization'
 import { ParticleSystem } from '../systems/ParticleSystem'
 import { ResourceSystem } from '../systems/ResourceSystem'
 import { CaravanSystem, Caravan } from '../systems/CaravanSystem'
 import { SpriteRenderer } from './SpriteRenderer'
-import { CropSystem, CropField, CropStage } from '../systems/CropSystem'
+import { CropSystem, CropStage } from '../systems/CropSystem'
 
 export class Renderer {
   private canvas: HTMLCanvasElement

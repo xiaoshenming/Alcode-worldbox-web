@@ -121,7 +121,7 @@ export class WorldAgeSystem {
       return Math.min(1, elapsed / 20000)
     }
     const duration = cfg.endTick - cfg.startTick
-    return Math.min(1, (this.worldTick - cfg.startTick) / duration)
+    return duration > 0 ? Math.min(1, (this.worldTick - cfg.startTick) / duration) : 1
   }
 
   /**
