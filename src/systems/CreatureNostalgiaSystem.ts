@@ -2,7 +2,7 @@
 // Nostalgia grows with distance and time away from home
 // Strong nostalgia boosts mood when returning, causes sadness when far away
 
-import { EntityManager, EntityId } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent, CreatureComponent } from '../ecs/Entity'
 
 export interface NostalgiaState {
   entityId: EntityId
@@ -40,7 +40,7 @@ export class CreatureNostalgiaSystem {
       if (Math.random() > NOSTALGIA_CHANCE) continue
       if (this.states.some(s => s.entityId === id)) continue
 
-      const pos = em.getComponent<any>(id, 'position')
+      const pos = em.getComponent<PositionComponent>(id, 'position')
       if (!pos) continue
 
       this.states.push({
@@ -60,7 +60,7 @@ export class CreatureNostalgiaSystem {
     const expired: number[] = []
     for (let i = 0; i < this.states.length; i++) {
       const state = this.states[i]
-      const pos = em.getComponent<any>(state.entityId, 'position')
+      const pos = em.getComponent<PositionComponent>(state.entityId, 'position')
       if (!pos) { expired.push(i); continue }
 
       const dx = pos.x - state.birthX
@@ -82,7 +82,7 @@ export class CreatureNostalgiaSystem {
       }
 
       // Apply mood
-      const creature = em.getComponent<any>(state.entityId, 'creature')
+      const creature = em.getComponent<CreatureComponent>(state.entityId, 'creature')
       if (creature && creature.mood != null) {
         creature.mood = Math.max(0, Math.min(100, creature.mood + state.moodEffect * 0.02))
       }

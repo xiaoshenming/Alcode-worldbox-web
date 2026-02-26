@@ -3,7 +3,7 @@
 
 import { CivManager } from '../civilization/CivManager'
 import { EntityManager, PositionComponent, CreatureComponent } from '../ecs/Entity'
-import { Civilization, BuildingComponent, BuildingType } from '../civilization/Civilization'
+import { Civilization, BuildingComponent, BuildingType, CivMemberComponent } from '../civilization/Civilization'
 import { World } from '../game/World'
 import { ParticleSystem } from './ParticleSystem'
 import { EventLog } from './EventLog'
@@ -196,7 +196,7 @@ export class EspionageSystem {
       case 'assassinate': {
         const heroes = em.getEntitiesWithComponent('hero')
         const targetHero = heroes.find(id => {
-          const cm = em.getComponent<any>(id, 'civMember')
+          const cm = em.getComponent<CivMemberComponent>(id, 'civMember')
           return cm && cm.civId === target.id
         })
         if (targetHero) {

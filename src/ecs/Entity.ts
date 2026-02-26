@@ -157,6 +157,8 @@ export interface CreatureComponent extends Component {
   age: number
   maxAge: number
   gender: 'male' | 'female'
+  mood?: number
+  state?: string
 }
 
 export interface HeroComponent extends Component {

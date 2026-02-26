@@ -2,7 +2,7 @@
 
 import { CivManager } from '../civilization/CivManager'
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
-import { BuildingComponent, BuildingType, Civilization } from '../civilization/Civilization'
+import { BuildingComponent, BuildingType, Civilization, CivMemberComponent } from '../civilization/Civilization'
 import { ParticleSystem } from './ParticleSystem'
 import { EventLog } from './EventLog'
 import { TimelineSystem } from './TimelineSystem'
@@ -123,7 +123,7 @@ export class EraSystem {
         // "The Discovery of Bronze" — all soldiers +3 damage
         const soldiers = em.getEntitiesWithComponents('creature', 'civMember')
         for (const id of soldiers) {
-          const member = em.getComponent<any>(id, 'civMember')
+          const member = em.getComponent<CivMemberComponent>(id, 'civMember')
           if (member?.civId !== civ.id) continue
           const creature = em.getComponent<CreatureComponent>(id, 'creature')
           if (creature) creature.damage += 3

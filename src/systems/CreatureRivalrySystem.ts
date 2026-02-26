@@ -2,7 +2,7 @@
 // Rivals compete for resources, mates, and status
 // Rivalries can escalate to duels or resolve through reconciliation
 
-import { EntityManager, EntityId, PositionComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent, CreatureComponent } from '../ecs/Entity'
 
 export type RivalryStage = 'tension' | 'competition' | 'hostility' | 'feud' | 'resolved'
 
@@ -87,8 +87,8 @@ export class CreatureRivalrySystem {
       if (rivalry.stage === 'resolved') { toRemove.push(i); continue }
 
       // Check both entities alive
-      const cA = em.getComponent<any>(rivalry.entityA, 'creature')
-      const cB = em.getComponent<any>(rivalry.entityB, 'creature')
+      const cA = em.getComponent<CreatureComponent>(rivalry.entityA, 'creature')
+      const cB = em.getComponent<CreatureComponent>(rivalry.entityB, 'creature')
       if (!cA || !cB) { toRemove.push(i); continue }
 
       // Chance to resolve

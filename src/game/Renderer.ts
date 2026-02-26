@@ -1,7 +1,7 @@
 import { TileType, TILE_SIZE } from '../utils/Constants'
 import { World } from './World'
 import { Camera } from './Camera'
-import { EntityManager, PositionComponent, RenderComponent, VelocityComponent, NeedsComponent, AIComponent, CreatureComponent, ArtifactComponent, InventoryComponent, DiseaseComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent, RenderComponent, VelocityComponent, NeedsComponent, AIComponent, CreatureComponent, ArtifactComponent, InventoryComponent, DiseaseComponent, HeroComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 import { BuildingComponent, BuildingType } from '../civilization/Civilization'
 import { ParticleSystem } from '../systems/ParticleSystem'
@@ -381,7 +381,7 @@ export class Renderer {
       ctx.drawImage(sprite, cx - spriteSize/2, cy - spriteSize/2, spriteSize, spriteSize)
 
       // Hero aura
-      const heroComp = em.getComponent<any>(id, 'hero')
+      const heroComp = em.getComponent<HeroComponent>(id, 'hero')
       if (heroComp && camera.zoom > 0.3) {
         const auraColor = Renderer.AURA_COLORS[heroComp.ability] || '#ffd700'
         const pulse = Math.sin(performance.now() * 0.004 + id) * 0.3 + 0.5

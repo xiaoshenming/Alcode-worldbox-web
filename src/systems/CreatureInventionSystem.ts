@@ -2,7 +2,7 @@
 // Inventions spread between creatures and boost civilization progress
 // Rare breakthrough inventions can shift the balance of power
 
-import { EntityManager, EntityId } from '../ecs/Entity'
+import { EntityManager, EntityId, CreatureComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 
 export type InventionCategory = 'tool' | 'weapon' | 'agriculture' | 'medicine' | 'construction' | 'navigation'
@@ -60,7 +60,7 @@ export class CreatureInventionSystem {
 
     for (const id of creatures) {
       if (Math.random() > INVENT_CHANCE) continue
-      const creature = em.getComponent<any>(id, 'creature')
+      const creature = em.getComponent<CreatureComponent>(id, 'creature')
       if (!creature) continue
 
       const category = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)]

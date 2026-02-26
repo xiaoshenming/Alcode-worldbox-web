@@ -1,5 +1,5 @@
-import { EntityManager, EntityId, PositionComponent, HeroComponent, CreatureComponent, NeedsComponent, AIComponent } from '../ecs/Entity'
-import { CivMemberComponent } from '../civilization/Civilization'
+import { EntityManager, EntityId, PositionComponent, HeroComponent, CreatureComponent, NeedsComponent, AIComponent, ArtifactComponent } from '../ecs/Entity'
+import { CivMemberComponent, BuildingComponent } from '../civilization/Civilization'
 import { CivManager } from '../civilization/CivManager'
 import { ParticleSystem } from './ParticleSystem'
 import { EventLog } from './EventLog'
@@ -211,7 +211,7 @@ export class QuestSystem {
     const artifacts = em.getEntitiesWithComponent('artifact')
     let hasUnclaimed = false
     for (const id of artifacts) {
-      const art = em.getComponent<any>(id, 'artifact')
+      const art = em.getComponent<ArtifactComponent>(id, 'artifact')
       if (art && !art.claimed) { hasUnclaimed = true; break }
     }
     if (hasUnclaimed) candidates.push('find_artifact')
@@ -269,7 +269,7 @@ export class QuestSystem {
       case 'find_artifact': {
         const artifacts = em.getEntitiesWithComponent('artifact')
         for (const id of artifacts) {
-          const art = em.getComponent<any>(id, 'artifact')
+          const art = em.getComponent<ArtifactComponent>(id, 'artifact')
           if (art && !art.claimed) {
             const pos = em.getComponent<PositionComponent>(id, 'position')
             if (pos) return { x: pos.x, y: pos.y }
@@ -290,7 +290,7 @@ export class QuestSystem {
         const civ = civManager.civilizations.get(civId)
         if (!civ) return null
         for (const bId of civ.buildings) {
-          const b = em.getComponent<any>(bId, 'building')
+          const b = em.getComponent<BuildingComponent>(bId, 'building')
           if (b && b.buildingType === 'temple') {
             const pos = em.getComponent<PositionComponent>(bId, 'position')
             if (pos) return { x: pos.x, y: pos.y }

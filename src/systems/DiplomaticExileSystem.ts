@@ -3,6 +3,7 @@
 // Exile events affect civ stability and inter-civ relations
 
 import { EntityManager, EntityId } from '../ecs/Entity'
+import { CivMemberComponent } from '../civilization/Civilization'
 
 export type ExileReason = 'criminal' | 'dissident' | 'heretic' | 'traitor' | 'outcast'
 
@@ -47,7 +48,7 @@ export class DiplomaticExileSystem {
       if (Math.random() > 0.04) continue
       const creatures = em.getEntitiesWithComponents('creature', 'civMember')
       for (const id of creatures) {
-        const member = em.getComponent<any>(id, 'civMember')
+        const member = em.getComponent<CivMemberComponent>(id, 'civMember')
         if (member?.civId !== civId) continue
         if (this.isExiled(id)) continue
         if (Math.random() > 0.1) continue
