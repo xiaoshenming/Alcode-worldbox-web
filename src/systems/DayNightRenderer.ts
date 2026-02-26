@@ -6,6 +6,27 @@
 const TORCH_BUILDING_TYPES = new Set(['TOWER', 'CASTLE', 'TEMPLE']);
 const CYCLE_REDRAW_THRESHOLD = 0.005;
 
+/**
+ * Pre-built rgba string cache to avoid template literal allocations on hot paths.
+ * Key = "r,g,b,a" (alpha rounded to 2 decimals), value = "rgba(r,g,b,a)" string.
+ */
+const _rgbaCache = new Map<string, string>();
+
+/** Return a cached rgba() string — zero allocation on cache hit. */
+function rgbaCached(r: number, g: number, b: number, a: number): string {
+  // Round alpha to 2 decimal places to keep cache bounded
+  const aRound = Math.round(a * 100) / 100;
+  const key = `${r},${g},${b},${aRound}`;
+  let v = _rgbaCache.get(key);
+  if (v === undefined) {
+    v = `rgba(${r},${g},${b},${aRound})`;
+    _rgbaCache.set(key, v);
+    // Prevent unbounded growth — very unlikely to exceed this in practice
+    if (_rgbaCache.size > 512) _rgbaCache.clear();
+  }
+  return v;
+}
+
 export class DayNightRenderer {
   private offscreen: OffscreenCanvas | null = null;
   private offCtx: OffscreenCanvasRenderingContext2D | null = null;
@@ -15,8 +36,12 @@ export class DayNightRenderer {
   private cachedHeight = 0;
   private flickerTime = 0;
 
-  /** 计算光照参数：颜色 + alpha */
+  /** Reusable overlay object — avoids allocating a new {r,g,b,a} every frame */
+  private readonly _overlay = { r: 0, g: 0, b: 0, a: 0 };
+
+  /** 计算光照参数：颜色 + alpha（写入 this._overlay，零分配） */
   private computeOverlay(cycle: number, isDay: boolean): { r: number; g: number; b: number; a: number } {
+    const o = this._overlay;
     // cycle: 0 = 午夜, 0.25 = 黎明, 0.5 = 正午, 0.75 = 黄昏
     if (isDay) {
       // 黎明/黄昏过渡区间
@@ -26,22 +51,26 @@ export class DayNightRenderer {
       if (cycle >= dawnStart && cycle < dawnEnd) {
         // 黎明：橙色调渐退
         const t = (cycle - dawnStart) / (dawnEnd - dawnStart);
-        return { r: 255, g: 180, b: 80, a: 0.2 * (1 - t) };
+        o.r = 255; o.g = 180; o.b = 80; o.a = 0.2 * (1 - t);
+        return o;
       }
       if (cycle >= duskStart && cycle < duskEnd) {
         // 黄昏：橙色调渐入
         const t = (cycle - duskStart) / (duskEnd - duskStart);
-        return { r: 255, g: 160, b: 60, a: 0.1 + 0.1 * t };
+        o.r = 255; o.g = 160; o.b = 60; o.a = 0.1 + 0.1 * t;
+        return o;
       }
       // 白天：无叠加
-      return { r: 0, g: 0, b: 0, a: 0 };
+      o.r = 0; o.g = 0; o.b = 0; o.a = 0;
+      return o;
     }
 
     // 夜晚：深蓝色叠加，越接近午夜越深
     const midDist = Math.abs(cycle - 0.0) < Math.abs(cycle - 1.0) ? Math.abs(cycle) : Math.abs(1 - cycle);
     const nightDepth = 1 - midDist * 2; // 0~1, 午夜最深
-    const a = 0.3 + 0.2 * Math.max(0, Math.min(1, nightDepth));
-    return { r: 10, g: 15, b: 50, a };
+    o.r = 10; o.g = 15; o.b = 50;
+    o.a = 0.3 + 0.2 * Math.max(0, Math.min(1, nightDepth));
+    return o;
   }
 
   /** 确保 OffscreenCanvas 尺寸匹配 */
@@ -76,13 +105,13 @@ export class DayNightRenderer {
       oc.clearRect(0, 0, width, height);
 
       // 基础光照层
-      oc.fillStyle = `rgba(${overlay.r},${overlay.g},${overlay.b},${overlay.a})`;
+      oc.fillStyle = rgbaCached(overlay.r, overlay.g, overlay.b, overlay.a);
       oc.fillRect(0, 0, width, height);
 
       // 月光效果（夜晚）
       if (!isDay) {
         const moonAlpha = 0.06 + 0.04 * Math.sin(dayNightCycle * Math.PI * 2);
-        oc.fillStyle = `rgba(140,160,220,${Math.max(0, moonAlpha)})`;
+        oc.fillStyle = rgbaCached(140, 160, 220, Math.max(0, moonAlpha));
         oc.fillRect(0, 0, width, height);
       }
 
@@ -96,7 +125,7 @@ export class DayNightRenderer {
       ctx.drawImage(this.offscreen, 0, 0);
       ctx.globalCompositeOperation = 'source-over';
       // 再叠加一层半透明色调
-      ctx.fillStyle = `rgba(${overlay.r},${overlay.g},${overlay.b},${overlay.a * 0.5})`;
+      ctx.fillStyle = rgbaCached(overlay.r, overlay.g, overlay.b, overlay.a * 0.5);
       ctx.fillRect(0, 0, width, height);
       ctx.globalCompositeOperation = prev;
     }
@@ -138,8 +167,8 @@ export class DayNightRenderer {
       const radius = tileSize * camera.zoom * 2.5 * flicker;
 
       const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, radius);
-      grad.addColorStop(0, `rgba(255,200,80,${0.35 * flicker})`);
-      grad.addColorStop(0.4, `rgba(255,160,40,${0.15 * flicker})`);
+      grad.addColorStop(0, rgbaCached(255, 200, 80, 0.35 * flicker));
+      grad.addColorStop(0.4, rgbaCached(255, 160, 40, 0.15 * flicker));
       grad.addColorStop(1, 'rgba(255,120,20,0)');
 
       ctx.fillStyle = grad;

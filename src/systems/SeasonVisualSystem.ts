@@ -70,6 +70,12 @@ export class SeasonVisualSystem {
   private prevSeason: Season = Season.Spring
   private indicatorFadeTimer: number = 0
 
+  /** Cached rgba/rgb strings to avoid template-literal GC in render loops */
+  private _cachedOverlayStyle = ''
+  private _cachedOverlaySeason: Season = Season.Spring
+  private _cachedOverlayAlpha = -1
+  private _cachedSnowRgb = 'rgb(240,245,255)'
+
   constructor() {
     // Pre-allocate all particles once
     this.particles = new Array<Particle>(TOTAL_PARTICLES)
@@ -116,11 +122,16 @@ export class SeasonVisualSystem {
     transitionProgress: number,
     isNight: boolean,
   ): void {
-    // 1. Season color overlay
+    // 1. Season color overlay (cache rgba string to avoid per-frame alloc)
     const tint = SEASON_TINTS[season]
     const alpha = tint.a * (transitionProgress < 1 ? transitionProgress : 1)
     if (alpha > 0) {
-      ctx.fillStyle = `rgba(${tint.r},${tint.g},${tint.b},${alpha})`
+      if (season !== this._cachedOverlaySeason || alpha !== this._cachedOverlayAlpha) {
+        this._cachedOverlaySeason = season
+        this._cachedOverlayAlpha = alpha
+        this._cachedOverlayStyle = `rgba(${tint.r},${tint.g},${tint.b},${alpha})`
+      }
+      ctx.fillStyle = this._cachedOverlayStyle
       ctx.fillRect(0, 0, width, height)
     }
 
@@ -137,8 +148,8 @@ export class SeasonVisualSystem {
         // Petal: small ellipse
         this.drawPetal(ctx, p)
       } else if (i >= OFF_SNOW) {
-        // Snowflake: circle
-        ctx.fillStyle = `rgb(${p.r},${p.g},${p.b})`
+        // Snowflake: circle (all share same color, use cached string)
+        ctx.fillStyle = this._cachedSnowRgb
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.size, 0, 6.2832)
         ctx.fill()

@@ -131,6 +131,15 @@ export class UnifiedParticleSystem {
   // --- 预分配的渲染排序缓冲 ---
   private readonly sortBuf: Int32Array;
 
+  // --- 预分配的渲染临时数组（避免每帧 GC） ---
+  private readonly _counts = new Int32Array(8);
+  private readonly _offsets = new Int32Array(8);
+  private readonly _cursor = new Int32Array(8);
+
+  // --- 预计算 RGB 颜色字符串缓存 (256*256*256 太大，用 LRU-ish 小表) ---
+  // 键 = (r << 16) | (g << 8) | b，值 = "rgb(r,g,b)"
+  private readonly _colorCache = new Map<number, string>();
+
   constructor() {
     this.px = new Float32Array(MAX_PARTICLES);
     this.py = new Float32Array(MAX_PARTICLES);
@@ -343,7 +352,8 @@ export class UnifiedParticleSystem {
     if (this.activeCount === 0) return;
 
     // 收集活跃粒子索引，按类型分组
-    const counts = [0, 0, 0, 0, 0, 0, 0, 0]; // 每种类型的计数
+    const counts = this._counts;
+    counts.fill(0);
     let total = 0;
     for (let i = 0; i < MAX_PARTICLES; i++) {
       if (this.palive[i]) {
@@ -354,14 +364,16 @@ export class UnifiedParticleSystem {
 
     // 简单按类型排序（计数排序，不分配新数组）
     // 计算偏移
-    const offsets = [0, 0, 0, 0, 0, 0, 0, 0];
+    const offsets = this._offsets;
+    offsets[0] = 0;
     for (let t = 1; t < 8; t++) {
       offsets[t] = offsets[t - 1] + counts[t - 1];
     }
 
     // 使用 sortBuf 后半段作为临时空间
     const tmpStart = MAX_PARTICLES >> 1;
-    const cursor = [0, 0, 0, 0, 0, 0, 0, 0];
+    const cursor = this._cursor;
+    cursor.fill(0);
     for (let i = 0; i < total; i++) {
       const idx = this.sortBuf[i];
       const t = this.ptype[idx];
@@ -404,7 +416,19 @@ export class UnifiedParticleSystem {
           const a = this.pa[idx];
 
           ctx.globalAlpha = a > 0 ? (a < 1 ? a : 1) : 0;
-          ctx.fillStyle = `rgb(${r},${g},${b})`;
+          const colorKey = (r << 16) | (g << 8) | b;
+          let color = this._colorCache.get(colorKey);
+          if (color === undefined) {
+            color = `rgb(${r},${g},${b})`;
+            this._colorCache.set(colorKey, color);
+            // 限制缓存大小，避免无限增长
+            if (this._colorCache.size > 1024) {
+              // 删除最早的条目
+              const firstKey = this._colorCache.keys().next().value!;
+              this._colorCache.delete(firstKey);
+            }
+          }
+          ctx.fillStyle = color;
           ctx.fillRect(sx - sz * 0.5, sy - sz * 0.5, sz, sz);
         }
         j++;

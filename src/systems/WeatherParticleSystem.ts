@@ -46,6 +46,15 @@ export class WeatherParticleSystem {
   private tornadoCenterX = 0;
   private tornadoCenterY = 0;
 
+  /** Reusable lightning style pairs [color, lineWidth] — avoids array alloc per frame */
+  private readonly _lightningStyles: [string, number][] = [['', 6], ['', 2]];
+  /** Cached splash style keyed by alpha to reduce template-literal GC */
+  private _cachedSplashAlpha = -1;
+  private _cachedSplashStyle = '';
+  /** Cached flash overlay style */
+  private _cachedFlashAlpha = -1;
+  private _cachedFlashStyle = '';
+
   /** 切换天气类型，触发平滑过渡 */
   setWeather(type: WeatherType): void {
     if (type === this.targetWeather) return;
@@ -216,7 +225,11 @@ export class WeatherParticleSystem {
       if (!s.active) continue;
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(150,190,255,${s.alpha})`;
+      if (s.alpha !== this._cachedSplashAlpha) {
+        this._cachedSplashAlpha = s.alpha;
+        this._cachedSplashStyle = `rgba(150,190,255,${s.alpha})`;
+      }
+      ctx.strokeStyle = this._cachedSplashStyle;
       ctx.stroke();
     }
   }
@@ -251,11 +264,18 @@ export class WeatherParticleSystem {
   private renderLightning(ctx: CanvasRenderingContext2D, width: number, height: number): void {
     if (this.lightningFlash <= 0) return;
     const flashAlpha = this.lightningFlash / 5;
-    ctx.fillStyle = `rgba(255,255,255,${flashAlpha * 0.15})`;
+    // Cache flash overlay style
+    if (flashAlpha !== this._cachedFlashAlpha) {
+      this._cachedFlashAlpha = flashAlpha;
+      this._cachedFlashStyle = `rgba(255,255,255,${flashAlpha * 0.15})`;
+      // Update reusable lightning stroke styles in-place
+      this._lightningStyles[0][0] = `rgba(200,200,255,${flashAlpha * 0.4})`;
+      this._lightningStyles[1][0] = `rgba(255,255,255,${flashAlpha * 0.9})`;
+    }
+    ctx.fillStyle = this._cachedFlashStyle;
     ctx.fillRect(0, 0, width, height);
     if (this.lightningSegments.length < 4) return;
-    const styles: [string, number][] = [[`rgba(200,200,255,${flashAlpha * 0.4})`, 6], [`rgba(255,255,255,${flashAlpha * 0.9})`, 2]];
-    for (const [color, lw] of styles) {
+    for (const [color, lw] of this._lightningStyles) {
       ctx.strokeStyle = color; ctx.lineWidth = lw;
       ctx.beginPath();
       ctx.moveTo(this.lightningSegments[0], this.lightningSegments[1]);
