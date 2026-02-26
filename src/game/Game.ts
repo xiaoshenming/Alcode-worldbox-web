@@ -3668,6 +3668,15 @@ export class Game {
         this.godPowerSystem.update(this.world, this.em, this.civManager, this.particles, tick)
         // Mining system - build civData from civilizations
         {
+          // Build civId→species map once (avoid per-civ getEntitiesWithComponents)
+          const civRace = new Map<number, string>()
+          const allMembers = this.em.getEntitiesWithComponents('creature', 'civMember')
+          for (const mid of allMembers) {
+            const cm = this.em.getComponent<CivMemberComponent>(mid, 'civMember')
+            if (!cm || civRace.has(cm.civId)) continue
+            const cc = this.em.getComponent<CreatureComponent>(mid, 'creature')
+            if (cc) civRace.set(cm.civId, cc.species)
+          }
           const civData: { id: number; cities: { x: number; y: number }[]; techLevel: number; race: string }[] = []
           for (const c of this.civManager.civilizations.values()) {
             const cities: { x: number; y: number }[] = []
@@ -3675,9 +3684,7 @@ export class Game {
               const pos = this.em.getComponent<PositionComponent>(bid, 'position')
               if (pos) cities.push({ x: Math.floor(pos.x), y: Math.floor(pos.y) })
             }
-            const creature = this.em.getEntitiesWithComponents('creature', 'civMember')[0]
-            const cc = creature ? this.em.getComponent<CreatureComponent>(creature, 'creature') : null
-            civData.push({ id: c.id, cities, techLevel: c.techLevel, race: cc?.species ?? 'human' })
+            civData.push({ id: c.id, cities, techLevel: c.techLevel, race: civRace.get(c.id) ?? 'human' })
           }
           this.miningSystem.update(tick, civData)
         }
@@ -5628,7 +5635,7 @@ export class Game {
     this.mapMarker.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
 
     // Time rewind system (v1.79)
-    const popCount = this.em.getAllEntities().length
+    const popCount = this.em.getEntityCount()
     const civCount = this.civManager.civilizations.size
     this.timeRewind.update(this.world.tick, popCount, civCount)
     this.timeRewind.render(ctx, this.canvas.width, this.canvas.height)

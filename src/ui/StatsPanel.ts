@@ -20,6 +20,7 @@ export class StatsPanel {
   private history: PopSnapshot[] = []
   private lastRecordTick: number = 0
   private tab: TabKey = 'population'
+  private lastRenderTick: number = -1
 
   constructor(elementId: string, em: EntityManager, civManager: CivManager) {
     this.el = document.getElementById(elementId)!
@@ -75,7 +76,11 @@ export class StatsPanel {
     }
 
     if (!this.visible) return
-    this.render()
+    // Throttle DOM rebuild to every 30 ticks (~0.5s) instead of every frame
+    if (tick - this.lastRenderTick >= 30) {
+      this.lastRenderTick = tick
+      this.render()
+    }
   }
 
   private render(): void {

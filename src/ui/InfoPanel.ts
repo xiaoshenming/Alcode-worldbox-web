@@ -45,7 +45,7 @@ export class InfoPanel {
   }
 
   update(fps: number = 0): void {
-    const entityCount = this.em.getAllEntities().length
+    const entityCount = this.em.getEntityCount()
     const civCount = this.civManager.civilizations.size
 
     // 1) Stats line - update only when text changes

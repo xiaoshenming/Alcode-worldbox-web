@@ -25,6 +25,9 @@ export class TechTreePanel {
   private visible: boolean = false
   private selectorRow: HTMLElement
   private animTick: number = 0
+  // Pre-computed static layout (TECHNOLOGIES is constant)
+  private levelGroups: Map<number, Technology[]> = new Map()
+  private nodePositions: Map<string, { x: number; y: number }> = new Map()
 
   constructor(elementId: string, civManager: CivManager) {
     this.element = document.getElementById(elementId)!
@@ -42,6 +45,22 @@ export class TechTreePanel {
     this.canvas.style.cssText = 'background:#111;border-radius:6px;width:100%'
     this.element.appendChild(this.canvas)
     this.ctx = this.canvas.getContext('2d')!
+
+    // Pre-compute level groups and node positions (static data)
+    for (const tech of TECHNOLOGIES) {
+      if (!this.levelGroups.has(tech.level)) this.levelGroups.set(tech.level, [])
+      this.levelGroups.get(tech.level)!.push(tech)
+    }
+    const w = this.canvas.width
+    for (let level = 1; level <= 5; level++) {
+      const techs = this.levelGroups.get(level) || []
+      const totalWidth = techs.length * NODE_W + (techs.length - 1) * H_GAP
+      const startX = LEFT_MARGIN + (w - LEFT_MARGIN - totalWidth) / 2
+      const y = TOP_MARGIN + (level - 1) * (NODE_H + V_GAP)
+      for (let i = 0; i < techs.length; i++) {
+        this.nodePositions.set(techs[i].name, { x: startX + i * (NODE_W + H_GAP), y })
+      }
+    }
   }
 
   toggle(): void {
@@ -129,27 +148,8 @@ export class TechTreePanel {
     const currentTech = civ.research.currentTech
     const progress = civ.research.progress
 
-    // Group techs by level
-    const levels: Map<number, Technology[]> = new Map()
-    for (const tech of TECHNOLOGIES) {
-      if (!levels.has(tech.level)) levels.set(tech.level, [])
-      const levelGroup = levels.get(tech.level)
-      if (levelGroup) levelGroup.push(tech)
-    }
-
-    // Compute node positions
-    const nodePositions: Map<string, { x: number; y: number }> = new Map()
-    for (let level = 1; level <= 5; level++) {
-      const techs = levels.get(level) || []
-      const totalWidth = techs.length * NODE_W + (techs.length - 1) * H_GAP
-      const startX = LEFT_MARGIN + (w - LEFT_MARGIN - totalWidth) / 2
-      const y = TOP_MARGIN + (level - 1) * (NODE_H + V_GAP)
-
-      for (let i = 0; i < techs.length; i++) {
-        const x = startX + i * (NODE_W + H_GAP)
-        nodePositions.set(techs[i].name, { x, y })
-      }
-    }
+    const levels = this.levelGroups
+    const nodePositions = this.nodePositions
 
     // Draw dependency lines (connect each tech to all techs in the next level)
     ctx.lineWidth = 1

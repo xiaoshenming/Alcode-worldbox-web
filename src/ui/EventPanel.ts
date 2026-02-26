@@ -25,7 +25,7 @@ export class EventPanel {
 
     for (let i = 0; i < this.events.length; i++) {
       const e = this.events[i]
-      const alpha = 0.4 + (i / this.events.length) * 0.6
+      const alpha = 0.4 + (i / Math.max(1, this.events.length - 1)) * 0.6
       const div = document.createElement('div')
       div.style.color = e.color
       div.style.opacity = alpha.toFixed(2)
