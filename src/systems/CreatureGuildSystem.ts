@@ -107,8 +107,12 @@ export class CreatureGuildSystem {
       const pos = em.getComponent<PositionComponent>(eid, 'position')
       if (!pos) continue
       const key = `${Math.floor(pos.x / GUILD_RANGE)},${Math.floor(pos.y / GUILD_RANGE)}`
-      if (!clusters.has(key)) clusters.set(key, [])
-      clusters.get(key)!.push(eid)
+      let group = clusters.get(key)
+      if (!group) {
+        group = []
+        clusters.set(key, group)
+      }
+      group.push(eid)
     }
 
     for (const [, group] of clusters) {

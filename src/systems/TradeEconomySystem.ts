@@ -107,7 +107,8 @@ export class TradeEconomySystem {
       EventLog.log('trade', `${civ.name} founded a Merchant Guild`, tick)
     }
 
-    const guild = this.guilds.get(civ.id)!
+    const guild = this.guilds.get(civ.id)
+    if (!guild) return
     // Level up thresholds: 50, 150, 400, 800
     const thresholds = [0, 50, 150, 400, 800]
     for (let lvl = 4; lvl >= 1; lvl--) {

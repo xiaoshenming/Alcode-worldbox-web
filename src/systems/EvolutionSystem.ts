@@ -136,17 +136,20 @@ export class EvolutionSystem {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (!creature || !pos) continue
 
-      if (!speciesGroups.has(creature.species)) {
-        speciesGroups.set(creature.species, [])
+      let group = speciesGroups.get(creature.species)
+      if (!group) {
+        group = []
+        speciesGroups.set(creature.species, group)
       }
-      speciesGroups.get(creature.species)!.push(id)
+      group.push(id)
 
       // Ensure species data exists
       if (!this.speciesData.has(creature.species)) {
         this.speciesData.set(creature.species, this.createSpeciesData(creature.species))
       }
 
-      const specData = this.speciesData.get(creature.species)!
+      const specData = this.speciesData.get(creature.species)
+      if (!specData) continue
 
       // Accumulate terrain exposure
       const tx = Math.floor(pos.x)
@@ -223,7 +226,8 @@ export class EvolutionSystem {
     if (!this.speciesData.has(species)) {
       this.speciesData.set(species, this.createSpeciesData(species))
     }
-    const specData = this.speciesData.get(species)!
+    const specData = this.speciesData.get(species)
+    if (!specData) return
     specData.deathCauses[cause]++
   }
 
@@ -279,7 +283,8 @@ export class EvolutionSystem {
     if (!creatureTraits.has(entityId)) {
       creatureTraits.set(entityId, new Set())
     }
-    const applied = creatureTraits.get(entityId)!
+    const applied = creatureTraits.get(entityId)
+    if (!applied) return
 
     const traits = this.getSpeciesTraits(creature.species)
     const needs = em.getComponent<NeedsComponent>(entityId, 'needs')

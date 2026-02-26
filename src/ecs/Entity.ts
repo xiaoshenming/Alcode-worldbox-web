@@ -31,10 +31,12 @@ export class EntityManager {
   }
 
   addComponent<T extends Component>(id: EntityId, component: T): void {
-    if (!this.components.has(component.type)) {
-      this.components.set(component.type, new Map())
+    let typeMap = this.components.get(component.type)
+    if (!typeMap) {
+      typeMap = new Map()
+      this.components.set(component.type, typeMap)
     }
-    this.components.get(component.type)!.set(id, component)
+    typeMap.set(id, component)
     this.invalidateCache()
   }
 

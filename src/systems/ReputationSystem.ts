@@ -107,7 +107,8 @@ export class ReputationSystem {
     if (!this.history.has(civId)) {
       this.history.set(civId, [])
     }
-    const hist = this.history.get(civId)!
+    const hist = this.history.get(civId)
+    if (!hist) return
     hist.push({ action, tick, delta })
     if (hist.length > this.maxHistoryPerCiv) {
       hist.shift()

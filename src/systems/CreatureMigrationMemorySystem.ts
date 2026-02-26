@@ -144,8 +144,12 @@ export class CreatureMigrationMemorySystem {
       const creature = em.getComponent<CreatureComponent>(mem.creatureId, 'creature')
       if (!creature) continue
       const race = creature.type ?? 'unknown'
-      if (!raceMemories.has(race)) raceMemories.set(race, [])
-      raceMemories.get(race)!.push(mem)
+      let mems = raceMemories.get(race)
+      if (!mems) {
+        mems = []
+        raceMemories.set(race, mems)
+      }
+      mems.push(mem)
     }
 
     for (const [race, mems] of raceMemories) {

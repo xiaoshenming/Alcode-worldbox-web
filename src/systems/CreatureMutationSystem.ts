@@ -86,8 +86,12 @@ export class CreatureMutationSystem {
       const magnitude = 0.1 + Math.random() * 0.9
       const mutation: Mutation = { type, magnitude, tick }
 
-      if (!this.mutations.has(eid)) this.mutations.set(eid, [])
-      this.mutations.get(eid)!.push(mutation)
+      let muts = this.mutations.get(eid)
+      if (!muts) {
+        muts = []
+        this.mutations.set(eid, muts)
+      }
+      muts.push(mutation)
 
       // Apply stat effects
       this.applyMutation(em, eid, mutation)

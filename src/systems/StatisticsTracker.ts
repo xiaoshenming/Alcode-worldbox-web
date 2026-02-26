@@ -56,7 +56,8 @@ export class StatisticsTracker {
       if (!this.civPopHistory.has(civId)) {
         this.civPopHistory.set(civId, { label: civ.name, color: civ.color, data: [] })
       }
-      const popSeries = this.civPopHistory.get(civId)!
+      const popSeries = this.civPopHistory.get(civId)
+      if (!popSeries) continue
       popSeries.label = civ.name
       popSeries.color = civ.color
       this.pushPoint(popSeries.data, tick, civ.population)
@@ -65,7 +66,8 @@ export class StatisticsTracker {
       if (!this.civTerritoryHistory.has(civId)) {
         this.civTerritoryHistory.set(civId, { label: civ.name, color: civ.color, data: [] })
       }
-      const terrSeries = this.civTerritoryHistory.get(civId)!
+      const terrSeries = this.civTerritoryHistory.get(civId)
+      if (!terrSeries) continue
       terrSeries.label = civ.name
       terrSeries.color = civ.color
       this.pushPoint(terrSeries.data, tick, civ.territory.size)
@@ -74,7 +76,8 @@ export class StatisticsTracker {
       if (!this.civTechHistory.has(civId)) {
         this.civTechHistory.set(civId, { label: civ.name, color: civ.color, data: [] })
       }
-      const techSeries = this.civTechHistory.get(civId)!
+      const techSeries = this.civTechHistory.get(civId)
+      if (!techSeries) continue
       techSeries.label = civ.name
       techSeries.color = civ.color
       this.pushPoint(techSeries.data, tick, civ.techLevel)

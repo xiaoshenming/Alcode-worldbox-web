@@ -103,7 +103,8 @@ export class EvolutionVisualSystem {
     const cm = new Map<number | null, EvolutionNode[]>()
     for (const nd of this.nodes.values()) {
       if (!cm.has(nd.parentId)) cm.set(nd.parentId, [])
-      cm.get(nd.parentId)!.push(nd)
+      const group = cm.get(nd.parentId)
+      if (group) group.push(nd)
     }
     const build = (pid: number | null, d: number, xo: number): { r: LayoutNode[]; w: number } => {
       const ch = cm.get(pid) ?? []
@@ -162,7 +163,8 @@ export class EvolutionVisualSystem {
     const sm = new Map<string, { total: number; nodes: EvolutionNode[] }>()
     for (const nd of this.nodes.values()) {
       if (!sm.has(nd.species)) sm.set(nd.species, { total: 0, nodes: [] })
-      const e = sm.get(nd.species)!
+      const e = sm.get(nd.species)
+      if (!e) continue
       e.total += nd.population; e.nodes.push(nd)
     }
     let cy = oy

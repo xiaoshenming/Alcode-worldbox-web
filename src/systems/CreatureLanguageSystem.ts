@@ -58,7 +58,8 @@ export class CreatureLanguageSystem {
   private evolveLanguages(civIds: number[], tick: number): void {
     for (const civId of civIds) {
       if (this.languages.has(civId)) {
-        const lang = this.languages.get(civId)!
+        const lang = this.languages.get(civId)
+        if (!lang) continue
         lang.age++
         lang.vocabulary += Math.floor(Math.random() * 20) + 5
         if (lang.complexity < MAX_COMPLEXITY) {

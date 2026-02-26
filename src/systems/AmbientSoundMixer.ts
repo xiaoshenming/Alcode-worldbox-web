@@ -238,45 +238,55 @@ export class AmbientSoundMixer {
     const zoomDampen = clamp01(1 / Math.max(cameraZoom, 0.1));
 
     // --- Nature ---
-    const nature = this._layers.get('nature')!;
-    nature.activeSound = natureSoundForContext(isNight);
-    nature.targetVolume = isNight ? 0.6 : 0.8;
+    const nature = this._layers.get('nature');
+    if (nature) {
+      nature.activeSound = natureSoundForContext(isNight);
+      nature.targetVolume = isNight ? 0.6 : 0.8;
+    }
 
     // --- Weather ---
-    const wl = this._layers.get('weather')!;
-    wl.activeSound = weatherSound(weather);
-    if (weather === 'rain') {
-      wl.targetVolume = 0.7;
-    } else if (weather === 'storm') {
-      wl.targetVolume = 0.9;
-    } else if (weather === 'snow') {
-      wl.targetVolume = 0.4;
-    } else {
-      wl.targetVolume = 0.1;
+    const wl = this._layers.get('weather');
+    if (wl) {
+      wl.activeSound = weatherSound(weather);
+      if (weather === 'rain') {
+        wl.targetVolume = 0.7;
+      } else if (weather === 'storm') {
+        wl.targetVolume = 0.9;
+      } else if (weather === 'snow') {
+        wl.targetVolume = 0.4;
+      } else {
+        wl.targetVolume = 0.1;
+      }
     }
 
     // --- Season ---
-    const sl = this._layers.get('season')!;
-    sl.activeSound = seasonSound(season);
-    const seasonBase: Record<string, number> = {
-      spring: 0.5,
-      summer: 0.6,
-      autumn: 0.4,
-      winter: 0.3,
-    };
-    sl.targetVolume = seasonBase[season] ?? 0.3;
+    const sl = this._layers.get('season');
+    if (sl) {
+      sl.activeSound = seasonSound(season);
+      const seasonBase: Record<string, number> = {
+        spring: 0.5,
+        summer: 0.6,
+        autumn: 0.4,
+        winter: 0.3,
+      };
+      sl.targetVolume = seasonBase[season] ?? 0.3;
+    }
 
     // --- War ---
-    const war = this._layers.get('war')!;
-    const battleProx = proximityFactor(nearestBattleDist) * zoomDampen;
-    war.targetVolume = battleProx * 0.9;
-    war.activeSound = battleProx > 0.5 ? 'war_drums_close' : battleProx > 0 ? 'distant_battle' : '';
+    const war = this._layers.get('war');
+    if (war) {
+      const battleProx = proximityFactor(nearestBattleDist) * zoomDampen;
+      war.targetVolume = battleProx * 0.9;
+      war.activeSound = battleProx > 0.5 ? 'war_drums_close' : battleProx > 0 ? 'distant_battle' : '';
+    }
 
     // --- Civilization ---
-    const civ = this._layers.get('civilization')!;
-    const cityProx = proximityFactor(nearestCityDist) * zoomDampen;
-    civ.targetVolume = cityProx * 0.6;
-    civ.activeSound = civilizationSound(nearestCityDist);
+    const civ = this._layers.get('civilization');
+    if (civ) {
+      const cityProx = proximityFactor(nearestCityDist) * zoomDampen;
+      civ.targetVolume = cityProx * 0.6;
+      civ.activeSound = civilizationSound(nearestCityDist);
+    }
   }
 
   private _interpolateVolumes(): void {

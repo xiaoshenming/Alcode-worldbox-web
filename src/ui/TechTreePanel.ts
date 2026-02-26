@@ -133,7 +133,8 @@ export class TechTreePanel {
     const levels: Map<number, Technology[]> = new Map()
     for (const tech of TECHNOLOGIES) {
       if (!levels.has(tech.level)) levels.set(tech.level, [])
-      levels.get(tech.level)!.push(tech)
+      const levelGroup = levels.get(tech.level)
+      if (levelGroup) levelGroup.push(tech)
     }
 
     // Compute node positions
@@ -184,7 +185,8 @@ export class TechTreePanel {
 
     // Draw tech nodes
     for (const tech of TECHNOLOGIES) {
-      const pos = nodePositions.get(tech.name)!
+      const pos = nodePositions.get(tech.name)
+      if (!pos) continue
       const isDone = completed.has(tech.name)
       const isResearching = currentTech === tech.name
 

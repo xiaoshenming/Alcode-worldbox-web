@@ -101,10 +101,10 @@ export class WorldChronicleSystem {
     const nameA = civAName ?? `Civilization ${civA}`
     const nameB = civBName ?? `Civilization ${civB}`
     if (!this.warStartTicks.has(warKey)) this.warStartTicks.set(warKey, tick)
-    const startTick = this.warStartTicks.get(warKey)!
+    const startTick = this.warStartTicks.get(warKey) ?? tick
     const durationYears = Math.max(1, tickToYear(tick) - tickToYear(startTick))
     if (!this.warNames.has(warKey)) this.warNames.set(warKey, this.generateWarName())
-    const warName = this.warNames.get(warKey)!
+    const warName = this.warNames.get(warKey) ?? this.generateWarName()
     const importance: 1 | 2 | 3 = durationYears >= 10 ? 3 : durationYears >= 3 ? 2 : 1
     const year = tickToYear(tick)
     const narrative = `The ${warName} between ${nameA} and ${nameB} lasted ${durationYears} year${durationYears > 1 ? 's' : ''}. ${result}.`

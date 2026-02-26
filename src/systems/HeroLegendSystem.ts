@@ -81,7 +81,8 @@ export class HeroLegendSystem {
     aliveSet.clear()
     for (const id of heroIds) aliveSet.add(id)
     for (const id of heroIds) {
-      const fame = this.fameMap.get(id)!
+      const fame = this.fameMap.get(id)
+      if (!fame) continue
       const hero = em.getComponent<HeroComponent>(id, 'hero')
       if (!hero) continue
 
