@@ -266,7 +266,6 @@ export class DiplomacyVisualSystem {
   private renderBubbles(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {
     const tileSize = 16 * zoom;
     for (const b of this.bubbles) {
-      const age = b.startTick >= 0 ? (this.bubbles.length > 0 ? 1 : 0) : 0;
       const elapsed = b.startTick >= 0 ? Math.max(0, BUBBLE_DURATION - 1) : 0;
       const progress = b.startTick >= 0 ? Math.min(1, elapsed / BUBBLE_DURATION) : 0;
       const floatY = progress * 30 * zoom;

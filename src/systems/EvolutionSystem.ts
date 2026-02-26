@@ -2,7 +2,7 @@
 
 import { EntityManager, EntityId, CreatureComponent, PositionComponent, NeedsComponent } from '../ecs/Entity'
 import { World } from '../game/World'
-import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
+import { TileType } from '../utils/Constants'
 import { EventLog } from './EventLog'
 
 // --- Interfaces ---

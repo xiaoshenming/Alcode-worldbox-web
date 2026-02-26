@@ -1,7 +1,7 @@
 // World Events & Prophecies - dramatic random global events
 // v0.95
 
-import { EntityManager, PositionComponent, CreatureComponent, NeedsComponent, AIComponent, RenderComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
 import { World } from '../game/World'
 import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { CivManager } from '../civilization/CivManager'

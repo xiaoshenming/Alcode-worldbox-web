@@ -22,8 +22,6 @@ const CHECK_INTERVAL = 4000
 const SPAWN_CHANCE = 0.002
 const MAX_LABYRINTHS = 12
 
-const TYPES: LabyrinthType[] = ['cave', 'hedge', 'stone', 'ice']
-
 export class WorldLabyrinthSystem {
   private labyrinths: Labyrinth[] = []
   private nextId = 1

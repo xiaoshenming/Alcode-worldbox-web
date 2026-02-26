@@ -1,7 +1,7 @@
 // Creature Pilgrimage System (v3.36) - Creatures undertake sacred journeys
 // Pilgrims travel to holy sites, gaining wisdom and spiritual power
 
-import { EntityManager, CreatureComponent, PositionComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent } from '../ecs/Entity'
 
 export type PilgrimageGoal = 'sacred_mountain' | 'ancient_temple' | 'holy_spring' | 'ancestor_grave' | 'world_edge'
 

@@ -98,7 +98,6 @@ export class MiniGameSystem {
   private active: ActiveEvent | null = null;
   private history: HistoryEntry[] = [];
   private nextTriggerTick: number;
-  private lastTimestamp: number = 0;
 
   constructor() {
     this.nextTriggerTick = MIN_INTERVAL + Math.floor(Math.random() * (MAX_INTERVAL - MIN_INTERVAL));

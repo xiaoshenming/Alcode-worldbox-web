@@ -1,7 +1,7 @@
 // Creature Sleepwalk System (v3.29) - Creatures sleepwalk at night
 // Some creatures wander aimlessly during night ticks, risking danger
 
-import { EntityManager, CreatureComponent, PositionComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent } from '../ecs/Entity'
 
 export interface Sleepwalker {
   id: number

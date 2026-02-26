@@ -1,7 +1,7 @@
 // Creature Barter System (v3.11) - Barter trading between creatures
 // Creatures exchange surplus resources with others for items they need
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 
 export type BarterItem = 'food' | 'wood' | 'stone' | 'gold' | 'herb' | 'gem'
 

@@ -25,8 +25,6 @@ const MAX_SANCTIONS = 10
 const SANCTION_DURATION = 8000
 const HOSTILITY_THRESHOLD = -40
 
-const SEVERITY_LEVELS: SanctionSeverity[] = ['light', 'moderate', 'severe', 'total']
-
 const SEVERITY_IMPACT: Record<SanctionSeverity, number> = {
   light: 0.1,
   moderate: 0.25,

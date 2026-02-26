@@ -130,10 +130,7 @@ export class ReligionSpreadSystem {
     ctx.font = `${Math.max(12, zoom * 0.8)}px serif`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    for (const [eid, temple] of this.temples) {
-      const pos = ctx.canvas.parentElement
-        ? undefined
-        : undefined
+    for (const [_eid, _temple] of this.temples) {
       // We need position from EM but don't have it here - use cached
     }
     ctx.restore()

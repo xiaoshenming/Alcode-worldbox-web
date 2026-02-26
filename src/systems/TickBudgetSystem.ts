@@ -134,13 +134,11 @@ export class TickBudgetSystem {
 // --- Spatial Hash ---
 
 export class SpatialHash {
-  private cellSize: number;
   private invCell: number;
   private cells: Map<string, number[]> = new Map();
   private resultSet: Set<number> = new Set();
 
   constructor(cellSize: number = 16) {
-    this.cellSize = cellSize;
     this.invCell = 1 / cellSize;
   }
 

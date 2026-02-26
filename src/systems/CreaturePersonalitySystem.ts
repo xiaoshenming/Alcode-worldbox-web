@@ -42,9 +42,6 @@ export class CreaturePersonalitySystem {
   private panelY = 65
   private scrollY = 0
   private selectedEntity = -1
-  private dragging = false
-  private dragOX = 0
-  private dragOY = 0
   private tickCounter = 0
 
   /* ── 公共 API ── */

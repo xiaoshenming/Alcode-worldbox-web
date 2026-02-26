@@ -1,7 +1,7 @@
 // Creature Foraging System (v2.94) - Creatures forage for wild food based on terrain and season
 // Different terrains yield different food types; foraging skill improves over time
 
-import { EntityManager, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent } from '../ecs/Entity'
 import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
 

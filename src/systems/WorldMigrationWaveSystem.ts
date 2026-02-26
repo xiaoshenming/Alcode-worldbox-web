@@ -5,7 +5,7 @@
  * to more hospitable areas, with a snowball effect along the path.
  */
 
-import { EntityManager, EntityId, PositionComponent, AIComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent, AIComponent } from '../ecs/Entity'
 import { World } from '../game/World'
 import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { isWalkable } from '../utils/Pathfinding'

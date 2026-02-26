@@ -55,9 +55,6 @@ export class MonumentSystem {
   private panelX = 110
   private panelY = 55
   private scrollY = 0
-  private dragging = false
-  private dragOX = 0
-  private dragOY = 0
 
   /* ── 公共 API ── */
 

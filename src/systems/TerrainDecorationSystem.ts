@@ -12,8 +12,6 @@ const TERRAIN_SAND = 2;
 const TERRAIN_GRASS = 3;
 const TERRAIN_FOREST = 4;
 const TERRAIN_MOUNTAIN = 5;
-const TERRAIN_SNOW = 6;
-const TERRAIN_LAVA = 7;
 
 const TILE_SIZE = 16;
 const MAX_RIPPLES = 100;

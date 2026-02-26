@@ -1,10 +1,8 @@
 import { World } from '../game/World'
 import { CivManager } from '../civilization/CivManager'
-import { Civilization } from '../civilization/Civilization'
 import {
   EntityManager,
   PositionComponent,
-  CreatureComponent,
   AIComponent,
 } from '../ecs/Entity'
 import { CivMemberComponent } from '../civilization/Civilization'

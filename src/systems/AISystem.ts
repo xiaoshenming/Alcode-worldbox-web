@@ -20,7 +20,6 @@ export class AISystem {
   private spatialHash: SpatialHashSystem
   private breedCooldown: Map<EntityId, number> = new Map()
   private resources: ResourceSystem | null = null
-  private civManager: CivManager | null = null
   /** Batch index for staggered updates — only process 1/3 of entities per tick */
   private batchIndex: number = 0
 
@@ -36,8 +35,8 @@ export class AISystem {
     this.resources = resources
   }
 
-  setCivManager(civManager: CivManager): void {
-    this.civManager = civManager
+  setCivManager(_civManager: CivManager): void {
+    // stored for future use
   }
 
   update(): void {

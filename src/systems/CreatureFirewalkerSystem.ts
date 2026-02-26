@@ -19,7 +19,6 @@ const CHECK_INTERVAL = 2600
 const ASSIGN_CHANCE = 0.002
 const MAX_FIREWALKERS = 8
 
-const MASTERY_LEVELS: FirewalkerMastery[] = ['novice', 'adept', 'master', 'grandmaster']
 const MASTERY_RESISTANCE: Record<FirewalkerMastery, number> = {
   novice: 20, adept: 50, master: 80, grandmaster: 100,
 }

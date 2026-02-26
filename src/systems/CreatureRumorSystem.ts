@@ -1,7 +1,7 @@
 // Creature Rumor System (v3.07) - Rumors spread between creatures
 // Gossip about events, other creatures, and dangers propagates through social networks
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 
 export type RumorTopic = 'danger' | 'treasure' | 'betrayal' | 'hero' | 'monster' | 'miracle'
 

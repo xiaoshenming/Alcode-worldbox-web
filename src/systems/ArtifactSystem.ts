@@ -1,4 +1,4 @@
-import { EntityManager, EntityId, PositionComponent, RenderComponent, ArtifactComponent, InventoryComponent, HeroComponent, CreatureComponent, NeedsComponent, AIComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent, RenderComponent, ArtifactComponent, InventoryComponent, CreatureComponent, NeedsComponent, AIComponent } from '../ecs/Entity'
 import { World } from '../game/World'
 import { ParticleSystem } from './ParticleSystem'
 import { EventLog } from './EventLog'

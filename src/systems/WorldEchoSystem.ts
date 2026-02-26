@@ -23,7 +23,6 @@ const CHECK_INTERVAL = 500
 const MAX_ECHOES = 20
 const SPAWN_CHANCE = 0.02
 const INTENSITY_DECAY = 5
-const SPREAD_RATE = 3
 
 const ECHO_CONFIG: Record<EchoSource, { intensity: [number, number]; maxRadius: [number, number]; speed: number }> = {
   battle: { intensity: [60, 90], maxRadius: [15, 30], speed: 4 },

@@ -1,7 +1,7 @@
 // Creature Handicraft System (v3.46) - Creatures craft decorative items and tools
 // Crafted items boost prestige and can be traded between civilizations
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 
 export type CraftType = 'jewelry' | 'pottery' | 'weapon' | 'textile' | 'sculpture' | 'instrument'
 

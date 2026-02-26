@@ -2,7 +2,7 @@
 // Bartering, negotiation, appraisal skills improve civ economy
 // Skilled traders generate more resources from trade routes
 
-import { EntityManager, EntityId, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, EntityId } from '../ecs/Entity'
 
 export type TradeSkillType = 'bartering' | 'negotiation' | 'appraisal' | 'logistics' | 'diplomacy'
 

@@ -1,7 +1,7 @@
 // World Seasonal Disaster System (v2.22) - Season-specific natural disasters
 // Different seasons trigger different types of disasters with varying severity
 
-import { EntityManager, EntityId, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent, NeedsComponent } from '../ecs/Entity'
 import { EventLog } from './EventLog'
 
 export type SeasonType = 'spring' | 'summer' | 'autumn' | 'winter'

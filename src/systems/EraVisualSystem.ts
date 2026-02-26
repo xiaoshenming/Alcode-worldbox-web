@@ -1,7 +1,5 @@
 // Era Visual System - changes global visual style based on the most advanced civilization's era
 
-import { TILE_SIZE } from '../utils/Constants'
-
 export type EraName = 'stone' | 'bronze' | 'iron' | 'medieval' | 'renaissance'
 
 interface EraVisualStyle {

@@ -1,7 +1,7 @@
 // Creature Superstition System (v2.83) - Creatures develop superstitious beliefs based on events
 // Positive/negative events near landmarks create superstitions that affect creature behavior
 
-import { EntityManager, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent } from '../ecs/Entity'
 
 export type SuperstitionType = 'lucky_spot' | 'cursed_ground' | 'sacred_tree' | 'omen_bird' | 'forbidden_path' | 'blessed_water'
 

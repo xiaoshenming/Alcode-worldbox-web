@@ -50,7 +50,7 @@ const RARITY_PARTICLES: Record<AchievementRarity, number> = {
 const CATEGORY_LABELS: Record<AchievementCategory, string> = {
   explore: '探索', war: '战争', build: '建设', disaster: '灾难', special: '特殊'
 }
-const CARD_W = 280, CARD_H = 72, CARD_PAD = 8
+const CARD_W = 280, CARD_H = 72
 const ENTER_TICKS = 20, STAY_TICKS = 180, EXIT_TICKS = 20
 const PROGRESS_BAR_H = 6, TRACKER_W = 200, TRACKER_ITEM_H = 32
 

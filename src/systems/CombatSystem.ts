@@ -1,4 +1,4 @@
-import { EntityManager, EntityId, PositionComponent, NeedsComponent, CreatureComponent, RenderComponent, AIComponent, HeroComponent, getHeroTitle } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent, NeedsComponent, CreatureComponent, RenderComponent, HeroComponent, getHeroTitle } from '../ecs/Entity'
 import { BuildingComponent, BuildingType, CivMemberComponent } from '../civilization/Civilization'
 import { CivManager } from '../civilization/CivManager'
 import { ParticleSystem } from './ParticleSystem'

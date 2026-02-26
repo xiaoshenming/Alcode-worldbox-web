@@ -3,8 +3,8 @@
  * Purple/dark overlay, damages creatures, purifiable by religion/god powers.
  * Spread rate modulated by weather and season.
  */
-import { EntityManager, EntityId, PositionComponent, NeedsComponent } from '../ecs/Entity'
-import { WORLD_WIDTH, WORLD_HEIGHT, TILE_SIZE } from '../utils/Constants'
+import { EntityManager, PositionComponent, NeedsComponent } from '../ecs/Entity'
+import { WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 
 interface WorldData { tiles: number[][]; width: number; height: number; tick: number }
 interface CorruptionSource { x: number; y: number; strength: number; tick: number }

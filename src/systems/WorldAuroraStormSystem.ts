@@ -2,7 +2,7 @@
 // Aurora storms boost magical abilities but can disrupt navigation
 
 import { World } from '../game/World'
-import { EntityManager, PositionComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 
 export interface AuroraStorm {
   id: number

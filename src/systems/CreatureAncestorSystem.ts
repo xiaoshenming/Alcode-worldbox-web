@@ -1,7 +1,7 @@
 // Creature Ancestor System (v2.16) - Creatures worship legendary ancestors
 // Dead heroes become ancestor spirits that buff their descendants and civilization
 
-import { EntityManager, EntityId, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
 import { CivMemberComponent } from '../civilization/Civilization'
 import { EventLog } from './EventLog'
 

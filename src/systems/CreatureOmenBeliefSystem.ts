@@ -1,7 +1,7 @@
 // Creature Omen Belief System (v3.41) - Creatures interpret natural events as omens
 // Omens influence morale, migration decisions, and pre-battle rituals
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 
 export type OmenType = 'good_harvest' | 'dark_sky' | 'animal_sign' | 'water_omen' | 'fire_portent' | 'wind_whisper'
 

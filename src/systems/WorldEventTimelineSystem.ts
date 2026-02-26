@@ -61,8 +61,6 @@ export class WorldEventTimelineSystem {
   private visible = false;
   private scrollOffset = 0;
   private hoveredIndex = -1;
-  private lastMouseX = 0;
-  private lastMouseY = 0;
 
   /** 创建世界事件时间轴系统 */
   constructor() {
@@ -187,8 +185,6 @@ export class WorldEventTimelineSystem {
    * @param screenH - 屏幕高度
    */
   handleMouseMove(x: number, y: number, screenW: number, screenH: number): void {
-    this.lastMouseX = x;
-    this.lastMouseY = y;
     if (!this.visible) {
       this.hoveredIndex = -1;
       return;

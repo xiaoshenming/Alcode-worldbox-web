@@ -1,4 +1,3 @@
-import { WeatherType } from './WeatherSystem'
 
 /** 天气控制面板 - 手动控制天气类型、强度、持续时间 */
 

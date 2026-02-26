@@ -32,8 +32,6 @@ const INTENSITY_BY_SOURCE: Record<MiasmaSource, [number, number]> = {
   plague: [45, 75],
 }
 
-const SOURCES: MiasmaSource[] = ['swamp', 'battlefield', 'pollution', 'cursed', 'volcanic', 'plague']
-
 export class WorldMiasmaSystem {
   private zones: MiasmaZone[] = []
   private nextId = 1

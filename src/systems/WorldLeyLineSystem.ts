@@ -4,7 +4,7 @@
  * Energy pulses over world age; lines render as glowing bezier curves.
  */
 
-import { EntityManager, EntityId, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent, CreatureComponent } from '../ecs/Entity'
 import { WORLD_WIDTH, WORLD_HEIGHT, TILE_SIZE } from '../utils/Constants'
 
 /** A single ley line defined by bezier control points */

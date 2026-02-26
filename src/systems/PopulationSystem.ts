@@ -2,7 +2,7 @@
 // population caps, baby booms, and famine for each civilization.
 
 import { EntityManager, CreatureComponent, NeedsComponent, PositionComponent } from '../ecs/Entity'
-import { CivMemberComponent, Civilization, BuildingType, BuildingComponent } from '../civilization/Civilization'
+import { CivMemberComponent, Civilization } from '../civilization/Civilization'
 import { CivManager } from '../civilization/CivManager'
 import { World } from '../game/World'
 import { ParticleSystem } from './ParticleSystem'

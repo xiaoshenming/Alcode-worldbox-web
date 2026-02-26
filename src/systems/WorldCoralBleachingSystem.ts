@@ -21,7 +21,6 @@ const CHECK_INTERVAL = 4000
 const SPAWN_CHANCE = 0.002
 const MAX_EVENTS = 10
 
-const STAGE_ORDER: BleachingStage[] = ['healthy', 'stressed', 'bleaching', 'dead']
 const STAGE_SEVERITY: Record<BleachingStage, number> = {
   healthy: 0, stressed: 30, bleaching: 65, dead: 100,
 }

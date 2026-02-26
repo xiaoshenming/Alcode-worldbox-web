@@ -1,7 +1,7 @@
 // Creature Oath System (v2.96) - Creatures swear oaths of loyalty, vengeance, or protection
 // Oaths bind creatures to specific behaviors and grant mood/combat bonuses
 
-import { EntityManager, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 
 export type OathType = 'loyalty' | 'vengeance' | 'protection' | 'pilgrimage' | 'silence' | 'service'
 

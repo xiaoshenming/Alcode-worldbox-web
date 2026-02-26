@@ -1,7 +1,7 @@
 // World Ancient Ruin System (v2.25) - Explorable ancient ruins scattered across the world
 // Creatures discover ruins and gain treasures, knowledge, or face dangers
 
-import { EntityManager, EntityId, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent, NeedsComponent } from '../ecs/Entity'
 import { EventLog } from './EventLog'
 
 export type RuinType = 'temple' | 'library' | 'vault' | 'tomb' | 'fortress'

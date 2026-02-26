@@ -2,7 +2,7 @@
 // Ambitions: become leader, build monument, explore unknown, master craft, defeat rival
 // Fulfilling ambitions grants permanent buffs and fame
 
-import { EntityManager, EntityId, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, EntityId } from '../ecs/Entity'
 
 export type AmbitionType = 'become_leader' | 'build_monument' | 'explore_unknown' | 'master_craft' | 'defeat_rival' | 'amass_wealth'
 

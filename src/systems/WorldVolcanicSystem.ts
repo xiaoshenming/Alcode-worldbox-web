@@ -3,7 +3,7 @@
 // Eruptions create lava, destroy terrain, and affect nearby creatures
 
 import { World } from '../game/World'
-import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
+import { TileType } from '../utils/Constants'
 
 export type VolcanoState = 'dormant' | 'rumbling' | 'active' | 'erupting' | 'cooling'
 

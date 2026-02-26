@@ -46,7 +46,6 @@ const PLAGUE_NAMES_PREFIX = ['黑', '红', '白', '灰', '暗', '血', '影', '�
 const PLAGUE_NAMES_SUFFIX = ['热病', '瘟疫', '腐蚀', '枯萎', '疫症', '毒雾']
 
 const PANEL_W = 440, PANEL_H = 400, HEADER_H = 36, ROW_H = 72
-const UPDATE_INTERVAL = 120
 const MUTATION_CHECK_INTERVAL = 600
 const MAX_STRAINS = 20
 
@@ -65,9 +64,6 @@ export class PlagueMutationSystem {
   private panelX = 120
   private panelY = 60
   private scrollY = 0
-  private dragging = false
-  private dragOX = 0
-  private dragOY = 0
   private tickCounter = 0
 
   /* ── 公共 API ── */

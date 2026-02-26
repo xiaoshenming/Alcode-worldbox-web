@@ -1,7 +1,7 @@
 // Fog of War & Exploration System
 // Each civilization maintains its own fog map tracking unexplored, explored, and visible tiles
 
-import { EntityManager, EntityId, PositionComponent, CreatureComponent } from '../ecs/Entity';
+import { EntityManager, PositionComponent } from '../ecs/Entity';
 import { CivManager } from '../civilization/CivManager';
 import { CivMemberComponent } from '../civilization/Civilization';
 import { ParticleSystem } from '../systems/ParticleSystem';

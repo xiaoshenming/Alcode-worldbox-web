@@ -1,7 +1,7 @@
 // Creature Constellation System (v3.103) - Creatures study star patterns
 // Stargazers identify constellations that grant cultural and navigation bonuses
 
-import { EntityManager, EntityId, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, EntityId } from '../ecs/Entity'
 
 export type ConstellationType = 'warrior' | 'harvest' | 'voyage' | 'wisdom' | 'fortune'
 

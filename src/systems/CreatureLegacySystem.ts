@@ -1,7 +1,7 @@
 // Creature Legacy System (v2.99) - Creatures leave lasting legacies after death
 // Great deeds are remembered, influencing descendants and civilization culture
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 
 export type LegacyType = 'heroic' | 'scholarly' | 'artistic' | 'villainous' | 'diplomatic' | 'tragic'
 

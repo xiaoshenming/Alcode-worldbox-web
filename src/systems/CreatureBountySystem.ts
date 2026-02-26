@@ -1,7 +1,7 @@
 // Creature Bounty System (v2.11) - Civilizations post bounties on enemy creatures
 // Hunters pursue bounty targets for gold rewards, creating emergent conflict
 
-import { EntityManager, EntityId, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent, NeedsComponent } from '../ecs/Entity'
 import { CivMemberComponent } from '../civilization/Civilization'
 import { EventLog } from './EventLog'
 

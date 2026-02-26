@@ -1,7 +1,7 @@
 // Creature Dream System (v2.86) - Creatures dream during rest, affecting mood and behavior
 // Dreams can be prophetic, nightmarish, or nostalgic, influencing next-day actions
 
-import { EntityManager, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 
 export type DreamType = 'prophetic' | 'nightmare' | 'nostalgic' | 'peaceful' | 'adventure' | 'warning'
 

@@ -1,7 +1,7 @@
 // Creature Echolocation System (v3.64) - Creatures develop sonar-like sensing
 // Echolocation helps navigate darkness, detect hidden enemies, and find resources
 
-import { EntityManager, CreatureComponent, PositionComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent } from '../ecs/Entity'
 
 export type EchoAbility = 'basic' | 'refined' | 'advanced' | 'master'
 

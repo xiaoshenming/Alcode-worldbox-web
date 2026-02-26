@@ -1,7 +1,7 @@
 // World Fog Bank System (v3.55) - Dense fog banks form along coastlines
 // Fog reduces visibility, slows creature movement, and can hide dangers
 
-import { EntityManager, PositionComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
 

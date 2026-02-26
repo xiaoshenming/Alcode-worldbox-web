@@ -1,9 +1,8 @@
-import { EntityManager, EntityId, PositionComponent, AIComponent, CreatureComponent, NomadComponent, NeedsComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent, AIComponent, CreatureComponent, NomadComponent } from '../ecs/Entity'
 import { World } from '../game/World'
 import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { isWalkable } from '../utils/Pathfinding'
 import { CivManager } from '../civilization/CivManager'
-import { CivMemberComponent } from '../civilization/Civilization'
 import { ParticleSystem } from './ParticleSystem'
 import { EventLog } from './EventLog'
 

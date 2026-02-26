@@ -24,7 +24,6 @@ export class CaravanSystem {
   private spawnTimers: Map<string, number> = new Map() // "fromCivId:toCivId" -> tick countdown
 
   update(civManager: CivManager, em: EntityManager, world: World, particles: ParticleSystem): void {
-    const tick = world.tick
 
     // Spawn new caravans from active trade routes
     for (const [, civ] of civManager.civilizations) {

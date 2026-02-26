@@ -1,6 +1,6 @@
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
-import { Civilization, TECH_TREE, CULTURE_ICONS, RELIGION_ICONS, RELIGION_NAMES } from '../civilization/Civilization'
+import { TECH_TREE, CULTURE_ICONS, RELIGION_ICONS, RELIGION_NAMES } from '../civilization/Civilization'
 
 interface PopSnapshot {
   tick: number

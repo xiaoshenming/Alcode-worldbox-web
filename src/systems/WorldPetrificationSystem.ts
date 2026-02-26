@@ -3,7 +3,7 @@
 
 import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
-import { EntityManager, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent } from '../ecs/Entity'
 
 export interface PetrificationZone {
   id: number

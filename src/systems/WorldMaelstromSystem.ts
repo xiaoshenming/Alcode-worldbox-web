@@ -22,7 +22,6 @@ const CHECK_INTERVAL = 600
 const MAX_MAELSTROMS = 6
 const FORM_CHANCE = 0.02
 const PULL_RANGE_MULT = 2.5
-const DAMAGE_PER_TICK = 3
 const MAX_AGE = 8000
 const MIN_DEEP_WATER = 12
 

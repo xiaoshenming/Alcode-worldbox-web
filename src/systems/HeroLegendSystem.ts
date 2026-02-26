@@ -1,6 +1,6 @@
 // Hero Legend System - tracks hero fame, legendary deeds, and monuments
 
-import { EntityManager, EntityId, HeroComponent, CreatureComponent, PositionComponent } from '../ecs/Entity'
+import { EntityManager, HeroComponent, CreatureComponent, PositionComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 import { CivMemberComponent } from '../civilization/Civilization'
 import { World } from '../game/World'

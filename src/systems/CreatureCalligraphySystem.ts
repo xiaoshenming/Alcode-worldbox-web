@@ -1,7 +1,7 @@
 // Creature Calligraphy System (v3.54) - Creatures develop writing skills
 // Calligraphy records history, boosts culture, and can be traded as art
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 
 export type ScriptStyle = 'pictographic' | 'cuneiform' | 'runic' | 'flowing' | 'geometric' | 'symbolic'
 

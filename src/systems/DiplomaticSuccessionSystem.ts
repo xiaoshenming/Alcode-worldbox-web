@@ -1,7 +1,7 @@
 // Diplomatic Succession System (v3.03) - Leadership succession in civilizations
 // When leaders die or are deposed, succession crises can trigger civil wars
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 
 export type SuccessionType = 'hereditary' | 'election' | 'conquest' | 'council' | 'divine_right'
 export type CrisisStatus = 'stable' | 'contested' | 'civil_war' | 'resolved'

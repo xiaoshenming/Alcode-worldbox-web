@@ -1,7 +1,7 @@
 // Creature Homesickness System (v3.49) - Creatures feel longing when far from home
 // Homesick creatures lose morale and may attempt to return to their village
 
-import { EntityManager, CreatureComponent, PositionComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent } from '../ecs/Entity'
 
 export interface HomesicknessState {
   id: number

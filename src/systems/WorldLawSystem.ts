@@ -70,7 +70,6 @@ export class WorldLawSystem {
   private visible = false
   private categories: LawCategory[]
   private activeTab = 0
-  private draggingParam: LawParam | null = null
 
   constructor() {
     this.categories = buildCategories()
@@ -110,12 +109,10 @@ export class WorldLawSystem {
   handleKey(key: string): boolean {
     if (key === 'w' || key === 'W') {
       this.visible = !this.visible
-      this.draggingParam = null
       return true
     }
     if (key === 'Escape' && this.visible) {
       this.visible = false
-      this.draggingParam = null
       return true
     }
     return false
@@ -132,7 +129,6 @@ export class WorldLawSystem {
     // 面板外点击关闭
     if (x < px || x > px + PANEL_W || y < py || y > py + PANEL_H) {
       this.visible = false
-      this.draggingParam = null
       return true
     }
     const lx = x - px
@@ -165,7 +161,6 @@ export class WorldLawSystem {
         const ratio = clamp((lx - sliderStartX) / sliderW, 0, 1)
         const p = cat.params[i]
         p.value = Math.round((p.min + ratio * (p.max - p.min)) * 100) / 100
-        this.draggingParam = p
         return true
       }
     }

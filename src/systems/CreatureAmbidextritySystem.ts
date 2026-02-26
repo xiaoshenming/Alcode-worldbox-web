@@ -1,7 +1,7 @@
 // Creature Ambidextrity System (v3.44) - Some creatures develop dual-hand proficiency
 // Ambidextrous creatures gain combat and crafting bonuses
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 
 export type HandDominance = 'left' | 'right' | 'ambidextrous'
 

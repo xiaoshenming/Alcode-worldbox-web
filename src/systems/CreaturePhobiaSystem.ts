@@ -1,7 +1,7 @@
 // Creature Phobia System (v3.14) - Creatures develop phobias
 // Fears affect creature movement and decision-making behavior
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 
 export type FearType = 'water' | 'fire' | 'heights' | 'darkness' | 'crowds' | 'storms'
 

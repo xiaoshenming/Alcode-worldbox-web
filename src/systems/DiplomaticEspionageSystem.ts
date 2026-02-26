@@ -1,7 +1,7 @@
 // Diplomatic Espionage System (v2.24) - Civilizations send spies to rival civs
 // Spies gather intelligence, sabotage, or steal technology
 
-import { EntityManager, EntityId, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent } from '../ecs/Entity'
 import { EventLog } from './EventLog'
 
 export type SpyMission = 'intel' | 'sabotage' | 'steal_tech' | 'assassinate'

@@ -44,7 +44,7 @@ export class DiplomaticExileSystem {
   private exileCreatures(em: EntityManager, civManager: { civilizations: Map<number, any> }, tick: number): void {
     if (this.exiles.filter(e => e.status === 'wandering').length >= MAX_EXILES) return
     const civs = [...civManager.civilizations.entries()]
-    for (const [civId, civ] of civs) {
+    for (const [civId, _civ] of civs) {
       if (Math.random() > 0.04) continue
       const creatures = em.getEntitiesWithComponents('creature', 'civMember')
       for (const id of creatures) {

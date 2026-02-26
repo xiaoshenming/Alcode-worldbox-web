@@ -208,7 +208,6 @@ export class WorldHeatmapSystem {
     screenW: number,
     screenH: number,
   ): void {
-    const tilePixel = CELL_SIZE * zoom;
     const step = this.renderStep;
 
     // 可见区域对应的网格范围

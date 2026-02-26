@@ -2,7 +2,7 @@
 // triggers revolts and civil-war splits when loyalty drops too low.
 
 import { CivManager } from '../civilization/CivManager'
-import { EntityManager, PositionComponent, CreatureComponent, NeedsComponent, HeroComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent } from '../ecs/Entity'
 import { BuildingComponent, BuildingType, Civilization, CivMemberComponent, createCivilization } from '../civilization/Civilization'
 import { World } from '../game/World'
 import { ParticleSystem } from './ParticleSystem'

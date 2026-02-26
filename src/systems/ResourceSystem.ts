@@ -1,4 +1,4 @@
-import { EntityManager, EntityId, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent } from '../ecs/Entity'
 import { World } from '../game/World'
 import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { CivMemberComponent } from '../civilization/Civilization'

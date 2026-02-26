@@ -1,7 +1,7 @@
 // World Relic System (v2.15) - Ancient relics scattered across the world
 // Relics provide area-of-effect buffs to nearby creatures and civilizations
 
-import { EntityManager, EntityId, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
 import { CivMemberComponent } from '../civilization/Civilization'
 import { EventLog } from './EventLog'
 

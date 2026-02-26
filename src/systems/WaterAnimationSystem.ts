@@ -46,7 +46,6 @@ export class WaterAnimationSystem {
   // OffscreenCanvas cache for water effects
   private waterCache: OffscreenCanvas | null = null
   private waterCacheCtx: OffscreenCanvasRenderingContext2D | null = null
-  private cacheTime: number = -1
   private cacheBounds: { startX: number; startY: number; endX: number; endY: number; camX: number; camY: number; zoom: number } | null = null
   private readonly CACHE_INTERVAL = 5 // re-render water every N frames (raised from 3)
   private frameCounter: number = 0
@@ -176,7 +175,6 @@ export class WaterAnimationSystem {
       }
 
       this.cacheBounds = { startX: x0, startY: y0, endX: x1, endY: y1, camX: cameraX, camY: cameraY, zoom }
-      this.cacheTime = time
     }
 
     // Blit cached water effects

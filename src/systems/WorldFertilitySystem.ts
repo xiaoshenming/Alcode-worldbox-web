@@ -3,7 +3,6 @@
 // Fertility changes over time based on usage, weather, and disasters
 
 const FERTILITY_UPDATE_INTERVAL = 600
-const DECAY_RATE = 0.02
 const REGEN_RATE = 0.01
 const MAX_FERTILITY = 100
 const MIN_FERTILITY = 0

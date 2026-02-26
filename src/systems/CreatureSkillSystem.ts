@@ -77,8 +77,6 @@ for (const s of SKILL_DEFS) SKILL_MAP.set(s.id, s)
 
 const PANEL_W = 460, PANEL_H = 420, HEADER_H = 36, TAB_H = 30
 
-function clamp(v: number, lo: number, hi: number): number { return v < lo ? lo : v > hi ? hi : v }
-
 export class CreatureSkillSystem {
   private data = new Map<number, CreatureSkillData>()
   private visible = false

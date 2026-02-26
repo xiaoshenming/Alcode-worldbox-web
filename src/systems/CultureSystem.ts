@@ -116,7 +116,6 @@ function clamp(v: number, lo: number, hi: number): number {
 export class CultureSystem {
   private cultures: Map<number, Culture> = new Map()
   private languages: LanguageFamily[] = [...BASE_LANGUAGES]
-  private nextLangId = BASE_LANGUAGES.length
 
   constructor() {}
 

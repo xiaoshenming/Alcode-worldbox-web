@@ -2,7 +2,7 @@
 // Sounds from battles, construction, and nature affect creature behavior
 // Loud areas cause stress, quiet areas promote rest and healing
 
-import { EntityManager, EntityId, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent, CreatureComponent } from '../ecs/Entity'
 
 export type SoundType = 'battle' | 'construction' | 'nature' | 'music' | 'thunder' | 'eruption'
 
@@ -37,12 +37,9 @@ export class WorldAcousticSystem {
   private sounds: SoundSource[] = []
   private lastCheck = 0
   private lastEffect = 0
-  private worldWidth = 0
-  private worldHeight = 0
 
-  setWorldSize(w: number, h: number): void {
-    this.worldWidth = w
-    this.worldHeight = h
+  setWorldSize(_w: number, _h: number): void {
+    // stored for future use
   }
 
   update(dt: number, em: EntityManager, tick: number): void {

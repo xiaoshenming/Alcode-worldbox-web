@@ -1,8 +1,7 @@
 // Creature Reputation System (v2.23) - Individual creature reputation
 // Creatures build reputation through actions, affecting social interactions
 
-import { EntityManager, EntityId, PositionComponent, CreatureComponent } from '../ecs/Entity'
-import { EventLog } from './EventLog'
+import { EntityManager, EntityId, PositionComponent } from '../ecs/Entity'
 
 export type ReputationTier = 'infamous' | 'disliked' | 'neutral' | 'respected' | 'legendary'
 

@@ -2,8 +2,8 @@
 // Spies, tributes, casus belli, and alliance warfare
 
 import { CivManager } from '../civilization/CivManager'
-import { EntityManager, PositionComponent, CreatureComponent } from '../ecs/Entity'
-import { Civilization, BuildingComponent, BuildingType, CivMemberComponent } from '../civilization/Civilization'
+import { EntityManager } from '../ecs/Entity'
+import { Civilization, BuildingComponent, CivMemberComponent } from '../civilization/Civilization'
 import { World } from '../game/World'
 import { ParticleSystem } from './ParticleSystem'
 import { EventLog } from './EventLog'

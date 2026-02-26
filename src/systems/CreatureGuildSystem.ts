@@ -1,7 +1,7 @@
 // Creature Guild System (v2.21) - Creatures of same profession form guilds
 // Guilds provide shared resource bonuses and skill boosts to members
 
-import { EntityManager, EntityId, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent } from '../ecs/Entity'
 import { EventLog } from './EventLog'
 
 export type GuildType = 'warriors' | 'hunters' | 'builders' | 'healers' | 'merchants'

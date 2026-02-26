@@ -1,7 +1,7 @@
 // Creature Divination System (v3.02) - Creatures practice divination to predict events
 // Shamans and elders read signs from nature, influencing tribe decisions
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 
 export type DivinationType = 'stars' | 'bones' | 'flames' | 'water' | 'dreams' | 'birds'
 

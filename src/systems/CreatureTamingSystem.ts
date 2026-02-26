@@ -48,8 +48,6 @@ const TAME_CHECK_INTERVAL = 30
 
 function clamp(v: number, lo: number, hi: number): number { return v < lo ? lo : v > hi ? hi : v }
 
-let nextTameId = 1
-
 export class CreatureTamingSystem {
   private records: TameRecord[] = []
   private visible = false

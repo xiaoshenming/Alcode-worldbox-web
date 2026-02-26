@@ -22,12 +22,6 @@ const MIN_DISTANCE = 25
 
 const BLESSING_TYPES: SacredGrove['blessingType'][] = ['healing', 'wisdom', 'strength', 'fertility', 'protection']
 
-const GROVE_NAMES = [
-  'Whispering Glade', 'Moonlit Hollow', 'Ancient Sanctuary',
-  'Spirit Garden', 'Verdant Heart', 'Twilight Grove',
-  'Starfall Clearing', 'Mystic Thicket', 'Dreamwood',
-]
-
 let nextGroveId = 1
 
 export class WorldSacredGroveSystem {

@@ -2,7 +2,7 @@
 // Hobbies: fishing, painting, stargazing, gardening, storytelling, crafting
 // Creatures with shared hobbies form stronger social bonds
 
-import { EntityManager, EntityId, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent } from '../ecs/Entity'
 
 export type HobbyType = 'fishing' | 'painting' | 'stargazing' | 'gardening' | 'storytelling' | 'crafting'
 

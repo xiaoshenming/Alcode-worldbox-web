@@ -2,7 +2,7 @@
 // Friendships and alliances that cross civilization boundaries
 // Allied creatures help each other in combat and share resources
 
-import { EntityManager, EntityId, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, PositionComponent } from '../ecs/Entity'
 
 export interface PersonalAlliance {
   id: number

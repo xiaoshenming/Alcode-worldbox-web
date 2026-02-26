@@ -1,6 +1,6 @@
 import { EntityManager, EntityId, PositionComponent, RenderComponent, ShipComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
-import { BuildingComponent, BuildingType, CivMemberComponent } from '../civilization/Civilization'
+import { BuildingComponent, BuildingType } from '../civilization/Civilization'
 import { ParticleSystem } from './ParticleSystem'
 import { EventLog } from './EventLog'
 import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'

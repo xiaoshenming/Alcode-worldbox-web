@@ -34,7 +34,6 @@ export class WorldTravertineTerraceSystem {
 
       const x = Math.floor(Math.random() * w)
       const y = Math.floor(Math.random() * h)
-      const tile = world.getTile(x, y)
 
       const nearWater = this.hasAdjacentTile(world, x, y, TileType.SHALLOW_WATER) || this.hasAdjacentTile(world, x, y, TileType.DEEP_WATER)
       const nearMountain = this.hasAdjacentTile(world, x, y, TileType.MOUNTAIN)

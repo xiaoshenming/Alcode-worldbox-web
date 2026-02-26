@@ -1,7 +1,7 @@
 // Creature Night Watch System (v3.10) - Creatures take turns guarding at night
 // Sentries protect villages from nocturnal threats, gaining vigilance skill
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 
 export type WatchShift = 'dusk' | 'midnight' | 'dawn'
 

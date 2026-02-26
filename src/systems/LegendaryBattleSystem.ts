@@ -91,7 +91,7 @@ export class LegendaryBattleSystem {
     // Scan each cell + neighbors for multi-civ clusters
     const visited = this._visited
     visited.clear()
-    for (const [key, cell] of grid) {
+    for (const [key, _cell] of grid) {
       if (visited.has(key)) continue
       visited.add(key)
 

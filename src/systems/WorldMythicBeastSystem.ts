@@ -1,7 +1,7 @@
 // World Mythic Beast System (v2.20) - Legendary creatures roam the world
 // Mythic beasts are powerful entities that terrorize or protect regions
 
-import { EntityManager, EntityId, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent, NeedsComponent } from '../ecs/Entity'
 import { EventLog } from './EventLog'
 
 export type BeastType = 'phoenix' | 'leviathan' | 'behemoth' | 'griffin' | 'hydra'

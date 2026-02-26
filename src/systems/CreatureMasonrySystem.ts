@@ -1,7 +1,7 @@
 // Creature Masonry System (v3.106) - Skilled masons build stone structures
 // Masons improve building durability and create monuments for their civilization
 
-import { EntityManager, EntityId, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, EntityId } from '../ecs/Entity'
 
 export type StoneProject = 'wall' | 'tower' | 'monument' | 'bridge' | 'aqueduct'
 export type ProjectPhase = 'quarrying' | 'shaping' | 'building' | 'complete'

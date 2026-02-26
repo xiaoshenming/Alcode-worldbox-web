@@ -5,7 +5,7 @@
  * 职业提供不同加成，可从 apprentice 升级到 master。
  * 按 Shift+P 查看职业信息面板。
  */
-import { EntityManager, EntityId, CreatureComponent, PositionComponent, GeneticsComponent } from '../ecs/Entity'
+import { EntityManager, EntityId, CreatureComponent, GeneticsComponent } from '../ecs/Entity'
 import { CivMemberComponent } from '../civilization/Civilization'
 import { CivManager } from '../civilization/CivManager'
 

@@ -16,7 +16,6 @@ export interface PermafrostZone {
 const CHECK_INTERVAL = 1200
 const SPAWN_CHANCE = 0.004
 const MAX_ZONES = 12
-const SLOW_FACTOR = 0.15
 const COLD_DAMAGE = 0.08
 
 export class WorldPermafrostSystem {

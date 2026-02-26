@@ -1,7 +1,7 @@
 // World Mangrove System (v3.62) - Mangrove forests grow along tropical coastlines
 // Mangroves protect against storms, nurture marine life, and filter water
 
-import { EntityManager, PositionComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
 

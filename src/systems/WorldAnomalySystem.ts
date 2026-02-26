@@ -1,7 +1,7 @@
 // World Anomaly System (v2.17) - Strange anomalies appear across the world
 // Anomalies warp terrain, mutate creatures, and create unpredictable effects
 
-import { EntityManager, EntityId, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
 import { EventLog } from './EventLog'
 
 export type AnomalyType = 'rift' | 'vortex' | 'mirage' | 'crystal_storm' | 'void_zone'

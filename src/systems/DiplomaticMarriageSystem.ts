@@ -2,7 +2,6 @@
 // Royal, noble, and strategic unions stabilize relations and extend influence
 
 import { EntityManager } from '../ecs/Entity'
-import { Civilization } from '../civilization/Civilization'
 import { CivManager } from '../civilization/CivManager'
 
 export type MarriageType = 'royal' | 'noble' | 'strategic' | 'peace_offering'

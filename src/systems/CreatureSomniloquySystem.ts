@@ -1,7 +1,7 @@
 // Creature Somniloquy System (v3.39) - Creatures talk in their sleep
 // Sleep-talking reveals secrets, prophecies, or nonsense
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 
 export type SleepTalkType = 'secret' | 'prophecy' | 'nonsense' | 'memory' | 'warning' | 'confession'
 

@@ -1,7 +1,7 @@
 // Creature Claustrophobia System (v3.34) - Some creatures fear enclosed spaces
 // Claustrophobic creatures panic near mountains, dense forests, or underground
 
-import { EntityManager, CreatureComponent, PositionComponent, NeedsComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent, NeedsComponent } from '../ecs/Entity'
 
 export interface Claustrophobe {
   id: number

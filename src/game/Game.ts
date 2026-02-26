@@ -870,7 +870,6 @@ export class Game {
   private toolbar: Toolbar
   private infoPanel: InfoPanel
   private creaturePanel: CreaturePanel
-  private eventPanel: EventPanel
   private statsPanel: StatsPanel
   private techTreePanel: TechTreePanel
   private contextMenu: ContextMenu
@@ -909,7 +908,6 @@ export class Game {
   private heroLegendSystem: HeroLegendSystem
   private wonderSystem: WonderSystem
   private toastSystem: ToastSystem
-  private tickBudget: TickBudgetSystem
   private loyaltySystem: LoyaltySystem
   private biomeEvolution: BiomeEvolutionSystem
   private espionageSystem: EspionageSystem
@@ -964,7 +962,6 @@ export class Game {
   private enhancedTooltip: EnhancedTooltipSystem
   private navalCombat: NavalCombatSystem
   private religionSpread: ReligionSpreadSystem
-  private geneticDisplay: GeneticDisplaySystem
   private lodRender: LODRenderSystem
   private buildingVariety: BuildingVarietySystem
   private historyReplay: HistoryReplaySystem
@@ -1781,7 +1778,7 @@ export class Game {
     this.heroLegendSystem = new HeroLegendSystem()
     this.wonderSystem = new WonderSystem()
     this.toastSystem = new ToastSystem()
-    this.tickBudget = new TickBudgetSystem()
+    new TickBudgetSystem()
     this.loyaltySystem = new LoyaltySystem()
     this.biomeEvolution = new BiomeEvolutionSystem()
     this.espionageSystem = new EspionageSystem()
@@ -1978,7 +1975,7 @@ export class Game {
     this.enhancedTooltip = new EnhancedTooltipSystem()
     this.navalCombat = new NavalCombatSystem()
     this.religionSpread = new ReligionSpreadSystem()
-    this.geneticDisplay = new GeneticDisplaySystem()
+    new GeneticDisplaySystem()
     this.lodRender = new LODRenderSystem()
     this.buildingVariety = new BuildingVarietySystem()
     this.historyReplay = new HistoryReplaySystem()
@@ -2756,7 +2753,7 @@ export class Game {
     this.toolbar = new Toolbar('toolbar', this.powers)
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
     this.creaturePanel = new CreaturePanel('creaturePanel', this.em, this.civManager)
-    this.eventPanel = new EventPanel('eventPanel')
+    new EventPanel('eventPanel')
     this.statsPanel = new StatsPanel('statsPanel', this.em, this.civManager)
     this.techTreePanel = new TechTreePanel('techTreePanel', this.civManager)
     this.contextMenu = new ContextMenu('contextMenu')
@@ -5603,7 +5600,7 @@ export class Game {
     this.achievementProgress.render(ctx, this.canvas.width, this.canvas.height)
 
     // Camera animation system (v1.76)
-    const camAnim = this.cameraAnimation.update(
+    this.cameraAnimation.update(
       this.world.tick, this.camera.x, this.camera.y, this.camera.zoom
     )
     this.cameraAnimation.render(ctx, this.canvas.width, this.canvas.height)

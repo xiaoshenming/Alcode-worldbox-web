@@ -2,7 +2,7 @@
 // Great waterfalls, crystal caves, ancient trees, geysers, aurora zones
 // Wonders provide area buffs to nearby creatures and civs
 
-import { EntityManager, EntityId, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent } from '../ecs/Entity'
 import { CivMemberComponent } from '../civilization/Civilization'
 
 export type WonderType = 'waterfall' | 'crystal_cave' | 'ancient_tree' | 'geyser' | 'aurora_zone'
@@ -24,14 +24,6 @@ const BUFF_INTERVAL = 800
 const MAX_WONDERS = 8
 const WONDER_RADIUS = 12
 
-const WONDER_NAMES: Record<WonderType, string[]> = {
-  waterfall: ['Eternal Falls', 'Misty Cascade', 'Thunder Drop'],
-  crystal_cave: ['Prism Grotto', 'Gem Hollow', 'Crystal Deep'],
-  ancient_tree: ['World Tree', 'Elder Oak', 'Life Root'],
-  geyser: ['Steam Spire', 'Hot Spring', 'Earth Breath'],
-  aurora_zone: ['Sky Veil', 'Light Dance', 'Star Curtain'],
-}
-
 const WONDER_LIST: WonderType[] = ['waterfall', 'crystal_cave', 'ancient_tree', 'geyser', 'aurora_zone']
 
 let nextWonderId = 1
@@ -42,7 +34,6 @@ export class WorldNaturalWonderSystem {
   private lastBuff = 0
 
   update(dt: number, em: EntityManager, world: { width: number; height: number; getTile: (x: number, y: number) => number | null }): void {
-    const tick = this.lastBuff + BUFF_INTERVAL  // approximate
     if (Date.now() - this.lastSpawn >= SPAWN_INTERVAL * 16) {
       this.lastSpawn = Date.now()
       this.trySpawnWonder(world)

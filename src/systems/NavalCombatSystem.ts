@@ -1,6 +1,5 @@
 /** NavalCombatSystem - ship battles, boarding, and naval warfare */
-import { EntityManager, EntityId, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
-import { CivMemberComponent } from '../civilization/Civilization'
+import { EntityManager, EntityId, PositionComponent, NeedsComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 
 export type ShipType = 'warship' | 'galley' | 'longship' | 'flagship'

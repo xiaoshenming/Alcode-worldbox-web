@@ -1,7 +1,7 @@
 // Creature Vision System (v2.91) - Creatures have vision range affecting exploration and combat
 // Vision is influenced by terrain, weather, and time of day
 
-import { EntityManager, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent } from '../ecs/Entity'
 import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
 

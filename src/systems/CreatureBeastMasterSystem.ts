@@ -1,7 +1,7 @@
 // Creature Beast Master System (v3.05) - Creatures specialize in taming wild beasts
 // Beast masters form bonds with animals, using them in combat and labor
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { EntityManager } from '../ecs/Entity'
 
 export type BeastBond = 'companion' | 'war_mount' | 'pack_animal' | 'scout' | 'guardian'
 
