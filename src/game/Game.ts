@@ -3640,15 +3640,16 @@ export class Game {
         this.tradeEconomySystem.update(this.civManager, this.em, this.world, this.particles, tick)
         // Culture system - cultural spread, trait adoption, language diffusion
         {
-          const civData = [...this.civManager.civilizations.values()].map(c => {
+          const civData: { id: number; neighbors: number[]; tradePartners: number[]; population: number }[] = []
+          for (const c of this.civManager.civilizations.values()) {
             const neighbors: number[] = []
             const tradePartners: number[] = []
             for (const [otherId, rel] of c.relations) {
               if (rel > -20) neighbors.push(otherId)
               if (rel > 10) tradePartners.push(otherId)
             }
-            return { id: c.id, neighbors, tradePartners, population: c.population }
-          })
+            civData.push({ id: c.id, neighbors, tradePartners, population: c.population })
+          }
           this.cultureSystem.update(tick, civData)
         }
         } // end tick % 10 === 0
@@ -3661,7 +3662,8 @@ export class Game {
         this.godPowerSystem.update(this.world, this.em, this.civManager, this.particles, tick)
         // Mining system - build civData from civilizations
         {
-          const civData = [...this.civManager.civilizations.values()].map(c => {
+          const civData: { id: number; cities: { x: number; y: number }[]; techLevel: number; race: string }[] = []
+          for (const c of this.civManager.civilizations.values()) {
             const cities: { x: number; y: number }[] = []
             for (const bid of c.buildings) {
               const pos = this.em.getComponent<PositionComponent>(bid, 'position')
@@ -3669,8 +3671,8 @@ export class Game {
             }
             const creature = this.em.getEntitiesWithComponents('creature', 'civMember')[0]
             const cc = creature ? this.em.getComponent<CreatureComponent>(creature, 'creature') : null
-            return { id: c.id, cities, techLevel: c.techLevel, race: cc?.species ?? 'human' }
-          })
+            civData.push({ id: c.id, cities, techLevel: c.techLevel, race: cc?.species ?? 'human' })
+          }
           this.miningSystem.update(tick, civData)
         }
         this.allianceSystem.update(this.civManager, this.em, this.world, this.particles, tick)
@@ -3733,8 +3735,8 @@ export class Game {
         {
           const achStats: AchContentWorldStats = {
             totalCreatures: this.em.getEntitiesWithComponents('creature').length,
-            speciesSet: new Set([...this.em.getEntitiesWithComponents('creature')].map(id => this.em.getComponent<CreatureComponent>(id, 'creature')?.species).filter((s): s is string => s !== undefined)),
-            maxCityPop: Math.max(0, ...[...this.civManager.civilizations.values()].map(c => c.population)),
+            speciesSet: (() => { const s = new Set<string>(); for (const id of this.em.getEntitiesWithComponents('creature')) { const c = this.em.getComponent<CreatureComponent>(id, 'creature'); if (c) s.add(c.species); } return s; })(),
+            maxCityPop: (() => { let m = 0; for (const c of this.civManager.civilizations.values()) { if (c.population > m) m = c.population; } return m; })(),
             filledTilePercent: 0, hasIsland: false,
             totalKills: 0, extinctSpecies: [], scorchedTiles: 0,
             disastersLast60Ticks: 0, nukeUsed: false,
@@ -3776,14 +3778,16 @@ export class Game {
         if (tick % 10 === 5) {
         // Clone power - degradation updates
         {
-          const cloneEntities = [...this.em.getEntitiesWithComponents('creature', 'position')].map(id => {
-            const c = this.em.getComponent<CreatureComponent>(id, 'creature')!
+          const cloneEntities: { id: number; isClone: boolean; health: number; maxHealth: number; age: number }[] = []
+          for (const id of this.em.getEntitiesWithComponents('creature', 'position')) {
+            const c = this.em.getComponent<CreatureComponent>(id, 'creature')
+            if (!c) continue
             const needs = this.em.getComponent<NeedsComponent>(id, 'needs')
-            return {
+            cloneEntities.push({
               id, isClone: this.clonePower.getGeneration(id) > 0,
               health: needs?.health ?? 100, maxHealth: 100, age: c.age
-            }
-          })
+            })
+          }
           const events = this.clonePower.update(tick, cloneEntities)
           for (const ev of events) {
             const needs = this.em.getComponent<NeedsComponent>(ev.id, 'needs')
@@ -3809,14 +3813,16 @@ export class Game {
 
         // === EVERY 60 TICKS: History replay snapshot ===
         if (tick % 60 === 10) {
+        const civSnap: { id: number; name: string; pop: number; color: string }[] = []
+        for (const [id, c] of this.civManager.civilizations) {
+          civSnap.push({ id, name: c.name, pop: c.population, color: c.color })
+        }
         this.historyReplay.recordSnapshot(
           tick,
           this.em.getEntitiesWithComponent('creature').length,
           this.civManager.civilizations.size,
           0, [], // wars and events simplified
-          [...this.civManager.civilizations.entries()].map(([id, c]) => ({
-            id, name: c.name, pop: c.population, color: c.color
-          }))
+          civSnap
         )
         }
         // === EVERY 5 TICKS (offset 4): Visual/particle systems ===
@@ -3845,19 +3851,22 @@ export class Game {
 
         // Diplomacy visual - update civ relation data
         if (tick % 120 === 0) {
-          const civData = [...this.civManager.civilizations.entries()].map(([id, c]) => {
+          const civData: { id: number; name: string; color: string; capitalX: number; capitalY: number; relations: Map<number, number> }[] = []
+          for (const [id, c] of this.civManager.civilizations) {
             const pos = c.buildings.length > 0 ? this.em.getComponent<PositionComponent>(c.buildings[0], 'position') : null
-            return { id, name: c.name, color: c.color, capitalX: pos?.x ?? 0, capitalY: pos?.y ?? 0, relations: c.relations }
-          })
+            civData.push({ id, name: c.name, color: c.color, capitalX: pos?.x ?? 0, capitalY: pos?.y ?? 0, relations: c.relations })
+          }
           this.diplomacyVisual.updateCivData(civData)
         }
 
         // Enhanced fog of war
         if (tick % 30 === 0) {
-          const units = [...this.em.getEntitiesWithComponents('creature', 'position')].map(id => {
-            const pos = this.em.getComponent<PositionComponent>(id, 'position')!
-            return { x: Math.floor(pos.x), y: Math.floor(pos.y), visionRange: 8 }
-          })
+          const units: { x: number; y: number; visionRange: number }[] = []
+          for (const id of this.em.getEntitiesWithComponents('creature', 'position')) {
+            const pos = this.em.getComponent<PositionComponent>(id, 'position')
+            if (!pos) continue
+            units.push({ x: Math.floor(pos.x), y: Math.floor(pos.y), visionRange: 8 })
+          }
           this.fogEnhanced.updateVision(tick, units, [])
         }
 
@@ -3881,7 +3890,7 @@ export class Game {
             if (!pos) continue
             const era = this.eraSystem.getEra(civId)
             const level = era === 'stone' ? 'wooden' as const : era === 'bronze' || era === 'iron' ? 'stone' as const : 'castle' as const
-            const hasWar = [...civ.relations.values()].some(r => r < -30)
+            let hasWar = false; for (const r of civ.relations.values()) { if (r < -30) { hasWar = true; break } }
             forts.push({
               cityId: civ.buildings[0], civId, centerX: Math.floor(pos.x), centerY: Math.floor(pos.y),
               radius: Math.min(8, 3 + Math.floor(civ.territory.size / 50)),
@@ -3943,12 +3952,16 @@ export class Game {
         // === EVERY 60 TICKS: World chronicle, diplomacy, building upgrades ===
         if (tick % 60 === 20) {
         {
-          const civs = [...this.civManager.civilizations.values()].map(c => ({
-            id: c.id, name: c.name, population: c.population, cities: c.buildings.length
-          }))
+          const civs: { id: number; name: string; population: number; cities: number }[] = []
+          let totalPop = 0, totalCities = 0
+          for (const c of this.civManager.civilizations.values()) {
+            civs.push({ id: c.id, name: c.name, population: c.population, cities: c.buildings.length })
+            totalPop += c.population
+            totalCities += c.buildings.length
+          }
           const snapshot: WorldSnapshot = {
-            totalPopulation: civs.reduce((s, c) => s + c.population, 0),
-            totalCities: civs.reduce((s, c) => s + c.cities, 0),
+            totalPopulation: totalPop,
+            totalCities,
             activeWars: 0,
             civilizations: civs,
             era: this.timeline.getCurrentEra().name,
