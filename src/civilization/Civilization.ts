@@ -172,6 +172,12 @@ const CIV_COLORS = [
 ]
 
 let nextCivId = 1
+const usedCivNames = new Set<string>()
+
+export function resetCivIdCounter(): void {
+  nextCivId = 1
+  usedCivNames.clear()
+}
 
 // Tech tree definitions
 export interface TechInfo {
@@ -297,11 +303,30 @@ export const TECHNOLOGIES: Technology[] = [
   },
 ]
 
+function pickUniqueCivName(): string {
+  // Try unused names first
+  const available = CIV_NAMES.filter(n => !usedCivNames.has(n))
+  if (available.length > 0) {
+    const name = available[Math.floor(Math.random() * available.length)]
+    usedCivNames.add(name)
+    return name
+  }
+  // All names used — append number suffix
+  for (let suffix = 2; ; suffix++) {
+    const base = CIV_NAMES[Math.floor(Math.random() * CIV_NAMES.length)]
+    const name = `${base} ${suffix}`
+    if (!usedCivNames.has(name)) {
+      usedCivNames.add(name)
+      return name
+    }
+  }
+}
+
 export function createCivilization(): Civilization {
   const id = nextCivId++
   return {
     id,
-    name: CIV_NAMES[Math.floor(Math.random() * CIV_NAMES.length)],
+    name: pickUniqueCivName(),
     color: CIV_COLORS[(id - 1) % CIV_COLORS.length],
     population: 0,
     territory: new Set(),

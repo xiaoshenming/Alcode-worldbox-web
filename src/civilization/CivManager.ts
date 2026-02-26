@@ -10,6 +10,7 @@ export class CivManager {
   civilizations: Map<number, Civilization> = new Map()
   territoryMap: number[][] = [] // civId per tile, 0 = unclaimed
   private previousRelations: Map<string, number> = new Map() // "civA:civB" -> previous relation
+  private updateTick: number = 0
 
   constructor(em: EntityManager, world: World) {
     this.em = em
@@ -103,6 +104,7 @@ export class CivManager {
   }
 
   update(): void {
+    this.updateTick++
     for (const [, civ] of this.civilizations) {
       // Resource gathering
       this.gatherResources(civ)
@@ -197,11 +199,13 @@ export class CivManager {
         }
       }
 
-      // Culture affinity: same culture trait = +2, different = -1
-      if (civ.culture.trait === otherCiv.culture.trait) {
-        relation += 2
-      } else {
-        relation -= 1
+      // Culture affinity: same culture trait = slow drift toward alliance, different = slow drift toward hostility
+      if (Math.random() < 0.01) {
+        if (civ.culture.trait === otherCiv.culture.trait) {
+          relation += 1
+        } else {
+          relation -= 0.5
+        }
       }
 
       // Alliance formation: relation > 50
@@ -233,14 +237,13 @@ export class CivManager {
 
   private areBordering(a: Civilization, b: Civilization): boolean {
     for (const key of a.territory) {
-      const [x, y] = key.split(',').map(Number)
-      const neighbors = [[0, 1], [0, -1], [1, 0], [-1, 0]]
-      for (const [dx, dy] of neighbors) {
-        const nx = x + dx, ny = y + dy
-        if (nx >= 0 && nx < WORLD_WIDTH && ny >= 0 && ny < WORLD_HEIGHT) {
-          if (this.territoryMap[ny][nx] === b.id) return true
-        }
-      }
+      const comma = key.indexOf(',')
+      const x = +key.substring(0, comma)
+      const y = +key.substring(comma + 1)
+      if (x > 0 && this.territoryMap[y][x - 1] === b.id) return true
+      if (x < WORLD_WIDTH - 1 && this.territoryMap[y][x + 1] === b.id) return true
+      if (y > 0 && this.territoryMap[y - 1][x] === b.id) return true
+      if (y < WORLD_HEIGHT - 1 && this.territoryMap[y + 1][x] === b.id) return true
     }
     return false
   }
@@ -271,16 +274,14 @@ export class CivManager {
     const contested: [number, number][] = []
 
     for (const key of defender.territory) {
-      const [x, y] = key.split(',').map(Number)
-      const neighbors = [[0, 1], [0, -1], [1, 0], [-1, 0]]
-      for (const [dx, dy] of neighbors) {
-        const nx = x + dx, ny = y + dy
-        if (nx >= 0 && nx < WORLD_WIDTH && ny >= 0 && ny < WORLD_HEIGHT) {
-          if (this.territoryMap[ny][nx] === attacker.id) {
-            contested.push([x, y])
-            break
-          }
-        }
+      const comma = key.indexOf(',')
+      const x = +key.substring(0, comma)
+      const y = +key.substring(comma + 1)
+      if ((x > 0 && this.territoryMap[y][x - 1] === attacker.id) ||
+          (x < WORLD_WIDTH - 1 && this.territoryMap[y][x + 1] === attacker.id) ||
+          (y > 0 && this.territoryMap[y - 1][x] === attacker.id) ||
+          (y < WORLD_HEIGHT - 1 && this.territoryMap[y + 1][x] === attacker.id)) {
+        contested.push([x, y])
       }
     }
 
@@ -320,7 +321,10 @@ export class CivManager {
     const rate = 0.01 * workerCount * techMultiplier
 
     for (const key of civ.territory) {
-      const [x, y] = key.split(',').map(Number)
+      // Parse territory key using indexOf for less GC than split+map
+      const comma = key.indexOf(',')
+      const x = +key.substring(0, comma)
+      const y = +key.substring(comma + 1)
       const tile = this.world.getTile(x, y)
 
       switch (tile) {
@@ -356,12 +360,24 @@ export class CivManager {
     civ.resources.food = Math.max(0, civ.resources.food)
   }
 
+  private workerCountCache: Map<number, number> = new Map()
+  private workerCacheTick: number = -1
+
   private getWorkerCount(civId: number): number {
-    const members = this.em.getEntitiesWithComponent('civMember')
-    return members.filter(id => {
-      const m = this.em.getComponent<CivMemberComponent>(id, 'civMember')
-      return m && m.civId === civId && m.role === 'worker'
-    }).length
+    // Rebuild cache once per update() call (all civs share same tick)
+    const tick = this.updateTick
+    if (tick !== this.workerCacheTick) {
+      this.workerCountCache.clear()
+      const members = this.em.getEntitiesWithComponent('civMember')
+      for (let i = 0; i < members.length; i++) {
+        const m = this.em.getComponent<CivMemberComponent>(members[i], 'civMember')
+        if (m && m.role === 'worker') {
+          this.workerCountCache.set(m.civId, (this.workerCountCache.get(m.civId) ?? 0) + 1)
+        }
+      }
+      this.workerCacheTick = tick
+    }
+    return this.workerCountCache.get(civId) ?? 0
   }
 
   private autoBuild(civ: Civilization): void {
@@ -375,7 +391,9 @@ export class CivManager {
     if (territoryArr.length === 0) return
 
     const key = territoryArr[Math.floor(Math.random() * territoryArr.length)]
-    const [x, y] = key.split(',').map(Number)
+    const comma = key.indexOf(',')
+    const x = +key.substring(0, comma)
+    const y = +key.substring(comma + 1)
 
     // Check if tile is buildable
     const tile = this.world.getTile(x, y)
@@ -444,16 +462,13 @@ export class CivManager {
     const border: [number, number][] = []
 
     for (const key of civ.territory) {
-      const [x, y] = key.split(',').map(Number)
-      const neighbors = [[0, 1], [0, -1], [1, 0], [-1, 0]]
-      for (const [dx, dy] of neighbors) {
-        const nx = x + dx, ny = y + dy
-        if (nx >= 0 && nx < WORLD_WIDTH && ny >= 0 && ny < WORLD_HEIGHT) {
-          if (this.territoryMap[ny][nx] === 0) {
-            border.push([nx, ny])
-          }
-        }
-      }
+      const comma = key.indexOf(',')
+      const x = +key.substring(0, comma)
+      const y = +key.substring(comma + 1)
+      if (x > 0 && this.territoryMap[y][x - 1] === 0) border.push([x - 1, y])
+      if (x < WORLD_WIDTH - 1 && this.territoryMap[y][x + 1] === 0) border.push([x + 1, y])
+      if (y > 0 && this.territoryMap[y - 1][x] === 0) border.push([x, y - 1])
+      if (y < WORLD_HEIGHT - 1 && this.territoryMap[y + 1][x] === 0) border.push([x, y + 1])
     }
 
     if (border.length === 0) return
@@ -487,6 +502,29 @@ export class CivManager {
     if (x < 0 || x >= WORLD_WIDTH || y < 0 || y >= WORLD_HEIGHT) return null
     const civId = this.territoryMap[y][x]
     return civId ? this.civilizations.get(civId) || null : null
+  }
+
+  /** Search for the nearest civilization within a given radius using territoryMap */
+  getNearestCiv(x: number, y: number, radius: number): Civilization | null {
+    // First check exact tile
+    const exact = this.getCivAt(x, y)
+    if (exact) return exact
+    // Spiral outward to find nearest civ territory
+    for (let r = 1; r <= radius; r++) {
+      for (let dx = -r; dx <= r; dx++) {
+        for (let dy = -r; dy <= r; dy++) {
+          if (Math.abs(dx) !== r && Math.abs(dy) !== r) continue // only check perimeter
+          const nx = x + dx, ny = y + dy
+          if (nx < 0 || nx >= WORLD_WIDTH || ny < 0 || ny >= WORLD_HEIGHT) continue
+          const civId = this.territoryMap[ny][nx]
+          if (civId) {
+            const civ = this.civilizations.get(civId)
+            if (civ) return civ
+          }
+        }
+      }
+    }
+    return null
   }
 
   getCivColor(x: number, y: number): string | null {

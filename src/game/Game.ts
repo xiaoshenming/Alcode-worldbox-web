@@ -20,6 +20,7 @@ import { ResourceSystem } from '../systems/ResourceSystem'
 import { SaveSystem, SaveSlotMeta } from './SaveSystem'
 import { CreatureFactory } from '../entities/CreatureFactory'
 import { CivManager } from '../civilization/CivManager'
+import { resetCivIdCounter } from '../civilization/Civilization'
 import { AchievementSystem, WorldStats } from '../systems/AchievementSystem'
 import { DisasterSystem } from '../systems/DisasterSystem'
 import { TimelineSystem } from '../systems/TimelineSystem'
@@ -1745,8 +1746,9 @@ export class Game {
     this.civManager = new CivManager(this.em, this.world)
     this.particles = new ParticleSystem()
     this.audio = new SoundSystem()
-    this.aiSystem = new AISystem(this.em, this.world, this.particles, this.creatureFactory)
-    this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles, this.audio)
+    this.spatialHash = new SpatialHashSystem(16)
+    this.aiSystem = new AISystem(this.em, this.world, this.particles, this.creatureFactory, this.spatialHash)
+    this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles, this.audio, this.spatialHash)
     this.weather = new WeatherSystem(this.world, this.particles, this.em)
     this.resources = new ResourceSystem(this.world, this.em, this.civManager, this.particles)
     this.achievements = new AchievementSystem()
@@ -1941,7 +1943,6 @@ export class Game {
     this.allianceSystem = new AllianceSystem()
     this.terraformingSystem = new TerraformingSystem()
     this.statisticsTracker = new StatisticsTracker()
-    this.spatialHash = new SpatialHashSystem(16)
     this.objectPool = new ObjectPoolSystem()
     this.minimapOverlay = new MinimapOverlaySystem()
     this.portalSystem = new PortalSystem()
@@ -2845,10 +2846,14 @@ export class Game {
       this.em.removeEntity(id)
     }
 
+    // Reset civilization ID counter and names
+    resetCivIdCounter()
+
     // Reset civilization manager
     this.civManager = new CivManager(this.em, this.world)
-    this.aiSystem = new AISystem(this.em, this.world, this.particles, this.creatureFactory)
-    this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles, this.audio)
+    this.spatialHash = new SpatialHashSystem(16)
+    this.aiSystem = new AISystem(this.em, this.world, this.particles, this.creatureFactory, this.spatialHash)
+    this.combatSystem = new CombatSystem(this.em, this.civManager, this.particles, this.audio, this.spatialHash)
     this.weather = new WeatherSystem(this.world, this.particles, this.em)
     this.resources = new ResourceSystem(this.world, this.em, this.civManager, this.particles)
     this.disasterSystem = new DisasterSystem(this.world, this.particles, this.em)
@@ -2885,6 +2890,7 @@ export class Game {
     this.aiSystem.setCivManager(this.civManager)
     this.combatSystem.setArtifactSystem(this.artifactSystem)
     this.powers = new Powers(this.world, this.em, this.creatureFactory, this.civManager, this.particles, this.audio)
+    this.toolbar = new Toolbar('toolbar', this.powers)
     this.infoPanel = new InfoPanel('worldInfo', this.world, this.em, this.civManager)
     this.creaturePanel = new CreaturePanel('creaturePanel', this.em, this.civManager)
     this.statsPanel = new StatsPanel('statsPanel', this.em, this.civManager)
@@ -2909,7 +2915,6 @@ export class Game {
     this.allianceSystem = new AllianceSystem()
     this.terraformingSystem = new TerraformingSystem()
     this.statisticsTracker = new StatisticsTracker()
-    this.spatialHash = new SpatialHashSystem(16)
     this.achievementContent = new AchievementContentSystem()
     this.chartPanel = new ChartPanelSystem()
     this.clonePower = new ClonePowerSystem()
@@ -3580,8 +3585,8 @@ export class Game {
 
     if (this.speed > 0) {
       this.accumulator += delta * this.speed
-      // Cap max ticks per frame to prevent spiral of death at high speeds
-      const maxTicksPerFrame = 3
+      // Cap max ticks per frame to prevent spiral of death at high entity counts
+      const maxTicksPerFrame = 1
       let ticksThisFrame = 0
       while (this.accumulator >= this.tickRate && ticksThisFrame < maxTicksPerFrame) {
         ticksThisFrame++
@@ -3589,11 +3594,13 @@ export class Game {
 
         // === EVERY TICK: Core systems (AI, combat, world, civ) ===
         this.world.update()
+        this.spatialHash.rebuild(this.em)
         this.aiSystem.update()
-        this.combatSystem.update(tick)
+        // Combat runs every 2 ticks to reduce load at high entity counts
+        if (tick % 2 === 0) this.combatSystem.update(tick)
         this.civManager.update()
 
-        // === EVERY 5 TICKS: Medium-importance systems ===
+        // === EVERY 5 TICKS (offset 0): Medium-importance systems (group A) ===
         if (tick % 5 === 0) {
         this.migrationSystem.update(this.em, this.world, this.civManager, this.particles)
         this.weather.update()
@@ -3603,6 +3610,10 @@ export class Game {
         this.artifactSystem.update(this.em, this.world, this.particles, tick)
         this.artifactSystem.spawnClaimParticles(this.em, this.particles, tick)
         this.diseaseSystem.update(this.em, this.world, this.civManager, this.particles)
+        }
+
+        // === EVERY 5 TICKS (offset 1): Medium-importance systems (group B) ===
+        if (tick % 5 === 1) {
         this.worldEventSystem.update(this.em, this.world, this.civManager, this.particles, this.timeline)
         this.caravanSystem.update(this.civManager, this.em, this.world, this.particles)
         this.cropSystem.update(this.world, this.civManager, this.em, this.particles)
@@ -3614,7 +3625,7 @@ export class Game {
         this.populationSystem.update(this.em, this.world, this.civManager, this.particles, tick)
         }
 
-        // === EVERY 10 TICKS: Civilization progression systems ===
+        // === EVERY 10 TICKS (offset 0): Civilization progression (group A) ===
         if (tick % 10 === 0) {
         this.techSystem.update(this.civManager)
         this.religionSystem.update(this.civManager, this.em, this.world, this.particles, tick)
@@ -3635,6 +3646,10 @@ export class Game {
           })
           this.cultureSystem.update(tick, civData)
         }
+        } // end tick % 10 === 0
+
+        // === EVERY 10 TICKS (offset 1): Civilization progression (group B) ===
+        if (tick % 10 === 1) {
         this.loyaltySystem.update(this.civManager, this.em, this.world, this.particles, tick)
         this.biomeEvolution.update(this.world, this.civManager, this.em, this.particles, tick)
         this.espionageSystem.update(this.civManager, this.em, this.world, this.particles, tick)
@@ -3656,7 +3671,7 @@ export class Game {
         this.allianceSystem.update(this.civManager, this.em, this.world, this.particles, tick)
         this.evolutionSystem.update(this.em, this.world, tick)
         this.terraformingSystem.update(this.world, this.particles, tick)
-        } // end tick % 10
+        } // end tick % 10 === 1
 
         // === EVERY 5 TICKS (offset 2): Secondary medium systems ===
         if (tick % 5 === 2) {
@@ -3693,8 +3708,6 @@ export class Game {
         if (tick % 60 === 0) {
         this.statisticsTracker.update(tick, this.civManager, this.em)
         }
-        // === EVERY TICK: Spatial hash rebuild (required for queries) ===
-        this.spatialHash.rebuild(this.em)
         // Object pool maintenance
         this.objectPool.update(this.tickRate / 1000)
 
@@ -3835,7 +3848,7 @@ export class Game {
         }
 
         // Enhanced fog of war
-        if (tick % 10 === 0) {
+        if (tick % 30 === 0) {
           const units = [...this.em.getEntitiesWithComponents('creature', 'position')].map(id => {
             const pos = this.em.getComponent<PositionComponent>(id, 'position')!
             return { x: Math.floor(pos.x), y: Math.floor(pos.y), visionRange: 8 }
@@ -5245,21 +5258,17 @@ export class Game {
 
     this.renderer.render(this.world, this.camera, this.em, this.civManager, this.particles, this.weather.fogAlpha, this.resources, this.caravanSystem, this.cropSystem)
 
+    const ctx = this.canvas.getContext('2d')!
+    const bounds = this.camera.getVisibleBounds()
+
     // Water animation overlay (waves, reflections, foam)
-    {
-      const bounds = this.camera.getVisibleBounds()
-      const ctx = this.canvas.getContext('2d')!
-      this.waterAnimation.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, bounds.startX, bounds.startY, bounds.endX, bounds.endY, this.world, this.world.dayNightCycle)
-    }
+    this.waterAnimation.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, bounds.startX, bounds.startY, bounds.endX, bounds.endY, this.world, this.world.dayNightCycle)
 
     // World decorations (flowers, rocks, etc.)
-    {
-      const bounds = this.camera.getVisibleBounds()
-      this.worldDecorations.render(this.canvas.getContext('2d')!, this.camera.x, this.camera.y, this.camera.zoom, bounds.startX, bounds.startY, bounds.endX, bounds.endY)
-    }
+    this.worldDecorations.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, bounds.startX, bounds.startY, bounds.endX, bounds.endY)
 
     // Trade route overlay
-    this.tradeRouteRenderer.render(this.canvas.getContext('2d')!, this.camera.x, this.camera.y, this.camera.zoom)
+    this.tradeRouteRenderer.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
     // Ambient particles (viewport-based)
     const vpX = this.camera.x / TILE_SIZE
     const vpY = this.camera.y / TILE_SIZE
@@ -5267,10 +5276,13 @@ export class Game {
     const vpH = window.innerHeight / (TILE_SIZE * this.camera.zoom)
     this.ambientParticles.update(this.world, this.particles, this.world.tick, vpX, vpY, vpW, vpH)
     // Dynamic music & ambient sound
-    const hasWar = Array.from(this.civManager.civilizations.values()).some(c => {
-      for (const [, rel] of c.relations) { if (rel < -50) return true }
-      return false
-    })
+    let hasWar = false
+    for (const [, c] of this.civManager.civilizations) {
+      for (const [, rel] of c.relations) {
+        if (rel < -50) { hasWar = true; break }
+      }
+      if (hasWar) break
+    }
     this.musicSystem.update({
       isNight: !this.world.isDay(),
       atWar: hasWar,
@@ -5285,9 +5297,14 @@ export class Game {
     {
       const mCtx = this.minimapCanvas.getContext('2d')
       if (mCtx) {
-        const politicalData = [...this.civManager.civilizations.values()].map(c => ({
-          color: c.color, territory: new Set([...c.territory].map(t => typeof t === 'string' ? parseInt(t, 10) : t as number))
-        }))
+        const politicalData: { color: string; territory: Set<number> }[] = []
+        for (const [, c] of this.civManager.civilizations) {
+          const numSet = new Set<number>()
+          for (const t of c.territory) {
+            numSet.add(typeof t === 'string' ? parseInt(t, 10) : t as number)
+          }
+          politicalData.push({ color: c.color, territory: numSet })
+        }
         this.minimapOverlay.render(mCtx, this.minimapCanvas.width, this.minimapCanvas.height, {
           political: politicalData, population: [], military: [], resources: [],
           worldWidth: WORLD_WIDTH, worldHeight: WORLD_HEIGHT
@@ -5298,18 +5315,10 @@ export class Game {
     // Minimap mode button (v1.67)
     {
       const mRect = this.minimapCanvas.getBoundingClientRect()
-      const mCtx2 = this.canvas.getContext('2d')!
-      this.minimapMode.renderModeButton(mCtx2, mRect.left, mRect.top)
+      this.minimapMode.renderModeButton(ctx, mRect.left, mRect.top)
     }
 
-    // Portal rendering (rotating rings, glow effects)
-    this.portalSystem.render(this.canvas.getContext('2d')!, this.camera.x, this.camera.y, this.camera.zoom)
-
-    // Formation rendering (outlines, morale bars)
-    this.formationSystem.render(this.canvas.getContext('2d')!, this.camera.x, this.camera.y, this.camera.zoom)
-
     // World event overlays and banners
-    const ctx = this.canvas.getContext('2d')!
 
     // Day/night lighting overlay
     this.dayNightRenderer.render(ctx, this.canvas.width, this.canvas.height, this.world.dayNightCycle, this.world.isDay())
@@ -5338,10 +5347,7 @@ export class Game {
     }
 
     // Fortification rendering
-    {
-      const bounds = this.camera.getVisibleBounds()
-      this.fortificationRenderer.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, bounds.startX, bounds.startY, bounds.endX, bounds.endY)
-    }
+    this.fortificationRenderer.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, bounds.startX, bounds.startY, bounds.endX, bounds.endY)
 
     // Terraforming visual effects overlay
     this.terraformingSystem.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
@@ -5496,7 +5502,7 @@ export class Game {
 
     // Achievement notifications
     this.achievements.updateNotifications()
-    this.achievements.renderNotifications(this.canvas.getContext('2d')!, this.canvas.width)
+    this.achievements.renderNotifications(ctx, this.canvas.width)
 
     // Real-time creature panel update when selected
     if (this.creaturePanel.getSelected()) {
@@ -5509,7 +5515,7 @@ export class Game {
     // Performance monitor update + render (v1.62)
     this.perfMonitor.update(
       this.accumulator > 0 ? this.tickRate / 1000 : 1 / 60,
-      this.em.getAllEntities().length,
+      this.em.getEntityCount(),
       this.world.tick,
       this.speed
     )

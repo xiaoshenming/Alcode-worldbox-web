@@ -137,12 +137,12 @@ export class Powers {
     const species = this.currentPower!.entityType!
     const civilized = ['human', 'elf', 'dwarf', 'orc']
     if (civilized.includes(species)) {
-      // Check if there's an existing civ nearby
-      const nearbyCiv = this.civManager.getCivAt(x, y)
+      // Search nearby area for existing civilization (radius 15)
+      const nearbyCiv = this.civManager.getNearestCiv(x, y, 15)
       if (nearbyCiv) {
         this.civManager.assignToCiv(entityId, nearbyCiv.id)
       } else {
-        // Create new civilization
+        // Create new civilization only if no civ nearby
         const civ = this.civManager.createCiv(x, y)
         this.civManager.assignToCiv(entityId, civ.id, 'leader')
       }

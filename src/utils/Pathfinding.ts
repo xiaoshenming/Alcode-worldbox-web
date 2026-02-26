@@ -128,10 +128,11 @@ export function findNextStep(
 
   const dx = toX - fromX
   const dy = toY - fromY
-  const dist = Math.sqrt(dx * dx + dy * dy)
-  if (dist < 0.5) return null
+  const dist2 = dx * dx + dy * dy
+  if (dist2 < 0.25) return null
 
   // Preferred direction
+  const dist = Math.sqrt(dist2)
   const ndx = dx / dist
   const ndy = dy / dist
 

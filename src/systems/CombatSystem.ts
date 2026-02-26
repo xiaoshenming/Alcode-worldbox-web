@@ -5,6 +5,7 @@ import { ParticleSystem } from './ParticleSystem'
 import { SoundSystem } from './SoundSystem'
 import { EventLog } from './EventLog'
 import { ArtifactSystem, getArtifactCombatBonus, getArtifactBonus } from './ArtifactSystem'
+import { SpatialHashSystem } from './SpatialHashSystem'
 
 export class CombatSystem {
   private em: EntityManager
@@ -13,12 +14,16 @@ export class CombatSystem {
   private audio: SoundSystem
   private tick: number = 0
   private artifactSystem: ArtifactSystem | null = null
+  private spatialHash: SpatialHashSystem
+  /** Batch index for staggered updates — only process 1/3 of entities per tick */
+  private batchIndex: number = 0
 
-  constructor(em: EntityManager, civManager: CivManager, particles: ParticleSystem, audio: SoundSystem) {
+  constructor(em: EntityManager, civManager: CivManager, particles: ParticleSystem, audio: SoundSystem, spatialHash: SpatialHashSystem) {
     this.em = em
     this.civManager = civManager
     this.particles = particles
     this.audio = audio
+    this.spatialHash = spatialHash
   }
 
   setArtifactSystem(artifactSystem: ArtifactSystem): void {
@@ -29,17 +34,14 @@ export class CombatSystem {
     this.tick = tick
     const entities = this.em.getEntitiesWithComponents('position', 'creature', 'needs')
 
-    // Spatial hash for fast neighbor lookup
-    const grid: Map<string, EntityId[]> = new Map()
-    for (const id of entities) {
-      const pos = this.em.getComponent<PositionComponent>(id, 'position')!
-      const key = `${Math.floor(pos.x / 5)},${Math.floor(pos.y / 5)}`
-      if (!grid.has(key)) grid.set(key, [])
-      grid.get(key)!.push(id)
-    }
+    // Staggered batch: only process 1/10 of entities per tick for combat checks
+    const BATCH_COUNT = 10
+    const batch = this.batchIndex % BATCH_COUNT
+    this.batchIndex++
 
-    // Check combat for each entity
-    for (const id of entities) {
+    // Check combat for each entity in this batch
+    for (let idx = batch; idx < entities.length; idx += BATCH_COUNT) {
+      const id = entities[idx]
       const pos = this.em.getComponent<PositionComponent>(id, 'position')!
       const creature = this.em.getComponent<CreatureComponent>(id, 'creature')!
       const needs = this.em.getComponent<NeedsComponent>(id, 'needs')!
@@ -47,38 +49,31 @@ export class CombatSystem {
 
       if (needs.health <= 0) continue
 
-      // Find nearby entities
-      const cx = Math.floor(pos.x / 5)
-      const cy = Math.floor(pos.y / 5)
-      const nearby: EntityId[] = []
+      // Hoist hero lookup out of inner loop — only depends on attacker id
+      const attackerHero = this.em.getComponent<HeroComponent>(id, 'hero')
+      const combatRange = (attackerHero && attackerHero.ability === 'ranger') ? 3 : 2
+      const combatRange2 = combatRange * combatRange
 
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          const key = `${cx + dx},${cy + dy}`
-          const cell = grid.get(key)
-          if (cell) nearby.push(...cell)
-        }
-      }
+      // Find nearby entities using spatial hash — query radius matches combat range
+      const nearby = this.spatialHash.query(pos.x, pos.y, combatRange)
 
       for (const otherId of nearby) {
         if (otherId === id) continue
 
-        const otherPos = this.em.getComponent<PositionComponent>(otherId, 'position')!
-        const otherNeeds = this.em.getComponent<NeedsComponent>(otherId, 'needs')
-        const otherCreature = this.em.getComponent<CreatureComponent>(otherId, 'creature')
-        const otherCivMember = this.em.getComponent<CivMemberComponent>(otherId, 'civMember')
-
-        if (!otherNeeds || !otherCreature || otherNeeds.health <= 0) continue
-
+        // Check distance first (cheapest filter)
+        const otherPos = this.em.getComponent<PositionComponent>(otherId, 'position')
+        if (!otherPos) continue
         const dx = pos.x - otherPos.x
         const dy = pos.y - otherPos.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
+        const dist2 = dx * dx + dy * dy
+        if (dist2 > combatRange2) continue
 
-        // Hero ranger gets extended range
-        const attackerHero = this.em.getComponent<HeroComponent>(id, 'hero')
-        const combatRange = (attackerHero && attackerHero.ability === 'ranger') ? 3 : 2
+        const otherNeeds = this.em.getComponent<NeedsComponent>(otherId, 'needs')
+        if (!otherNeeds || otherNeeds.health <= 0) continue
 
-        if (dist > combatRange) continue // Too far for combat
+        const otherCreature = this.em.getComponent<CreatureComponent>(otherId, 'creature')
+        if (!otherCreature) continue
+        const otherCivMember = this.em.getComponent<CivMemberComponent>(otherId, 'civMember')
 
         // Determine if hostile
         const shouldFight = this.isHostile(creature, civMember, otherCreature, otherCivMember)
@@ -139,7 +134,7 @@ export class CombatSystem {
 
     // Tower defense: towers attack nearby enemies
     if (tick % 30 === 0) {
-      this.updateTowerDefense(entities, grid)
+      this.updateTowerDefense()
     }
 
     // Clean up dead entities
@@ -265,7 +260,7 @@ export class CombatSystem {
     }
   }
 
-  private updateTowerDefense(creatures: EntityId[], grid: Map<string, EntityId[]>): void {
+  private updateTowerDefense(): void {
     const towers = this.em.getEntitiesWithComponent('building')
 
     for (const towerId of towers) {
@@ -276,16 +271,10 @@ export class CombatSystem {
       if (!tPos) continue
 
       const range = 8
-      const cx = Math.floor(tPos.x / 5)
-      const cy = Math.floor(tPos.y / 5)
+      // Query global spatial hash for entities within tower range
+      const nearby = this.spatialHash.query(tPos.x, tPos.y, range)
 
-      // Check nearby creatures
-      for (let dy = -2; dy <= 2; dy++) {
-        for (let dx = -2; dx <= 2; dx++) {
-          const cell = grid.get(`${cx + dx},${cy + dy}`)
-          if (!cell) continue
-
-          for (const creatureId of cell) {
+      for (const creatureId of nearby) {
             const cPos = this.em.getComponent<PositionComponent>(creatureId, 'position')
             if (!cPos) continue
 
@@ -316,8 +305,6 @@ export class CombatSystem {
                 this.particles.spawn(cPos.x, cPos.y, 2, '#ffaa00', 0.5)
               }
             }
-          }
-        }
       }
     }
   }
@@ -329,10 +316,10 @@ export class CombatSystem {
       const civMember = this.em.getComponent<CivMemberComponent>(creatureId, 'civMember')
       if (!civMember || civMember.role !== 'soldier') continue
 
-      const cPos = this.em.getComponent<PositionComponent>(creatureId, 'position')!
-      const creature = this.em.getComponent<CreatureComponent>(creatureId, 'creature')!
-      const needs = this.em.getComponent<NeedsComponent>(creatureId, 'needs')!
-      if (needs.health <= 0) continue
+      const cPos = this.em.getComponent<PositionComponent>(creatureId, 'position')
+      const creature = this.em.getComponent<CreatureComponent>(creatureId, 'creature')
+      const needs = this.em.getComponent<NeedsComponent>(creatureId, 'needs')
+      if (!cPos || !creature || !needs || needs.health <= 0) continue
 
       const attackerCiv = this.civManager.civilizations.get(civMember.civId)
       if (!attackerCiv) continue

@@ -10,21 +10,26 @@ import { ResourceSystem, ResourceNode } from './ResourceSystem'
 import { CivMemberComponent } from '../civilization/Civilization'
 import { CivManager } from '../civilization/CivManager'
 import { GeneticsSystem } from './GeneticsSystem'
+import { SpatialHashSystem } from './SpatialHashSystem'
 
 export class AISystem {
   private em: EntityManager
   private world: World
   private particles: ParticleSystem
   private factory: CreatureFactory
+  private spatialHash: SpatialHashSystem
   private breedCooldown: Map<EntityId, number> = new Map()
   private resources: ResourceSystem | null = null
   private civManager: CivManager | null = null
+  /** Batch index for staggered updates — only process 1/3 of entities per tick */
+  private batchIndex: number = 0
 
-  constructor(em: EntityManager, world: World, particles: ParticleSystem, factory: CreatureFactory) {
+  constructor(em: EntityManager, world: World, particles: ParticleSystem, factory: CreatureFactory, spatialHash: SpatialHashSystem) {
     this.em = em
     this.world = world
     this.particles = particles
     this.factory = factory
+    this.spatialHash = spatialHash
   }
 
   setResourceSystem(resources: ResourceSystem): void {
@@ -38,16 +43,13 @@ export class AISystem {
   update(): void {
     const entities = this.em.getEntitiesWithComponents('position', 'ai', 'creature', 'needs')
 
-    // Build spatial hash for fast neighbor lookup (5x5 grid, same as CombatSystem)
-    const grid: Map<string, EntityId[]> = new Map()
-    for (const id of entities) {
-      const pos = this.em.getComponent<PositionComponent>(id, 'position')!
-      const key = `${Math.floor(pos.x / 5)},${Math.floor(pos.y / 5)}`
-      if (!grid.has(key)) grid.set(key, [])
-      grid.get(key)!.push(id)
-    }
+    // Staggered batch: only process 1/8 of entities per tick
+    const BATCH_COUNT = 8
+    const batch = this.batchIndex % BATCH_COUNT
+    this.batchIndex++
 
-    for (const id of entities) {
+    for (let idx = batch; idx < entities.length; idx += BATCH_COUNT) {
+      const id = entities[idx]
       const pos = this.em.getComponent<PositionComponent>(id, 'position')!
       const ai = this.em.getComponent<AIComponent>(id, 'ai')!
       const needs = this.em.getComponent<NeedsComponent>(id, 'needs')!
@@ -84,7 +86,7 @@ export class AISystem {
       }
 
       // State machine — threat detection overrides other states
-      const threat = this.findNearbyThreat(id, pos, creature, grid)
+      const threat = this.findNearbyThreat(id, pos, creature)
       if (threat) {
         if (creature.isHostile || creature.species === 'wolf' || creature.species === 'dragon') {
           // Predators attack
@@ -193,14 +195,20 @@ export class AISystem {
           // Run away from threat
           const fdx = pos.x - threatPos.x
           const fdy = pos.y - threatPos.y
-          const fdist = Math.sqrt(fdx * fdx + fdy * fdy)
+          const fdist2 = fdx * fdx + fdy * fdy
 
-          if (fdist > 15) {
-            // Safe distance, stop fleeing
+          if (fdist2 > 225) {
+            // Safe distance (15^2=225), stop fleeing
             ai.state = 'idle'
             ai.targetEntity = null
+          } else if (fdist2 < 0.01) {
+            // Overlapping with threat — flee in random direction
+            ai.targetX = pos.x + (Math.random() - 0.5) * 20
+            ai.targetY = pos.y + (Math.random() - 0.5) * 20
+            this.moveTowards(pos, ai, creature, vel)
           } else {
             // Flee in opposite direction
+            const fdist = Math.sqrt(fdist2)
             ai.targetX = pos.x + (fdx / fdist) * 10
             ai.targetY = pos.y + (fdy / fdist) * 10
             this.moveTowards(pos, ai, creature, vel)
@@ -243,11 +251,10 @@ export class AISystem {
           }
 
           // Legacy fallback: non-band migrating creatures (shouldn't happen often)
-          const origSpeed = creature.speed
+          const fallbackSpeed = creature.speed
           creature.speed *= 1.5
           this.moveTowards(pos, ai, creature, vel)
-          creature.speed = origSpeed
-
+          creature.speed = fallbackSpeed
           if (this.reachedTarget(pos, ai)) {
             ai.state = 'idle'
             ai.cooldown = 0
@@ -262,17 +269,18 @@ export class AISystem {
     }
 
     // Breeding pass
-    this.updateBreeding(entities, grid)
+    this.updateBreeding(entities)
   }
 
-  private updateBreeding(entities: EntityId[], grid: Map<string, EntityId[]>): void {
+  private updateBreeding(entities: EntityId[]): void {
     const newborns: { species: EntityType; x: number; y: number; motherId: EntityId; fatherId: EntityId }[] = []
 
     for (const id of entities) {
       if (!this.em.hasComponent(id, 'creature')) continue
       const creature = this.em.getComponent<CreatureComponent>(id, 'creature')!
-      const pos = this.em.getComponent<PositionComponent>(id, 'position')!
-      const needs = this.em.getComponent<NeedsComponent>(id, 'needs')!
+      const pos = this.em.getComponent<PositionComponent>(id, 'position')
+      const needs = this.em.getComponent<NeedsComponent>(id, 'needs')
+      if (!pos || !needs) continue
 
       // Must be adult (age > 20% of maxAge), healthy, not hungry
       if (creature.age < creature.maxAge * 0.2) continue
@@ -290,36 +298,28 @@ export class AISystem {
         continue
       }
 
-      // Find nearby male of same species using spatial hash
-      const cx = Math.floor(pos.x / 5)
-      const cy = Math.floor(pos.y / 5)
-      let found = false
+      // Find nearby male of same species using global spatial hash
+      const nearby = this.spatialHash.query(pos.x, pos.y, 5)
 
-      for (let dy = -1; dy <= 1 && !found; dy++) {
-        for (let dx = -1; dx <= 1 && !found; dx++) {
-          const cell = grid.get(`${cx + dx},${cy + dy}`)
-          if (!cell) continue
-
-          for (const otherId of cell) {
+      for (const otherId of nearby) {
             if (otherId === id) continue
             if (!this.em.hasComponent(otherId, 'creature')) continue
-            const other = this.em.getComponent<CreatureComponent>(otherId, 'creature')!
+            const other = this.em.getComponent<CreatureComponent>(otherId, 'creature')
+            if (!other) continue
             if (other.species !== creature.species || other.gender !== 'male') continue
             if (other.age < other.maxAge * 0.2) continue
 
-            const otherPos = this.em.getComponent<PositionComponent>(otherId, 'position')!
+            const otherPos = this.em.getComponent<PositionComponent>(otherId, 'position')
+            if (!otherPos) continue
             const ddx = pos.x - otherPos.x
             const ddy = pos.y - otherPos.y
-            const dist = Math.sqrt(ddx * ddx + ddy * ddy)
+            const dist2 = ddx * ddx + ddy * ddy
 
-            if (dist < 3 && Math.random() < 0.005 * fertilityMod) {
+            if (dist2 < 9 && Math.random() < 0.005 * fertilityMod) {
               newborns.push({ species: creature.species as EntityType, x: pos.x, y: pos.y, motherId: id, fatherId: otherId })
               this.breedCooldown.set(id, 300)
-              found = true
               break
             }
-          }
-        }
       }
     }
 
@@ -401,7 +401,7 @@ export class AISystem {
   private reachedTarget(pos: PositionComponent, ai: AIComponent): boolean {
     const dx = ai.targetX - pos.x
     const dy = ai.targetY - pos.y
-    return Math.sqrt(dx * dx + dy * dy) < 1
+    return dx * dx + dy * dy < 1
   }
 
   private findNearestResource(pos: PositionComponent, type: string | null, range: number): ResourceNode | null {
@@ -454,11 +454,13 @@ export class AISystem {
 
   private heroHeal(id: EntityId, pos: PositionComponent, hero: HeroComponent): void {
     const civMember = this.em.getComponent<CivMemberComponent>(id, 'civMember')
-    const entities = this.em.getEntitiesWithComponents('position', 'needs')
+    // Use spatial hash instead of iterating all entities
+    const nearby = this.spatialHash.query(pos.x, pos.y, 5)
 
-    for (const otherId of entities) {
+    for (const otherId of nearby) {
       if (otherId === id) continue
-      const otherPos = this.em.getComponent<PositionComponent>(otherId, 'position')!
+      const otherPos = this.em.getComponent<PositionComponent>(otherId, 'position')
+      if (!otherPos) continue
       const dx = pos.x - otherPos.x
       const dy = pos.y - otherPos.y
       if (dx * dx + dy * dy > 25) continue // 5 tile range
@@ -469,8 +471,8 @@ export class AISystem {
         if (!otherCiv || otherCiv.civId !== civMember.civId) continue
       }
 
-      const otherNeeds = this.em.getComponent<NeedsComponent>(otherId, 'needs')!
-      if (otherNeeds.health < 100) {
+      const otherNeeds = this.em.getComponent<NeedsComponent>(otherId, 'needs')
+      if (otherNeeds && otherNeeds.health < 100) {
         otherNeeds.health = Math.min(100, otherNeeds.health + 15)
         this.particles.spawn(otherPos.x, otherPos.y, 3, '#00ff88', 0.8)
         hero.abilityCooldown = 120
@@ -480,25 +482,20 @@ export class AISystem {
   }
 
   private findNearbyThreat(
-    id: EntityId, pos: PositionComponent, creature: CreatureComponent, grid: Map<string, EntityId[]>
+    id: EntityId, pos: PositionComponent, creature: CreatureComponent
   ): { id: EntityId; dist: number } | null {
     let detectRange = creature.isHostile ? 12 : 8
     // Heroes have doubled detect range
     const hero = this.em.getComponent<HeroComponent>(id, 'hero')
     if (hero) detectRange *= 2
+    const detectRange2 = detectRange * detectRange
     let closest: { id: EntityId; dist: number } | null = null
+    let closestDist2 = detectRange2
 
-    // Query spatial hash: detectRange up to 12, cell size 5, so need radius of 3 cells
-    const cx = Math.floor(pos.x / 5)
-    const cy = Math.floor(pos.y / 5)
-    const cellRadius = Math.ceil(detectRange / 5)
+    // Query global spatial hash with detectRange radius
+    const nearby = this.spatialHash.query(pos.x, pos.y, detectRange)
 
-    for (let dy = -cellRadius; dy <= cellRadius; dy++) {
-      for (let dx = -cellRadius; dx <= cellRadius; dx++) {
-        const cell = grid.get(`${cx + dx},${cy + dy}`)
-        if (!cell) continue
-
-        for (const otherId of cell) {
+    for (const otherId of nearby) {
           if (otherId === id) continue
           const otherCreature = this.em.getComponent<CreatureComponent>(otherId, 'creature')
           if (!otherCreature) continue
@@ -518,13 +515,12 @@ export class AISystem {
 
           const ddx = pos.x - otherPos.x
           const ddy = pos.y - otherPos.y
-          const dist = Math.sqrt(ddx * ddx + ddy * ddy)
+          const dist2 = ddx * ddx + ddy * ddy
 
-          if (dist < detectRange && (!closest || dist < closest.dist)) {
-            closest = { id: otherId, dist }
+          if (dist2 < closestDist2) {
+            closestDist2 = dist2
+            closest = { id: otherId, dist: Math.sqrt(dist2) }
           }
-        }
-      }
     }
 
     return closest

@@ -32,8 +32,10 @@ export class WaterAnimationSystem {
   private waveCache: WaveCache | null = null
   private readonly WAVE_CACHE_INTERVAL = 4
 
-  // Coastline tile cache: set of "x,y" keys that are water tiles adjacent to land
-  private coastTiles: Set<string> = new Set()
+  // Coastline tile cache: flat Uint8Array grid (1 = coast water tile)
+  private coastGrid: Uint8Array = new Uint8Array(0)
+  private coastGridWidth: number = 0
+  private coastGridHeight: number = 0
   private coastCacheTick: number = -1
   private readonly COAST_CACHE_INTERVAL = 120
 
@@ -48,6 +50,9 @@ export class WaterAnimationSystem {
   private cacheBounds: { startX: number; startY: number; endX: number; endY: number; camX: number; camY: number; zoom: number } | null = null
   private readonly CACHE_INTERVAL = 3 // re-render water every N frames
   private frameCounter: number = 0
+
+  // Static direction arrays to avoid GC in hot paths
+  private static readonly DIRS_4: readonly [number, number][] = [[-1, 0], [1, 0], [0, -1], [0, 1]]
 
   constructor() {
     this.SIN_TABLE = new Float32Array(this.SIN_TABLE_SIZE)
@@ -81,7 +86,7 @@ export class WaterAnimationSystem {
     // Spawn foam particles along coastlines
     this.spawnFoam(world, tick)
 
-    // Age and remove dead foam particles
+    // Age and remove dead foam particles (swap-and-pop for O(1) removal)
     for (let i = this.foamParticles.length - 1; i >= 0; i--) {
       const p = this.foamParticles[i]
       p.age++
@@ -91,7 +96,11 @@ export class WaterAnimationSystem {
       p.dx *= 0.96
       p.dy *= 0.96
       if (p.age >= p.maxAge) {
-        this.foamParticles.splice(i, 1)
+        const last = this.foamParticles.length - 1
+        if (i !== last) {
+          this.foamParticles[i] = this.foamParticles[last]
+        }
+        this.foamParticles.pop()
       }
     }
 
@@ -160,7 +169,7 @@ export class WaterAnimationSystem {
           this.renderDepthGradient(cctx, screenX, screenY, sz, tx, ty, time, isDeep)
           this.renderReflection(cctx, screenX, screenY, sz, tx, ty, time, dayNightCycle)
 
-          if (this.coastTiles.has(`${tx},${ty}`)) {
+          if (this.coastGrid[ty * this.coastGridWidth + tx]) {
             this.renderCoastFoamEdge(cctx, screenX, screenY, sz, tx, ty, time, world)
           }
         }
@@ -296,7 +305,7 @@ export class WaterAnimationSystem {
     tx: number, ty: number,
     time: number, world: World
   ): void {
-    const dirs: [number, number][] = [[-1, 0], [1, 0], [0, -1], [0, 1]]
+    const dirs = WaterAnimationSystem.DIRS_4
 
     for (const [dx, dy] of dirs) {
       const nx = tx + dx
@@ -351,23 +360,30 @@ export class WaterAnimationSystem {
   // ── Coastline cache: find water tiles adjacent to land ──
 
   private rebuildCoastCache(world: World): void {
-    this.coastTiles.clear()
+    const w = world.width
+    const h = world.height
+    if (this.coastGridWidth !== w || this.coastGridHeight !== h) {
+      this.coastGrid = new Uint8Array(w * h)
+      this.coastGridWidth = w
+      this.coastGridHeight = h
+    } else {
+      this.coastGrid.fill(0)
+    }
 
-    for (let y = 0; y < world.height; y++) {
-      for (let x = 0; x < world.width; x++) {
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
         const tile = world.tiles[y][x]
         if (tile !== TileType.DEEP_WATER && tile !== TileType.SHALLOW_WATER) continue
 
-        // Check 4-neighbors for land
         if (this.hasLandNeighbor(x, y, world)) {
-          this.coastTiles.add(`${x},${y}`)
+          this.coastGrid[y * w + x] = 1
         }
       }
     }
   }
 
   private hasLandNeighbor(x: number, y: number, world: World): boolean {
-    const dirs: [number, number][] = [[-1, 0], [1, 0], [0, -1], [0, 1]]
+    const dirs = WaterAnimationSystem.DIRS_4
     for (const [dx, dy] of dirs) {
       const nx = x + dx
       const ny = y + dy
@@ -384,15 +400,25 @@ export class WaterAnimationSystem {
     // Spawn a few particles each tick (throttled)
     if (tick % 3 !== 0) return
     if (this.foamParticles.length >= this.MAX_FOAM) return
+    if (this.coastGridWidth === 0) return
 
-    // Pick random coast tiles to spawn from
-    const coastArray = Array.from(this.coastTiles)
-    if (coastArray.length === 0) return
-
+    const w = this.coastGridWidth
+    const h = this.coastGridHeight
     const spawnCount = Math.min(4, this.MAX_FOAM - this.foamParticles.length)
+
     for (let i = 0; i < spawnCount; i++) {
-      const key = coastArray[(Math.random() * coastArray.length) | 0]
-      const [cx, cy] = key.split(',').map(Number)
+      // Random sample from grid — try up to 20 times to find a coast tile
+      let cx = -1, cy = -1
+      for (let attempt = 0; attempt < 20; attempt++) {
+        const rx = (Math.random() * w) | 0
+        const ry = (Math.random() * h) | 0
+        if (this.coastGrid[ry * w + rx]) {
+          cx = rx
+          cy = ry
+          break
+        }
+      }
+      if (cx < 0) continue
 
       // Spawn at pixel position with slight random offset
       const px = cx * TILE_SIZE + Math.random() * TILE_SIZE
@@ -401,17 +427,10 @@ export class WaterAnimationSystem {
       // Drift direction: away from nearest land
       let driftX = 0
       let driftY = 0
-      const dirs: [number, number][] = [[-1, 0], [1, 0], [0, -1], [0, 1]]
-      for (const [dx, dy] of dirs) {
-        const nx = cx + dx
-        const ny = cy + dy
-        if (nx < 0 || nx >= world.width || ny < 0 || ny >= world.height) continue
-        const n = world.tiles[ny][nx]
-        if (n !== TileType.DEEP_WATER && n !== TileType.SHALLOW_WATER) {
-          driftX -= dx * 0.15
-          driftY -= dy * 0.15
-        }
-      }
+      if (cx > 0 && world.tiles[cy][cx - 1] !== TileType.DEEP_WATER && world.tiles[cy][cx - 1] !== TileType.SHALLOW_WATER) driftX += 0.15
+      if (cx < w - 1 && world.tiles[cy][cx + 1] !== TileType.DEEP_WATER && world.tiles[cy][cx + 1] !== TileType.SHALLOW_WATER) driftX -= 0.15
+      if (cy > 0 && world.tiles[cy - 1][cx] !== TileType.DEEP_WATER && world.tiles[cy - 1][cx] !== TileType.SHALLOW_WATER) driftY += 0.15
+      if (cy < h - 1 && world.tiles[cy + 1][cx] !== TileType.DEEP_WATER && world.tiles[cy + 1][cx] !== TileType.SHALLOW_WATER) driftY -= 0.15
 
       this.foamParticles.push({
         x: px,

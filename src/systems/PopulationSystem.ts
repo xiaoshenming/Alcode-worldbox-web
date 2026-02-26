@@ -11,7 +11,6 @@ import { generateName } from '../utils/NameGenerator'
 import { GeneticsSystem } from './GeneticsSystem'
 
 const POP_CHECK_INTERVAL = 120
-const AGE_PER_TICK = 1
 const ELDER_AGE_RATIO = 0.85          // age/maxAge above this → death chance
 const ELDER_DEATH_CHANCE = 0.08       // per check for elders
 const FAMINE_DAMAGE = 12              // health lost per check when starving
@@ -53,8 +52,7 @@ export class PopulationSystem {
   }
 
   update(em: EntityManager, world: World, civManager: CivManager, particles: ParticleSystem, tick: number): void {
-    // Age all creatures every tick
-    this.ageTick(em)
+    // Aging is handled by AISystem (creature.age += 0.1 per tick) — no duplicate here
 
     if (tick % POP_CHECK_INTERVAL !== 0) return
 
@@ -81,15 +79,7 @@ export class PopulationSystem {
     }
   }
 
-  // ── Aging ──────────────────────────────────────────────────────────
-
-  private ageTick(em: EntityManager): void {
-    const entities = em.getEntitiesWithComponents('creature')
-    for (const id of entities) {
-      const creature = em.getComponent<CreatureComponent>(id, 'creature')!
-      creature.age += AGE_PER_TICK
-    }
-  }
+  // ── Aging (death checks only; age increment is in AISystem) ──────
 
   private processAging(
     em: EntityManager, members: number[], civ: Civilization,

@@ -105,6 +105,10 @@ export class EntityManager {
   getAllEntities(): EntityId[] {
     return Array.from(this.entities)
   }
+
+  getEntityCount(): number {
+    return this.entities.size
+  }
 }
 
 // Components

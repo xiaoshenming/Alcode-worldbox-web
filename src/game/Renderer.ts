@@ -28,6 +28,18 @@ export class Renderer {
   private lastCameraY: number = -1
   private lastCameraZoom: number = -1
 
+  // Minimap terrain cache
+  private minimapTerrainCanvas: OffscreenCanvas | null = null
+  private minimapTerrainCtx: OffscreenCanvasRenderingContext2D | null = null
+  private minimapTerrainDirty: boolean = true
+
+  // Reusable batch arrays to reduce GC in renderEntities
+  private _buildingBatch: number[] = []
+  private _creatureBatch: number[] = []
+  private _artifactBatch: number[] = []
+  private _fallbackByColor: Map<string, { id: number; cx: number; cy: number; size: number }[]> = new Map()
+  private _fallbackBucketPool: { id: number; cx: number; cy: number; size: number }[][] = []
+
   constructor(canvas: HTMLCanvasElement, minimapCanvas: HTMLCanvasElement) {
     this.canvas = canvas
     this.ctx = canvas.getContext('2d')!
@@ -45,6 +57,7 @@ export class Renderer {
     this.terrainCanvas = new OffscreenCanvas(width, height)
     this.terrainCtx = this.terrainCanvas.getContext('2d')!
     this.terrainDirty = true
+    this.minimapTerrainDirty = true
   }
 
   render(world: World, camera: Camera, em?: EntityManager, civManager?: CivManager, particles?: ParticleSystem, fogAlpha?: number, resources?: ResourceSystem, caravanSystem?: CaravanSystem, cropSystem?: CropSystem): void {
@@ -61,6 +74,7 @@ export class Renderer {
     const cameraChanged = camera.x !== this.lastCameraX || camera.y !== this.lastCameraY || camera.zoom !== this.lastCameraZoom
     if (cameraChanged || world.isDirty()) {
       this.terrainDirty = true
+      if (world.isDirty()) this.minimapTerrainDirty = true
       this.lastCameraX = camera.x
       this.lastCameraY = camera.y
       this.lastCameraZoom = camera.zoom
@@ -267,10 +281,16 @@ export class Renderer {
     const entities = em.getEntitiesWithComponents('position', 'render')
 
     // --- Batch pass: group simple fallback entities by color to reduce fillStyle switches ---
-    const buildingBatch: number[] = []
-    const creatureBatch: number[] = []
-    const artifactBatch: number[] = []
-    const fallbackByColor: Map<string, { id: number; cx: number; cy: number; size: number }[]> = new Map()
+    const buildingBatch = this._buildingBatch; buildingBatch.length = 0
+    const creatureBatch = this._creatureBatch; creatureBatch.length = 0
+    const artifactBatch = this._artifactBatch; artifactBatch.length = 0
+    // Return fallback buckets to pool and clear map
+    for (const bucket of this._fallbackByColor.values()) {
+      bucket.length = 0
+      this._fallbackBucketPool.push(bucket)
+    }
+    this._fallbackByColor.clear()
+    const fallbackByColor = this._fallbackByColor
 
     for (const id of entities) {
       const pos = em.getComponent<PositionComponent>(id, 'position')!
@@ -297,7 +317,7 @@ export class Renderer {
           const cy = screenY + tileSize / 2
           const size = render.size * camera.zoom
           let bucket = fallbackByColor.get(render.color)
-          if (!bucket) { bucket = []; fallbackByColor.set(render.color, bucket) }
+          if (!bucket) { bucket = this._fallbackBucketPool.pop() || []; fallbackByColor.set(render.color, bucket) }
           bucket.push({ id, cx, cy, size })
         }
       }
@@ -838,16 +858,29 @@ export class Renderer {
     const mh = this.minimapCanvas.height
     const scale = mw / world.width
 
-    ctx.fillStyle = '#000'
-    ctx.fillRect(0, 0, mw, mh)
-
-    // Terrain
-    for (let y = 0; y < world.height; y += 2) {
-      for (let x = 0; x < world.width; x += 2) {
-        ctx.fillStyle = world.getColor(x, y)
-        ctx.fillRect(x * scale, y * scale, scale * 2, scale * 2)
-      }
+    // Initialize minimap terrain cache if needed
+    if (!this.minimapTerrainCanvas || this.minimapTerrainCanvas.width !== mw) {
+      this.minimapTerrainCanvas = new OffscreenCanvas(mw, mh)
+      this.minimapTerrainCtx = this.minimapTerrainCanvas.getContext('2d')!
+      this.minimapTerrainDirty = true
     }
+
+    // Rebuild terrain cache only when dirty
+    if (this.minimapTerrainDirty) {
+      const tctx = this.minimapTerrainCtx!
+      tctx.fillStyle = '#000'
+      tctx.fillRect(0, 0, mw, mh)
+      for (let y = 0; y < world.height; y += 2) {
+        for (let x = 0; x < world.width; x += 2) {
+          tctx.fillStyle = world.getColor(x, y)
+          tctx.fillRect(x * scale, y * scale, scale * 2, scale * 2)
+        }
+      }
+      this.minimapTerrainDirty = false
+    }
+
+    // Draw cached terrain
+    ctx.drawImage(this.minimapTerrainCanvas!, 0, 0)
 
     // Territory overlay (sample every 3rd tile for performance)
     if (civManager) {

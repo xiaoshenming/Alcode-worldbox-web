@@ -93,11 +93,18 @@ const RENDER_MAP: Record<DecorationType, RenderFn> = {
 }
 
 export class WorldDecorationSystem {
-  private decorations: Map<string, Decoration> = new Map()
+  private grid: (Decoration | null)[][] = []
+  private worldWidth: number = 0
+  private worldHeight: number = 0
+  private decorationCount: number = 0
 
   generate(tiles: TileType[][], width: number, height: number): void {
-    this.decorations.clear()
+    this.worldWidth = width
+    this.worldHeight = height
+    this.decorationCount = 0
+    this.grid = new Array(height)
     for (let y = 0; y < height; y++) {
+      this.grid[y] = new Array(width).fill(null)
       for (let x = 0; x < width; x++) {
         const tile = tiles[y][x]
         const candidates = TERRAIN_DECORATIONS[tile]
@@ -112,24 +119,10 @@ export class WorldDecorationSystem {
         const offsetX = Math.floor(seededRandom(x, y, 251) * (TILE_SIZE - 3)) + 1
         const offsetY = Math.floor(seededRandom(x, y, 389) * (TILE_SIZE - 4)) + 1
 
-        this.decorations.set(`${x},${y}`, { x, y, type, offsetX, offsetY })
+        this.grid[y][x] = { x, y, type, offsetX, offsetY }
+        this.decorationCount++
       }
     }
-  }
-
-  getDecorationsInBounds(
-    minX: number, minY: number, maxX: number, maxY: number
-  ): Decoration[] {
-    const result: Decoration[] = []
-    const x0 = Math.max(0, minX)
-    const y0 = Math.max(0, minY)
-    for (let y = y0; y <= maxY; y++) {
-      for (let x = x0; x <= maxX; x++) {
-        const d = this.decorations.get(`${x},${y}`)
-        if (d) result.push(d)
-      }
-    }
-    return result
   }
 
   render(
@@ -138,29 +131,38 @@ export class WorldDecorationSystem {
     minTileX: number, minTileY: number,
     maxTileX: number, maxTileY: number
   ): void {
-    const decorations = this.getDecorationsInBounds(
-      minTileX, minTileY, maxTileX, maxTileY
-    )
-    for (const d of decorations) {
-      const px = Math.floor((d.x * TILE_SIZE + d.offsetX - cameraX) * zoom)
-      const py = Math.floor((d.y * TILE_SIZE + d.offsetY - cameraY) * zoom)
-      // 缩放过小时跳过装饰渲染
-      if (zoom < 0.5) continue
+    // 缩放过小时跳过装饰渲染
+    if (zoom < 0.5) return
 
-      ctx.save()
-      ctx.scale(zoom, zoom)
-      const sx = (d.x * TILE_SIZE + d.offsetX - cameraX)
-      const sy = (d.y * TILE_SIZE + d.offsetY - cameraY)
-      RENDER_MAP[d.type](ctx, sx, sy)
-      ctx.restore()
+    const x0 = Math.max(0, minTileX)
+    const y0 = Math.max(0, minTileY)
+    const x1 = Math.min(this.worldWidth - 1, maxTileX)
+    const y1 = Math.min(this.worldHeight - 1, maxTileY)
+
+    ctx.save()
+    ctx.scale(zoom, zoom)
+    for (let y = y0; y <= y1; y++) {
+      const row = this.grid[y]
+      if (!row) continue
+      for (let x = x0; x <= x1; x++) {
+        const d = row[x]
+        if (!d) continue
+        const sx = d.x * TILE_SIZE + d.offsetX - cameraX
+        const sy = d.y * TILE_SIZE + d.offsetY - cameraY
+        RENDER_MAP[d.type](ctx, sx, sy)
+      }
     }
+    ctx.restore()
   }
 
   removeAt(x: number, y: number): void {
-    this.decorations.delete(`${x},${y}`)
+    if (y >= 0 && y < this.worldHeight && x >= 0 && x < this.worldWidth) {
+      if (this.grid[y][x]) this.decorationCount--
+      this.grid[y][x] = null
+    }
   }
 
   get count(): number {
-    return this.decorations.size
+    return this.decorationCount
   }
 }
