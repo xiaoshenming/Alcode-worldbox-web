@@ -222,12 +222,13 @@ export class WeatherSystem {
       // Can kill nearby creatures
       const entities = this.em.getEntitiesWithComponents('position', 'needs')
       for (const id of entities) {
-        const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+        const pos = this.em.getComponent<PositionComponent>(id, 'position')
+        if (!pos) continue
         const dx = pos.x - lx
         const dy = pos.y - ly
         if (Math.sqrt(dx * dx + dy * dy) < 3 && Math.random() < 0.3) {
-          const needs = this.em.getComponent<NeedsComponent>(id, 'needs')!
-          needs.health -= 30
+          const needs = this.em.getComponent<NeedsComponent>(id, 'needs')
+          if (needs) needs.health -= 30
         }
       }
     }

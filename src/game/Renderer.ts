@@ -295,8 +295,9 @@ export class Renderer {
     const fallbackByColor = this._fallbackByColor
 
     for (const id of entities) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
-      const render = em.getComponent<RenderComponent>(id, 'render')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      const render = em.getComponent<RenderComponent>(id, 'render')
+      if (!pos || !render) continue
 
       // Viewport culling
       if (pos.x < bounds.startX - 1 || pos.x > bounds.endX + 1 ||
@@ -327,8 +328,9 @@ export class Renderer {
 
     // Draw buildings
     for (const id of buildingBatch) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
-      const building = em.getComponent<BuildingComponent>(id, 'building')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      const building = em.getComponent<BuildingComponent>(id, 'building')
+      if (!pos || !building) continue
       const screenX = pos.x * TILE_SIZE * camera.zoom + offsetX
       const screenY = pos.y * TILE_SIZE * camera.zoom + offsetY
       const sprite = this.sprites.getBuildingSprite(building.buildingType, building.level)
@@ -359,8 +361,9 @@ export class Renderer {
 
     // Draw creatures (sprites + overlays)
     for (const id of creatureBatch) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
-      const render = em.getComponent<RenderComponent>(id, 'render')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      const render = em.getComponent<RenderComponent>(id, 'render')
+      if (!pos || !render) continue
       const screenX = pos.x * TILE_SIZE * camera.zoom + offsetX
       const screenY = pos.y * TILE_SIZE * camera.zoom + offsetY
       const size = render.size * camera.zoom
@@ -484,8 +487,9 @@ export class Renderer {
     // Draw artifacts
     const time = performance.now()
     for (const id of artifactBatch) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
-      const artifact = em.getComponent<ArtifactComponent>(id, 'artifact')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      const artifact = em.getComponent<ArtifactComponent>(id, 'artifact')
+      if (!pos || !artifact) continue
       const screenX = pos.x * TILE_SIZE * camera.zoom + offsetX
       const screenY = pos.y * TILE_SIZE * camera.zoom + offsetY
       const cx = screenX + tileSize / 2
@@ -895,7 +899,8 @@ export class Renderer {
       }
       const entities = em.getEntitiesWithComponents('position')
       for (const id of entities) {
-        const pos = em.getComponent<PositionComponent>(id, 'position')!
+        const pos = em.getComponent<PositionComponent>(id, 'position')
+        if (!pos) continue
         const gx = Math.floor(pos.x / gridSize)
         const gy = Math.floor(pos.y / gridSize)
         if (gx >= 0 && gx < gridW && gy >= 0 && gy < gridH) {
@@ -925,8 +930,9 @@ export class Renderer {
     if (em) {
       const buildings = em.getEntitiesWithComponents('position', 'building')
       for (const id of buildings) {
-        const pos = em.getComponent<PositionComponent>(id, 'position')!
-        const building = em.getComponent<BuildingComponent>(id, 'building')!
+        const pos = em.getComponent<PositionComponent>(id, 'position')
+        const building = em.getComponent<BuildingComponent>(id, 'building')
+        if (!pos || !building) continue
         if (building.buildingType === BuildingType.CASTLE) {
           ctx.fillStyle = '#fff'
         } else if (building.buildingType === BuildingType.BARRACKS) {
@@ -944,8 +950,9 @@ export class Renderer {
       const skip = entities.length > 200 ? 2 : 1
       for (let i = 0; i < entities.length; i += skip) {
         const id = entities[i]
-        const pos = em.getComponent<PositionComponent>(id, 'position')!
-        const render = em.getComponent<RenderComponent>(id, 'render')!
+        const pos = em.getComponent<PositionComponent>(id, 'position')
+        const render = em.getComponent<RenderComponent>(id, 'render')
+        if (!pos || !render) continue
         ctx.fillStyle = render.color
         ctx.fillRect(pos.x * scale, pos.y * scale, 2, 2)
       }

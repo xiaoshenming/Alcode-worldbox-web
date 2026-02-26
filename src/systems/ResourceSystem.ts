@@ -133,8 +133,9 @@ export class ResourceSystem {
     // Creatures near resources gather them
     const entities = this.em.getEntitiesWithComponents('position', 'creature', 'civMember')
     for (const id of entities) {
-      const pos = this.em.getComponent<PositionComponent>(id, 'position')!
-      const civMember = this.em.getComponent<CivMemberComponent>(id, 'civMember')!
+      const pos = this.em.getComponent<PositionComponent>(id, 'position')
+      const civMember = this.em.getComponent<CivMemberComponent>(id, 'civMember')
+      if (!pos || !civMember) continue
 
       const nearby = this.getNodesNear(pos.x, pos.y, 2)
       for (const node of nearby) {

@@ -142,9 +142,10 @@ export class QuestSystem {
       // Max 1 active quest per hero
       if (this.quests.some(q => q.heroId === heroId && !q.completed && !q.failed)) continue
 
-      const hero = em.getComponent<HeroComponent>(heroId, 'hero')!
-      const civMember = em.getComponent<CivMemberComponent>(heroId, 'civMember')!
-      const heroPos = em.getComponent<PositionComponent>(heroId, 'position')!
+      const hero = em.getComponent<HeroComponent>(heroId, 'hero')
+      const civMember = em.getComponent<CivMemberComponent>(heroId, 'civMember')
+      const heroPos = em.getComponent<PositionComponent>(heroId, 'position')
+      if (!hero || !civMember || !heroPos) continue
       const civ = civManager.civilizations.get(civMember.civId)
       if (!civ) continue
 

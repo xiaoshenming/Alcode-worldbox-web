@@ -50,10 +50,11 @@ export class AISystem {
 
     for (let idx = batch; idx < entities.length; idx += BATCH_COUNT) {
       const id = entities[idx]
-      const pos = this.em.getComponent<PositionComponent>(id, 'position')!
-      const ai = this.em.getComponent<AIComponent>(id, 'ai')!
-      const needs = this.em.getComponent<NeedsComponent>(id, 'needs')!
-      const creature = this.em.getComponent<CreatureComponent>(id, 'creature')!
+      const pos = this.em.getComponent<PositionComponent>(id, 'position')
+      const ai = this.em.getComponent<AIComponent>(id, 'ai')
+      const needs = this.em.getComponent<NeedsComponent>(id, 'needs')
+      const creature = this.em.getComponent<CreatureComponent>(id, 'creature')
+      if (!pos || !ai || !needs || !creature) continue
       const vel = this.em.getComponent<VelocityComponent>(id, 'velocity')
 
       // Update cooldown

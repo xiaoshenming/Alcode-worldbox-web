@@ -76,8 +76,9 @@ export class CreatureAgingSystem {
 
     for (let i = 0; i < creatures.length; i++) {
       const id = creatures[i]
-      const creature = em.getComponent<CreatureComponent>(id, 'creature')!
-      const needs = em.getComponent<NeedsComponent>(id, 'needs')!
+      const creature = em.getComponent<CreatureComponent>(id, 'creature')
+      const needs = em.getComponent<NeedsComponent>(id, 'needs')
+      if (!creature || !needs) continue
       const stage = this.resolveStage(creature.age)
       this.stageCache.set(id, stage)
 

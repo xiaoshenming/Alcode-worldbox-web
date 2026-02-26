@@ -278,9 +278,11 @@ export class WeatherDisasterSystem {
     // Damage low-level buildings in flood area
     const buildingEntities = em.getEntitiesWithComponents('position', 'building')
     for (const id of buildingEntities) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      if (!pos) continue
       if (!this.isInArea(pos.x, pos.y, area)) continue
-      const building = em.getComponent<BuildingComponent>(id, 'building')!
+      const building = em.getComponent<BuildingComponent>(id, 'building')
+      if (!building) continue
       if (building.level <= 1) {
         building.health -= Math.floor(20 * disaster.intensity)
       }

@@ -91,8 +91,9 @@ export class MoodSystem {
     for (let i = 0; i < creatures.length; i++) {
       const id = creatures[i]
       const data = this.getOrCreate(id)
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
-      const needs = em.getComponent<NeedsComponent>(id, 'needs')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      const needs = em.getComponent<NeedsComponent>(id, 'needs')
+      if (!pos || !needs) continue
       const civMem = em.getComponent<CivMemberComponent>(id, 'civMember')
 
       let delta = 0

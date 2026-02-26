@@ -106,8 +106,9 @@ export class ArtifactSystem {
       // Heroes with 2+ artifacts don't seek more
       if (inv && inv.artifacts.length >= 2) continue
 
-      const heroPos = em.getComponent<PositionComponent>(heroId, 'position')!
-      const ai = em.getComponent<AIComponent>(heroId, 'ai')!
+      const heroPos = em.getComponent<PositionComponent>(heroId, 'position')
+      const ai = em.getComponent<AIComponent>(heroId, 'ai')
+      if (!heroPos || !ai) continue
 
       // Find nearest unclaimed artifact
       let nearest: { id: EntityId; x: number; y: number; dist: number } | null = null

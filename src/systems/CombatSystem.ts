@@ -42,9 +42,10 @@ export class CombatSystem {
     // Check combat for each entity in this batch
     for (let idx = batch; idx < entities.length; idx += BATCH_COUNT) {
       const id = entities[idx]
-      const pos = this.em.getComponent<PositionComponent>(id, 'position')!
-      const creature = this.em.getComponent<CreatureComponent>(id, 'creature')!
-      const needs = this.em.getComponent<NeedsComponent>(id, 'needs')!
+      const pos = this.em.getComponent<PositionComponent>(id, 'position')
+      const creature = this.em.getComponent<CreatureComponent>(id, 'creature')
+      const needs = this.em.getComponent<NeedsComponent>(id, 'needs')
+      if (!pos || !creature || !needs) continue
       const civMember = this.em.getComponent<CivMemberComponent>(id, 'civMember')
 
       if (needs.health <= 0) continue

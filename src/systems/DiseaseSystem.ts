@@ -141,8 +141,9 @@ export class DiseaseSystem {
         }
       }
 
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
-      const creature = em.getComponent<CreatureComponent>(id, 'creature')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      const creature = em.getComponent<CreatureComponent>(id, 'creature')
+      if (!pos || !creature) continue
       const diseaseDef = DISEASES[disease.diseaseType]
       if (!diseaseDef) continue
 
@@ -162,7 +163,8 @@ export class DiseaseSystem {
             const otherDisease = em.getComponent<DiseaseComponent>(otherId, 'disease')
             if (otherDisease) continue
 
-            const otherPos = em.getComponent<PositionComponent>(otherId, 'position')!
+            const otherPos = em.getComponent<PositionComponent>(otherId, 'position')
+            if (!otherPos) continue
             const ddx = pos.x - otherPos.x
             const ddy = pos.y - otherPos.y
             const dist = Math.sqrt(ddx * ddx + ddy * ddy)
