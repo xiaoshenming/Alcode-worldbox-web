@@ -132,11 +132,13 @@ export class TickBudgetSystem {
 }
 
 // --- Spatial Hash ---
+// Uses numeric keys (cy * 100000 + cx) to avoid string allocation GC pressure
 
 export class SpatialHash {
   private invCell: number;
-  private cells: Map<string, number[]> = new Map();
+  private cells: Map<number, number[]> = new Map();
   private resultSet: Set<number> = new Set();
+  private _resultBuf: number[] = [];
 
   constructor(cellSize: number = 16) {
     this.invCell = 1 / cellSize;
@@ -147,7 +149,9 @@ export class SpatialHash {
   }
 
   insert(id: number, x: number, y: number): void {
-    const key = this.toKey(x, y);
+    const cx = Math.floor(x * this.invCell);
+    const cy = Math.floor(y * this.invCell);
+    const key = cy * 100000 + cx;
     let bucket = this.cells.get(key);
     if (!bucket) { bucket = []; this.cells.set(key, bucket); }
     bucket.push(id);
@@ -173,18 +177,16 @@ export class SpatialHash {
     this.resultSet.clear();
     for (let cx = minCX; cx <= maxCX; cx++) {
       for (let cy = minCY; cy <= maxCY; cy++) {
-        const bucket = this.cells.get(cx + ',' + cy);
+        const key = cy * 100000 + cx;
+        const bucket = this.cells.get(key);
         if (bucket) {
           for (let i = 0, len = bucket.length; i < len; i++) this.resultSet.add(bucket[i]);
         }
       }
     }
-    const out: number[] = [];
+    const out = this._resultBuf;
+    out.length = 0;
     for (const id of this.resultSet) out.push(id);
     return out;
-  }
-
-  private toKey(x: number, y: number): string {
-    return Math.floor(x * this.invCell) + ',' + Math.floor(y * this.invCell);
   }
 }
