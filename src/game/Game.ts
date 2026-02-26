@@ -3997,7 +3997,7 @@ export class Game {
         this.prophecy.update(tick, this.civManager.civilizations.size)
         this.creatureSkill.update()
         this.worldNarrator.update()
-        this.mythology.update(tick, [...this.civManager.civilizations.keys()])
+        this.mythology.update(tick, this.civManager.civilizations.keys())
         this.creatureTaming.update(tick)
         this.plagueMutation.update(tick)
         this.monument.update(tick)
@@ -4046,7 +4046,7 @@ export class Game {
         // World natural wonders (v2.27) - natural wonders provide area buffs
         this.worldNaturalWonder.update(this.tickRate, this.em, this.world)
         // Creature language (v2.28) - language evolution affects diplomacy
-        this.creatureLanguage.update(this.tickRate, [...this.civManager.civilizations.keys()], tick)
+        this.creatureLanguage.update(this.tickRate, this.civManager.civilizations.keys(), tick)
         // Diplomatic tribute (v2.29) - weaker civs pay tribute
         this.diplomaticTribute.update(this.tickRate, this.world, this.em, tick)
         // World weather fronts (v2.30) - moving weather fronts
@@ -4072,7 +4072,7 @@ export class Game {
         // World fertility (v2.40) - soil fertility map
         this.worldFertility.update(this.tickRate, this.world.tiles, tick)
         // Creature fashion (v2.43) - fashion trends in civs
-        this.creatureFashion.update(this.tickRate, [...this.civManager.civilizations.keys()], tick)
+        this.creatureFashion.update(this.tickRate, this.civManager.civilizations.keys(), tick)
         // Diplomatic hostages (v2.44) - hostage exchange for peace
         this.diplomaticHostage.update(this.tickRate, this.em, this.civManager, tick)
         // World erosion (v2.45) - terrain erosion over time

@@ -39,7 +39,7 @@ export class CreatureFashionSystem {
   private lastCheck = 0
   private lastSpread = 0
 
-  update(dt: number, civIds: number[], tick: number): void {
+  update(dt: number, civIds: Iterable<number>, tick: number): void {
     if (tick - this.lastCheck >= CHECK_INTERVAL) {
       this.lastCheck = tick
       this.createTrends(civIds, tick)
@@ -50,7 +50,7 @@ export class CreatureFashionSystem {
     }
   }
 
-  private createTrends(civIds: number[], tick: number): void {
+  private createTrends(civIds: Iterable<number>, tick: number): void {
     if (this.trends.length >= MAX_TRENDS) return
     for (const civId of civIds) {
       if (Math.random() > 0.06) continue

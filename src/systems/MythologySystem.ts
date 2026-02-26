@@ -99,7 +99,7 @@ export class MythologySystem {
 
   /* ── 更新 ── */
 
-  update(tick: number, civIds: number[]): void {
+  update(tick: number, civIds: Iterable<number>): void {
     this.tickCounter++
     if (this.tickCounter % GEN_INTERVAL !== 0) return
 

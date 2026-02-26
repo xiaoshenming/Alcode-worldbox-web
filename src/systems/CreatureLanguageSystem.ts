@@ -43,7 +43,7 @@ export class CreatureLanguageSystem {
   private lastEvolve = 0
   private lastDrift = 0
 
-  update(dt: number, civIds: number[], tick: number): void {
+  update(dt: number, civIds: Iterable<number>, tick: number): void {
     if (tick - this.lastEvolve >= EVOLVE_INTERVAL) {
       this.lastEvolve = tick
       this.evolveLanguages(civIds, tick)
@@ -55,8 +55,9 @@ export class CreatureLanguageSystem {
     }
   }
 
-  private evolveLanguages(civIds: number[], tick: number): void {
-    for (const civId of civIds) {
+  private evolveLanguages(civIds: Iterable<number>, tick: number): void {
+    const civIdSet = new Set(civIds)
+    for (const civId of civIdSet) {
       if (this.languages.has(civId)) {
         const lang = this.languages.get(civId)
         if (!lang) continue
@@ -84,7 +85,7 @@ export class CreatureLanguageSystem {
     }
     // Remove languages for dead civs
     for (const [civId] of this.languages) {
-      if (!civIds.includes(civId)) {
+      if (!civIdSet.has(civId)) {
         this.languages.delete(civId)
       }
     }
