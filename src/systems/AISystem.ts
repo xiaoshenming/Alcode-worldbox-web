@@ -278,10 +278,10 @@ export class AISystem {
 
     for (const id of entities) {
       if (!this.em.hasComponent(id, 'creature')) continue
-      const creature = this.em.getComponent<CreatureComponent>(id, 'creature')!
+      const creature = this.em.getComponent<CreatureComponent>(id, 'creature')
       const pos = this.em.getComponent<PositionComponent>(id, 'position')
       const needs = this.em.getComponent<NeedsComponent>(id, 'needs')
-      if (!pos || !needs) continue
+      if (!creature || !pos || !needs) continue
 
       // Must be adult (age > 20% of maxAge), healthy, not hungry
       if (creature.age < creature.maxAge * 0.2) continue

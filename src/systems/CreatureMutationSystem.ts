@@ -71,7 +71,7 @@ export class CreatureMutationSystem {
 
       if (Math.random() > MUTATION_CHANCE) continue
 
-      const pos = em.getComponent<PositionComponent>(eid, 'position')!
+      const pos = em.getComponent<PositionComponent>(eid, 'position')
       const genetics = em.getComponent<GeneticsComponent>(eid, 'genetics')
       if (!pos || !genetics) continue
 

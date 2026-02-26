@@ -41,7 +41,8 @@ export class MigrationSystem {
     for (const id of entities) {
       if (em.hasComponent(id, 'civMember')) continue
       if (em.hasComponent(id, 'nomad')) continue
-      const creature = em.getComponent<CreatureComponent>(id, 'creature')!
+      const creature = em.getComponent<CreatureComponent>(id, 'creature')
+      if (!creature) continue
       if (creature.species !== 'human' && creature.species !== 'elf' &&
           creature.species !== 'dwarf' && creature.species !== 'orc') continue
       candidates.push(id)
@@ -55,16 +56,19 @@ export class MigrationSystem {
     const speciesGroups: Map<string, Map<string, EntityId[]>> = new Map()
 
     for (const id of candidates) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
-      const creature = em.getComponent<CreatureComponent>(id, 'creature')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      const creature = em.getComponent<CreatureComponent>(id, 'creature')
+      if (!pos || !creature) continue
       const cellKey = `${Math.floor(pos.x / cellSize)},${Math.floor(pos.y / cellSize)}`
 
       if (!speciesGroups.has(creature.species)) {
         speciesGroups.set(creature.species, new Map())
       }
-      const cells = speciesGroups.get(creature.species)!
+      const cells = speciesGroups.get(creature.species)
+      if (!cells) continue
       if (!cells.has(cellKey)) cells.set(cellKey, [])
-      cells.get(cellKey)!.push(id)
+      const cellArr = cells.get(cellKey)
+      if (cellArr) cellArr.push(id)
     }
 
     // For each species, find clusters of 3+ within 8 tiles
@@ -112,7 +116,8 @@ export class MigrationSystem {
     const seasonBonus = world.season === 'autumn' ? 0.3 : 0
 
     // 2. Local food scarcity
-    const pos0 = em.getComponent<PositionComponent>(candidates[0], 'position')!
+    const pos0 = em.getComponent<PositionComponent>(candidates[0], 'position')
+    if (!pos0) return false
     let grassForestCount = 0
     const checkRadius = 10
     for (let dy = -checkRadius; dy <= checkRadius; dy++) {
@@ -129,7 +134,8 @@ export class MigrationSystem {
     const allCreatures = em.getEntitiesWithComponents('position', 'creature')
     let nearbyCount = 0
     for (const id of allCreatures) {
-      const p = em.getComponent<PositionComponent>(id, 'position')!
+      const p = em.getComponent<PositionComponent>(id, 'position')
+      if (!p) continue
       const dx = p.x - pos0.x
       const dy = p.y - pos0.y
       if (dx * dx + dy * dy < 100) nearbyCount++ // within 10 tiles
@@ -145,14 +151,16 @@ export class MigrationSystem {
     let leaderId = members[0]
     let bestDamage = 0
     for (const id of members) {
-      const creature = em.getComponent<CreatureComponent>(id, 'creature')!
+      const creature = em.getComponent<CreatureComponent>(id, 'creature')
+      if (!creature) continue
       if (creature.damage > bestDamage) {
         bestDamage = creature.damage
         leaderId = id
       }
     }
 
-    const leaderPos = em.getComponent<PositionComponent>(leaderId, 'position')!
+    const leaderPos = em.getComponent<PositionComponent>(leaderId, 'position')
+    if (!leaderPos) return
     const bandId = nextBandId++
 
     // Pick destination: seek unclaimed fertile land away from existing civs
@@ -170,7 +178,9 @@ export class MigrationSystem {
 
     // Add NomadComponent to all members and set them migrating
     for (const id of members) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      const ai = em.getComponent<AIComponent>(id, 'ai')
+      if (!pos || !ai) continue
       em.addComponent<NomadComponent>(id, {
         type: 'nomad',
         bandId,
@@ -180,14 +190,15 @@ export class MigrationSystem {
         journeyTicks: 0
       })
 
-      const ai = em.getComponent<AIComponent>(id, 'ai')!
       ai.state = 'migrating'
       ai.targetX = destination.x
       ai.targetY = destination.y
     }
 
-    const leaderCreature = em.getComponent<CreatureComponent>(leaderId, 'creature')!
-    EventLog.log('civ_founded', `${leaderCreature.name}'s band of ${species} (${members.length}) set out to find new land`, world.tick)
+    const leaderCreature = em.getComponent<CreatureComponent>(leaderId, 'creature')
+    if (leaderCreature) {
+      EventLog.log('civ_founded', `${leaderCreature.name}'s band of ${species} (${members.length}) set out to find new land`, world.tick)
+    }
   }
 
   private findMigrationTarget(world: World, civManager: CivManager, fromX: number, fromY: number): { x: number; y: number } {
@@ -283,8 +294,13 @@ export class MigrationSystem {
       }
 
       // Update leader target and follower positions
-      const leaderPos = em.getComponent<PositionComponent>(band.leaderId, 'position')!
-      const leaderAi = em.getComponent<AIComponent>(band.leaderId, 'ai')!
+      const leaderPos = em.getComponent<PositionComponent>(band.leaderId, 'position')
+      const leaderAi = em.getComponent<AIComponent>(band.leaderId, 'ai')
+      if (!leaderPos || !leaderAi) {
+        this.dissolveBand(em, band)
+        bandsToRemove.push(bandId)
+        continue
+      }
 
       // Ensure leader is still migrating
       if (leaderAi.state !== 'migrating') {
@@ -354,8 +370,9 @@ export class MigrationSystem {
   }
 
   private settleBand(em: EntityManager, band: NomadBand, civManager: CivManager, particles: ParticleSystem, world: World): void {
-    const leaderPos = em.getComponent<PositionComponent>(band.leaderId, 'position')!
-    const leaderCreature = em.getComponent<CreatureComponent>(band.leaderId, 'creature')!
+    const leaderPos = em.getComponent<PositionComponent>(band.leaderId, 'position')
+    const leaderCreature = em.getComponent<CreatureComponent>(band.leaderId, 'creature')
+    if (!leaderPos || !leaderCreature) return
     const tx = Math.floor(leaderPos.x)
     const ty = Math.floor(leaderPos.y)
 

@@ -140,8 +140,9 @@ export class CreatureAncestorSystem {
         const dx = pos.x - ancestor.x, dy = pos.y - ancestor.y
         if (dx * dx + dy * dy > r2) continue
 
-        const needs = em.getComponent<NeedsComponent>(eid, 'needs')!
-        const cc = em.getComponent<CreatureComponent>(eid, 'creature')!
+        const needs = em.getComponent<NeedsComponent>(eid, 'needs')
+        const cc = em.getComponent<CreatureComponent>(eid, 'creature')
+        if (!needs || !cc) continue
         const strength = ancestor.power * (ancestor.shrineBuilt ? 1.5 : 1.0)
 
         switch (ancestor.domain) {

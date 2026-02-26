@@ -180,7 +180,8 @@ export class WeatherDisasterSystem {
 
   private triggerBlizzard(world: World, em: EntityManager, particles: ParticleSystem, tick: number): void {
     const disaster = this.createDisaster('blizzard', tick)
-    const area = disaster.affectedArea!
+    const area = disaster.affectedArea
+    if (!area) return
 
     for (let dy = -area.radius; dy <= area.radius; dy++) {
       for (let dx = -area.radius; dx <= area.radius; dx++) {
@@ -221,7 +222,8 @@ export class WeatherDisasterSystem {
 
   private triggerDrought(world: World, em: EntityManager, particles: ParticleSystem, tick: number): void {
     const disaster = this.createDisaster('drought', tick)
-    const area = disaster.affectedArea!
+    const area = disaster.affectedArea
+    if (!area) return
 
     for (let dy = -area.radius; dy <= area.radius; dy++) {
       for (let dx = -area.radius; dx <= area.radius; dx++) {
@@ -248,7 +250,8 @@ export class WeatherDisasterSystem {
 
   private triggerFlood(world: World, em: EntityManager, particles: ParticleSystem, tick: number): void {
     const disaster = this.createDisaster('flood', tick)
-    const area = disaster.affectedArea!
+    const area = disaster.affectedArea
+    if (!area) return
 
     for (let dy = -area.radius; dy <= area.radius; dy++) {
       for (let dx = -area.radius; dx <= area.radius; dx++) {
@@ -306,7 +309,8 @@ export class WeatherDisasterSystem {
 
   private triggerHeatwave(world: World, em: EntityManager, particles: ParticleSystem, tick: number): void {
     const disaster = this.createDisaster('heatwave', tick)
-    const area = disaster.affectedArea!
+    const area = disaster.affectedArea
+    if (!area) return
 
     for (let dy = -area.radius; dy <= area.radius; dy++) {
       for (let dx = -area.radius; dx <= area.radius; dx++) {
@@ -368,11 +372,11 @@ export class WeatherDisasterSystem {
     if (elapsed % 60 === 0) {
       const entities = em.getEntitiesWithComponents('position', 'needs', 'creature')
       for (const id of entities) {
-        const pos = em.getComponent<PositionComponent>(id, 'position')!
+        const pos = em.getComponent<PositionComponent>(id, 'position')
+        const creature = em.getComponent<CreatureComponent>(id, 'creature')
+        const needs = em.getComponent<NeedsComponent>(id, 'needs')
+        if (!pos || !creature || !needs) continue
         if (!this.isInArea(pos.x, pos.y, area)) continue
-
-        const creature = em.getComponent<CreatureComponent>(id, 'creature')!
-        const needs = em.getComponent<NeedsComponent>(id, 'needs')!
 
         // Gradual speed reduction (approaches 50% over time)
         creature.speed = Math.max(0.1, creature.speed * 0.98)
@@ -425,9 +429,10 @@ export class WeatherDisasterSystem {
     if (elapsed % 60 === 0) {
       const entities = em.getEntitiesWithComponents('position', 'needs', 'creature')
       for (const id of entities) {
-        const pos = em.getComponent<PositionComponent>(id, 'position')!
+        const pos = em.getComponent<PositionComponent>(id, 'position')
+        const needs = em.getComponent<NeedsComponent>(id, 'needs')
+        if (!pos || !needs) continue
         if (!this.isInArea(pos.x, pos.y, area)) continue
-        const needs = em.getComponent<NeedsComponent>(id, 'needs')!
         needs.hunger = Math.min(100, needs.hunger + 0.3 * disaster.intensity)
       }
     }
@@ -492,12 +497,14 @@ export class WeatherDisasterSystem {
     if (elapsed % 60 === 0) {
       const entities = em.getEntitiesWithComponents('position', 'needs', 'creature')
       for (const id of entities) {
-        const pos = em.getComponent<PositionComponent>(id, 'position')!
+        const pos = em.getComponent<PositionComponent>(id, 'position')
+        if (!pos) continue
         if (!this.isInArea(pos.x, pos.y, area)) continue
         const tile = world.getTile(Math.floor(pos.x), Math.floor(pos.y))
         if (tile === TileType.SHALLOW_WATER) {
-          const needs = em.getComponent<NeedsComponent>(id, 'needs')!
-          const creature = em.getComponent<CreatureComponent>(id, 'creature')!
+          const needs = em.getComponent<NeedsComponent>(id, 'needs')
+          const creature = em.getComponent<CreatureComponent>(id, 'creature')
+          if (!needs || !creature) continue
           creature.speed = Math.max(0.1, creature.speed * 0.97)
           needs.health -= 0.2 * disaster.intensity
         }
@@ -522,9 +529,10 @@ export class WeatherDisasterSystem {
     if (elapsed % 300 === 0) {
       const buildingEntities = em.getEntitiesWithComponents('position', 'building')
       for (const id of buildingEntities) {
-        const pos = em.getComponent<PositionComponent>(id, 'position')!
+        const pos = em.getComponent<PositionComponent>(id, 'position')
+        const building = em.getComponent<BuildingComponent>(id, 'building')
+        if (!pos || !building) continue
         if (!this.isInArea(pos.x, pos.y, area)) continue
-        const building = em.getComponent<BuildingComponent>(id, 'building')!
         if (building.level <= 1) {
           building.health -= Math.floor(10 * disaster.intensity)
         }
@@ -559,10 +567,11 @@ export class WeatherDisasterSystem {
     if (elapsed % 60 === 0) {
       const entities = em.getEntitiesWithComponents('position', 'needs', 'creature')
       for (const id of entities) {
-        const pos = em.getComponent<PositionComponent>(id, 'position')!
+        const pos = em.getComponent<PositionComponent>(id, 'position')
+        const creature = em.getComponent<CreatureComponent>(id, 'creature')
+        const needs = em.getComponent<NeedsComponent>(id, 'needs')
+        if (!pos || !creature || !needs) continue
         if (!this.isInArea(pos.x, pos.y, area)) continue
-        const creature = em.getComponent<CreatureComponent>(id, 'creature')!
-        const needs = em.getComponent<NeedsComponent>(id, 'needs')!
         if (creature.species !== 'dragon') {
           needs.health -= 0.4 * disaster.intensity
           needs.hunger = Math.min(100, needs.hunger + 0.3 * disaster.intensity)

@@ -374,7 +374,8 @@ export class Renderer {
       let direction: 'up' | 'down' | 'left' | 'right' = 'down'
       if (vel) direction = SpriteRenderer.directionFromVelocity(vel.vx, vel.vy)
 
-      const creature = em.getComponent<CreatureComponent>(id, 'creature')!
+      const creature = em.getComponent<CreatureComponent>(id, 'creature')
+      if (!creature) continue
       const sprite = this.sprites.getCreatureSprite(creature.species, direction)
       const spriteSize = tileSize * 1.2
       ctx.drawImage(sprite, cx - spriteSize/2, cy - spriteSize/2, spriteSize, spriteSize)

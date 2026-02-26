@@ -66,11 +66,13 @@ export class CreatureMentorSystem {
       if (this.bonds.length >= MAX_BONDS) break
       if (Math.random() > BOND_CHANCE) continue
 
-      const mPos = em.getComponent<PositionComponent>(mentorId, 'position')!
+      const mPos = em.getComponent<PositionComponent>(mentorId, 'position')
+      if (!mPos) continue
 
       for (const appId of apprentices) {
         if (this.apprenticeIds.has(appId)) continue
-        const aPos = em.getComponent<PositionComponent>(appId, 'position')!
+        const aPos = em.getComponent<PositionComponent>(appId, 'position')
+        if (!aPos) continue
         const dx = mPos.x - aPos.x
         const dy = mPos.y - aPos.y
         if (dx * dx + dy * dy > PROXIMITY_RANGE * PROXIMITY_RANGE) continue

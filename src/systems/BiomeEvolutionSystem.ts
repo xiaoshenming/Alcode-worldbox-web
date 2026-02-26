@@ -182,7 +182,8 @@ export class BiomeEvolutionSystem {
     const map = new Map<string, number>()
     const entities = em.getEntitiesWithComponents('position', 'creature')
     for (const id of entities) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      if (!pos) continue
       // Bucket into 8x8 cells
       const key = `${Math.floor(pos.x / 8)},${Math.floor(pos.y / 8)}`
       map.set(key, (map.get(key) || 0) + 1)
@@ -194,8 +195,9 @@ export class BiomeEvolutionSystem {
     const map = new Map<string, BuildingType>()
     const entities = em.getEntitiesWithComponents('position', 'building')
     for (const id of entities) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
-      const bld = em.getComponent<BuildingComponent>(id, 'building')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      const bld = em.getComponent<BuildingComponent>(id, 'building')
+      if (!pos || !bld) continue
       const key = `${Math.floor(pos.x)},${Math.floor(pos.y)}`
       map.set(key, bld.buildingType)
     }

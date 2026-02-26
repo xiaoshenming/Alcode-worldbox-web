@@ -152,10 +152,11 @@ const EVENT_DEFINITIONS: WorldEventDef[] = [
         // Damage creatures nearby
         const creatures = ctx.em.getEntitiesWithComponents('position', 'needs')
         for (const eid of creatures) {
-          const pos = ctx.em.getComponent<PositionComponent>(eid, 'position')!
+          const pos = ctx.em.getComponent<PositionComponent>(eid, 'position')
+          const needs = ctx.em.getComponent<NeedsComponent>(eid, 'needs')
+          if (!pos || !needs) continue
           const dist = Math.abs(pos.x - mx) + Math.abs(pos.y - my)
           if (dist < 4) {
-            const needs = ctx.em.getComponent<NeedsComponent>(eid, 'needs')!
             needs.health -= 30 + Math.random() * 20
           }
         }
@@ -220,7 +221,8 @@ const EVENT_DEFINITIONS: WorldEventDef[] = [
       const creatures = ctx.em.getEntitiesWithComponents('creature')
       const buffed: number[] = []
       for (const eid of creatures) {
-        const c = ctx.em.getComponent<CreatureComponent>(eid, 'creature')!
+        const c = ctx.em.getComponent<CreatureComponent>(eid, 'creature')
+        if (!c) continue
         if (c.isHostile) {
           // Store original values for restoration
           buffed.push(eid)
@@ -354,10 +356,11 @@ const EVENT_DEFINITIONS: WorldEventDef[] = [
       // Damage buildings in the area
       const buildings = ctx.em.getEntitiesWithComponents('position', 'building')
       for (const bid of buildings) {
-        const pos = ctx.em.getComponent<PositionComponent>(bid, 'position')!
+        const pos = ctx.em.getComponent<PositionComponent>(bid, 'position')
+        const b = ctx.em.getComponent<BuildingComponent>(bid, 'building')
+        if (!pos || !b) continue
         const dist = Math.sqrt((pos.x - cx) ** 2 + (pos.y - cy) ** 2)
         if (dist < radius) {
-          const b = ctx.em.getComponent<BuildingComponent>(bid, 'building')!
           const dmg = Math.floor(30 + Math.random() * 40)
           b.health = Math.max(0, b.health - dmg)
         }
@@ -622,7 +625,8 @@ export class WorldEventSystem {
     this.bloodMoonBuffs.clear()
     const creatures = em.getEntitiesWithComponents('creature')
     for (const eid of creatures) {
-      const c = em.getComponent<CreatureComponent>(eid, 'creature')!
+      const c = em.getComponent<CreatureComponent>(eid, 'creature')
+      if (!c) continue
       if (c.isHostile) {
         this.bloodMoonBuffs.set(eid, { origDamage: c.damage, origSpeed: c.speed })
         c.damage *= 1.5
@@ -637,7 +641,8 @@ export class WorldEventSystem {
     const creatures = em.getEntitiesWithComponents('creature')
     for (const eid of creatures) {
       if (this.bloodMoonBuffs.has(eid)) continue
-      const c = em.getComponent<CreatureComponent>(eid, 'creature')!
+      const c = em.getComponent<CreatureComponent>(eid, 'creature')
+      if (!c) continue
       if (c.isHostile) {
         this.bloodMoonBuffs.set(eid, { origDamage: c.damage, origSpeed: c.speed })
         c.damage *= 1.5

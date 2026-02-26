@@ -143,7 +143,8 @@ export class DiplomaticEspionageSystem {
     }
     if (!spyEntity) return
 
-    const pos = em.getComponent<PositionComponent>(spyEntity, 'position')!
+    const pos = em.getComponent<PositionComponent>(spyEntity, 'position')
+    if (!pos) return
     const missions: SpyMission[] = ['intel', 'sabotage', 'steal_tech', 'assassinate']
     const mission = missions[Math.floor(Math.random() * missions.length)]
 

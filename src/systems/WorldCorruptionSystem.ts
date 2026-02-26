@@ -200,8 +200,9 @@ export class WorldCorruptionSystem {
   private damageCreatures(em: EntityManager): void {
     const entities = em.getEntitiesWithComponents('position', 'needs')
     for (const id of entities) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
-      const needs = em.getComponent<NeedsComponent>(id, 'needs')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      const needs = em.getComponent<NeedsComponent>(id, 'needs')
+      if (!pos || !needs) continue
       const corruption = this.getCorruption(Math.floor(pos.x), Math.floor(pos.y))
       if (corruption >= CORRUPTION_THRESHOLD) {
         needs.health = Math.max(0, needs.health - DAMAGE_PER_TICK * corruption)

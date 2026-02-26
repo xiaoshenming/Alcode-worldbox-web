@@ -35,7 +35,8 @@ export class SpatialHashSystem {
 
     const ids = em.getEntitiesWithComponents('position')
     for (let i = 0; i < ids.length; i++) {
-      const pos = em.getComponent<PositionComponent>(ids[i], 'position')!
+      const pos = em.getComponent<PositionComponent>(ids[i], 'position')
+      if (!pos) continue
       const k = this.key(this.toCell(pos.x), this.toCell(pos.y))
       const bucket = this.cells.get(k)
       if (bucket) {

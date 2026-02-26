@@ -88,7 +88,8 @@ export class FlockingSystem {
     // Group by civ + species
     const groups = new Map<string, EntityId[]>()
     for (const eid of entities) {
-      const creature = em.getComponent<CreatureComponent>(eid, 'creature')!
+      const creature = em.getComponent<CreatureComponent>(eid, 'creature')
+      if (!creature) continue
       const civMember = em.getComponent<CivMemberComponent>(eid, 'civMember')
       const key = `${civMember?.civId ?? -1}:${creature.species}`
 
@@ -106,14 +107,16 @@ export class FlockingSystem {
 
       for (const eid of members) {
         if (assigned.has(eid)) continue
-        const pos = em.getComponent<PositionComponent>(eid, 'position')!
+        const pos = em.getComponent<PositionComponent>(eid, 'position')
+        if (!pos) continue
 
         const nearby: EntityId[] = [eid]
         assigned.add(eid)
 
         for (const other of members) {
           if (assigned.has(other)) continue
-          const oPos = em.getComponent<PositionComponent>(other, 'position')!
+          const oPos = em.getComponent<PositionComponent>(other, 'position')
+          if (!oPos) continue
           const dx = pos.x - oPos.x
           const dy = pos.y - oPos.y
           if (dx * dx + dy * dy < FLOCK_RADIUS * FLOCK_RADIUS) {
@@ -127,8 +130,9 @@ export class FlockingSystem {
         // Compute flock data
         let cx = 0, cy = 0, vx = 0, vy = 0
         for (const nid of nearby) {
-          const p = em.getComponent<PositionComponent>(nid, 'position')!
-          const v = em.getComponent<VelocityComponent>(nid, 'velocity')!
+          const p = em.getComponent<PositionComponent>(nid, 'position')
+          const v = em.getComponent<VelocityComponent>(nid, 'velocity')
+          if (!p || !v) continue
           cx += p.x; cy += p.y
           vx += v.vx; vy += v.vy
         }

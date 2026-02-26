@@ -61,8 +61,9 @@ export class CreatureTotemSystem {
       if (Math.random() > SPAWN_CHANCE) continue
 
       const eid = entities[Math.floor(Math.random() * entities.length)]
-      const pos = em.getComponent<PositionComponent>(eid, 'position')!
-      const creature = em.getComponent<CreatureComponent>(eid, 'creature')!
+      const pos = em.getComponent<PositionComponent>(eid, 'position')
+      const creature = em.getComponent<CreatureComponent>(eid, 'creature')
+      if (!pos || !creature) continue
 
       // Don't place totems too close together
       if (this.totems.some(t => Math.abs(t.x - pos.x) < 12 && Math.abs(t.y - pos.y) < 12)) continue
@@ -75,7 +76,8 @@ export class CreatureTotemSystem {
       // Population density check — more creatures nearby = higher chance
       let nearby = 0
       for (const other of entities) {
-        const op = em.getComponent<PositionComponent>(other, 'position')!
+        const op = em.getComponent<PositionComponent>(other, 'position')
+        if (!op) continue
         const dx = op.x - x, dy = op.y - y
         if (dx * dx + dy * dy < 225) nearby++ // radius 15
       }
@@ -99,7 +101,8 @@ export class CreatureTotemSystem {
     for (const totem of this.totems) {
       let worshippers = 0
       for (const eid of entities) {
-        const pos = em.getComponent<PositionComponent>(eid, 'position')!
+        const pos = em.getComponent<PositionComponent>(eid, 'position')
+        if (!pos) continue
         const dx = pos.x - totem.x, dy = pos.y - totem.y
         if (dx * dx + dy * dy <= WORSHIP_RADIUS * WORSHIP_RADIUS) {
           worshippers++

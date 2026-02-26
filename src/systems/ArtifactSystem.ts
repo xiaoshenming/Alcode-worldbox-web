@@ -42,7 +42,8 @@ export class ArtifactSystem {
     const existingTypes = new Set<string>()
 
     for (const id of artifactEntities) {
-      const art = em.getComponent<ArtifactComponent>(id, 'artifact')!
+      const art = em.getComponent<ArtifactComponent>(id, 'artifact')
+      if (!art) continue
       existingTypes.add(art.artifactType)
       if (!art.claimed) unclaimedCount++
     }
@@ -93,8 +94,8 @@ export class ArtifactSystem {
     // Collect unclaimed artifact positions
     const unclaimed: { id: EntityId; x: number; y: number }[] = []
     for (const artId of artifactEntities) {
-      const art = em.getComponent<ArtifactComponent>(artId, 'artifact')!
-      if (art.claimed) continue
+      const art = em.getComponent<ArtifactComponent>(artId, 'artifact')
+      if (!art || art.claimed) continue
       const pos = em.getComponent<PositionComponent>(artId, 'position')
       if (pos) unclaimed.push({ id: artId, x: pos.x, y: pos.y })
     }
@@ -139,7 +140,8 @@ export class ArtifactSystem {
   }
 
   private claimArtifact(em: EntityManager, heroId: EntityId, artifactEntityId: EntityId): void {
-    const art = em.getComponent<ArtifactComponent>(artifactEntityId, 'artifact')!
+    const art = em.getComponent<ArtifactComponent>(artifactEntityId, 'artifact')
+    if (!art) return
     const heroCreature = em.getComponent<CreatureComponent>(heroId, 'creature')
     const artPos = em.getComponent<PositionComponent>(artifactEntityId, 'position')
 
@@ -150,9 +152,9 @@ export class ArtifactSystem {
     let inv = em.getComponent<InventoryComponent>(heroId, 'inventory')
     if (!inv) {
       em.addComponent<InventoryComponent>(heroId, { type: 'inventory', artifacts: [] })
-      inv = em.getComponent<InventoryComponent>(heroId, 'inventory')!
+      inv = em.getComponent<InventoryComponent>(heroId, 'inventory')
     }
-    inv.artifacts.push(art.artifactType)
+    if (inv) inv.artifacts.push(art.artifactType)
 
     // Remove the artifact entity's render/position (it's now carried by the hero)
     em.removeComponent(artifactEntityId, 'position')
@@ -172,8 +174,8 @@ export class ArtifactSystem {
   spawnClaimParticles(em: EntityManager, particles: ParticleSystem, tick: number): void {
     const artifactEntities = em.getEntitiesWithComponent('artifact')
     for (const artId of artifactEntities) {
-      const art = em.getComponent<ArtifactComponent>(artId, 'artifact')!
-      if (!art.claimed || art.claimedBy === null) continue
+      const art = em.getComponent<ArtifactComponent>(artId, 'artifact')
+      if (!art || !art.claimed || art.claimedBy === null) continue
 
       const heroPos = em.getComponent<PositionComponent>(art.claimedBy, 'position')
       if (!heroPos) continue
@@ -183,7 +185,8 @@ export class ArtifactSystem {
         const allies = em.getEntitiesWithComponents('position', 'needs')
         for (const allyId of allies) {
           if (allyId === art.claimedBy) continue
-          const allyPos = em.getComponent<PositionComponent>(allyId, 'position')!
+          const allyPos = em.getComponent<PositionComponent>(allyId, 'position')
+          if (!allyPos) continue
           const dx = heroPos.x - allyPos.x
           const dy = heroPos.y - allyPos.y
           if (dx * dx + dy * dy < 36) { // 6 tile range
@@ -202,8 +205,8 @@ export class ArtifactSystem {
     const artifactEntities = em.getEntitiesWithComponent('artifact')
 
     for (const artId of artifactEntities) {
-      const art = em.getComponent<ArtifactComponent>(artId, 'artifact')!
-      if (!art.claimed || art.claimedBy === null) continue
+      const art = em.getComponent<ArtifactComponent>(artId, 'artifact')
+      if (!art || !art.claimed || art.claimedBy === null) continue
 
       // Check holder still exists
       if (!em.hasComponent(art.claimedBy, 'position')) {
@@ -257,7 +260,8 @@ export class ArtifactSystem {
   dropAllArtifacts(em: EntityManager, entityId: EntityId): void {
     const artifactEntities = em.getEntitiesWithComponent('artifact')
     for (const artId of artifactEntities) {
-      const art = em.getComponent<ArtifactComponent>(artId, 'artifact')!
+      const art = em.getComponent<ArtifactComponent>(artId, 'artifact')
+      if (!art) continue
       if (art.claimed && art.claimedBy === entityId) {
         this.dropArtifact(em, artId, art)
       }
@@ -270,7 +274,8 @@ export function getArtifactBonus(em: EntityManager, entityId: EntityId, bonusTyp
   let total = 1
   const artifactEntities = em.getEntitiesWithComponent('artifact')
   for (const artId of artifactEntities) {
-    const art = em.getComponent<ArtifactComponent>(artId, 'artifact')!
+    const art = em.getComponent<ArtifactComponent>(artId, 'artifact')
+    if (!art) continue
     if (art.claimed && art.claimedBy === entityId && art.bonusType === bonusType) {
       total *= art.bonusValue
     }

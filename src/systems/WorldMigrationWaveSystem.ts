@@ -124,7 +124,8 @@ export class WorldMigrationWaveSystem {
     const cellCounts: Map<string, EntityId[]> = new Map()
 
     for (const id of creatures) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      if (!pos) continue
       const key = `${Math.floor(pos.x / cellSize)},${Math.floor(pos.y / cellSize)}`
       let arr = cellCounts.get(key)
       if (!arr) {
@@ -182,7 +183,8 @@ export class WorldMigrationWaveSystem {
 
       // Set recruited creatures to migrating
       for (const id of recruits) {
-        const ai = em.getComponent<AIComponent>(id, 'ai')!
+        const ai = em.getComponent<AIComponent>(id, 'ai')
+        if (!ai) continue
         ai.state = 'migrating'
         ai.targetX = dest.x
         ai.targetY = dest.y
@@ -382,10 +384,10 @@ export class WorldMigrationWaveSystem {
     for (const id of allCreatures) {
       if (wave.entityIds.has(id)) continue
 
-      const ai = em.getComponent<AIComponent>(id, 'ai')!
+      const ai = em.getComponent<AIComponent>(id, 'ai')
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      if (!ai || !pos) continue
       if (ai.state === 'migrating') continue
-
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
       const dx = pos.x - cx
       const dy = pos.y - cy
       if (dx * dx + dy * dy > radiusSq) continue

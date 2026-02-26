@@ -124,7 +124,8 @@ export class WorldAncientRuinSystem {
     for (const ruin of this.ruins) {
       if (ruin.explored) continue
       for (const eid of entities) {
-        const pos = em.getComponent<PositionComponent>(eid, 'position')!
+        const pos = em.getComponent<PositionComponent>(eid, 'position')
+        if (!pos) continue
         const dx = pos.x - ruin.x
         const dy = pos.y - ruin.y
         if (dx * dx + dy * dy < EXPLORE_RANGE * EXPLORE_RANGE) {

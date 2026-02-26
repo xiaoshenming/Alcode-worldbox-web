@@ -175,8 +175,9 @@ export class NavalSystem {
     const ships = em.getEntitiesWithComponents('ship', 'position')
 
     for (const id of ships) {
-      const ship = em.getComponent<ShipComponent>(id, 'ship')!
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const ship = em.getComponent<ShipComponent>(id, 'ship')
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      if (!ship || !pos) continue
 
       // Assign a new random target if idle or reached destination
       const dx = ship.targetX - pos.x
@@ -236,17 +237,20 @@ export class NavalSystem {
     const grid = this._combatGrid
     grid.clear()
     for (const id of ships) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      if (!pos) continue
       const key = `${Math.floor(pos.x / 8)},${Math.floor(pos.y / 8)}`
-      if (!grid.has(key)) grid.set(key, [])
-      grid.get(key)!.push(id)
+      let cell = grid.get(key)
+      if (!cell) { cell = []; grid.set(key, cell) }
+      cell.push(id)
     }
 
     for (const id of ships) {
-      const ship = em.getComponent<ShipComponent>(id, 'ship')!
-      if (ship.health <= 0 || ship.damage === 0) continue // Only armed ships fight
+      const ship = em.getComponent<ShipComponent>(id, 'ship')
+      if (!ship || ship.health <= 0 || ship.damage === 0) continue // Only armed ships fight
 
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      if (!pos) continue
       const cx = Math.floor(pos.x / 8)
       const cy = Math.floor(pos.y / 8)
 
@@ -257,8 +261,8 @@ export class NavalSystem {
 
           for (const otherId of cell) {
             if (otherId === id) continue
-            const otherShip = em.getComponent<ShipComponent>(otherId, 'ship')!
-            if (otherShip.health <= 0) continue
+            const otherShip = em.getComponent<ShipComponent>(otherId, 'ship')
+            if (!otherShip || otherShip.health <= 0) continue
             if (otherShip.civId === ship.civId) continue // Same civ
 
             // Check if hostile
@@ -268,7 +272,8 @@ export class NavalSystem {
             const relation = civA.relations.get(otherShip.civId) ?? 0
             if (relation >= -30) continue // Not hostile enough
 
-            const otherPos = em.getComponent<PositionComponent>(otherId, 'position')!
+            const otherPos = em.getComponent<PositionComponent>(otherId, 'position')
+            if (!otherPos) continue
             const ddx = pos.x - otherPos.x
             const ddy = pos.y - otherPos.y
             const dist = Math.sqrt(ddx * ddx + ddy * ddy)
@@ -322,8 +327,8 @@ export class NavalSystem {
     const ships = em.getEntitiesWithComponents('ship', 'position')
 
     for (const id of ships) {
-      const ship = em.getComponent<ShipComponent>(id, 'ship')!
-      if (ship.shipType !== 'trader' || ship.health <= 0) continue
+      const ship = em.getComponent<ShipComponent>(id, 'ship')
+      if (!ship || ship.shipType !== 'trader' || ship.health <= 0) continue
 
       const civ = civManager.civilizations.get(ship.civId)
       if (!civ) continue
@@ -340,7 +345,8 @@ export class NavalSystem {
       }
 
       // Check if near target (arrived at port)
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      if (!pos) continue
       const dx = ship.targetX - pos.x
       const dy = ship.targetY - pos.y
       if (dx * dx + dy * dy < 4) {
@@ -385,14 +391,15 @@ export class NavalSystem {
     const ships = em.getEntitiesWithComponents('ship', 'position')
 
     for (const id of ships) {
-      const ship = em.getComponent<ShipComponent>(id, 'ship')!
-      if (ship.shipType !== 'explorer' || ship.health <= 0) continue
+      const ship = em.getComponent<ShipComponent>(id, 'ship')
+      if (!ship || ship.shipType !== 'explorer' || ship.health <= 0) continue
 
       const civ = civManager.civilizations.get(ship.civId)
       if (!civ) continue
 
       ship.state = 'exploring'
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      if (!pos) continue
 
       // Claim nearby unclaimed water tiles as territory
       const radius = 3
@@ -425,8 +432,8 @@ export class NavalSystem {
     const ships = em.getEntitiesWithComponents('ship', 'position')
 
     for (const id of ships) {
-      const ship = em.getComponent<ShipComponent>(id, 'ship')!
-      if (ship.shipType !== 'fishing' || ship.health <= 0) continue
+      const ship = em.getComponent<ShipComponent>(id, 'ship')
+      if (!ship || ship.shipType !== 'fishing' || ship.health <= 0) continue
 
       const civ = civManager.civilizations.get(ship.civId)
       if (!civ) continue
@@ -444,10 +451,11 @@ export class NavalSystem {
     const ports = em.getEntitiesWithComponent('building')
 
     for (const shipId of ships) {
-      const ship = em.getComponent<ShipComponent>(shipId, 'ship')!
-      if (ship.shipType !== 'warship' || ship.health <= 0) continue
+      const ship = em.getComponent<ShipComponent>(shipId, 'ship')
+      if (!ship || ship.shipType !== 'warship' || ship.health <= 0) continue
 
-      const shipPos = em.getComponent<PositionComponent>(shipId, 'position')!
+      const shipPos = em.getComponent<PositionComponent>(shipId, 'position')
+      if (!shipPos) continue
       const attackerCiv = civManager.civilizations.get(ship.civId)
       if (!attackerCiv) continue
 
@@ -490,8 +498,8 @@ export class NavalSystem {
     const ships = em.getEntitiesWithComponents('ship', 'position')
 
     for (const id of ships) {
-      const ship = em.getComponent<ShipComponent>(id, 'ship')!
-      if (ship.health > 0) continue
+      const ship = em.getComponent<ShipComponent>(id, 'ship')
+      if (!ship || ship.health > 0) continue
 
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (pos) {

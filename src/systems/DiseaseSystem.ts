@@ -76,10 +76,12 @@ export class DiseaseSystem {
     const grid = this._outbreakGrid
     grid.clear()
     for (const id of creatures) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      if (!pos) continue
       const key = `${Math.floor(pos.x / 10)},${Math.floor(pos.y / 10)}`
-      if (!grid.has(key)) grid.set(key, [])
-      grid.get(key)!.push(id)
+      let cell = grid.get(key)
+      if (!cell) { cell = []; grid.set(key, cell) }
+      cell.push(id)
     }
 
     // Find densest cell
@@ -107,7 +109,8 @@ export class DiseaseSystem {
     const diseaseType = DISEASE_TYPES[Math.floor(Math.random() * DISEASE_TYPES.length)]
     this.infectEntity(em, patientZero, diseaseType, world)
 
-    const creature = em.getComponent<CreatureComponent>(patientZero, 'creature')!
+    const creature = em.getComponent<CreatureComponent>(patientZero, 'creature')
+    if (!creature) return
     const disease = DISEASES[diseaseType]
     EventLog.log('disease', `${disease.name} outbreak! ${creature.name} is patient zero`, world.tick)
   }
@@ -121,14 +124,17 @@ export class DiseaseSystem {
     const grid = this._spreadGrid
     grid.clear()
     for (const id of allCreatures) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      if (!pos) continue
       const key = `${Math.floor(pos.x / 5)},${Math.floor(pos.y / 5)}`
-      if (!grid.has(key)) grid.set(key, [])
-      grid.get(key)!.push(id)
+      let cell = grid.get(key)
+      if (!cell) { cell = []; grid.set(key, cell) }
+      cell.push(id)
     }
 
     for (const id of infected) {
-      const disease = em.getComponent<DiseaseComponent>(id, 'disease')!
+      const disease = em.getComponent<DiseaseComponent>(id, 'disease')
+      if (!disease) continue
       if (!disease.contagious || disease.immune) continue
 
       // Quarantine: if civ has Medicine, infected members don't spread within civ
@@ -173,8 +179,8 @@ export class DiseaseSystem {
             let spreadChance = diseaseDef.spreadRate
 
             // Same species spreads faster
-            const otherCreature = em.getComponent<CreatureComponent>(otherId, 'creature')!
-            if (otherCreature.species === creature.species) {
+            const otherCreature = em.getComponent<CreatureComponent>(otherId, 'creature')
+            if (otherCreature && otherCreature.species === creature.species) {
               spreadChance *= 1.5
             }
 
@@ -202,10 +208,11 @@ export class DiseaseSystem {
     const infected = em.getEntitiesWithComponents('disease', 'needs', 'creature', 'position')
 
     for (const id of infected) {
-      const disease = em.getComponent<DiseaseComponent>(id, 'disease')!
-      const needs = em.getComponent<NeedsComponent>(id, 'needs')!
-      const creature = em.getComponent<CreatureComponent>(id, 'creature')!
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const disease = em.getComponent<DiseaseComponent>(id, 'disease')
+      const needs = em.getComponent<NeedsComponent>(id, 'needs')
+      const creature = em.getComponent<CreatureComponent>(id, 'creature')
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      if (!disease || !needs || !creature || !pos) continue
 
       // Immune creatures: check if immunity expired
       if (disease.immune) {
@@ -310,7 +317,8 @@ export function infectAt(em: EntityManager, x: number, y: number, diseaseType: s
   if (!diseaseDef) return
 
   for (const id of creatures) {
-    const pos = em.getComponent<PositionComponent>(id, 'position')!
+    const pos = em.getComponent<PositionComponent>(id, 'position')
+    if (!pos) continue
     const dx = pos.x - x
     const dy = pos.y - y
     if (dx * dx + dy * dy < 9) { // 3 tile radius

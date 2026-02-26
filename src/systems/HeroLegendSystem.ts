@@ -60,7 +60,8 @@ export class HeroLegendSystem {
     // Track new heroes
     for (const id of heroIds) {
       if (!this.fameMap.has(id)) {
-        const creature = em.getComponent<CreatureComponent>(id, 'creature')!
+        const creature = em.getComponent<CreatureComponent>(id, 'creature')
+        if (!creature) continue
         const civMember = em.getComponent<CivMemberComponent>(id, 'civMember')
         this.fameMap.set(id, {
           entityId: id,
@@ -81,7 +82,8 @@ export class HeroLegendSystem {
     for (const id of heroIds) aliveSet.add(id)
     for (const id of heroIds) {
       const fame = this.fameMap.get(id)!
-      const hero = em.getComponent<HeroComponent>(id, 'hero')!
+      const hero = em.getComponent<HeroComponent>(id, 'hero')
+      if (!hero) continue
 
       // Survival fame: +1 per 600 ticks
       const lastTick = this.lastSurvivalTick.get(id) ?? tick

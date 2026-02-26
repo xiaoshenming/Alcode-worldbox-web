@@ -53,7 +53,11 @@ export class EnhancedTooltipSystem {
 
     const creature = this.findCreatureAt(wx, wy, em)
     if (creature) {
-      const c = em.getComponent<CreatureComponent>(creature, 'creature')!
+      const c = em.getComponent<CreatureComponent>(creature, 'creature')
+      if (!c) {
+        this.hide()
+        return
+      }
       const needs = em.getComponent<NeedsComponent>(creature, 'needs')
       const hero = em.getComponent<HeroComponent>(creature, 'hero')
 
@@ -141,7 +145,8 @@ export class EnhancedTooltipSystem {
     let closest: number | null = null
     let closestDist = 1.5
     for (const id of entities) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      if (!pos) continue
       const dx = pos.x - (wx + 0.5)
       const dy = pos.y - (wy + 0.5)
       const dist = Math.sqrt(dx * dx + dy * dy)
@@ -156,7 +161,8 @@ export class EnhancedTooltipSystem {
   private findBuildingAt(wx: number, wy: number, em: EntityManager): number | null {
     const entities = em.getEntitiesWithComponents('position', 'building')
     for (const id of entities) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      if (!pos) continue
       if (Math.floor(pos.x) === wx && Math.floor(pos.y) === wy) return id
     }
     return null

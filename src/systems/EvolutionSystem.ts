@@ -132,8 +132,9 @@ export class EvolutionSystem {
     const speciesGroups: Map<string, EntityId[]> = new Map()
 
     for (const id of creatures) {
-      const creature = em.getComponent<CreatureComponent>(id, 'creature')!
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const creature = em.getComponent<CreatureComponent>(id, 'creature')
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      if (!creature || !pos) continue
 
       if (!speciesGroups.has(creature.species)) {
         speciesGroups.set(creature.species, [])

@@ -262,11 +262,12 @@ export class WeatherSystem {
     // Damage buildings on the path
     const buildingEntities = this.em.getEntitiesWithComponents('position', 'building')
     for (const id of buildingEntities) {
-      const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+      const pos = this.em.getComponent<PositionComponent>(id, 'position')
+      const b = this.em.getComponent<BuildingComponent>(id, 'building')
+      if (!pos || !b) continue
       const dx = pos.x - this.tornadoX
       const dy = pos.y - this.tornadoY
       if (Math.sqrt(dx * dx + dy * dy) < 2) {
-        const b = this.em.getComponent<BuildingComponent>(id, 'building')!
         b.health -= 10
       }
     }
@@ -274,11 +275,12 @@ export class WeatherSystem {
     // Damage creatures within 5 tiles
     const creatureEntities = this.em.getEntitiesWithComponents('position', 'needs')
     for (const id of creatureEntities) {
-      const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+      const pos = this.em.getComponent<PositionComponent>(id, 'position')
+      const needs = this.em.getComponent<NeedsComponent>(id, 'needs')
+      if (!pos || !needs) continue
       const dx = pos.x - this.tornadoX
       const dy = pos.y - this.tornadoY
       if (Math.sqrt(dx * dx + dy * dy) < 5) {
-        const needs = this.em.getComponent<NeedsComponent>(id, 'needs')!
         needs.health -= 5
       }
     }
@@ -357,8 +359,9 @@ export class WeatherSystem {
     const entities = this.em.getEntitiesWithComponents('position', 'needs', 'creature')
 
     for (const id of entities) {
-      const needs = this.em.getComponent<NeedsComponent>(id, 'needs')!
-      const creature = this.em.getComponent<CreatureComponent>(id, 'creature')!
+      const needs = this.em.getComponent<NeedsComponent>(id, 'needs')
+      const creature = this.em.getComponent<CreatureComponent>(id, 'creature')
+      if (!needs || !creature) continue
 
       switch (this.currentWeather) {
         case 'rain':

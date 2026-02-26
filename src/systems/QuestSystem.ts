@@ -182,13 +182,15 @@ export class QuestSystem {
       this.quests.push(quest)
 
       // Direct hero toward quest target
-      const ai = em.getComponent<AIComponent>(heroId, 'ai')!
-      ai.state = 'wandering'
-      ai.targetX = target.x
-      ai.targetY = target.y
+      const ai = em.getComponent<AIComponent>(heroId, 'ai')
+      if (ai) {
+        ai.state = 'wandering'
+        ai.targetX = target.x
+        ai.targetY = target.y
+      }
 
-      const creature = em.getComponent<CreatureComponent>(heroId, 'creature')!
-      EventLog.log('hero', `${creature.name} embarked on quest: ${quest.description}`, tick)
+      const creature = em.getComponent<CreatureComponent>(heroId, 'creature')
+      EventLog.log('hero', `${creature ? creature.name : 'A hero'} embarked on quest: ${quest.description}`, tick)
     }
   }
 
@@ -199,7 +201,8 @@ export class QuestSystem {
     const creatures = em.getEntitiesWithComponent('creature')
     let hasDragons = false
     for (const id of creatures) {
-      const c = em.getComponent<CreatureComponent>(id, 'creature')!
+      const c = em.getComponent<CreatureComponent>(id, 'creature')
+      if (!c) continue
       if (c.species === 'dragon') { hasDragons = true; break }
     }
     if (hasDragons) candidates.push('slay_dragon', 'slay_dragon') // weighted
@@ -241,7 +244,8 @@ export class QuestSystem {
         const creatures = em.getEntitiesWithComponent('creature')
         let nearest: { x: number; y: number; dist: number } | null = null
         for (const id of creatures) {
-          const c = em.getComponent<CreatureComponent>(id, 'creature')!
+          const c = em.getComponent<CreatureComponent>(id, 'creature')
+          if (!c) continue
           if (c.species !== 'dragon') continue
           const pos = em.getComponent<PositionComponent>(id, 'position')
           if (!pos) continue
@@ -361,7 +365,8 @@ export class QuestSystem {
         const creatures = em.getEntitiesWithComponent('creature')
         let dragonNearby = false
         for (const id of creatures) {
-          const c = em.getComponent<CreatureComponent>(id, 'creature')!
+          const c = em.getComponent<CreatureComponent>(id, 'creature')
+          if (!c) continue
           if (c.species !== 'dragon') continue
           const cPos = em.getComponent<PositionComponent>(id, 'position')
           if (!cPos) continue

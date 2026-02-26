@@ -137,7 +137,8 @@ export class StatsPanel {
     const speciesCount = new Map<string, number>()
     const entities = this.em.getEntitiesWithComponents('creature')
     for (const id of entities) {
-      const c = this.em.getComponent<CreatureComponent>(id, 'creature')!
+      const c = this.em.getComponent<CreatureComponent>(id, 'creature')
+      if (!c) continue
       speciesCount.set(c.species, (speciesCount.get(c.species) || 0) + 1)
     }
 

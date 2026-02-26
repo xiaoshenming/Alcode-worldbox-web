@@ -78,9 +78,10 @@ export class LegendaryBattleSystem {
     const grid = this._detectGrid
     grid.clear()
     for (const id of fighters) {
-      const needs = em.getComponent<NeedsComponent>(id, 'needs')!
-      if (needs.health <= 0) continue
-      const pos = em.getComponent<PositionComponent>(id, 'position')!
+      const needs = em.getComponent<NeedsComponent>(id, 'needs')
+      if (!needs || needs.health <= 0) continue
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      if (!pos) continue
       const key = `${Math.floor(pos.x / cellSize)},${Math.floor(pos.y / cellSize)}`
       const cell = grid.get(key)
       if (cell) cell.push(id)
@@ -118,8 +119,9 @@ export class LegendaryBattleSystem {
       let sumX = 0
       let sumY = 0
       for (const id of cluster) {
-        const civ = em.getComponent<CivMemberComponent>(id, 'civMember')!
-        const pos = em.getComponent<PositionComponent>(id, 'position')!
+        const civ = em.getComponent<CivMemberComponent>(id, 'civMember')
+        const pos = em.getComponent<PositionComponent>(id, 'position')
+        if (!civ || !pos) continue
         sumX += pos.x
         sumY += pos.y
         const arr = civCounts.get(civ.civId)

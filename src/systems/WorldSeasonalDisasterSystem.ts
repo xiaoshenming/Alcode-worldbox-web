@@ -130,7 +130,8 @@ export class WorldSeasonalDisasterSystem {
     const entities = em.getEntitiesWithComponents('position', 'needs')
     for (const disaster of this.disasters) {
       for (const eid of entities) {
-        const pos = em.getComponent<PositionComponent>(eid, 'position')!
+        const pos = em.getComponent<PositionComponent>(eid, 'position')
+        if (!pos) continue
         const dx = pos.x - disaster.x
         const dy = pos.y - disaster.y
         if (dx * dx + dy * dy < disaster.radius * disaster.radius) {

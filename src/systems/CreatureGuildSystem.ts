@@ -104,7 +104,8 @@ export class CreatureGuildSystem {
     // Group by rough location
     const clusters = new Map<string, EntityId[]>()
     for (const eid of entities) {
-      const pos = em.getComponent<PositionComponent>(eid, 'position')!
+      const pos = em.getComponent<PositionComponent>(eid, 'position')
+      if (!pos) continue
       const key = `${Math.floor(pos.x / GUILD_RANGE)},${Math.floor(pos.y / GUILD_RANGE)}`
       if (!clusters.has(key)) clusters.set(key, [])
       clusters.get(key)!.push(eid)
@@ -119,7 +120,8 @@ export class CreatureGuildSystem {
       const guildType = this.pickGuildType()
       const names = GUILD_NAMES[guildType]
       const name = names[Math.floor(Math.random() * names.length)]
-      const firstPos = em.getComponent<PositionComponent>(unguilded[0], 'position')!
+      const firstPos = em.getComponent<PositionComponent>(unguilded[0], 'position')
+      if (!firstPos) continue
       const members = unguilded.slice(0, MAX_MEMBERS)
 
       const guild: Guild = {
@@ -148,7 +150,8 @@ export class CreatureGuildSystem {
       for (const eid of entities) {
         if (guild.members.length >= MAX_MEMBERS) break
         if (this.getGuildForEntity(eid)) continue
-        const pos = em.getComponent<PositionComponent>(eid, 'position')!
+        const pos = em.getComponent<PositionComponent>(eid, 'position')
+        if (!pos) continue
         const dx = pos.x - guild.hallX
         const dy = pos.y - guild.hallY
         if (dx * dx + dy * dy < GUILD_RANGE * GUILD_RANGE) {
