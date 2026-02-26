@@ -6,7 +6,7 @@ import { CivManager } from '../civilization/CivManager'
 import { BuildingComponent, BuildingType } from '../civilization/Civilization'
 import { ParticleSystem } from '../systems/ParticleSystem'
 import { ResourceSystem } from '../systems/ResourceSystem'
-import { CaravanSystem, Caravan } from '../systems/CaravanSystem'
+import { CaravanSystem } from '../systems/CaravanSystem'
 import { SpriteRenderer } from './SpriteRenderer'
 import { CropSystem, CropStage } from '../systems/CropSystem'
 
@@ -48,6 +48,9 @@ export class Renderer {
   private static readonly AURA_COLORS: Record<string, string> = {
     warrior: '#ffd700', ranger: '#44ff44', healer: '#ffffff', berserker: '#ff4444'
   }
+
+  // Territory color cache: civColor → civColor + '30'
+  private _territoryColorCache: Map<string, string> = new Map()
   private _particleByColor: Map<string, { sx: number; sy: number; r: number; alpha: number }[]> = new Map()
   private _particleBucketPool: { sx: number; sy: number; r: number; alpha: number }[][] = []
 
@@ -235,13 +238,16 @@ export class Renderer {
 
     // Pass 3: territory overlay
     if (this.showTerritory && civManager) {
+      const terColorCache = this._territoryColorCache
       for (let y = bounds.startY; y < bounds.endY; y++) {
         for (let x = bounds.startX; x < bounds.endX; x++) {
           const civColor = civManager.getCivColor(x, y)
           if (civColor) {
             const screenX = x * TILE_SIZE * camera.zoom + offsetX
             const screenY = y * TILE_SIZE * camera.zoom + offsetY
-            ctx.fillStyle = civColor + '30'
+            let cached = terColorCache.get(civColor)
+            if (!cached) { cached = civColor + '30'; terColorCache.set(civColor, cached) }
+            ctx.fillStyle = cached
             ctx.fillRect(screenX, screenY, tileSizeCeil, tileSizeCeil)
           }
         }
@@ -326,6 +332,8 @@ export class Renderer {
       }
     }
 
+    const now = performance.now()
+
     // Draw buildings
     for (const id of buildingBatch) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
@@ -352,7 +360,7 @@ export class Renderer {
 
         // Red tint overlay on heavily damaged building
         if (hpPct < 0.5) {
-          const flash = Math.sin(performance.now() * 0.006 + id) * 0.1 + 0.15
+          const flash = Math.sin(now * 0.006 + id) * 0.1 + 0.15
           ctx.fillStyle = `rgba(255, 0, 0, ${flash})`
           ctx.fillRect(screenX + tileSize / 2 - bSize / 2, screenY + tileSize / 2 - bSize / 2, bSize, bSize)
         }
@@ -360,6 +368,9 @@ export class Renderer {
     }
 
     // Draw creatures (sprites + overlays)
+    const heroFont = `${Math.max(6, 8 * camera.zoom)}px monospace`
+    const artFont = `${Math.max(6, 7 * camera.zoom)}px monospace`
+    const stateFont = `${Math.max(8, 10 * camera.zoom)}px monospace`
     for (const id of creatureBatch) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       const render = em.getComponent<RenderComponent>(id, 'render')
@@ -384,7 +395,7 @@ export class Renderer {
       const heroComp = em.getComponent<HeroComponent>(id, 'hero')
       if (heroComp && camera.zoom > 0.3) {
         const auraColor = Renderer.AURA_COLORS[heroComp.ability] || '#ffd700'
-        const pulse = Math.sin(performance.now() * 0.004 + id) * 0.3 + 0.5
+        const pulse = Math.sin(now * 0.004 + id) * 0.3 + 0.5
         const auraRadius = spriteSize * 0.8 + pulse * 3 * camera.zoom
 
         ctx.strokeStyle = auraColor
@@ -396,7 +407,7 @@ export class Renderer {
 
         ctx.globalAlpha = 0.9
         ctx.fillStyle = '#ffd700'
-        ctx.font = `${Math.max(6, 8 * camera.zoom)}px monospace`
+        ctx.font = heroFont
         ctx.textAlign = 'center'
         const stars = '\u2605'.repeat(Math.min(heroComp.level, 5))
         ctx.fillText(stars, cx, cy + spriteSize * 0.7 + 4 * camera.zoom)
@@ -404,10 +415,10 @@ export class Renderer {
 
         const heroInv = em.getComponent<InventoryComponent>(id, 'inventory')
         if (heroInv && heroInv.artifacts.length > 0 && camera.zoom > 0.4) {
-          const artPulse = Math.sin(performance.now() * 0.003 + id) * 0.2 + 0.8
+          const artPulse = Math.sin(now * 0.003 + id) * 0.2 + 0.8
           ctx.globalAlpha = artPulse
           ctx.fillStyle = '#ffd700'
-          ctx.font = `${Math.max(6, 7 * camera.zoom)}px monospace`
+          ctx.font = artFont
           ctx.textAlign = 'center'
           const artSymbols = '\u25C6'.repeat(heroInv.artifacts.length)
           ctx.fillText(artSymbols, cx, cy - spriteSize * 0.7 - 6 * camera.zoom)
@@ -433,7 +444,7 @@ export class Renderer {
       // Disease indicator
       const diseaseComp = em.getComponent<DiseaseComponent>(id, 'disease')
       if (diseaseComp && !diseaseComp.immune && camera.zoom > 0.3) {
-        const pulse = Math.sin(performance.now() * 0.006 + id * 2) * 0.3 + 0.7
+        const pulse = Math.sin(now * 0.006 + id * 2) * 0.3 + 0.7
         const dotRadius = Math.max(1.5, 2.5 * camera.zoom) * pulse
         const dotY = cy - size - 8 * camera.zoom
         ctx.globalAlpha = pulse * 0.9
@@ -458,7 +469,7 @@ export class Renderer {
         }
         if (icon) {
           ctx.fillStyle = ai.state === 'attacking' ? '#f44' : ai.state === 'fleeing' ? '#4af' : '#ff4'
-          ctx.font = `${Math.max(8, 10 * camera.zoom)}px monospace`
+          ctx.font = stateFont
           ctx.textAlign = 'center'
           ctx.fillText(icon, cx, cy - size - 6 * camera.zoom)
         }
@@ -467,7 +478,7 @@ export class Renderer {
       // Attacking creature: red crossed swords spark (merged from renderBattleEffects)
       if (ai && ai.state === 'attacking' && camera.zoom > 0.3 && camera.zoom <= 0.8) {
         const sparkSize = Math.max(3, 5 * camera.zoom)
-        const pulse = Math.sin(performance.now() * 0.01 + id * 3) * 0.4 + 0.6
+        const pulse = Math.sin(now * 0.01 + id * 3) * 0.4 + 0.6
 
         ctx.globalAlpha = pulse
         ctx.strokeStyle = '#ff3300'
@@ -486,7 +497,6 @@ export class Renderer {
     }
 
     // Draw artifacts
-    const time = performance.now()
     for (const id of artifactBatch) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       const artifact = em.getComponent<ArtifactComponent>(id, 'artifact')
@@ -496,7 +506,7 @@ export class Renderer {
       const cx = screenX + tileSize / 2
       const cy = screenY + tileSize / 2
 
-      const pulse = Math.sin(time * 0.005 + id * 2) * 0.3 + 0.7
+      const pulse = Math.sin(now * 0.005 + id * 2) * 0.3 + 0.7
       const diamondSize = Math.max(3, tileSize * 0.6) * pulse
       const glowSize = diamondSize * 1.8
 
