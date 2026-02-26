@@ -1732,6 +1732,19 @@ export class Game {
   // GC optimization: reusable buffers for hot render path
   private _politicalData: { color: string; territory: Set<number> }[] = []
   private _politicalSets: Set<number>[] = []
+  private _musicState = { isNight: false, atWar: false, disasterActive: false, isEpic: false, isRaining: false }
+  private _fogCivId: number | undefined = undefined
+  private _fogCallback = (x: number, y: number): 0 | 1 | 2 => {
+    if (this._fogCivId === undefined) return 2
+    const alpha = this.fogOfWarSystem.getFogAlpha(this._fogCivId, x, y)
+    return (alpha > 0.6 ? 0 : alpha > 0.2 ? 1 : 2) as 0 | 1 | 2
+  }
+  private _minimapRect = { left: 0, top: 0 }
+  private _minimapRectDirty = true
+  private _minimapOverlayData = {
+    political: this._politicalData, population: [] as never[], military: [] as never[], resources: [] as never[],
+    worldWidth: 0, worldHeight: 0
+  }
   private _clonePositions: { x: number; y: number; generation: number }[] = []
 
   constructor() {
@@ -3064,6 +3077,7 @@ export class Game {
   private setupResize(): void {
     window.addEventListener('resize', () => {
       this.renderer.resize(window.innerWidth, window.innerHeight)
+      this._minimapRectDirty = true
     })
   }
 
@@ -5314,13 +5328,12 @@ export class Game {
       }
       if (hasWar) break
     }
-    this.musicSystem.update({
-      isNight: !this.world.isDay(),
-      atWar: hasWar,
-      disasterActive: this.disasterSystem.getActiveDisasters().length > 0,
-      isEpic: this.wonderSystem.getActiveWonders().length > 0,
-      isRaining: this.weather.currentWeather === 'rain' || this.weather.currentWeather === 'storm',
-    })
+    this._musicState.isNight = !this.world.isDay()
+    this._musicState.atWar = hasWar
+    this._musicState.disasterActive = this.disasterSystem.getActiveDisasters().length > 0
+    this._musicState.isEpic = this.wonderSystem.getActiveWonders().length > 0
+    this._musicState.isRaining = this.weather.currentWeather === 'rain' || this.weather.currentWeather === 'storm'
+    this.musicSystem.update(this._musicState)
     this.renderer.renderBrushOutline(this.camera, this.input.mouseX, this.input.mouseY, this.powers.getBrushSize())
 
     // Minimap + overlay: throttle to every 3 frames to reduce GC and draw cost
@@ -5332,33 +5345,40 @@ export class Game {
         const mCtx = this.minimapCanvas.getContext('2d')
         if (mCtx) {
           // Reset reusable arrays
-          this._politicalData.length = 0
           let setIdx = 0
           for (const [, c] of this.civManager.civilizations) {
-            // Reuse or create Set
+            // Reuse or create Set and data object
             if (setIdx >= this._politicalSets.length) {
               this._politicalSets.push(new Set<number>())
+              this._politicalData.push({ color: '', territory: this._politicalSets[setIdx] })
             }
             const numSet = this._politicalSets[setIdx]
             numSet.clear()
             for (const t of c.territory) {
               numSet.add(typeof t === 'string' ? parseInt(t, 10) : t as number)
             }
-            this._politicalData.push({ color: c.color, territory: numSet })
+            this._politicalData[setIdx].color = c.color
+            this._politicalData[setIdx].territory = numSet
             setIdx++
           }
-          this.minimapOverlay.render(mCtx, this.minimapCanvas.width, this.minimapCanvas.height, {
-            political: this._politicalData, population: [], military: [], resources: [],
-            worldWidth: WORLD_WIDTH, worldHeight: WORLD_HEIGHT
-          })
+          this._politicalData.length = setIdx
+          this._minimapOverlayData.political = this._politicalData
+          this._minimapOverlayData.worldWidth = WORLD_WIDTH
+          this._minimapOverlayData.worldHeight = WORLD_HEIGHT
+          this.minimapOverlay.render(mCtx, this.minimapCanvas.width, this.minimapCanvas.height, this._minimapOverlayData)
         }
       }
     }
 
     // Minimap mode button (v1.67)
     {
-      const mRect = this.minimapCanvas.getBoundingClientRect()
-      this.minimapMode.renderModeButton(ctx, mRect.left, mRect.top)
+      if (this._minimapRectDirty) {
+        const mRect = this.minimapCanvas.getBoundingClientRect()
+        this._minimapRect.left = mRect.left
+        this._minimapRect.top = mRect.top
+        this._minimapRectDirty = false
+      }
+      this.minimapMode.renderModeButton(ctx, this._minimapRect.left, this._minimapRect.top)
     }
 
     // World event overlays and banners
@@ -5379,14 +5399,10 @@ export class Game {
     // Fog of war overlay - connect to actual FogOfWarSystem
     {
       const bounds = this.camera.getVisibleBounds()
-      const firstCivId = this.civManager.civilizations.keys().next().value
+      this._fogCivId = this.civManager.civilizations.keys().next().value
       this.fogOfWar.render(ctx, this.camera.x, this.camera.y, this.camera.zoom,
         bounds.startX, bounds.startY, bounds.endX, bounds.endY,
-        (x: number, y: number) => {
-          if (firstCivId === undefined) return 2 as const
-          const alpha = this.fogOfWarSystem.getFogAlpha(firstCivId, x, y)
-          return (alpha > 0.6 ? 0 : alpha > 0.2 ? 1 : 2) as 0 | 1 | 2
-        })
+        this._fogCallback)
     }
 
     // Fortification rendering

@@ -78,12 +78,14 @@ export class Camera {
     return this.isDragging
   }
 
+  // Reusable bounds object to avoid GC in hot path
+  private _bounds = { startX: 0, startY: 0, endX: 0, endY: 0 }
+
   getVisibleBounds(): { startX: number; startY: number; endX: number; endY: number } {
-    return {
-      startX: Math.max(0, Math.floor(this.x / TILE_SIZE)),
-      startY: Math.max(0, Math.floor(this.y / TILE_SIZE)),
-      endX: Math.min(WORLD_WIDTH, Math.ceil((this.x + window.innerWidth / this.zoom) / TILE_SIZE)),
-      endY: Math.min(WORLD_HEIGHT, Math.ceil((this.y + window.innerHeight / this.zoom) / TILE_SIZE))
-    }
+    this._bounds.startX = Math.max(0, Math.floor(this.x / TILE_SIZE))
+    this._bounds.startY = Math.max(0, Math.floor(this.y / TILE_SIZE))
+    this._bounds.endX = Math.min(WORLD_WIDTH, Math.ceil((this.x + window.innerWidth / this.zoom) / TILE_SIZE))
+    this._bounds.endY = Math.min(WORLD_HEIGHT, Math.ceil((this.y + window.innerHeight / this.zoom) / TILE_SIZE))
+    return this._bounds
   }
 }
