@@ -1,5 +1,5 @@
-// Creature Planisher System (v3.599) - Metal planishing artisans
-// Craftspeople who smooth and flatten metal surfaces with specialized hammers
+// Creature Planisher System (v3.659) - Metal planishing artisans
+// Craftspeople who smooth metal by hammering with a flat-faced tool
 
 import { EntityManager } from '../ecs/Entity'
 
@@ -7,14 +7,14 @@ export interface Planisher {
   id: number
   entityId: number
   planishingSkill: number
-  hammerControl: number
-  surfaceFinish: number
-  outputQuality: number
+  hammerPrecision: number
+  surfaceFlatness: number
+  metalAlignment: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2770
-const RECRUIT_CHANCE = 0.0014
+const CHECK_INTERVAL = 2890
+const RECRUIT_CHANCE = 0.0015
 const MAX_PLANISHERS = 10
 
 export class CreaturePlanisherSystem {
@@ -31,17 +31,17 @@ export class CreaturePlanisherSystem {
         id: this.nextId++,
         entityId: Math.floor(Math.random() * 500),
         planishingSkill: 10 + Math.random() * 25,
-        hammerControl: 15 + Math.random() * 20,
-        surfaceFinish: 5 + Math.random() * 20,
-        outputQuality: 10 + Math.random() * 25,
+        hammerPrecision: 15 + Math.random() * 20,
+        surfaceFlatness: 5 + Math.random() * 20,
+        metalAlignment: 10 + Math.random() * 25,
         tick,
       })
     }
 
     for (const p of this.planishers) {
       p.planishingSkill = Math.min(100, p.planishingSkill + 0.02)
-      p.hammerControl = Math.min(100, p.hammerControl + 0.015)
-      p.outputQuality = Math.min(100, p.outputQuality + 0.01)
+      p.hammerPrecision = Math.min(100, p.hammerPrecision + 0.015)
+      p.metalAlignment = Math.min(100, p.metalAlignment + 0.01)
     }
 
     this.planishers = this.planishers.filter(p => p.planishingSkill > 4)

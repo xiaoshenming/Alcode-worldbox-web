@@ -787,6 +787,21 @@ import { DiplomaticAgisterSystem } from '../systems/DiplomaticAgisterSystem'
 import { CreatureHammermanSystem } from '../systems/CreatureHammermanSystem'
 import { WorldCeriumSpringSystem } from '../systems/WorldCeriumSpringSystem'
 import { DiplomaticWoodwardSystem } from '../systems/DiplomaticWoodwardSystem'
+import { CreaturePeenerSystem } from '../systems/CreaturePeenerSystem'
+import { WorldPraseodymiumSpringSystem } from '../systems/WorldPraseodymiumSpringSystem'
+import { DiplomaticWarrenerSystem } from '../systems/DiplomaticWarrenerSystem'
+import { CreaturePlanisherSystem } from '../systems/CreaturePlanisherSystem'
+import { WorldNeodymiumSpringSystem } from '../systems/WorldNeodymiumSpringSystem'
+import { DiplomaticParkwardSystem } from '../systems/DiplomaticParkwardSystem'
+import { CreatureBevellerSystem } from '../systems/CreatureBevellerSystem'
+import { WorldSamariumSpringSystem } from '../systems/WorldSamariumSpringSystem'
+import { DiplomaticWoodreveSystem } from '../systems/DiplomaticWoodreveSystem'
+import { CreatureFlatterSystem } from '../systems/CreatureFlatterSystem'
+import { WorldEuropiumSpringSystem } from '../systems/WorldEuropiumSpringSystem'
+import { DiplomaticRangerSystem } from '../systems/DiplomaticRangerSystem'
+import { CreatureChisellerSystem } from '../systems/CreatureChisellerSystem'
+import { WorldGadoliniumSpringSystem } from '../systems/WorldGadoliniumSpringSystem'
+import { DiplomaticForestarSystem } from '../systems/DiplomaticForestarSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1575,6 +1590,21 @@ export class Game {
   private creatureHammerman!: CreatureHammermanSystem
   private worldCeriumSpring!: WorldCeriumSpringSystem
   private diplomaticWoodward!: DiplomaticWoodwardSystem
+  private creaturePeener!: CreaturePeenerSystem
+  private worldPraseodymiumSpring!: WorldPraseodymiumSpringSystem
+  private diplomaticWarrener!: DiplomaticWarrenerSystem
+  private creaturePlanisher!: CreaturePlanisherSystem
+  private worldNeodymiumSpring!: WorldNeodymiumSpringSystem
+  private diplomaticParkward!: DiplomaticParkwardSystem
+  private creatureBeveller!: CreatureBevellerSystem
+  private worldSamariumSpring!: WorldSamariumSpringSystem
+  private diplomaticWoodreve!: DiplomaticWoodreveSystem
+  private creatureFlatter!: CreatureFlatterSystem
+  private worldEuropiumSpring!: WorldEuropiumSpringSystem
+  private diplomaticRanger!: DiplomaticRangerSystem
+  private creatureChiseller!: CreatureChisellerSystem
+  private worldGadoliniumSpring!: WorldGadoliniumSpringSystem
+  private diplomaticForestar!: DiplomaticForestarSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -2514,6 +2544,21 @@ export class Game {
     this.creatureHammerman = new CreatureHammermanSystem()
     this.worldCeriumSpring = new WorldCeriumSpringSystem()
     this.diplomaticWoodward = new DiplomaticWoodwardSystem()
+    this.creaturePeener = new CreaturePeenerSystem()
+    this.worldPraseodymiumSpring = new WorldPraseodymiumSpringSystem()
+    this.diplomaticWarrener = new DiplomaticWarrenerSystem()
+    this.creaturePlanisher = new CreaturePlanisherSystem()
+    this.worldNeodymiumSpring = new WorldNeodymiumSpringSystem()
+    this.diplomaticParkward = new DiplomaticParkwardSystem()
+    this.creatureBeveller = new CreatureBevellerSystem()
+    this.worldSamariumSpring = new WorldSamariumSpringSystem()
+    this.diplomaticWoodreve = new DiplomaticWoodreveSystem()
+    this.creatureFlatter = new CreatureFlatterSystem()
+    this.worldEuropiumSpring = new WorldEuropiumSpringSystem()
+    this.diplomaticRanger = new DiplomaticRangerSystem()
+    this.creatureChiseller = new CreatureChisellerSystem()
+    this.worldGadoliniumSpring = new WorldGadoliniumSpringSystem()
+    this.diplomaticForestar = new DiplomaticForestarSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -4937,6 +4982,21 @@ export class Game {
         this.creatureHammerman.update(this.tickRate, this.em, this.world.tick)
         this.worldCeriumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
         this.diplomaticWoodward.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creaturePeener.update(this.tickRate, this.em, this.world.tick)
+        this.worldPraseodymiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticWarrener.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creaturePlanisher.update(this.tickRate, this.em, this.world.tick)
+        this.worldNeodymiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticParkward.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureBeveller.update(this.tickRate, this.em, this.world.tick)
+        this.worldSamariumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticWoodreve.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureFlatter.update(this.tickRate, this.em, this.world.tick)
+        this.worldEuropiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticRanger.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureChiseller.update(this.tickRate, this.em, this.world.tick)
+        this.worldGadoliniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticForestar.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
