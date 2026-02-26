@@ -608,6 +608,7 @@ export class WorldEventSystem {
     this.activeEvents.push(active)
     this.eventCooldowns.set(def.id, def.cooldown)
     this.eventHistory.push({ id: def.id, name: def.name, tick })
+    if (this.eventHistory.length > 100) this.eventHistory.splice(0, this.eventHistory.length - 100)
 
     // Show banner
     this.banner = {

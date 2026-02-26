@@ -115,7 +115,13 @@ export class HeroLegendSystem {
         }
         this.trackedHeroes.delete(id)
         this.lastSurvivalTick.delete(id)
+        this.fameMap.delete(id)
       }
+    }
+
+    // Cap monuments to prevent unbounded growth
+    if (this.monuments.length > 50) {
+      this.monuments.splice(0, this.monuments.length - 50)
     }
 
     // Monument happiness aura (every 300 ticks)
