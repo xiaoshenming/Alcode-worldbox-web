@@ -72,23 +72,24 @@ export class MigrationSystem {
       for (const [cellKey, cellMembers] of cells) {
         // Also check neighboring cells
         const [cx, cy] = cellKey.split(',').map(Number)
-        const nearby: EntityId[] = [...cellMembers]
+        const nearby = new Set<EntityId>(cellMembers)
 
         for (let dy = -1; dy <= 1; dy++) {
           for (let dx = -1; dx <= 1; dx++) {
             if (dx === 0 && dy === 0) continue
             const neighborKey = `${cx + dx},${cy + dy}`
             const neighborMembers = cells.get(neighborKey)
-            if (neighborMembers) nearby.push(...neighborMembers)
+            if (neighborMembers) for (const id of neighborMembers) nearby.add(id)
           }
         }
 
-        // Deduplicate
-        const unique = [...new Set(nearby)]
-        if (unique.length < 3) continue
+        if (nearby.size < 3) continue
 
         // Filter to only those still valid (not already assigned to a band this tick)
-        const valid = unique.filter(id => !em.hasComponent(id, 'nomad'))
+        const valid: EntityId[] = []
+        for (const id of nearby) {
+          if (!em.hasComponent(id, 'nomad')) valid.push(id)
+        }
         if (valid.length < 3) continue
 
         // Check migration triggers
