@@ -150,7 +150,7 @@ export class WorldStatsOverviewSystem {
       ctx.beginPath()
       ctx.moveTo(cX, cY + cH)
       for (let i = 0; i < n; i++) { const [px, py] = this.chartPt(i, n, cX, cY, cW, cH, maxVal); ctx.lineTo(px, py) }
-      ctx.lineTo(cX + (n - 1) * (cW / (n - 1)), cY + cH)
+      ctx.lineTo(cX + cW, cY + cH)
       ctx.closePath()
       ctx.fillStyle = 'rgba(79,195,247,0.15)'
       ctx.fill()
