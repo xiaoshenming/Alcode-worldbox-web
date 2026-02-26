@@ -51,6 +51,8 @@ export class HeroLegendSystem {
   private monuments: Monument[] = []
   private trackedHeroes: Set<number> = new Set()
   private lastSurvivalTick: Map<number, number> = new Map()
+  // Reusable set to avoid GC pressure
+  private _aliveSet: Set<number> = new Set()
 
   update(em: EntityManager, civManager: CivManager, world: World, particles: ParticleSystem, tick: number): void {
     const heroIds = em.getEntitiesWithComponents('position', 'hero', 'creature')
@@ -74,7 +76,9 @@ export class HeroLegendSystem {
     }
 
     // Update survival fame and check kills
-    const aliveSet = new Set(heroIds)
+    const aliveSet = this._aliveSet
+    aliveSet.clear()
+    for (const id of heroIds) aliveSet.add(id)
     for (const id of heroIds) {
       const fame = this.fameMap.get(id)!
       const hero = em.getComponent<HeroComponent>(id, 'hero')!

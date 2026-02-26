@@ -30,6 +30,8 @@ const BLOCKADE_INTERVAL = 80
 export class NavalSystem {
   // Track how many ships each port has spawned: portEntityId -> count
   private portShipCount: Map<EntityId, number> = new Map()
+  // Reusable spatial hash to avoid GC pressure
+  private _combatGrid: Map<string, EntityId[]> = new Map()
 
   update(em: EntityManager, world: World, civManager: CivManager, particles: ParticleSystem, tick: number): void {
     // Spawn ships from ports
@@ -231,7 +233,8 @@ export class NavalSystem {
     const ships = em.getEntitiesWithComponents('ship', 'position')
 
     // Spatial hash for fast neighbor lookup (cell size 8)
-    const grid: Map<string, EntityId[]> = new Map()
+    const grid = this._combatGrid
+    grid.clear()
     for (const id of ships) {
       const pos = em.getComponent<PositionComponent>(id, 'position')!
       const key = `${Math.floor(pos.x / 8)},${Math.floor(pos.y / 8)}`

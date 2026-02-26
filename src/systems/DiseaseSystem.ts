@@ -29,6 +29,9 @@ export class DiseaseSystem {
   totalRecovered: number = 0
 
   private tickCounter: number = 0
+  // Reusable maps to avoid GC pressure in hot paths
+  private _outbreakGrid: Map<string, EntityId[]> = new Map()
+  private _spreadGrid: Map<string, EntityId[]> = new Map()
 
   update(em: EntityManager, world: World, civManager: CivManager, particles: ParticleSystem): void {
     this.tickCounter++
@@ -70,7 +73,8 @@ export class DiseaseSystem {
     if (creatures.length === 0) return
 
     // Prefer overcrowded areas: build spatial density
-    const grid: Map<string, EntityId[]> = new Map()
+    const grid = this._outbreakGrid
+    grid.clear()
     for (const id of creatures) {
       const pos = em.getComponent<PositionComponent>(id, 'position')!
       const key = `${Math.floor(pos.x / 10)},${Math.floor(pos.y / 10)}`
@@ -114,7 +118,8 @@ export class DiseaseSystem {
 
     // Build spatial hash for all creatures (cell size 5)
     const allCreatures = em.getEntitiesWithComponents('position', 'creature', 'needs')
-    const grid: Map<string, EntityId[]> = new Map()
+    const grid = this._spreadGrid
+    grid.clear()
     for (const id of allCreatures) {
       const pos = em.getComponent<PositionComponent>(id, 'position')!
       const key = `${Math.floor(pos.x / 5)},${Math.floor(pos.y / 5)}`

@@ -163,13 +163,16 @@ export class SiegeWarfareSystem {
       ctx.fillRect(moraleX, moraleY, moraleW * (siege.defenderMorale / 100), barH * 0.7);
       ctx.strokeRect(moraleX, moraleY, moraleW, barH * 0.7);
 
-      // Weapon icons
-      const uniqueWeapons = [...new Set(siege.siegeWeapons)];
+      // Weapon icons — deduplicate without allocating a Set per frame
+      const seen: SiegeWeaponType[] = [];
+      for (const w of siege.siegeWeapons) {
+        if (!seen.includes(w)) seen.push(w);
+      }
       const iconSize = Math.max(8, 10 * zoom);
       ctx.font = `${iconSize}px serif`;
       ctx.textAlign = 'center';
-      uniqueWeapons.forEach((w, i) => {
-        const ix = sx - (uniqueWeapons.length * iconSize) / 2 + i * iconSize + iconSize / 2;
+      seen.forEach((w, i) => {
+        const ix = sx - (seen.length * iconSize) / 2 + i * iconSize + iconSize / 2;
         const iy = sy + tileSize * 0.9;
         ctx.fillText(WEAPON_ICONS[w], ix, iy);
       });

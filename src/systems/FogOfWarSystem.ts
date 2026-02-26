@@ -48,6 +48,8 @@ export class FogOfWarSystem {
   private civFogMap: Map<number, CivFogData> = new Map();
   // Track which civs have already been "discovered" by each civ to avoid repeat diplomacy events
   private discoveredCivs: Map<number, Set<number>> = new Map();
+  // Reusable map to avoid GC pressure in hot path
+  private _memberPositions: Map<number, { x: number; y: number; radius: number }[]> = new Map();
 
   getCivFog(civId: number): CivFogData | undefined {
     return this.civFogMap.get(civId);
@@ -93,7 +95,8 @@ export class FogOfWarSystem {
     }
 
     // Collect civ member positions grouped by civId
-    const memberPositions: Map<number, { x: number; y: number; radius: number }[]> = new Map();
+    const memberPositions = this._memberPositions;
+    memberPositions.clear();
     const civMemberIds = em.getEntitiesWithComponent('civMember');
     for (const id of civMemberIds) {
       const member = em.getComponent<CivMemberComponent>(id, 'civMember');

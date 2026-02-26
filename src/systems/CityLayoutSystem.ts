@@ -407,13 +407,14 @@ export class CityLayoutSystem {
   ): void {
     const isFence = layout.level === 'town'
     const isDouble = layout.level === 'capital'
-    const gateSet = new Set(layout.gates.map(g => `${g.x},${g.y}`))
+    // Build gate lookup without allocating a new Set per frame
+    const gates = layout.gates
     const wallW = TILE * zoom
     const merlonSize = Math.max(2, zoom * 3)
 
     for (let i = 0; i < layout.walls.length; i++) {
       const w = layout.walls[i]
-      if (gateSet.has(`${w.x},${w.y}`)) continue // 城门处留空
+      if (gates.some(g => g.x === w.x && g.y === w.y)) continue // 城门处留空
       const px = (w.x * TILE - camX) * zoom
       const py = (w.y * TILE - camY) * zoom
 

@@ -44,6 +44,9 @@ export class LegendaryBattleSystem {
   private warStories: string[] = []
   private nextBattleId = 1
   private heroBuffs: Map<EntityId, number> = new Map() // entityId -> buff expiry tick
+  // Reusable collections to avoid GC pressure
+  private _detectGrid: Map<string, EntityId[]> = new Map()
+  private _visited: Set<string> = new Set()
 
   /**
    * Main update loop. Detects new battles, updates existing ones,
@@ -72,7 +75,8 @@ export class LegendaryBattleSystem {
 
     // Build spatial grid (cell size = DETECT_RADIUS)
     const cellSize = BATTLE_DETECT_RADIUS
-    const grid: Map<string, EntityId[]> = new Map()
+    const grid = this._detectGrid
+    grid.clear()
     for (const id of fighters) {
       const needs = em.getComponent<NeedsComponent>(id, 'needs')!
       if (needs.health <= 0) continue
@@ -84,7 +88,8 @@ export class LegendaryBattleSystem {
     }
 
     // Scan each cell + neighbors for multi-civ clusters
-    const visited = new Set<string>()
+    const visited = this._visited
+    visited.clear()
     for (const [key, cell] of grid) {
       if (visited.has(key)) continue
       visited.add(key)

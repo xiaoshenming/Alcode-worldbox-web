@@ -1,6 +1,6 @@
 import { TileType, EntityType, PowerType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { World } from './World'
-import { EntityManager, RenderComponent } from '../ecs/Entity'
+import { EntityManager, RenderComponent, PositionComponent } from '../ecs/Entity'
 import { CreatureFactory } from '../entities/CreatureFactory'
 import { CivManager } from '../civilization/CivManager'
 import { ParticleSystem } from '../systems/ParticleSystem'
@@ -109,13 +109,15 @@ export class Powers {
   }
 
   private applyTerrain(x: number, y: number): void {
+    if (!this.currentPower || this.currentPower.tileType === undefined) return
+    const tileType = this.currentPower.tileType
     const half = Math.floor(this.brushSize / 2)
     for (let dy = -half; dy <= half; dy++) {
       for (let dx = -half; dx <= half; dx++) {
         const tx = x + dx
         const ty = y + dy
         if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
-          this.world.setTile(tx, ty, this.currentPower!.tileType!)
+          this.world.setTile(tx, ty, tileType)
         }
       }
     }
@@ -123,10 +125,12 @@ export class Powers {
   }
 
   private spawnCreature(x: number, y: number): void {
+    if (!this.currentPower || !this.currentPower.entityType) return
+    const entityType = this.currentPower.entityType
     const tile = this.world.getTile(x, y)
     // Don't spawn in water or lava
     if (tile === TileType.DEEP_WATER || tile === TileType.SHALLOW_WATER || tile === TileType.LAVA) return
-    const entityId = this.factory.spawn(this.currentPower!.entityType!, x, y)
+    const entityId = this.factory.spawn(entityType, x, y)
     this.audio.playSpawn()
 
     // Birth particle effect
@@ -134,7 +138,7 @@ export class Powers {
     this.particles.spawnBirth(x, y, render ? render.color : '#ffffff')
 
     // Civilized species auto-create/join civilization
-    const species = this.currentPower!.entityType!
+    const species = entityType
     const civilized = ['human', 'elf', 'dwarf', 'orc']
     if (civilized.includes(species)) {
       // Search nearby area for existing civilization (radius 15)
@@ -306,7 +310,7 @@ export class Powers {
   private killEntitiesInRadius(cx: number, cy: number, radius: number, chance: number = 1): void {
     const entities = this.em.getEntitiesWithComponent('position')
     for (const id of entities) {
-      const pos = this.em.getComponent<any>(id, 'position')
+      const pos = this.em.getComponent<PositionComponent>(id, 'position')
       if (!pos) continue
       const dx = pos.x - cx
       const dy = pos.y - cy

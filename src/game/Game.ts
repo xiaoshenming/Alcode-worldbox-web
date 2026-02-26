@@ -5820,7 +5820,7 @@ export class Game {
         btn.addEventListener('click', () => {
           const ok = SaveSystem.save(this.world, this.em, this.civManager, this.resources, slot)
           btn.textContent = ok ? 'Saved!' : 'Failed'
-          setTimeout(() => panel!.remove(), 800)
+          setTimeout(() => { if (panel.parentNode) panel.remove() }, 800)
         })
         row.appendChild(btn)
       } else if (mode === 'load' && hasSave) {
@@ -5831,7 +5831,7 @@ export class Game {
           const ok = SaveSystem.load(this.world, this.em, this.civManager, this.resources, slot)
           if (ok) this.world.markFullDirty()
           loadBtn.textContent = ok ? 'Loaded!' : 'Failed'
-          setTimeout(() => panel!.remove(), 800)
+          setTimeout(() => { if (panel.parentNode) panel.remove() }, 800)
         })
         row.appendChild(loadBtn)
         if (slot !== 'auto') {
@@ -5840,7 +5840,7 @@ export class Game {
           delBtn.style.cssText = 'padding:2px 8px;cursor:pointer;color:#f66'
           delBtn.addEventListener('click', () => {
             SaveSystem.deleteSave(slot)
-            panel!.remove()
+            if (panel.parentNode) panel.remove()
             this.showSaveLoadPanel(mode)
           })
           row.appendChild(delBtn)
@@ -5854,7 +5854,7 @@ export class Game {
     const closeBtn = document.createElement('button')
     closeBtn.textContent = 'Close'
     closeBtn.style.cssText = 'padding:2px 16px;cursor:pointer'
-    closeBtn.addEventListener('click', () => panel!.remove())
+    closeBtn.addEventListener('click', () => { if (panel.parentNode) panel.remove() })
     closeRow.appendChild(closeBtn)
     panel.appendChild(closeRow)
 
