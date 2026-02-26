@@ -6,8 +6,8 @@
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![Vite](https://img.shields.io/badge/Vite-6.0-646CFF)
-![Lines](https://img.shields.io/badge/代码量-~101k_lines-green)
-![Systems](https://img.shields.io/badge/ECS_Systems-727-orange)
+![Lines](https://img.shields.io/badge/代码量-~103k_lines-green)
+![Systems](https://img.shields.io/badge/ECS_Systems-769-orange)
 
 ## 快速开始
 
