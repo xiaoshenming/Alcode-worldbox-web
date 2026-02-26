@@ -1,75 +1,51 @@
-// Creature Fuller System (v3.231) - Fullers clean and thicken cloth
-// Textile workers who process woven fabric by pounding and washing
+// Creature Fuller System (v3.707) - Metal fullering artisans
+// Craftspeople who use fuller tools to spread and thin metal stock
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
-
-export type ClothType = 'wool' | 'linen' | 'cotton' | 'silk'
+import { EntityManager } from '../ecs/Entity'
 
 export interface Fuller {
   id: number
   entityId: number
-  skill: number
-  boltsProcessed: number
-  clothType: ClothType
-  thickness: number
-  softness: number
+  fulleringSkill: number
+  spreadControl: number
+  metalThinning: number
+  grooveDepth: number
   tick: number
 }
 
-const CHECK_INTERVAL = 1350
-const CRAFT_CHANCE = 0.006
-const MAX_FULLERS = 36
-const SKILL_GROWTH = 0.07
-
-const CLOTH_TYPES: ClothType[] = ['wool', 'linen', 'cotton', 'silk']
+const CHECK_INTERVAL = 3050
+const RECRUIT_CHANCE = 0.0015
+const MAX_FULLERS = 10
 
 export class CreatureFullerSystem {
   private fullers: Fuller[] = []
   private nextId = 1
   private lastCheck = 0
-  private skillMap = new Map<number, number>()
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const creatures = em.getEntitiesWithComponents('creature', 'position')
-
-    for (const eid of creatures) {
-      if (this.fullers.length >= MAX_FULLERS) break
-      if (Math.random() > CRAFT_CHANCE) continue
-
-      const c = em.getComponent<CreatureComponent>(eid, 'creature')
-      if (!c || c.age < 9) continue
-
-      let skill = this.skillMap.get(eid) ?? (2 + Math.random() * 8)
-      skill = Math.min(100, skill + SKILL_GROWTH)
-      this.skillMap.set(eid, skill)
-
-      const clothIdx = Math.min(3, Math.floor(skill / 25))
-      const boltsProcessed = 1 + Math.floor(skill / 14)
-      const thickness = 10 + skill * 0.6 + Math.random() * 15
-
+    if (this.fullers.length < MAX_FULLERS && Math.random() < RECRUIT_CHANCE) {
       this.fullers.push({
         id: this.nextId++,
-        entityId: eid,
-        skill,
-        boltsProcessed,
-        clothType: CLOTH_TYPES[clothIdx],
-        thickness: Math.min(100, thickness),
-        softness: 8 + skill * 0.75 + Math.random() * 12,
+        entityId: Math.floor(Math.random() * 500),
+        fulleringSkill: 10 + Math.random() * 25,
+        spreadControl: 15 + Math.random() * 20,
+        metalThinning: 5 + Math.random() * 20,
+        grooveDepth: 10 + Math.random() * 25,
         tick,
       })
     }
 
-    const cutoff = tick - 45000
-    for (let i = this.fullers.length - 1; i >= 0; i--) {
-      if (this.fullers[i].tick < cutoff) {
-        this.fullers.splice(i, 1)
-      }
+    for (const f of this.fullers) {
+      f.fulleringSkill = Math.min(100, f.fulleringSkill + 0.02)
+      f.spreadControl = Math.min(100, f.spreadControl + 0.015)
+      f.grooveDepth = Math.min(100, f.grooveDepth + 0.01)
     }
+
+    this.fullers = this.fullers.filter(f => f.fulleringSkill > 4)
   }
 
-  getFullers(): readonly Fuller[] { return this.fullers }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
+  getFullers(): Fuller[] { return this.fullers }
 }

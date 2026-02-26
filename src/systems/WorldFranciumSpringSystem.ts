@@ -1,25 +1,25 @@
-// World Radium Spring System (v3.705) - Radium-bearing mineral springs
-// Springs carrying trace radium from carnotite ore weathering
+// World Francium Spring System (v3.711) - Francium-bearing mineral springs
+// Springs carrying trace francium from actinium decay chains
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 import { TileType } from '../utils/Constants'
 
-export interface RadiumSpringZone {
+export interface FranciumSpringZone {
   id: number; x: number; y: number
-  radiumContent: number
+  franciumContent: number
   springFlow: number
-  carnotiteWeathering: number
-  radonEmission: number
+  actiniumDecay: number
+  alkaliReactivity: number
   tick: number
 }
 
-const CHECK_INTERVAL = 3080
+const CHECK_INTERVAL = 3100
 const FORM_CHANCE = 0.003
 const MAX_ZONES = 32
 
-export class WorldRadiumSpringSystem {
-  private zones: RadiumSpringZone[] = []
+export class WorldFranciumSpringSystem {
+  private zones: FranciumSpringZone[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -40,10 +40,10 @@ export class WorldRadiumSpringSystem {
 
       this.zones.push({
         id: this.nextId++, x, y,
-        radiumContent: 40 + Math.random() * 60,
+        franciumContent: 40 + Math.random() * 60,
         springFlow: 10 + Math.random() * 50,
-        carnotiteWeathering: 20 + Math.random() * 80,
-        radonEmission: 15 + Math.random() * 85,
+        actiniumDecay: 20 + Math.random() * 80,
+        alkaliReactivity: 15 + Math.random() * 85,
         tick
       })
     }
@@ -64,5 +64,5 @@ export class WorldRadiumSpringSystem {
     return false
   }
 
-  getZones(): readonly RadiumSpringZone[] { return this.zones }
+  getZones(): readonly FranciumSpringZone[] { return this.zones }
 }

@@ -832,6 +832,19 @@ import { DiplomaticBreadweigherSystem } from '../systems/DiplomaticBreadweigherS
 import { CreatureCoinerSystem } from '../systems/CreatureCoinerSystem'
 import { WorldProtactiniumSpringSystem } from '../systems/WorldProtactiniumSpringSystem'
 import { DiplomaticMuragersSystem } from '../systems/DiplomaticMuragersSystem'
+import { CreatureSwageBlockerSystem } from '../systems/CreatureSwageBlockerSystem'
+import { WorldUraniumSpringSystem } from '../systems/WorldUraniumSpringSystem'
+import { DiplomaticGarthmanSystem } from '../systems/DiplomaticGarthmanSystem'
+import { CreatureDrifterSystem } from '../systems/CreatureDrifterSystem'
+import { DiplomaticCrierSystem } from '../systems/DiplomaticCrierSystem'
+import { WorldPoloniumSpringSystem } from '../systems/WorldPoloniumSpringSystem'
+import { DiplomaticBeadleSystem } from '../systems/DiplomaticBeadleSystem'
+import { CreatureUpsetterSystem } from '../systems/CreatureUpsetterSystem'
+import { WorldFranciumSpringSystem } from '../systems/WorldFranciumSpringSystem'
+import { DiplomaticHerbalistSystem } from '../systems/DiplomaticHerbalistSystem'
+import { CreatureSwedgerSystem } from '../systems/CreatureSwedgerSystem'
+import { WorldRadonSpringSystem } from '../systems/WorldRadonSpringSystem'
+import { DiplomaticLampwardenSystem } from '../systems/DiplomaticLampwardenSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1665,6 +1678,19 @@ export class Game {
   private creatureCoiner!: CreatureCoinerSystem
   private worldProtactiniumSpring!: WorldProtactiniumSpringSystem
   private diplomaticMuragers!: DiplomaticMuragersSystem
+  private creatureSwageBlocker!: CreatureSwageBlockerSystem
+  private worldUraniumSpring!: WorldUraniumSpringSystem
+  private diplomaticGarthman!: DiplomaticGarthmanSystem
+  private creatureDrifter!: CreatureDrifterSystem
+  private diplomaticCrier!: DiplomaticCrierSystem
+  private worldPoloniumSpring!: WorldPoloniumSpringSystem
+  private diplomaticBeadle!: DiplomaticBeadleSystem
+  private creatureUpsetter!: CreatureUpsetterSystem
+  private worldFranciumSpring!: WorldFranciumSpringSystem
+  private diplomaticHerbalist!: DiplomaticHerbalistSystem
+  private creatureSwedger!: CreatureSwedgerSystem
+  private worldRadonSpring!: WorldRadonSpringSystem
+  private diplomaticLampwarden!: DiplomaticLampwardenSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -2649,6 +2675,19 @@ export class Game {
     this.creatureCoiner = new CreatureCoinerSystem()
     this.worldProtactiniumSpring = new WorldProtactiniumSpringSystem()
     this.diplomaticMuragers = new DiplomaticMuragersSystem()
+    this.creatureSwageBlocker = new CreatureSwageBlockerSystem()
+    this.worldUraniumSpring = new WorldUraniumSpringSystem()
+    this.diplomaticGarthman = new DiplomaticGarthmanSystem()
+    this.creatureDrifter = new CreatureDrifterSystem()
+    this.diplomaticCrier = new DiplomaticCrierSystem()
+    this.worldPoloniumSpring = new WorldPoloniumSpringSystem()
+    this.diplomaticBeadle = new DiplomaticBeadleSystem()
+    this.creatureUpsetter = new CreatureUpsetterSystem()
+    this.worldFranciumSpring = new WorldFranciumSpringSystem()
+    this.diplomaticHerbalist = new DiplomaticHerbalistSystem()
+    this.creatureSwedger = new CreatureSwedgerSystem()
+    this.worldRadonSpring = new WorldRadonSpringSystem()
+    this.diplomaticLampwarden = new DiplomaticLampwardenSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -5117,6 +5156,19 @@ export class Game {
         this.creatureCoiner.update(this.tickRate, this.em, this.world.tick)
         this.worldProtactiniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
         this.diplomaticMuragers.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureSwageBlocker.update(this.tickRate, this.em, this.world.tick)
+        this.worldUraniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticGarthman.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureDrifter.update(this.tickRate, this.em, this.world.tick)
+        this.diplomaticCrier.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldPoloniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticBeadle.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureUpsetter.update(this.tickRate, this.em, this.world.tick)
+        this.worldFranciumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticHerbalist.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureSwedger.update(this.tickRate, this.em, this.world.tick)
+        this.worldRadonSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticLampwarden.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate

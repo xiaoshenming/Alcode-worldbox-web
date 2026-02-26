@@ -1,25 +1,25 @@
-// World Radium Spring System (v3.705) - Radium-bearing mineral springs
-// Springs carrying trace radium from carnotite ore weathering
+// World Radon Spring System (v3.714) - Radon-bearing mineral springs
+// Springs carrying dissolved radon gas from radium decay underground
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 import { TileType } from '../utils/Constants'
 
-export interface RadiumSpringZone {
+export interface RadonSpringZone {
   id: number; x: number; y: number
-  radiumContent: number
+  radonContent: number
   springFlow: number
-  carnotiteWeathering: number
-  radonEmission: number
+  radiumDecay: number
+  gasConcentration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 3080
+const CHECK_INTERVAL = 3110
 const FORM_CHANCE = 0.003
 const MAX_ZONES = 32
 
-export class WorldRadiumSpringSystem {
-  private zones: RadiumSpringZone[] = []
+export class WorldRadonSpringSystem {
+  private zones: RadonSpringZone[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -40,10 +40,10 @@ export class WorldRadiumSpringSystem {
 
       this.zones.push({
         id: this.nextId++, x, y,
-        radiumContent: 40 + Math.random() * 60,
+        radonContent: 40 + Math.random() * 60,
         springFlow: 10 + Math.random() * 50,
-        carnotiteWeathering: 20 + Math.random() * 80,
-        radonEmission: 15 + Math.random() * 85,
+        radiumDecay: 20 + Math.random() * 80,
+        gasConcentration: 15 + Math.random() * 85,
         tick
       })
     }
@@ -64,5 +64,5 @@ export class WorldRadiumSpringSystem {
     return false
   }
 
-  getZones(): readonly RadiumSpringZone[] { return this.zones }
+  getZones(): readonly RadonSpringZone[] { return this.zones }
 }
