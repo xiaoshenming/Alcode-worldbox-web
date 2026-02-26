@@ -727,6 +727,21 @@ import { DiplomaticPatronageSystem } from '../systems/DiplomaticPatronageSystem'
 import { CreatureBellfounderSystem } from '../systems/CreatureBellfounderSystem'
 import { WorldStrontiumSpringSystem } from '../systems/WorldStrontiumSpringSystem'
 import { DiplomaticStewardshipPactSystem } from '../systems/DiplomaticStewardshipPactSystem'
+import { CreatureGirdlerSystem } from '../systems/CreatureGirdlerSystem'
+import { WorldBariumSpringSystem } from '../systems/WorldBariumSpringSystem'
+import { DiplomaticConservatorshipSystem } from '../systems/DiplomaticConservatorshipSystem'
+import { CreaturePewtererSystem } from '../systems/CreaturePewtererSystem'
+import { WorldZincSpringSystem } from '../systems/WorldZincSpringSystem'
+import { DiplomaticReceivershipSystem } from '../systems/DiplomaticReceivershipSystem'
+import { CreatureWiredrawerSystem } from '../systems/CreatureWiredrawerSystem'
+import { WorldCopperSpringSystem } from '../systems/WorldCopperSpringSystem'
+import { DiplomaticProcuratorshipSystem } from '../systems/DiplomaticProcuratorshipSystem'
+import { CreatureGlazierMasterSystem } from '../systems/CreatureGlazierMasterSystem'
+import { WorldManganeseSpringSystem } from '../systems/WorldManganeseSpringSystem'
+import { DiplomaticPrefectureSystem } from '../systems/DiplomaticPrefectureSystem'
+import { CreatureRiveterSystem } from '../systems/CreatureRiveterSystem'
+import { WorldTinSpringSystem } from '../systems/WorldTinSpringSystem'
+import { DiplomaticVicarageSystem } from '../systems/DiplomaticVicarageSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1455,6 +1470,21 @@ export class Game {
   private creatureBellfounder!: CreatureBellfounderSystem
   private worldStrontiumSpring!: WorldStrontiumSpringSystem
   private diplomaticStewardshipPact!: DiplomaticStewardshipPactSystem
+  private creatureGirdler!: CreatureGirdlerSystem
+  private worldBariumSpring!: WorldBariumSpringSystem
+  private diplomaticConservatorship!: DiplomaticConservatorshipSystem
+  private creaturePewterer!: CreaturePewtererSystem
+  private worldZincSpring!: WorldZincSpringSystem
+  private diplomaticReceivership!: DiplomaticReceivershipSystem
+  private creatureWiredrawer!: CreatureWiredrawerSystem
+  private worldCopperSpring!: WorldCopperSpringSystem
+  private diplomaticProcuratorship!: DiplomaticProcuratorshipSystem
+  private creatureGlazierMaster!: CreatureGlazierMasterSystem
+  private worldManganeseSpring!: WorldManganeseSpringSystem
+  private diplomaticPrefecture!: DiplomaticPrefectureSystem
+  private creatureRiveter!: CreatureRiveterSystem
+  private worldTinSpring!: WorldTinSpringSystem
+  private diplomaticVicarage!: DiplomaticVicarageSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -2334,6 +2364,21 @@ export class Game {
     this.creatureBellfounder = new CreatureBellfounderSystem()
     this.worldStrontiumSpring = new WorldStrontiumSpringSystem()
     this.diplomaticStewardshipPact = new DiplomaticStewardshipPactSystem()
+    this.creatureGirdler = new CreatureGirdlerSystem()
+    this.worldBariumSpring = new WorldBariumSpringSystem()
+    this.diplomaticConservatorship = new DiplomaticConservatorshipSystem()
+    this.creaturePewterer = new CreaturePewtererSystem()
+    this.worldZincSpring = new WorldZincSpringSystem()
+    this.diplomaticReceivership = new DiplomaticReceivershipSystem()
+    this.creatureWiredrawer = new CreatureWiredrawerSystem()
+    this.worldCopperSpring = new WorldCopperSpringSystem()
+    this.diplomaticProcuratorship = new DiplomaticProcuratorshipSystem()
+    this.creatureGlazierMaster = new CreatureGlazierMasterSystem()
+    this.worldManganeseSpring = new WorldManganeseSpringSystem()
+    this.diplomaticPrefecture = new DiplomaticPrefectureSystem()
+    this.creatureRiveter = new CreatureRiveterSystem()
+    this.worldTinSpring = new WorldTinSpringSystem()
+    this.diplomaticVicarage = new DiplomaticVicarageSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -4697,6 +4742,21 @@ export class Game {
         this.creatureBellfounder.update(this.tickRate, this.em, this.world.tick)
         this.worldStrontiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
         this.diplomaticStewardshipPact.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureGirdler.update(this.tickRate, this.em, this.world.tick)
+        this.worldBariumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticConservatorship.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creaturePewterer.update(this.tickRate, this.em, this.world.tick)
+        this.worldZincSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticReceivership.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureWiredrawer.update(this.tickRate, this.em, this.world.tick)
+        this.worldCopperSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticProcuratorship.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureGlazierMaster.update(this.tickRate, this.em, this.world.tick)
+        this.worldManganeseSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticPrefecture.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureRiveter.update(this.tickRate, this.em, this.world.tick)
+        this.worldTinSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticVicarage.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
