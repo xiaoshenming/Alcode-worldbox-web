@@ -2944,7 +2944,7 @@ export class Game {
     const buttons = document.querySelectorAll('#speedControls .btn')
     buttons.forEach(btn => {
       btn.addEventListener('click', () => {
-        const speed = parseInt((btn as HTMLElement).dataset.speed || '1')
+        const speed = parseInt((btn as HTMLElement).dataset.speed || '1', 10)
         this.speed = speed
         buttons.forEach(b => b.classList.remove('active'))
         btn.classList.add('active')
@@ -2956,7 +2956,7 @@ export class Game {
     const slider = document.getElementById('brushSlider') as HTMLInputElement
     const value = document.getElementById('brushValue') as HTMLElement
     slider.addEventListener('input', () => {
-      const size = parseInt(slider.value)
+      const size = parseInt(slider.value, 10)
       this.powers.setBrushSize(size)
       value.textContent = String(size)
     })
@@ -3071,7 +3071,7 @@ export class Game {
     this.speed = speed
     const buttons = document.querySelectorAll('#speedControls .btn')
     buttons.forEach(b => {
-      const s = parseInt((b as HTMLElement).dataset.speed || '1')
+      const s = parseInt((b as HTMLElement).dataset.speed || '1', 10)
       b.classList.toggle('active', s === speed)
     })
   }
@@ -3097,7 +3097,7 @@ export class Game {
         // Speed controls (plain) / Camera bookmarks (Ctrl=save, Alt=jump)
         case '1': case '2': case '3': case '4':
         case '5': case '6': case '7': case '8': case '9': {
-          const slot = parseInt(e.key) - 1
+          const slot = parseInt(e.key, 10) - 1
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault()
             this.cameraBookmarks.save(slot, this.camera.x, this.camera.y, this.camera.zoom)
@@ -3141,7 +3141,7 @@ export class Game {
         case '[': {
           const slider = document.getElementById('brushSlider') as HTMLInputElement
           if (slider) {
-            const val = Math.max(1, parseInt(slider.value) - 1)
+            const val = Math.max(1, parseInt(slider.value, 10) - 1)
             slider.value = String(val)
             slider.dispatchEvent(new Event('input'))
           }
@@ -3150,7 +3150,7 @@ export class Game {
         case ']': {
           const slider = document.getElementById('brushSlider') as HTMLInputElement
           if (slider) {
-            const val = Math.min(10, parseInt(slider.value) + 1)
+            const val = Math.min(10, parseInt(slider.value, 10) + 1)
             slider.value = String(val)
             slider.dispatchEvent(new Event('input'))
           }

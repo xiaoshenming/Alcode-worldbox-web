@@ -102,8 +102,8 @@ export class ReligionSpreadSystem {
     ctx.globalAlpha = 0.08
     for (const [key, faith] of this.faithMap) {
       const [xStr, yStr] = key.split(',')
-      const wx = parseInt(xStr)
-      const wy = parseInt(yStr)
+      const wx = parseInt(xStr, 10)
+      const wy = parseInt(yStr, 10)
       const sx = (wx - camX) * zoom
       const sy = (wy - camY) * zoom
       ctx.fillStyle = RELIGION_COLORS[faith.religion]

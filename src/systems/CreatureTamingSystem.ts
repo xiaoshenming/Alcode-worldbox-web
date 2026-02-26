@@ -91,7 +91,7 @@ export class CreatureTamingSystem {
       const info = ANIMAL_INFO[r.animalType]
       if (info.bonus.includes(bonusType)) {
         const match = info.bonus.match(/(\d+)%/)
-        if (match) total += parseInt(match[1]) / 100
+        if (match) total += parseInt(match[1], 10) / 100
       }
     }
     return total

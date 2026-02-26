@@ -164,8 +164,10 @@ export class EditorEnhancedSystem {
       { dx: 1, dy: 0 },
     ];
 
-    while (queue.length > 0 && filled.length < MAX_FLOOD_FILL) {
-      const cur = queue.shift()!;
+    let head = 0
+
+    while (head < queue.length && filled.length < MAX_FLOOD_FILL) {
+      const cur = queue[head++];
       filled.push(cur);
 
       for (let i = 0; i < dirs.length; i++) {

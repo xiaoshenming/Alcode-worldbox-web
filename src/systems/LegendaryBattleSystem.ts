@@ -97,8 +97,8 @@ export class LegendaryBattleSystem {
 
       // Collect entities from this cell and neighbors
       const [cxStr, cyStr] = key.split(',')
-      const cx = parseInt(cxStr)
-      const cy = parseInt(cyStr)
+      const cx = parseInt(cxStr, 10)
+      const cy = parseInt(cyStr, 10)
       const cluster: EntityId[] = []
 
       for (let dy = -1; dy <= 1; dy++) {
@@ -118,12 +118,14 @@ export class LegendaryBattleSystem {
       const civCounts = new Map<number, EntityId[]>()
       let sumX = 0
       let sumY = 0
+      let posCount = 0
       for (const id of cluster) {
         const civ = em.getComponent<CivMemberComponent>(id, 'civMember')
         const pos = em.getComponent<PositionComponent>(id, 'position')
         if (!civ || !pos) continue
         sumX += pos.x
         sumY += pos.y
+        posCount++
         const arr = civCounts.get(civ.civId)
         if (arr) arr.push(id)
         else civCounts.set(civ.civId, [id])
@@ -131,8 +133,8 @@ export class LegendaryBattleSystem {
 
       if (civCounts.size < 2) continue
 
-      const centerX = sumX / cluster.length
-      const centerY = sumY / cluster.length
+      const centerX = posCount > 0 ? sumX / posCount : 0
+      const centerY = posCount > 0 ? sumY / posCount : 0
 
       // Try to merge into existing battle
       let merged = false
