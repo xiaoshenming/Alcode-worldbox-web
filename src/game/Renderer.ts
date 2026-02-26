@@ -391,9 +391,9 @@ export class Renderer {
       const spriteSize = tileSize * 1.2
       ctx.drawImage(sprite, cx - spriteSize/2, cy - spriteSize/2, spriteSize, spriteSize)
 
-      // Hero aura
-      const heroComp = em.getComponent<HeroComponent>(id, 'hero')
-      if (heroComp && camera.zoom > 0.3) {
+      // Hero aura (skip getComponent when zoomed out)
+      const heroComp = camera.zoom > 0.3 ? em.getComponent<HeroComponent>(id, 'hero') : null
+      if (heroComp) {
         const auraColor = Renderer.AURA_COLORS[heroComp.ability] || '#ffd700'
         const pulse = Math.sin(now * 0.004 + id) * 0.3 + 0.5
         const auraRadius = spriteSize * 0.8 + pulse * 3 * camera.zoom
@@ -426,9 +426,9 @@ export class Renderer {
         }
       }
 
-      // Health bar (only when damaged)
-      const needs = em.getComponent<NeedsComponent>(id, 'needs')
-      if (needs && needs.health < 100 && camera.zoom > 0.5) {
+      // Health bar (only when damaged, skip getComponent when zoomed out)
+      const needs = camera.zoom > 0.5 ? em.getComponent<NeedsComponent>(id, 'needs') : null
+      if (needs && needs.health < 100) {
         const barWidth = size * 3
         const barHeight = 2 * camera.zoom
         const barX = cx - barWidth / 2
@@ -441,9 +441,9 @@ export class Renderer {
         ctx.fillRect(barX, barY, barWidth * healthPct, barHeight)
       }
 
-      // Disease indicator
-      const diseaseComp = em.getComponent<DiseaseComponent>(id, 'disease')
-      if (diseaseComp && !diseaseComp.immune && camera.zoom > 0.3) {
+      // Disease indicator (skip getComponent when zoomed out)
+      const diseaseComp = camera.zoom > 0.3 ? em.getComponent<DiseaseComponent>(id, 'disease') : null
+      if (diseaseComp && !diseaseComp.immune) {
         const pulse = Math.sin(now * 0.006 + id * 2) * 0.3 + 0.7
         const dotRadius = Math.max(1.5, 2.5 * camera.zoom) * pulse
         const dotY = cy - size - 8 * camera.zoom
@@ -458,8 +458,8 @@ export class Renderer {
         ctx.globalAlpha = 1
       }
 
-      // State icon when zoomed in
-      const ai = em.getComponent<AIComponent>(id, 'ai')
+      // State icon when zoomed in (skip getComponent when zoomed out)
+      const ai = camera.zoom > 0.3 ? em.getComponent<AIComponent>(id, 'ai') : null
       if (ai && camera.zoom > 0.8) {
         let icon = ''
         switch (ai.state) {
