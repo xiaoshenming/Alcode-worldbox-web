@@ -28,6 +28,24 @@ const ALPHA_EXPLORED = 0.5;
 /** 高地视野加成 */
 const HIGHLAND_VISION_BONUS = 3;
 
+/** computeSmoothedAlpha 四邻居偏移（提升为模块常量避免热路径分配） */
+const NEIGHBOR_OFFSETS: ReadonlyArray<readonly [number, number]> = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+/**
+ * fillStyle 字符串缓存：alpha 量化到 0.01 精度，索引 0-100 对应 alpha 0.00-1.00
+ * 避免 render() 中每个 tile 都做模板字符串拼接 + toFixed
+ */
+const FILL_STYLE_CACHE: string[] = new Array(101);
+for (let i = 0; i <= 100; i++) {
+  FILL_STYLE_CACHE[i] = `rgba(0,0,0,${(i / 100).toFixed(2)})`;
+}
+
+/**
+ * revealCircle 射线方向向量缓存：key 是 radius，value 是预计算的 {cos, sin}[]
+ * 避免每次 revealCircle 调用都重复计算 Math.cos/Math.sin
+ */
+const RAY_DIR_CACHE: Map<number, { cos: number; sin: number }[]> = new Map();
+
 /**
  * 增强版战争迷雾系统
  *
@@ -171,15 +189,24 @@ export class FogOfWarEnhanced {
     // 先揭示中心点
     this.setVisible(cx, cy, vis);
 
-    // 向圆周采样点投射射线
-    // 采样密度：圆周长 * 1.5 确保无缝覆盖
-    const circumference = Math.ceil(2 * Math.PI * r * 1.5);
-    const angleStep = (2 * Math.PI) / circumference;
+    // 获取或创建该 radius 的预计算方向向量
+    let dirs = RAY_DIR_CACHE.get(r);
+    if (!dirs) {
+      const circumference = Math.ceil(2 * Math.PI * r);
+      const angleStep = (2 * Math.PI) / circumference;
+      dirs = new Array(circumference);
+      for (let i = 0; i < circumference; i++) {
+        const angle = i * angleStep;
+        dirs[i] = { cos: Math.cos(angle), sin: Math.sin(angle) };
+      }
+      RAY_DIR_CACHE.set(r, dirs);
+    }
 
-    for (let i = 0; i < circumference; i++) {
-      const angle = i * angleStep;
-      const tx = cx + Math.round(Math.cos(angle) * r);
-      const ty = cy + Math.round(Math.sin(angle) * r);
+    // 向圆周采样点投射射线（使用缓存的 cos/sin）
+    for (let i = 0, len = dirs.length; i < len; i++) {
+      const d = dirs[i];
+      const tx = cx + Math.round(d.cos * r);
+      const ty = cy + Math.round(d.sin * r);
       this.castRay(cx, cy, tx, ty, r2, vis);
     }
   }
@@ -305,7 +332,8 @@ export class FogOfWarEnhanced {
         const px = tx * TILE_SIZE * zoom + camX;
         const py = ty * TILE_SIZE * zoom + camY;
 
-        ctx.fillStyle = `rgba(0,0,0,${alpha.toFixed(2)})`;
+        const cacheIdx = (alpha * 100 + 0.5) | 0; // 量化到 0-100 整数索引
+        ctx.fillStyle = FILL_STYLE_CACHE[cacheIdx];
         ctx.fillRect(px, py, tileSize + 0.5, tileSize + 0.5);
       }
     }
@@ -327,7 +355,7 @@ export class FogOfWarEnhanced {
     let visibleNeighbors = 0;
     let totalNeighbors = 0;
 
-    const offsets = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    const offsets = NEIGHBOR_OFFSETS;
     for (let i = 0; i < 4; i++) {
       const nx = x + offsets[i][0];
       const ny = y + offsets[i][1];

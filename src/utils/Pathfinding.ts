@@ -26,6 +26,72 @@ interface Node {
   h: number
   f: number
   parent: Node | null
+  heapIndex: number
+}
+
+// ── Inline binary min-heap keyed on Node.f ──────────────────────────
+
+const _heapData: Node[] = []
+let _heapSize = 0
+
+function _heapReset(): void {
+  _heapSize = 0
+}
+
+function _heapPush(node: Node): void {
+  node.heapIndex = _heapSize
+  _heapData[_heapSize] = node
+  _heapSize++
+  _heapBubbleUp(node.heapIndex)
+}
+
+function _heapPop(): Node {
+  const top = _heapData[0]
+  _heapSize--
+  if (_heapSize > 0) {
+    const last = _heapData[_heapSize]
+    _heapData[0] = last
+    last.heapIndex = 0
+    _heapSinkDown(0)
+  }
+  return top
+}
+
+/** Re-sort a node upward after its f value decreased. */
+function _heapDecrease(node: Node): void {
+  _heapBubbleUp(node.heapIndex)
+}
+
+function _heapBubbleUp(i: number): void {
+  const node = _heapData[i]
+  while (i > 0) {
+    const pi = (i - 1) >> 1
+    const parent = _heapData[pi]
+    if (node.f >= parent.f) break
+    _heapData[i] = parent
+    parent.heapIndex = i
+    i = pi
+  }
+  _heapData[i] = node
+  node.heapIndex = i
+}
+
+function _heapSinkDown(i: number): void {
+  const node = _heapData[i]
+  while (true) {
+    let smallest = i
+    const l = 2 * i + 1
+    const r = 2 * i + 2
+    if (l < _heapSize && _heapData[l].f < _heapData[smallest].f) smallest = l
+    if (r < _heapSize && _heapData[r].f < _heapData[smallest].f) smallest = r
+    if (smallest === i) break
+    const swap = _heapData[smallest]
+    _heapData[i] = swap
+    swap.heapIndex = i
+    i = smallest
+  }
+  _heapData[i] = node
+  node.heapIndex = i
 }
 
 const WALKABLE: Set<TileType> = new Set([
@@ -43,7 +109,7 @@ export function isWalkable(tile: TileType, canFly: boolean = false): boolean {
   return WALKABLE.has(tile)
 }
 
-// Simple A* with limited search radius for performance
+// A* with binary min-heap and Map-based open set for O(log n) pop / O(1) lookup
 export function findPath(
   world: World,
   startX: number, startY: number,
@@ -63,65 +129,75 @@ export function findPath(
   const targetTile = world.getTile(ex, ey)
   if (targetTile === null || !isWalkable(targetTile, canFly)) return null
 
-  const open: Node[] = []
+  const w = world.width
+
+  _heapReset()
+  const openMap = new Map<number, Node>()
   const closed = new Set<number>()
-  const key = (x: number, y: number) => y * world.width + x
 
   const h = (x: number, y: number) => Math.abs(x - ex) + Math.abs(y - ey)
 
-  open.push({ x: sx, y: sy, g: 0, h: h(sx, sy), f: h(sx, sy), parent: null })
+  const hStart = h(sx, sy)
+  const startNode: Node = { x: sx, y: sy, g: 0, h: hStart, f: hStart, parent: null, heapIndex: 0 }
+  _heapPush(startNode)
+  openMap.set(sy * w + sx, startNode)
 
   let steps = 0
+  const maxIter = maxSteps * 10
 
-  while (open.length > 0 && steps < maxSteps * 10) {
+  while (_heapSize > 0 && steps < maxIter) {
     steps++
 
-    // Find lowest f
-    let bestIdx = 0
-    for (let i = 1; i < open.length; i++) {
-      if (open[i].f < open[bestIdx].f) bestIdx = i
-    }
-    const current = open[bestIdx]
-    open.splice(bestIdx, 1)
+    const current = _heapPop()
+    const currentKey = current.y * w + current.x
+    openMap.delete(currentKey)
 
     if (current.x === ex && current.y === ey) {
-      // Reconstruct path
+      // Reconstruct path: push + reverse instead of unshift
       const path: { x: number; y: number }[] = []
       let node: Node | null = current
       while (node && node.parent) {
-        path.unshift({ x: node.x, y: node.y })
+        path.push({ x: node.x, y: node.y })
         node = node.parent
       }
+      path.reverse()
       // Limit path length
-      return path.slice(0, maxSteps)
+      if (path.length > maxSteps) path.length = maxSteps
+      return path
     }
 
-    closed.add(key(current.x, current.y))
+    closed.add(currentKey)
 
-    for (const [dx, dy] of DIRS_8) {
-      const nx = current.x + dx
-      const ny = current.y + dy
+    for (let d = 0; d < 8; d++) {
+      const dir = DIRS_8[d]
+      const nx = current.x + dir[0]
+      const ny = current.y + dir[1]
 
-      if (nx < 0 || nx >= world.width || ny < 0 || ny >= world.height) continue
-      if (closed.has(key(nx, ny))) continue
+      if (nx < 0 || nx >= w || ny < 0 || ny >= world.height) continue
+
+      const nKey = ny * w + nx
+      if (closed.has(nKey)) continue
 
       const tile = world.getTile(nx, ny)
       if (tile === null || !isWalkable(tile, canFly)) continue
 
       // Diagonal cost
-      const moveCost = (dx !== 0 && dy !== 0) ? 1.414 : 1
+      const moveCost = (dir[0] !== 0 && dir[1] !== 0) ? 1.414 : 1
       const g = current.g + moveCost
 
-      const existing = open.find(n => n.x === nx && n.y === ny)
-      if (existing) {
+      const existing = openMap.get(nKey)
+      if (existing !== undefined) {
         if (g < existing.g) {
           existing.g = g
           existing.f = g + existing.h
           existing.parent = current
+          _heapDecrease(existing)
         }
       } else {
         const hVal = h(nx, ny)
-        open.push({ x: nx, y: ny, g, h: hVal, f: g + hVal, parent: current })
+        const newNode: Node = { x: nx, y: ny, g, h: hVal, f: g + hVal, parent: current, heapIndex: 0 }
+        _heapPush(newNode)
+        openMap.set(nKey, newNode)
       }
     }
   }

@@ -43,6 +43,10 @@ export interface PopulationEvent {
 
 export class PopulationSystem {
   private pendingEvents: PopulationEvent[] = []
+  /** Reusable map: civId → member entity ids, rebuilt each update cycle */
+  private _civMembersMap = new Map<number, number[]>()
+  /** Pool of arrays to avoid allocating new ones each cycle */
+  private _civMembersBuf: number[][] = []
 
   /** Drain and return accumulated events since last call */
   drainEvents(): PopulationEvent[] {
@@ -56,9 +60,31 @@ export class PopulationSystem {
 
     if (tick % POP_CHECK_INTERVAL !== 0) return
 
+    // Build civId → members lookup in one pass (avoids O(civs * entities))
+    const map = this._civMembersMap
+    // Return used arrays to the buffer pool, then clear the map
+    for (const arr of map.values()) {
+      arr.length = 0
+      this._civMembersBuf.push(arr)
+    }
+    map.clear()
+
+    const allCivMembers = em.getEntitiesWithComponents('civMember', 'creature')
+    for (let i = 0, len = allCivMembers.length; i < len; i++) {
+      const id = allCivMembers[i]
+      const m = em.getComponent<CivMemberComponent>(id, 'civMember')
+      if (!m) continue
+      let bucket = map.get(m.civId)
+      if (!bucket) {
+        bucket = this._civMembersBuf.length > 0 ? this._civMembersBuf.pop()! : []
+        map.set(m.civId, bucket)
+      }
+      bucket.push(id)
+    }
+
     for (const [civId, civ] of civManager.civilizations) {
-      const members = this.getCivMembers(em, civId)
-      if (members.length === 0) continue
+      const members = map.get(civId)
+      if (!members || members.length === 0) continue
 
       const popCap = this.calcPopCap(civ)
       const foodPerCapita = civ.population > 0 ? civ.resources.food / civ.population : 10
@@ -236,14 +262,6 @@ export class PopulationSystem {
   }
 
   // ── Helpers ────────────────────────────────────────────────────────
-
-  private getCivMembers(em: EntityManager, civId: number): number[] {
-    const all = em.getEntitiesWithComponents('civMember', 'creature')
-    return all.filter(id => {
-      const m = em.getComponent<CivMemberComponent>(id, 'civMember')
-      return m && m.civId === civId
-    })
-  }
 
   private calcPopCap(civ: Civilization): number {
     const fromTerritory = Math.floor(civ.territory.size * POP_CAP_PER_TERRITORY)

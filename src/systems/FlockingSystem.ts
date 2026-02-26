@@ -19,6 +19,10 @@ const FLOCK_SCAN_INTERVAL = 15
 export class FlockingSystem {
   private flocks: Map<string, FlockData> = new Map()  // key = civId:species
   private flockAssignment: Map<EntityId, string> = new Map()
+  /** Reusable containers to avoid GC pressure in rebuildFlocks */
+  private _groups: Map<string, EntityId[]> = new Map()
+  private _assigned: Set<EntityId> = new Set()
+  private _nearbyBuf: EntityId[] = []
 
   update(tick: number, em: EntityManager): void {
     // Rebuild flocks periodically
@@ -85,8 +89,9 @@ export class FlockingSystem {
 
     const entities = em.getEntitiesWithComponents('position', 'creature', 'velocity')
 
-    // Group by civ + species
-    const groups = new Map<string, EntityId[]>()
+    // Group by civ + species — reuse Map, clear arrays in-place
+    const groups = this._groups
+    for (const arr of groups.values()) arr.length = 0
     for (const eid of entities) {
       const creature = em.getComponent<CreatureComponent>(eid, 'creature')
       if (!creature) continue
@@ -99,18 +104,23 @@ export class FlockingSystem {
     }
 
     // Build spatial flocks within each group
+    const assigned = this._assigned
+    const nearbyBuf = this._nearbyBuf
+    const flockRadiusSq = FLOCK_RADIUS * FLOCK_RADIUS
+
     for (const [key, members] of groups) {
       if (members.length < 3) continue
 
       // Simple clustering: find nearby members
-      const assigned = new Set<EntityId>()
+      assigned.clear()
 
       for (const eid of members) {
         if (assigned.has(eid)) continue
         const pos = em.getComponent<PositionComponent>(eid, 'position')
         if (!pos) continue
 
-        const nearby: EntityId[] = [eid]
+        nearbyBuf.length = 0
+        nearbyBuf[0] = eid
         assigned.add(eid)
 
         for (const other of members) {
@@ -119,34 +129,39 @@ export class FlockingSystem {
           if (!oPos) continue
           const dx = pos.x - oPos.x
           const dy = pos.y - oPos.y
-          if (dx * dx + dy * dy < FLOCK_RADIUS * FLOCK_RADIUS) {
-            nearby.push(other)
+          if (dx * dx + dy * dy < flockRadiusSq) {
+            nearbyBuf.push(other)
             assigned.add(other)
           }
         }
 
-        if (nearby.length < 3) continue
+        if (nearbyBuf.length < 3) continue
 
         // Compute flock data
+        const n = nearbyBuf.length
         let cx = 0, cy = 0, vx = 0, vy = 0
-        for (const nid of nearby) {
+        for (let i = 0; i < n; i++) {
+          const nid = nearbyBuf[i]
           const p = em.getComponent<PositionComponent>(nid, 'position')
           const v = em.getComponent<VelocityComponent>(nid, 'velocity')
           if (!p || !v) continue
           cx += p.x; cy += p.y
           vx += v.vx; vy += v.vy
         }
-        const n = nearby.length
         const flockKey = `${key}:${Math.floor(pos.x)}:${Math.floor(pos.y)}`
+
+        // Copy buffer to persistent members array for this flock
+        const flockMembers = new Array<EntityId>(n)
+        for (let i = 0; i < n; i++) flockMembers[i] = nearbyBuf[i]
 
         this.flocks.set(flockKey, {
           centroidX: cx / n, centroidY: cy / n,
           avgVx: vx / n, avgVy: vy / n,
-          count: n, members: nearby,
+          count: n, members: flockMembers,
         })
 
-        for (const nid of nearby) {
-          this.flockAssignment.set(nid, flockKey)
+        for (let i = 0; i < n; i++) {
+          this.flockAssignment.set(flockMembers[i], flockKey)
         }
       }
     }
