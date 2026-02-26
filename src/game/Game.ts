@@ -1786,6 +1786,10 @@ export class Game {
   private _achSpeciesSet = new Set<string>()
   private _achStats: AchContentWorldStats = { totalCreatures: 0, speciesSet: new Set<string>(), maxCityPop: 0, filledTilePercent: 0, hasIsland: false, totalKills: 0, extinctSpecies: _EMPTY_ARRAY as unknown as string[], scorchedTiles: 0, disastersLast60Ticks: 0, nukeUsed: false, civsMet: 0, activeTradeRoutes: 0, maxEra: 'stone', peaceTicks: 0, maxTerritoryPercent: 0, totalCombats: 0, shipCount: 0, citiesCaptured: 0, maxHeroLevel: 0, maxArmySize: 0, volcanoEruptions: 0, waterTilesCreatedAtOnce: 0, diseasedCivs: 0, evolutionEvents: 0, coexistSpecies: 0, coexistTicks: 0, totalTicks: 0, exploredPercent: 0, totalCivs: 0, totalWars: 0, clonedCreatures: 0, portalPairs: 0 }
   private _civValuesBuf: any[] = []
+  private _cultureCivBuf: { id: number; neighbors: number[]; tradePartners: number[]; population: number }[] = []
+  private _miningCivRace = new Map<number, string>()
+  private _miningCivBuf: { id: number; cities: { x: number; y: number }[]; techLevel: number; race: string }[] = []
+  private _siegeSoldiersBuf: number[] = []
 
   constructor() {
     this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement
@@ -3725,17 +3729,23 @@ export class Game {
         this.tradeEconomySystem.update(this.civManager, this.em, this.world, this.particles, tick)
         // Culture system - cultural spread, trait adoption, language diffusion
         {
-          const civData: { id: number; neighbors: number[]; tradePartners: number[]; population: number }[] = []
+          let ci = 0
           for (const c of this.civManager.civilizations.values()) {
-            const neighbors: number[] = []
-            const tradePartners: number[] = []
-            for (const [otherId, rel] of c.relations) {
-              if (rel > -20) neighbors.push(otherId)
-              if (rel > 10) tradePartners.push(otherId)
+            // Grow or reuse culture civ buffer
+            if (ci >= this._cultureCivBuf.length) {
+              this._cultureCivBuf.push({ id: 0, neighbors: [], tradePartners: [], population: 0 })
             }
-            civData.push({ id: c.id, neighbors, tradePartners, population: c.population })
+            const entry = this._cultureCivBuf[ci]
+            entry.id = c.id; entry.population = c.population
+            entry.neighbors.length = 0; entry.tradePartners.length = 0
+            for (const [otherId, rel] of c.relations) {
+              if (rel > -20) entry.neighbors.push(otherId)
+              if (rel > 10) entry.tradePartners.push(otherId)
+            }
+            ci++
           }
-          this.cultureSystem.update(tick, civData)
+          this._cultureCivBuf.length = ci
+          this.cultureSystem.update(tick, this._cultureCivBuf)
         }
         } // end tick % 10 === 0
 
@@ -3747,25 +3757,32 @@ export class Game {
         this.godPowerSystem.update(this.world, this.em, this.civManager, this.particles, tick)
         // Mining system - build civData from civilizations
         {
-          // Build civId→species map once (avoid per-civ getEntitiesWithComponents)
-          const civRace = new Map<number, string>()
+          // Reuse civRace map
+          this._miningCivRace.clear()
           const allMembers = this.em.getEntitiesWithComponents('creature', 'civMember')
           for (const mid of allMembers) {
             const cm = this.em.getComponent<CivMemberComponent>(mid, 'civMember')
-            if (!cm || civRace.has(cm.civId)) continue
+            if (!cm || this._miningCivRace.has(cm.civId)) continue
             const cc = this.em.getComponent<CreatureComponent>(mid, 'creature')
-            if (cc) civRace.set(cm.civId, cc.species)
+            if (cc) this._miningCivRace.set(cm.civId, cc.species)
           }
-          const civData: { id: number; cities: { x: number; y: number }[]; techLevel: number; race: string }[] = []
+          let mi = 0
           for (const c of this.civManager.civilizations.values()) {
-            const cities: { x: number; y: number }[] = []
+            if (mi >= this._miningCivBuf.length) {
+              this._miningCivBuf.push({ id: 0, cities: [], techLevel: 0, race: 'human' })
+            }
+            const entry = this._miningCivBuf[mi]
+            entry.id = c.id; entry.techLevel = c.techLevel
+            entry.race = this._miningCivRace.get(c.id) ?? 'human'
+            entry.cities.length = 0
             for (const bid of c.buildings) {
               const pos = this.em.getComponent<PositionComponent>(bid, 'position')
-              if (pos) cities.push({ x: Math.floor(pos.x), y: Math.floor(pos.y) })
+              if (pos) entry.cities.push({ x: Math.floor(pos.x), y: Math.floor(pos.y) })
             }
-            civData.push({ id: c.id, cities, techLevel: c.techLevel, race: civRace.get(c.id) ?? 'human' })
+            mi++
           }
-          this.miningSystem.update(tick, civData)
+          this._miningCivBuf.length = mi
+          this.miningSystem.update(tick, this._miningCivBuf)
         }
         this.allianceSystem.update(this.civManager, this.em, this.world, this.particles, tick)
         this.evolutionSystem.update(this.em, this.world, tick)
@@ -4013,17 +4030,21 @@ export class Game {
                 if (other && other.buildings.length > 0 && civ.population > 5) {
                   const targetPos = this.em.getComponent<PositionComponent>(other.buildings[0], 'position')
                   if (targetPos) {
-                    const existingSiege = this.siegeWarfare.getActiveSieges().find(
-                      s => s.attackerCivId === civId && s.defenderCivId === otherId
-                    )
-                    if (!existingSiege) {
+                    let _hasSiege = false
+                    const _sieges = this.siegeWarfare.getActiveSieges()
+                    for (let si = 0; si < _sieges.length; si++) {
+                      if (_sieges[si].attackerCivId === civId && _sieges[si].defenderCivId === otherId) { _hasSiege = true; break }
+                    }
+                    if (!_hasSiege) {
                       this.siegeWarfare.startSiege(civId, otherId, Math.floor(targetPos.x), Math.floor(targetPos.y), Math.min(20, civ.population))
                       // Auto-form army into wedge formation for siege
-                      const soldiers = this.em.getEntitiesWithComponents('position', 'creature', 'civMember')
-                        .filter(id => {
-                          const cm = this.em.getComponent<CivMemberComponent>(id, 'civMember')
-                          return cm?.civId === civId
-                        }).slice(0, 12)
+                      this._siegeSoldiersBuf.length = 0
+                      const _allSoldiers = this.em.getEntitiesWithComponents('position', 'creature', 'civMember')
+                      for (let si = 0; si < _allSoldiers.length && this._siegeSoldiersBuf.length < 12; si++) {
+                        const cm = this.em.getComponent<CivMemberComponent>(_allSoldiers[si], 'civMember')
+                        if (cm?.civId === civId) this._siegeSoldiersBuf.push(_allSoldiers[si])
+                      }
+                      const soldiers = this._siegeSoldiersBuf
                       if (soldiers.length >= 3 && !this.formationSystem.getFormationForEntity(soldiers[0])) {
                         this.formationSystem.createFormation(civId, 'wedge', soldiers)
                       }
