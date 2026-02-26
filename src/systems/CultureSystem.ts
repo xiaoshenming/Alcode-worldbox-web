@@ -100,7 +100,7 @@ const CULTURE_NAME_SUFFIXES = ['an', 'ite', 'ese', 'ish', 'ic', 'ian', 'ean', 'o
 // --- Helpers ---
 
 function pick<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]
+  return arr[Math.floor(Math.random() * arr.length)] ?? arr[0]
 }
 
 function randInt(min: number, max: number): number {

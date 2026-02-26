@@ -209,7 +209,7 @@ export class AISystem {
             this.moveTowards(pos, ai, creature, vel)
           } else {
             // Flee in opposite direction
-            const fdist = Math.sqrt(fdist2)
+            const fdist = Math.sqrt(fdist2) || 1
             ai.targetX = pos.x + (fdx / fdist) * 10
             ai.targetY = pos.y + (fdy / fdist) * 10
             this.moveTowards(pos, ai, creature, vel)
@@ -384,7 +384,7 @@ export class AISystem {
       const moveX = step.x * speed
       const moveY = step.y * speed
       // Normalize diagonal movement
-      const mag = Math.sqrt(step.x * step.x + step.y * step.y)
+      const mag = Math.sqrt(step.x * step.x + step.y * step.y) || 1
       pos.x += (step.x / mag) * speed
       pos.y += (step.y / mag) * speed
 

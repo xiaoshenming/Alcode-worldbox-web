@@ -106,7 +106,10 @@ export class ClonePowerSystem {
   getCloneLineage(entityId: number): number[] {
     const chain: number[] = [entityId];
     let current = entityId;
+    const visited = new Set<number>();
     while (this.lineage.has(current)) {
+      if (visited.has(current)) break
+      visited.add(current)
       const entry = this.lineage.get(current)
       if (!entry) break
       chain.unshift(entry.sourceId);
