@@ -1,25 +1,25 @@
-// World Magnesium Spring System (v3.745) - Magnesium mineral springs
-// Springs rich in dissolved magnesium from dolomite and serpentine rock formations
+// World Aluminum Spring System (v3.746) - Aluminum mineral springs
+// Springs with dissolved aluminum from bauxite and feldspar weathering zones
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 import { TileType } from '../utils/Constants'
 
-export interface MagnesiumSpringZone {
+export interface AluminumSpringZone {
   id: number; x: number; y: number
-  magnesiumContent: number
+  aluminumContent: number
   springFlow: number
-  dolomiteLeaching: number
-  dissolvedMineral: number
+  bauxiteWeathering: number
+  dissolvedAluminate: number
   tick: number
 }
 
-const CHECK_INTERVAL = 3352
+const CHECK_INTERVAL = 3365
 const FORM_CHANCE = 0.003
 const MAX_ZONES = 32
 
-export class WorldMagnesiumSpringSystem {
-  private zones: MagnesiumSpringZone[] = []
+export class WorldAluminumSpringSystem {
+  private zones: AluminumSpringZone[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -40,10 +40,10 @@ export class WorldMagnesiumSpringSystem {
 
       this.zones.push({
         id: this.nextId++, x, y,
-        magnesiumContent: 40 + Math.random() * 60,
+        aluminumContent: 40 + Math.random() * 60,
         springFlow: 10 + Math.random() * 50,
-        dolomiteLeaching: 20 + Math.random() * 80,
-        dissolvedMineral: 15 + Math.random() * 85,
+        bauxiteWeathering: 20 + Math.random() * 80,
+        dissolvedAluminate: 15 + Math.random() * 85,
         tick
       })
     }
@@ -64,5 +64,5 @@ export class WorldMagnesiumSpringSystem {
     return false
   }
 
-  getZones(): readonly MagnesiumSpringZone[] { return this.zones }
+  getZones(): readonly AluminumSpringZone[] { return this.zones }
 }

@@ -1,5 +1,5 @@
-// Creature Etcher System (v3.581) - Metal etching artisans
-// Craftspeople who use acid and tools to create detailed designs on metal
+// Creature Etcher System (v3.745) - Metal etching artisans
+// Craftspeople who use acid or chemical processes to create designs on metal
 
 import { EntityManager } from '../ecs/Entity'
 
@@ -8,13 +8,13 @@ export interface Etcher {
   entityId: number
   etchingSkill: number
   acidControl: number
-  designPrecision: number
-  outputQuality: number
+  maskPrecision: number
+  surfaceFinish: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2710
-const RECRUIT_CHANCE = 0.0014
+const CHECK_INTERVAL = 3312
+const RECRUIT_CHANCE = 0.0015
 const MAX_ETCHERS = 10
 
 export class CreatureEtcherSystem {
@@ -32,8 +32,8 @@ export class CreatureEtcherSystem {
         entityId: Math.floor(Math.random() * 500),
         etchingSkill: 10 + Math.random() * 25,
         acidControl: 15 + Math.random() * 20,
-        designPrecision: 5 + Math.random() * 20,
-        outputQuality: 10 + Math.random() * 25,
+        maskPrecision: 5 + Math.random() * 20,
+        surfaceFinish: 10 + Math.random() * 25,
         tick,
       })
     }
@@ -41,7 +41,7 @@ export class CreatureEtcherSystem {
     for (const e of this.etchers) {
       e.etchingSkill = Math.min(100, e.etchingSkill + 0.02)
       e.acidControl = Math.min(100, e.acidControl + 0.015)
-      e.outputQuality = Math.min(100, e.outputQuality + 0.01)
+      e.surfaceFinish = Math.min(100, e.surfaceFinish + 0.01)
     }
 
     this.etchers = this.etchers.filter(e => e.etchingSkill > 4)

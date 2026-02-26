@@ -1,25 +1,25 @@
-// World Magnesium Spring System (v3.745) - Magnesium mineral springs
-// Springs rich in dissolved magnesium from dolomite and serpentine rock formations
+// World Fluorine Spring System (v3.743) - Fluorine mineral springs
+// Springs enriched with fluorine compounds from deep geological formations
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 import { TileType } from '../utils/Constants'
 
-export interface MagnesiumSpringZone {
+export interface FluorineSpringZone {
   id: number; x: number; y: number
-  magnesiumContent: number
+  fluorineContent: number
   springFlow: number
-  dolomiteLeaching: number
-  dissolvedMineral: number
+  mineralDeposit: number
+  dissolvedFluoride: number
   tick: number
 }
 
-const CHECK_INTERVAL = 3352
+const CHECK_INTERVAL = 3328
 const FORM_CHANCE = 0.003
 const MAX_ZONES = 32
 
-export class WorldMagnesiumSpringSystem {
-  private zones: MagnesiumSpringZone[] = []
+export class WorldFluorineSpringSystem {
+  private zones: FluorineSpringZone[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -40,10 +40,10 @@ export class WorldMagnesiumSpringSystem {
 
       this.zones.push({
         id: this.nextId++, x, y,
-        magnesiumContent: 40 + Math.random() * 60,
+        fluorineContent: 40 + Math.random() * 60,
         springFlow: 10 + Math.random() * 50,
-        dolomiteLeaching: 20 + Math.random() * 80,
-        dissolvedMineral: 15 + Math.random() * 85,
+        mineralDeposit: 20 + Math.random() * 80,
+        dissolvedFluoride: 15 + Math.random() * 85,
         tick
       })
     }
@@ -64,5 +64,5 @@ export class WorldMagnesiumSpringSystem {
     return false
   }
 
-  getZones(): readonly MagnesiumSpringZone[] { return this.zones }
+  getZones(): readonly FluorineSpringZone[] { return this.zones }
 }
