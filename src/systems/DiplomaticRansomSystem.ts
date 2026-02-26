@@ -28,13 +28,12 @@ export class DiplomaticRansomSystem {
   private nextId = 1
   private lastCheck = 0
 
-  update(dt: number, world: World, em: EntityManager, tick: number): void {
+  update(dt: number, world: World, em: EntityManager, tick: number, civManager?: CivManager): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const civManager = (em as any).civManager ?? (world as any).civManager
     if (!civManager?.civilizations) return
-    const civs = Array.from((civManager as CivManager).civilizations.values())
+    const civs = Array.from(civManager.civilizations.values())
     if (civs.length < 2) return
 
     // Initiate new ransom demands

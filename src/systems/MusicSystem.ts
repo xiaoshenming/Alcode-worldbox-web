@@ -88,23 +88,26 @@ export class MusicSystem {
   }
 
   private createNoiseBuffer(): void {
-    const ctx = this.ctx!
+    if (!this.ctx) return
+    const ctx = this.ctx
     const len = ctx.sampleRate * 2
     this.noiseBuffer = ctx.createBuffer(1, len, ctx.sampleRate)
     const data = this.noiseBuffer.getChannelData(0)
     for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1
   }
 
-  private makeNoiseSource(loop: boolean = true): AudioBufferSourceNode {
-    const ctx = this.ctx!
+  private makeNoiseSource(loop: boolean = true): AudioBufferSourceNode | null {
+    if (!this.ctx) return null
+    const ctx = this.ctx
     const src = ctx.createBufferSource()
-    src.buffer = this.noiseBuffer!
+    src.buffer = this.noiseBuffer ?? null
     src.loop = loop
     return src
   }
 
   private startAmbientLayers(): void {
-    const ctx = this.ctx!
+    if (!this.ctx || !this.ambientGain) return
+    const ctx = this.ctx
     // Wind: filtered white noise
     this.windSource = this.makeNoiseSource()
     this.windFilter = ctx.createBiquadFilter()
@@ -113,10 +116,10 @@ export class MusicSystem {
     this.windFilter.Q.value = 0.5
     const windGain = ctx.createGain()
     windGain.gain.value = 0.15
-    this.windSource.connect(this.windFilter)
+    this.windSource?.connect(this.windFilter)
     this.windFilter.connect(windGain)
-    windGain.connect(this.ambientGain!)
-    this.windSource.start()
+    windGain.connect(this.ambientGain)
+    this.windSource?.start()
     // Water: very low frequency filtered noise
     this.waterSource = this.makeNoiseSource()
     this.waterFilter = ctx.createBiquadFilter()
@@ -125,10 +128,10 @@ export class MusicSystem {
     this.waterFilter.Q.value = 1.0
     const waterGain = ctx.createGain()
     waterGain.gain.value = 0.08
-    this.waterSource.connect(this.waterFilter)
+    this.waterSource?.connect(this.waterFilter)
     this.waterFilter.connect(waterGain)
-    waterGain.connect(this.ambientGain!)
-    this.waterSource.start()
+    waterGain.connect(this.ambientGain)
+    this.waterSource?.start()
     // Rain: prepared but silent until needed
     this.rainSource = this.makeNoiseSource()
     this.rainFilter = ctx.createBiquadFilter()
@@ -137,14 +140,14 @@ export class MusicSystem {
     this.rainFilter.Q.value = 0.3
     this.rainGainNode = ctx.createGain()
     this.rainGainNode.gain.value = 0
-    this.rainSource.connect(this.rainFilter)
+    this.rainSource?.connect(this.rainFilter)
     this.rainFilter.connect(this.rainGainNode)
-    this.rainGainNode.connect(this.ambientGain!)
-    this.rainSource.start()
+    this.rainGainNode.connect(this.ambientGain)
+    this.rainSource?.start()
   }
 
   private playBirdChirp(): void {
-    if (this.muted || !this.ctx) return
+    if (this.muted || !this.ctx || !this.ambientGain) return
     const ctx = this.ctx
     const now = ctx.currentTime
     const freq = 1800 + Math.random() * 1200
@@ -157,13 +160,13 @@ export class MusicSystem {
     gain.gain.setValueAtTime(0.03, now)
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15)
     osc.connect(gain)
-    gain.connect(this.ambientGain!)
+    gain.connect(this.ambientGain)
     osc.start(now)
     osc.stop(now + 0.15)
   }
 
   private playInsectChirp(): void {
-    if (this.muted || !this.ctx) return
+    if (this.muted || !this.ctx || !this.ambientGain) return
     const ctx = this.ctx
     const now = ctx.currentTime
     const freq = 3000 + Math.random() * 2000
@@ -178,13 +181,13 @@ export class MusicSystem {
     }
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3)
     osc.connect(gain)
-    gain.connect(this.ambientGain!)
+    gain.connect(this.ambientGain)
     osc.start(now)
     osc.stop(now + 0.3)
   }
 
-  private getActiveFadeGain(): GainNode {
-    return this.activeFade === 'A' ? this.fadeGainA! : this.fadeGainB!
+  private getActiveFadeGain(): GainNode | null {
+    return this.activeFade === 'A' ? this.fadeGainA : this.fadeGainB
   }
 
   private scheduleBar(): void {
@@ -197,7 +200,7 @@ export class MusicSystem {
     const t = this.nextBarTime
     const dur = config.barDuration
     const fadeGain = this.getActiveFadeGain()
-    // Chord tones
+    if (!fadeGain) return
     for (const freq of chord) {
       const osc = ctx.createOscillator()
       const g = ctx.createGain()
@@ -216,6 +219,7 @@ export class MusicSystem {
     const beatLen = dur / beats
     for (let i = 0; i < beats; i++) {
       const src = this.makeNoiseSource(false)
+      if (!src) continue
       const g = ctx.createGain()
       const f = ctx.createBiquadFilter()
       f.type = 'lowpass'
@@ -256,8 +260,9 @@ export class MusicSystem {
     const ctx = this.ctx
     const now = ctx.currentTime
     const fadeDur = 2.0
-    const outGain = this.activeFade === 'A' ? this.fadeGainA! : this.fadeGainB!
-    const inGain = this.activeFade === 'A' ? this.fadeGainB! : this.fadeGainA!
+    const outGain = this.activeFade === 'A' ? this.fadeGainA : this.fadeGainB
+    const inGain = this.activeFade === 'A' ? this.fadeGainB : this.fadeGainA
+    if (!outGain || !inGain) return
     outGain.gain.setValueAtTime(outGain.gain.value, now)
     outGain.gain.linearRampToValueAtTime(0, now + fadeDur)
     inGain.gain.setValueAtTime(inGain.gain.value, now)
@@ -332,29 +337,29 @@ export class MusicSystem {
       const ctx = this.getCtx()
       if (ctx.state === 'suspended') ctx.resume()
     }
-    if (this.masterGain) {
-      this.masterGain.gain.setValueAtTime(muted ? 0 : this.masterVolume, this.ctx!.currentTime)
+    if (this.masterGain && this.ctx) {
+      this.masterGain.gain.setValueAtTime(muted ? 0 : this.masterVolume, this.ctx.currentTime)
     }
   }
 
   setMasterVolume(v: number): void {
     this.masterVolume = Math.max(0, Math.min(1, v))
-    if (this.masterGain && !this.muted) {
-      this.masterGain.gain.setValueAtTime(this.masterVolume, this.ctx!.currentTime)
+    if (this.masterGain && !this.muted && this.ctx) {
+      this.masterGain.gain.setValueAtTime(this.masterVolume, this.ctx.currentTime)
     }
   }
 
   setMusicVolume(v: number): void {
     this.musicVolume = Math.max(0, Math.min(1, v))
-    if (this.musicGain) {
-      this.musicGain.gain.setValueAtTime(this.musicVolume, this.ctx!.currentTime)
+    if (this.musicGain && this.ctx) {
+      this.musicGain.gain.setValueAtTime(this.musicVolume, this.ctx.currentTime)
     }
   }
 
   setAmbientVolume(v: number): void {
     this.ambientVolume = Math.max(0, Math.min(1, v))
-    if (this.ambientGain) {
-      this.ambientGain.gain.setValueAtTime(this.ambientVolume, this.ctx!.currentTime)
+    if (this.ambientGain && this.ctx) {
+      this.ambientGain.gain.setValueAtTime(this.ambientVolume, this.ctx.currentTime)
     }
   }
 

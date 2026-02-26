@@ -56,7 +56,7 @@ let nextSpyId = 1
 interface CivLike {
   id: number
   name: string
-  villages: { x: number; y: number }[]
+  villages?: { x: number; y: number }[]
 }
 
 export class DiplomaticEspionageSystem {

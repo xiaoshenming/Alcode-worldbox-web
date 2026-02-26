@@ -2,6 +2,8 @@
 // Royal, noble, and strategic unions stabilize relations and extend influence
 
 import { EntityManager } from '../ecs/Entity'
+import { Civilization } from '../civilization/Civilization'
+import { CivManager } from '../civilization/CivManager'
 
 export type MarriageType = 'royal' | 'noble' | 'strategic' | 'peace_offering'
 
@@ -30,7 +32,7 @@ export class DiplomaticMarriageSystem {
   private nextId = 1
   private lastCheck = 0
 
-  update(dt: number, em: EntityManager, civManager: any, tick: number): void {
+  update(dt: number, em: EntityManager, civManager: CivManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
@@ -38,8 +40,8 @@ export class DiplomaticMarriageSystem {
     if (this.marriages.length < MAX_MARRIAGES && civManager?.civilizations) {
       const civs = Array.from(civManager.civilizations.values())
       if (civs.length >= 2 && Math.random() < MARRIAGE_CHANCE) {
-        const a = civs[Math.floor(Math.random() * civs.length)] as any
-        let b = civs[Math.floor(Math.random() * civs.length)] as any
+        const a = civs[Math.floor(Math.random() * civs.length)]
+        let b = civs[Math.floor(Math.random() * civs.length)]
         if (a.id !== b.id) {
           const rel = a.relations?.get(b.id) ?? 0
           if (rel >= 0) {

@@ -101,7 +101,7 @@ export class CreatureRivalrySystem {
       // Escalate
       rivalry.intensity = Math.min(100, rivalry.intensity + ESCALATION_RATE)
       rivalry.encounters++
-      const stageIdx = STAGES.indexOf(rivalry.stage as any)
+      const stageIdx = STAGES.indexOf(rivalry.stage)
       if (stageIdx >= 0 && stageIdx < STAGES.length - 1 && rivalry.intensity > (stageIdx + 1) * 25) {
         rivalry.stage = STAGES[stageIdx + 1]
       }

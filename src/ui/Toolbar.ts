@@ -38,7 +38,7 @@ export class Toolbar {
       btn.onclick = () => {
         this.activeCategory = cat.type
         this.activeButton = null
-        this.powers.setPower(null as any)
+        this.powers.setPower(null)
         this.render()
       }
       categoryDiv.appendChild(btn)
@@ -62,7 +62,7 @@ export class Toolbar {
           if (this.activeButton === btn) {
             // Deselect
             this.activeButton = null
-            this.powers.setPower(null as any)
+            this.powers.setPower(null)
             btn.classList.remove('active')
           } else {
             // Select
@@ -90,7 +90,7 @@ export class Toolbar {
     if (pt !== undefined && pt !== this.activeCategory) {
       this.activeCategory = pt
       this.activeButton = null
-      this.powers.setPower(null as any)
+      this.powers.setPower(null)
       this.render()
     }
   }

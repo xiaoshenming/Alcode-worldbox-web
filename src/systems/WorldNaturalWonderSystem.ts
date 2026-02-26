@@ -3,6 +3,7 @@
 // Wonders provide area buffs to nearby creatures and civs
 
 import { EntityManager, EntityId, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { CivMemberComponent } from '../civilization/Civilization'
 
 export type WonderType = 'waterfall' | 'crystal_cave' | 'ancient_tree' | 'geyser' | 'aurora_zone'
 
@@ -87,7 +88,7 @@ export class WorldNaturalWonderSystem {
         if (dx * dx + dy * dy <= wonder.radius * wonder.radius) {
           if (!wonder.discovered) {
             wonder.discovered = true
-            const cm = em.getComponent(id, 'civMember') as any
+            const cm = em.getComponent<CivMemberComponent>(id, 'civMember')
             if (cm) wonder.discoveredBy = cm.civId
           }
         }

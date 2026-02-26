@@ -240,7 +240,7 @@ export class SaveSystem {
       for (const type of componentTypes) {
         const comp = em.getComponent(id, type)
         if (comp) {
-          const { type: _, ...rest } = comp as any
+          const { type: _, ...rest } = comp as unknown as Record<string, unknown>
           components[type] = rest
         }
       }

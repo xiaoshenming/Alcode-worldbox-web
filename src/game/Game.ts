@@ -20,7 +20,7 @@ import { ResourceSystem } from '../systems/ResourceSystem'
 import { SaveSystem, SaveSlotMeta } from './SaveSystem'
 import { CreatureFactory } from '../entities/CreatureFactory'
 import { CivManager } from '../civilization/CivManager'
-import { resetCivIdCounter } from '../civilization/Civilization'
+import { resetCivIdCounter, CivMemberComponent } from '../civilization/Civilization'
 import { AchievementSystem, WorldStats } from '../systems/AchievementSystem'
 import { DisasterSystem } from '../systems/DisasterSystem'
 import { TimelineSystem } from '../systems/TimelineSystem'
@@ -1732,6 +1732,11 @@ export class Game {
   private frameCount: number = 0
   private fpsTime: number = 0
 
+  // GC optimization: reusable buffers for hot render path
+  private _politicalData: { color: string; territory: Set<number> }[] = []
+  private _politicalSets: Set<number>[] = []
+  private _clonePositions: { x: number; y: number; generation: number }[] = []
+
   constructor() {
     this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement
     this.minimapCanvas = document.getElementById('minimap') as HTMLCanvasElement
@@ -1918,7 +1923,7 @@ export class Game {
       countWarZones: () => {
         let wars = 0
         for (const [, civ] of this.civManager.civilizations) {
-          if ((civ as any).atWar || (civ as any).wars?.length > 0) wars++
+          if (civ.diplomaticStance === 'aggressive') wars++
         }
         return Math.floor(wars / 2)
       },
@@ -3287,7 +3292,7 @@ export class Game {
           } else if (tlPanel?.style.display !== 'none' && tlPanel?.style.display) {
             tlPanel.style.display = 'none'
           } else {
-            this.powers.setPower(null as any)
+            this.powers.setPower(null)
             this.toolbar.clearSelection()
           }
           break
@@ -3793,7 +3798,7 @@ export class Game {
         this.worldAge.update(tick, this.world)
         this.bloodMoon.update(tick)
         this.creatureAging.update(tick, this.em, this.spatialHash)
-        this.resourceScarcity.update(tick, this.civManager, this.em as any, this.world)
+        this.resourceScarcity.update(tick, this.civManager, this.em, this.world)
         this.legendaryBattle.update(tick, this.em, this.civManager)
         this.worldBorder.update(tick)
         this.navalCombat.update(tick, this.em, this.civManager)
@@ -3903,7 +3908,7 @@ export class Game {
                       // Auto-form army into wedge formation for siege
                       const soldiers = this.em.getEntitiesWithComponents('position', 'creature', 'civMember')
                         .filter(id => {
-                          const cm = this.em.getComponent(id, 'civMember') as any
+                          const cm = this.em.getComponent<CivMemberComponent>(id, 'civMember')
                           return cm?.civId === civId
                         }).slice(0, 12)
                       if (soldiers.length >= 3 && !this.formationSystem.getFormationForEntity(soldiers[0])) {
@@ -4014,7 +4019,7 @@ export class Game {
         // Creature reputation (v2.23) - individual reputation tracking
         this.creatureReputation.update(this.tickRate, this.em, tick)
         // Diplomatic espionage (v2.24) - spy missions between civs
-        this.diplomaticEspionage.update(this.tickRate, this.em, [...this.civManager.civilizations.values()] as any, tick)
+        this.diplomaticEspionage.update(this.tickRate, this.em, [...this.civManager.civilizations.values()], tick)
         // World ancient ruins (v2.25) - explorable ruins
         this.worldAncientRuin.update(this.tickRate, this.em, this.world)
         // Creature hobbies (v2.26) - creatures develop hobbies
@@ -5291,24 +5296,36 @@ export class Game {
       isRaining: this.weather.currentWeather === 'rain' || this.weather.currentWeather === 'storm',
     })
     this.renderer.renderBrushOutline(this.camera, this.input.mouseX, this.input.mouseY, this.powers.getBrushSize())
-    this.renderer.renderMinimap(this.world, this.camera, this.em, this.civManager)
 
-    // Minimap overlay (political/population/military modes)
-    {
-      const mCtx = this.minimapCanvas.getContext('2d')
-      if (mCtx) {
-        const politicalData: { color: string; territory: Set<number> }[] = []
-        for (const [, c] of this.civManager.civilizations) {
-          const numSet = new Set<number>()
-          for (const t of c.territory) {
-            numSet.add(typeof t === 'string' ? parseInt(t, 10) : t as number)
+    // Minimap + overlay: throttle to every 3 frames to reduce GC and draw cost
+    if (this.world.tick % 3 === 0) {
+      this.renderer.renderMinimap(this.world, this.camera, this.em, this.civManager)
+
+      // Minimap overlay (political/population/military modes) - reuse buffers
+      {
+        const mCtx = this.minimapCanvas.getContext('2d')
+        if (mCtx) {
+          // Reset reusable arrays
+          this._politicalData.length = 0
+          let setIdx = 0
+          for (const [, c] of this.civManager.civilizations) {
+            // Reuse or create Set
+            if (setIdx >= this._politicalSets.length) {
+              this._politicalSets.push(new Set<number>())
+            }
+            const numSet = this._politicalSets[setIdx]
+            numSet.clear()
+            for (const t of c.territory) {
+              numSet.add(typeof t === 'string' ? parseInt(t, 10) : t as number)
+            }
+            this._politicalData.push({ color: c.color, territory: numSet })
+            setIdx++
           }
-          politicalData.push({ color: c.color, territory: numSet })
+          this.minimapOverlay.render(mCtx, this.minimapCanvas.width, this.minimapCanvas.height, {
+            political: this._politicalData, population: [], military: [], resources: [],
+            worldWidth: WORLD_WIDTH, worldHeight: WORLD_HEIGHT
+          })
         }
-        this.minimapOverlay.render(mCtx, this.minimapCanvas.width, this.minimapCanvas.height, {
-          political: politicalData, population: [], military: [], resources: [],
-          worldWidth: WORLD_WIDTH, worldHeight: WORLD_HEIGHT
-        })
       }
     }
 
@@ -5368,16 +5385,18 @@ export class Game {
       this.chartPanel.render(ctx, this.canvas.width - 420, 60, 400, 250)
     }
 
-    // Clone power visual effects
+    // Clone power visual effects - reuse buffer to avoid GC
     {
-      const clonePositions = [...this.em.getEntitiesWithComponents('position', 'creature')]
-        .filter(id => this.clonePower.getGeneration(id) > 0)
-        .map(id => {
+      this._clonePositions.length = 0
+      for (const id of this.em.getEntitiesWithComponents('position', 'creature')) {
+        const gen = this.clonePower.getGeneration(id)
+        if (gen > 0) {
           const pos = this.em.getComponent<PositionComponent>(id, 'position')!
-          return { x: pos.x, y: pos.y, generation: this.clonePower.getGeneration(id) }
-        })
-      if (clonePositions.length > 0) {
-        this.clonePower.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, clonePositions)
+          this._clonePositions.push({ x: pos.x, y: pos.y, generation: gen })
+        }
+      }
+      if (this._clonePositions.length > 0) {
+        this.clonePower.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, this._clonePositions)
       }
     }
 
@@ -5474,8 +5493,10 @@ export class Game {
     // Achievement popup and progress
     this.achievementPopup.render(ctx, this.canvas.width, this.canvas.height)
 
-    // Minimap enhanced overlay
-    this.minimapEnhanced.render(ctx, this.canvas.width - 160, this.canvas.height - 160, 150, 150, this.camera.x, this.camera.y, this.canvas.width, this.canvas.height)
+    // Minimap enhanced overlay - throttle to every 5 frames
+    if (this.world.tick % 5 === 0) {
+      this.minimapEnhanced.render(ctx, this.canvas.width - 160, this.canvas.height - 160, 150, 150, this.camera.x, this.camera.y, this.canvas.width, this.canvas.height)
+    }
 
     // Ambient sound volume indicator
     this.ambientSound.renderVolumeIndicator(ctx, 10, this.canvas.height - 80)
