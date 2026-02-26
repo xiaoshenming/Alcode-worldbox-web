@@ -233,9 +233,7 @@ export class EspionageSystem {
   // --- Tribute System ---
 
   private processTributes(civManager: CivManager, tick: number): void {
-    const civs = Array.from(civManager.civilizations.values())
-
-    for (const weak of civs) {
+    for (const weak of civManager.civilizations.values()) {
       for (const [otherId, rel] of weak.relations) {
         const strong = civManager.civilizations.get(otherId)
         if (!strong) continue

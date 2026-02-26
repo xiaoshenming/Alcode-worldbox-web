@@ -166,9 +166,7 @@ export class ReligionSystem {
   }
 
   private updateCulture(civManager: CivManager, em: EntityManager): void {
-    const civs = Array.from(civManager.civilizations.values())
-
-    for (const civ of civs) {
+    for (const civ of civManager.civilizations.values()) {
       // Natural culture growth
       if (civ.culture.strength < 100) {
         let growth = 1
@@ -182,7 +180,7 @@ export class ReligionSystem {
       }
 
       // Culture diplomacy effects
-      for (const other of civs) {
+      for (const other of civManager.civilizations.values()) {
         if (other.id === civ.id) continue
         const rel = civ.relations.get(other.id) ?? 0
 

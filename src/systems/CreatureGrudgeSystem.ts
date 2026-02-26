@@ -47,8 +47,7 @@ export class CreatureGrudgeSystem {
   private formGrudges(em: EntityManager, tick: number): void {
     if (this.grudges.length >= MAX_GRUDGES) return
 
-    const entities = em.getEntitiesWithComponents('creature')
-    const entityArr = Array.from(entities)
+    const entityArr = em.getEntitiesWithComponents('creature')
     if (entityArr.length < 2) return
 
     for (const eid of entityArr) {
