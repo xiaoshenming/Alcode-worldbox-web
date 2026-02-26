@@ -95,7 +95,8 @@ export class EraSystem {
 
       if (newEra !== oldEra) {
         this.civEras.set(civId, newEra)
-        const def = ERA_MAP.get(newEra)!
+        const def = ERA_MAP.get(newEra)
+        if (!def) continue
 
         // Event log
         EventLog.log('era', `${civ.name} has entered the ${def.displayName}!`, tick)

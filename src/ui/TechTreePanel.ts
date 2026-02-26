@@ -156,9 +156,10 @@ export class TechTreePanel {
       const parentTechs = levels.get(level) || []
       const childTechs = levels.get(level + 1) || []
       for (const parent of parentTechs) {
-        const pPos = nodePositions.get(parent.name)!
+        const pPos = nodePositions.get(parent.name)
         for (const child of childTechs) {
-          const cPos = nodePositions.get(child.name)!
+          const cPos = nodePositions.get(child.name)
+          if (!pPos || !cPos) continue
           const bothDone = completed.has(parent.name) && completed.has(child.name)
           ctx.strokeStyle = bothDone ? 'rgba(46,204,113,0.4)' : 'rgba(100,100,120,0.3)'
           ctx.beginPath()

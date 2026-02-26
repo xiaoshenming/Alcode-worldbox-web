@@ -1,4 +1,4 @@
-import { EntityManager, EntityId, RenderComponent, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { EntityManager, EntityId } from '../ecs/Entity'
 import { EntityType } from '../utils/Constants'
 import { generateName } from '../utils/NameGenerator'
 import { GeneticsSystem } from '../systems/GeneticsSystem'

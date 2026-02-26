@@ -85,12 +85,12 @@ export class MinimapSystem {
   ): void {
     // Ensure offscreen cache exists at the right size
     this.ensureCache(mapWidth, mapHeight)
-    if (!this.cacheCtx) return
+    if (!this.cacheCtx || !this.cache) return
 
     ctx.save()
 
     // Draw cached minimap image
-    ctx.drawImage(this.cache!, x, y, mapWidth, mapHeight)
+    ctx.drawImage(this.cache, x, y, mapWidth, mapHeight)
 
     // Draw viewport rectangle
     const scaleX = mapWidth / (this.worldWidth * TILE_SIZE)
