@@ -3,6 +3,7 @@ import { Camera } from './Camera'
 import { Renderer } from './Renderer'
 import { Input } from './Input'
 import { Powers } from './Powers'
+import { GameUIHelper, GameUIContext } from './GameUISetup'
 import { EntityType, TILE_SIZE, TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { Toolbar } from '../ui/Toolbar'
 import { InfoPanel } from '../ui/InfoPanel'
@@ -18,6 +19,8 @@ import { SoundSystem } from '../systems/SoundSystem'
 import { WeatherSystem } from '../systems/WeatherSystem'
 import { ResourceSystem } from '../systems/ResourceSystem'
 import { SaveSystem } from './SaveSystem'
+import { showSaveLoadPanel } from './SaveLoadPanel'
+import { GameInputManager } from './GameInputManager'
 import { CreatureFactory } from '../entities/CreatureFactory'
 import { CivManager } from '../civilization/CivManager'
 import { resetCivIdCounter, CivMemberComponent } from '../civilization/Civilization'
@@ -866,6 +869,8 @@ const _EMPTY_ARRAY: never[] = []
 
 export class Game {
 
+  private uiHelper!: GameUIHelper
+
   // Batch system interfaces for data-driven tick dispatch
   private _batch11A!: { update(tickRate: number, world: any, em: any, tick: number): void }[]
   private _batch11B!: { update(tickRate: number, em: any, tick: number): void }[]
@@ -903,6 +908,7 @@ export class Game {
   private statsPanel: StatsPanel
   private techTreePanel: TechTreePanel
   private contextMenu: ContextMenu
+  private inputManager!: GameInputManager
 
   em: EntityManager
   private aiSystem: AISystem
@@ -2799,9 +2805,10 @@ export class Game {
     this.diplomaticTollbooth = new DiplomaticTollboothSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
-    this.setupAchievementTracking()
-    this.setupParticleEventHooks()
-    this.setupSoundEventHooks()
+    this.uiHelper = new GameUIHelper(this as unknown as GameUIContext)
+    this.uiHelper.setupAchievementTracking()
+    this.uiHelper.setupParticleEventHooks()
+    this.uiHelper.setupSoundEventHooks()
     this.aiSystem.setResourceSystem(this.resources)
     this.aiSystem.setCivManager(this.civManager)
     this.combatSystem.setArtifactSystem(this.artifactSystem)
@@ -2815,17 +2822,53 @@ export class Game {
     this.techTreePanel = new TechTreePanel('techTreePanel', this.civManager)
     this.contextMenu = new ContextMenu('contextMenu')
 
-    this.setupSpeedControls()
-    this.setupBrushControls()
-    this.setupInputCallbacks()
-    this.setupContextMenu()
-    this.setupResize()
-    this.setupToolbarButtons()
-    this.setupKeyboard()
-    this.setupTooltip()
-    this.setupMuteButton()
-    this.setupMinimapClick()
-    this.setupMinimapModeBtn()
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this
+    this.inputManager = new GameInputManager({
+      get speed() { return self.speed },
+      set speed(v: number) { self.speed = v },
+      world: this.world,
+      camera: this.camera,
+      renderer: this.renderer,
+      input: this.input,
+      powers: this.powers,
+      toolbar: this.toolbar,
+      creaturePanel: this.creaturePanel,
+      statsPanel: this.statsPanel,
+      techTreePanel: this.techTreePanel,
+      contextMenu: this.contextMenu,
+      em: this.em,
+      creatureFactory: this.creatureFactory,
+      audio: this.audio,
+      musicSystem: this.musicSystem,
+      helpOverlay: this.helpOverlay,
+      notificationCenter: this.notificationCenter,
+      sandboxSettings: this.sandboxSettings,
+      screenshotMode: this.screenshotMode,
+      cameraBookmarks: this.cameraBookmarks,
+      entityInspector: this.entityInspector,
+      minimapMode: this.minimapMode,
+      historyReplay: this.historyReplay,
+      creatureMemory: this.creatureMemory,
+      pollution: this.pollution,
+      prophecy: this.prophecy,
+      creatureSkill: this.creatureSkill,
+      worldNarrator: this.worldNarrator,
+      mythology: this.mythology,
+      creatureTaming: this.creatureTaming,
+      plagueMutation: this.plagueMutation,
+      monument: this.monument,
+      creaturePersonality: this.creaturePersonality,
+      showSaveLoadPanel: (mode) => this.showSaveLoadPanel(mode),
+      resetWorld: () => this.resetWorld(),
+    })
+    this.inputManager.setupAll()
+    this.uiHelper.setupResize()
+    this.uiHelper.setupToolbarButtons()
+    this.uiHelper.setupTooltip()
+    this.uiHelper.setupMuteButton()
+    this.uiHelper.setupMinimapClick()
+    this.uiHelper.setupMinimapModeBtn()
     this.renderer.resize(window.innerWidth, window.innerHeight)
     // === Batch system registration (data-driven tick dispatch) ===
     this._batch11A = [this.worldCorruption, this.diplomaticTribute]
@@ -2852,80 +2895,6 @@ export class Game {
     this._batch26B = [this.creatureClaspMakers, this.creatureRivetMakers, this.creatureFerruleMakers, this.creatureGrommetMakers, this.creatureBobbinMakers, this.creatureSpindleMakers, this.creatureShuttleMakers, this.creatureBobbinLaceMakers, this.creatureTattingMakers, this.creatureNettingMakers, this.creatureFringeMakers, this.creatureTasselMakers, this.creatureBraidMakers, this.creatureMacrameMakers, this.creatureQuiltingMakers, this.creatureEmbroideryMakers, this.creatureAppliqueMakers, this.creatureSmockingMakers, this.creatureCrochetMakers, this.creatureFeltingMakers, this.creatureBobbinLace2Makers, this.creatureWeavingMakers, this.creatureDyeingMakers, this.creatureKnittingMakers, this.creatureFeltingMakers2, this.creatureSpinningMakers, this.creatureLoomMakers, this.creatureNeedleworkMakers, this.creatureWarpingMakers, this.creatureBobbinWinder, this.creatureCardingMakers, this.creatureFullingMakers, this.creatureTatamiMakers, this.creatureSilkWeaver, this.creaturePotter, this.creatureBasketWeaver, this.creatureHornworker, this.creatureScabbardMaker]
     this._batch46A = [this.worldSiliceousSinter, this.diplomaticDominion, this.worldHotPool, this.diplomaticCommonwealth, this.worldGeothermalPool, this.worldFumarolicField, this.diplomaticHegemony, this.worldMineralSpring, this.diplomaticSuzerainty, this.worldThermalSpring, this.diplomaticAutonomy, this.worldSodaSpring, this.diplomaticVassalage, this.worldArtesianWell, this.worldChalybeateSpring, this.diplomaticImperium, this.worldSulfurSpring, this.diplomaticMandate, this.worldLithiumSpring, this.diplomaticRegency, this.worldRadiumSpring, this.diplomaticStewardship, this.worldBorateSpring, this.diplomaticCustodianship, this.worldSeleniumSpring, this.diplomaticTrusteeship, this.worldMagnesiumSpring, this.diplomaticGuardianship, this.worldPotassiumSpring, this.diplomaticPatronage, this.worldStrontiumSpring, this.diplomaticStewardshipPact, this.worldBariumSpring, this.diplomaticConservatorship, this.worldZincSpring, this.diplomaticReceivership, this.worldCopperSpring, this.diplomaticProcuratorship, this.worldManganeseSpring, this.diplomaticPrefecture, this.worldTinSpring, this.diplomaticVicarage, this.worldIridiumSpring, this.diplomaticSeneschalry, this.worldOsmiumSpring, this.diplomaticChatelaincy, this.worldRutheniumSpring, this.diplomaticCastellany, this.worldNiobiumSpring, this.diplomaticBailiffry, this.worldTantalumSpring, this.diplomaticSheriffalty, this.worldHafniumSpring, this.diplomaticCoroner, this.worldZirconiumSpring, this.diplomaticEscheator, this.worldIndiumSpring, this.diplomaticAlmoner, this.worldGalliumSpring, this.diplomaticPurveyor, this.worldGermaniumSpring, this.diplomaticHarbinger, this.worldThalliumSpring, this.diplomaticVerderer, this.worldScandiumSpring, this.diplomaticHayward, this.worldYttriumSpring, this.diplomaticPannager, this.worldLanthanumSpring, this.diplomaticAgister, this.worldCeriumSpring, this.diplomaticWoodward, this.worldPraseodymiumSpring, this.diplomaticWarrener, this.worldNeodymiumSpring, this.diplomaticParkward, this.worldSamariumSpring, this.diplomaticWoodreve, this.worldEuropiumSpring, this.diplomaticRanger, this.worldGadoliniumSpring, this.diplomaticForestar, this.worldTerbiumSpring, this.diplomaticWaynward, this.worldDysprosiumSpring, this.diplomaticMootman, this.worldHolmiumSpring, this.diplomaticTithingman, this.worldErbiumSpring, this.diplomaticHayreve, this.worldThuliumSpring, this.diplomaticPinder, this.worldYtterbiumSpring, this.diplomaticGrithman, this.worldLutetiumSpring, this.diplomaticBorsholder, this.worldActiniumSpring, this.diplomaticAletaster, this.worldThoriumSpring, this.diplomaticBreadweigher, this.worldProtactiniumSpring, this.diplomaticMuragers, this.worldUraniumSpring, this.diplomaticGarthman, this.diplomaticCrier, this.worldPoloniumSpring, this.diplomaticBeadle, this.worldFranciumSpring, this.diplomaticHerbalist, this.worldRadonSpring, this.diplomaticLampwarden, this.worldAstatineSpring, this.diplomaticClavigers, this.worldCaesiumSpring, this.diplomaticPavior, this.worldRubidiumSpring, this.diplomaticWainage, this.worldTelluriumSpring, this.diplomaticGarble, this.worldXenonSpring, this.diplomaticTollbooth]
     this._batch46B = [this.creatureQuiverMaker, this.creatureStringMaker, this.creatureRopeWalker, this.creatureHarnessmaker, this.creatureBridlemaker, this.creatureYokemaker, this.creaturePlowright, this.creatureAnvilsmith, this.creatureToolsmith, this.creatureNailsmith, this.creatureChainmaker, this.creatureBellfounder, this.creatureGirdler, this.creaturePewterer, this.creatureWiredrawer, this.creatureGlazierMaster, this.creatureRiveter, this.creatureSmelter, this.creaturePuddler, this.creatureAssayer, this.creatureWelder, this.creatureRoller, this.creatureDrawer, this.creatureSpinner, this.creatureFurbisher, this.creatureTinplater, this.creatureAnnealer, this.creatureBurnisher, this.creatureSwager, this.creatureStamper, this.creatureForger, this.creatureHammerman, this.creaturePeener, this.creaturePlanisher, this.creatureBeveller, this.creatureFlatter, this.creatureChiseller, this.creatureKnurler, this.creatureReamer, this.creatureBroacher, this.creatureHoner, this.creatureLapper, this.creatureBorer, this.creatureCountersinker, this.creatureSpotfacer, this.creatureTapper, this.creatureCoiner, this.creatureSwageBlocker, this.creatureDrifter, this.creatureUpsetter, this.creatureSwedger, this.creatureBurnOuter, this.creatureScriber, this.creatureStaker, this.creaturePlanisherMaster, this.creatureNeedler]
-  }
-
-  private setupToolbarButtons(): void {
-    // New World button
-    const newWorldBtn = document.getElementById('newWorldBtn')
-    if (newWorldBtn) {
-      newWorldBtn.addEventListener('click', () => {
-        this.resetWorld()
-      })
-    }
-
-    // Toggle Territory button
-    const toggleTerritoryBtn = document.getElementById('toggleTerritoryBtn')
-    if (toggleTerritoryBtn) {
-      toggleTerritoryBtn.addEventListener('click', () => {
-        this.renderer.showTerritory = !this.renderer.showTerritory
-        toggleTerritoryBtn.classList.toggle('active', this.renderer.showTerritory)
-      })
-      toggleTerritoryBtn.classList.add('active')
-    }
-
-    // Save button - opens save panel
-    const saveBtn = document.getElementById('saveBtn')
-    if (saveBtn) {
-      saveBtn.addEventListener('click', () => {
-        this.showSaveLoadPanel('save')
-      })
-    }
-
-    // Load button - opens load panel
-    const loadBtn = document.getElementById('loadBtn')
-    if (loadBtn) {
-      loadBtn.addEventListener('click', () => {
-        this.showSaveLoadPanel('load')
-      })
-    }
-
-    // Achievements button
-    const achievementsBtn = document.getElementById('achievementsBtn')
-    const achievementsPanel = document.getElementById('achievementsPanel')
-    if (achievementsBtn && achievementsPanel) {
-      achievementsBtn.addEventListener('click', () => {
-        const visible = achievementsPanel.style.display !== 'none'
-        achievementsPanel.style.display = visible ? 'none' : 'block'
-        if (!visible) this.renderAchievementsPanel()
-      })
-    }
-
-    // Timeline button
-    const timelineBtn = document.getElementById('timelineBtn')
-    const timelinePanel = document.getElementById('timelinePanel')
-    if (timelineBtn && timelinePanel) {
-      timelineBtn.addEventListener('click', () => {
-        const visible = timelinePanel.style.display !== 'none'
-        timelinePanel.style.display = visible ? 'none' : 'block'
-        if (!visible) this.renderTimelinePanel()
-      })
-    }
-
-    // Stats button
-    const statsBtn = document.getElementById('statsBtn')
-    if (statsBtn) {
-      statsBtn.addEventListener('click', () => {
-        this.statsPanel.toggle()
-      })
-    }
-
-    // Tech Tree button
-    const techTreeBtn = document.getElementById('techTreeBtn')
-    if (techTreeBtn) {
-      techTreeBtn.addEventListener('click', () => {
-        this.techTreePanel.toggle()
-      })
-    }
   }
 
   private resetWorld(): void {
@@ -3020,642 +2989,6 @@ export class Game {
     this.legendaryBattle = new LegendaryBattleSystem()
     this.worldBorder = new WorldBorderSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
-  }
-
-  private setupSpeedControls(): void {
-    const buttons = document.querySelectorAll('#speedControls .btn')
-    buttons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const speed = parseInt((btn as HTMLElement).dataset.speed || '1', 10)
-        this.speed = speed
-        buttons.forEach(b => b.classList.remove('active'))
-        btn.classList.add('active')
-      })
-    })
-  }
-
-  private setupBrushControls(): void {
-    const slider = document.getElementById('brushSlider') as HTMLInputElement
-    const value = document.getElementById('brushValue') as HTMLElement
-    slider.addEventListener('input', () => {
-      const size = parseInt(slider.value, 10)
-      this.powers.setBrushSize(size)
-      value.textContent = String(size)
-    })
-  }
-
-  private setupInputCallbacks(): void {
-    this.input.setOnMouseDown((x, y) => {
-      // Check if clicking on a creature (when no power selected)
-      if (!this.powers.getPower()) {
-        const clicked = this.findCreatureAt(x, y)
-        this.creaturePanel.select(clicked)
-        return
-      }
-      this.powers.apply(x, y)
-    })
-    this.input.setOnMouseMove((x, y) => {
-      if (this.input.isMouseDown && this.input.mouseButton === 0) {
-        this.powers.applyContinuous(x, y)
-      }
-    })
-  }
-
-  private findCreatureAt(wx: number, wy: number): number | null {
-    const entities = this.em.getEntitiesWithComponents('position', 'creature')
-    let closest: number | null = null
-    let closestDist = 2 // max click distance in tiles
-
-    for (const id of entities) {
-      const pos = this.em.getComponent<PositionComponent>(id, 'position')
-      if (!pos) continue
-      const dx = pos.x - wx
-      const dy = pos.y - wy
-      const dist = Math.sqrt(dx * dx + dy * dy)
-      if (dist < closestDist) {
-        closestDist = dist
-        closest = id
-      }
-    }
-    return closest
-  }
-
-  private setupContextMenu(): void {
-    const tileNames = ['Deep Water', 'Shallow Water', 'Sand', 'Grass', 'Forest', 'Mountain', 'Snow', 'Lava']
-
-    this.input.setOnRightClick((wx, wy, screenX, screenY) => {
-      const sections: MenuSection[] = []
-
-      // Check if clicked on a creature
-      const creatureId = this.findCreatureAt(wx, wy)
-      if (creatureId !== null) {
-        const creature = this.em.getComponent<CreatureComponent>(creatureId, 'creature')
-        const needs = this.em.getComponent<NeedsComponent>(creatureId, 'needs')
-        if (!creature || !needs) return
-        sections.push({
-          header: `${creature.name} (${creature.species})`,
-          items: [
-            { icon: '\u{1F50D}', label: 'Inspect', action: () => this.creaturePanel.select(creatureId) },
-            { icon: '\u{1F49A}', label: 'Heal', action: () => { needs.health = 100; needs.hunger = 0 } },
-            { icon: '\u26A1', label: 'Smite', action: () => { needs.health = 0 } },
-          ]
-        })
-
-        // Hero options
-        const hero = this.em.getComponent<HeroComponent>(creatureId, 'hero')
-        if (!hero) {
-          sections[sections.length - 1].items.push({
-            icon: '\u2B50', label: 'Make Hero', action: () => {
-              const abilities: ('warrior'|'ranger'|'healer'|'berserker')[] = ['warrior','ranger','healer','berserker']
-              const ability = abilities[Math.floor(Math.random() * abilities.length)]
-              this.em.addComponent(creatureId, {
-                type: 'hero', level: 1, xp: 0, xpToNext: 30, kills: 0,
-                title: ability.charAt(0).toUpperCase() + ability.slice(1),
-                ability, abilityCooldown: 0
-              } as HeroComponent)
-            }
-          })
-        } else {
-          sections[sections.length - 1].items.push({
-            icon: '\u2B50', label: `Lv.${hero.level} ${hero.title} (${hero.xp}/${hero.xpToNext} XP)`, action: () => {}
-          })
-        }
-      }
-
-      // Terrain operations
-      const tile = this.world.getTile(Math.floor(wx), Math.floor(wy))
-      if (tile !== null) {
-        sections.push({
-          header: `Tile: ${tileNames[tile]} (${Math.floor(wx)}, ${Math.floor(wy)})`,
-          items: [
-            { icon: '\u{1F464}', label: 'Spawn Human', action: () => this.creatureFactory.spawn(EntityType.HUMAN, wx, wy) },
-            { icon: '\u{1F43A}', label: 'Spawn Wolf', action: () => this.creatureFactory.spawn(EntityType.WOLF, wx, wy) },
-            { icon: '\u{1F409}', label: 'Spawn Dragon', action: () => this.creatureFactory.spawn(EntityType.DRAGON, wx, wy) },
-            { icon: '\u26A1', label: 'Lightning', action: () => this.powers.applyAction('lightning', wx, wy) },
-            { icon: '\u2604\uFE0F', label: 'Meteor', action: () => this.powers.applyAction('meteor', wx, wy) },
-          ]
-        })
-      }
-
-      if (sections.length > 0) {
-        this.contextMenu.show(screenX, screenY, sections)
-      }
-    })
-  }
-
-  private setupResize(): void {
-    window.addEventListener('resize', () => {
-      this.renderer.resize(window.innerWidth, window.innerHeight)
-      this._minimapRectDirty = true
-    })
-  }
-
-  private setSpeed(speed: number): void {
-    this.speed = speed
-    const buttons = document.querySelectorAll('#speedControls .btn')
-    buttons.forEach(b => {
-      const s = parseInt((b as HTMLElement).dataset.speed || '1', 10)
-      b.classList.toggle('active', s === speed)
-    })
-  }
-
-  private setupKeyboard(): void {
-    window.addEventListener('keydown', (e) => {
-      // Ignore shortcuts when typing in inputs
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
-
-      // Delegate to v1.91-v1.95 systems (Shift+ combos)
-      if (this.creatureMemory.handleKeyDown(e)) return
-      if (this.pollution.handleKeyDown(e)) return
-      if (this.prophecy.handleKeyDown(e)) return
-      if (this.creatureSkill.handleKeyDown(e)) return
-      if (this.worldNarrator.handleKeyDown(e)) return
-      if (this.mythology.handleKeyDown(e)) return
-      if (this.creatureTaming.handleKeyDown(e)) return
-      if (this.plagueMutation.handleKeyDown(e)) return
-      if (this.monument.handleKeyDown(e)) return
-      if (this.creaturePersonality.handleKeyDown(e)) return
-
-      switch (e.key) {
-        // Speed controls (plain) / Camera bookmarks (Ctrl=save, Alt=jump)
-        case '1': case '2': case '3': case '4':
-        case '5': case '6': case '7': case '8': case '9': {
-          const slot = parseInt(e.key, 10) - 1
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault()
-            this.cameraBookmarks.save(slot, this.camera.x, this.camera.y, this.camera.zoom)
-          } else if (e.altKey) {
-            e.preventDefault()
-            const bm = this.cameraBookmarks.get(slot)
-            if (bm) { this.camera.x = bm.x; this.camera.y = bm.y; this.camera.zoom = bm.zoom }
-          } else {
-            // Original speed controls for 1-4
-            if (e.key === '1') this.setSpeed(1)
-            else if (e.key === '2') this.setSpeed(2)
-            else if (e.key === '3') this.setSpeed(5)
-            else if (e.key === '4') this.setSpeed(0)
-          }
-          break
-        }
-        case ' ':
-          e.preventDefault()
-          this.setSpeed(this.speed === 0 ? 1 : 0)
-          break
-
-        // Tool category switching: Q/W/E/D
-        case 'q':
-        case 'Q':
-          this.toolbar.setCategory('terrain')
-          break
-        case 'w':
-        case 'W':
-          this.toolbar.setCategory('creature')
-          break
-        case 'e':
-        case 'E':
-          this.toolbar.setCategory('nature')
-          break
-        case 'd':
-        case 'D':
-          this.toolbar.setCategory('disaster')
-          break
-
-        // Brush size: [ and ]
-        case '[': {
-          const slider = document.getElementById('brushSlider') as HTMLInputElement
-          if (slider) {
-            const val = Math.max(1, parseInt(slider.value, 10) - 1)
-            slider.value = String(val)
-            slider.dispatchEvent(new Event('input'))
-          }
-          break
-        }
-        case ']': {
-          const slider = document.getElementById('brushSlider') as HTMLInputElement
-          if (slider) {
-            const val = Math.min(10, parseInt(slider.value, 10) + 1)
-            slider.value = String(val)
-            slider.dispatchEvent(new Event('input'))
-          }
-          break
-        }
-
-        // Quick save/load: Ctrl+S / Ctrl+L
-        case 's':
-        case 'S':
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault()
-            this.showSaveLoadPanel('save')
-          }
-          break
-        case 'l':
-        case 'L':
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault()
-            this.showSaveLoadPanel('load')
-          }
-          break
-
-        // Toggle mute: M
-        case 'm':
-        case 'M': {
-          const muted = this.audio.toggleMute()
-        this.musicSystem.setMuted(muted)
-          const muteBtn = document.getElementById('muteBtn')
-          if (muteBtn) muteBtn.textContent = muted ? '🔇' : '🔊'
-          break
-        }
-
-        // Toggle territory: T
-        case 't':
-        case 'T': {
-          this.renderer.showTerritory = !this.renderer.showTerritory
-          const terBtn = document.getElementById('toggleTerritoryBtn')
-          if (terBtn) terBtn.classList.toggle('active', this.renderer.showTerritory)
-          break
-        }
-
-        case 'h':
-        case 'H':
-          if (!e.ctrlKey && !e.metaKey) this.helpOverlay.toggle()
-          break
-        case 'F1':
-          e.preventDefault()
-          this.helpOverlay.toggle()
-          break
-
-        // Notification history: N
-        case 'n':
-        case 'N':
-          if (!e.ctrlKey && !e.metaKey) this.notificationCenter.toggleHistory()
-          break
-
-        // Sandbox settings: P
-        case 'p':
-        case 'P':
-          if (!e.ctrlKey && !e.metaKey) this.sandboxSettings.togglePanel()
-          break
-
-        // Screenshot: F12
-        case 'F12':
-          e.preventDefault()
-          this.screenshotMode.enterScreenshotMode(1)
-          break
-
-        // Camera bookmarks panel: B
-        case 'b':
-        case 'B':
-          if (!e.ctrlKey && !e.metaKey) this.cameraBookmarks.togglePanel()
-          break
-
-        // Entity inspector: I
-        case 'i':
-        case 'I':
-          if (!e.ctrlKey && !e.metaKey) this.entityInspector.togglePanel()
-          break
-
-        // Minimap mode cycle: V
-        case 'v':
-        case 'V':
-          if (!e.ctrlKey && !e.metaKey) this.minimapMode.cycleMode()
-          break
-
-        // History replay toggle / Reset world (Ctrl+R)
-        case 'r':
-        case 'R':
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault()
-            this.resetWorld()
-          } else {
-            if (this.historyReplay.isReplaying()) this.historyReplay.stopReplay()
-            else this.historyReplay.startReplay()
-          }
-          break
-        case 'ArrowLeft':
-          if (this.historyReplay.isReplaying()) this.historyReplay.step(-1)
-          break
-        case 'ArrowRight':
-          if (this.historyReplay.isReplaying()) this.historyReplay.step(1)
-          break
-
-        // Escape: close panels / deselect tool
-        case 'Escape': {
-          if (this.entityInspector.isPanelOpen()) {
-            this.entityInspector.close()
-            break
-          }
-          if (this.cameraBookmarks.isPanelOpen()) {
-            this.cameraBookmarks.togglePanel()
-            break
-          }
-          if (this.sandboxSettings.isPanelOpen()) {
-            this.sandboxSettings.togglePanel()
-            break
-          }
-          if (this.notificationCenter.isHistoryOpen()) {
-            this.notificationCenter.toggleHistory()
-            break
-          }
-          if (this.historyReplay.isReplaying()) {
-            this.historyReplay.stopReplay()
-            break
-          }
-          if (this.helpOverlay.isVisible()) {
-            this.helpOverlay.toggle()
-            break
-          }
-          const savePanel = document.getElementById('saveLoadPanel')
-          const achPanel = document.getElementById('achievementsPanel')
-          const tlPanel = document.getElementById('timelinePanel')
-          if (savePanel?.style.display !== 'none' && savePanel?.style.display) {
-            savePanel.style.display = 'none'
-          } else if (this.techTreePanel.isVisible()) {
-            this.techTreePanel.hide()
-          } else if (this.statsPanel.isVisible()) {
-            this.statsPanel.hide()
-          } else if (achPanel?.style.display !== 'none' && achPanel?.style.display) {
-            achPanel.style.display = 'none'
-          } else if (tlPanel?.style.display !== 'none' && tlPanel?.style.display) {
-            tlPanel.style.display = 'none'
-          } else {
-            this.powers.setPower(null)
-            this.toolbar.clearSelection()
-          }
-          break
-        }
-      }
-    })
-  }
-
-  private setupTooltip(): void {
-    const oldTooltip = document.getElementById('tooltip')
-    if (oldTooltip) oldTooltip.style.display = 'none'
-
-    this.canvas.addEventListener('mousemove', (e) => {
-      this.enhancedTooltip.update(
-        e.clientX, e.clientY,
-        this.camera, this.world,
-        this.em, this.civManager
-      )
-    })
-
-    this.canvas.addEventListener('mouseleave', () => {
-      this.enhancedTooltip.hide()
-    })
-  }
-
-  private setupMuteButton(): void {
-    const btn = document.getElementById('muteBtn')
-    if (btn) {
-      btn.addEventListener('click', () => {
-        const muted = this.audio.toggleMute()
-        this.musicSystem.setMuted(muted)
-        btn.textContent = muted ? '🔇' : '🔊'
-      })
-    }
-  }
-
-  private setupMinimapClick(): void {
-    this.minimapCanvas.addEventListener('click', (e) => {
-      const rect = this.minimapCanvas.getBoundingClientRect()
-      const mx = e.clientX - rect.left
-      const my = e.clientY - rect.top
-
-      // Convert minimap coords to world tile coords
-      const scale = this.minimapCanvas.width / this.world.width
-      const worldTileX = mx / scale
-      const worldTileY = my / scale
-
-      // Center camera on clicked world position
-      const halfViewW = (window.innerWidth / this.camera.zoom) / 2
-      const halfViewH = (window.innerHeight / this.camera.zoom) / 2
-      this.camera.x = worldTileX * TILE_SIZE - halfViewW
-      this.camera.y = worldTileY * TILE_SIZE - halfViewH
-    })
-  }
-
-  private setupMinimapModeBtn(): void {
-    const btn = document.getElementById('minimapModeBtn')
-    if (!btn) return
-    const modes: Array<'normal' | 'territory' | 'heatmap'> = ['normal', 'territory', 'heatmap']
-    const labels: Record<string, string> = { normal: 'Normal', territory: 'Territory', heatmap: 'Heatmap' }
-    btn.addEventListener('click', () => {
-      const idx = modes.indexOf(this.renderer.minimapMode)
-      const next = modes[(idx + 1) % modes.length]
-      this.renderer.minimapMode = next
-      btn.textContent = labels[next]
-    })
-  }
-
-  private renderSelectedHighlight(): void {
-    const id = this.creaturePanel.getSelected()
-    if (!id) return
-    const pos = this.em.getComponent<PositionComponent>(id, 'position')
-    if (!pos) return
-
-    const ctx = this.canvas.getContext('2d')!
-    const tileSize = 8 * this.camera.zoom
-    const offsetX = -this.camera.x * this.camera.zoom
-    const offsetY = -this.camera.y * this.camera.zoom
-    const screenX = pos.x * tileSize + offsetX + tileSize / 2
-    const screenY = pos.y * tileSize + offsetY + tileSize / 2
-    const radius = 6 * this.camera.zoom
-
-    // Pulsing ring
-    const pulse = Math.sin(performance.now() * 0.005) * 0.3 + 0.7
-    ctx.strokeStyle = `rgba(255, 255, 100, ${pulse})`
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    ctx.arc(screenX, screenY, radius, 0, Math.PI * 2)
-    ctx.stroke()
-  }
-
-  private renderAchievementsPanel(): void {
-    const panel = document.getElementById('achievementsPanel')
-    if (!panel) return
-    const all = this.achievements.getAll()
-    const progress = this.achievements.getProgress()
-    let html = `<div class="title">\u{1F3C6} Achievements (${progress.unlocked}/${progress.total})</div>`
-    html += '<div style="display:flex;flex-direction:column;gap:4px">'
-    for (const a of all) {
-      const opacity = a.unlocked ? '1' : '0.35'
-      const bg = a.unlocked ? 'rgba(100,140,200,0.15)' : 'rgba(40,40,60,0.3)'
-      const check = a.unlocked ? '\u2705' : '\u{1F512}'
-      html += `<div style="opacity:${opacity};background:${bg};padding:6px 10px;border-radius:6px;display:flex;align-items:center;gap:8px">`
-      html += `<span style="font-size:18px">${a.icon}</span>`
-      html += `<div><div style="font-weight:bold;font-size:12px">${a.name} ${check}</div>`
-      html += `<div style="font-size:10px;color:#888">${a.description}</div></div></div>`
-    }
-    html += '</div>'
-    panel.innerHTML = html
-  }
-
-  private updateAchievementsButton(): void {
-    const btn = document.getElementById('achievementsBtn')
-    if (btn) {
-      const p = this.achievements.getProgress()
-      btn.textContent = `\u{1F3C6} ${p.unlocked}/${p.total}`
-    }
-  }
-
-  private renderTimelinePanel(): void {
-    const panel = document.getElementById('timelinePanel')
-    if (!panel) return
-
-    const era = this.timeline.getCurrentEra()
-    const progress = this.timeline.getEraProgress(this.world.tick)
-    const age = this.timeline.getWorldAge(this.world.tick)
-    const eras = this.timeline.getEraDefinitions()
-    const history = this.timeline.getHistory()
-
-    let html = `<div style="font-weight:bold;margin-bottom:8px;font-size:13px;border-bottom:1px solid #555;padding-bottom:4px">`
-    html += `\u{1F30D} World Timeline - ${age}</div>`
-
-    // Era progress bar
-    html += `<div style="margin-bottom:8px">`
-    html += `<div style="font-size:11px;color:${era.color};margin-bottom:3px">Current Era: ${era.name}</div>`
-    html += `<div style="background:#222;border-radius:4px;height:8px;overflow:hidden">`
-    html += `<div style="background:${era.color};height:100%;width:${Math.round(progress * 100)}%;transition:width 0.3s"></div></div>`
-
-    // Era markers
-    html += `<div style="display:flex;gap:2px;margin-top:4px">`
-    for (let i = 0; i < eras.length; i++) {
-      const e = eras[i]
-      const active = i <= era.index
-      html += `<div style="flex:1;height:4px;border-radius:2px;background:${active ? e.color : '#333'}" title="${e.name}"></div>`
-    }
-    html += `</div></div>`
-
-    // Historical events (most recent first)
-    html += `<div style="color:#aaa;font-size:10px;margin-bottom:3px">HISTORICAL EVENTS</div>`
-    html += `<div style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:3px">`
-    const recent = history.slice(-20).reverse()
-    const typeIcons: Record<string, string> = {
-      era_change: '\u{1F451}', war: '\u2694\uFE0F', disaster: '\u{1F30B}',
-      achievement: '\u{1F3C6}', founding: '\u{1F3F0}', collapse: '\u{1F4A5}'
-    }
-    for (const ev of recent) {
-      const icon = typeIcons[ev.type] || '\u{1F4DC}'
-      const yr = this.timeline.getWorldAge(ev.tick)
-      html += `<div style="font-size:10px;padding:2px 4px;background:rgba(40,40,60,0.4);border-radius:3px">`
-      html += `<span style="color:#666">${yr}</span> ${icon} ${ev.description}</div>`
-    }
-    html += `</div>`
-
-    panel.innerHTML = html
-  }
-
-  private setupAchievementTracking(): void {
-    EventLog.onEvent((e) => {
-      if (e.type === 'death') this.achievements.recordDeath()
-      if (e.type === 'birth') this.achievements.recordBirth()
-      if (e.type === 'war') {
-        this.achievements.recordWar()
-        this.timeline.recordEvent(this.world.tick, 'war', e.message)
-      }
-      if (e.type === 'combat') this.achievements.recordKill()
-      if (e.type === 'disaster') this.timeline.recordEvent(this.world.tick, 'disaster', e.message)
-      if (e.type === 'building' && e.message.includes('founded')) this.timeline.recordEvent(this.world.tick, 'founding', e.message)
-    })
-  }
-
-  /** Hook into EventLog to trigger celebration fireworks on treaty signing */
-  private setupParticleEventHooks(): void {
-    EventLog.onEvent((e) => {
-      if (e.type === 'peace' && e.message.includes('signed')) {
-        // Spawn fireworks at a random territory tile of a signing civ
-        for (const [, civ] of this.civManager.civilizations) {
-          if (e.message.includes(civ.name) && civ.territory.size > 0) {
-            const keys = Array.from(civ.territory)
-            const key = keys[Math.floor(Math.random() * keys.length)]
-            const [tx, ty] = key.split(',').map(Number)
-            const colors = ['#ffd700', '#ff4488', '#44ddff', '#44ff88']
-            const color = colors[Math.floor(Math.random() * colors.length)]
-            this.particles.spawnFirework(tx, ty, color)
-            break
-          }
-        }
-      }
-    })
-  }
-
-  /** Play contextual sound effects based on game events */
-  private setupSoundEventHooks(): void {
-    let lastAchievementCount = 0
-    EventLog.onEvent((e) => {
-      if (e.type === 'building') this.audio.playBuild()
-      if (e.type === 'peace' || e.type === 'diplomacy') this.audio.playDiplomacy()
-      if (e.type === 'trade') this.audio.playTrade()
-      // Check for new achievements
-      const current = this.achievements.getProgress().unlocked
-      if (current > lastAchievementCount) {
-        this.audio.playAchievement()
-        lastAchievementCount = current
-      }
-    })
-  }
-
-  /** Spawn hero trails and mutation auras each tick */
-  private updateVisualEffects(): void {
-    // Hero trails — every 3rd tick to avoid particle spam
-    if (this.world.tick % 3 === 0) {
-      const heroes = this.em.getEntitiesWithComponents('position', 'hero', 'velocity')
-      for (const id of heroes) {
-        const pos = this.em.getComponent<PositionComponent>(id, 'position')
-        const vel = this.em.getComponent<VelocityComponent>(id, 'velocity')
-        if (!pos || !vel) continue
-        // Only trail when actually moving
-        if (Math.abs(vel.vx) > 0.01 || Math.abs(vel.vy) > 0.01) {
-          const hero = this.em.getComponent<HeroComponent>(id, 'hero')
-          if (!hero) continue
-          const trailColors: Record<string, string> = {
-            warrior: '#ffd700', ranger: '#44ff44', healer: '#aaaaff', berserker: '#ff4444'
-          }
-          this.particles.spawnTrail(pos.x, pos.y, trailColors[hero.ability] || '#ffd700')
-        }
-      }
-    }
-
-    // Mutation auras — every 10th tick
-    if (this.world.tick % 10 === 0) {
-      const mutants = this.em.getEntitiesWithComponents('position', 'genetics')
-      for (const id of mutants) {
-        const gen = this.em.getComponent<GeneticsComponent>(id, 'genetics')
-        if (!gen) continue
-        if (gen.mutations.length > 0) {
-          const pos = this.em.getComponent<PositionComponent>(id, 'position')
-          if (pos) this.particles.spawnAura(pos.x, pos.y, '#d4f', 0.6)
-        }
-      }
-    }
-  }
-
-  private gatherWorldStats(): WorldStats {
-    const creatures = this.em.getEntitiesWithComponents('position', 'creature')
-    const heroes = this.em.getEntitiesWithComponents('hero')
-    const buildings = this.em.getEntitiesWithComponents('building')
-    let maxPop = 0
-    let maxTech = 0
-    let tradeRoutes = 0
-    for (const [, civ] of this.civManager.civilizations) {
-      if (civ.population > maxPop) maxPop = civ.population
-      if (civ.techLevel > maxTech) maxTech = civ.techLevel
-      tradeRoutes += civ.tradeRoutes.length
-    }
-    return {
-      totalPopulation: creatures.length,
-      totalCivs: this.civManager.civilizations.size,
-      totalBuildings: buildings.length,
-      totalDeaths: 0, // tracked incrementally
-      totalBirths: 0,
-      totalWars: 0,
-      maxTechLevel: maxTech,
-      maxCivPopulation: maxPop,
-      worldTick: this.world.tick,
-      totalKills: 0,
-      heroCount: heroes.length,
-      tradeRouteCount: tradeRoutes
-    }
   }
 
   start(): void {
@@ -4190,7 +3523,7 @@ export class Game {
 
 
         // === EVERY TICK: Visual effects and particles (must run every tick) ===
-        this.updateVisualEffects()
+        this.uiHelper.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
       }
@@ -4459,8 +3792,8 @@ export class Game {
     if (this.world.tick % 30 === 0) {
       this.infoPanel.update(this.fps)
       this.statsPanel.update(this.world.tick)
-      this.achievements.updateStats(this.gatherWorldStats())
-      this.updateAchievementsButton()
+      this.achievements.updateStats(this.uiHelper.gatherWorldStats())
+      this.uiHelper.updateAchievementsButton()
       if (this.techTreePanel.isVisible()) {
         this.techTreePanel.render()
       }
@@ -4473,10 +3806,10 @@ export class Game {
     // Real-time creature panel update when selected
     if (this.creaturePanel.getSelected()) {
       this.creaturePanel.update()
-      this.renderSelectedHighlight()
+      this.uiHelper.renderSelectedHighlight()
     }
 
-    this.updateDayNightIndicator()
+    this.uiHelper.updateDayNightIndicator()
 
     // Performance monitor update + render (v1.62)
     this.perfMonitor.update(
@@ -4701,108 +4034,12 @@ export class Game {
     requestAnimationFrame(this.loop)
   }
 
-  private updateDayNightIndicator(): void {
-    if (this.world.tick % 30 !== 0) return
-    const el = document.getElementById('dayNightIndicator')
-    if (!el) return
-    const isDay = this.world.isDay()
-    const icon = isDay ? '☀️' : '🌙'
-    const timeStr = isDay ? 'Day' : 'Night'
-    const hour = Math.floor(this.world.dayNightCycle * 24)
-    const weatherLabel = this.weather.getWeatherLabel()
-    const seasonLabels = { spring: '🌱 Spring', summer: '☀️ Summer', autumn: '🍂 Autumn', winter: '❄️ Winter' }
-    const seasonLabel = seasonLabels[this.world.season]
-    el.textContent = `${icon} ${timeStr} (${hour}:00) | ${seasonLabel} | ${weatherLabel}`
-  }
-
   private showSaveLoadPanel(mode: 'save' | 'load'): void {
-    let panel = document.getElementById('saveLoadPanel')
-    if (panel) { panel.remove(); return }
-
-    panel = document.createElement('div')
-    panel.id = 'saveLoadPanel'
-    panel.className = 'panel'
-    Object.assign(panel.style, {
-      position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-      width: '320px', zIndex: '350', fontSize: '12px', lineHeight: '1.8', padding: '12px'
+    showSaveLoadPanel(mode, {
+      world: this.world,
+      em: this.em,
+      civManager: this.civManager,
+      resources: this.resources
     })
-
-    const titleEl = document.createElement('div')
-    titleEl.style.cssText = 'font-weight:bold;font-size:14px;margin-bottom:8px;text-align:center'
-    titleEl.textContent = mode === 'save' ? 'Save Game' : 'Load Game'
-    panel.appendChild(titleEl)
-
-    const metas = SaveSystem.getAllSlotMeta()
-    const slots: Array<number | 'auto'> = ['auto', 1, 2, 3]
-
-    for (const slot of slots) {
-      const meta = metas.find(m => m.slot === slot)
-      const label = slot === 'auto' ? 'Autosave' : `Slot ${slot}`
-      const hasSave = SaveSystem.hasSave(slot)
-      const info = meta
-        ? `${new Date(meta.timestamp).toLocaleString()} | Pop: ${meta.population} | Civs: ${meta.civCount}`
-        : (hasSave ? 'Save data found' : 'Empty')
-
-      const row = document.createElement('div')
-      row.style.cssText = 'display:flex;align-items:center;gap:6px;margin:4px 0;padding:4px;background:rgba(255,255,255,0.05);border-radius:4px'
-
-      const infoDiv = document.createElement('div')
-      infoDiv.style.flex = '1'
-      const labelEl2 = document.createElement('div')
-      labelEl2.style.fontWeight = 'bold'
-      labelEl2.textContent = label
-      const detailEl = document.createElement('div')
-      detailEl.style.cssText = 'opacity:0.6;font-size:10px'
-      detailEl.textContent = info
-      infoDiv.appendChild(labelEl2)
-      infoDiv.appendChild(detailEl)
-      row.appendChild(infoDiv)
-
-      if (mode === 'save' && slot !== 'auto') {
-        const btn = document.createElement('button')
-        btn.textContent = 'Save'
-        btn.style.cssText = 'padding:2px 8px;cursor:pointer'
-        btn.addEventListener('click', () => {
-          const ok = SaveSystem.save(this.world, this.em, this.civManager, this.resources, slot)
-          btn.textContent = ok ? 'Saved!' : 'Failed'
-          setTimeout(() => { if (panel.parentNode) panel.remove() }, 800)
-        })
-        row.appendChild(btn)
-      } else if (mode === 'load' && hasSave) {
-        const loadBtn = document.createElement('button')
-        loadBtn.textContent = 'Load'
-        loadBtn.style.cssText = 'padding:2px 8px;cursor:pointer'
-        loadBtn.addEventListener('click', () => {
-          const ok = SaveSystem.load(this.world, this.em, this.civManager, this.resources, slot)
-          if (ok) this.world.markFullDirty()
-          loadBtn.textContent = ok ? 'Loaded!' : 'Failed'
-          setTimeout(() => { if (panel.parentNode) panel.remove() }, 800)
-        })
-        row.appendChild(loadBtn)
-        if (slot !== 'auto') {
-          const delBtn = document.createElement('button')
-          delBtn.textContent = 'Del'
-          delBtn.style.cssText = 'padding:2px 8px;cursor:pointer;color:#f66'
-          delBtn.addEventListener('click', () => {
-            SaveSystem.deleteSave(slot)
-            if (panel.parentNode) panel.remove()
-            this.showSaveLoadPanel(mode)
-          })
-          row.appendChild(delBtn)
-        }
-      }
-      panel.appendChild(row)
-    }
-
-    const closeRow = document.createElement('div')
-    closeRow.style.cssText = 'text-align:center;margin-top:8px'
-    const closeBtn = document.createElement('button')
-    closeBtn.textContent = 'Close'
-    closeBtn.style.cssText = 'padding:2px 16px;cursor:pointer'
-    closeBtn.addEventListener('click', () => { if (panel.parentNode) panel.remove() })
-    closeRow.appendChild(closeBtn)
-    panel.appendChild(closeRow)
-
-    document.body.appendChild(panel)
   }
 }
