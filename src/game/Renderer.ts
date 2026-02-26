@@ -207,10 +207,6 @@ export class Renderer {
           const screenX = x * TILE_SIZE * camera.zoom + offsetX
           const screenY = y * TILE_SIZE * camera.zoom + offsetY
 
-          // Check 4 neighbors: top, bottom, left, right
-          const neighbors: [number, number, number, number, number, number][] = [
-            // neighborTile check: dx, dy, drawX, drawY, drawW, drawH
-          ]
           const top = world.getTile(x, y - 1)
           const bottom = world.getTile(x, y + 1)
           const left = world.getTile(x - 1, y)
@@ -284,7 +280,6 @@ export class Renderer {
     tileSize: number, offsetX: number, offsetY: number
   ): void {
     const ctx = this.ctx
-    const now = performance.now()
     const entities = em.getEntitiesWithComponents('position', 'render')
 
     // --- Batch pass: group simple fallback entities by color to reduce fillStyle switches ---
@@ -762,14 +757,6 @@ export class Renderer {
     }
 
     ctx.globalAlpha = 1
-  }
-
-  /** @deprecated Battle effects are now rendered inline in renderEntities to avoid duplicate entity traversal. */
-  private renderBattleEffects(
-    _em: EntityManager, _camera: Camera, _bounds: any,
-    _tileSize: number, _offsetX: number, _offsetY: number
-  ): void {
-    return
   }
 
   private renderWarBorders(

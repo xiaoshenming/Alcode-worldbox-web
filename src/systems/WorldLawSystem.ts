@@ -244,7 +244,8 @@ export class WorldLawSystem {
       ctx.roundRect(trackX, trackY, sliderW, SLIDER_TRACK_H, 3)
       ctx.fill()
       // 填充部分
-      const ratio = (p.value - p.min) / (p.max - p.min)
+      const range = p.max - p.min
+      const ratio = range > 0 ? (p.value - p.min) / range : 0
       ctx.fillStyle = '#e94560'
       ctx.beginPath()
       ctx.roundRect(trackX, trackY, sliderW * ratio, SLIDER_TRACK_H, 3)

@@ -171,7 +171,8 @@ export class SandboxSettingsSystem {
       ctx.fill();
 
       // Slider fill
-      const ratio = (v - d.min) / (d.max - d.min);
+      const range = d.max - d.min;
+      const ratio = range > 0 ? (v - d.min) / range : 0;
       ctx.fillStyle = 'rgba(79,195,247,0.5)';
       ctx.beginPath();
       ctx.roundRect(sx, sy, sw * ratio, sh, 4);

@@ -351,7 +351,7 @@ export class EraTransitionSystem {
     }
 
     const n = this.popSamples.length;
-    const dx = cw / (n - 1);
+    const dx = n > 1 ? cw / (n - 1) : 0;
 
     // 从底部向上逐层绘制面积
     // 先算每个采样点的累积值

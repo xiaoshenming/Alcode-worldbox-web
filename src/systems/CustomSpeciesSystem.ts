@@ -259,7 +259,8 @@ export class CustomSpeciesSystem {
       ctx.fillStyle = '#aaa';
       ctx.fillText(def.label, px + PAD, cy + 14);
       const val = this.editValues[def.key];
-      const ratio = (val - def.min) / (def.max - def.min);
+      const range = def.max - def.min;
+      const ratio = range > 0 ? (val - def.min) / range : 0;
       const sliderX = px + 70;
       const sliderW = PANEL_W - 70 - PAD - 40;
       // 轨道
