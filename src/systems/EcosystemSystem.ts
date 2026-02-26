@@ -216,6 +216,7 @@ export class EcosystemSystem {
   private spawnWildlife(em: EntityManager, world: World, tick: number): void {
     if (this.getTotalWildlife() >= MAX_WILDLIFE) return;
 
+    this.rebuildCreatureCache(em, tick);
     const season = world.getSeason();
     let seasonMultiplier = 1.0;
     if (season === 'spring') seasonMultiplier = 1.8;
@@ -248,16 +249,31 @@ export class EcosystemSystem {
     }
   }
 
-  private countSpeciesInArea(em: EntityManager, species: string, cx: number, cy: number): number {
-    const half = AREA_CHECK_SIZE / 2;
-    let count = 0;
+  private _cachedCreaturePositions: { species: string; x: number; y: number }[] = [];
+  private _creatureCacheTick = -1;
+
+  private rebuildCreatureCache(em: EntityManager, tick: number): void {
+    if (this._creatureCacheTick === tick) return;
+    this._creatureCacheTick = tick;
+    this._cachedCreaturePositions.length = 0;
     const entities = em.getEntitiesWithComponents('creature', 'position');
     for (const id of entities) {
       const creature = em.getComponent<CreatureComponent>(id, 'creature');
-      if (!creature || creature.species !== species) continue;
+      if (!creature) continue;
       const pos = em.getComponent<PositionComponent>(id, 'position');
       if (!pos) continue;
-      if (Math.abs(pos.x - cx) <= half && Math.abs(pos.y - cy) <= half) {
+      this._cachedCreaturePositions.push({ species: creature.species, x: pos.x, y: pos.y });
+    }
+  }
+
+  private countSpeciesInArea(em: EntityManager, species: string, cx: number, cy: number): number {
+    const half = AREA_CHECK_SIZE / 2;
+    let count = 0;
+    const cached = this._cachedCreaturePositions;
+    for (let i = 0, len = cached.length; i < len; i++) {
+      const c = cached[i];
+      if (c.species !== species) continue;
+      if (Math.abs(c.x - cx) <= half && Math.abs(c.y - cy) <= half) {
         count++;
       }
     }

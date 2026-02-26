@@ -45,10 +45,13 @@ export class DiplomacySystem {
   private treaties: Treaty[] = []
   private events: DiplomaticEvent[] = []
   private maxEvents = 50
+  private _civsBuf: Civilization[] = []
 
   update(civManager: CivManager, world: World, em: EntityManager): void {
     const tick = world.tick
-    const civs = Array.from(civManager.civilizations.values())
+    const civs = this._civsBuf
+    civs.length = 0
+    for (const c of civManager.civilizations.values()) civs.push(c)
 
     // Update existing treaties
     this.updateTreaties(civManager, tick)
