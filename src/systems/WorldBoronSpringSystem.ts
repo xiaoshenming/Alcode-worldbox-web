@@ -1,25 +1,25 @@
-// World Lithium Spring System (v3.737) - Lithium-bearing mineral springs
-// Springs carrying dissolved lithium salts from pegmatite formations
+// World Boron Spring System (v3.739) - Boron-bearing mineral springs
+// Springs carrying dissolved boron compounds from evaporite deposits
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 import { TileType } from '../utils/Constants'
 
-export interface LithiumSpringZone {
+export interface BoronSpringZone {
   id: number; x: number; y: number
-  lithiumContent: number
+  boronContent: number
   springFlow: number
-  pegmatiteLeaching: number
-  alkaliConcentration: number
+  evaporiteLeaching: number
+  borateConcentration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 3240
+const CHECK_INTERVAL = 3270
 const FORM_CHANCE = 0.003
 const MAX_ZONES = 32
 
-export class WorldLithiumSpringSystem {
-  private zones: LithiumSpringZone[] = []
+export class WorldBoronSpringSystem {
+  private zones: BoronSpringZone[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -40,10 +40,10 @@ export class WorldLithiumSpringSystem {
 
       this.zones.push({
         id: this.nextId++, x, y,
-        lithiumContent: 40 + Math.random() * 60,
+        boronContent: 40 + Math.random() * 60,
         springFlow: 10 + Math.random() * 50,
-        pegmatiteLeaching: 20 + Math.random() * 80,
-        alkaliConcentration: 15 + Math.random() * 85,
+        evaporiteLeaching: 20 + Math.random() * 80,
+        borateConcentration: 15 + Math.random() * 85,
         tick
       })
     }
@@ -64,5 +64,5 @@ export class WorldLithiumSpringSystem {
     return false
   }
 
-  getZones(): readonly LithiumSpringZone[] { return this.zones }
+  getZones(): readonly BoronSpringZone[] { return this.zones }
 }

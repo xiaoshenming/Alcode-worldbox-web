@@ -1,25 +1,25 @@
-// World Lithium Spring System (v3.737) - Lithium-bearing mineral springs
-// Springs carrying dissolved lithium salts from pegmatite formations
+// World Beryllium Spring System (v3.738) - Beryllium-bearing mineral springs
+// Springs carrying dissolved beryllium compounds from granitic rock formations
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 import { TileType } from '../utils/Constants'
 
-export interface LithiumSpringZone {
+export interface BerylliumSpringZone {
   id: number; x: number; y: number
-  lithiumContent: number
+  berylliumContent: number
   springFlow: number
-  pegmatiteLeaching: number
-  alkaliConcentration: number
+  graniteLeaching: number
+  silicateConcentration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 3240
+const CHECK_INTERVAL = 3255
 const FORM_CHANCE = 0.003
 const MAX_ZONES = 32
 
-export class WorldLithiumSpringSystem {
-  private zones: LithiumSpringZone[] = []
+export class WorldBerylliumSpringSystem {
+  private zones: BerylliumSpringZone[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -40,10 +40,10 @@ export class WorldLithiumSpringSystem {
 
       this.zones.push({
         id: this.nextId++, x, y,
-        lithiumContent: 40 + Math.random() * 60,
+        berylliumContent: 40 + Math.random() * 60,
         springFlow: 10 + Math.random() * 50,
-        pegmatiteLeaching: 20 + Math.random() * 80,
-        alkaliConcentration: 15 + Math.random() * 85,
+        graniteLeaching: 20 + Math.random() * 80,
+        silicateConcentration: 15 + Math.random() * 85,
         tick
       })
     }
@@ -64,5 +64,5 @@ export class WorldLithiumSpringSystem {
     return false
   }
 
-  getZones(): readonly LithiumSpringZone[] { return this.zones }
+  getZones(): readonly BerylliumSpringZone[] { return this.zones }
 }

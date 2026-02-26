@@ -1,29 +1,29 @@
-// Diplomatic Hayward System (v3.646) - Hayward governance
-// Hedge and fence wardens managing common land boundaries between kingdoms
+// Diplomatic Hayward System (v3.737) - Hayward enclosure governance
+// Officers managing hedge and fence maintenance between kingdom territories
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 
-export type HaywardForm = 'common_hayward' | 'manor_hayward' | 'parish_hayward' | 'borough_hayward'
+export type HaywardForm = 'royal_hayward' | 'manor_hayward' | 'parish_hayward' | 'common_hayward'
 
 export interface HaywardArrangement {
   id: number
-  commonCivId: number
-  haywardCivId: number
+  enclosingCivId: number
+  neighborCivId: number
   form: HaywardForm
+  enclosureAuthority: number
+  hedgeMaintenance: number
   boundaryEnforcement: number
-  fenceInspection: number
-  strayRecovery: number
-  commonRights: number
+  commonProtection: number
   duration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2830
+const CHECK_INTERVAL = 3110
 const PROCEED_CHANCE = 0.0021
 const MAX_ARRANGEMENTS = 16
 
-const FORMS: HaywardForm[] = ['common_hayward', 'manor_hayward', 'parish_hayward', 'borough_hayward']
+const FORMS: HaywardForm[] = ['royal_hayward', 'manor_hayward', 'parish_hayward', 'common_hayward']
 
 export class DiplomaticHaywardSystem {
   private arrangements: HaywardArrangement[] = []
@@ -35,21 +35,21 @@ export class DiplomaticHaywardSystem {
     this.lastCheck = tick
 
     if (this.arrangements.length < MAX_ARRANGEMENTS && Math.random() < PROCEED_CHANCE) {
-      const common = 1 + Math.floor(Math.random() * 8)
-      const hayward = 1 + Math.floor(Math.random() * 8)
-      if (common === hayward) return
+      const enclosing = 1 + Math.floor(Math.random() * 8)
+      const neighbor = 1 + Math.floor(Math.random() * 8)
+      if (enclosing === neighbor) return
 
       const form = FORMS[Math.floor(Math.random() * FORMS.length)]
 
       this.arrangements.push({
         id: this.nextId++,
-        commonCivId: common,
-        haywardCivId: hayward,
+        enclosingCivId: enclosing,
+        neighborCivId: neighbor,
         form,
-        boundaryEnforcement: 20 + Math.random() * 40,
-        fenceInspection: 25 + Math.random() * 35,
-        strayRecovery: 10 + Math.random() * 30,
-        commonRights: 15 + Math.random() * 25,
+        enclosureAuthority: 20 + Math.random() * 40,
+        hedgeMaintenance: 25 + Math.random() * 35,
+        boundaryEnforcement: 10 + Math.random() * 30,
+        commonProtection: 15 + Math.random() * 25,
         duration: 0,
         tick,
       })
@@ -57,10 +57,10 @@ export class DiplomaticHaywardSystem {
 
     for (const a of this.arrangements) {
       a.duration += 1
-      a.boundaryEnforcement = Math.max(5, Math.min(85, a.boundaryEnforcement + (Math.random() - 0.48) * 0.12))
-      a.fenceInspection = Math.max(10, Math.min(90, a.fenceInspection + (Math.random() - 0.5) * 0.11))
-      a.strayRecovery = Math.max(5, Math.min(80, a.strayRecovery + (Math.random() - 0.42) * 0.13))
-      a.commonRights = Math.max(5, Math.min(65, a.commonRights + (Math.random() - 0.46) * 0.09))
+      a.enclosureAuthority = Math.max(5, Math.min(85, a.enclosureAuthority + (Math.random() - 0.48) * 0.12))
+      a.hedgeMaintenance = Math.max(10, Math.min(90, a.hedgeMaintenance + (Math.random() - 0.5) * 0.11))
+      a.boundaryEnforcement = Math.max(5, Math.min(80, a.boundaryEnforcement + (Math.random() - 0.42) * 0.13))
+      a.commonProtection = Math.max(5, Math.min(65, a.commonProtection + (Math.random() - 0.46) * 0.09))
     }
 
     const cutoff = tick - 88000
