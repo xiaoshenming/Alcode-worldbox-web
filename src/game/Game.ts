@@ -713,6 +713,20 @@ import { DiplomaticRegencySystem } from '../systems/DiplomaticRegencySystem'
 import { CreatureAnvilsmithSystem } from '../systems/CreatureAnvilsmithSystem'
 import { WorldRadiumSpringSystem } from '../systems/WorldRadiumSpringSystem'
 import { DiplomaticStewardshipSystem } from '../systems/DiplomaticStewardshipSystem'
+import { CreatureToolsmithSystem } from '../systems/CreatureToolsmithSystem'
+import { WorldBorateSpringSystem } from '../systems/WorldBorateSpringSystem'
+import { DiplomaticCustodianshipSystem } from '../systems/DiplomaticCustodianshipSystem'
+import { CreatureNailsmithSystem } from '../systems/CreatureNailsmithSystem'
+import { WorldSeleniumSpringSystem } from '../systems/WorldSeleniumSpringSystem'
+import { DiplomaticTrusteeshipSystem } from '../systems/DiplomaticTrusteeshipSystem'
+import { WorldMagnesiumSpringSystem } from '../systems/WorldMagnesiumSpringSystem'
+import { DiplomaticGuardianshipSystem } from '../systems/DiplomaticGuardianshipSystem'
+import { CreatureChainmakerSystem } from '../systems/CreatureChainmakerSystem'
+import { WorldPotassiumSpringSystem } from '../systems/WorldPotassiumSpringSystem'
+import { DiplomaticPatronageSystem } from '../systems/DiplomaticPatronageSystem'
+import { CreatureBellfounderSystem } from '../systems/CreatureBellfounderSystem'
+import { WorldStrontiumSpringSystem } from '../systems/WorldStrontiumSpringSystem'
+import { DiplomaticStewardshipPactSystem } from '../systems/DiplomaticStewardshipPactSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1427,6 +1441,20 @@ export class Game {
   private creatureAnvilsmith!: CreatureAnvilsmithSystem
   private worldRadiumSpring!: WorldRadiumSpringSystem
   private diplomaticStewardship!: DiplomaticStewardshipSystem
+  private creatureToolsmith!: CreatureToolsmithSystem
+  private worldBorateSpring!: WorldBorateSpringSystem
+  private diplomaticCustodianship!: DiplomaticCustodianshipSystem
+  private creatureNailsmith!: CreatureNailsmithSystem
+  private worldSeleniumSpring!: WorldSeleniumSpringSystem
+  private diplomaticTrusteeship!: DiplomaticTrusteeshipSystem
+  private worldMagnesiumSpring!: WorldMagnesiumSpringSystem
+  private diplomaticGuardianship!: DiplomaticGuardianshipSystem
+  private creatureChainmaker!: CreatureChainmakerSystem
+  private worldPotassiumSpring!: WorldPotassiumSpringSystem
+  private diplomaticPatronage!: DiplomaticPatronageSystem
+  private creatureBellfounder!: CreatureBellfounderSystem
+  private worldStrontiumSpring!: WorldStrontiumSpringSystem
+  private diplomaticStewardshipPact!: DiplomaticStewardshipPactSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -2292,6 +2320,20 @@ export class Game {
     this.creatureAnvilsmith = new CreatureAnvilsmithSystem()
     this.worldRadiumSpring = new WorldRadiumSpringSystem()
     this.diplomaticStewardship = new DiplomaticStewardshipSystem()
+    this.creatureToolsmith = new CreatureToolsmithSystem()
+    this.worldBorateSpring = new WorldBorateSpringSystem()
+    this.diplomaticCustodianship = new DiplomaticCustodianshipSystem()
+    this.creatureNailsmith = new CreatureNailsmithSystem()
+    this.worldSeleniumSpring = new WorldSeleniumSpringSystem()
+    this.diplomaticTrusteeship = new DiplomaticTrusteeshipSystem()
+    this.worldMagnesiumSpring = new WorldMagnesiumSpringSystem()
+    this.diplomaticGuardianship = new DiplomaticGuardianshipSystem()
+    this.creatureChainmaker = new CreatureChainmakerSystem()
+    this.worldPotassiumSpring = new WorldPotassiumSpringSystem()
+    this.diplomaticPatronage = new DiplomaticPatronageSystem()
+    this.creatureBellfounder = new CreatureBellfounderSystem()
+    this.worldStrontiumSpring = new WorldStrontiumSpringSystem()
+    this.diplomaticStewardshipPact = new DiplomaticStewardshipPactSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -4641,6 +4683,20 @@ export class Game {
         this.worldRadiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic stewardship (v3.535) - stewardship governance
         this.diplomaticStewardship.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureToolsmith.update(this.tickRate, this.em, this.world.tick)
+        this.worldBorateSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticCustodianship.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureNailsmith.update(this.tickRate, this.em, this.world.tick)
+        this.worldSeleniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticTrusteeship.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMagnesiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticGuardianship.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureChainmaker.update(this.tickRate, this.em, this.world.tick)
+        this.worldPotassiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticPatronage.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureBellfounder.update(this.tickRate, this.em, this.world.tick)
+        this.worldStrontiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticStewardshipPact.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate

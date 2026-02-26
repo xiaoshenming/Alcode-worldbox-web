@@ -1,76 +1,51 @@
-// Creature Locksmith System (v3.218) - Locksmiths craft locks, keys, and security devices
-// Master locksmiths protect vaults and homes with intricate mechanisms
+// Creature Locksmith System (v3.542) - Lock and key crafting artisans
+// Skilled metalworkers creating locks, keys, and security mechanisms
 
-import { EntityManager, CreatureComponent } from '../ecs/Entity'
-
-export type LockType = 'padlock' | 'deadbolt' | 'combination' | 'puzzle'
+import { EntityManager } from '../ecs/Entity'
 
 export interface Locksmith {
   id: number
   entityId: number
-  skill: number
-  locksMade: number
-  lockType: LockType
-  complexity: number
-  pickResistance: number
+  precisionWork: number
+  mechanismDesign: number
+  keyFitting: number
+  outputQuality: number
   tick: number
 }
 
-const CHECK_INTERVAL = 1150
-const CRAFT_CHANCE = 0.006
-const MAX_LOCKSMITHS = 46
-const SKILL_GROWTH = 0.08
-
-const LOCK_TYPES: LockType[] = ['padlock', 'deadbolt', 'combination', 'puzzle']
+const CHECK_INTERVAL = 2600
+const RECRUIT_CHANCE = 0.0014
+const MAX_LOCKSMITHS = 10
 
 export class CreatureLocksmithSystem {
   private locksmiths: Locksmith[] = []
   private nextId = 1
   private lastCheck = 0
-  private skillMap = new Map<number, number>()
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const creatures = em.getEntitiesWithComponents('creature', 'position')
-
-    for (const eid of creatures) {
-      if (this.locksmiths.length >= MAX_LOCKSMITHS) break
-      if (Math.random() > CRAFT_CHANCE) continue
-
-      const c = em.getComponent<CreatureComponent>(eid, 'creature')
-      if (!c || c.age < 10) continue
-
-      let skill = this.skillMap.get(eid) ?? (3 + Math.random() * 10)
-      skill = Math.min(100, skill + SKILL_GROWTH)
-      this.skillMap.set(eid, skill)
-
-      const typeIdx = Math.min(3, Math.floor(skill / 25))
-      const lockType = LOCK_TYPES[typeIdx]
-      const locksMade = 1 + Math.floor(skill / 12)
-      const complexity = 10 + skill * 0.7 + Math.random() * 15
-
+    if (this.locksmiths.length < MAX_LOCKSMITHS && Math.random() < RECRUIT_CHANCE) {
       this.locksmiths.push({
         id: this.nextId++,
-        entityId: eid,
-        skill,
-        locksMade,
-        lockType,
-        complexity: Math.min(100, complexity),
-        pickResistance: 5 + skill * 0.85 + Math.random() * 10,
+        entityId: Math.floor(Math.random() * 500),
+        precisionWork: 10 + Math.random() * 25,
+        mechanismDesign: 15 + Math.random() * 20,
+        keyFitting: 5 + Math.random() * 20,
+        outputQuality: 10 + Math.random() * 25,
         tick,
       })
     }
 
-    const cutoff = tick - 41000
-    for (let i = this.locksmiths.length - 1; i >= 0; i--) {
-      if (this.locksmiths[i].tick < cutoff) {
-        this.locksmiths.splice(i, 1)
-      }
+    for (const l of this.locksmiths) {
+      l.precisionWork = Math.min(100, l.precisionWork + 0.02)
+      l.keyFitting = Math.min(100, l.keyFitting + 0.015)
+      l.outputQuality = Math.min(100, l.outputQuality + 0.01)
     }
+
+    this.locksmiths = this.locksmiths.filter(l => l.precisionWork > 4)
   }
 
-  getLocksmiths(): readonly Locksmith[] { return this.locksmiths }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
+  getLocksmiths(): Locksmith[] { return this.locksmiths }
 }
