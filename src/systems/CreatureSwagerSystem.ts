@@ -1,5 +1,5 @@
-// Creature Swager System (v3.644) - Metal swaging artisans
-// Workers who shape metal using dies and hammers in swaging machines
+// Creature Swager System (v3.662) - Metal swaging artisans
+// Craftspeople who shape metal using dies and hammering techniques
 
 import { EntityManager } from '../ecs/Entity'
 
@@ -8,13 +8,13 @@ export interface Swager {
   entityId: number
   swagingSkill: number
   dieAlignment: number
-  forceControl: number
-  shapeAccuracy: number
+  metalForming: number
+  dimensionalAccuracy: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2880
-const RECRUIT_CHANCE = 0.0014
+const CHECK_INTERVAL = 2900
+const RECRUIT_CHANCE = 0.0015
 const MAX_SWAGERS = 10
 
 export class CreatureSwagerSystem {
@@ -32,8 +32,8 @@ export class CreatureSwagerSystem {
         entityId: Math.floor(Math.random() * 500),
         swagingSkill: 10 + Math.random() * 25,
         dieAlignment: 15 + Math.random() * 20,
-        forceControl: 5 + Math.random() * 20,
-        shapeAccuracy: 10 + Math.random() * 25,
+        metalForming: 5 + Math.random() * 20,
+        dimensionalAccuracy: 10 + Math.random() * 25,
         tick,
       })
     }
@@ -41,7 +41,7 @@ export class CreatureSwagerSystem {
     for (const s of this.swagers) {
       s.swagingSkill = Math.min(100, s.swagingSkill + 0.02)
       s.dieAlignment = Math.min(100, s.dieAlignment + 0.015)
-      s.shapeAccuracy = Math.min(100, s.shapeAccuracy + 0.01)
+      s.dimensionalAccuracy = Math.min(100, s.dimensionalAccuracy + 0.01)
     }
 
     this.swagers = this.swagers.filter(s => s.swagingSkill > 4)
