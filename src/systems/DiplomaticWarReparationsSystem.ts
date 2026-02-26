@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { CivManager } from '../civilization/CivManager'
 
 export type ReparationPhase = 'negotiating' | 'paying' | 'defaulted' | 'completed'
 
@@ -27,14 +28,12 @@ export class DiplomaticWarReparationsSystem {
   private nextId = 1
   private lastCheck = 0
 
-  // Note: civManager access via (world as any).civManager or (em as any).civManager
-  update(dt: number, world: World, em: EntityManager, tick: number): void {
+  update(dt: number, world: World, em: EntityManager, civManager: CivManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const civManager = (em as any).civManager ?? (world as any).civManager
     if (!civManager?.civilizations) return
-    const civs = civManager.civilizations
+    const civs = Array.from(civManager.civilizations.values())
     if (civs.length < 2) return
 
     // Initiate new reparation agreements

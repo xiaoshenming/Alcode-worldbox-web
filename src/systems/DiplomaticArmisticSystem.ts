@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { CivManager } from '../civilization/CivManager'
 
 export type ArmisticeStatus = 'proposed' | 'active' | 'expired' | 'violated'
 
@@ -26,13 +27,12 @@ export class DiplomaticArmisticSystem {
   private nextId = 1
   private lastCheck = 0
 
-  update(dt: number, world: World, em: EntityManager, tick: number): void {
+  update(dt: number, world: World, em: EntityManager, civManager: CivManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const civManager = (em as any).civManager ?? (world as any).civManager
     if (!civManager?.civilizations) return
-    const civs = civManager.civilizations
+    const civs = Array.from(civManager.civilizations.values())
     if (civs.length < 2) return
 
     // Propose new armistices between warring factions

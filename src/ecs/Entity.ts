@@ -11,6 +11,12 @@ export interface Component {
 export class EntityManager {
   private entities: Set<EntityId> = new Set()
   private components: Map<string, Map<EntityId, Component>> = new Map()
+  private cacheVersion = 0
+  private queryCache: Map<string, { version: number; result: EntityId[] }> = new Map()
+
+  private invalidateCache(): void {
+    this.cacheVersion++
+  }
 
   createEntity(): EntityId {
     const id = nextEntityId++
@@ -21,6 +27,7 @@ export class EntityManager {
   removeEntity(id: EntityId): void {
     this.entities.delete(id)
     this.components.forEach(compMap => compMap.delete(id))
+    this.invalidateCache()
   }
 
   addComponent<T extends Component>(id: EntityId, component: T): void {
@@ -28,6 +35,7 @@ export class EntityManager {
       this.components.set(component.type, new Map())
     }
     this.components.get(component.type)!.set(id, component)
+    this.invalidateCache()
   }
 
   getComponent<T extends Component>(id: EntityId, type: string): T | undefined {
@@ -40,17 +48,26 @@ export class EntityManager {
 
   removeComponent(id: EntityId, type: string): void {
     this.components.get(type)?.delete(id)
+    this.invalidateCache()
   }
 
   getEntitiesWithComponent(type: string): EntityId[] {
+    const cached = this.queryCache.get(type)
+    if (cached && cached.version === this.cacheVersion) return cached.result
     const compMap = this.components.get(type)
     if (!compMap) return []
-    return [...compMap.keys()]
+    const result = [...compMap.keys()]
+    this.queryCache.set(type, { version: this.cacheVersion, result })
+    return result
   }
 
   getEntitiesWithComponents(...types: string[]): EntityId[] {
     if (types.length === 0) return []
     if (types.length === 1) return this.getEntitiesWithComponent(types[0])
+
+    const cacheKey = types.join('|')
+    const cached = this.queryCache.get(cacheKey)
+    if (cached && cached.version === this.cacheVersion) return cached.result
 
     // Collect component maps, bail early if any type has no entities
     const maps: Map<EntityId, Component>[] = []
@@ -81,6 +98,7 @@ export class EntityManager {
       }
       if (hasAll) result.push(id)
     }
+    this.queryCache.set(cacheKey, { version: this.cacheVersion, result })
     return result
   }
 

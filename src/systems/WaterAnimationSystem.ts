@@ -1,6 +1,8 @@
 import { World } from '../game/World'
 import { TileType, TILE_SIZE } from '../utils/Constants'
 
+type Ctx2D = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
+
 /** Foam particle at water-land boundary */
 interface FoamParticle {
   x: number
@@ -38,6 +40,14 @@ export class WaterAnimationSystem {
   // Pre-computed sin table for performance
   private readonly SIN_TABLE: Float32Array
   private readonly SIN_TABLE_SIZE = 256
+
+  // OffscreenCanvas cache for water effects
+  private waterCache: OffscreenCanvas | null = null
+  private waterCacheCtx: OffscreenCanvasRenderingContext2D | null = null
+  private cacheTime: number = -1
+  private cacheBounds: { startX: number; startY: number; endX: number; endY: number; camX: number; camY: number; zoom: number } | null = null
+  private readonly CACHE_INTERVAL = 3 // re-render water every N frames
+  private frameCounter: number = 0
 
   constructor() {
     this.SIN_TABLE = new Float32Array(this.SIN_TABLE_SIZE)
@@ -113,42 +123,68 @@ export class WaterAnimationSystem {
     const x1 = Math.min(world.width - 1, endX)
     const y1 = Math.min(world.height - 1, endY)
 
-    for (let ty = y0; ty <= y1; ty++) {
-      for (let tx = x0; tx <= x1; tx++) {
-        const tile = world.tiles[ty][tx]
-        if (tile !== TileType.DEEP_WATER && tile !== TileType.SHALLOW_WATER) continue
+    this.frameCounter++
 
-        const screenX = (tx * TILE_SIZE - cameraX) * zoom
-        const screenY = (ty * TILE_SIZE - cameraY) * zoom
-        const isDeep = tile === TileType.DEEP_WATER
+    // Check if we need to re-render the water cache
+    const boundsChanged = !this.cacheBounds ||
+      this.cacheBounds.startX !== x0 || this.cacheBounds.startY !== y0 ||
+      this.cacheBounds.endX !== x1 || this.cacheBounds.endY !== y1 ||
+      this.cacheBounds.camX !== cameraX || this.cacheBounds.camY !== cameraY ||
+      this.cacheBounds.zoom !== zoom
 
-        // 1. Wave ripple overlay
-        this.renderWave(ctx, screenX, screenY, sz, tx, ty, time, isDeep)
+    const needsRedraw = boundsChanged || this.frameCounter % this.CACHE_INTERVAL === 0
 
-        // 2. Depth-based color gradient
-        this.renderDepthGradient(ctx, screenX, screenY, sz, tx, ty, time, isDeep)
+    if (needsRedraw) {
+      const width = ctx.canvas.width
+      const height = ctx.canvas.height
 
-        // 3. Reflection / shimmer
-        this.renderReflection(ctx, screenX, screenY, sz, tx, ty, time, dayNightCycle)
+      // Ensure cache canvas exists and is correct size
+      if (!this.waterCache || this.waterCache.width !== width || this.waterCache.height !== height) {
+        this.waterCache = new OffscreenCanvas(width, height)
+        this.waterCacheCtx = this.waterCache.getContext('2d')!
+      }
 
-        // 4. Coastline foam edge
-        if (this.coastTiles.has(`${tx},${ty}`)) {
-          this.renderCoastFoamEdge(ctx, screenX, screenY, sz, tx, ty, time, world)
+      const cctx = this.waterCacheCtx!
+      cctx.clearRect(0, 0, width, height)
+
+      for (let ty = y0; ty <= y1; ty++) {
+        for (let tx = x0; tx <= x1; tx++) {
+          const tile = world.tiles[ty][tx]
+          if (tile !== TileType.DEEP_WATER && tile !== TileType.SHALLOW_WATER) continue
+
+          const screenX = (tx * TILE_SIZE - cameraX) * zoom
+          const screenY = (ty * TILE_SIZE - cameraY) * zoom
+          const isDeep = tile === TileType.DEEP_WATER
+
+          this.renderWave(cctx, screenX, screenY, sz, tx, ty, time, isDeep)
+          this.renderDepthGradient(cctx, screenX, screenY, sz, tx, ty, time, isDeep)
+          this.renderReflection(cctx, screenX, screenY, sz, tx, ty, time, dayNightCycle)
+
+          if (this.coastTiles.has(`${tx},${ty}`)) {
+            this.renderCoastFoamEdge(cctx, screenX, screenY, sz, tx, ty, time, world)
+          }
         }
       }
+
+      this.cacheBounds = { startX: x0, startY: y0, endX: x1, endY: y1, camX: cameraX, camY: cameraY, zoom }
+      this.cacheTime = time
     }
 
-    // 5. Foam particles
+    // Blit cached water effects
+    if (this.waterCache) {
+      ctx.drawImage(this.waterCache, 0, 0)
+    }
+
+    // Foam particles are always rendered fresh (they're few and move every frame)
     this.renderFoamParticles(ctx, cameraX, cameraY, zoom)
 
-    // Restore alpha
     ctx.globalAlpha = 1
   }
 
   // ── Wave ripple: sine-based undulation with per-tile phase offset ──
 
   private renderWave(
-    ctx: CanvasRenderingContext2D,
+    ctx: Ctx2D,
     sx: number, sy: number, sz: number,
     tx: number, ty: number,
     time: number, isDeep: boolean
@@ -182,7 +218,7 @@ export class WaterAnimationSystem {
   // ── Depth gradient: deeper water gets a darker tint that shifts over time ──
 
   private renderDepthGradient(
-    ctx: CanvasRenderingContext2D,
+    ctx: Ctx2D,
     sx: number, sy: number, sz: number,
     tx: number, ty: number,
     time: number, isDeep: boolean
@@ -207,7 +243,7 @@ export class WaterAnimationSystem {
   // ── Reflection: sun/moon glint on water surface ──
 
   private renderReflection(
-    ctx: CanvasRenderingContext2D,
+    ctx: Ctx2D,
     sx: number, sy: number, sz: number,
     tx: number, ty: number,
     time: number, dayNightCycle: number
@@ -255,7 +291,7 @@ export class WaterAnimationSystem {
   // ── Coast foam edge: white fringe where water meets land ──
 
   private renderCoastFoamEdge(
-    ctx: CanvasRenderingContext2D,
+    ctx: Ctx2D,
     sx: number, sy: number, sz: number,
     tx: number, ty: number,
     time: number, world: World

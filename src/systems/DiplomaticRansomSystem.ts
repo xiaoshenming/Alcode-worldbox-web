@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { CivManager } from '../civilization/CivManager'
 
 export type RansomStatus = 'demanding' | 'negotiating' | 'paid' | 'refused'
 
@@ -33,7 +34,7 @@ export class DiplomaticRansomSystem {
 
     const civManager = (em as any).civManager ?? (world as any).civManager
     if (!civManager?.civilizations) return
-    const civs = civManager.civilizations
+    const civs = Array.from((civManager as CivManager).civilizations.values())
     if (civs.length < 2) return
 
     // Initiate new ransom demands

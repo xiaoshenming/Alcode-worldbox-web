@@ -2,6 +2,7 @@
 // Tariffs reduce trade efficiency and can spark trade wars
 
 import { EntityManager } from '../ecs/Entity'
+import { CivManager } from '../civilization/CivManager'
 
 export type TariffLevel = 'low' | 'moderate' | 'high' | 'prohibitive'
 
@@ -37,12 +38,12 @@ export class DiplomaticTariffSystem {
   private nextId = 1
   private lastCheck = 0
 
-  update(dt: number, em: EntityManager, civManager: any, tick: number): void {
+  update(dt: number, em: EntityManager, civManager: CivManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs = civManager.civilizations
+    const civs = Array.from(civManager.civilizations.values())
     if (civs.length < 2) return
 
     // Impose new tariffs

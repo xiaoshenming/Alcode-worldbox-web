@@ -3,6 +3,8 @@
  * 为地形添加动态视觉细节：草丛摇摆、水面波纹、岩石纹理、沙地粒子、花朵点缀
  */
 
+type Ctx2D = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
+
 // 地形类型常量（与项目约定一致）
 const TERRAIN_DEEP_WATER = 0;
 const TERRAIN_SHALLOW_WATER = 1;
@@ -95,6 +97,18 @@ export class TerrainDecorationSystem {
 
   private tick = 0;
 
+  // OffscreenCanvas cache for static decorations (flowers, rocks)
+  private staticCache: OffscreenCanvas | null = null;
+  private staticCacheCtx: OffscreenCanvasRenderingContext2D | null = null;
+  private staticCacheBounds: { sx: number; sy: number; ex: number; ey: number; camX: number; camY: number; zoom: number } | null = null;
+  private staticCacheDirty = true;
+
+  // Grass rendering frame skip
+  private frameCounter = 0;
+  private grassCanvas: OffscreenCanvas | null = null;
+  private grassCtx: OffscreenCanvasRenderingContext2D | null = null;
+  private readonly GRASS_UPDATE_INTERVAL = 3;
+
   // --- 公共接口 ---
 
   init(worldWidth: number, worldHeight: number, getTerrain: (x: number, y: number) => number): void {
@@ -117,6 +131,7 @@ export class TerrainDecorationSystem {
     this.season = season;
     // 季节变化时清除花朵缓存以重新生成
     this.flowerCache.clear();
+    this.staticCacheDirty = true;
   }
 
   update(tick: number): void {
@@ -126,7 +141,7 @@ export class TerrainDecorationSystem {
   }
 
   render(
-    ctx: CanvasRenderingContext2D,
+    ctx: Ctx2D,
     camX: number, camY: number, zoom: number,
     startX: number, startY: number, endX: number, endY: number
   ): void {
@@ -134,33 +149,79 @@ export class TerrainDecorationSystem {
     const sy = Math.max(0, startY);
     const ex = Math.min(this.worldW - 1, endX);
     const ey = Math.min(this.worldH - 1, endY);
+    const width = ctx.canvas.width;
+    const height = ctx.canvas.height;
 
-    ctx.save();
+    this.frameCounter++;
 
-    for (let ty = sy; ty <= ey; ty++) {
-      for (let tx = sx; tx <= ex; tx++) {
-        const terrain = this.getTerrain(tx, ty);
-        const px = (tx * TILE_SIZE - camX) * zoom;
-        const py = (ty * TILE_SIZE - camY) * zoom;
-        const sz = TILE_SIZE * zoom;
+    // --- Static decorations (flowers, rock cracks) cached ---
+    const boundsChanged = !this.staticCacheBounds ||
+      this.staticCacheBounds.sx !== sx || this.staticCacheBounds.sy !== sy ||
+      this.staticCacheBounds.ex !== ex || this.staticCacheBounds.ey !== ey ||
+      this.staticCacheBounds.camX !== camX || this.staticCacheBounds.camY !== camY ||
+      this.staticCacheBounds.zoom !== zoom;
 
-        if (terrain === TERRAIN_GRASS || terrain === TERRAIN_FOREST) {
-          this.renderGrass(ctx, tx, ty, px, py, sz);
-          this.renderFlowers(ctx, tx, ty, px, py, sz);
-        } else if (terrain === TERRAIN_DEEP_WATER || terrain === TERRAIN_SHALLOW_WATER) {
-          // 波纹在 tile 循环外统一渲染
-        } else if (terrain === TERRAIN_MOUNTAIN) {
-          this.renderRockCracks(ctx, tx, ty, px, py, sz);
+    if (boundsChanged || this.staticCacheDirty) {
+      if (!this.staticCache || this.staticCache.width !== width || this.staticCache.height !== height) {
+        this.staticCache = new OffscreenCanvas(width, height);
+        this.staticCacheCtx = this.staticCache.getContext('2d')!;
+      }
+      const sctx = this.staticCacheCtx!;
+      sctx.clearRect(0, 0, width, height);
+
+      for (let ty = sy; ty <= ey; ty++) {
+        for (let tx = sx; tx <= ex; tx++) {
+          const terrain = this.getTerrain(tx, ty);
+          const px = (tx * TILE_SIZE - camX) * zoom;
+          const py = (ty * TILE_SIZE - camY) * zoom;
+          const sz = TILE_SIZE * zoom;
+
+          if (terrain === TERRAIN_GRASS || terrain === TERRAIN_FOREST) {
+            this.renderFlowers(sctx, tx, ty, px, py, sz);
+          } else if (terrain === TERRAIN_MOUNTAIN) {
+            this.renderRockCracks(sctx, tx, ty, px, py, sz);
+          }
         }
       }
+
+      this.staticCacheBounds = { sx, sy, ex, ey, camX, camY, zoom };
+      this.staticCacheDirty = false;
+    }
+
+    ctx.drawImage(this.staticCache!, 0, 0);
+
+    // --- Dynamic grass (updated every N frames) ---
+    const needsGrassRedraw = boundsChanged || this.frameCounter % this.GRASS_UPDATE_INTERVAL === 0;
+
+    if (needsGrassRedraw) {
+      if (!this.grassCanvas || this.grassCanvas.width !== width || this.grassCanvas.height !== height) {
+        this.grassCanvas = new OffscreenCanvas(width, height);
+        this.grassCtx = this.grassCanvas.getContext('2d')!;
+      }
+      const gctx = this.grassCtx!;
+      gctx.clearRect(0, 0, width, height);
+
+      for (let ty = sy; ty <= ey; ty++) {
+        for (let tx = sx; tx <= ex; tx++) {
+          const terrain = this.getTerrain(tx, ty);
+          if (terrain === TERRAIN_GRASS || terrain === TERRAIN_FOREST) {
+            const px = (tx * TILE_SIZE - camX) * zoom;
+            const py = (ty * TILE_SIZE - camY) * zoom;
+            const sz = TILE_SIZE * zoom;
+            this.renderGrass(gctx, tx, ty, px, py, sz);
+          }
+        }
+      }
+    }
+
+    if (this.grassCanvas) {
+      ctx.drawImage(this.grassCanvas, 0, 0);
     }
 
     // 渲染波纹（全局）
     this.renderRipples(ctx, camX, camY, zoom);
     // 渲染沙粒（全局）
     this.renderSandParticles(ctx, camX, camY, zoom);
-
-    ctx.restore();
   }
 
   getActiveParticleCount(): number {
@@ -190,7 +251,7 @@ export class TerrainDecorationSystem {
   }
 
   private renderGrass(
-    ctx: CanvasRenderingContext2D, tx: number, ty: number,
+    ctx: Ctx2D, tx: number, ty: number,
     px: number, py: number, sz: number
   ): void {
     const tile = this.getGrassTile(tx, ty);
@@ -250,7 +311,7 @@ export class TerrainDecorationSystem {
   }
 
   private renderRipples(
-    ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number
+    ctx: Ctx2D, camX: number, camY: number, zoom: number
   ): void {
     ctx.lineWidth = Math.max(0.5, zoom * 0.8);
     for (const r of this.ripples) {
@@ -286,7 +347,7 @@ export class TerrainDecorationSystem {
   }
 
   private renderRockCracks(
-    ctx: CanvasRenderingContext2D, tx: number, ty: number,
+    ctx: Ctx2D, tx: number, ty: number,
     px: number, py: number, sz: number
   ): void {
     const cracks = this.getRockCracks(tx, ty);
@@ -345,7 +406,7 @@ export class TerrainDecorationSystem {
   }
 
   private renderSandParticles(
-    ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number
+    ctx: Ctx2D, camX: number, camY: number, zoom: number
   ): void {
     const r = Math.max(1, zoom * 1.5);
     for (const p of this.sandParticles) {
@@ -399,7 +460,7 @@ export class TerrainDecorationSystem {
   }
 
   private renderFlowers(
-    ctx: CanvasRenderingContext2D, tx: number, ty: number,
+    ctx: Ctx2D, tx: number, ty: number,
     px: number, py: number, sz: number
   ): void {
     const flowers = this.getFlowers(tx, ty);

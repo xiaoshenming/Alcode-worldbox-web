@@ -192,7 +192,8 @@ export class EcosystemSystem {
     this.wildlifeCounts.clear();
     const entities = em.getEntitiesWithComponents('creature', 'position');
     for (const id of entities) {
-      const creature = em.getComponent<CreatureComponent>(id, 'creature')!;
+      const creature = em.getComponent<CreatureComponent>(id, 'creature');
+      if (!creature) continue;
       if (this.isWildlife(creature.species)) {
         const count = this.wildlifeCounts.get(creature.species) || 0;
         this.wildlifeCounts.set(creature.species, count + 1);
@@ -252,9 +253,10 @@ export class EcosystemSystem {
     let count = 0;
     const entities = em.getEntitiesWithComponents('creature', 'position');
     for (const id of entities) {
-      const creature = em.getComponent<CreatureComponent>(id, 'creature')!;
-      if (creature.species !== species) continue;
-      const pos = em.getComponent<PositionComponent>(id, 'position')!;
+      const creature = em.getComponent<CreatureComponent>(id, 'creature');
+      if (!creature || creature.species !== species) continue;
+      const pos = em.getComponent<PositionComponent>(id, 'position');
+      if (!pos) continue;
       if (Math.abs(pos.x - cx) <= half && Math.abs(pos.y - cy) <= half) {
         count++;
       }
@@ -318,12 +320,13 @@ export class EcosystemSystem {
     const entities = em.getEntitiesWithComponents('creature', 'position', 'ai', 'needs');
 
     for (const id of entities) {
-      const creature = em.getComponent<CreatureComponent>(id, 'creature')!;
-      if (!this.isWildlife(creature.species)) continue;
+      const creature = em.getComponent<CreatureComponent>(id, 'creature');
+      if (!creature || !this.isWildlife(creature.species)) continue;
 
-      const pos = em.getComponent<PositionComponent>(id, 'position')!;
-      const ai = em.getComponent<AIComponent>(id, 'ai')!;
-      const needs = em.getComponent<NeedsComponent>(id, 'needs')!;
+      const pos = em.getComponent<PositionComponent>(id, 'position');
+      const ai = em.getComponent<AIComponent>(id, 'ai');
+      const needs = em.getComponent<NeedsComponent>(id, 'needs');
+      if (!pos || !ai || !needs) continue;
       const rule = this.ruleMap.get(creature.species);
       if (!rule) continue;
 
@@ -374,9 +377,10 @@ export class EcosystemSystem {
     const entities = em.getEntitiesWithComponents('creature', 'position');
     for (const id of entities) {
       if (id === selfId) continue;
-      const creature = em.getComponent<CreatureComponent>(id, 'creature')!;
-      if (!fleeFrom.includes(creature.species)) continue;
-      const pos = em.getComponent<PositionComponent>(id, 'position')!;
+      const creature = em.getComponent<CreatureComponent>(id, 'creature');
+      if (!creature || !fleeFrom.includes(creature.species)) continue;
+      const pos = em.getComponent<PositionComponent>(id, 'position');
+      if (!pos) continue;
       const dist = Math.hypot(pos.x - selfPos.x, pos.y - selfPos.y);
       if (dist < nearestDist) {
         nearestDist = dist;
@@ -393,9 +397,10 @@ export class EcosystemSystem {
     const entities = em.getEntitiesWithComponents('creature', 'position');
     for (const id of entities) {
       if (id === selfId) continue;
-      const creature = em.getComponent<CreatureComponent>(id, 'creature')!;
-      if (!preySpecies.includes(creature.species)) continue;
-      const pos = em.getComponent<PositionComponent>(id, 'position')!;
+      const creature = em.getComponent<CreatureComponent>(id, 'creature');
+      if (!creature || !preySpecies.includes(creature.species)) continue;
+      const pos = em.getComponent<PositionComponent>(id, 'position');
+      if (!pos) continue;
       const dist = Math.hypot(pos.x - selfPos.x, pos.y - selfPos.y);
       if (dist < nearestDist) {
         nearestDist = dist;
@@ -464,10 +469,11 @@ export class EcosystemSystem {
 
     const entities = em.getEntitiesWithComponents('creature', 'needs');
     for (const id of entities) {
-      const creature = em.getComponent<CreatureComponent>(id, 'creature')!;
-      if (!this.isWildlife(creature.species)) continue;
+      const creature = em.getComponent<CreatureComponent>(id, 'creature');
+      if (!creature || !this.isWildlife(creature.species)) continue;
 
-      const needs = em.getComponent<NeedsComponent>(id, 'needs')!;
+      const needs = em.getComponent<NeedsComponent>(id, 'needs');
+      if (!needs) continue;
       const rule = this.ruleMap.get(creature.species);
       if (!rule) continue;
 

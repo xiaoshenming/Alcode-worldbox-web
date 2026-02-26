@@ -2,6 +2,7 @@
 // Treaties end wars, establish borders, and create lasting diplomatic bonds
 
 import { EntityManager } from '../ecs/Entity'
+import { CivManager } from '../civilization/CivManager'
 
 export type TreatyStatus = 'negotiating' | 'signed' | 'honored' | 'violated' | 'expired'
 export type TreatyTerm = 'ceasefire' | 'border_recognition' | 'trade_access' | 'prisoner_exchange' | 'reparations' | 'non_aggression'
@@ -31,12 +32,12 @@ export class DiplomaticPeaceTreatySystem {
   private nextId = 1
   private lastCheck = 0
 
-  update(dt: number, em: EntityManager, civManager: any, tick: number): void {
+  update(dt: number, em: EntityManager, civManager: CivManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs = civManager.civilizations
+    const civs = Array.from(civManager.civilizations.values())
     if (civs.length < 2) return
 
     // Start new treaty negotiations

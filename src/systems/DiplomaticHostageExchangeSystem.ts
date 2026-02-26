@@ -2,6 +2,7 @@
 // Civilizations exchange hostages to build mutual trust over time
 
 import { EntityManager } from '../ecs/Entity'
+import { CivManager } from '../civilization/CivManager'
 
 export type ExchangeStatus = 'proposed' | 'active' | 'completed' | 'broken'
 
@@ -26,12 +27,12 @@ export class DiplomaticHostageExchangeSystem {
   private nextId = 1
   private lastCheck = 0
 
-  update(dt: number, world: any, em: EntityManager, civManager: any, tick: number): void {
+  update(dt: number, world: any, em: EntityManager, civManager: CivManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs = civManager.civilizations
+    const civs = Array.from(civManager.civilizations.values())
     if (civs.length < 2) return
 
     if (this.exchanges.length < MAX_EXCHANGES && Math.random() < SPAWN_CHANCE) {

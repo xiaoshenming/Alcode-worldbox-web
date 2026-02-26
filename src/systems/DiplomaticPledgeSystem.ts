@@ -2,6 +2,7 @@
 // Pledges enforce cooperation; breaking a pledge damages reputation severely
 
 import { EntityManager } from '../ecs/Entity'
+import { CivManager } from '../civilization/CivManager'
 
 export type PledgeType = 'non_aggression' | 'resource_sharing' | 'mutual_defense' | 'border_respect' | 'trade_priority'
 
@@ -30,12 +31,12 @@ export class DiplomaticPledgeSystem {
   private nextId = 1
   private lastCheck = 0
 
-  update(dt: number, em: EntityManager, civManager: any, tick: number): void {
+  update(dt: number, em: EntityManager, civManager: CivManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs = civManager.civilizations
+    const civs = Array.from(civManager.civilizations.values())
     if (civs.length < 2) return
 
     // Form new pledges

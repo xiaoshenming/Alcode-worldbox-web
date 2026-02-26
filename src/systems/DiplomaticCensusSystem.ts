@@ -2,6 +2,7 @@
 // Census data influences diplomatic power and resource allocation
 
 import { EntityManager } from '../ecs/Entity'
+import { CivManager } from '../civilization/CivManager'
 
 export interface Census {
   id: number
@@ -23,7 +24,7 @@ export class DiplomaticCensusSystem {
   private nextId = 1
   private lastCheck = 0
 
-  update(dt: number, em: EntityManager, civManager: any, tick: number): void {
+  update(dt: number, em: EntityManager, civManager: CivManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
@@ -31,10 +32,10 @@ export class DiplomaticCensusSystem {
     this.cleanup()
   }
 
-  private conductCensus(civManager: any, tick: number): void {
+  private conductCensus(civManager: CivManager, tick: number): void {
     if (!civManager?.civilizations) return
 
-    for (const civ of civManager.civilizations) {
+    for (const civ of civManager.civilizations.values()) {
       if (Math.random() > CENSUS_CHANCE) continue
       if (this.records.length >= MAX_RECORDS) break
 

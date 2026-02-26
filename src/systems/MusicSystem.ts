@@ -275,7 +275,8 @@ export class MusicSystem {
     isEpic: boolean
     isRaining: boolean
   }): void {
-    const ctx = this.getCtx()
+    if (!this.ctx) return
+    const ctx = this.ctx
     if (ctx.state === 'suspended') return
     // Determine target mood from game state
     let mood: Mood = 'peaceful'
@@ -326,6 +327,11 @@ export class MusicSystem {
 
   setMuted(muted: boolean): void {
     this.muted = muted
+    if (!muted) {
+      // User interaction: safe to create/resume AudioContext
+      const ctx = this.getCtx()
+      if (ctx.state === 'suspended') ctx.resume()
+    }
     if (this.masterGain) {
       this.masterGain.gain.setValueAtTime(muted ? 0 : this.masterVolume, this.ctx!.currentTime)
     }

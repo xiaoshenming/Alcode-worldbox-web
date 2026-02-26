@@ -2,6 +2,7 @@
 // Defeated civilizations transfer resources to victors over time
 
 import { EntityManager } from '../ecs/Entity'
+import { CivManager } from '../civilization/CivManager'
 
 export type ReparationStatus = 'active' | 'defaulted' | 'completed'
 
@@ -26,7 +27,7 @@ export class DiplomaticWarReparationSystem {
   private nextId = 1
   private lastCheck = 0
 
-  update(dt: number, em: EntityManager, civManager: any, tick: number): void {
+  update(dt: number, em: EntityManager, civManager: CivManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
@@ -36,11 +37,11 @@ export class DiplomaticWarReparationSystem {
     this.cleanup()
   }
 
-  private createReparations(civManager: any, tick: number): void {
+  private createReparations(civManager: CivManager, tick: number): void {
     if (!civManager?.civilizations) return
     if (this.reparations.length >= MAX_REPARATIONS) return
 
-    const civs = civManager.civilizations
+    const civs = Array.from(civManager.civilizations.values())
     if (civs.length < 2) return
 
     for (const civ of civs) {

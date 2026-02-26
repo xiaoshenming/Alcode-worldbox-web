@@ -11,11 +11,11 @@ export class Noise {
     const p: number[] = []
     for (let i = 0; i < 256; i++) p[i] = i
 
-    // Shuffle with seed
-    let s = seed
+    // Shuffle with seed - ensure seed is a valid positive integer
+    let s = Math.abs(Math.floor(seed)) || 1
     for (let i = 255; i > 0; i--) {
       s = (s * 16807) % 2147483647
-      const j = s % (i + 1)
+      const j = Math.abs(s) % (i + 1)
       ;[p[i], p[j]] = [p[j], p[i]]
     }
 
@@ -53,9 +53,9 @@ export class Noise {
 
     const ii = i & 255
     const jj = j & 255
-    const gi0 = this.perm[ii + this.perm[jj]] % 12
-    const gi1 = this.perm[ii + i1 + this.perm[jj + j1]] % 12
-    const gi2 = this.perm[ii + 1 + this.perm[jj + 1]] % 12
+    const gi0 = this.perm[(ii + this.perm[jj]) & 511] % 12
+    const gi1 = this.perm[(ii + i1 + this.perm[(jj + j1) & 511]) & 511] % 12
+    const gi2 = this.perm[(ii + 1 + this.perm[(jj + 1) & 511]) & 511] % 12
 
     let n0 = 0, n1 = 0, n2 = 0
 

@@ -3573,40 +3573,55 @@ export class Game {
     this.frameCount++
     this.fpsTime += delta
     if (this.fpsTime >= 1000) {
-      this.fps = this.frameCount
+      this.fps = Math.round(this.frameCount * 1000 / this.fpsTime)
       this.frameCount = 0
-      this.fpsTime = 0
+      this.fpsTime -= 1000
     }
 
     if (this.speed > 0) {
       this.accumulator += delta * this.speed
-      while (this.accumulator >= this.tickRate) {
+      // Cap max ticks per frame to prevent spiral of death at high speeds
+      const maxTicksPerFrame = 3
+      let ticksThisFrame = 0
+      while (this.accumulator >= this.tickRate && ticksThisFrame < maxTicksPerFrame) {
+        ticksThisFrame++
+        const tick = this.world.tick
+
+        // === EVERY TICK: Core systems (AI, combat, world, civ) ===
         this.world.update()
         this.aiSystem.update()
-        this.migrationSystem.update(this.em, this.world, this.civManager, this.particles)
-        this.combatSystem.update(this.world.tick)
+        this.combatSystem.update(tick)
         this.civManager.update()
-        this.techSystem.update(this.civManager)
+
+        // === EVERY 5 TICKS: Medium-importance systems ===
+        if (tick % 5 === 0) {
+        this.migrationSystem.update(this.em, this.world, this.civManager, this.particles)
         this.weather.update()
         this.resources.update()
         this.disasterSystem.update()
-        this.timeline.update(this.world.tick)
-        this.artifactSystem.update(this.em, this.world, this.particles, this.world.tick)
-        this.artifactSystem.spawnClaimParticles(this.em, this.particles, this.world.tick)
+        this.timeline.update(tick)
+        this.artifactSystem.update(this.em, this.world, this.particles, tick)
+        this.artifactSystem.spawnClaimParticles(this.em, this.particles, tick)
         this.diseaseSystem.update(this.em, this.world, this.civManager, this.particles)
         this.worldEventSystem.update(this.em, this.world, this.civManager, this.particles, this.timeline)
         this.caravanSystem.update(this.civManager, this.em, this.world, this.particles)
         this.cropSystem.update(this.world, this.civManager, this.em, this.particles)
-        this.navalSystem.update(this.em, this.world, this.civManager, this.particles, this.world.tick)
-        this.questSystem.update(this.em, this.world, this.civManager, this.particles, this.world.tick)
-        this.ecosystemSystem.update(this.em, this.world, this.civManager, this.particles, this.world.tick)
-        this.fogOfWarSystem.update(this.em, this.world, this.civManager, this.particles, this.world.tick)
-        this.religionSystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
-        this.armySystem.update(this.em, this.civManager, this.world, this.particles, this.world.tick)
-        this.eraSystem.update(this.civManager, this.em, this.particles, this.world.tick, this.timeline)
-        this.heroLegendSystem.update(this.em, this.civManager, this.world, this.particles, this.world.tick)
-        this.wonderSystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
-        this.tradeEconomySystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
+        this.navalSystem.update(this.em, this.world, this.civManager, this.particles, tick)
+        this.questSystem.update(this.em, this.world, this.civManager, this.particles, tick)
+        this.ecosystemSystem.update(this.em, this.world, this.civManager, this.particles, tick)
+        this.fogOfWarSystem.update(this.em, this.world, this.civManager, this.particles, tick)
+        this.armySystem.update(this.em, this.civManager, this.world, this.particles, tick)
+        this.populationSystem.update(this.em, this.world, this.civManager, this.particles, tick)
+        }
+
+        // === EVERY 10 TICKS: Civilization progression systems ===
+        if (tick % 10 === 0) {
+        this.techSystem.update(this.civManager)
+        this.religionSystem.update(this.civManager, this.em, this.world, this.particles, tick)
+        this.eraSystem.update(this.civManager, this.em, this.particles, tick, this.timeline)
+        this.heroLegendSystem.update(this.em, this.civManager, this.world, this.particles, tick)
+        this.wonderSystem.update(this.civManager, this.em, this.world, this.particles, tick)
+        this.tradeEconomySystem.update(this.civManager, this.em, this.world, this.particles, tick)
         // Culture system - cultural spread, trait adoption, language diffusion
         {
           const civData = [...this.civManager.civilizations.values()].map(c => {
@@ -3618,12 +3633,12 @@ export class Game {
             }
             return { id: c.id, neighbors, tradePartners, population: c.population }
           })
-          this.cultureSystem.update(this.world.tick, civData)
+          this.cultureSystem.update(tick, civData)
         }
-        this.loyaltySystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
-        this.biomeEvolution.update(this.world, this.civManager, this.em, this.particles, this.world.tick)
-        this.espionageSystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
-        this.godPowerSystem.update(this.world, this.em, this.civManager, this.particles, this.world.tick)
+        this.loyaltySystem.update(this.civManager, this.em, this.world, this.particles, tick)
+        this.biomeEvolution.update(this.world, this.civManager, this.em, this.particles, tick)
+        this.espionageSystem.update(this.civManager, this.em, this.world, this.particles, tick)
+        this.godPowerSystem.update(this.world, this.em, this.civManager, this.particles, tick)
         // Mining system - build civData from civilizations
         {
           const civData = [...this.civManager.civilizations.values()].map(c => {
@@ -3636,13 +3651,20 @@ export class Game {
             const cc = creature ? this.em.getComponent<CreatureComponent>(creature, 'creature') : null
             return { id: c.id, cities, techLevel: c.techLevel, race: cc?.species ?? 'human' }
           })
-          this.miningSystem.update(this.world.tick, civData)
+          this.miningSystem.update(tick, civData)
         }
-        this.disasterChainSystem.update(this.world.tick)
-        this.seasonSystem.update(this.world.tick)
-        this.animalMigration.update(this.world.tick, this.em, this.world, this.seasonSystem.getCurrentSeason())
-        this.volcanoSystem.update(this.world.tick, this.world, this.particles)
-        this.ruinsSystem.update(this.world.tick)
+        this.allianceSystem.update(this.civManager, this.em, this.world, this.particles, tick)
+        this.evolutionSystem.update(this.em, this.world, tick)
+        this.terraformingSystem.update(this.world, this.particles, tick)
+        } // end tick % 10
+
+        // === EVERY 5 TICKS (offset 2): Secondary medium systems ===
+        if (tick % 5 === 2) {
+        this.disasterChainSystem.update(tick)
+        this.seasonSystem.update(tick)
+        this.animalMigration.update(tick, this.em, this.world, this.seasonSystem.getCurrentSeason())
+        this.volcanoSystem.update(tick, this.world, this.particles)
+        this.ruinsSystem.update(tick)
         this.plagueVisual.update()
         // Weather disaster linkage - use actual weather and season
         {
@@ -3650,7 +3672,7 @@ export class Game {
           const w = this.weather.currentWeather
           const weatherForDisaster: 'clear' | 'rain' | 'storm' | 'snow' =
             w === 'rain' ? 'rain' : w === 'storm' || w === 'tornado' ? 'storm' : w === 'snow' ? 'snow' : 'clear'
-          this.weatherDisaster.update(this.world, this.em, this.civManager, this.particles, this.world.tick, season, weatherForDisaster)
+          this.weatherDisaster.update(this.world, this.em, this.civManager, this.particles, tick, season, weatherForDisaster)
         }
         // Era visual sync - track most advanced civ
         {
@@ -3665,31 +3687,31 @@ export class Game {
         this.eraVisual.update()
         this.fogOfWar.update()
         this.fortificationRenderer.update()
-        // Evolution system
-        this.evolutionSystem.update(this.em, this.world, this.world.tick)
-        // Population dynamics
-        this.populationSystem.update(this.em, this.world, this.civManager, this.particles, this.world.tick)
-        // Alliance & federation
-        this.allianceSystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
-        // Terraforming visual effects
-        this.terraformingSystem.update(this.world, this.particles, this.world.tick)
-        // Statistics tracking
-        this.statisticsTracker.update(this.world.tick, this.civManager, this.em)
-        // Spatial hash rebuild for efficient queries
+        }
+
+        // === EVERY 60 TICKS: Statistics and decorative systems ===
+        if (tick % 60 === 0) {
+        this.statisticsTracker.update(tick, this.civManager, this.em)
+        }
+        // === EVERY TICK: Spatial hash rebuild (required for queries) ===
         this.spatialHash.rebuild(this.em)
         // Object pool maintenance
         this.objectPool.update(this.tickRate / 1000)
-        // Portal teleportation
-        this.portalSystem.update(this.em, this.world.tick)
-        // Water animation update
-        this.waterAnimation.update(this.world.tick, this.world)
-        // Enhanced minimap update
-        if (this.world.tick % 30 === 0) {
-          this.minimapSystem.update(this.world, this.civManager, this.em, this.world.tick)
+
+        // === EVERY 5 TICKS (offset 3): Portal, water, formation ===
+        if (tick % 5 === 3) {
+        this.portalSystem.update(this.em, tick)
+        this.waterAnimation.update(tick, this.world)
+        this.formationSystem.update(this.em, this.world, tick)
         }
-        // Formation system - army formations and morale
-        this.formationSystem.update(this.em, this.world, this.world.tick)
-        // Achievement content - check extended achievements
+
+        // Enhanced minimap update
+        if (tick % 30 === 0) {
+          this.minimapSystem.update(this.world, this.civManager, this.em, tick)
+        }
+
+        // === EVERY 30 TICKS: Achievement content check ===
+        if (tick % 30 === 5) {
         {
           const achStats: AchContentWorldStats = {
             totalCreatures: this.em.getEntitiesWithComponents('creature').length,
@@ -3705,15 +3727,16 @@ export class Game {
             volcanoEruptions: 0, waterTilesCreatedAtOnce: 0,
             diseasedCivs: 0, evolutionEvents: 0,
             coexistSpecies: 0, coexistTicks: 0,
-            totalTicks: this.world.tick, exploredPercent: 0,
+            totalTicks: tick, exploredPercent: 0,
             totalCivs: this.civManager.civilizations.size, totalWars: 0,
             clonedCreatures: this.clonePower.getCloneCount(),
             portalPairs: this.portalSystem.getPortals().length / 2,
           }
           this.achievementContent.check(achStats)
         }
+        }
         // Chart panel - record data point every 60 ticks
-        if (this.world.tick % 60 === 0) {
+        if (tick % 60 === 0) {
           let totalTerritory = 0
           let totalTech = 0
           let warCount = 0
@@ -3723,7 +3746,7 @@ export class Game {
             for (const [, rel] of civ.relations) { if (rel < -30) warCount++ }
           }
           const civCount = this.civManager.civilizations.size
-          this.chartPanel.addDataPoint(this.world.tick, {
+          this.chartPanel.addDataPoint(tick, {
             population: this.em.getEntitiesWithComponents('creature').length,
             civCount,
             warCount: Math.floor(warCount / 2),
@@ -3731,6 +3754,8 @@ export class Game {
             totalTerritory,
           })
         }
+        // === EVERY 10 TICKS (offset 5): Clone, siege, mood, combat-adjacent ===
+        if (tick % 10 === 5) {
         // Clone power - degradation updates
         {
           const cloneEntities = [...this.em.getEntitiesWithComponents('creature', 'position')].map(id => {
@@ -3741,45 +3766,33 @@ export class Game {
               health: needs?.health ?? 100, maxHealth: 100, age: c.age
             }
           })
-          const events = this.clonePower.update(this.world.tick, cloneEntities)
+          const events = this.clonePower.update(tick, cloneEntities)
           for (const ev of events) {
             const needs = this.em.getComponent<NeedsComponent>(ev.id, 'needs')
             if (needs && ev.type === 'health_loss') needs.health = Math.max(0, needs.health - ev.amount)
           }
         }
-        // Siege warfare - update active sieges
-        this.siegeWarfare.update(this.world.tick)
-        // Reputation system - track civ reputation from actions
-        this.reputationSystem.update(this.world.tick, this.civManager, this.em)
-        // Enhanced siege system - battering rams, siege towers, wall breaching
-        this.siegeSystem.update(this.world.tick, this.em, this.civManager, this.world)
-        // Disaster warning system - omens and tremors before disasters
-        this.disasterWarning.update(this.world.tick)
-        // Mood system - creature happiness affects productivity
-        this.moodSystem.update(this.world.tick, this.em, this.world, this.civManager, this.weather.currentWeather, this.spatialHash)
-        // World age system - epoch progression and terrain drift
-        this.worldAge.update(this.world.tick, this.world)
-        // Blood moon event - periodic hostile event
-        this.bloodMoon.update(this.world.tick)
-        // Creature aging - life stages and visual aging
-        this.creatureAging.update(this.world.tick, this.em, this.spatialHash)
-        // Resource scarcity - famine, drought effects
-        this.resourceScarcity.update(this.world.tick, this.civManager, this.em as any, this.world)
-        // Legendary battles - detect and enhance large-scale combat
-        this.legendaryBattle.update(this.world.tick, this.em, this.civManager)
-        // World border - animate edge effects
-        this.worldBorder.update(this.world.tick)
-        // Naval combat - ship battles and boarding
-        this.navalCombat.update(this.world.tick, this.em, this.civManager)
-        // Religion spread - faith influence from temples
-        this.religionSpread.update(this.world.tick, this.em, this.civManager)
-        // LOD render - update detail level based on zoom
+        this.siegeWarfare.update(tick)
+        this.reputationSystem.update(tick, this.civManager, this.em)
+        this.siegeSystem.update(tick, this.em, this.civManager, this.world)
+        this.disasterWarning.update(tick)
+        this.moodSystem.update(tick, this.em, this.world, this.civManager, this.weather.currentWeather, this.spatialHash)
+        this.worldAge.update(tick, this.world)
+        this.bloodMoon.update(tick)
+        this.creatureAging.update(tick, this.em, this.spatialHash)
+        this.resourceScarcity.update(tick, this.civManager, this.em as any, this.world)
+        this.legendaryBattle.update(tick, this.em, this.civManager)
+        this.worldBorder.update(tick)
+        this.navalCombat.update(tick, this.em, this.civManager)
+        this.religionSpread.update(tick, this.em, this.civManager)
         this.lodRender.update(this.camera)
-        // Building variety - update building health/decay
-        this.buildingVariety.update(this.world.tick, this.em)
-        // History replay - record world snapshot
+        this.buildingVariety.update(tick, this.em)
+        } // end tick % 10 offset 5
+
+        // === EVERY 60 TICKS: History replay snapshot ===
+        if (tick % 60 === 10) {
         this.historyReplay.recordSnapshot(
-          this.world.tick,
+          tick,
           this.em.getEntitiesWithComponent('creature').length,
           this.civManager.civilizations.size,
           0, [], // wars and events simplified
@@ -3787,50 +3800,22 @@ export class Game {
             id, name: c.name, pop: c.population, color: c.color
           }))
         )
-        // Flocking - group behavior and coordinated movement
-        this.flocking.update(this.world.tick, this.em)
-        // Season visual effects - particles and overlays
-        this.seasonVisual.update(this.world.tick, this.seasonSystem.getCurrentSeason(), this.seasonSystem.getTransitionProgress(), !this.world.isDay())
-        // Trade fleet - ship movement along routes
-        this.tradeFleet.update(this.world.tick)
-        // Unified particle system - high-performance particle pool
-        this.unifiedParticles.update(this.world.tick)
-        // World dashboard - population sampling
-        if (this.world.tick % 60 === 0) {
-          const pops: Record<string, number> = {}
-          for (const id of this.em.getEntitiesWithComponents('creature')) {
-        // Weather particles - rain, snow, storm effects
+        }
+        // === EVERY 5 TICKS (offset 4): Visual/particle systems ===
+        if (tick % 5 === 4) {
+        this.flocking.update(tick, this.em)
+        this.seasonVisual.update(tick, this.seasonSystem.getCurrentSeason(), this.seasonSystem.getTransitionProgress(), !this.world.isDay())
+        this.tradeFleet.update(tick)
+        this.unifiedParticles.update(tick)
         this.weatherParticles.setWeather(this.weather.currentWeather === 'rain' ? 'rain' : this.weather.currentWeather === 'storm' || this.weather.currentWeather === 'tornado' ? 'storm' : this.weather.currentWeather === 'snow' ? 'snow' : 'clear')
-        this.weatherParticles.update(this.world.tick, 0.5, 0)
-        // Diplomacy visual - update civ relation data
-        if (this.world.tick % 120 === 0) {
-          const civData = [...this.civManager.civilizations.entries()].map(([id, c]) => {
-            const pos = c.buildings.length > 0 ? this.em.getComponent<PositionComponent>(c.buildings[0], 'position') : null
-            return { id, name: c.name, color: c.color, capitalX: pos?.x ?? 0, capitalY: pos?.y ?? 0, relations: c.relations }
-          })
-          this.diplomacyVisual.updateCivData(civData)
-        }
-        this.diplomacyVisual.update(this.world.tick)
-        // Event notification - update indicators
-        this.eventNotification.update(this.world.tick, this.camera.x, this.camera.y, this.canvas.width, this.canvas.height, this.camera.zoom)
-        // Enhanced fog of war
-        if (this.world.tick % 10 === 0) {
-          const units = [...this.em.getEntitiesWithComponents('creature', 'position')].map(id => {
-            const pos = this.em.getComponent<PositionComponent>(id, 'position')!
-            return { x: Math.floor(pos.x), y: Math.floor(pos.y), visionRange: 8 }
-          })
-          this.fogEnhanced.updateVision(this.world.tick, units, [])
-        }
-        // Battle replay system
-        this.battleReplay.update(this.world.tick)
-        // Evolution visual system
-        this.evolutionVisual.update(this.world.tick)
-        // Achievement popup system
-        this.achievementPopup.update(this.world.tick)
-        // Minimap enhanced system
-        this.minimapEnhanced.update(this.world.tick)
-        // Ambient sound mixer
-        this.ambientSound.update(this.world.tick, {
+        this.weatherParticles.update(tick, 0.5, 0)
+        this.diplomacyVisual.update(tick)
+        this.eventNotification.update(tick, this.camera.x, this.camera.y, this.canvas.width, this.canvas.height, this.camera.zoom)
+        this.battleReplay.update(tick)
+        this.evolutionVisual.update(tick)
+        this.achievementPopup.update(tick)
+        this.minimapEnhanced.update(tick)
+        this.ambientSound.update(tick, {
           isNight: !this.world.isDay(),
           season: this.seasonSystem.getCurrentSeason(),
           weather: this.weather.currentWeather ?? 'clear',
@@ -3838,15 +3823,39 @@ export class Game {
           nearestCityDist: 999,
           cameraZoom: this.camera.zoom
         })
+        }
+
+        // Diplomacy visual - update civ relation data
+        if (tick % 120 === 0) {
+          const civData = [...this.civManager.civilizations.entries()].map(([id, c]) => {
+            const pos = c.buildings.length > 0 ? this.em.getComponent<PositionComponent>(c.buildings[0], 'position') : null
+            return { id, name: c.name, color: c.color, capitalX: pos?.x ?? 0, capitalY: pos?.y ?? 0, relations: c.relations }
+          })
+          this.diplomacyVisual.updateCivData(civData)
+        }
+
+        // Enhanced fog of war
+        if (tick % 10 === 0) {
+          const units = [...this.em.getEntitiesWithComponents('creature', 'position')].map(id => {
+            const pos = this.em.getComponent<PositionComponent>(id, 'position')!
+            return { x: Math.floor(pos.x), y: Math.floor(pos.y), visionRange: 8 }
+          })
+          this.fogEnhanced.updateVision(tick, units, [])
+        }
+
+        // World dashboard - population sampling
+        if (tick % 60 === 0) {
+          const pops: Record<string, number> = {}
+          for (const id of this.em.getEntitiesWithComponents('creature')) {
             const c = this.em.getComponent<CreatureComponent>(id, 'creature')
             if (c) pops[c.species] = (pops[c.species] ?? 0) + 1
           }
-          this.worldDashboard.addPopulationSample(this.world.tick, pops)
+          this.worldDashboard.addPopulationSample(tick, pops)
         }
         // Tutorial system - check step conditions
         this.tutorial.update()
         // Build fortification data from civilizations
-        if (this.world.tick % 120 === 0) {
+        if (tick % 120 === 0) {
           const forts: CityFortification[] = []
           for (const [civId, civ] of this.civManager.civilizations) {
             if (civ.buildings.length === 0) continue
@@ -3895,7 +3904,7 @@ export class Game {
           }
         }
         // Update trade route visualization from caravan data
-        if (this.world.tick % 120 === 0) {
+        if (tick % 120 === 0) {
           const routes: TradeRoute[] = []
           for (const [, civ] of this.civManager.civilizations) {
             for (const [otherId, rel] of civ.relations) {
@@ -3913,7 +3922,8 @@ export class Game {
           }
           this.tradeRouteRenderer.setRoutes(routes)
         }
-        // World Chronicle - build narrative history from world state
+        // === EVERY 60 TICKS: World chronicle, diplomacy, building upgrades ===
+        if (tick % 60 === 20) {
         {
           const civs = [...this.civManager.civilizations.values()].map(c => ({
             id: c.id, name: c.name, population: c.population, cities: c.buildings.length
@@ -3925,1313 +3935,1308 @@ export class Game {
             civilizations: civs,
             era: this.timeline.getCurrentEra().name,
           }
-          this.worldChronicle.update(this.world.tick, snapshot)
+          this.worldChronicle.update(tick, snapshot)
         }
-        if (this.world.tick % 60 === 0) {
-          this.diplomacySystem.update(this.civManager, this.world, this.em)
-          this.buildingUpgradeSystem.update(this.em, this.civManager, this.world.tick)
-          this.cityPlanningSystem.update(this.civManager, this.em, this.world, this.particles, this.world.tick)
+        this.diplomacySystem.update(this.civManager, this.world, this.em)
+        this.buildingUpgradeSystem.update(this.em, this.civManager, tick)
+        this.cityPlanningSystem.update(this.civManager, this.em, this.world, this.particles, tick)
         }
         // AutoSave system (replaces old tick-based autosave)
-        this.autoSave.update(this.world.tick, this.world, this.em, this.civManager, this.resources)
+        this.autoSave.update(tick, this.world, this.em, this.civManager, this.resources)
         // Notification center fade-out
-        this.notificationCenter.update(this.world.tick)
+        this.notificationCenter.update(tick)
         // World stats overview sampling (v1.68)
-        this.worldStatsOverview.update(this.world.tick, this.em, this.civManager)
+        if (tick % 30 === 15) {
+        this.worldStatsOverview.update(tick, this.em, this.civManager)
+        }
         // Screenshot mode state (v1.66)
         this.screenshotMode.update()
-        // Creature memory decay (v1.91)
-        this.creatureMemory.update(this.world.tick)
-        // Pollution diffusion and decay (v1.92)
+
+        // === EVERY 60 TICKS (offsets 11,41): v1.91-v2.99 lightweight systems ===
+        if (tick % 60 === 11) {
+        // === EVERY 60 TICKS (offset 11): v1.91-v2.46 systems (first half) ===
+        this.creatureMemory.update(tick)
         this.pollution.update(this.world.tiles)
-        // Prophecy generation and fulfillment (v1.93)
-        this.prophecy.update(this.world.tick, this.civManager.civilizations.size)
-        // Creature skill system (v1.94) - passive update
+        this.prophecy.update(tick, this.civManager.civilizations.size)
         this.creatureSkill.update()
-        // World narrator (v1.95) - passive update
         this.worldNarrator.update()
-        // Mythology system (v1.96) - generate myths for civs
-        this.mythology.update(this.world.tick, [...this.civManager.civilizations.keys()])
-        // Creature taming (v1.97) - taming progress
-        this.creatureTaming.update(this.world.tick)
-        // Plague mutation (v1.98) - strain evolution
-        this.plagueMutation.update(this.world.tick)
-        // Monument system (v1.99) - build progress and decay
-        this.monument.update(this.world.tick)
-        // Creature personality (v2.00) - trait drift
-        this.creaturePersonality.update(this.world.tick)
-        // Trade negotiation (v2.01) - civilization trade deals
-        this.tradeNegotiation.update(this.tickRate, this.em, this.civManager, this.world.tick)
-        // Creature dream (v2.02) - sleep dreams affect behavior
-        this.creatureDream.update(this.tickRate, this.em, this.world.tick)
-        // Disaster recovery (v2.03) - terrain and building restoration
+        this.mythology.update(tick, [...this.civManager.civilizations.keys()])
+        this.creatureTaming.update(tick)
+        this.plagueMutation.update(tick)
+        this.monument.update(tick)
+        this.creaturePersonality.update(tick)
+        this.tradeNegotiation.update(this.tickRate, this.em, this.civManager, tick)
+        this.creatureDream.update(this.tickRate, this.em, tick)
         this.disasterRecovery.update(this.tickRate, this.world, this.em, this.civManager)
-        // Creature fame (v2.04) - individual reputation tracking
-        this.creatureFame.update(this.tickRate, this.em, this.world.tick)
-        // Migration wave (v2.05) - large-scale population movement
+        this.creatureFame.update(this.tickRate, this.em, tick)
         this.migrationWave.update(this.tickRate, this.em, this.world, this.civManager)
-        // Creature rivalry (v2.06) - persistent hatred between creatures
-        this.creatureRivalry.update(this.tickRate, this.em, this.world.tick)
-        // World corruption (v2.07) - evil forces corrupt terrain
-        this.worldCorruption.update(this.tickRate, this.world, this.em, this.world.tick)
-        // Creature profession (v2.08) - job assignment system
-        this.creatureProfession.update(this.tickRate, this.em, this.world.tick)
-        // Diplomatic summit (v2.09) - multi-party negotiations
-        this.diplomaticSummit.update(this.tickRate, this.civManager, this.world.tick)
-        // World ley lines (v2.10) - energy lines on the map
-        this.worldLeyLine.update(this.tickRate, this.em, this.world.tick)
-        // Creature bounty (v2.11) - bounty hunting system
-        this.creatureBounty.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.creatureRivalry.update(this.tickRate, this.em, tick)
+        this.worldCorruption.update(this.tickRate, this.world, this.em, tick)
+        this.creatureProfession.update(this.tickRate, this.em, tick)
+        this.diplomaticSummit.update(this.tickRate, this.civManager, tick)
+        this.worldLeyLine.update(this.tickRate, this.em, tick)
+        this.creatureBounty.update(this.tickRate, this.em, this.civManager, tick)
         // Season festival (v2.12) - seasonal celebrations
-        this.seasonFestival.update(this.tickRate, this.civManager, this.seasonSystem, this.world.tick)
+        this.seasonFestival.update(this.tickRate, this.civManager, this.seasonSystem, tick)
         // Creature mutation (v2.13) - environmental mutations
         this.creatureMutation.update(this.tickRate, this.em, this.world)
         // Diplomatic marriage (v2.14) - royal marriages
-        this.diplomaticMarriage.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.diplomaticMarriage.update(this.tickRate, this.em, this.civManager, tick)
         // World relics (v2.15) - ancient relics with buffs
         this.worldRelic.update(this.tickRate, this.em, this.world)
         // Creature ancestor worship (v2.16) - ancestor spirits buff descendants
-        this.creatureAncestor.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.creatureAncestor.update(this.tickRate, this.em, this.civManager, tick)
         // World anomalies (v2.17) - strange anomalies warp terrain and creatures
         this.worldAnomaly.update(this.tickRate, this.em, this.world)
         // Creature apprentice (v2.18) - master-apprentice mentoring
-        this.creatureApprentice.update(this.tickRate, this.em, this.world.tick)
+        this.creatureApprentice.update(this.tickRate, this.em, tick)
         // Diplomatic sanctions (v2.19) - economic sanctions between civs
-        this.diplomaticSanction.update(this.tickRate, this.civManager, this.world.tick)
+        this.diplomaticSanction.update(this.tickRate, this.civManager, tick)
         // World mythic beasts (v2.20) - legendary creatures roam the world
         this.worldMythicBeast.update(this.tickRate, this.em, this.world)
         // Creature guilds (v2.21) - profession-based guilds
-        this.creatureGuild.update(this.tickRate, this.em, this.world.tick)
+        this.creatureGuild.update(this.tickRate, this.em, tick)
         // World seasonal disasters (v2.22) - season-specific disasters
         this.worldSeasonalDisaster.update(this.tickRate, this.em, this.world)
         // Creature reputation (v2.23) - individual reputation tracking
-        this.creatureReputation.update(this.tickRate, this.em, this.world.tick)
+        this.creatureReputation.update(this.tickRate, this.em, tick)
         // Diplomatic espionage (v2.24) - spy missions between civs
-        this.diplomaticEspionage.update(this.tickRate, this.em, [...this.civManager.civilizations.values()] as any, this.world.tick)
+        this.diplomaticEspionage.update(this.tickRate, this.em, [...this.civManager.civilizations.values()] as any, tick)
         // World ancient ruins (v2.25) - explorable ruins
         this.worldAncientRuin.update(this.tickRate, this.em, this.world)
         // Creature hobbies (v2.26) - creatures develop hobbies
-        this.creatureHobby.update(this.tickRate, this.em, this.world.tick)
+        this.creatureHobby.update(this.tickRate, this.em, tick)
         // World natural wonders (v2.27) - natural wonders provide area buffs
         this.worldNaturalWonder.update(this.tickRate, this.em, this.world)
         // Creature language (v2.28) - language evolution affects diplomacy
-        this.creatureLanguage.update(this.tickRate, [...this.civManager.civilizations.keys()], this.world.tick)
+        this.creatureLanguage.update(this.tickRate, [...this.civManager.civilizations.keys()], tick)
         // Diplomatic tribute (v2.29) - weaker civs pay tribute
-        this.diplomaticTribute.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticTribute.update(this.tickRate, this.world, this.em, tick)
         // World weather fronts (v2.30) - moving weather fronts
-        this.worldWeatherFront.update(this.tickRate, this.world.tick)
+        this.worldWeatherFront.update(this.tickRate, tick)
         // Creature trade skills (v2.31) - trade skill development
-        this.creatureTradeSkill.update(this.tickRate, this.em, this.world.tick)
+        this.creatureTradeSkill.update(this.tickRate, this.em, tick)
         // World sacred groves (v2.32) - spiritual groves with blessings
-        this.worldSacredGrove.update(this.tickRate, this.world, this.world.tick)
+        this.worldSacredGrove.update(this.tickRate, this.world, tick)
         // Creature alliances (v2.33) - personal cross-civ friendships
-        this.creatureAlliance.update(this.tickRate, this.em, this.world.tick)
+        this.creatureAlliance.update(this.tickRate, this.em, tick)
         // Diplomatic propaganda (v3.23) - influence campaigns
-        this.diplomaticPropaganda.update(this.tickRate, this.em, this.world.tick)
+        this.diplomaticPropaganda.update(this.tickRate, this.em, tick)
         // World tidal system (v2.35) - coastal tide cycles
-        this.worldTidal.update(this.tickRate, this.world, this.world.tick)
+        this.worldTidal.update(this.tickRate, this.world, tick)
         // Creature superstitions (v2.36) - omens and beliefs
-        this.creatureSuperstition.update(this.tickRate, this.em, this.world.tick)
+        this.creatureSuperstition.update(this.tickRate, this.em, tick)
         // World magic storms (v2.37) - arcane storms mutate terrain
-        this.worldMagicStorm.update(this.tickRate, this.world.tick)
+        this.worldMagicStorm.update(this.tickRate, tick)
         // Creature ambitions (v2.38) - personal goals and dreams
-        this.creatureAmbition.update(this.tickRate, this.em, this.world.tick)
+        this.creatureAmbition.update(this.tickRate, this.em, tick)
         // Diplomatic councils (v3.18) - multi-civ voting councils
-        this.diplomaticCouncil.update(this.tickRate, this.em, this.world.tick)
+        this.diplomaticCouncil.update(this.tickRate, this.em, tick)
         // World fertility (v2.40) - soil fertility map
-        this.worldFertility.update(this.tickRate, this.world.tiles, this.world.tick)
+        this.worldFertility.update(this.tickRate, this.world.tiles, tick)
         // Creature fashion (v2.43) - fashion trends in civs
-        this.creatureFashion.update(this.tickRate, [...this.civManager.civilizations.keys()], this.world.tick)
+        this.creatureFashion.update(this.tickRate, [...this.civManager.civilizations.keys()], tick)
         // Diplomatic hostages (v2.44) - hostage exchange for peace
-        this.diplomaticHostage.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.diplomaticHostage.update(this.tickRate, this.em, this.civManager, tick)
         // World erosion (v2.45) - terrain erosion over time
-        this.worldErosion.update(this.tickRate, this.world, this.world.tick)
+        this.worldErosion.update(this.tickRate, this.world, tick)
         // Creature pets (v2.46) - pet adoption and bonding
-        this.creaturePet.update(this.tickRate, this.em, this.world.tick)
+        this.creaturePet.update(this.tickRate, this.em, tick)
+        } // end tick % 60 === 11 (v1.91-v2.46)
+
+        if (tick % 60 === 41) {
+        // === EVERY 60 TICKS (offset 41): v2.47-v2.99 systems (second half) ===
         // World crystal formations (v2.47) - crystal growth in mountains
-        this.worldCrystalFormation.update(this.tickRate, this.world, this.world.tick)
+        this.worldCrystalFormation.update(this.tickRate, this.world, tick)
         // Creature rituals (v3.16) - group ritual ceremonies
-        this.creatureRitual.update(this.tickRate, this.em, this.world.tick)
+        this.creatureRitual.update(this.tickRate, this.em, tick)
         // Diplomatic exile (v2.49) - exile criminals and dissidents
-        this.diplomaticExile.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.diplomaticExile.update(this.tickRate, this.em, this.civManager, tick)
         // World migration routes (v2.50) - seasonal migration paths
-        this.worldMigrationRoute.update(this.tickRate, this.world.tick)
+        this.worldMigrationRoute.update(this.tickRate, tick)
         // World volcanic activity (v2.52) - volcano eruptions and lava
-        this.worldVolcanic.update(this.tickRate, this.world, this.world.tick)
+        this.worldVolcanic.update(this.tickRate, this.world, tick)
         // World acoustics (v2.55) - sound propagation effects
-        this.worldAcoustic.update(this.tickRate, this.em, this.world.tick)
+        this.worldAcoustic.update(this.tickRate, this.em, tick)
         // Creature nostalgia (v2.56) - homesickness and birthplace bonds
-        this.creatureNostalgia.update(this.tickRate, this.em, this.world.tick)
+        this.creatureNostalgia.update(this.tickRate, this.em, tick)
         // World underground (v2.57) - subterranean cave networks
-        this.worldUnderground.update(this.tickRate, this.world, this.world.tick)
+        this.worldUnderground.update(this.tickRate, this.world, tick)
         // Diplomatic blockades (v2.58) - naval/land blockades
-        this.diplomaticBlockade.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.diplomaticBlockade.update(this.tickRate, this.em, this.civManager, tick)
         // Creature inventions (v2.59) - tools and techniques
-        this.creatureInvention.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.creatureInvention.update(this.tickRate, this.em, this.civManager, tick)
         // World aurora (v2.60) - northern/southern lights
-        this.worldAurora.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldAurora.update(this.tickRate, this.world, this.em, tick)
         // Creature phobias (v2.61) - fears and panic
-        this.creaturePhobia.update(this.tickRate, this.em, this.world.tick)
+        this.creaturePhobia.update(this.tickRate, this.em, tick)
         // World geothermal (v2.62) - hot springs and geysers
-        this.worldGeothermal.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldGeothermal.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic federations (v2.63) - multi-civ alliances
-        this.diplomaticFederation.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticFederation.update(this.tickRate, this.world, this.em, tick)
         // Creature art (v2.64) - artistic expression
-        this.creatureArt.update(this.tickRate, this.em, this.world.tick)
+        this.creatureArt.update(this.tickRate, this.em, tick)
         // World miasma (v2.65) - toxic zones
-        this.worldMiasma.update(this.tickRate, this.world, this.world.tick)
+        this.worldMiasma.update(this.tickRate, this.world, tick)
         // Creature totems (v2.66) - tribal worship totems
-        this.creatureTotem.update(this.tickRate, this.em, this.world, this.world.tick)
+        this.creatureTotem.update(this.tickRate, this.em, this.world, tick)
         // World fossils (v2.67) - buried ancient fossils
-        this.worldFossil.update(this.tickRate, this.world, this.world.tick)
+        this.worldFossil.update(this.tickRate, this.world, tick)
         // Diplomatic spies (v2.68) - espionage and intelligence
-        this.diplomaticSpy.update(this.tickRate, this.civManager, this.world.tick)
+        this.diplomaticSpy.update(this.tickRate, this.civManager, tick)
         // Creature dances (v2.69) - ritual dances
-        this.creatureDance.update(this.tickRate, this.em, this.world.tick)
+        this.creatureDance.update(this.tickRate, this.em, tick)
         // World beacons (v2.70) - signal beacons and lighthouses
-        this.worldBeacon.update(this.tickRate, this.world, this.world.tick)
+        this.worldBeacon.update(this.tickRate, this.world, tick)
         // World tectonics (v2.72) - tectonic plates and earthquakes
-        this.worldTectonic.update(this.tickRate, this.world, this.world.tick)
+        this.worldTectonic.update(this.tickRate, this.world, tick)
         // Creature mentors (v2.74) - elder mentoring younger creatures
-        this.creatureMentor.update(this.tickRate, this.em, this.world.tick)
+        this.creatureMentor.update(this.tickRate, this.em, tick)
         // World echoes (v2.75) - sound propagation through the world
-        this.worldEcho.update(this.tickRate, this.world, this.world.tick)
+        this.worldEcho.update(this.tickRate, this.world, tick)
         // Creature trauma (v2.76) - psychological trauma from events
-        this.creatureTrauma.update(this.tickRate, this.em, this.world.tick)
+        this.creatureTrauma.update(this.tickRate, this.em, tick)
         // World oases (v2.77) - desert oases formation
-        this.worldOasis.update(this.tickRate, this.world, this.world.tick)
+        this.worldOasis.update(this.tickRate, this.world, tick)
         // Diplomatic ceremonies (v2.78) - formal civilization ceremonies
-        this.diplomaticCeremony.update(this.tickRate, this.civManager, this.world.tick)
+        this.diplomaticCeremony.update(this.tickRate, this.civManager, tick)
         // Creature migration memory (v2.79) - habitat memory inheritance
-        this.creatureMigrationMemory.update(this.tickRate, this.em, this.world.tick)
+        this.creatureMigrationMemory.update(this.tickRate, this.em, tick)
         // World petrification (v2.80) - magical petrification zones
-        this.worldPetrification.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldPetrification.update(this.tickRate, this.world, this.em, tick)
         // World maelstrom (v2.81) - oceanic maelstroms in deep water
-        this.worldMaelstrom.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMaelstrom.update(this.tickRate, this.world, this.em, tick)
         // Creature rivalry duel (v2.82) - formal duels between rivals
-        this.creatureRivalryDuel.update(this.tickRate, this.em, this.world.tick)
+        this.creatureRivalryDuel.update(this.tickRate, this.em, tick)
         // World coral reef (v2.84) - coral reefs in shallow coastal water
-        this.worldCoralReef.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldCoralReef.update(this.tickRate, this.world, this.em, tick)
         // World sandstorm (v2.87) - sandstorms in desert regions
-        this.worldSandstorm.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSandstorm.update(this.tickRate, this.world, this.em, tick)
         // Creature collection (v2.89) - creatures collect and hoard items
-        this.creatureCollection.update(this.tickRate, this.em, this.world.tick)
+        this.creatureCollection.update(this.tickRate, this.em, tick)
         // World rift (v2.90) - dimensional rifts warp terrain
-        this.worldRift.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldRift.update(this.tickRate, this.world, this.em, tick)
         // Creature vision (v2.91) - vision range affects exploration and combat
-        this.creatureVision.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureVision.update(this.tickRate, this.world, this.em, tick)
         // World avalanche (v2.92) - avalanches in snowy mountain regions
-        this.worldAvalanche.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldAvalanche.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic asylum (v2.93) - persecuted creatures seek asylum
-        this.diplomaticAsylum.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticAsylum.update(this.tickRate, this.world, this.em, tick)
         // Creature foraging (v2.94) - creatures forage for wild food
-        this.creatureForaging.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureForaging.update(this.tickRate, this.world, this.em, tick)
         // World whirlpool (v2.95) - whirlpools in deep water
-        this.worldWhirlpool.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldWhirlpool.update(this.tickRate, this.world, this.em, tick)
         // Creature oath (v2.96) - creatures swear binding oaths
-        this.creatureOath.update(this.tickRate, this.em, this.world.tick)
+        this.creatureOath.update(this.tickRate, this.em, tick)
         // World aurora storm (v2.97) - intense aurora events
-        this.worldAuroraStorm.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldAuroraStorm.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic embargo (v2.98) - trade embargoes between nations
-        this.diplomaticEmbargo.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.diplomaticEmbargo.update(this.tickRate, this.em, this.civManager, tick)
         // Creature legacy (v2.99) - lasting legacies after death
-        this.creatureLegacy.update(this.tickRate, this.em, this.world.tick)
+        this.creatureLegacy.update(this.tickRate, this.em, tick)
+        } // end tick % 60 === 41 (v2.47-v2.99)
+
+        // === EVERY 60 TICKS (offsets 21,36,51): v3.00-v3.259 lightweight systems ===
+        if (tick % 60 === 21) {
+        // === EVERY 60 TICKS (offset 21): v3.00-v3.84 systems (first third) ===
         // World memorial (v3.00) - memorials mark significant events
-        this.worldMemorial.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMemorial.update(this.tickRate, this.world, this.em, tick)
         // World tide pool (v3.01) - tide pools along coastlines
-        this.worldTidePool.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldTidePool.update(this.tickRate, this.world, this.em, tick)
         // Creature divination (v3.02) - creatures practice divination
-        this.creatureDivination.update(this.tickRate, this.em, this.world.tick)
+        this.creatureDivination.update(this.tickRate, this.em, tick)
         // Diplomatic succession (v3.03) - leadership succession crises
-        this.diplomaticSuccession.update(this.tickRate, this.em, this.world.tick)
+        this.diplomaticSuccession.update(this.tickRate, this.em, tick)
         // World meteor shower (v3.04) - meteor showers deposit minerals
-        this.worldMeteorShower.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMeteorShower.update(this.tickRate, this.world, this.em, tick)
         // Creature beast master (v3.05) - creatures tame wild beasts
-        this.creatureBeastMaster.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBeastMaster.update(this.tickRate, this.em, tick)
         // World glacier (v3.06) - glaciers reshape terrain
-        this.worldGlacier.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldGlacier.update(this.tickRate, this.world, this.em, tick)
         // Creature rumor (v3.07) - rumors spread between creatures
-        this.creatureRumor.update(this.tickRate, this.em, this.world.tick)
+        this.creatureRumor.update(this.tickRate, this.em, tick)
         // Diplomatic trade agreement (v3.08) - formal trade agreements
-        this.diplomaticTradeAgreement.update(this.tickRate, this.em, this.world.tick)
+        this.diplomaticTradeAgreement.update(this.tickRate, this.em, tick)
         // World purification (v3.09) - sacred sites purify land
-        this.worldPurification.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldPurification.update(this.tickRate, this.world, this.em, tick)
         // Creature night watch (v3.10) - sentries guard at night
-        this.creatureNightWatch.update(this.tickRate, this.em, this.world.tick)
+        this.creatureNightWatch.update(this.tickRate, this.em, tick)
         // Creature barter (v3.11) - resource trading between creatures
-        this.creatureBarter.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBarter.update(this.tickRate, this.em, tick)
         // World geysers (v3.12) - periodic geyser eruptions
-        this.worldGeyser.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldGeyser.update(this.tickRate, this.world, this.em, tick)
         // World quicksand (v3.17) - quicksand traps in desert
-        this.worldQuicksand.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldQuicksand.update(this.tickRate, this.world, this.em, tick)
         // Creature intuition (v3.19) - creatures sense danger and opportunity
-        this.creatureIntuition.update(this.tickRate, this.em, this.world.tick)
+        this.creatureIntuition.update(this.tickRate, this.em, tick)
         // World comets (v3.20) - rare comets streak across the sky
-        this.worldComet.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldComet.update(this.tickRate, this.world, this.em, tick)
         // Creature exile (v3.21) - banished creatures become wanderers
-        this.creatureExile.update(this.tickRate, this.em, this.world.tick)
+        this.creatureExile.update(this.tickRate, this.em, tick)
         // World hot springs (v3.22) - healing springs near mountains
-        this.worldHotSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldHotSpring.update(this.tickRate, this.world, this.em, tick)
         // Creature nicknames (v3.24) - creatures earn titles from deeds
-        this.creatureNickname.update(this.tickRate, this.em, this.world.tick)
+        this.creatureNickname.update(this.tickRate, this.em, tick)
         // World eclipses (v3.25) - celestial events affect creatures
-        this.worldEclipse.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldEclipse.update(this.tickRate, this.world, this.em, tick)
         // Creature grudges (v3.26) - creatures hold grudges and seek revenge
-        this.creatureGrudge.update(this.tickRate, this.em, this.world.tick)
+        this.creatureGrudge.update(this.tickRate, this.em, tick)
         // World sinkholes (v3.27) - ground collapses forming dangerous pits
-        this.worldSinkhole.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSinkhole.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic census (v3.28) - civilizations track population data
-        this.diplomaticCensus.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.diplomaticCensus.update(this.tickRate, this.em, this.civManager, tick)
         // Creature sleepwalking (v3.29) - creatures wander at night
-        this.creatureSleepwalk.update(this.tickRate, this.em, this.world.tick)
+        this.creatureSleepwalk.update(this.tickRate, this.em, tick)
         // World rainbows (v3.30) - rainbows boost morale after rain
-        this.worldRainbow.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldRainbow.update(this.tickRate, this.world, this.em, tick)
         // Creature tattoos (v3.31) - creatures earn tattoos as status symbols
-        this.creatureTattoo.update(this.tickRate, this.em, this.world.tick)
+        this.creatureTattoo.update(this.tickRate, this.em, tick)
         // World dust storms (v3.32) - massive storms sweep terrain
-        this.worldDustStorm.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldDustStorm.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic war reparations (v3.33) - losers pay victors after wars
-        this.diplomaticWarReparation.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.diplomaticWarReparation.update(this.tickRate, this.em, this.civManager, tick)
         // Creature claustrophobia (v3.34) - fear of enclosed spaces
-        this.creatureClaustrophobia.update(this.tickRate, this.em, this.world, this.world.tick)
+        this.creatureClaustrophobia.update(this.tickRate, this.em, this.world, tick)
         // World bioluminescence (v3.35) - glowing organisms in water
-        this.worldBioluminescence.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldBioluminescence.update(this.tickRate, this.world, this.em, tick)
         // Creature pilgrimage (v3.36) - sacred journeys to holy sites
-        this.creaturePilgrimage.update(this.tickRate, this.em, this.world, this.world.tick)
+        this.creaturePilgrimage.update(this.tickRate, this.em, this.world, tick)
         // World permafrost (v3.37) - frozen ground in cold regions
-        this.worldPermafrost.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldPermafrost.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic cultural exchange (v3.38) - civs share culture
-        this.diplomaticCulturalExchange.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.diplomaticCulturalExchange.update(this.tickRate, this.em, this.civManager, tick)
         // Creature somniloquy (v3.39) - creatures talk in sleep
-        this.creatureSomniloquy.update(this.tickRate, this.em, this.world.tick)
+        this.creatureSomniloquy.update(this.tickRate, this.em, tick)
         // World tidal waves (v3.40) - massive waves crash coastlines
-        this.worldTidalWave.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldTidalWave.update(this.tickRate, this.world, this.em, tick)
         // Creature omen beliefs (v3.41) - creatures interpret events as omens
-        this.creatureOmenBelief.update(this.tickRate, this.em, this.world.tick)
+        this.creatureOmenBelief.update(this.tickRate, this.em, tick)
         // World mudslides (v3.42) - rain triggers mudslides on mountains
-        this.worldMudslide.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMudslide.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic pledges (v3.43) - civs make binding pledges
-        this.diplomaticPledge.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.diplomaticPledge.update(this.tickRate, this.em, this.civManager, tick)
         // Creature ambidextrity (v3.44) - dual-hand proficiency
-        this.creatureAmbidextrity.update(this.tickRate, this.em, this.world.tick)
+        this.creatureAmbidextrity.update(this.tickRate, this.em, tick)
         // World kelp forests (v3.45) - underwater kelp grows in shallows
-        this.worldKelpForest.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldKelpForest.update(this.tickRate, this.world, this.em, tick)
         // Creature handicrafts (v3.46) - creatures craft items
-        this.creatureHandicraft.update(this.tickRate, this.em, this.world.tick)
+        this.creatureHandicraft.update(this.tickRate, this.em, tick)
         // World geothermal vents (v3.47) - underwater heat vents
-        this.worldGeothermalVent.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldGeothermalVent.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic tariffs (v3.48) - trade tariffs between civs
-        this.diplomaticTariff.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.diplomaticTariff.update(this.tickRate, this.em, this.civManager, tick)
         // Creature homesickness (v3.49) - creatures long for home
-        this.creatureHomesickness.update(this.tickRate, this.em, this.world.tick)
+        this.creatureHomesickness.update(this.tickRate, this.em, tick)
         // World mirages (v3.50) - desert illusions lure creatures
-        this.worldMirage.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMirage.update(this.tickRate, this.world, this.em, tick)
         // Creature lullabies (v3.51) - adults sing to calm young
-        this.creatureLullaby.update(this.tickRate, this.em, this.world.tick)
+        this.creatureLullaby.update(this.tickRate, this.em, tick)
         // Diplomatic mediation (v3.53) - third-party conflict resolution
-        this.diplomaticMediation.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticMediation.update(this.tickRate, this.world, this.em, tick)
         // Creature calligraphy (v3.54) - creatures develop writing
-        this.creatureCalligraphy.update(this.tickRate, this.em, this.world.tick)
+        this.creatureCalligraphy.update(this.tickRate, this.em, tick)
         // World fog banks (v3.55) - coastal fog reduces visibility
-        this.worldFogBank.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldFogBank.update(this.tickRate, this.world, this.em, tick)
         // Creature fermentation (v3.56) - creatures discover brewing
-        this.creatureFermentation.update(this.tickRate, this.em, this.world.tick)
+        this.creatureFermentation.update(this.tickRate, this.em, tick)
         // Creature ventriloquism (v3.59) - voice-throwing abilities
-        this.creatureVentriloquism.update(this.tickRate, this.em, this.world.tick)
+        this.creatureVentriloquism.update(this.tickRate, this.em, tick)
         // World dust devils (v3.60) - whirlwinds in arid regions
-        this.worldDustDevil.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldDustDevil.update(this.tickRate, this.world, this.em, tick)
         // Creature pottery (v3.61) - creatures craft pottery
-        this.creaturePottery.update(this.tickRate, this.em, this.world.tick)
+        this.creaturePottery.update(this.tickRate, this.em, tick)
         // World mangroves (v3.62) - coastal mangrove forests
-        this.worldMangrove.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMangrove.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic peace treaties (v3.63) - formal peace agreements
-        this.diplomaticPeaceTreaty.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.diplomaticPeaceTreaty.update(this.tickRate, this.em, this.civManager, tick)
         // Creature echolocation (v3.64) - sonar-like sensing
-        this.creatureEcholocation.update(this.tickRate, this.em, this.world.tick)
+        this.creatureEcholocation.update(this.tickRate, this.em, tick)
         // World ball lightning (v3.65) - rare electrical phenomena
-        this.worldBallLightning.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldBallLightning.update(this.tickRate, this.world, this.em, tick)
         // Creature weaving (v3.66) - textile crafting
-        this.creatureWeaving.update(this.tickRate, this.em, this.world.tick)
+        this.creatureWeaving.update(this.tickRate, this.em, tick)
         // World crystal caves (v3.67) - underground crystal formations
-        this.worldCrystalCave.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldCrystalCave.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic trade sanctions (v3.68) - targeted trade restrictions
-        this.diplomaticTradeSanction.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.diplomaticTradeSanction.update(this.tickRate, this.em, this.civManager, tick)
         // Creature mimicry (v3.69) - species mimicry for survival
-        this.creatureMimicry.update(this.tickRate, this.em, this.world.tick)
+        this.creatureMimicry.update(this.tickRate, this.em, tick)
         // World waterspouts (v3.70) - ocean tornado phenomena
-        this.worldWaterspout.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldWaterspout.update(this.tickRate, this.world, this.em, tick)
         // Creature beekeeping (v3.71) - honey production and apiaries
-        this.creatureBeekeeping.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBeekeeping.update(this.tickRate, this.em, tick)
         // World volcanic islands (v3.72) - new islands emerge from ocean
-        this.worldVolcanicIsland.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldVolcanicIsland.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic trade guilds (v3.73) - economic alliances
-        this.diplomaticTradeGuild.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.diplomaticTradeGuild.update(this.tickRate, this.em, this.civManager, tick)
         // Creature telepathy (v3.74) - psychic communication
-        this.creatureTelepathy.update(this.tickRate, this.em, this.world.tick)
+        this.creatureTelepathy.update(this.tickRate, this.em, tick)
         // Creature glassblowing (v3.76) - glass crafting
-        this.creatureGlassblowing.update(this.tickRate, this.em, this.world.tick)
+        this.creatureGlassblowing.update(this.tickRate, this.em, tick)
         // World underground rivers (v3.77) - hidden subterranean waterways
-        this.worldUndergroundRiver.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldUndergroundRiver.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic naval blockades (v3.78) - port blockades
-        this.diplomaticNavalBlockade.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.diplomaticNavalBlockade.update(this.tickRate, this.em, this.civManager, tick)
         // Creature premonition (v3.79) - sensing future events
-        this.creaturePremonition.update(this.tickRate, this.em, this.world.tick)
+        this.creaturePremonition.update(this.tickRate, this.em, tick)
         // Creature herbalism (v3.81) - medicinal plant knowledge
-        this.creatureHerbalism.update(this.tickRate, this.em, this.world.tick)
+        this.creatureHerbalism.update(this.tickRate, this.em, tick)
         // World floating islands (v3.82) - magical hovering landmasses
-        this.worldFloatingIsland.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldFloatingIsland.update(this.tickRate, this.world, this.em, tick)
         // Creature cartography (v3.83) - map-making skills
-        this.creatureCartography.update(this.tickRate, this.em, this.world.tick)
+        this.creatureCartography.update(this.tickRate, this.em, tick)
         // Creature shapeshifting (v3.84) - magical form changing
-        this.creatureShapeshifting.update(this.tickRate, this.em, this.world.tick)
+        this.creatureShapeshifting.update(this.tickRate, this.em, tick)
+        } // end tick % 60 === 21 (v3.00-v3.84)
+
+        if (tick % 60 === 36) {
+        // === EVERY 60 TICKS (offset 36): v3.85-v3.177 systems (second third) ===
         // World whirlwinds (v3.85) - spinning wind phenomena
-        this.worldWhirlwind.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldWhirlwind.update(this.tickRate, this.world, this.em, tick)
         // Creature runecrafting (v3.86) - magical rune inscription
-        this.creatureRunecrafting.update(this.tickRate, this.em, this.world.tick)
-        // World geothermal (v3.87) - hot springs and geysers
-        this.worldGeothermal.update(this.tickRate, this.world, this.em, this.world.tick)
-        // Diplomatic hostages (v3.88) - hostage negotiation
-        this.diplomaticHostage.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.creatureRunecrafting.update(this.tickRate, this.em, tick)
         // Creature astrology (v3.89) - celestial event readings
-        this.creatureAstrology.update(this.tickRate, this.em, this.world.tick)
-        // World avalanches (v3.90) - mountain snow avalanches
-        this.worldAvalanche.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureAstrology.update(this.tickRate, this.em, tick)
         // Creature summoning (v3.91) - magical creature summoning
-        this.creatureSummoning.update(this.tickRate, this.em, this.world.tick)
-        // World coral reefs (v3.92) - underwater reef ecosystems
-        this.worldCoralReef.update(this.tickRate, this.world, this.em, this.world.tick)
-        // Diplomatic marriages (v3.93) - political alliances through marriage
-        this.diplomaticMarriage.update(this.tickRate, this.em, this.civManager, this.world.tick)
+        this.creatureSummoning.update(this.tickRate, this.em, tick)
         // Creature alchemy (v3.94) - potion brewing
-        this.creatureAlchemy.update(this.tickRate, this.em, this.world.tick)
-        // World meteor showers (v3.95) - falling meteors
-        this.worldMeteorShower.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureAlchemy.update(this.tickRate, this.em, tick)
         // Creature enchanting (v3.96) - magical item enchantment
-        this.creatureEnchanting.update(this.tickRate, this.em, this.world.tick)
+        this.creatureEnchanting.update(this.tickRate, this.em, tick)
         // World geyser fields (v3.97) - geothermal eruption zones
-        this.worldGeyserField.update(this.tickRate, this.world, this.em, this.world.tick)
-        // Diplomatic tribute (v3.98) - vassal tribute payments
-        this.diplomaticTribute.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldGeyserField.update(this.tickRate, this.world, this.em, tick)
         // Creature bards (v3.99) - musical morale boosting
-        this.creatureBard.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBard.update(this.tickRate, this.em, tick)
         // World northern lights (v3.100) - polar aurora displays
-        this.worldNorthernLights.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldNorthernLights.update(this.tickRate, this.world, this.em, tick)
         // World moss growth (v3.101) - moss spreads on damp surfaces
-        this.worldMossGrowth.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMossGrowth.update(this.tickRate, this.world, this.em, tick)
         // World irrigation (v3.102) - water channels for farmland
-        this.worldIrrigation.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldIrrigation.update(this.tickRate, this.world, this.em, tick)
         // Creature constellations (v3.103) - stargazing bonuses
-        this.creatureConstellation.update(this.tickRate, this.em, this.world.tick)
+        this.creatureConstellation.update(this.tickRate, this.em, tick)
         // Creature scribes (v3.104) - history recording
-        this.creatureScribe.update(this.tickRate, this.em, this.world.tick)
+        this.creatureScribe.update(this.tickRate, this.em, tick)
         // World lighthouses (v3.105) - coastal navigation aids
-        this.worldLighthouse.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldLighthouse.update(this.tickRate, this.world, this.em, tick)
         // Creature masonry (v3.106) - stone building projects
-        this.creatureMasonry.update(this.tickRate, this.em, this.world.tick)
+        this.creatureMasonry.update(this.tickRate, this.em, tick)
         // World tidewater (v3.107) - tidal fluctuations
-        this.worldTidewater.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldTidewater.update(this.tickRate, this.world, this.em, tick)
         // Creature origami (v3.108) - paper folding art
-        this.creatureOrigami.update(this.tickRate, this.em, this.world.tick)
+        this.creatureOrigami.update(this.tickRate, this.em, tick)
         // World labyrinths (v3.109) - natural maze formations
-        this.worldLabyrinth.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldLabyrinth.update(this.tickRate, this.world, this.em, tick)
         // Creature falconry (v3.110) - trained hunting birds
-        this.creatureFalconry.update(this.tickRate, this.em, this.world.tick)
+        this.creatureFalconry.update(this.tickRate, this.em, tick)
         // Creature apiary (v3.111) - beekeeping and honey
-        this.creatureApiary.update(this.tickRate, this.em, this.world.tick)
+        this.creatureApiary.update(this.tickRate, this.em, tick)
         // World terracing (v3.112) - hillside terrace farming
-        this.worldTerracing.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldTerracing.update(this.tickRate, this.world, this.em, tick)
         // Creature couriers (v3.113) - message runners
-        this.creatureCourier.update(this.tickRate, this.em, this.world.tick)
+        this.creatureCourier.update(this.tickRate, this.em, tick)
         // Creature mosaics (v3.114) - decorative art
-        this.creatureMosaic.update(this.tickRate, this.em, this.world.tick)
+        this.creatureMosaic.update(this.tickRate, this.em, tick)
         // World sundials (v3.115) - timekeeping monuments
-        this.worldSundial.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSundial.update(this.tickRate, this.world, this.em, tick)
         // World aqueducts (v3.116) - water transport infrastructure
-        this.worldAqueduct.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldAqueduct.update(this.tickRate, this.world, this.em, tick)
         // Creature tattoists (v3.117) - symbolic ink markings
-        this.creatureTattoist.update(this.tickRate, this.em, this.world.tick)
+        this.creatureTattoist.update(this.tickRate, this.em, tick)
         // World geoglyphs (v3.118) - giant ground drawings
-        this.worldGeoglyph.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldGeoglyph.update(this.tickRate, this.world, this.em, tick)
         // Creature heralds (v3.119) - event announcers
-        this.creatureHerald.update(this.tickRate, this.em, this.world.tick)
+        this.creatureHerald.update(this.tickRate, this.em, tick)
         // Creature puppeteers (v3.121) - puppet show entertainment
-        this.creaturePuppeteer.update(this.tickRate, this.em, this.world.tick)
+        this.creaturePuppeteer.update(this.tickRate, this.em, tick)
         // World obsidian (v3.122) - volcanic glass deposits
-        this.worldObsidian.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldObsidian.update(this.tickRate, this.world, this.em, tick)
         // Creature rangers (v3.123) - territory patrol
-        this.creatureRanger.update(this.tickRate, this.em, this.world.tick)
+        this.creatureRanger.update(this.tickRate, this.em, tick)
         // World coral reef growth (v3.124) - expanding reef ecosystems
-        this.worldCoralReefGrowth.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldCoralReefGrowth.update(this.tickRate, this.world, this.em, tick)
         // Creature runners (v3.125) - long-distance messengers
-        this.creatureRunner.update(this.tickRate, this.em, this.world.tick)
+        this.creatureRunner.update(this.tickRate, this.em, tick)
         // Creature jesters (v3.127) - court entertainers
-        this.creatureJester.update(this.tickRate, this.em, this.world.tick)
+        this.creatureJester.update(this.tickRate, this.em, tick)
         // World petrified forests (v3.128) - ancient stone trees
-        this.worldPetrifiedForest.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldPetrifiedForest.update(this.tickRate, this.world, this.em, tick)
         // Creature nomads (v3.129) - migrating tribes
-        this.creatureNomad.update(this.tickRate, this.em, this.world.tick)
+        this.creatureNomad.update(this.tickRate, this.em, tick)
         // World stalactites (v3.131) - cave formations
-        this.worldStalactite.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldStalactite.update(this.tickRate, this.world, this.em, tick)
         // Creature chroniclers (v3.132) - event recorders
-        this.creatureChronicler.update(this.tickRate, this.em, this.world.tick)
+        this.creatureChronicler.update(this.tickRate, this.em, tick)
         // Creature firewalkers (v3.134) - lava immunity
-        this.creatureFirewalker.update(this.tickRate, this.em, this.world.tick)
+        this.creatureFirewalker.update(this.tickRate, this.em, tick)
         // Diplomatic hostage exchange (v3.135) - trust building
-        this.diplomaticHostageExchange.update(this.tickRate, this.world, this.em, this.civManager, this.world.tick)
+        this.diplomaticHostageExchange.update(this.tickRate, this.world, this.em, this.civManager, tick)
         // World frostbite (v3.136) - cold damage zones
-        this.worldFrostbite.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldFrostbite.update(this.tickRate, this.world, this.em, tick)
         // Creature oracles (v3.137) - future sight
-        this.creatureOracle.update(this.tickRate, this.em, this.world.tick)
+        this.creatureOracle.update(this.tickRate, this.em, tick)
         // World coral bleaching (v3.138) - reef degradation
-        this.worldCoralBleaching.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldCoralBleaching.update(this.tickRate, this.world, this.em, tick)
         // Creature blacksmiths (v3.139) - weapon forging
-        this.creatureBlacksmith.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBlacksmith.update(this.tickRate, this.em, tick)
         // Creature dowsers (v3.141) - water finding
-        this.creatureDowser.update(this.tickRate, this.em, this.world.tick)
+        this.creatureDowser.update(this.tickRate, this.em, tick)
         // World magnetic field (v3.142) - navigation anomalies
-        this.worldMagneticField.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMagneticField.update(this.tickRate, this.world, this.em, tick)
         // Creature cheese agers (v3.143) - food quality
-        this.creatureCheeseAger.update(this.tickRate, this.em, this.world.tick)
+        this.creatureCheeseAger.update(this.tickRate, this.em, tick)
         // World sinkhole prevention (v3.144) - ground stability
-        this.worldSinkholePrev.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSinkholePrev.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic ransom (v3.145) - prisoner negotiation
-        this.diplomaticRansom.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticRansom.update(this.tickRate, this.world, this.em, tick)
         // Creature soap makers (v3.146) - soap crafting
-        this.creatureSoapMaker.update(this.tickRate, this.em, this.world.tick)
+        this.creatureSoapMaker.update(this.tickRate, this.em, tick)
         // World dew formation (v3.147) - moisture cycles
-        this.worldDewFormation.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldDewFormation.update(this.tickRate, this.world, this.em, tick)
         // Creature gamblers (v3.148) - wealth redistribution
-        this.creatureGambler.update(this.tickRate, this.em, this.world.tick)
+        this.creatureGambler.update(this.tickRate, this.em, tick)
         // World sand dune (v3.149) - dune migration
-        this.worldSandDune.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSandDune.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic war reparations (v3.150) - post-war payments
-        this.diplomaticWarReparations.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticWarReparations.update(this.tickRate, this.world, this.em, this.civManager, tick)
         // Creature gladiators (v3.151) - arena combat
-        this.creatureGladiator.update(this.tickRate, this.em, this.world.tick)
+        this.creatureGladiator.update(this.tickRate, this.em, tick)
         // World tide flat (v3.152) - intertidal zones
-        this.worldTideFlat.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldTideFlat.update(this.tickRate, this.world, this.em, tick)
         // Creature mushroom foragers (v3.153) - fungal gathering
-        this.creatureMushroomForager.update(this.tickRate, this.em, this.world.tick)
+        this.creatureMushroomForager.update(this.tickRate, this.em, tick)
         // World ice sheet (v3.154) - glacial expansion
-        this.worldIceSheet.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldIceSheet.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic non-aggression (v3.155) - peace pacts
-        this.diplomaticNonAggression.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticNonAggression.update(this.tickRate, this.world, this.em, tick)
         // Creature trappers (v3.156) - hunting traps
-        this.creatureTrapper.update(this.tickRate, this.em, this.world.tick)
+        this.creatureTrapper.update(this.tickRate, this.em, tick)
         // World coral spawning (v3.157) - reef reproduction
-        this.worldCoralSpawning.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldCoralSpawning.update(this.tickRate, this.world, this.em, tick)
         // Creature astronomers (v3.158) - star observation
-        this.creatureAstronomer.update(this.tickRate, this.em, this.world.tick)
+        this.creatureAstronomer.update(this.tickRate, this.em, tick)
         // World thermal vent (v3.159) - deep sea vents
-        this.worldThermalVent.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldThermalVent.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic armistice (v3.160) - ceasefire agreements
-        this.diplomaticArmistic.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticArmistic.update(this.tickRate, this.world, this.em, this.civManager, tick)
         // Creature weavers (v3.161) - textile crafting
-        this.creatureWeaver.update(this.tickRate, this.em, this.world.tick)
+        this.creatureWeaver.update(this.tickRate, this.em, tick)
         // Creature herbalists (v3.163) - herb gathering and potions
-        this.creatureHerbalist.update(this.tickRate, this.em, this.world.tick)
+        this.creatureHerbalist.update(this.tickRate, this.em, tick)
         // Creature sentinels (v3.166) - watchmen and guards
-        this.creatureSentinel.update(this.tickRate, this.em, this.world.tick)
+        this.creatureSentinel.update(this.tickRate, this.em, tick)
         // World peat bogs (v3.167) - waterlogged organic deposits
-        this.worldPeatBog.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldPeatBog.update(this.tickRate, this.world, this.em, tick)
         // Creature beekeepers (v3.171) - honey and wax production
-        this.creatureBeekeeper.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBeekeeper.update(this.tickRate, this.em, tick)
         // World atolls (v3.172) - ring-shaped coral islands
-        this.worldAtoll.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldAtoll.update(this.tickRate, this.world, this.em, tick)
         // Creature lamplighters (v3.173) - settlement lighting
-        this.creatureLamplighter.update(this.tickRate, this.em, this.world.tick)
+        this.creatureLamplighter.update(this.tickRate, this.em, tick)
         // Diplomatic ceasefire (v3.175) - temporary peace agreements
-        this.diplomaticCeasefire.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticCeasefire.update(this.tickRate, this.world, this.em, tick)
         // Creature perfumers (v3.176) - fragrance crafting
-        this.creaturePerfumer.update(this.tickRate, this.em, this.world.tick)
+        this.creaturePerfumer.update(this.tickRate, this.em, tick)
         // World coral nurseries (v3.177) - coral cultivation
-        this.worldCoralNursery.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldCoralNursery.update(this.tickRate, this.world, this.em, tick)
+        } // end tick % 60 === 36 (v3.85-v3.177)
+
+        if (tick % 60 === 51) {
+        // === EVERY 60 TICKS (offset 51): v3.178-v3.259 systems (third third) ===
         // Creature glaziers (v3.178) - glass crafting
-        this.creatureGlazier.update(this.tickRate, this.em, this.world.tick)
+        this.creatureGlazier.update(this.tickRate, this.em, tick)
         // World mud volcanoes (v3.179) - mud eruptions
-        this.worldMudVolcano.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMudVolcano.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic protectorate (v3.180) - vassal protection
-        this.diplomaticProtectorate.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticProtectorate.update(this.tickRate, this.world, this.em, tick)
         // Creature gondoliers (v3.181) - waterway transport
-        this.creatureGondolier.update(this.tickRate, this.em, this.world.tick)
+        this.creatureGondolier.update(this.tickRate, this.em, tick)
         // World fungal networks (v3.182) - underground mycelium
-        this.worldFungalNetwork.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldFungalNetwork.update(this.tickRate, this.world, this.em, tick)
         // Creature coopers (v3.183) - barrel making
-        this.creatureCooper.update(this.tickRate, this.em, this.world.tick)
+        this.creatureCooper.update(this.tickRate, this.em, tick)
         // World salt marshes (v3.184) - coastal wetlands
-        this.worldSaltMarsh.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSaltMarsh.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic confederation (v3.185) - multi-civ alliances
-        this.diplomaticConfederation.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticConfederation.update(this.tickRate, this.world, this.em, tick)
         // Creature chandlers (v3.186) - candle making
-        this.creatureChandler.update(this.tickRate, this.em, this.world.tick)
+        this.creatureChandler.update(this.tickRate, this.em, tick)
         // World frost hollows (v3.187) - cold air pooling
-        this.worldFrostHollow.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldFrostHollow.update(this.tickRate, this.world, this.em, tick)
         // Creature tinkers (v3.188) - repair and mending
-        this.creatureTinker.update(this.tickRate, this.em, this.world.tick)
+        this.creatureTinker.update(this.tickRate, this.em, tick)
         // World basalt columns (v3.189) - volcanic formations
-        this.worldBasaltColumn.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldBasaltColumn.update(this.tickRate, this.world, this.em, tick)
         // Creature fletchers (v3.191) - arrow and bow crafting
-        this.creatureFletcher.update(this.tickRate, this.em, this.world.tick)
+        this.creatureFletcher.update(this.tickRate, this.em, tick)
         // World mangrove swamps (v3.192) - coastal ecosystems
-        this.worldMangroveSwamp.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMangroveSwamp.update(this.tickRate, this.world, this.em, tick)
         // Creature wheelwrights (v3.193) - wheel building
-        this.creatureWheelwright.update(this.tickRate, this.em, this.world.tick)
+        this.creatureWheelwright.update(this.tickRate, this.em, tick)
         // World obsidian fields (v3.194) - volcanic glass deposits
-        this.worldObsidianField.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldObsidianField.update(this.tickRate, this.world, this.em, tick)
         // Creature falconers (v3.196) - raptor training
-        this.creatureFalconer.update(this.tickRate, this.em, this.world.tick)
+        this.creatureFalconer.update(this.tickRate, this.em, tick)
         // Creature engravers (v3.198) - inscription crafting
-        this.creatureEngraver.update(this.tickRate, this.em, this.world.tick)
+        this.creatureEngraver.update(this.tickRate, this.em, tick)
         // World lava tubes (v3.199) - underground tunnels
-        this.worldLavaTube.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldLavaTube.update(this.tickRate, this.world, this.em, tick)
         // Creature tanners (v3.201) - leather processing
-        this.creatureTanner.update(this.tickRate, this.em, this.world.tick)
+        this.creatureTanner.update(this.tickRate, this.em, tick)
         // World bioluminescent bays (v3.202) - glowing coastal waters
-        this.worldBioluminescentBay.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldBioluminescentBay.update(this.tickRate, this.world, this.em, tick)
         // Creature cartographers (v3.203) - map making
-        this.creatureCartographer.update(this.tickRate, this.em, this.world.tick)
+        this.creatureCartographer.update(this.tickRate, this.em, tick)
         // World pumice fields (v3.204) - floating volcanic rock
-        this.worldPumiceField.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldPumiceField.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic tribunal (v3.205) - international justice
-        this.diplomaticTribunal.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticTribunal.update(this.tickRate, this.world, this.em, tick)
         // Creature rope makers (v3.206) - cordage crafting
-        this.creatureRopeMaker.update(this.tickRate, this.em, this.world.tick)
+        this.creatureRopeMaker.update(this.tickRate, this.em, tick)
         // World sandstone arches (v3.207) - desert rock formations
-        this.worldSandstoneArch.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSandstoneArch.update(this.tickRate, this.world, this.em, tick)
         // Creature vintners (v3.208) - wine production
-        this.creatureVintner.update(this.tickRate, this.em, this.world.tick)
+        this.creatureVintner.update(this.tickRate, this.em, tick)
         // World fumarole fields (v3.209) - volcanic steam vents
-        this.worldFumaroleField.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldFumaroleField.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic amnesty (v3.210) - prisoner release
-        this.diplomaticAmnesty.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticAmnesty.update(this.tickRate, this.world, this.em, tick)
         // Creature shipwrights (v3.211) - vessel building
-        this.creatureShipwright.update(this.tickRate, this.em, this.world.tick)
+        this.creatureShipwright.update(this.tickRate, this.em, tick)
         // World cloud forests (v3.212) - misty highlands
-        this.worldCloudForest.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldCloudForest.update(this.tickRate, this.world, this.em, tick)
         // Creature dyers (v3.213) - textile dyeing
-        this.creatureDyer.update(this.tickRate, this.em, this.world.tick)
+        this.creatureDyer.update(this.tickRate, this.em, tick)
         // World travertine terraces (v3.214) - mineral formations
-        this.worldTravertineTerrace.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldTravertineTerrace.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic arbitration (v3.215) - dispute resolution
-        this.diplomaticArbitration.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticArbitration.update(this.tickRate, this.world, this.em, tick)
         // Creature lapidaries (v3.216) - gem cutting
-        this.creatureLapidary.update(this.tickRate, this.em, this.world.tick)
+        this.creatureLapidary.update(this.tickRate, this.em, tick)
         // World black sand beaches (v3.217) - volcanic coastlines
-        this.worldBlackSandBeach.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldBlackSandBeach.update(this.tickRate, this.world, this.em, tick)
         // Creature locksmiths (v3.218) - lock crafting
-        this.creatureLocksmith.update(this.tickRate, this.em, this.world.tick)
+        this.creatureLocksmith.update(this.tickRate, this.em, tick)
         // World ice caves (v3.219) - glacial formations
-        this.worldIceCave.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldIceCave.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic plebiscite (v3.220) - popular votes
-        this.diplomaticPlebiscite.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticPlebiscite.update(this.tickRate, this.world, this.em, tick)
         // Creature rugmakers (v3.221) - rug weaving artisans
-        this.creatureRugmaker.update(this.tickRate, this.em, this.world.tick)
+        this.creatureRugmaker.update(this.tickRate, this.em, tick)
         // World tidal lagoons (v3.222) - coastal brackish lagoons
-        this.worldTidalLagoon.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldTidalLagoon.update(this.tickRate, this.world, this.em, tick)
         // Creature saddlers (v3.223) - leather saddle crafters
-        this.creatureSaddler.update(this.tickRate, this.em, this.world.tick)
+        this.creatureSaddler.update(this.tickRate, this.em, tick)
         // World ice shelves (v3.224) - floating glacial platforms
-        this.worldIceShelf.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldIceShelf.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic referendum (v3.225) - popular vote diplomacy
-        this.diplomaticReferendum.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticReferendum.update(this.tickRate, this.world, this.em, tick)
         // Creature bookbinders (v3.226) - book binding artisans
-        this.creatureBookbinder.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBookbinder.update(this.tickRate, this.em, tick)
         // World sea stacks (v3.227) - erosion-carved rock pillars
-        this.worldSeaStack.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSeaStack.update(this.tickRate, this.world, this.em, tick)
         // Creature farriers (v3.228) - horseshoe smiths
-        this.creatureFarrier.update(this.tickRate, this.em, this.world.tick)
+        this.creatureFarrier.update(this.tickRate, this.em, tick)
         // World permafrost thaw (v3.229) - melting frozen ground
-        this.worldPermafrostThaw.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldPermafrostThaw.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic ratification (v3.230) - treaty approval
-        this.diplomaticRatification.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticRatification.update(this.tickRate, this.world, this.em, tick)
         // Creature fullers (v3.231) - cloth processing workers
-        this.creatureFuller.update(this.tickRate, this.em, this.world.tick)
+        this.creatureFuller.update(this.tickRate, this.em, tick)
         // World barrier islands (v3.232) - coastal sandy islands
-        this.worldBarrierIsland.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldBarrierIsland.update(this.tickRate, this.world, this.em, tick)
         // Creature sawyers (v3.233) - timber cutting workers
-        this.creatureSawyer.update(this.tickRate, this.em, this.world.tick)
+        this.creatureSawyer.update(this.tickRate, this.em, tick)
         // World volcanic ash plains (v3.234) - eruption aftermath
-        this.worldVolcanicAshPlain.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldVolcanicAshPlain.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic adjudication (v3.235) - dispute resolution
-        this.diplomaticAdjudication.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticAdjudication.update(this.tickRate, this.world, this.em, tick)
         // Creature gilders (v3.236) - gold leaf artisans
-        this.creatureGilders.update(this.tickRate, this.em, this.world.tick)
+        this.creatureGilders.update(this.tickRate, this.em, tick)
         // Creature coopers (v3.238) - barrel crafters
-        this.creatureCoopers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureCoopers.update(this.tickRate, this.em, tick)
         // World mud flats (v3.239) - tidal mudflats
-        this.worldMudFlat.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMudFlat.update(this.tickRate, this.world, this.em, tick)
         // Creature thatchers (v3.241) - straw roof builders
-        this.creatureThatchers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureThatchers.update(this.tickRate, this.em, tick)
         // World coral atolls (v3.242) - ring-shaped reef islands
-        this.worldCoralAtoll.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldCoralAtoll.update(this.tickRate, this.world, this.em, tick)
         // Creature chandlers (v3.243) - candle and soap makers
-        this.creatureChandlers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureChandlers.update(this.tickRate, this.em, tick)
         // World geothermal springs (v3.244) - hot springs
-        this.worldGeothermalSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldGeothermalSpring.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic conciliation (v3.245) - post-war reconciliation
-        this.diplomaticConciliation.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticConciliation.update(this.tickRate, this.world, this.em, tick)
         // Creature glazers (v3.246) - window glass artisans
-        this.creatureGlazers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureGlazers.update(this.tickRate, this.em, tick)
         // World sinkhole plains (v3.247) - karst landscape
-        this.worldSinkholePlain.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSinkholePlain.update(this.tickRate, this.world, this.em, tick)
         // Creature plasterers (v3.248) - wall finish workers
-        this.creaturePlasterers.update(this.tickRate, this.em, this.world.tick)
-        // World peat bogs (v3.249) - acidic wetlands
-        this.worldPeatBog.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creaturePlasterers.update(this.tickRate, this.em, tick)
         // Diplomatic arbitration treaties (v3.250) - binding agreements
-        this.diplomaticArbitrationTreaty.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticArbitrationTreaty.update(this.tickRate, this.world, this.em, tick)
         // Creature engravers (v3.251) - metal and stone carving
-        this.creatureEngravers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureEngravers.update(this.tickRate, this.em, tick)
         // World mangrove deltas (v3.252) - coastal wetland forests
-        this.worldMangroveDelta.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMangroveDelta.update(this.tickRate, this.world, this.em, tick)
         // Creature wheelwrights (v3.253) - wheel builders
-        this.creatureWheelwrights.update(this.tickRate, this.em, this.world.tick)
+        this.creatureWheelwrights.update(this.tickRate, this.em, tick)
         // World salt flats (v3.254) - crystallized salt landscapes
-        this.worldSaltFlat.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSaltFlat.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic extradition (v3.255) - fugitive return treaties
-        this.diplomaticExtradition.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticExtradition.update(this.tickRate, this.world, this.em, tick)
         // Creature perfumers (v3.256) - fragrance distillers
-        this.creaturePerfumers.update(this.tickRate, this.em, this.world.tick)
+        this.creaturePerfumers.update(this.tickRate, this.em, tick)
         // World obsidian flows (v3.257) - volcanic glass formations
-        this.worldObsidianFlow.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldObsidianFlow.update(this.tickRate, this.world, this.em, tick)
         // Creature cobblers (v3.258) - footwear crafters
-        this.creatureCobblers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureCobblers.update(this.tickRate, this.em, tick)
         // World tidal marshes (v3.259) - coastal salt marshes
-        this.worldTidalMarsh.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldTidalMarsh.update(this.tickRate, this.world, this.em, tick)
+        } // end tick % 60 === 51 (v3.178-v3.259)
+
+        // === EVERY 60 TICKS (offsets 6,26,46): v3.260-v3.746 lightweight systems ===
+        if (tick % 60 === 6) {
+        // === EVERY 60 TICKS (offset 6): v3.260-v3.374 systems (first third) ===
         // Diplomatic sovereignty (v3.260) - sovereignty recognition
-        this.diplomaticSovereignty.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticSovereignty.update(this.tickRate, this.world, this.em, tick)
         // Creature assayers (v3.261) - ore purity testers
-        this.creatureAssayers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureAssayers.update(this.tickRate, this.em, tick)
         // World karst towers (v3.262) - limestone tower formations
-        this.worldKarstTower.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldKarstTower.update(this.tickRate, this.world, this.em, tick)
         // Creature fletchers (v3.263) - arrow and bolt crafters
-        this.creatureFletchers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureFletchers.update(this.tickRate, this.em, tick)
         // World alluvial fans (v3.264) - sediment fan deposits
-        this.worldAlluvialFan.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldAlluvialFan.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic reparation (v3.265) - war reparation agreements
-        this.diplomaticReparation.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticReparation.update(this.tickRate, this.world, this.em, tick)
         // Creature wainwrights (v3.266) - wagon and cart builders
-        this.creatureWainwrights.update(this.tickRate, this.em, this.world.tick)
+        this.creatureWainwrights.update(this.tickRate, this.em, tick)
         // World bayous (v3.267) - slow-moving marshy waterways
-        this.worldBayou.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldBayou.update(this.tickRate, this.world, this.em, tick)
         // Creature curiers (v3.268) - leather curers
-        this.creatureCuriers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureCuriers.update(this.tickRate, this.em, tick)
         // World cinder cones (v3.269) - volcanic cinder cones
-        this.worldCinderCone.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldCinderCone.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic restitution (v3.270) - property restitution
-        this.diplomaticRestitution.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticRestitution.update(this.tickRate, this.world, this.em, tick)
         // Creature horners (v3.271) - horn and antler craftsmen
-        this.creatureHorners.update(this.tickRate, this.em, this.world.tick)
+        this.creatureHorners.update(this.tickRate, this.em, tick)
         // World fjords (v3.272) - glacially carved inlets
-        this.worldFjord.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldFjord.update(this.tickRate, this.world, this.em, tick)
         // Creature nailers (v3.273) - nail makers
-        this.creatureNailers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureNailers.update(this.tickRate, this.em, tick)
         // World badlands (v3.274) - eroded arid terrain
-        this.worldBadlands.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldBadlands.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic indemnity (v3.275) - damage compensation
-        this.diplomaticIndemnity.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticIndemnity.update(this.tickRate, this.world, this.em, tick)
         // Creature reed cutters (v3.276) - reed harvesters
-        this.creatureReedCutters.update(this.tickRate, this.em, this.world.tick)
+        this.creatureReedCutters.update(this.tickRate, this.em, tick)
         // World mesas (v3.277) - flat-topped landforms
-        this.worldMesa.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMesa.update(this.tickRate, this.world, this.em, tick)
         // Creature potters (v3.278) - clay pottery craftsmen
-        this.creaturePotters.update(this.tickRate, this.em, this.world.tick)
+        this.creaturePotters.update(this.tickRate, this.em, tick)
         // Diplomatic annexation (v3.280) - territorial annexation
-        this.diplomaticAnnexation.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticAnnexation.update(this.tickRate, this.world, this.em, tick)
         // Creature rope makers (v3.281) - rope and cordage craftsmen
-        this.creatureRopeMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureRopeMakers.update(this.tickRate, this.em, tick)
         // World buttes (v3.282) - isolated flat-topped hills
-        this.worldButtes.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldButtes.update(this.tickRate, this.world, this.em, tick)
         // Creature bell founders (v3.283) - bell casting craftsmen
-        this.creatureBellFounders.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBellFounders.update(this.tickRate, this.em, tick)
         // World canyons (v3.284) - deep river-carved gorges
-        this.worldCanyon.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldCanyon.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic secession (v3.285) - territorial secession
-        this.diplomaticSecession.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticSecession.update(this.tickRate, this.world, this.em, tick)
         // Creature quarrymen (v3.286) - stone quarry workers
-        this.creatureQuarrymen.update(this.tickRate, this.em, this.world.tick)
+        this.creatureQuarrymen.update(this.tickRate, this.em, tick)
         // World archipelagos (v3.287) - island chain formations
-        this.worldArchipelago.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldArchipelago.update(this.tickRate, this.world, this.em, tick)
         // Creature felters (v3.288) - felt making craftsmen
-        this.creatureFelters.update(this.tickRate, this.em, this.world.tick)
+        this.creatureFelters.update(this.tickRate, this.em, tick)
         // World rift valleys (v3.289) - tectonic rift valleys
-        this.worldRiftValley.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldRiftValley.update(this.tickRate, this.world, this.em, tick)
         // Creature limeburners (v3.291) - lime kiln operators
-        this.creatureLimeburners.update(this.tickRate, this.em, this.world.tick)
+        this.creatureLimeburners.update(this.tickRate, this.em, tick)
         // World calderas (v3.292) - volcanic caldera formations
-        this.worldCaldera.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldCaldera.update(this.tickRate, this.world, this.em, tick)
         // Creature wheelers (v3.293) - wheel makers
-        this.creatureWheelers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureWheelers.update(this.tickRate, this.em, tick)
         // World escarpments (v3.294) - steep cliff faces
-        this.worldEscarpment.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldEscarpment.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic neutralization (v3.295) - neutrality agreements
-        this.diplomaticNeutralization.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticNeutralization.update(this.tickRate, this.world, this.em, tick)
         // Creature sieve makers (v3.296) - sieve and screen craftsmen
-        this.creatureSieveMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureSieveMakers.update(this.tickRate, this.em, tick)
         // World plains (v3.297) - vast open grassland plains
-        this.worldPlains.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldPlains.update(this.tickRate, this.world, this.em, tick)
         // Creature broom makers (v3.298) - broom and brush craftsmen
-        this.creatureBroomMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBroomMakers.update(this.tickRate, this.em, tick)
         // World spires (v3.299) - tall rock spire formations
-        this.worldSpire.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSpire.update(this.tickRate, this.world, this.em, tick)
         // Creature charcoal burners (v3.301) - charcoal production workers
-        this.creatureCharcoalBurners.update(this.tickRate, this.em, this.world.tick)
+        this.creatureCharcoalBurners.update(this.tickRate, this.em, tick)
         // World grottos (v3.302) - small picturesque caves
-        this.worldGrotto.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldGrotto.update(this.tickRate, this.world, this.em, tick)
         // Creature tinsmiths (v3.303) - tin and pewter workers
-        this.creatureTinsmiths.update(this.tickRate, this.em, this.world.tick)
+        this.creatureTinsmiths.update(this.tickRate, this.em, tick)
         // World pinnacles (v3.304) - pointed rock formations
-        this.worldPinnacle.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldPinnacle.update(this.tickRate, this.world, this.em, tick)
         // Creature basket weavers (v3.306) - basket weaving craftsmen
-        this.creatureBasketWeavers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBasketWeavers.update(this.tickRate, this.em, tick)
         // World hoodoos (v3.307) - hoodoo rock formations
-        this.worldHoodoo.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldHoodoo.update(this.tickRate, this.world, this.em, tick)
         // Creature soap makers (v3.308) - soap production craftsmen
-        this.creatureSoapMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureSoapMakers.update(this.tickRate, this.em, tick)
         // World cenotes (v3.309) - natural sinkholes with water
-        this.worldCenote.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldCenote.update(this.tickRate, this.world, this.em, tick)
         // Creature glassblowers (v3.311) - glass blowing craftsmen
-        this.creatureGlassblowers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureGlassblowers.update(this.tickRate, this.em, tick)
         // World moraines (v3.312) - glacial moraine formations
-        this.worldMoraine.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMoraine.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic coexistence (v3.313) - peaceful coexistence agreements
-        this.diplomaticCoexistence.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticCoexistence.update(this.tickRate, this.world, this.em, tick)
         // Creature parchment makers (v3.314) - parchment production craftsmen
-        this.creatureParchmentMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureParchmentMakers.update(this.tickRate, this.em, tick)
         // World blowholes (v3.315) - coastal blowhole formations
-        this.worldBlowhole.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldBlowhole.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic reunification (v3.316) - reunification treaties
-        this.diplomaticReunification.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticReunification.update(this.tickRate, this.world, this.em, tick)
         // Creature dyers (v3.317) - fabric dyeing craftsmen
-        this.creatureDyers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureDyers.update(this.tickRate, this.em, tick)
         // World drumlins (v3.318) - glacial drumlin formations
-        this.worldDrumlin.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldDrumlin.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic non-intervention (v3.319) - non-intervention pacts
-        this.diplomaticNonIntervention.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticNonIntervention.update(this.tickRate, this.world, this.em, tick)
         // Creature harness makers (v3.320) - harness and tack craftsmen
-        this.creatureHarnessMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureHarnessMakers.update(this.tickRate, this.em, tick)
         // World kettle holes (v3.321) - glacial kettle hole formations
-        this.worldKettleHole.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldKettleHole.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic reconciliation (v3.322) - post-conflict reconciliation
-        this.diplomaticReconciliation.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticReconciliation.update(this.tickRate, this.world, this.em, tick)
         // Creature vinegar makers (v3.323) - vinegar production craftsmen
-        this.creatureVinegarMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureVinegarMakers.update(this.tickRate, this.em, tick)
         // World nunataks (v3.324) - ice field mountain peaks
-        this.worldNunatak.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldNunatak.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic disarmament (v3.325) - disarmament treaties
-        this.diplomaticDisarmament.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticDisarmament.update(this.tickRate, this.world, this.em, tick)
         // World cirques (v3.327) - glacial cirque formations
-        this.worldCirque.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldCirque.update(this.tickRate, this.world, this.em, tick)
         // Creature lace makers (v3.329) - lace weaving craftsmen
-        this.creatureLaceMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureLaceMakers.update(this.tickRate, this.em, tick)
         // World arroyos (v3.330) - dry creek bed formations
-        this.worldArroyo.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldArroyo.update(this.tickRate, this.world, this.em, tick)
         // Creature furriers (v3.332) - fur trading craftsmen
-        this.creatureFurriers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureFurriers.update(this.tickRate, this.em, tick)
         // World coulees (v3.333) - lava coulee formations
-        this.worldCoulee.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldCoulee.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic detente (v3.334) - detente agreements
-        this.diplomaticDetente.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticDetente.update(this.tickRate, this.world, this.em, tick)
         // World deltas (v3.336) - river delta formations
-        this.worldDelta.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldDelta.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic rapprochement (v3.337) - rapprochement agreements
-        this.diplomaticRapprochement.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticRapprochement.update(this.tickRate, this.world, this.em, tick)
         // Creature bookbinders (v3.338) - book binding craftsmen
-        this.creatureBookbinders.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBookbinders.update(this.tickRate, this.em, tick)
         // World estuaries (v3.339) - estuary formations
-        this.worldEstuary.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldEstuary.update(this.tickRate, this.world, this.em, tick)
         // Creature enamelers (v3.341) - enamel coating craftsmen
-        this.creatureEnamelers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureEnamelers.update(this.tickRate, this.em, tick)
         // World wadis (v3.342) - dry valley formations
-        this.worldWadi.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldWadi.update(this.tickRate, this.world, this.em, tick)
         // Creature upholsterers (v3.344) - upholstery craftsmen
-        this.creatureUpholsterers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureUpholsterers.update(this.tickRate, this.em, tick)
         // World peneplains (v3.345) - peneplain formations
-        this.worldPeneplain.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldPeneplain.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic appeasement (v3.346) - appeasement policies
-        this.diplomaticAppeasement.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticAppeasement.update(this.tickRate, this.world, this.em, tick)
         // Creature calderers (v3.347) - cauldron making craftsmen
-        this.creatureCalderers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureCalderers.update(this.tickRate, this.em, tick)
         // World ravines (v3.348) - ravine formations
-        this.worldRavine.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldRavine.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic entente (v3.349) - entente agreements
-        this.diplomaticEntente.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticEntente.update(this.tickRate, this.world, this.em, tick)
         // Creature scriveners (v3.350) - professional scribes
-        this.creatureScriveners.update(this.tickRate, this.em, this.world.tick)
+        this.creatureScriveners.update(this.tickRate, this.em, tick)
         // World inselbergs (v3.351) - inselberg formations
-        this.worldInselberg.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldInselberg.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic accord (v3.352) - accord agreements
-        this.diplomaticAccord.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticAccord.update(this.tickRate, this.world, this.em, tick)
         // Creature illuminators (v3.353) - manuscript illumination craftsmen
-        this.creatureIlluminators.update(this.tickRate, this.em, this.world.tick)
+        this.creatureIlluminators.update(this.tickRate, this.em, tick)
         // World gorges (v3.354) - gorge formations
-        this.worldGorge.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldGorge.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic concord (v3.355) - concord treaties
-        this.diplomaticConcord.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticConcord.update(this.tickRate, this.world, this.em, tick)
         // Creature bell makers (v3.356) - bell casting craftsmen
-        this.creatureBellMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBellMakers.update(this.tickRate, this.em, tick)
         // World playas (v3.357) - dry lake bed formations
-        this.worldPlaya.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldPlaya.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic neutrality (v3.358) - neutrality declarations
-        this.diplomaticNeutrality.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticNeutrality.update(this.tickRate, this.world, this.em, tick)
         // Creature comb makers (v3.359) - comb crafting artisans
-        this.creatureCombMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureCombMakers.update(this.tickRate, this.em, tick)
         // World pediments (v3.360) - pediment formations
-        this.worldPediment.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldPediment.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic solidarity (v3.361) - solidarity pacts
-        this.diplomaticSolidarity.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticSolidarity.update(this.tickRate, this.world, this.em, tick)
         // Creature nail smiths (v3.362) - nail forging craftsmen
-        this.creatureNailSmiths.update(this.tickRate, this.em, this.world.tick)
+        this.creatureNailSmiths.update(this.tickRate, this.em, tick)
         // World hogbacks (v3.363) - hogback ridge formations
-        this.worldHogback.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldHogback.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic reciprocity (v3.364) - reciprocity agreements
-        this.diplomaticReciprocity.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticReciprocity.update(this.tickRate, this.world, this.em, tick)
         // Creature pin makers (v3.365) - pin crafting artisans
-        this.creaturePinMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creaturePinMakers.update(this.tickRate, this.em, tick)
         // World cuestas (v3.366) - cuesta formations
-        this.worldCuesta.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldCuesta.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic benevolence (v3.367) - benevolence initiatives
-        this.diplomaticBenevolence.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticBenevolence.update(this.tickRate, this.world, this.em, tick)
         // Creature thimble makers (v3.368) - thimble crafting artisans
-        this.creatureThimbleMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureThimbleMakers.update(this.tickRate, this.em, tick)
         // World flatirons (v3.369) - flatiron formations
-        this.worldFlatiron.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldFlatiron.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic clemency (v3.370) - clemency acts
-        this.diplomaticClemency.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticClemency.update(this.tickRate, this.world, this.em, tick)
         // Creature awl makers (v3.371) - awl crafting artisans
-        this.creatureAwlMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureAwlMakers.update(this.tickRate, this.em, tick)
         // World tepuis (v3.372) - table-top mountain formations
-        this.worldTepui.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldTepui.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic magnanimity (v3.373) - magnanimity gestures
-        this.diplomaticMagnanimity.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticMagnanimity.update(this.tickRate, this.world, this.em, tick)
         // Creature buckle makers (v3.374) - buckle crafting artisans
-        this.creatureBuckleMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBuckleMakers.update(this.tickRate, this.em, tick)
+        } // end tick % 60 === 6 (v3.260-v3.374)
+
+        if (tick % 60 === 26) {
+        // === EVERY 60 TICKS (offset 26): v3.375-v3.500 systems (second third) ===
         // World yardangs (v3.375) - wind-eroded rock formations
-        this.worldYardang.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldYardang.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic forbearance (v3.376) - forbearance agreements
-        this.diplomaticForbearance.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticForbearance.update(this.tickRate, this.world, this.em, tick)
         // Creature clasp makers (v3.377) - clasp crafting artisans
-        this.creatureClaspMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureClaspMakers.update(this.tickRate, this.em, tick)
         // World ventifacts (v3.378) - wind-sculpted stones
-        this.worldVentifact.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldVentifact.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic lenity (v3.379) - lenity policies
-        this.diplomaticLenity.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticLenity.update(this.tickRate, this.world, this.em, tick)
         // Creature rivet makers (v3.380) - rivet forging artisans
-        this.creatureRivetMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureRivetMakers.update(this.tickRate, this.em, tick)
         // World dreikanters (v3.381) - three-edged wind stones
-        this.worldDreikanter.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldDreikanter.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic absolution (v3.382) - absolution declarations
-        this.diplomaticAbsolution.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticAbsolution.update(this.tickRate, this.world, this.em, tick)
         // Creature ferrule makers (v3.383) - ferrule crafting artisans
-        this.creatureFerruleMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureFerruleMakers.update(this.tickRate, this.em, tick)
         // World deflation hollows (v3.384) - wind-eroded depressions
-        this.worldDeflationHollow.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldDeflationHollow.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic exoneration (v3.385) - exoneration proceedings
-        this.diplomaticExoneration.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticExoneration.update(this.tickRate, this.world, this.em, tick)
         // Creature grommet makers (v3.386) - grommet crafting artisans
-        this.creatureGrommetMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureGrommetMakers.update(this.tickRate, this.em, tick)
         // World zeugens (v3.387) - mushroom rock formations
-        this.worldZeugen.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldZeugen.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic reprieve (v3.388) - reprieve grants
-        this.diplomaticReprieve.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticReprieve.update(this.tickRate, this.world, this.em, tick)
         // Creature bobbin makers (v3.389) - bobbin crafting artisans
-        this.creatureBobbinMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBobbinMakers.update(this.tickRate, this.em, tick)
         // World inliers (v3.390) - geological inlier formations
-        this.worldInlier.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldInlier.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic dispensation (v3.391) - dispensation grants
-        this.diplomaticDispensation.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticDispensation.update(this.tickRate, this.world, this.em, tick)
         // Creature spindle makers (v3.392) - spindle crafting artisans
-        this.creatureSpindleMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureSpindleMakers.update(this.tickRate, this.em, tick)
         // World outliers (v3.393) - geological outlier formations
-        this.worldOutlier.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldOutlier.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic remission (v3.394) - remission of penalties
-        this.diplomaticRemission.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticRemission.update(this.tickRate, this.world, this.em, tick)
         // Creature shuttle makers (v3.395) - shuttle crafting artisans
-        this.creatureShuttleMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureShuttleMakers.update(this.tickRate, this.em, tick)
         // World tafoni (v3.396) - honeycomb weathering formations
-        this.worldTafoni.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldTafoni.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic acquittal (v3.397) - acquittal verdicts
-        this.diplomaticAcquittal.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticAcquittal.update(this.tickRate, this.world, this.em, tick)
         // Creature bobbin lace makers (v3.398) - bobbin lace artisans
-        this.creatureBobbinLaceMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBobbinLaceMakers.update(this.tickRate, this.em, tick)
         // World rock pedestals (v3.399) - rock pedestal formations
-        this.worldRockPedestal.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldRockPedestal.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic immunity (v3.400) - immunity agreements
-        this.diplomaticImmunity.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticImmunity.update(this.tickRate, this.world, this.em, tick)
         // Creature tatting makers (v3.401) - tatting lace artisans
-        this.creatureTattingMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureTattingMakers.update(this.tickRate, this.em, tick)
         // World balancing rocks (v3.402) - balancing rock formations
-        this.worldBalancingRock.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldBalancingRock.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic indulgence (v3.403) - indulgence grants
-        this.diplomaticIndulgence.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticIndulgence.update(this.tickRate, this.world, this.em, tick)
         // Creature netting makers (v3.404) - netting artisans
-        this.creatureNettingMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureNettingMakers.update(this.tickRate, this.em, tick)
         // World fairy chimneys (v3.405) - fairy chimney formations
-        this.worldFairyChimney.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldFairyChimney.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic commutation (v3.406) - commutation of sentences
-        this.diplomaticCommutation.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticCommutation.update(this.tickRate, this.world, this.em, tick)
         // Creature fringe makers (v3.407) - fringe crafting artisans
-        this.creatureFringeMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureFringeMakers.update(this.tickRate, this.em, tick)
         // World stone arches (v3.408) - natural stone arch formations
-        this.worldStoneArch.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldStoneArch.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic mitigation (v3.409) - mitigation measures
-        this.diplomaticMitigation.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticMitigation.update(this.tickRate, this.world, this.em, tick)
         // Creature tassel makers (v3.410) - tassel crafting artisans
-        this.creatureTasselMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureTasselMakers.update(this.tickRate, this.em, tick)
         // World rock bridges (v3.411) - natural rock bridge formations
-        this.worldRockBridge.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldRockBridge.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic condonation (v3.412) - condonation policies
-        this.diplomaticCondonation.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticCondonation.update(this.tickRate, this.world, this.em, tick)
         // Creature braid makers (v3.413) - braid crafting artisans
-        this.creatureBraidMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBraidMakers.update(this.tickRate, this.em, tick)
         // World stone windows (v3.414) - natural stone window formations
-        this.worldStoneWindow.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldStoneWindow.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic vindication (v3.415) - vindication proceedings
-        this.diplomaticVindication.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticVindication.update(this.tickRate, this.world, this.em, tick)
         // Creature macramé makers (v3.416) - macramé knotting artisans
-        this.creatureMacrameMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureMacrameMakers.update(this.tickRate, this.em, tick)
         // World rock pillars (v3.417) - natural rock pillar formations
-        this.worldRockPillar.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldRockPillar.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic rehabilitation (v3.418) - rehabilitation diplomacy
-        this.diplomaticRehabilitation.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticRehabilitation.update(this.tickRate, this.world, this.em, tick)
         // Creature quilting makers (v3.419) - quilting artisans
-        this.creatureQuiltingMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureQuiltingMakers.update(this.tickRate, this.em, tick)
         // Creature embroidery makers (v3.422) - embroidery artisans
-        this.creatureEmbroideryMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureEmbroideryMakers.update(this.tickRate, this.em, tick)
         // World blowholes (v3.423) - coastal blowhole formations
-        this.worldBlowhole2.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldBlowhole2.update(this.tickRate, this.world, this.em, tick)
         // Creature appliqué makers (v3.425) - appliqué artisans
-        this.creatureAppliqueMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureAppliqueMakers.update(this.tickRate, this.em, tick)
         // World rock shelters (v3.426) - natural rock shelter formations
-        this.worldRockShelter.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldRockShelter.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic reconciliation (v3.427) - reconciliation diplomacy
-        this.diplomaticReconciliation2.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticReconciliation2.update(this.tickRate, this.world, this.em, tick)
         // Creature smocking makers (v3.428) - smocking artisans
-        this.creatureSmockingMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureSmockingMakers.update(this.tickRate, this.em, tick)
         // World natural tunnels (v3.429) - natural tunnel formations
-        this.worldNaturalTunnel.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldNaturalTunnel.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic atonement (v3.430) - atonement diplomacy
-        this.diplomaticAtonement.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticAtonement.update(this.tickRate, this.world, this.em, tick)
         // Creature crochet makers (v3.431) - crochet artisans
-        this.creatureCrochetMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureCrochetMakers.update(this.tickRate, this.em, tick)
         // World rock arches (v3.432) - natural rock arch formations
-        this.worldRockArch2.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldRockArch2.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic absolution (v3.433) - absolution diplomacy
-        this.diplomaticAbsolution2.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticAbsolution2.update(this.tickRate, this.world, this.em, tick)
         // Creature felting makers (v3.434) - felting artisans
-        this.creatureFeltingMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureFeltingMakers.update(this.tickRate, this.em, tick)
         // World sea caves (v3.435) - coastal sea cave formations
-        this.worldSeaCave.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSeaCave.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic amnesty (v3.436) - amnesty diplomacy
-        this.diplomaticAmnesty2.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticAmnesty2.update(this.tickRate, this.world, this.em, tick)
         // Creature bobbin lace makers (v3.437) - bobbin lace artisans
-        this.creatureBobbinLace2Makers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBobbinLace2Makers.update(this.tickRate, this.em, tick)
         // World karst springs (v3.438) - karst spring formations
-        this.worldKarstSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldKarstSpring.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic clemency (v3.439) - clemency diplomacy
-        this.diplomaticClemency2.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticClemency2.update(this.tickRate, this.world, this.em, tick)
         // Creature weaving makers (v3.440) - weaving artisans
-        this.creatureWeavingMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureWeavingMakers.update(this.tickRate, this.em, tick)
         // World sinkholes (v3.441) - sinkhole formations
-        this.worldSinkhole2.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSinkhole2.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic pardon (v3.442) - pardon diplomacy
-        this.diplomaticPardon.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticPardon.update(this.tickRate, this.world, this.em, tick)
         // Creature dyeing makers (v3.443) - dyeing artisans
-        this.creatureDyeingMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureDyeingMakers.update(this.tickRate, this.em, tick)
         // Diplomatic arbitration (v3.445) - arbitration diplomacy
-        this.diplomaticArbitration2.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticArbitration2.update(this.tickRate, this.world, this.em, tick)
         // Creature knitting makers (v3.446) - knitting artisans
-        this.creatureKnittingMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureKnittingMakers.update(this.tickRate, this.em, tick)
         // Creature felting makers 2 (v3.449) - advanced felting artisans
-        this.creatureFeltingMakers2.update(this.tickRate, this.em, this.world.tick)
+        this.creatureFeltingMakers2.update(this.tickRate, this.em, tick)
         // World fumaroles (v3.450) - volcanic fumarole formations
-        this.worldFumarole.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldFumarole.update(this.tickRate, this.world, this.em, tick)
         // Creature spinning makers (v3.452) - spinning artisans
-        this.creatureSpinningMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureSpinningMakers.update(this.tickRate, this.em, tick)
         // Creature loom makers (v3.455) - loom-weaving artisans
-        this.creatureLoomMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureLoomMakers.update(this.tickRate, this.em, tick)
         // World hot springs 2 (v3.456) - hot spring formations
-        this.worldHotSpring2.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldHotSpring2.update(this.tickRate, this.world, this.em, tick)
         // World solfataras (v3.459) - solfatara volcanic formations
-        this.worldSolfatara.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSolfatara.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic intercession (v3.460) - intercession diplomacy
-        this.diplomaticIntercession.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticIntercession.update(this.tickRate, this.world, this.em, tick)
         // Creature needlework makers (v3.461) - needlework artisans
-        this.creatureNeedleworkMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureNeedleworkMakers.update(this.tickRate, this.em, tick)
         // World maars (v3.462) - maar crater formations
-        this.worldMaar.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMaar.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic arbitrement (v3.463) - arbitrement diplomacy
-        this.diplomaticArbitrement.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticArbitrement.update(this.tickRate, this.world, this.em, tick)
         // Creature warping makers (v3.464) - warping artisans
-        this.creatureWarpingMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureWarpingMakers.update(this.tickRate, this.em, tick)
         // Diplomatic compromise (v3.466) - compromise diplomacy
-        this.diplomaticCompromise.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticCompromise.update(this.tickRate, this.world, this.em, tick)
         // Creature bobbin winders (v3.467) - bobbin winding artisans
-        this.creatureBobbinWinder.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBobbinWinder.update(this.tickRate, this.em, tick)
         // Diplomatic detente 2 (v3.469) - advanced detente diplomacy
-        this.diplomaticDetente2.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticDetente2.update(this.tickRate, this.world, this.em, tick)
         // Creature carding makers (v3.470) - carding artisans
-        this.creatureCardingMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureCardingMakers.update(this.tickRate, this.em, tick)
         // World lahars (v3.471) - lahar mudflow formations
-        this.worldLahar.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldLahar.update(this.tickRate, this.world, this.em, tick)
         // Creature fulling makers (v3.473) - fulling artisans
-        this.creatureFullingMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureFullingMakers.update(this.tickRate, this.em, tick)
         // World pyroclastic flows (v3.474) - pyroclastic flow events
-        this.worldPyroclasticFlow.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldPyroclasticFlow.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic entente 2 (v3.475) - advanced entente diplomacy
-        this.diplomaticEntente2.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticEntente2.update(this.tickRate, this.world, this.em, tick)
         // Creature tatami makers (v3.476) - tatami mat artisans
-        this.creatureTatamiMakers.update(this.tickRate, this.em, this.world.tick)
+        this.creatureTatamiMakers.update(this.tickRate, this.em, tick)
         // World phreatic explosions (v3.477) - steam-driven eruptions
-        this.worldPhreaticExplosion.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldPhreaticExplosion.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic accommodation (v3.478) - accommodation diplomacy
-        this.diplomaticAccommodation.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticAccommodation.update(this.tickRate, this.world, this.em, tick)
         // Creature silk weavers (v3.479) - silk weaving artisans
-        this.creatureSilkWeaver.update(this.tickRate, this.em, this.world.tick)
+        this.creatureSilkWeaver.update(this.tickRate, this.em, tick)
         // Diplomatic concordat (v3.481) - concordat agreements
-        this.diplomaticConcordat.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticConcordat.update(this.tickRate, this.world, this.em, tick)
         // World mud pots (v3.483) - bubbling mud formations
-        this.worldMudPot.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMudPot.update(this.tickRate, this.world, this.em, tick)
         // Creature potters (v3.485) - pottery artisans
-        this.creaturePotter.update(this.tickRate, this.em, this.world.tick)
+        this.creaturePotter.update(this.tickRate, this.em, tick)
         // World steam vents (v3.486) - steam vent formations
-        this.worldSteamVent.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSteamVent.update(this.tickRate, this.world, this.em, tick)
         // Creature basket weavers (v3.488) - basket weaving artisans
-        this.creatureBasketWeaver.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBasketWeaver.update(this.tickRate, this.em, tick)
         // World travertine (v3.489) - travertine mineral formations
-        this.worldTravertine.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldTravertine.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic mutual aid (v3.490) - mutual aid agreements
-        this.diplomaticMutualAid.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticMutualAid.update(this.tickRate, this.world, this.em, tick)
         // World geyserite (v3.492) - geyserite mineral deposits
-        this.worldGeyserite.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldGeyserite.update(this.tickRate, this.world, this.em, tick)
         // World sinter (v3.495) - sinter mineral formations
-        this.worldSinter.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSinter.update(this.tickRate, this.world, this.em, tick)
         // Creature hornworkers (v3.497) - horn crafting artisans
-        this.creatureHornworker.update(this.tickRate, this.em, this.world.tick)
+        this.creatureHornworker.update(this.tickRate, this.em, tick)
         // World tufa (v3.498) - tufa tower formations
-        this.worldTufa.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldTufa.update(this.tickRate, this.world, this.em, tick)
         // Creature scabbard makers (v3.500) - scabbard crafting artisans
-        this.creatureScabbardMaker.update(this.tickRate, this.em, this.world.tick)
+        this.creatureScabbardMaker.update(this.tickRate, this.em, tick)
+        } // end tick % 60 === 26 (v3.375-v3.500)
+
+        if (tick % 60 === 46) {
+        // === EVERY 60 TICKS (offset 46): v3.501-v3.535 systems (third third) ===
         // World siliceous sinter (v3.501) - siliceous sinter deposits
-        this.worldSiliceousSinter.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSiliceousSinter.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic dominion (v3.502) - dominion relations
-        this.diplomaticDominion.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticDominion.update(this.tickRate, this.world, this.em, tick)
         // Creature quiver makers (v3.503) - quiver crafting artisans
-        this.creatureQuiverMaker.update(this.tickRate, this.em, this.world.tick)
+        this.creatureQuiverMaker.update(this.tickRate, this.em, tick)
         // World hot pools (v3.504) - hot pool formations
-        this.worldHotPool.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldHotPool.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic commonwealth (v3.505) - commonwealth unions
-        this.diplomaticCommonwealth.update(this.tickRate, this.world, this.em, this.world.tick)
-        // Creature fletchers (v3.506) - arrow fletching artisans
-        this.creatureFletcher.update(this.tickRate, this.em, this.world.tick)
+        this.diplomaticCommonwealth.update(this.tickRate, this.world, this.em, tick)
         // World geothermal pools (v3.507) - geothermal pool formations
-        this.worldGeothermalPool.update(this.tickRate, this.world, this.em, this.world.tick)
-        // Diplomatic sovereignty (v3.508) - sovereignty recognition
-        this.diplomaticSovereignty.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldGeothermalPool.update(this.tickRate, this.world, this.em, tick)
         // Creature string makers (v3.509) - string crafting artisans
-        this.creatureStringMaker.update(this.tickRate, this.em, this.world.tick)
+        this.creatureStringMaker.update(this.tickRate, this.em, tick)
         // World fumarolic fields (v3.510) - fumarolic field formations
-        this.worldFumarolicField.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldFumarolicField.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic hegemony (v3.511) - hegemonic influence
-        this.diplomaticHegemony.update(this.tickRate, this.world, this.em, this.world.tick)
-        // Creature wheelwrights (v3.512) - wheel crafting artisans
-        this.creatureWheelwright.update(this.tickRate, this.em, this.world.tick)
+        this.diplomaticHegemony.update(this.tickRate, this.world, this.em, tick)
         // World mineral springs (v3.513) - mineral spring formations
-        this.worldMineralSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldMineralSpring.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic suzerainty (v3.514) - suzerainty relations
-        this.diplomaticSuzerainty.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticSuzerainty.update(this.tickRate, this.world, this.em, tick)
         // Creature rope walkers (v3.515) - rope crafting artisans
-        this.creatureRopeWalker.update(this.tickRate, this.em, this.world.tick)
+        this.creatureRopeWalker.update(this.tickRate, this.em, tick)
         // World thermal springs (v3.516) - thermal spring formations
-        this.worldThermalSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldThermalSpring.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic autonomy (v3.517) - autonomy agreements
-        this.diplomaticAutonomy.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticAutonomy.update(this.tickRate, this.world, this.em, tick)
         // Creature harnessmakers (v3.518) - harness crafting artisans
-        this.creatureHarnessmaker.update(this.tickRate, this.em, this.world.tick)
+        this.creatureHarnessmaker.update(this.tickRate, this.em, tick)
         // World soda springs (v3.519) - soda spring formations
-        this.worldSodaSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSodaSpring.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic vassalage (v3.520) - vassalage relations
-        this.diplomaticVassalage.update(this.tickRate, this.world, this.em, this.world.tick)
-        // Creature saddlers (v3.521) - saddle crafting artisans
-        this.creatureSaddler.update(this.tickRate, this.em, this.world.tick)
+        this.diplomaticVassalage.update(this.tickRate, this.world, this.em, tick)
         // World artesian wells (v3.522) - artesian well formations
-        this.worldArtesianWell.update(this.tickRate, this.world, this.em, this.world.tick)
-        // Diplomatic tribute (v3.523) - tribute arrangements
-        this.diplomaticTribute.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldArtesianWell.update(this.tickRate, this.world, this.em, tick)
         // Creature bridlemakers (v3.524) - bridle crafting artisans
-        this.creatureBridlemaker.update(this.tickRate, this.em, this.world.tick)
+        this.creatureBridlemaker.update(this.tickRate, this.em, tick)
         // World chalybeate springs (v3.525) - iron-rich springs
-        this.worldChalybeateSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldChalybeateSpring.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic imperium (v3.526) - imperial authority
-        this.diplomaticImperium.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticImperium.update(this.tickRate, this.world, this.em, tick)
         // Creature yokemakers (v3.527) - yoke crafting artisans
-        this.creatureYokemaker.update(this.tickRate, this.em, this.world.tick)
+        this.creatureYokemaker.update(this.tickRate, this.em, tick)
         // World sulfur springs (v3.528) - sulfur spring formations
-        this.worldSulfurSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldSulfurSpring.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic mandate (v3.529) - mandate governance
-        this.diplomaticMandate.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticMandate.update(this.tickRate, this.world, this.em, tick)
         // Creature plowrights (v3.530) - plow crafting artisans
-        this.creaturePlowright.update(this.tickRate, this.em, this.world.tick)
+        this.creaturePlowright.update(this.tickRate, this.em, tick)
         // World lithium springs (v3.531) - lithium-rich springs
-        this.worldLithiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldLithiumSpring.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic regency (v3.532) - regency governance
-        this.diplomaticRegency.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticRegency.update(this.tickRate, this.world, this.em, tick)
         // Creature anvilsmiths (v3.533) - anvil crafting artisans
-        this.creatureAnvilsmith.update(this.tickRate, this.em, this.world.tick)
+        this.creatureAnvilsmith.update(this.tickRate, this.em, tick)
         // World radium springs (v3.534) - radioactive springs
-        this.worldRadiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.worldRadiumSpring.update(this.tickRate, this.world, this.em, tick)
         // Diplomatic stewardship (v3.535) - stewardship governance
-        this.diplomaticStewardship.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureToolsmith.update(this.tickRate, this.em, this.world.tick)
-        this.worldBorateSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticCustodianship.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureNailsmith.update(this.tickRate, this.em, this.world.tick)
-        this.worldSeleniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticTrusteeship.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.worldMagnesiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticGuardianship.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureChainmaker.update(this.tickRate, this.em, this.world.tick)
-        this.worldPotassiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticPatronage.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureBellfounder.update(this.tickRate, this.em, this.world.tick)
-        this.worldStrontiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticStewardshipPact.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureGirdler.update(this.tickRate, this.em, this.world.tick)
-        this.worldBariumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticConservatorship.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creaturePewterer.update(this.tickRate, this.em, this.world.tick)
-        this.worldZincSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticReceivership.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureWiredrawer.update(this.tickRate, this.em, this.world.tick)
-        this.worldCopperSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticProcuratorship.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureGlazierMaster.update(this.tickRate, this.em, this.world.tick)
-        this.worldManganeseSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticPrefecture.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureRiveter.update(this.tickRate, this.em, this.world.tick)
-        this.worldTinSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticVicarage.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureSmelter.update(this.tickRate, this.em, this.world.tick)
-        this.worldIridiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticSeneschalry.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creaturePuddler.update(this.tickRate, this.em, this.world.tick)
-        this.worldOsmiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticChatelaincy.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureAssayer.update(this.tickRate, this.em, this.world.tick)
-        this.worldRutheniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticCastellany.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureWelder.update(this.tickRate, this.em, this.world.tick)
-        this.worldNiobiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticBailiffry.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureRoller.update(this.tickRate, this.em, this.world.tick)
-        this.worldTantalumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticSheriffalty.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureDrawer.update(this.tickRate, this.em, this.world.tick)
-        this.worldHafniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticCoroner.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureSpinner.update(this.tickRate, this.em, this.world.tick)
-        this.worldZirconiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticEscheator.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureFurbisher.update(this.tickRate, this.em, this.world.tick)
-        this.worldIndiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticAlmoner.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureTinplater.update(this.tickRate, this.em, this.world.tick)
-        this.worldGalliumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticPurveyor.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureAnnealer.update(this.tickRate, this.em, this.world.tick)
-        this.worldGermaniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticHarbinger.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureBurnisher.update(this.tickRate, this.em, this.world.tick)
-        this.worldThalliumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticVerderer.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureSwager.update(this.tickRate, this.em, this.world.tick)
-        this.worldScandiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticHayward.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureStamper.update(this.tickRate, this.em, this.world.tick)
-        this.worldYttriumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticPannager.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureForger.update(this.tickRate, this.em, this.world.tick)
-        this.worldLanthanumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticAgister.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureHammerman.update(this.tickRate, this.em, this.world.tick)
-        this.worldCeriumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticWoodward.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creaturePeener.update(this.tickRate, this.em, this.world.tick)
-        this.worldPraseodymiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticWarrener.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creaturePlanisher.update(this.tickRate, this.em, this.world.tick)
-        this.worldNeodymiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticParkward.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureBeveller.update(this.tickRate, this.em, this.world.tick)
-        this.worldSamariumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticWoodreve.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureFlatter.update(this.tickRate, this.em, this.world.tick)
-        this.worldEuropiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticRanger.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureChiseller.update(this.tickRate, this.em, this.world.tick)
-        this.worldGadoliniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticForestar.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureKnurler.update(this.tickRate, this.em, this.world.tick)
-        this.worldTerbiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticWaynward.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureReamer.update(this.tickRate, this.em, this.world.tick)
-        this.worldDysprosiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticMootman.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureBroacher.update(this.tickRate, this.em, this.world.tick)
-        this.worldHolmiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticTithingman.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureHoner.update(this.tickRate, this.em, this.world.tick)
-        this.worldErbiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticHayreve.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureLapper.update(this.tickRate, this.em, this.world.tick)
-        this.worldThuliumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticPinder.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureBorer.update(this.tickRate, this.em, this.world.tick)
-        this.worldYtterbiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticGrithman.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureCountersinker.update(this.tickRate, this.em, this.world.tick)
-        this.worldLutetiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticBorsholder.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureSpotfacer.update(this.tickRate, this.em, this.world.tick)
-        this.worldActiniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticAletaster.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureTapper.update(this.tickRate, this.em, this.world.tick)
-        this.worldThoriumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticBreadweigher.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureCoiner.update(this.tickRate, this.em, this.world.tick)
-        this.worldProtactiniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticMuragers.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureSwageBlocker.update(this.tickRate, this.em, this.world.tick)
-        this.worldUraniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticGarthman.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureDrifter.update(this.tickRate, this.em, this.world.tick)
-        this.diplomaticCrier.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.worldPoloniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticBeadle.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureUpsetter.update(this.tickRate, this.em, this.world.tick)
-        this.worldFranciumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticHerbalist.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureSwedger.update(this.tickRate, this.em, this.world.tick)
-        this.worldRadonSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticLampwarden.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureBurnOuter.update(this.tickRate, this.em, this.world.tick)
-        this.worldAstatineSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticClavigers.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureScriber.update(this.tickRate, this.em, this.world.tick)
-        this.worldCaesiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticPavior.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureStaker.update(this.tickRate, this.em, this.world.tick)
-        this.worldRubidiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticWainage.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creaturePlanisherMaster.update(this.tickRate, this.em, this.world.tick)
-        this.worldTelluriumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticGarble.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.creatureNeedler.update(this.tickRate, this.em, this.world.tick)
-        this.worldXenonSpring.update(this.tickRate, this.world, this.em, this.world.tick)
-        this.diplomaticTollbooth.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticStewardship.update(this.tickRate, this.world, this.em, tick)
+        this.creatureToolsmith.update(this.tickRate, this.em, tick)
+        this.worldBorateSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticCustodianship.update(this.tickRate, this.world, this.em, tick)
+        this.creatureNailsmith.update(this.tickRate, this.em, tick)
+        this.worldSeleniumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticTrusteeship.update(this.tickRate, this.world, this.em, tick)
+        this.worldMagnesiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticGuardianship.update(this.tickRate, this.world, this.em, tick)
+        this.creatureChainmaker.update(this.tickRate, this.em, tick)
+        this.worldPotassiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticPatronage.update(this.tickRate, this.world, this.em, tick)
+        this.creatureBellfounder.update(this.tickRate, this.em, tick)
+        this.worldStrontiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticStewardshipPact.update(this.tickRate, this.world, this.em, tick)
+        this.creatureGirdler.update(this.tickRate, this.em, tick)
+        this.worldBariumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticConservatorship.update(this.tickRate, this.world, this.em, tick)
+        this.creaturePewterer.update(this.tickRate, this.em, tick)
+        this.worldZincSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticReceivership.update(this.tickRate, this.world, this.em, tick)
+        this.creatureWiredrawer.update(this.tickRate, this.em, tick)
+        this.worldCopperSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticProcuratorship.update(this.tickRate, this.world, this.em, tick)
+        this.creatureGlazierMaster.update(this.tickRate, this.em, tick)
+        this.worldManganeseSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticPrefecture.update(this.tickRate, this.world, this.em, tick)
+        this.creatureRiveter.update(this.tickRate, this.em, tick)
+        this.worldTinSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticVicarage.update(this.tickRate, this.world, this.em, tick)
+        this.creatureSmelter.update(this.tickRate, this.em, tick)
+        this.worldIridiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticSeneschalry.update(this.tickRate, this.world, this.em, tick)
+        this.creaturePuddler.update(this.tickRate, this.em, tick)
+        this.worldOsmiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticChatelaincy.update(this.tickRate, this.world, this.em, tick)
+        this.creatureAssayer.update(this.tickRate, this.em, tick)
+        this.worldRutheniumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticCastellany.update(this.tickRate, this.world, this.em, tick)
+        this.creatureWelder.update(this.tickRate, this.em, tick)
+        this.worldNiobiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticBailiffry.update(this.tickRate, this.world, this.em, tick)
+        this.creatureRoller.update(this.tickRate, this.em, tick)
+        this.worldTantalumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticSheriffalty.update(this.tickRate, this.world, this.em, tick)
+        this.creatureDrawer.update(this.tickRate, this.em, tick)
+        this.worldHafniumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticCoroner.update(this.tickRate, this.world, this.em, tick)
+        this.creatureSpinner.update(this.tickRate, this.em, tick)
+        this.worldZirconiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticEscheator.update(this.tickRate, this.world, this.em, tick)
+        this.creatureFurbisher.update(this.tickRate, this.em, tick)
+        this.worldIndiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticAlmoner.update(this.tickRate, this.world, this.em, tick)
+        this.creatureTinplater.update(this.tickRate, this.em, tick)
+        this.worldGalliumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticPurveyor.update(this.tickRate, this.world, this.em, tick)
+        this.creatureAnnealer.update(this.tickRate, this.em, tick)
+        this.worldGermaniumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticHarbinger.update(this.tickRate, this.world, this.em, tick)
+        this.creatureBurnisher.update(this.tickRate, this.em, tick)
+        this.worldThalliumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticVerderer.update(this.tickRate, this.world, this.em, tick)
+        this.creatureSwager.update(this.tickRate, this.em, tick)
+        this.worldScandiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticHayward.update(this.tickRate, this.world, this.em, tick)
+        this.creatureStamper.update(this.tickRate, this.em, tick)
+        this.worldYttriumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticPannager.update(this.tickRate, this.world, this.em, tick)
+        this.creatureForger.update(this.tickRate, this.em, tick)
+        this.worldLanthanumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticAgister.update(this.tickRate, this.world, this.em, tick)
+        this.creatureHammerman.update(this.tickRate, this.em, tick)
+        this.worldCeriumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticWoodward.update(this.tickRate, this.world, this.em, tick)
+        this.creaturePeener.update(this.tickRate, this.em, tick)
+        this.worldPraseodymiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticWarrener.update(this.tickRate, this.world, this.em, tick)
+        this.creaturePlanisher.update(this.tickRate, this.em, tick)
+        this.worldNeodymiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticParkward.update(this.tickRate, this.world, this.em, tick)
+        this.creatureBeveller.update(this.tickRate, this.em, tick)
+        this.worldSamariumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticWoodreve.update(this.tickRate, this.world, this.em, tick)
+        this.creatureFlatter.update(this.tickRate, this.em, tick)
+        this.worldEuropiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticRanger.update(this.tickRate, this.world, this.em, tick)
+        this.creatureChiseller.update(this.tickRate, this.em, tick)
+        this.worldGadoliniumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticForestar.update(this.tickRate, this.world, this.em, tick)
+        this.creatureKnurler.update(this.tickRate, this.em, tick)
+        this.worldTerbiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticWaynward.update(this.tickRate, this.world, this.em, tick)
+        this.creatureReamer.update(this.tickRate, this.em, tick)
+        this.worldDysprosiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticMootman.update(this.tickRate, this.world, this.em, tick)
+        this.creatureBroacher.update(this.tickRate, this.em, tick)
+        this.worldHolmiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticTithingman.update(this.tickRate, this.world, this.em, tick)
+        this.creatureHoner.update(this.tickRate, this.em, tick)
+        this.worldErbiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticHayreve.update(this.tickRate, this.world, this.em, tick)
+        this.creatureLapper.update(this.tickRate, this.em, tick)
+        this.worldThuliumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticPinder.update(this.tickRate, this.world, this.em, tick)
+        this.creatureBorer.update(this.tickRate, this.em, tick)
+        this.worldYtterbiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticGrithman.update(this.tickRate, this.world, this.em, tick)
+        this.creatureCountersinker.update(this.tickRate, this.em, tick)
+        this.worldLutetiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticBorsholder.update(this.tickRate, this.world, this.em, tick)
+        this.creatureSpotfacer.update(this.tickRate, this.em, tick)
+        this.worldActiniumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticAletaster.update(this.tickRate, this.world, this.em, tick)
+        this.creatureTapper.update(this.tickRate, this.em, tick)
+        this.worldThoriumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticBreadweigher.update(this.tickRate, this.world, this.em, tick)
+        this.creatureCoiner.update(this.tickRate, this.em, tick)
+        this.worldProtactiniumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticMuragers.update(this.tickRate, this.world, this.em, tick)
+        this.creatureSwageBlocker.update(this.tickRate, this.em, tick)
+        this.worldUraniumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticGarthman.update(this.tickRate, this.world, this.em, tick)
+        this.creatureDrifter.update(this.tickRate, this.em, tick)
+        this.diplomaticCrier.update(this.tickRate, this.world, this.em, tick)
+        this.worldPoloniumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticBeadle.update(this.tickRate, this.world, this.em, tick)
+        this.creatureUpsetter.update(this.tickRate, this.em, tick)
+        this.worldFranciumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticHerbalist.update(this.tickRate, this.world, this.em, tick)
+        this.creatureSwedger.update(this.tickRate, this.em, tick)
+        this.worldRadonSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticLampwarden.update(this.tickRate, this.world, this.em, tick)
+        this.creatureBurnOuter.update(this.tickRate, this.em, tick)
+        this.worldAstatineSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticClavigers.update(this.tickRate, this.world, this.em, tick)
+        this.creatureScriber.update(this.tickRate, this.em, tick)
+        this.worldCaesiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticPavior.update(this.tickRate, this.world, this.em, tick)
+        this.creatureStaker.update(this.tickRate, this.em, tick)
+        this.worldRubidiumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticWainage.update(this.tickRate, this.world, this.em, tick)
+        this.creaturePlanisherMaster.update(this.tickRate, this.em, tick)
+        this.worldTelluriumSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticGarble.update(this.tickRate, this.world, this.em, tick)
+        this.creatureNeedler.update(this.tickRate, this.em, tick)
+        this.worldXenonSpring.update(this.tickRate, this.world, this.em, tick)
+        this.diplomaticTollbooth.update(this.tickRate, this.world, this.em, tick)
+        } // end tick % 60 === 46 (v3.501-v3.535)
+
+        // === EVERY TICK: Visual effects and particles (must run every tick) ===
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
+      }
+      // Drain excess accumulator to prevent spiral of death
+      if (ticksThisFrame >= maxTicksPerFrame) {
+        this.accumulator = 0
       }
     }
 

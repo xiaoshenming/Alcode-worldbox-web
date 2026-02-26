@@ -2,6 +2,7 @@
 // Embargoes weaken target economies but can also hurt the imposer
 
 import { EntityManager } from '../ecs/Entity'
+import { CivManager } from '../civilization/CivManager'
 
 export type EmbargoSeverity = 'partial' | 'full' | 'blockade'
 export type EmbargoStatus = 'active' | 'weakening' | 'lifted'
@@ -39,12 +40,12 @@ export class DiplomaticEmbargoSystem {
   private nextId = 1
   private lastCheck = 0
 
-  update(dt: number, em: EntityManager, civManager: any, tick: number): void {
+  update(dt: number, em: EntityManager, civManager: CivManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs = civManager.civilizations
+    const civs = Array.from(civManager.civilizations.values())
     if (civs.length < 2) return
 
     // Start new embargoes

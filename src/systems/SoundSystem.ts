@@ -17,6 +17,9 @@ export class SoundSystem {
 
   toggleMute(): boolean {
     this.muted = !this.muted
+    if (!this.muted && this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume()
+    }
     return this.muted
   }
 

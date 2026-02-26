@@ -2,6 +2,7 @@
 // Cultural exchanges improve relations and spread technology between civilizations
 
 import { EntityManager } from '../ecs/Entity'
+import { CivManager } from '../civilization/CivManager'
 
 export type ExchangeType = 'art' | 'music' | 'cuisine' | 'language' | 'technology' | 'religion'
 
@@ -36,7 +37,7 @@ export class DiplomaticCulturalExchangeSystem {
   private nextId = 1
   private lastCheck = 0
 
-  update(dt: number, em: EntityManager, civManager: any, tick: number): void {
+  update(dt: number, em: EntityManager, civManager: CivManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
@@ -46,11 +47,11 @@ export class DiplomaticCulturalExchangeSystem {
     this.cleanup()
   }
 
-  private initiateExchanges(civManager: any, tick: number): void {
+  private initiateExchanges(civManager: CivManager, tick: number): void {
     if (!civManager?.civilizations) return
     if (this.exchanges.length >= MAX_EXCHANGES) return
 
-    const civs = civManager.civilizations
+    const civs = Array.from(civManager.civilizations.values())
     if (civs.length < 2) return
 
     for (const civ of civs) {

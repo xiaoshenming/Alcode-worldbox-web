@@ -7,6 +7,8 @@ import { CivManager } from '../civilization/CivManager'
 import { World } from '../game/World'
 import { ParticleSystem } from './ParticleSystem'
 import { EventLog } from './EventLog'
+import { generateName } from '../utils/NameGenerator'
+import { GeneticsSystem } from './GeneticsSystem'
 
 const POP_CHECK_INTERVAL = 120
 const AGE_PER_TICK = 1
@@ -19,6 +21,18 @@ const POP_CAP_PER_TERRITORY = 0.05    // 1 pop per 20 territory tiles
 const POP_CAP_PER_BUILDING = 2        // each building adds 2 to cap
 const POP_CAP_BASE = 5                // minimum cap for any civ
 const FOOD_PER_CAPITA_THRESHOLD = 1.5 // below this → famine
+
+const SPECIES_COLORS: Record<string, string> = {
+  human: '#ffcc99', elf: '#99ffcc', dwarf: '#cc9966', orc: '#66cc66',
+  sheep: '#ffffff', wolf: '#888888', dragon: '#ff4444',
+}
+const SPECIES_SIZES: Record<string, number> = {
+  human: 3, elf: 3, dwarf: 3, orc: 4, sheep: 3, wolf: 3, dragon: 6,
+}
+const SPECIES_MAX_AGE: Record<string, [number, number]> = {
+  human: [600, 900], elf: [1200, 2000], dwarf: [800, 1200], orc: [400, 700],
+  sheep: [300, 500], wolf: [400, 600], dragon: [2000, 4000],
+}
 
 export interface PopulationEvent {
   type: 'birth' | 'death'
@@ -179,9 +193,48 @@ export class PopulationSystem {
       particles.spawn(pos.x, pos.y, 5, '#88ff88', 1.8)
       this.pendingEvents.push({ type: 'birth', civId: civ.id, reason: 'natural', x: pos.x, y: pos.y })
 
+      // Create actual ECS entity for the newborn
+      const childId = em.createEntity()
+      const species = creature.species
+      const ageRange = SPECIES_MAX_AGE[species] || [500, 800]
+      const maxAge = ageRange[0] + Math.random() * (ageRange[1] - ageRange[0])
+      const offsetX = pos.x + (Math.random() - 0.5) * 2
+      const offsetY = pos.y + (Math.random() - 0.5) * 2
+
+      em.addComponent(childId, { type: 'position', x: offsetX, y: offsetY })
+      em.addComponent(childId, { type: 'velocity', vx: 0, vy: 0 })
+      em.addComponent(childId, {
+        type: 'render',
+        color: SPECIES_COLORS[species] || '#ffcc99',
+        size: SPECIES_SIZES[species] || 3
+      })
+      em.addComponent(childId, {
+        type: 'creature',
+        species,
+        speed: species === 'dragon' ? 2 : species === 'wolf' ? 1.5 : 1,
+        damage: species === 'dragon' ? 50 : species === 'wolf' ? 10 : 5,
+        isHostile: ['wolf', 'orc', 'dragon'].includes(species),
+        name: generateName(species),
+        age: 0,
+        maxAge,
+        gender: Math.random() < 0.5 ? 'male' : 'female'
+      })
+      em.addComponent(childId, { type: 'needs', hunger: 0, health: 100 })
+      em.addComponent(childId, {
+        type: 'ai', state: 'idle',
+        targetX: offsetX, targetY: offsetY,
+        targetEntity: null, cooldown: 0
+      })
+      const genetics = GeneticsSystem.generateRandomTraits()
+      em.addComponent(childId, genetics)
+      GeneticsSystem.applyTraits(childId, em)
+
+      // Assign to civ (this also increments civ.population)
+      em.addComponent(childId, { type: 'civMember', civId: civ.id, role: 'worker' } as CivMemberComponent)
+      civ.population++
+
       // Consume food for the birth
       civ.resources.food = Math.max(0, civ.resources.food - 3)
-      civ.population++
       birthsThisRound++
 
       EventLog.log('birth', `A new citizen is born in ${civ.name} (pop: ${civ.population})`, tick)
