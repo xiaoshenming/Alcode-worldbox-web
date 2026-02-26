@@ -1,5 +1,5 @@
-// World Potassium Spring System (v3.546) - Potassium-rich mineral springs
-// Springs enriched with potassium salts from ancient evaporite deposits
+// World Potassium Spring System (v3.735) - Potassium-bearing mineral springs
+// Springs carrying dissolved potassium compounds from feldspar and sylvite formations
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
@@ -9,14 +9,14 @@ export interface PotassiumSpringZone {
   id: number; x: number; y: number
   potassiumContent: number
   springFlow: number
-  saltDeposit: number
-  evaporiteLayer: number
+  geologicalDeposit: number
+  mineralConcentration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2710
-const FORM_CHANCE = 0.003
-const MAX_ZONES = 32
+const CHECK_INTERVAL = 3225
+const FORM_CHANCE = 0.0033
+const MAX_ZONES = 35
 
 export class WorldPotassiumSpringSystem {
   private zones: PotassiumSpringZone[] = []
@@ -40,15 +40,15 @@ export class WorldPotassiumSpringSystem {
 
       this.zones.push({
         id: this.nextId++, x, y,
-        potassiumContent: 40 + Math.random() * 60,
-        springFlow: 10 + Math.random() * 50,
-        saltDeposit: 20 + Math.random() * 80,
-        evaporiteLayer: 15 + Math.random() * 85,
+        potassiumContent: 46 + Math.random() * 54,
+        springFlow: 16 + Math.random() * 44,
+        geologicalDeposit: 26 + Math.random() * 74,
+        mineralConcentration: 20 + Math.random() * 80,
         tick
       })
     }
 
-    const cutoff = tick - 54000
+    const cutoff = tick - 57000
     for (let i = this.zones.length - 1; i >= 0; i--) {
       if (this.zones[i].tick < cutoff) this.zones.splice(i, 1)
     }

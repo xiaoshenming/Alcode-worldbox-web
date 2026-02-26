@@ -1,5 +1,5 @@
-// World Barium Spring System (v3.552) - Barium-enriched mineral springs
-// Springs carrying dissolved barium from barite-bearing geological formations
+// World Barium Spring System (v3.732) - Barium-bearing mineral springs
+// Springs carrying dissolved barium compounds from deep geological formations
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
@@ -9,12 +9,12 @@ export interface BariumSpringZone {
   id: number; x: number; y: number
   bariumContent: number
   springFlow: number
-  bariteDeposit: number
-  mineralDensity: number
+  geologicalDeposit: number
+  mineralConcentration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 2740
+const CHECK_INTERVAL = 3180
 const FORM_CHANCE = 0.003
 const MAX_ZONES = 32
 
@@ -42,8 +42,8 @@ export class WorldBariumSpringSystem {
         id: this.nextId++, x, y,
         bariumContent: 40 + Math.random() * 60,
         springFlow: 10 + Math.random() * 50,
-        bariteDeposit: 20 + Math.random() * 80,
-        mineralDensity: 15 + Math.random() * 85,
+        geologicalDeposit: 20 + Math.random() * 80,
+        mineralConcentration: 15 + Math.random() * 85,
         tick
       })
     }

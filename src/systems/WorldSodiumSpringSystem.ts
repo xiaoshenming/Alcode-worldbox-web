@@ -1,25 +1,25 @@
-// World Strontium Spring System (v3.733) - Strontium-bearing mineral springs
-// Springs carrying dissolved strontium compounds from celestite-rich formations
+// World Sodium Spring System (v3.736) - Sodium-bearing mineral springs
+// Springs carrying dissolved sodium compounds from halite and evaporite formations
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 import { TileType } from '../utils/Constants'
 
-export interface StrontiumSpringZone {
+export interface SodiumSpringZone {
   id: number; x: number; y: number
-  strontiumContent: number
+  sodiumContent: number
   springFlow: number
   geologicalDeposit: number
   mineralConcentration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 3195
-const FORM_CHANCE = 0.0031
-const MAX_ZONES = 33
+const CHECK_INTERVAL = 3240
+const FORM_CHANCE = 0.0034
+const MAX_ZONES = 36
 
-export class WorldStrontiumSpringSystem {
-  private zones: StrontiumSpringZone[] = []
+export class WorldSodiumSpringSystem {
+  private zones: SodiumSpringZone[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -40,15 +40,15 @@ export class WorldStrontiumSpringSystem {
 
       this.zones.push({
         id: this.nextId++, x, y,
-        strontiumContent: 42 + Math.random() * 58,
-        springFlow: 12 + Math.random() * 48,
-        geologicalDeposit: 22 + Math.random() * 78,
-        mineralConcentration: 16 + Math.random() * 84,
+        sodiumContent: 48 + Math.random() * 52,
+        springFlow: 18 + Math.random() * 42,
+        geologicalDeposit: 28 + Math.random() * 72,
+        mineralConcentration: 22 + Math.random() * 78,
         tick
       })
     }
 
-    const cutoff = tick - 55000
+    const cutoff = tick - 58000
     for (let i = this.zones.length - 1; i >= 0; i--) {
       if (this.zones[i].tick < cutoff) this.zones.splice(i, 1)
     }
@@ -64,5 +64,5 @@ export class WorldStrontiumSpringSystem {
     return false
   }
 
-  getZones(): readonly StrontiumSpringZone[] { return this.zones }
+  getZones(): readonly SodiumSpringZone[] { return this.zones }
 }

@@ -1,25 +1,25 @@
-// World Strontium Spring System (v3.733) - Strontium-bearing mineral springs
-// Springs carrying dissolved strontium compounds from celestite-rich formations
+// World Calcium Spring System (v3.734) - Calcium-bearing mineral springs
+// Springs carrying dissolved calcium compounds from limestone and chalk formations
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 import { TileType } from '../utils/Constants'
 
-export interface StrontiumSpringZone {
+export interface CalciumSpringZone {
   id: number; x: number; y: number
-  strontiumContent: number
+  calciumContent: number
   springFlow: number
   geologicalDeposit: number
   mineralConcentration: number
   tick: number
 }
 
-const CHECK_INTERVAL = 3195
-const FORM_CHANCE = 0.0031
-const MAX_ZONES = 33
+const CHECK_INTERVAL = 3210
+const FORM_CHANCE = 0.0032
+const MAX_ZONES = 34
 
-export class WorldStrontiumSpringSystem {
-  private zones: StrontiumSpringZone[] = []
+export class WorldCalciumSpringSystem {
+  private zones: CalciumSpringZone[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -40,15 +40,15 @@ export class WorldStrontiumSpringSystem {
 
       this.zones.push({
         id: this.nextId++, x, y,
-        strontiumContent: 42 + Math.random() * 58,
-        springFlow: 12 + Math.random() * 48,
-        geologicalDeposit: 22 + Math.random() * 78,
-        mineralConcentration: 16 + Math.random() * 84,
+        calciumContent: 44 + Math.random() * 56,
+        springFlow: 14 + Math.random() * 46,
+        geologicalDeposit: 24 + Math.random() * 76,
+        mineralConcentration: 18 + Math.random() * 82,
         tick
       })
     }
 
-    const cutoff = tick - 55000
+    const cutoff = tick - 56000
     for (let i = this.zones.length - 1; i >= 0; i--) {
       if (this.zones[i].tick < cutoff) this.zones.splice(i, 1)
     }
@@ -64,5 +64,5 @@ export class WorldStrontiumSpringSystem {
     return false
   }
 
-  getZones(): readonly StrontiumSpringZone[] { return this.zones }
+  getZones(): readonly CalciumSpringZone[] { return this.zones }
 }
