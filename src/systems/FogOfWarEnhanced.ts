@@ -358,7 +358,7 @@ export class FogOfWarEnhanced {
     for (let i = 0; i < total; i++) {
       if (civMap[i] >= FOG_EXPLORED) explored++;
     }
-    return (explored / total) * 100;
+    return total > 0 ? (explored / total) * 100 : 0;
   }
 
   /**
