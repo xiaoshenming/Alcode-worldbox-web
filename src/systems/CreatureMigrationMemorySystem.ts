@@ -47,6 +47,7 @@ export class CreatureMigrationMemorySystem {
     this.inheritMemories(em, tick)
     this.updateRoutes(em)
     this.decayMemories()
+    this.pruneDeadCreatures(em)
   }
 
   private formMemories(em: EntityManager, tick: number): void {
@@ -178,6 +179,14 @@ export class CreatureMigrationMemorySystem {
     for (let i = this.memories.length - 1; i >= 0; i--) {
       this.memories[i].quality -= QUALITY_DECAY
       if (this.memories[i].quality < MIN_QUALITY) {
+        this.memories.splice(i, 1)
+      }
+    }
+  }
+
+  private pruneDeadCreatures(em: EntityManager): void {
+    for (let i = this.memories.length - 1; i >= 0; i--) {
+      if (!em.hasComponent(this.memories[i].creatureId, 'creature')) {
         this.memories.splice(i, 1)
       }
     }
