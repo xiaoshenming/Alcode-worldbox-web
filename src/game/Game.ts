@@ -700,6 +700,19 @@ import { DiplomaticAutonomySystem } from '../systems/DiplomaticAutonomySystem'
 import { CreatureHarnessmakerSystem } from '../systems/CreatureHarnessmakerSystem'
 import { WorldSodaSpringSystem } from '../systems/WorldSodaSpringSystem'
 import { DiplomaticVassalageSystem } from '../systems/DiplomaticVassalageSystem'
+import { WorldArtesianWellSystem } from '../systems/WorldArtesianWellSystem'
+import { CreatureBridlemakerSystem } from '../systems/CreatureBridlemakerSystem'
+import { WorldChalybeateSpringSystem } from '../systems/WorldChalybeateSpringSystem'
+import { DiplomaticImperiumSystem } from '../systems/DiplomaticImperiumSystem'
+import { CreatureYokemakerSystem } from '../systems/CreatureYokemakerSystem'
+import { WorldSulfurSpringSystem } from '../systems/WorldSulfurSpringSystem'
+import { DiplomaticMandateSystem } from '../systems/DiplomaticMandateSystem'
+import { CreaturePlowrightSystem } from '../systems/CreaturePlowrightSystem'
+import { WorldLithiumSpringSystem } from '../systems/WorldLithiumSpringSystem'
+import { DiplomaticRegencySystem } from '../systems/DiplomaticRegencySystem'
+import { CreatureAnvilsmithSystem } from '../systems/CreatureAnvilsmithSystem'
+import { WorldRadiumSpringSystem } from '../systems/WorldRadiumSpringSystem'
+import { DiplomaticStewardshipSystem } from '../systems/DiplomaticStewardshipSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1401,6 +1414,19 @@ export class Game {
   private creatureHarnessmaker!: CreatureHarnessmakerSystem
   private worldSodaSpring!: WorldSodaSpringSystem
   private diplomaticVassalage!: DiplomaticVassalageSystem
+  private worldArtesianWell!: WorldArtesianWellSystem
+  private creatureBridlemaker!: CreatureBridlemakerSystem
+  private worldChalybeateSpring!: WorldChalybeateSpringSystem
+  private diplomaticImperium!: DiplomaticImperiumSystem
+  private creatureYokemaker!: CreatureYokemakerSystem
+  private worldSulfurSpring!: WorldSulfurSpringSystem
+  private diplomaticMandate!: DiplomaticMandateSystem
+  private creaturePlowright!: CreaturePlowrightSystem
+  private worldLithiumSpring!: WorldLithiumSpringSystem
+  private diplomaticRegency!: DiplomaticRegencySystem
+  private creatureAnvilsmith!: CreatureAnvilsmithSystem
+  private worldRadiumSpring!: WorldRadiumSpringSystem
+  private diplomaticStewardship!: DiplomaticStewardshipSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -2253,6 +2279,19 @@ export class Game {
     this.creatureHarnessmaker = new CreatureHarnessmakerSystem()
     this.worldSodaSpring = new WorldSodaSpringSystem()
     this.diplomaticVassalage = new DiplomaticVassalageSystem()
+    this.worldArtesianWell = new WorldArtesianWellSystem()
+    this.creatureBridlemaker = new CreatureBridlemakerSystem()
+    this.worldChalybeateSpring = new WorldChalybeateSpringSystem()
+    this.diplomaticImperium = new DiplomaticImperiumSystem()
+    this.creatureYokemaker = new CreatureYokemakerSystem()
+    this.worldSulfurSpring = new WorldSulfurSpringSystem()
+    this.diplomaticMandate = new DiplomaticMandateSystem()
+    this.creaturePlowright = new CreaturePlowrightSystem()
+    this.worldLithiumSpring = new WorldLithiumSpringSystem()
+    this.diplomaticRegency = new DiplomaticRegencySystem()
+    this.creatureAnvilsmith = new CreatureAnvilsmithSystem()
+    this.worldRadiumSpring = new WorldRadiumSpringSystem()
+    this.diplomaticStewardship = new DiplomaticStewardshipSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -3537,7 +3576,7 @@ export class Game {
         // Creature language (v2.28) - language evolution affects diplomacy
         this.creatureLanguage.update(this.tickRate, [...this.civManager.civilizations.keys()], this.world.tick)
         // Diplomatic tribute (v2.29) - weaker civs pay tribute
-        this.diplomaticTribute.update(this.tickRate, this.em, this.world.tick)
+        this.diplomaticTribute.update(this.tickRate, this.world, this.em, this.world.tick)
         // World weather fronts (v2.30) - moving weather fronts
         this.worldWeatherFront.update(this.tickRate, this.world.tick)
         // Creature trade skills (v2.31) - trade skill development
@@ -3831,7 +3870,7 @@ export class Game {
         // World geyser fields (v3.97) - geothermal eruption zones
         this.worldGeyserField.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic tribute (v3.98) - vassal tribute payments
-        this.diplomaticTribute.update(this.tickRate, this.em, this.world.tick)
+        this.diplomaticTribute.update(this.tickRate, this.world, this.em, this.world.tick)
         // Creature bards (v3.99) - musical morale boosting
         this.creatureBard.update(this.tickRate, this.em, this.world.tick)
         // World northern lights (v3.100) - polar aurora displays
@@ -4572,6 +4611,36 @@ export class Game {
         this.worldSodaSpring.update(this.tickRate, this.world, this.em, this.world.tick)
         // Diplomatic vassalage (v3.520) - vassalage relations
         this.diplomaticVassalage.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature saddlers (v3.521) - saddle crafting artisans
+        this.creatureSaddler.update(this.tickRate, this.em, this.world.tick)
+        // World artesian wells (v3.522) - artesian well formations
+        this.worldArtesianWell.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic tribute (v3.523) - tribute arrangements
+        this.diplomaticTribute.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature bridlemakers (v3.524) - bridle crafting artisans
+        this.creatureBridlemaker.update(this.tickRate, this.em, this.world.tick)
+        // World chalybeate springs (v3.525) - iron-rich springs
+        this.worldChalybeateSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic imperium (v3.526) - imperial authority
+        this.diplomaticImperium.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature yokemakers (v3.527) - yoke crafting artisans
+        this.creatureYokemaker.update(this.tickRate, this.em, this.world.tick)
+        // World sulfur springs (v3.528) - sulfur spring formations
+        this.worldSulfurSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic mandate (v3.529) - mandate governance
+        this.diplomaticMandate.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature plowrights (v3.530) - plow crafting artisans
+        this.creaturePlowright.update(this.tickRate, this.em, this.world.tick)
+        // World lithium springs (v3.531) - lithium-rich springs
+        this.worldLithiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic regency (v3.532) - regency governance
+        this.diplomaticRegency.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Creature anvilsmiths (v3.533) - anvil crafting artisans
+        this.creatureAnvilsmith.update(this.tickRate, this.em, this.world.tick)
+        // World radium springs (v3.534) - radioactive springs
+        this.worldRadiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        // Diplomatic stewardship (v3.535) - stewardship governance
+        this.diplomaticStewardship.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
