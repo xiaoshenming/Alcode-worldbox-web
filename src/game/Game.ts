@@ -861,6 +861,9 @@ import { DiplomaticGarbleSystem } from '../systems/DiplomaticGarbleSystem'
 import { CreatureNeedlerSystem } from '../systems/CreatureNeedlerSystem'
 import { WorldXenonSpringSystem } from '../systems/WorldXenonSpringSystem'
 import { DiplomaticTollboothSystem } from '../systems/DiplomaticTollboothSystem'
+const _ERA_ORDER = ['stone', 'bronze', 'iron', 'medieval', 'renaissance'] as const
+const _EMPTY_ARRAY: never[] = []
+
 export class Game {
 
   // Batch system interfaces for data-driven tick dispatch
@@ -1773,6 +1776,16 @@ export class Game {
     worldWidth: 0, worldHeight: 0
   }
   private _clonePositions: { x: number; y: number; generation: number }[] = []
+
+  // Pre-allocated buffers for GC-free tick paths
+  private _ambientSoundParams = { isNight: false, season: 'spring' as string, weather: 'clear' as string, nearestBattleDist: 999, nearestCityDist: 999, cameraZoom: 1 }
+  private _fogUnits: { x: number; y: number; visionRange: number }[] = []
+  private _fogUnitsBuf: { x: number; y: number; visionRange: number }[] = []
+  private _cloneEntities: { id: number; isClone: boolean; health: number; maxHealth: number; age: number }[] = []
+  private _cloneEntitiesBuf: { id: number; isClone: boolean; health: number; maxHealth: number; age: number }[] = []
+  private _achSpeciesSet = new Set<string>()
+  private _achStats: AchContentWorldStats = { totalCreatures: 0, speciesSet: new Set<string>(), maxCityPop: 0, filledTilePercent: 0, hasIsland: false, totalKills: 0, extinctSpecies: _EMPTY_ARRAY as unknown as string[], scorchedTiles: 0, disastersLast60Ticks: 0, nukeUsed: false, civsMet: 0, activeTradeRoutes: 0, maxEra: 'stone', peaceTicks: 0, maxTerritoryPercent: 0, totalCombats: 0, shipCount: 0, citiesCaptured: 0, maxHeroLevel: 0, maxArmySize: 0, volcanoEruptions: 0, waterTilesCreatedAtOnce: 0, diseasedCivs: 0, evolutionEvents: 0, coexistSpecies: 0, coexistTicks: 0, totalTicks: 0, exploredPercent: 0, totalCivs: 0, totalWars: 0, clonedCreatures: 0, portalPairs: 0 }
+  private _civValuesBuf: any[] = []
 
   constructor() {
     this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement
@@ -3778,7 +3791,7 @@ export class Game {
         // Era visual sync - track most advanced civ
         {
           let maxEra: 'stone' | 'bronze' | 'iron' | 'medieval' | 'renaissance' = 'stone'
-          const eraOrder = ['stone', 'bronze', 'iron', 'medieval', 'renaissance'] as const
+          const eraOrder = _ERA_ORDER
           for (const [civId] of this.civManager.civilizations) {
             const era = this.eraSystem.getEra(civId)
             if (eraOrder.indexOf(era) > eraOrder.indexOf(maxEra)) maxEra = era
@@ -3812,26 +3825,25 @@ export class Game {
         // === EVERY 30 TICKS: Achievement content check ===
         if (tick % 30 === 5) {
         {
-          const achStats: AchContentWorldStats = {
-            totalCreatures: this.em.getEntitiesWithComponents('creature').length,
-            speciesSet: (() => { const s = new Set<string>(); for (const id of this.em.getEntitiesWithComponents('creature')) { const c = this.em.getComponent<CreatureComponent>(id, 'creature'); if (c) s.add(c.species); } return s; })(),
-            maxCityPop: (() => { let m = 0; for (const c of this.civManager.civilizations.values()) { if (c.population > m) m = c.population; } return m; })(),
-            filledTilePercent: 0, hasIsland: false,
-            totalKills: 0, extinctSpecies: [], scorchedTiles: 0,
-            disastersLast60Ticks: 0, nukeUsed: false,
-            civsMet: this.civManager.civilizations.size,
-            activeTradeRoutes: 0, maxEra: 'stone', peaceTicks: 0,
-            maxTerritoryPercent: 0, totalCombats: 0, shipCount: 0,
-            citiesCaptured: 0, maxHeroLevel: 0, maxArmySize: 0,
-            volcanoEruptions: 0, waterTilesCreatedAtOnce: 0,
-            diseasedCivs: 0, evolutionEvents: 0,
-            coexistSpecies: 0, coexistTicks: 0,
-            totalTicks: tick, exploredPercent: 0,
-            totalCivs: this.civManager.civilizations.size, totalWars: 0,
-            clonedCreatures: this.clonePower.getCloneCount(),
-            portalPairs: this.portalSystem.getPortals().length / 2,
+          // Reuse speciesSet - clear and refill
+          this._achSpeciesSet.clear()
+          for (const id of this.em.getEntitiesWithComponents('creature')) {
+            const c = this.em.getComponent<CreatureComponent>(id, 'creature')
+            if (c) this._achSpeciesSet.add(c.species)
           }
-          this.achievementContent.check(achStats)
+          let _achMaxPop = 0
+          for (const c of this.civManager.civilizations.values()) { if (c.population > _achMaxPop) _achMaxPop = c.population }
+          // Reuse achStats object
+          const as = this._achStats
+          as.totalCreatures = this.em.getEntitiesWithComponents('creature').length
+          as.speciesSet = this._achSpeciesSet
+          as.maxCityPop = _achMaxPop
+          as.civsMet = this.civManager.civilizations.size
+          as.totalTicks = tick
+          as.totalCivs = this.civManager.civilizations.size
+          as.clonedCreatures = this.clonePower.getCloneCount()
+          as.portalPairs = this.portalSystem.getPortals().length / 2
+          this.achievementContent.check(as)
         }
         }
         // Chart panel - record data point every 60 ticks
@@ -3857,17 +3869,24 @@ export class Game {
         if (tick % 10 === 5) {
         // Clone power - degradation updates
         {
-          const cloneEntities: { id: number; isClone: boolean; health: number; maxHealth: number; age: number }[] = []
+          this._cloneEntities.length = 0
           for (const id of this.em.getEntitiesWithComponents('creature', 'position')) {
             const c = this.em.getComponent<CreatureComponent>(id, 'creature')
             if (!c) continue
             const needs = this.em.getComponent<NeedsComponent>(id, 'needs')
-            cloneEntities.push({
-              id, isClone: this.clonePower.getGeneration(id) > 0,
-              health: needs?.health ?? 100, maxHealth: 100, age: c.age
-            })
+            // Reuse or grow buffer
+            if (this._cloneEntities.length < this._cloneEntitiesBuf.length) {
+              const e = this._cloneEntitiesBuf[this._cloneEntities.length]
+              e.id = id; e.isClone = this.clonePower.getGeneration(id) > 0
+              e.health = needs?.health ?? 100; e.maxHealth = 100; e.age = c.age
+              this._cloneEntities.push(e)
+            } else {
+              const e = { id, isClone: this.clonePower.getGeneration(id) > 0, health: needs?.health ?? 100, maxHealth: 100, age: c.age }
+              this._cloneEntitiesBuf.push(e)
+              this._cloneEntities.push(e)
+            }
           }
-          const events = this.clonePower.update(tick, cloneEntities)
+          const events = this.clonePower.update(tick, this._cloneEntities)
           for (const ev of events) {
             const needs = this.em.getComponent<NeedsComponent>(ev.id, 'needs')
             if (needs && ev.type === 'health_loss') needs.health = Math.max(0, needs.health - ev.amount)
@@ -3900,7 +3919,7 @@ export class Game {
           tick,
           this.em.getEntitiesWithComponent('creature').length,
           this.civManager.civilizations.size,
-          0, [], // wars and events simplified
+          0, _EMPTY_ARRAY, // wars and events simplified
           civSnap
         )
         }
@@ -3918,14 +3937,11 @@ export class Game {
         this.evolutionVisual.update(tick)
         this.achievementPopup.update(tick)
         this.minimapEnhanced.update(tick)
-        this.ambientSound.update(tick, {
-          isNight: !this.world.isDay(),
-          season: this.seasonSystem.getCurrentSeason(),
-          weather: this.weather.currentWeather ?? 'clear',
-          nearestBattleDist: 999,
-          nearestCityDist: 999,
-          cameraZoom: this.camera.zoom
-        })
+        this._ambientSoundParams.isNight = !this.world.isDay()
+        this._ambientSoundParams.season = this.seasonSystem.getCurrentSeason()
+        this._ambientSoundParams.weather = this.weather.currentWeather ?? 'clear'
+        this._ambientSoundParams.cameraZoom = this.camera.zoom
+        this.ambientSound.update(tick, this._ambientSoundParams)
         }
 
         // Diplomacy visual - update civ relation data
@@ -3940,13 +3956,22 @@ export class Game {
 
         // Enhanced fog of war
         if (tick % 30 === 0) {
-          const units: { x: number; y: number; visionRange: number }[] = []
+          this._fogUnits.length = 0
           for (const id of this.em.getEntitiesWithComponents('creature', 'position')) {
             const pos = this.em.getComponent<PositionComponent>(id, 'position')
             if (!pos) continue
-            units.push({ x: Math.floor(pos.x), y: Math.floor(pos.y), visionRange: 8 })
+            // Reuse or grow buffer
+            if (this._fogUnits.length < this._fogUnitsBuf.length) {
+              const u = this._fogUnitsBuf[this._fogUnits.length]
+              u.x = Math.floor(pos.x); u.y = Math.floor(pos.y); u.visionRange = 8
+              this._fogUnits.push(u)
+            } else {
+              const u = { x: Math.floor(pos.x), y: Math.floor(pos.y), visionRange: 8 }
+              this._fogUnitsBuf.push(u)
+              this._fogUnits.push(u)
+            }
           }
-          this.fogEnhanced.updateVision(tick, units, [])
+          this.fogEnhanced.updateVision(tick, this._fogUnits, _EMPTY_ARRAY)
         }
 
         // World dashboard - population sampling
@@ -4086,7 +4111,9 @@ export class Game {
           this.worldAnomaly.update(this.tickRate, this.em, this.world)
           this.worldMythicBeast.update(this.tickRate, this.em, this.world)
           this.worldSeasonalDisaster.update(this.tickRate, this.em, this.world)
-          this.diplomaticEspionage.update(this.tickRate, this.em, [...this.civManager.civilizations.values()], tick)
+          this._civValuesBuf.length = 0
+          for (const c of this.civManager.civilizations.values()) this._civValuesBuf.push(c)
+          this.diplomaticEspionage.update(this.tickRate, this.em, this._civValuesBuf, tick)
           this.worldAncientRuin.update(this.tickRate, this.em, this.world)
           this.worldNaturalWonder.update(this.tickRate, this.em, this.world)
           this.creatureLanguage.update(this.tickRate, this.civManager.civilizations.keys(), tick)
