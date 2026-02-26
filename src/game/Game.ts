@@ -817,6 +817,21 @@ import { DiplomaticHayreveSystem } from '../systems/DiplomaticHayreveSystem'
 import { CreatureLapperSystem } from '../systems/CreatureLapperSystem'
 import { WorldThuliumSpringSystem } from '../systems/WorldThuliumSpringSystem'
 import { DiplomaticPinderSystem } from '../systems/DiplomaticPinderSystem'
+import { CreatureBorerSystem } from '../systems/CreatureBorerSystem'
+import { WorldYtterbiumSpringSystem } from '../systems/WorldYtterbiumSpringSystem'
+import { DiplomaticGrithmanSystem } from '../systems/DiplomaticGrithmanSystem'
+import { CreatureCountersinkerSystem } from '../systems/CreatureCountersinkerSystem'
+import { WorldLutetiumSpringSystem } from '../systems/WorldLutetiumSpringSystem'
+import { DiplomaticBorsholderSystem } from '../systems/DiplomaticBorsholderSystem'
+import { CreatureSpotfacerSystem } from '../systems/CreatureSpotfacerSystem'
+import { WorldActiniumSpringSystem } from '../systems/WorldActiniumSpringSystem'
+import { DiplomaticAletasterSystem } from '../systems/DiplomaticAletasterSystem'
+import { CreatureTapperSystem } from '../systems/CreatureTapperSystem'
+import { WorldThoriumSpringSystem } from '../systems/WorldThoriumSpringSystem'
+import { DiplomaticBreadweigherSystem } from '../systems/DiplomaticBreadweigherSystem'
+import { CreatureCoinerSystem } from '../systems/CreatureCoinerSystem'
+import { WorldProtactiniumSpringSystem } from '../systems/WorldProtactiniumSpringSystem'
+import { DiplomaticMuragersSystem } from '../systems/DiplomaticMuragersSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1635,6 +1650,21 @@ export class Game {
   private creatureLapper!: CreatureLapperSystem
   private worldThuliumSpring!: WorldThuliumSpringSystem
   private diplomaticPinder!: DiplomaticPinderSystem
+  private creatureBorer!: CreatureBorerSystem
+  private worldYtterbiumSpring!: WorldYtterbiumSpringSystem
+  private diplomaticGrithman!: DiplomaticGrithmanSystem
+  private creatureCountersinker!: CreatureCountersinkerSystem
+  private worldLutetiumSpring!: WorldLutetiumSpringSystem
+  private diplomaticBorsholder!: DiplomaticBorsholderSystem
+  private creatureSpotfacer!: CreatureSpotfacerSystem
+  private worldActiniumSpring!: WorldActiniumSpringSystem
+  private diplomaticAletaster!: DiplomaticAletasterSystem
+  private creatureTapper!: CreatureTapperSystem
+  private worldThoriumSpring!: WorldThoriumSpringSystem
+  private diplomaticBreadweigher!: DiplomaticBreadweigherSystem
+  private creatureCoiner!: CreatureCoinerSystem
+  private worldProtactiniumSpring!: WorldProtactiniumSpringSystem
+  private diplomaticMuragers!: DiplomaticMuragersSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -2604,6 +2634,21 @@ export class Game {
     this.creatureLapper = new CreatureLapperSystem()
     this.worldThuliumSpring = new WorldThuliumSpringSystem()
     this.diplomaticPinder = new DiplomaticPinderSystem()
+    this.creatureBorer = new CreatureBorerSystem()
+    this.worldYtterbiumSpring = new WorldYtterbiumSpringSystem()
+    this.diplomaticGrithman = new DiplomaticGrithmanSystem()
+    this.creatureCountersinker = new CreatureCountersinkerSystem()
+    this.worldLutetiumSpring = new WorldLutetiumSpringSystem()
+    this.diplomaticBorsholder = new DiplomaticBorsholderSystem()
+    this.creatureSpotfacer = new CreatureSpotfacerSystem()
+    this.worldActiniumSpring = new WorldActiniumSpringSystem()
+    this.diplomaticAletaster = new DiplomaticAletasterSystem()
+    this.creatureTapper = new CreatureTapperSystem()
+    this.worldThoriumSpring = new WorldThoriumSpringSystem()
+    this.diplomaticBreadweigher = new DiplomaticBreadweigherSystem()
+    this.creatureCoiner = new CreatureCoinerSystem()
+    this.worldProtactiniumSpring = new WorldProtactiniumSpringSystem()
+    this.diplomaticMuragers = new DiplomaticMuragersSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -5057,6 +5102,21 @@ export class Game {
         this.creatureLapper.update(this.tickRate, this.em, this.world.tick)
         this.worldThuliumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
         this.diplomaticPinder.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureBorer.update(this.tickRate, this.em, this.world.tick)
+        this.worldYtterbiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticGrithman.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureCountersinker.update(this.tickRate, this.em, this.world.tick)
+        this.worldLutetiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticBorsholder.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureSpotfacer.update(this.tickRate, this.em, this.world.tick)
+        this.worldActiniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticAletaster.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureTapper.update(this.tickRate, this.em, this.world.tick)
+        this.worldThoriumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticBreadweigher.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureCoiner.update(this.tickRate, this.em, this.world.tick)
+        this.worldProtactiniumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticMuragers.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
