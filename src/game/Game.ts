@@ -845,6 +845,21 @@ import { DiplomaticHerbalistSystem } from '../systems/DiplomaticHerbalistSystem'
 import { CreatureSwedgerSystem } from '../systems/CreatureSwedgerSystem'
 import { WorldRadonSpringSystem } from '../systems/WorldRadonSpringSystem'
 import { DiplomaticLampwardenSystem } from '../systems/DiplomaticLampwardenSystem'
+import { CreatureBurnOuterSystem } from '../systems/CreatureBurnOuterSystem'
+import { WorldAstatineSpringSystem } from '../systems/WorldAstatineSpringSystem'
+import { DiplomaticClavigersSystem } from '../systems/DiplomaticClavigersSystem'
+import { CreatureScriberSystem } from '../systems/CreatureScriberSystem'
+import { WorldCaesiumSpringSystem } from '../systems/WorldCaesiumSpringSystem'
+import { DiplomaticPaviorSystem } from '../systems/DiplomaticPaviorSystem'
+import { CreatureStakerSystem } from '../systems/CreatureStakerSystem'
+import { WorldRubidiumSpringSystem } from '../systems/WorldRubidiumSpringSystem'
+import { DiplomaticWainageSystem } from '../systems/DiplomaticWainageSystem'
+import { CreaturePlanisherMasterSystem } from '../systems/CreaturePlanisherMasterSystem'
+import { WorldTelluriumSpringSystem } from '../systems/WorldTelluriumSpringSystem'
+import { DiplomaticGarbleSystem } from '../systems/DiplomaticGarbleSystem'
+import { CreatureNeedlerSystem } from '../systems/CreatureNeedlerSystem'
+import { WorldXenonSpringSystem } from '../systems/WorldXenonSpringSystem'
+import { DiplomaticTollboothSystem } from '../systems/DiplomaticTollboothSystem'
 export class Game {
   private world: World
   private camera: Camera
@@ -1691,6 +1706,21 @@ export class Game {
   private creatureSwedger!: CreatureSwedgerSystem
   private worldRadonSpring!: WorldRadonSpringSystem
   private diplomaticLampwarden!: DiplomaticLampwardenSystem
+  private creatureBurnOuter!: CreatureBurnOuterSystem
+  private worldAstatineSpring!: WorldAstatineSpringSystem
+  private diplomaticClavigers!: DiplomaticClavigersSystem
+  private creatureScriber!: CreatureScriberSystem
+  private worldCaesiumSpring!: WorldCaesiumSpringSystem
+  private diplomaticPavior!: DiplomaticPaviorSystem
+  private creatureStaker!: CreatureStakerSystem
+  private worldRubidiumSpring!: WorldRubidiumSpringSystem
+  private diplomaticWainage!: DiplomaticWainageSystem
+  private creaturePlanisherMaster!: CreaturePlanisherMasterSystem
+  private worldTelluriumSpring!: WorldTelluriumSpringSystem
+  private diplomaticGarble!: DiplomaticGarbleSystem
+  private creatureNeedler!: CreatureNeedlerSystem
+  private worldXenonSpring!: WorldXenonSpringSystem
+  private diplomaticTollbooth!: DiplomaticTollboothSystem
   private canvas: HTMLCanvasElement
   private minimapCanvas: HTMLCanvasElement
   private speed: number = 1
@@ -2688,6 +2718,21 @@ export class Game {
     this.creatureSwedger = new CreatureSwedgerSystem()
     this.worldRadonSpring = new WorldRadonSpringSystem()
     this.diplomaticLampwarden = new DiplomaticLampwardenSystem()
+    this.creatureBurnOuter = new CreatureBurnOuterSystem()
+    this.worldAstatineSpring = new WorldAstatineSpringSystem()
+    this.diplomaticClavigers = new DiplomaticClavigersSystem()
+    this.creatureScriber = new CreatureScriberSystem()
+    this.worldCaesiumSpring = new WorldCaesiumSpringSystem()
+    this.diplomaticPavior = new DiplomaticPaviorSystem()
+    this.creatureStaker = new CreatureStakerSystem()
+    this.worldRubidiumSpring = new WorldRubidiumSpringSystem()
+    this.diplomaticWainage = new DiplomaticWainageSystem()
+    this.creaturePlanisherMaster = new CreaturePlanisherMasterSystem()
+    this.worldTelluriumSpring = new WorldTelluriumSpringSystem()
+    this.diplomaticGarble = new DiplomaticGarbleSystem()
+    this.creatureNeedler = new CreatureNeedlerSystem()
+    this.worldXenonSpring = new WorldXenonSpringSystem()
+    this.diplomaticTollbooth = new DiplomaticTollboothSystem()
     this.renderCulling.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT)
     this.toastSystem.setupEventListeners()
     this.setupAchievementTracking()
@@ -5169,6 +5214,21 @@ export class Game {
         this.creatureSwedger.update(this.tickRate, this.em, this.world.tick)
         this.worldRadonSpring.update(this.tickRate, this.world, this.em, this.world.tick)
         this.diplomaticLampwarden.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureBurnOuter.update(this.tickRate, this.em, this.world.tick)
+        this.worldAstatineSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticClavigers.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureScriber.update(this.tickRate, this.em, this.world.tick)
+        this.worldCaesiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticPavior.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureStaker.update(this.tickRate, this.em, this.world.tick)
+        this.worldRubidiumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticWainage.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creaturePlanisherMaster.update(this.tickRate, this.em, this.world.tick)
+        this.worldTelluriumSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticGarble.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.creatureNeedler.update(this.tickRate, this.em, this.world.tick)
+        this.worldXenonSpring.update(this.tickRate, this.world, this.em, this.world.tick)
+        this.diplomaticTollbooth.update(this.tickRate, this.world, this.em, this.world.tick)
         this.updateVisualEffects()
         this.particles.update()
         this.accumulator -= this.tickRate
