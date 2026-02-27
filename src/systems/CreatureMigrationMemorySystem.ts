@@ -108,11 +108,23 @@ export class CreatureMigrationMemorySystem {
         const dy = pos.y - opos.y
         if (dx * dx + dy * dy > PROXIMITY_RANGE * PROXIMITY_RANGE) continue
 
-        const elderMemories = this.memories.filter(m => m.creatureId === oid && m.quality > 40)
-        if (elderMemories.length === 0) continue
+        // Find memories of elder with quality > 40, pick one randomly
+        let eligibleCount = 0
+        for (let _mi = 0; _mi < this.memories.length; _mi++) {
+          const m = this.memories[_mi]
+          if (m.creatureId === oid && m.quality > 40) eligibleCount++
+        }
+        if (eligibleCount === 0) continue
 
-        // Pass one memory
-        const mem = elderMemories[Math.floor(Math.random() * elderMemories.length)]
+        // Sample one eligible memory
+        let targetIdx = Math.floor(Math.random() * eligibleCount)
+        let mem = this.memories[0]
+        for (let _mi = 0; _mi < this.memories.length; _mi++) {
+          const m = this.memories[_mi]
+          if (m.creatureId === oid && m.quality > 40) {
+            if (targetIdx-- === 0) { mem = m; break }
+          }
+        }
         const alreadyHas = this.memories.some(m =>
           m.creatureId === id &&
           Math.abs(m.x - mem.x) < 5 &&
