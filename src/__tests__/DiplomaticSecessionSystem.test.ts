@@ -9,4 +9,7 @@ describe('DiplomaticSecessionSystem', () => {
     ;(sys as any).movements.push({ id: 1 })
     expect(sys.getMovements()).toHaveLength(1)
   })
+  it('getMovements返回数组', () => { expect(Array.isArray(sys.getMovements())).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })

@@ -9,4 +9,7 @@ describe('DiplomaticWarReparationsSystem', () => {
     ;(sys as any).reparations.push({ id: 1 })
     expect(sys.getReparations()).toHaveLength(1)
   })
+  it('getReparations返回数组', () => { expect(Array.isArray(sys.getReparations())).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })
