@@ -34,6 +34,8 @@ export class EditorEnhancedSystem {
 
   // 网格
   private gridVisible: boolean = false;
+  private _lastZoom = -1;
+  private _brushFont = '';
 
   constructor() {
     this.undoStack = new Array<EditAction | null>(MAX_UNDO_STEPS).fill(null);
@@ -197,6 +199,10 @@ export class EditorEnhancedSystem {
     camY: number,
     zoom: number
   ): void {
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._brushFont = `${Math.max(10, zoom)}px monospace`
+    }
     const worldX = (mouseX / zoom) + camX;
     const worldY = (mouseY / zoom) + camY;
     const centerScreenX = (worldX - camX) * zoom;
@@ -231,7 +237,7 @@ export class EditorEnhancedSystem {
 
     // 画笔大小数字
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.font = `${Math.max(10, zoom)}px monospace`;
+    ctx.font = this._brushFont;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(String(this.brushSize), centerScreenX, centerScreenY - radius - zoom * 0.8);
