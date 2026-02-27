@@ -16,6 +16,14 @@ const TERRAIN_MOUNTAIN = 5;
 const TILE_SIZE = 16;
 const MAX_RIPPLES = 100;
 const MAX_SAND_PARTICLES = 80;
+// Pre-computed alpha color tables (alpha 0.00 to 1.00, step 0.01)
+const RIPPLE_COLORS: string[] = []
+const SAND_COLORS: string[] = []
+for (let i = 0; i <= 100; i++) {
+  const a = (i / 100).toFixed(2)
+  RIPPLE_COLORS.push(`rgba(255,255,255,${a})`)
+  SAND_COLORS.push(`rgba(210,180,100,${a})`)
+}
 
 // 伪随机哈希
 function hash(x: number, y: number): number {
@@ -315,7 +323,7 @@ export class TerrainDecorationSystem {
     for (const r of this.ripples) {
       const sx = (r.x - camX) * zoom;
       const sy = (r.y - camY) * zoom;
-      ctx.strokeStyle = `rgba(255,255,255,${r.alpha.toFixed(2)})`;
+      ctx.strokeStyle = RIPPLE_COLORS[Math.round(r.alpha * 100)];
       ctx.beginPath();
       ctx.arc(sx, sy, r.radius * zoom, 0, Math.PI * 2);
       ctx.stroke();
@@ -410,7 +418,7 @@ export class TerrainDecorationSystem {
     for (const p of this.sandParticles) {
       const sx = (p.x - camX) * zoom;
       const sy = (p.y - camY) * zoom;
-      ctx.fillStyle = `rgba(210,180,100,${p.alpha.toFixed(2)})`;
+      ctx.fillStyle = SAND_COLORS[Math.round(p.alpha * 100)];
       ctx.beginPath();
       ctx.arc(sx, sy, r, 0, Math.PI * 2);
       ctx.fill();

@@ -34,7 +34,7 @@ interface PopupCard {
 interface Particle {
   x: number; y: number; vx: number; vy: number
   life: number; maxLife: number; size: number
-  r: number; g: number; b: number
+  r: number; g: number; b: number; color: string
 }
 
 const RARITY_COLORS: Record<AchievementRarity, string> = {
@@ -200,7 +200,7 @@ export class AchievementPopupSystem {
         y: isLegendary ? Math.random() * 600 : 0,
         vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 2,
         life: 40 + Math.random() * 40, maxLife: 80,
-        size: 2 + Math.random() * 3, r: c.r, g: c.g, b: c.b
+        size: 2 + Math.random() * 3, r: c.r, g: c.g, b: c.b, color: `rgb(${c.r},${c.g},${c.b})`
       })
     }
   }
@@ -293,7 +293,7 @@ export class AchievementPopupSystem {
       const pt = this.particles[i]
       const alpha = pt.life / pt.maxLife
       ctx.globalAlpha = alpha
-      ctx.fillStyle = `rgb(${pt.r},${pt.g},${pt.b})`
+      ctx.fillStyle = pt.color
       ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.size * alpha, 0, Math.PI * 2); ctx.fill()
     }
     ctx.restore()

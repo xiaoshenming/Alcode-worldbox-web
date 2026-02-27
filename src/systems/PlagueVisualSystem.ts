@@ -35,6 +35,28 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t
 }
 
+// Pre-computed plague zone overlay colors (severity 0-100 steps)
+const PLAGUE_ZONE_COLORS: string[] = (() => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) {
+    const s = i / 100
+    const r = Math.round(lerp(LIGHT_R, DARK_R, s))
+    const g = Math.round(lerp(LIGHT_G, DARK_G, s))
+    const b = Math.round(lerp(LIGHT_B, DARK_B, s))
+    const a = lerp(LIGHT_A, DARK_A, s)
+    cols.push(`rgba(${r},${g},${b},${a.toFixed(3)})`)
+  }
+  return cols
+})()
+// Pre-computed particle alpha strings (alpha = life/maxLife * 0.6, quantized to 60 steps)
+const PARTICLE_COLORS: string[] = (() => {
+  const cols: string[] = ['']  // index 0 placeholder
+  for (let i = 1; i <= 60; i++) {
+    cols.push(`rgba(100,180,60,${(i / 100).toFixed(2)})`)
+  }
+  return cols
+})()
+
 export class PlagueVisualSystem {
   private zones: InfectedZone[] = []
   private quarantines: QuarantineZone[] = []
@@ -96,11 +118,7 @@ export class PlagueVisualSystem {
       const sx = (zone.x * TILE_SIZE - cameraX) * zoom
       const sy = (zone.y * TILE_SIZE - cameraY) * zoom
       const s = zone.severity
-      const r = Math.round(lerp(LIGHT_R, DARK_R, s))
-      const g = Math.round(lerp(LIGHT_G, DARK_G, s))
-      const b = Math.round(lerp(LIGHT_B, DARK_B, s))
-      const a = lerp(LIGHT_A, DARK_A, s)
-      ctx.fillStyle = `rgba(${r},${g},${b},${a})`
+      ctx.fillStyle = PLAGUE_ZONE_COLORS[Math.round(s * 100)]
       ctx.fillRect(sx, sy, tileScreen, tileScreen)
     }
 
@@ -110,7 +128,7 @@ export class PlagueVisualSystem {
       const sy = (p.y - cameraY) * zoom
       const alpha = (p.life / p.maxLife) * 0.6
       const radius = 2 * zoom
-      ctx.fillStyle = `rgba(100,180,60,${alpha.toFixed(2)})`
+      ctx.fillStyle = PARTICLE_COLORS[Math.max(1, Math.min(60, Math.round(alpha * 100)))]
       ctx.beginPath()
       ctx.arc(sx, sy, radius, 0, Math.PI * 2)
       ctx.fill()

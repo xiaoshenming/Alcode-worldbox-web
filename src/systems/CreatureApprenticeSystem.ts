@@ -42,6 +42,7 @@ export class CreatureApprenticeSystem {
   private apprenticeships: Apprenticeship[] = []
   private nextCheckTick = CHECK_INTERVAL
   private nextTrainTick = TRAIN_INTERVAL
+  private _activeBuf: Apprenticeship[] = []
 
   getApprenticeships(): Apprenticeship[] { return this.apprenticeships }
 
@@ -75,8 +76,9 @@ export class CreatureApprenticeSystem {
   }
 
   private formApprenticeships(em: EntityManager, tick: number): void {
-    const active = this.apprenticeships.filter(a => !a.graduated)
-    if (active.length >= MAX_APPRENTICESHIPS) return
+    let activeCount = 0
+    for (const a of this.apprenticeships) { if (!a.graduated) activeCount++ }
+    if (activeCount >= MAX_APPRENTICESHIPS) return
 
     const entities = em.getEntitiesWithComponents('position', 'creature', 'civMember')
     const candidates: Array<{ id: EntityId; age: number; civId: number; x: number; y: number }> = []
@@ -94,7 +96,7 @@ export class CreatureApprenticeSystem {
     const young = candidates.filter(c => c.age < MIN_AGE_MASTER * 0.6)
 
     for (const master of masters) {
-      if (active.length >= MAX_APPRENTICESHIPS) break
+      if (activeCount >= MAX_APPRENTICESHIPS) break
       // Already mentoring?
       if (this.apprenticeships.some(a => a.masterId === master.id && !a.graduated)) continue
 
@@ -118,7 +120,7 @@ export class CreatureApprenticeSystem {
           graduated: false,
         }
         this.apprenticeships.push(app)
-        active.push(app)
+        activeCount++
 
         const mc = em.getComponent<CreatureComponent>(master.id, 'creature')
         const ac = em.getComponent<CreatureComponent>(apprentice.id, 'creature')
@@ -178,7 +180,9 @@ export class CreatureApprenticeSystem {
   }
 
   render(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number, em: EntityManager): void {
-    const active = this.apprenticeships.filter(a => !a.graduated)
+    const active = this._activeBuf
+    active.length = 0
+    for (const a of this.apprenticeships) { if (!a.graduated) active.push(a) }
     if (active.length === 0) return
 
     ctx.save()

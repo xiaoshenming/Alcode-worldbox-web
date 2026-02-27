@@ -180,11 +180,9 @@ export class WorldMythicBeastSystem {
   }
 
   private attackNearby(em: EntityManager, tick: number): void {
-    const hostileBeasts = this.beasts.filter(b => b.hostile)
-    if (hostileBeasts.length === 0) return
-
     const entities = em.getEntitiesWithComponents('position', 'creature', 'needs')
-    for (const beast of hostileBeasts) {
+    for (const beast of this.beasts) {
+      if (!beast.hostile) continue
       const r2 = ATTACK_RANGE * ATTACK_RANGE
       for (const eid of entities) {
         const pos = em.getComponent<PositionComponent>(eid, 'position')

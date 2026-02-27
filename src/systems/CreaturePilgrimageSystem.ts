@@ -105,11 +105,21 @@ export class CreaturePilgrimageSystem {
   }
 
   private cleanup(): void {
-    // Remove old completed pilgrimages
-    const active = this.pilgrimages.filter(p => !p.completed)
-    const completed = this.pilgrimages.filter(p => p.completed)
+    // Remove old completed pilgrimages, keep top 20 by wisdom
+    // Sort: active first, then completed sorted by wisdom desc
+    let activeEnd = 0
+    for (let i = 0; i < this.pilgrimages.length; i++) {
+      if (!this.pilgrimages[i].completed) {
+        if (i !== activeEnd) { const tmp = this.pilgrimages[activeEnd]; this.pilgrimages[activeEnd] = this.pilgrimages[i]; this.pilgrimages[i] = tmp }
+        activeEnd++
+      }
+    }
+    // Sort completed portion by wisdom desc
+    const completed = this.pilgrimages.slice(activeEnd)
     completed.sort((a, b) => b.wisdom - a.wisdom)
-    this.pilgrimages = [...active, ...completed.slice(0, 20)]
+    this.pilgrimages.length = activeEnd
+    const keep = Math.min(20, completed.length)
+    for (let i = 0; i < keep; i++) this.pilgrimages.push(completed[i])
   }
 
   private isOnPilgrimage(entityId: number): boolean {
