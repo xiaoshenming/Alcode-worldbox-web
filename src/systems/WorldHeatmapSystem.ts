@@ -58,6 +58,15 @@ function valueToColor(t: number, alpha: number): string {
   return `rgba(${r},${g},${bl},${alpha})`;
 }
 
+// Pre-computed color table for OVERLAY_ALPHA: 101 steps t 0.00..1.00
+const HEATMAP_COLOR_TABLE: string[] = (() => {
+  const tbl: string[] = []
+  for (let i = 0; i <= 100; i++) {
+    tbl.push(valueToColor(i / 100, OVERLAY_ALPHA))
+  }
+  return tbl
+})()
+
 /**
  * 双线性插值
  * @param grid - 数据网格
@@ -234,7 +243,7 @@ export class WorldHeatmapSystem {
         if (raw <= 0.001) continue;
 
         const normalized = raw / maxVal;
-        ctx.fillStyle = valueToColor(normalized, OVERLAY_ALPHA);
+        ctx.fillStyle = HEATMAP_COLOR_TABLE[Math.round(normalized * 100)];
         ctx.fillRect(sx, sy, step, step);
       }
     }
