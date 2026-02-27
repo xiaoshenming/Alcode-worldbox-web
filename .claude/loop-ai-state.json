@@ -1,12 +1,12 @@
 {
-  "notes": "迭代27完成。核心工作：继续消除热路径GC分配 + 代码质量提升（文件拆分）。主要成果：1) 字符串键→数值键：MigrationSystem(cellKey)/CityLayoutSystem(zones/roadSet/roadEnds/closed/A*visited)/LegendaryBattleSystem(_detectGrid/_visited)/WeatherDisasterSystem(originalTiles)共4个系统；2) EcosystemSystem拆分(548行→422行)，提取WILDLIFE_RULES/MAX_AGE_WILDLIFE等到EcosystemData.ts；3) 29个Creature系系统消除alive Set GC：将'const alive = new Set(em.getEntitiesWithComponent(creature))'替换为直接调用'em.hasComponent(id, creature)'，消除每次update创建Set的分配；4) ReligionSpreadSystem.getDominantReligion用Partial<Record>替代new Map()。测试：5434个全部通过，构建成功。关键发现：1) CityLayoutSystem的zones Map从string改为number时，renderZoning的key解析'[sx,sy]=key.split()'要改为Math.floor(key/10000)+key%10000；2) alive Set模式批量替换时，部分系统有复合条件'!alive.has(id)||other'需手动处理（GamblerSystem/OracleSystem）；3) Partial<Record<K,V>>中for..in可以枚举所有属性，比new Map()更轻量；4) 26+个系统使用同一个alive Set反模式——批量替换是最高效策略。",
+  "notes": "迭代28完成。核心工作：继续消除热路径GC分配（filter→反向删除、字符串键→数值键、预分配缓冲区）+ 文件质量（QuestSystem拆分）。主要成果：1) QuestSystem(501→461行)：提取QUEST_DESCRIPTIONS/BALLAD_TEMPLATES到QuestData.ts；2) EspionageSystem：warJustifications改为反向删除(每tick无保护)、ownedSpies.filter改为手动计数、spies.filter改为反向删除；3) DiplomacyVisualSystem：update()中bubbles.filter改为合并反向删除(每tick无保护)；4) AISystem._newbornsBuf预分配缓冲区(替代每次breeding创建的临时数组)；5) ArmySystem._buildingsToRemoveBuf预分配(siege循环每30tick)；6) WorldMigrationWaveSystem：字符串键改数值键+移除split(',').map(Number)；7) CreatureGuildSystem：字符串键改数值键；8) AnimalMigrationSystem：_animalsBuf预分配+completed临时数组改为直接反向删除；9) WeatherDisasterSystem：new Set+map()改为4个布尔标志变量；10) WonderSystem：builtIds/buildingIds new Set+map()改为.some()直接查；11) WorldMagicStormSystem(每帧)：storms.filter+enchantedZones.filter全改为反向删除；12) SiegeWarfareSystem(每帧)：particles.filter改为反向删除；13) WorldWeatherFrontSystem：fronts.filter改为反向删除；14) Renderer.ts：静态_EMPTY_DASH替代setLineDash([])字面量(每帧)。测试：5434个全部通过，构建成功。",
   "priorities": [
-    "1. Game.ts仍有4045行（超标8倍）：loop(1038行)是最大候选，考虑按功能拆分（输入处理/渲染调用/系统更新分批）",
-    "2. Renderer.ts(988行)超标，可考虑提取renderWarBorders和renderMinimap相关私有方法到帮助类",
-    "3. WeatherDisasterSystem(741行)私有方法高度耦合，可考虑将render*方法拆分",
-    "4. QuestSystem(501行)有QUEST_DESCRIPTIONS数据块可提取（约67行），拆分后可低���500行",
-    "5. NavalSystem(550行)、AISystem(528行)仍超标，看是否有数据块可提取",
-    "6. 搜索Game.ts和Renderer.ts中的new Map/new Set创建：这两个热路径文件可能还有GC优化机会"
+    "1. Game.ts仍有4045行（超标8倍）：loop方法(1038行)是最大候选，但重构风险高，需谨慎评估",
+    "2. Renderer.ts(988行)仍超标：density[][](minimap heatmap)可预分配，setLineDash([4*zoom,4*zoom])动态数组可用持久化_dashBuf解决",
+    "3. WeatherDisasterSystem(740行)私有方法仍偏多：可考虑提取render*方法，但耦合度高",
+    "4. NavalSystem(550行)、AISystem(528行)：没有大型数据块，拆分价值有限",
+    "5. 继续搜索每帧执行且无保护的filter/map()：重点检查Game.ts和更多系统的update()路径",
+    "6. BloodMoonSystem等渲染系统：positions临时数组可能在渲染热路径中"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -39,7 +39,10 @@
     "【迭代27新增】alive Set反模式：'const alive = new Set(em.getEntitiesWithComponent(creature))'在29+个系统存在，可用em.hasComponent(id,'creature')直接替代，零分配",
     "【迭代27新增】批量替换时Python脚本比sed更灵活——可以提取变量名后动态构造替换模式",
     "【迭代27新增】getDominantReligion等少量固定key的聚合操作，用Partial<Record<K,number>>比new Map()更轻量",
-    "【迭代27新增】CityLayoutSystem改字符串键为数值键时，renderZoning中的key.split(',').map(Number)要改为Math.floor(key/10000)和key%10000"
+    "【迭代28新增】this.xxx = this.xxx.filter(...)在每帧调用的update()中是高优先级GC源 — 用for逆序+splice替代；如需同时更新元素，用普通for循环+splice",
+    "【迭代28新增】new Set(arr.map(x => x.field))可用.some()替代来做存在性检查，零分配",
+    "【迭代28新增】ctx.setLineDash([])每次调用都创建新数组 — 用static readonly _EMPTY_DASH=[]常量替代",
+    "【迭代28新增】Edit工具替换时要特别注意目标字符串的唯一性，避免误删周围代码（尤其是函数签名）"
   ],
-  "last_updated": "2026-02-27T23:55:00+08:00"
+  "last_updated": "2026-02-28T00:32:00+08:00"
 }
