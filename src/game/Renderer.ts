@@ -48,6 +48,7 @@ export class Renderer {
   private _heroFont = ''
   private _artFont = ''
   private _stateFont = ''
+  private _resourceFont = ''
 
   // Static constants for renderWarBorders
   private static readonly WAR_NEIGHBORS: readonly number[][] = [[0, 1], [0, -1], [1, 0], [-1, 0]]
@@ -593,8 +594,14 @@ export class Renderer {
     tileSize: number, offsetX: number, offsetY: number
   ): void {
     const ctx = this.ctx
-    const fontSize = Math.max(6, Math.floor(tileSize * 1.2))
-    ctx.font = `${fontSize}px monospace`
+    if (camera.zoom !== this._lastFontZoom) {
+      this._lastFontZoom = camera.zoom
+      this._heroFont = `${Math.max(6, 8 * camera.zoom)}px monospace`
+      this._artFont = `${Math.max(6, 7 * camera.zoom)}px monospace`
+      this._stateFont = `${Math.max(8, 10 * camera.zoom)}px monospace`
+      this._resourceFont = `${Math.max(6, Math.floor(tileSize * 1.2))}px monospace`
+    }
+    ctx.font = this._resourceFont
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
 
