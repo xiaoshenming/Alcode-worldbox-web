@@ -41,6 +41,8 @@ export class SiegeWarfareSystem {
   private sieges: Map<number, SiegeData> = new Map();
   private nextId = 1;
   private particles: { x: number; y: number; life: number; vx: number; vy: number; type: 'fire' | 'smoke' }[] = [];
+  private _lastZoom = -1;
+  private _iconFont = '';
 
   startSiege(attackerCivId: number, defenderCivId: number, cityX: number, cityY: number, attackerCount: number): SiegeData {
     const siege: SiegeData = {
@@ -132,6 +134,10 @@ export class SiegeWarfareSystem {
 
   render(ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number, zoom: number): void {
     const tileSize = 16 * zoom;
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._iconFont = `${Math.max(8, 10 * zoom)}px serif`
+    }
 
     for (const siege of this.sieges.values()) {
       if (siege.resolved) continue;
@@ -170,7 +176,7 @@ export class SiegeWarfareSystem {
         if (!seen.includes(w)) seen.push(w);
       }
       const iconSize = Math.max(8, 10 * zoom);
-      ctx.font = `${iconSize}px serif`;
+      ctx.font = this._iconFont;
       ctx.textAlign = 'center';
       seen.forEach((w, i) => {
         const ix = sx - (seen.length * iconSize) / 2 + i * iconSize + iconSize / 2;

@@ -47,6 +47,7 @@ const BUBBLE_OFFSET_Y = -28;
 const BUBBLE_RADIUS = 12;
 /** 气泡字体大小 */
 const FONT_SIZE = 16;
+const EMOTION_FONT = `${FONT_SIZE}px serif`;
 
 /**
  * 生物情绪气泡系统
@@ -218,7 +219,7 @@ export class CreatureEmotionSystem {
     ctx.fill();
 
     // 绘制情绪图标
-    ctx.font = `${FONT_SIZE}px serif`;
+    ctx.font = EMOTION_FONT;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#ffffff';

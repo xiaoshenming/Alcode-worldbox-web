@@ -58,6 +58,8 @@ export class TradeFleetSystem {
   private ripples: Ripple[] = [];
   private tradeVolume = 0;
   private dashOffset = 0;
+  private _lastZoom = -1;
+  private _indFont = '';
   /** 用于交替货物图标 */
   private iconFlip = 0;
 
@@ -167,6 +169,10 @@ export class TradeFleetSystem {
   /** 渲染路线、船只、波纹和货物指示 */
   render(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {
     ctx.save();
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._indFont = `${Math.max(6, 10 * zoom)}px sans-serif`
+    }
 
     // 渲染路线虚线
     this.routes.forEach(route => {
@@ -341,7 +347,7 @@ export class TradeFleetSystem {
 
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.font = `${size}px sans-serif`;
+    ctx.font = this._indFont;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(ind.icon === 0 ? '\uD83D\uDCB0' : '\uD83D\uDCE6', sx, sy + floatY);

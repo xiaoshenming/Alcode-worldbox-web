@@ -30,6 +30,9 @@ export class MapMarkerSystem {
   /** Pre-allocated marker slots */
   private pool: (MarkerData | null)[] = initPool()
   private nextId = 1
+  private _lastZoom = -1
+  private _sansFont = ''
+  private _monoFont = ''
   private count = 0
 
   constructor() {
@@ -84,8 +87,14 @@ export class MapMarkerSystem {
     const scale = Math.max(minScale, Math.min(zoom, 2))
     const fontSize = Math.round(baseSize * scale)
 
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._sansFont = `${fontSize}px sans-serif`
+      this._monoFont = `${Math.round(10 * scale)}px monospace`
+    }
+
     ctx.save()
-    ctx.font = `${fontSize}px sans-serif`
+    ctx.font = this._sansFont
     ctx.textAlign = 'center'
     ctx.textBaseline = 'bottom'
 
@@ -102,13 +111,13 @@ export class MapMarkerSystem {
       // Label below icon
       if (m.label && zoom > 0.4) {
         const labelSize = Math.round(10 * scale)
-        ctx.font = `${labelSize}px monospace`
+        ctx.font = this._monoFont
         ctx.fillStyle = '#fff'
         ctx.strokeStyle = '#000'
         ctx.lineWidth = 2
         ctx.strokeText(m.label, sx, sy + labelSize + 2)
         ctx.fillText(m.label, sx, sy + labelSize + 2)
-        ctx.font = `${fontSize}px sans-serif`
+        ctx.font = this._sansFont
       }
     }
     ctx.restore()
