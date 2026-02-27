@@ -29,11 +29,15 @@ export class AllianceSystem {
   private readonly RELATION_ALLY_MIN = 50
   private readonly RELATION_LEAVE_THRESHOLD = 0
   private readonly TECH_SHARE_RATE = 0.005
+  // Reusable buffer to avoid Array.from() every 180 ticks
+  private _civsBuf: Civilization[] = []
 
   update(civManager: CivManager, em: EntityManager, world: World, particles: ParticleSystem, tick: number): void {
     if (tick % this.TICK_INTERVAL !== 0) return
 
-    const civs = Array.from(civManager.civilizations.values())
+    const civs = this._civsBuf
+    civs.length = 0
+    for (const c of civManager.civilizations.values()) civs.push(c)
 
     this.cleanupDeadMembers(civManager)
     this.tryFormAlliances(civs, tick)
@@ -59,7 +63,9 @@ export class AllianceSystem {
         if (!civManager.civilizations.has(id)) alliance.members.delete(id)
       }
     }
-    this.alliances = this.alliances.filter(a => a.members.size >= 2)
+    for (let i = this.alliances.length - 1; i >= 0; i--) {
+      if (this.alliances[i].members.size < 2) this.alliances.splice(i, 1)
+    }
   }
 
   /** Two civs with relation > 50 and a shared enemy may form or join an alliance */
@@ -131,7 +137,9 @@ export class AllianceSystem {
         EventLog.log('diplomacy', `${civName} left ${alliance.name}`, 0)
       }
     }
-    this.alliances = this.alliances.filter(a => a.members.size >= 2)
+    for (let i = this.alliances.length - 1; i >= 0; i--) {
+      if (this.alliances[i].members.size < 2) this.alliances.splice(i, 1)
+    }
   }
 
   /** When an alliance member is attacked (relation < -50), other members worsen relations with attacker */
