@@ -46,6 +46,8 @@ export class DiplomacySystem {
   private events: DiplomaticEvent[] = []
   private maxEvents = 50
   private _civsBuf: Civilization[] = []
+  // Reusable buffer for getActiveTreatiesBetween to avoid new array per call
+  private _treatyBuf: Treaty[] = []
 
   update(civManager: CivManager, world: World, em: EntityManager): void {
     const tick = world.tick
@@ -269,17 +271,27 @@ export class DiplomacySystem {
   }
 
   private getActiveTreatiesBetween(civA: number, civB: number): Treaty[] {
-    return this.treaties.filter(t =>
-      !t.broken &&
-      ((t.civA === civA && t.civB === civB) || (t.civA === civB && t.civB === civA))
-    )
+    const buf = this._treatyBuf
+    buf.length = 0
+    for (const t of this.treaties) {
+      if (!t.broken && ((t.civA === civA && t.civB === civB) || (t.civA === civB && t.civB === civA))) {
+        buf.push(t)
+      }
+    }
+    return buf
   }
 
   private removeTreatyFromCivs(treaty: Treaty, civManager: CivManager): void {
     const a = civManager.civilizations.get(treaty.civA)
     const b = civManager.civilizations.get(treaty.civB)
-    if (a) a.treaties = a.treaties.filter(id => id !== treaty.id)
-    if (b) b.treaties = b.treaties.filter(id => id !== treaty.id)
+    if (a) {
+      const idx = a.treaties.indexOf(treaty.id)
+      if (idx >= 0) a.treaties.splice(idx, 1)
+    }
+    if (b) {
+      const idx = b.treaties.indexOf(treaty.id)
+      if (idx >= 0) b.treaties.splice(idx, 1)
+    }
   }
 
   private getCivName(civId: number, civManager: CivManager): string {
