@@ -208,12 +208,18 @@ export class GameUIHelper {
       if (e.type === 'peace' && e.message.includes('signed')) {
         for (const [, civ] of this.g.civManager.civilizations) {
           if (e.message.includes(civ.name) && civ.territory.size > 0) {
-            const keys = Array.from(civ.territory)
-            const key = keys[Math.floor(Math.random() * keys.length)]
-            const [tx, ty] = key.split(',').map(Number)
-            const colors = ['#ffd700', '#ff4488', '#44ddff', '#44ff88']
-            const color = colors[Math.floor(Math.random() * colors.length)]
-            this.g.particles.spawnFirework(tx, ty, color)
+            const terrSize = civ.territory.size
+            let targetIdx = Math.floor(Math.random() * terrSize)
+            for (const key of civ.territory) {
+              if (targetIdx-- === 0) {
+                const comma = key.indexOf(',')
+                const tx = +key.substring(0, comma), ty = +key.substring(comma + 1)
+                const colors = ['#ffd700', '#ff4488', '#44ddff', '#44ff88']
+                const color = colors[Math.floor(Math.random() * colors.length)]
+                this.g.particles.spawnFirework(tx, ty, color)
+                break
+              }
+            }
             break
           }
         }
