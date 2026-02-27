@@ -56,6 +56,29 @@ function getColorLerp(mode: MinimapMode): ((t: number) => ColorBuf) | null {
 const PREVIEW_SIZE = 120;
 const PREVIEW_ZOOM = 2;
 
+// Pre-computed heatmap palette: 101 steps for val 0.00..1.00
+// Rebuilt whenever mode changes. alpha = 0.30 + val * 0.60
+type HeatPalette = string[]
+const _HEAT_PALETTES = new Map<MinimapMode, HeatPalette>()
+
+function buildHeatPalette(mode: MinimapMode): HeatPalette {
+  const lerpFn = getColorLerp(mode)
+  if (!lerpFn) return []
+  const pal: HeatPalette = []
+  for (let i = 0; i <= 100; i++) {
+    const val = i / 100
+    const c = lerpFn(val)
+    const alpha = (0.3 + val * 0.6).toFixed(2)
+    pal.push(`rgba(${c.r},${c.g},${c.b},${alpha})`)
+  }
+  return pal
+}
+
+// Pre-build palettes at module load
+;(['population', 'war', 'resource', 'faith'] as MinimapMode[]).forEach(m => {
+  _HEAT_PALETTES.set(m, buildHeatPalette(m))
+})
+
 export class MinimapEnhancedSystem {
   private mode: MinimapMode = 'terrain';
   private heatmaps: Map<MinimapMode, MinimapHeatData> = new Map();
@@ -136,6 +159,7 @@ export class MinimapEnhancedSystem {
 
     const lerpFn = getColorLerp(this.mode);
     if (lerpFn) {
+      const pal = _HEAT_PALETTES.get(this.mode);
       const srcR = 1 / (PREVIEW_ZOOM * 2);
       const sU = Math.max(0, normX - srcR), eU = Math.min(1, normX + srcR);
       const sV = Math.max(0, normY - srcR), eV = Math.min(1, normY + srcR);
@@ -147,8 +171,12 @@ export class MinimapEnhancedSystem {
           const v = sV + (sy / steps) * (eV - sV);
           const di = Math.floor(v * heat.height) * heat.width + Math.floor(u * heat.width);
           const val = heat.data[di] ?? 0;
-          const c = lerpFn(val);
-          ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
+          if (pal && pal.length > 0) {
+            ctx.fillStyle = pal[Math.round(val * 100)];
+          } else {
+            const c = lerpFn(val);
+            ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
+          }
           ctx.fillRect(px + sx * cellS, py + sy * cellS, cellS + 0.5, cellS + 0.5);
         }
       }
@@ -175,8 +203,8 @@ export class MinimapEnhancedSystem {
   private renderHeatmap(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
     const heat = this.heatmaps.get(this.mode);
     if (!heat) return;
-    const lerpFn = getColorLerp(this.mode);
-    if (!lerpFn) return;
+    const pal = _HEAT_PALETTES.get(this.mode);
+    if (!pal || pal.length === 0) return;
 
     const stepsX = Math.min(w, heat.width, 100);
     const stepsY = Math.min(h, heat.height, 100);
@@ -187,8 +215,7 @@ export class MinimapEnhancedSystem {
       for (let sx = 0; sx < stepsX; sx++) {
         const val = heat.data[dataY * heat.width + Math.floor((sx / stepsX) * heat.width)];
         if (val < 0.01) continue;
-        const c = lerpFn(val);
-        ctx.fillStyle = `rgba(${c.r},${c.g},${c.b},${(0.3 + val * 0.6).toFixed(2)})`;
+        ctx.fillStyle = pal[Math.round(val * 100)];
         ctx.fillRect(x + sx * cellW, y + sy * cellH, cellW + 0.5, cellH + 0.5);
       }
     }
@@ -244,23 +271,17 @@ export class MinimapEnhancedSystem {
     ctx.lineWidth = 1.5;
     ctx.strokeRect(vx, vy, vw, vh);
 
-    // 视口角标
+    // 视口角标（手动展开，避免每帧创建 4 个子数组）
     const cl = 3;
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 2;
-    const corners: [number, number, number, number, number, number][] = [
-      [vx, vy + cl, vx, vy, vx + cl, vy],
-      [vx + vw - cl, vy, vx + vw, vy, vx + vw, vy + cl],
-      [vx, vy + vh - cl, vx, vy + vh, vx + cl, vy + vh],
-      [vx + vw - cl, vy + vh, vx + vw, vy + vh, vx + vw, vy + vh - cl],
-    ];
-    for (let i = 0; i < corners.length; i++) {
-      const p = corners[i];
-      ctx.beginPath();
-      ctx.moveTo(p[0], p[1]);
-      ctx.lineTo(p[2], p[3]);
-      ctx.lineTo(p[4], p[5]);
-      ctx.stroke();
-    }
+    // top-left
+    ctx.beginPath(); ctx.moveTo(vx, vy + cl); ctx.lineTo(vx, vy); ctx.lineTo(vx + cl, vy); ctx.stroke();
+    // top-right
+    ctx.beginPath(); ctx.moveTo(vx + vw - cl, vy); ctx.lineTo(vx + vw, vy); ctx.lineTo(vx + vw, vy + cl); ctx.stroke();
+    // bottom-left
+    ctx.beginPath(); ctx.moveTo(vx, vy + vh - cl); ctx.lineTo(vx, vy + vh); ctx.lineTo(vx + cl, vy + vh); ctx.stroke();
+    // bottom-right
+    ctx.beginPath(); ctx.moveTo(vx + vw - cl, vy + vh); ctx.lineTo(vx + vw, vy + vh); ctx.lineTo(vx + vw, vy + vh - cl); ctx.stroke();
   }
 }
