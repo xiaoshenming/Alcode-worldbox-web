@@ -10,8 +10,8 @@ describe('MinimapSystem', () => {
     sys.setMode('political')
     expect(sys.getMode()).toBe('political')
   })
-  it('setMode resource 后 getMode 返回 resource', () => {
-    sys.setMode('resource')
-    expect(sys.getMode()).toBe('resource')
+  it('setMode resource 后 getMode 返回 resources', () => {
+    sys.setMode('resources')
+    expect(sys.getMode()).toBe('resources')
   })
 })
