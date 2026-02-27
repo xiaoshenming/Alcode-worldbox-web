@@ -59,8 +59,9 @@ export class CreatureTraumaSystem {
       if (!creature) continue
 
       // Limit per creature
-      const existing = this.traumas.filter(t => t.creatureId === id)
-      if (existing.length >= 3) continue
+      let existingCount = 0
+      for (const t of this.traumas) { if (t.creatureId === id) existingCount++ }
+      if (existingCount >= 3) continue
 
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (!pos) continue

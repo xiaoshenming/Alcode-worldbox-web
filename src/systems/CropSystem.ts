@@ -10,6 +10,9 @@ import { EventLog } from './EventLog'
 export type CropType = 'wheat' | 'corn' | 'rice' | 'potato'
 export type CropStage = 'planted' | 'growing' | 'mature' | 'harvested' | 'dead'
 
+// Pre-allocated offsets array for tryPlantCrops (avoids new array per farm per tick)
+const FARM_OFFSETS: readonly [number, number][] = [[-1, -1], [1, -1], [-1, 1], [1, 1], [-2, 0], [2, 0], [0, -2], [0, 2]]
+
 export interface CropField {
   x: number
   y: number
@@ -120,19 +123,18 @@ export class CropSystem {
         const farmY = Math.floor(pos.y)
 
         // Check if we already have enough crops near this farm
-        const nearbyCount = this.fields.filter(f =>
-          f.civId === civ.id &&
-          Math.abs(f.x - farmX) <= 3 && Math.abs(f.y - farmY) <= 3 &&
-          f.stage !== 'harvested' && f.stage !== 'dead'
-        ).length
+        let nearbyCount = 0
+        for (const f of this.fields) {
+          if (f.civId === civ.id && Math.abs(f.x - farmX) <= 3 && Math.abs(f.y - farmY) <= 3 &&
+              f.stage !== 'harvested' && f.stage !== 'dead') nearbyCount++
+        }
 
         // Max 4 crop fields per farm (scaled by level)
         const maxCrops = 3 + b.level
         if (nearbyCount >= maxCrops) continue
 
         // Find an empty spot near the farm
-        const offsets = [[-1, -1], [1, -1], [-1, 1], [1, 1], [-2, 0], [2, 0], [0, -2], [0, 2]]
-        for (const [dx, dy] of offsets) {
+        for (const [dx, dy] of FARM_OFFSETS) {
           const cx = farmX + dx
           const cy = farmY + dy
 
