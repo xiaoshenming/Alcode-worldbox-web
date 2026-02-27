@@ -128,10 +128,11 @@ export class TechSystem {
     rate *= religionBonus
 
     // Temple count bonus: each temple adds 5% research speed
-    const templeCount = civ.buildings.filter(id => {
+    let templeCount = 0
+    for (const id of civ.buildings) {
       const b = civManager['em'].getComponent<BuildingComponent>(id, 'building')
-      return b && b.buildingType === BuildingType.TEMPLE
-    }).length
+      if (b && b.buildingType === BuildingType.TEMPLE) templeCount++
+    }
     rate *= 1 + templeCount * 0.05
 
     // Writing tech bonus (from completed techs)

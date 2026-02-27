@@ -42,9 +42,18 @@ export class CreatureConstellationSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = entities[Math.floor(Math.random() * entities.length)]
-        const available = NAMES.filter(n => !this.usedNames.has(n))
-        if (available.length > 0) {
-          const name = available[Math.floor(Math.random() * available.length)]
+        // Pick a name not yet used — two-pass count+sample, zero allocation
+        let availCount = 0
+        for (const n of NAMES) { if (!this.usedNames.has(n)) availCount++ }
+        if (availCount > 0) {
+          let targetIdx = Math.floor(Math.random() * availCount)
+          let name: string | undefined
+          for (const n of NAMES) {
+            if (!this.usedNames.has(n)) {
+              if (targetIdx-- === 0) { name = n; break }
+            }
+          }
+          if (name) {
           this.usedNames.add(name)
           this.constellations.push({
             id: this.nextId++,
@@ -56,6 +65,7 @@ export class CreatureConstellationSystem {
             season: Math.floor(Math.random() * 4),
             tick,
           })
+        }
         }
       }
     }

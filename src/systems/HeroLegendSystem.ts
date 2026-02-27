@@ -141,11 +141,15 @@ export class HeroLegendSystem {
     EventLog.log('hero', `[Deed] ${description}`, tick)
   }
 
+  private _leaderboardBuf: HeroFame[] = []
   getLeaderboard(): HeroFame[] {
-    const alive = [...this.fameMap.values()]
-      .filter(f => this.trackedHeroes.has(f.entityId))
-      .sort((a, b) => b.fame - a.fame)
-    return alive.slice(0, 10)
+    this._leaderboardBuf.length = 0
+    for (const f of this.fameMap.values()) {
+      if (this.trackedHeroes.has(f.entityId)) this._leaderboardBuf.push(f)
+    }
+    this._leaderboardBuf.sort((a, b) => b.fame - a.fame)
+    if (this._leaderboardBuf.length > 10) this._leaderboardBuf.length = 10
+    return this._leaderboardBuf
   }
 
   getFame(entityId: number): HeroFame | undefined {

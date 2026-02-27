@@ -24,6 +24,7 @@ export class WorldEventSystem {
   private eventHistory: { id: string; name: string; tick: number }[] = []
   private banner: EventBanner | null = null
   private nextEventTick: number = 2000 + Math.floor(Math.random() * 2000)
+  private _availEventsBuf: WorldEventDef[] = []
   private checkInterval: number = 120  // only check every 120 ticks for performance
 
   // Screen overlay for Blood Moon / Eclipse
@@ -90,11 +91,13 @@ export class WorldEventSystem {
     particles: ParticleSystem, timeline: TimelineSystem, tick: number
   ): void {
     // Filter available events (not on cooldown, not already active)
-    const available = EVENT_DEFINITIONS.filter(def => {
-      if (this.eventCooldowns.has(def.id)) return false
-      if (this.activeEvents.some(a => a.def.id === def.id)) return false
-      return true
-    })
+    this._availEventsBuf.length = 0
+    for (const def of EVENT_DEFINITIONS) {
+      if (this.eventCooldowns.has(def.id)) continue
+      if (this.activeEvents.some(a => a.def.id === def.id)) continue
+      this._availEventsBuf.push(def)
+    }
+    const available = this._availEventsBuf
 
     if (available.length === 0) return
 
