@@ -27,4 +27,5 @@ describe('WorldRockShelterSystem.getShelters', () => {
     expect(s.stability).toBe(75)
     expect(s.spectacle).toBe(70)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

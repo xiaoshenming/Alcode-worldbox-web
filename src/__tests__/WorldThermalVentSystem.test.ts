@@ -27,4 +27,5 @@ describe('WorldThermalVentSystem.getVents', () => {
     expect(v.mineralPlume).toBe(60)
     expect(v.biomeRadius).toBe(10)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

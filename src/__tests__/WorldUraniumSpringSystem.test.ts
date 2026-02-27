@@ -26,4 +26,5 @@ describe('WorldUraniumSpringSystem.getZones', () => {
     expect(z.uraniumContent).toBe(40)
     expect(z.springFlow).toBe(50)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

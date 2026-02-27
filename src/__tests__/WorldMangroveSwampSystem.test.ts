@@ -27,4 +27,5 @@ describe('WorldMangroveSwampSystem.getSwamps', () => {
     expect(s.biodiversity).toBe(90)
     expect(s.coastalProtection).toBe(70)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

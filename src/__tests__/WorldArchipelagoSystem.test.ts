@@ -27,4 +27,5 @@ describe('WorldArchipelagoSystem.getArchipelagos', () => {
     expect(a.biodiversity).toBe(80)
     expect(a.seaDepth).toBe(50)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

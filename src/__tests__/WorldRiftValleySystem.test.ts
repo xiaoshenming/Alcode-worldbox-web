@@ -27,4 +27,5 @@ describe('WorldRiftValleySystem.getRifts', () => {
     expect(r.lakeFormation).toBe(40)
     expect(r.volcanicVents).toBe(3)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

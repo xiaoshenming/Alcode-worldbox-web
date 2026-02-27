@@ -27,4 +27,5 @@ describe('WorldRockBridgeSystem.getBridges', () => {
     expect(b.loadCapacity).toBe(5)
     expect(b.spectacle).toBe(90)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

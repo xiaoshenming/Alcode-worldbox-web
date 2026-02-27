@@ -27,4 +27,5 @@ describe('WorldKettleHoleSystem.getKettles', () => {
     expect(k.wildlifeValue).toBe(70)
     expect(k.vegetationRing).toBe(60)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

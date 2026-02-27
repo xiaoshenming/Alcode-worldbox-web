@@ -27,4 +27,5 @@ describe('WorldHoodooSystem.getHoodoos', () => {
     expect(h.stability).toBe(80)
     expect(h.colorBanding).toBe(6)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

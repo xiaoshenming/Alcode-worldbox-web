@@ -27,4 +27,5 @@ describe('WorldRockPillarSystem.getPillars', () => {
     expect(p.stability).toBe(70)
     expect(p.spectacle).toBe(80)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

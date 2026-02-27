@@ -27,4 +27,5 @@ describe('WorldExportSystem', () => {
       }
     }).not.toThrow()
   })
+  it('importing初始为false', () => { expect((sys as any).importing).toBe(false) })
 })

@@ -27,4 +27,5 @@ describe('WorldVolcanicAshPlainSystem.getPlains', () => {
     expect(p.particleDensity).toBe(80)
     expect(p.revegetation).toBe(10)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

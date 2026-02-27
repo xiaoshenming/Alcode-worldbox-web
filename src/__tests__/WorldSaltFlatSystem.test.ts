@@ -27,4 +27,5 @@ describe('WorldSaltFlatSystem.getFlats', () => {
     expect(f.reflectivity).toBe(80)
     expect(f.hexagonalPatterns).toBe(20)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

@@ -27,4 +27,5 @@ describe('WorldMaarSystem.getMaars', () => {
     expect(m.waterDepth).toBe(8)
     expect(m.tephraRing).toBe(5)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

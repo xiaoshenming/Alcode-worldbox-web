@@ -27,4 +27,5 @@ describe('WorldTravertineTerraceSystem.getZones', () => {
     expect(z.calcification).toBe(60)
     expect(z.flowRate).toBe(40)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

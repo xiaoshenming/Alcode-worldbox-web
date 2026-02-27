@@ -27,4 +27,5 @@ describe('WorldBlowhole2System.getBlowholes', () => {
     expect(b.spectacle).toBe(80)
     expect(b.sprayHeight).toBe(8)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

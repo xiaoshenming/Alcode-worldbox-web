@@ -27,4 +27,5 @@ describe('WorldRockPedestalSystem.getPedestals', () => {
     expect(p.balanceRisk).toBe(30)
     expect(p.spectacle).toBe(75)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

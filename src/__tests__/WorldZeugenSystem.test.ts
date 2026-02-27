@@ -27,4 +27,5 @@ describe('WorldZeugenSystem.getZeugens', () => {
     expect(z.baseWeakness).toBe(60)
     expect(z.spectacle).toBe(65)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

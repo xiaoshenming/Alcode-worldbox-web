@@ -27,4 +27,5 @@ describe('WorldMineralSpringSystem.getSprings', () => {
     expect(s.purity).toBe(80)
     expect(s.temperature).toBe(20)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

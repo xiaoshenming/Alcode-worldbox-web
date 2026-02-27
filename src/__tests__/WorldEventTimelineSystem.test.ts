@@ -17,4 +17,5 @@ describe('WorldEventTimelineSystem', () => {
     ;(sys as any).visible = true
     expect(sys.isVisible).toBe(true)
   })
+  it('visible初始为false', () => { expect((sys as any).visible).toBe(false) })
 })

@@ -27,4 +27,5 @@ describe('WorldThermalSpringSystem.getSprings', () => {
     expect(s.dissolvedMinerals).toBe(40)
     expect(s.clarity).toBe(70)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

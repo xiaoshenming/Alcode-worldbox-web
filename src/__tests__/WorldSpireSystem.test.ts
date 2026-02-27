@@ -27,4 +27,5 @@ describe('WorldSpireSystem.getSpires', () => {
     expect(s.stability).toBe(85)
     expect(s.windResistance).toBe(70)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

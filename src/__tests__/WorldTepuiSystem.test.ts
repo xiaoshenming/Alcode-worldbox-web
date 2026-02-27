@@ -27,4 +27,5 @@ describe('WorldTepuiSystem.getTepuis', () => {
     expect(t.endemicSpecies).toBe(20)
     expect(t.spectacle).toBe(90)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

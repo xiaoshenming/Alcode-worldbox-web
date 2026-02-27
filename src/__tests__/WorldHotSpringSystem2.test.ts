@@ -27,4 +27,5 @@ describe('WorldHotSpring2System.getSprings', () => {
     expect(s.mineralRichness).toBe(70)
     expect(s.healingPotency).toBe(80)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

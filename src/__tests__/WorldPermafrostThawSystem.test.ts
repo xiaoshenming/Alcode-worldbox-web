@@ -27,4 +27,5 @@ describe('WorldPermafrostThawSystem.getZones', () => {
     expect(z.groundStability).toBe(40)
     expect(z.thawDepth).toBe(5)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

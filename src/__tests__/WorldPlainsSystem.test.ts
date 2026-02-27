@@ -27,4 +27,5 @@ describe('WorldPlainsSystem.getPlains', () => {
     expect(p.wildlifeAbundance).toBe(70)
     expect(p.moisture).toBe(50)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

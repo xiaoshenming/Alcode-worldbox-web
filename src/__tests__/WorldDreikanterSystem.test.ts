@@ -27,4 +27,5 @@ describe('WorldDreikanterSystem.getDreikanters', () => {
     expect(d.polish).toBe(80)
     expect(d.windIntensity).toBe(70)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

@@ -27,4 +27,5 @@ describe('WorldMudFlatSystem.getFlats', () => {
     expect(f.invertebrateCount).toBe(50)
     expect(f.birdActivity).toBe(30)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

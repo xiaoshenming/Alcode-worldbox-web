@@ -27,4 +27,5 @@ describe('WorldTideFlatSystem.getTideFlats', () => {
     expect(f.nutrients).toBe(70)
     expect(f.organisms).toBe(30)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

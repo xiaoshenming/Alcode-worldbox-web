@@ -27,4 +27,5 @@ describe('WorldSiliceousSinterSystem.getDeposits', () => {
     expect(d.opalescence).toBe(70)
     expect(d.thermalActivity).toBe(60)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

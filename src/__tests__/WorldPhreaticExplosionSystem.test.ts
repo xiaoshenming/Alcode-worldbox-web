@@ -27,4 +27,5 @@ describe('WorldPhreaticExplosionSystem.getExplosions', () => {
     expect(e.blastRadius).toBe(10)
     expect(e.debrisEjection).toBe(60)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

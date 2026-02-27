@@ -27,4 +27,5 @@ describe('WorldFumarolicFieldSystem.getFields', () => {
     expect(f.heatOutput).toBe(80)
     expect(f.ventCount).toBe(6)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

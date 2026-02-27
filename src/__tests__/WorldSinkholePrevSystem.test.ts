@@ -27,4 +27,5 @@ describe('WorldSinkholePrevSystem.getRisks', () => {
     expect(r.groundStability).toBe(40)
     expect(r.mitigated).toBe(false)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

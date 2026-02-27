@@ -27,4 +27,5 @@ describe('WorldChalybeateSpringSystem.getSprings', () => {
     expect(s.flowRate).toBe(40)
     expect(s.rustDeposit).toBe(20)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

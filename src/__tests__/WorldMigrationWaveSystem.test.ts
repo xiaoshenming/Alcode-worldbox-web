@@ -22,4 +22,5 @@ describe('WorldMigrationWaveSystem.getActiveWaves', () => {
     expect(w.toY).toBe(60)
     expect(w.progress).toBe(0.5)
   })
+  it('getActiveWaves返回只读数组', () => { expect(Array.isArray(sys.getActiveWaves())).toBe(true) })
 })

@@ -27,4 +27,5 @@ describe('WorldInlierSystem.getInliers', () => {
     expect(i.spectacle).toBe(65)
     expect(i.rockAge).toBe(5000)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

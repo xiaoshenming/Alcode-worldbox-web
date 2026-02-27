@@ -27,4 +27,5 @@ describe('WorldStoneWindowSystem.getWindows', () => {
     expect(w.lightEffect).toBe(70)
     expect(w.spectacle).toBe(85)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

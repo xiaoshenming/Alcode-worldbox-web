@@ -27,4 +27,5 @@ describe('WorldEscarpmentSystem.getEscarpments', () => {
     expect(e.rockfallRisk).toBe(25)
     expect(e.vegetationCover).toBe(30)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

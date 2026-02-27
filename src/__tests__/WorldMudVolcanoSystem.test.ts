@@ -27,4 +27,5 @@ describe('WorldMudVolcanoSystem.getVolcanos', () => {
     expect(v.gasEmission).toBe(70)
     expect(v.dormancy).toBe(100)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

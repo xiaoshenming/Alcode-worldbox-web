@@ -27,4 +27,5 @@ describe('WorldKarstSpringSystem.getSprings', () => {
     expect(s.spectacle).toBe(70)
     expect(s.temperature).toBe(15)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

@@ -27,4 +27,5 @@ describe('WorldRockArch2System.getArches', () => {
     expect(a.stability).toBe(80)
     expect(a.spectacle).toBe(85)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

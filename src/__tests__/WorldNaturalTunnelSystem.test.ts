@@ -27,4 +27,5 @@ describe('WorldNaturalTunnelSystem.getTunnels', () => {
     expect(t.echoEffect).toBe(50)
     expect(t.spectacle).toBe(70)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })
