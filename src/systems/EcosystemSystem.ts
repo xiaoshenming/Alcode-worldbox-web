@@ -123,31 +123,40 @@ export class EcosystemSystem {
     }
   }
 
-  private _cachedCreaturePositions: { species: string; x: number; y: number }[] = [];
+  // Flat parallel arrays instead of object array to avoid per-creature object allocation
+  private _cacheSpecies: string[] = [];
+  private _cacheX: number[] = [];
+  private _cacheY: number[] = [];
+  private _cacheLen = 0;
   private _creatureCacheTick = -1;
 
   private rebuildCreatureCache(em: EntityManager, tick: number): void {
     if (this._creatureCacheTick === tick) return;
     this._creatureCacheTick = tick;
-    this._cachedCreaturePositions.length = 0;
+    this._cacheLen = 0;
     const entities = em.getEntitiesWithComponents('creature', 'position');
     for (const id of entities) {
       const creature = em.getComponent<CreatureComponent>(id, 'creature');
       if (!creature) continue;
       const pos = em.getComponent<PositionComponent>(id, 'position');
       if (!pos) continue;
-      this._cachedCreaturePositions.push({ species: creature.species, x: pos.x, y: pos.y });
+      const i = this._cacheLen++;
+      this._cacheSpecies[i] = creature.species;
+      this._cacheX[i] = pos.x;
+      this._cacheY[i] = pos.y;
     }
   }
 
   private countSpeciesInArea(em: EntityManager, species: string, cx: number, cy: number): number {
     const half = AREA_CHECK_SIZE / 2;
     let count = 0;
-    const cached = this._cachedCreaturePositions;
-    for (let i = 0, len = cached.length; i < len; i++) {
-      const c = cached[i];
-      if (c.species !== species) continue;
-      if (Math.abs(c.x - cx) <= half && Math.abs(c.y - cy) <= half) {
+    const len = this._cacheLen;
+    const cacheSpecies = this._cacheSpecies;
+    const cacheX = this._cacheX;
+    const cacheY = this._cacheY;
+    for (let i = 0; i < len; i++) {
+      if (cacheSpecies[i] !== species) continue;
+      if (Math.abs(cacheX[i] - cx) <= half && Math.abs(cacheY[i] - cy) <= half) {
         count++;
       }
     }
