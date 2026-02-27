@@ -302,7 +302,9 @@ export class AmbientSoundMixer {
 
   /** Remove events older than 1 tick (consumed by external audio system). */
   private _expireEvents(tick: number): void {
-    this._pendingEvents = this._pendingEvents.filter((e) => e.tick >= tick - 1);
+    for (let i = this._pendingEvents.length - 1; i >= 0; i--) {
+      if (this._pendingEvents[i].tick < tick - 1) this._pendingEvents.splice(i, 1)
+    }
   }
 
   private _drawBar(

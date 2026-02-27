@@ -116,6 +116,8 @@ function clamp(v: number, lo: number, hi: number): number {
 export class CultureSystem {
   private cultures: Map<number, Culture> = new Map()
   private languages: LanguageFamily[] = [...BASE_LANGUAGES]
+  // Cache vowels/consonants per language id to avoid filter() on each name generation
+  private _phonemeCache: Map<number, { vowels: string[]; consonants: string[] }> = new Map()
 
   constructor() {}
 
@@ -255,8 +257,16 @@ export class CultureSystem {
 
   private generateNameFromLang(lang: LanguageFamily): string {
     const pattern = pick(lang.namePatterns)
-    const vowels = lang.phonemes.filter(p => /^[aeiou]/.test(p))
-    const consonants = lang.phonemes.filter(p => !/^[aeiou]/.test(p))
+    // Use cached vowels/consonants to avoid filter() on each call
+    let cached = this._phonemeCache.get(lang.id)
+    if (!cached) {
+      cached = {
+        vowels: lang.phonemes.filter(p => /^[aeiou]/.test(p)),
+        consonants: lang.phonemes.filter(p => !/^[aeiou]/.test(p)),
+      }
+      this._phonemeCache.set(lang.id, cached)
+    }
+    const { vowels, consonants } = cached
     if (vowels.length === 0 || consonants.length === 0) return 'Unnamed'
 
     let name = ''

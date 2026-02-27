@@ -23,6 +23,9 @@ export class FlockingSystem {
   private _groups: Map<string, EntityId[]> = new Map()
   private _assigned: Set<EntityId> = new Set()
   private _nearbyBuf: EntityId[] = []
+  /** Pool of member arrays to reuse across flock rebuilds */
+  private _memberPool: EntityId[][] = []
+  private _memberPoolNext = 0
 
   update(tick: number, em: EntityManager): void {
     // Rebuild flocks periodically
@@ -86,6 +89,7 @@ export class FlockingSystem {
   private rebuildFlocks(em: EntityManager): void {
     this.flocks.clear()
     this.flockAssignment.clear()
+    this._memberPoolNext = 0  // reset pool pointer
 
     const entities = em.getEntitiesWithComponents('position', 'creature', 'velocity')
 
@@ -150,8 +154,16 @@ export class FlockingSystem {
         }
         const flockKey = `${key}:${Math.floor(pos.x)}:${Math.floor(pos.y)}`
 
-        // Copy buffer to persistent members array for this flock
-        const flockMembers = new Array<EntityId>(n)
+        // Get or reuse a member array from pool
+        let flockMembers: EntityId[]
+        if (this._memberPoolNext < this._memberPool.length) {
+          flockMembers = this._memberPool[this._memberPoolNext++]
+          flockMembers.length = n
+        } else {
+          flockMembers = new Array<EntityId>(n)
+          this._memberPool.push(flockMembers)
+          this._memberPoolNext++
+        }
         for (let i = 0; i < n; i++) flockMembers[i] = nearbyBuf[i]
 
         this.flocks.set(flockKey, {

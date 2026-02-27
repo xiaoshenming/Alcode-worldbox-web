@@ -208,6 +208,8 @@ export class EcosystemSystem {
 
   private updateBehaviors(em: EntityManager, world: World, tick: number): void {
     const entities = em.getEntitiesWithComponents('creature', 'position', 'ai', 'needs');
+    // Pre-fetch all creature+position entities once to avoid O(N²) calls inside the loop
+    const allCreaturePos = em.getEntitiesWithComponents('creature', 'position');
 
     for (const id of entities) {
       const creature = em.getComponent<CreatureComponent>(id, 'creature');
@@ -222,7 +224,7 @@ export class EcosystemSystem {
 
       // Check for threats first (flee behavior)
       if (rule.fleeFrom.length > 0) {
-        const threat = this.findNearestThreat(em, id, pos, rule.fleeFrom);
+        const threat = this.findNearestThreat(em, id, pos, rule.fleeFrom, allCreaturePos);
         if (threat) {
           this.flee(pos, ai, threat);
           continue;
@@ -231,7 +233,7 @@ export class EcosystemSystem {
 
       // Predator hunting behavior
       if (rule.predator && rule.prey.length > 0 && needs.hunger > 40) {
-        const preyTarget = this.findNearestPrey(em, id, pos, rule.prey);
+        const preyTarget = this.findNearestPrey(em, id, pos, rule.prey, allCreaturePos);
         if (preyTarget) {
           const preyPos = em.getComponent<PositionComponent>(preyTarget, 'position');
           if (preyPos) {
@@ -260,12 +262,11 @@ export class EcosystemSystem {
     }
   }
 
-  private findNearestThreat(em: EntityManager, selfId: EntityId, selfPos: PositionComponent, fleeFrom: string[]): PositionComponent | null {
+  private findNearestThreat(em: EntityManager, selfId: EntityId, selfPos: PositionComponent, fleeFrom: string[], allEntities: EntityId[]): PositionComponent | null {
     let nearest: PositionComponent | null = null;
     let nearestDist = FLEE_RANGE;
 
-    const entities = em.getEntitiesWithComponents('creature', 'position');
-    for (const id of entities) {
+    for (const id of allEntities) {
       if (id === selfId) continue;
       const creature = em.getComponent<CreatureComponent>(id, 'creature');
       if (!creature || !fleeFrom.includes(creature.species)) continue;
@@ -280,12 +281,11 @@ export class EcosystemSystem {
     return nearest;
   }
 
-  private findNearestPrey(em: EntityManager, selfId: EntityId, selfPos: PositionComponent, preySpecies: string[]): EntityId | null {
+  private findNearestPrey(em: EntityManager, selfId: EntityId, selfPos: PositionComponent, preySpecies: string[], allEntities: EntityId[]): EntityId | null {
     let nearest: EntityId | null = null;
     let nearestDist = HUNT_RANGE;
 
-    const entities = em.getEntitiesWithComponents('creature', 'position');
-    for (const id of entities) {
+    for (const id of allEntities) {
       if (id === selfId) continue;
       const creature = em.getComponent<CreatureComponent>(id, 'creature');
       if (!creature || !preySpecies.includes(creature.species)) continue;

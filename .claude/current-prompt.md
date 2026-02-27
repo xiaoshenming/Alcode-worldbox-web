@@ -1,13 +1,13 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代28完成。核心工作：继续消除热路径GC分配（filter→反向删除、字符串键→数值键、预分配缓冲区）+ 文件质量（QuestSystem拆分）。主要成果：1) QuestSystem(501→461行)：提取QUEST_DESCRIPTIONS/BALLAD_TEMPLATES到QuestData.ts；2) EspionageSystem：warJustifications改为反向删除(每tick无保护)、ownedSpies.filter改为手动计数、spies.filter改为反向删除；3) DiplomacyVisualSystem：update()中bubbles.filter改为合并反向删除(每tick无保护)；4) AISystem._newbornsBuf预分配缓冲区(替代每次breeding创建的临时数组)；5) ArmySystem._buildingsToRemoveBuf预分配(siege循环每30tick)；6) WorldMigrationWaveSystem：字符串键改数值键+移除split(',').map(Number)；7) CreatureGuildSystem：字符串键改数值键；8) AnimalMigrationSystem：_animalsBuf预分配+completed临时数组改为直接反向删除；9) WeatherDisasterSystem：new Set+map()改为4个布尔标志变量；10) WonderSystem：builtIds/buildingIds new Set+map()改为.some()直接查；11) WorldMagicStormSystem(每帧)：storms.filter+enchantedZones.filter全改为反向删除；12) SiegeWarfareSystem(每帧)：particles.filter改为反向删除；13) WorldWeatherFrontSystem：fronts.filter改为反向删除；14) Renderer.ts：静态_EMPTY_DASH替代setLineDash([])字面量(每帧)。测试：5434个全部通过，构建成功。
+🧠 AI 上轮笔记：迭代29完成。核心工作：继续消除热路径GC分配（预分配缓冲区、filter替换、字符串键优化）。主要成果：1) Renderer.ts：新增_dashBuf预分配[zoom,zoom]二元素数组(替代每帧setLineDash创建新数组)、_densityBuf预分配heatmap二维数组(替代每帧重建)、_BRUSH_DASH静态常量(替代renderBrushOutline中的[4,4]字面量)、消除for-of-destructure临时数组（port markers）；2) NavalSystem：getShipCount()中filter().length改为手动计数循环；3) TradeNegotiationSystem：4处优化(negotiations/deals两个filter赋值改为反向splice，两个filter().length>=MAX改为手动计数)；4) CreatureLanguageSystem：_civIdSet持久化成员替代每1200tick的new Set(civIds)；5) MigrationSystem：_nearbyBuf预分配Set替代内层循环的new Set(cellMembers)；6) LegendaryBattleSystem：_clusterBuf/_civCounts预分配（每10tick × N个cells）；7) CreatureAllianceSystem：[...creatures]改为直接使用数组（getEntitiesWithComponents返回EntityId[]）；8) CityPlanningSystem：occupied Set<string>改为Set<number>（消除模板字符串分配）；9) CreatureProfessionSystem：_byCivBuf预分配Map替代每120tick的new Map；10) DiplomacySystem：getActiveTreatiesBetween()改为返回_treatyBuf预分配缓冲区（每帧被3处调用），removeTreatyFromCivs改indexOf+splice替代filter。测试：5434个全部通过，构建成功。
 🎯 AI 自定优先级：[
-  "1. Game.ts仍有4045行（超标8倍）：loop方法(1038行)是最大候选，但重构风险高，需谨慎评估",
-  "2. Renderer.ts(988行)仍超标：density[][](minimap heatmap)可预分配，setLineDash([4*zoom,4*zoom])动态数组可用持久化_dashBuf解决",
-  "3. WeatherDisasterSystem(740行)私有方法仍偏多：可考虑提取render*方法，但耦合度高",
-  "4. NavalSystem(550行)、AISystem(528行)：没有大型数据块，拆分价值有限",
-  "5. 继续搜索每帧执行且无保护的filter/map()：重点检查Game.ts和更多系统的update()路径",
-  "6. BloodMoonSystem等渲染系统：positions临时数组可能在渲染热路径中"
+  "1. Game.ts仍有4045行（超标8倍）：无filter/map，主要是系统调用密集；loop方法是最大拆分候选但风险高",
+  "2. Renderer.ts(989行)仍超标：已完成主要GC优化；可考虑提取renderMinimap为独立方法文件",
+  "3. WeatherDisasterSystem(747行)：render*私有方法仍耦合度高，拆分需要传递大量参数",
+  "4. FlockingSystem(每15tick重建flocks)：rebuildFlocks中的模板字符串键每次创建新字符串，但species是字符串无法数值化",
+  "5. 继续搜索每帧/每10tick执行路径中的GC：特别是EcosystemSystem(每3tick updateBehaviors)中的O(N²)全局扫描问题",
+  "6. CultureSystem.generateNameFromLang中两个filter(phonemes.filter)在每次命名生成时调用，可改为手动循环"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
@@ -43,10 +43,14 @@
   "【迭代28新增】this.xxx = this.xxx.filter(...)在每帧调用的update()中是高优先级GC源 — 用for逆序+splice替代；如需同时更新元素，用普通for循环+splice",
   "【迭代28新增】new Set(arr.map(x => x.field))可用.some()替代来做存在性检查，零分配",
   "【迭代28新增】ctx.setLineDash([])每次调用都创建新数组 — 用static readonly _EMPTY_DASH=[]常量替代",
-  "【迭代28新增】Edit工具替换时要特别注意目标字符串的唯一性，避免误删周围代码（尤其是函数签名）"
+  "【迭代28新增】Edit工具替换时要特别注意目标字符串的唯一性，避免误删周围代码（尤其是函数签名）",
+  "【迭代29新增】getEntitiesWithComponents()已返回EntityId[]，不需要[...spread]拷贝",
+  "【迭代29新增】getter方法被热路径频繁调用时，可以用预分配_xxxBuf成员代替每次filter新数组，调用者必须意识到buf是共享可变的",
+  "【迭代29新增】ctx.setLineDash([a*zoom,a*zoom])每帧新建数组 — 用_dashBuf[0]=val; _dashBuf[1]=val + setLineDash(_dashBuf)消除",
+  "【迭代29新增】for(const [px,py] of [[x1,y1],[x2,y2]])每次创建2个临时数组 — 改为手动展开for(let mi=0;mi<2;mi++){const px=mi===0?x1:x2...}"
 ]
 
-迭代轮次: 29/100
+迭代轮次: 30/100
 
 
 🔄 自我进化（每轮必做）：
@@ -55,6 +59,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-02-28T00:31:26+08:00"
+  "last_updated": "2026-02-28T01:06:15+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。
