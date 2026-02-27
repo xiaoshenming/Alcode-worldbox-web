@@ -169,16 +169,18 @@ export class ReligionSpreadSystem {
   }
 
   getDominantReligion(civId: number): ReligionType | null {
-    const counts = new Map<ReligionType, number>()
+    // Accumulate per-religion strength using a plain object (zero-alloc)
+    const counts: Partial<Record<ReligionType, number>> = {}
     for (const temple of this.temples.values()) {
       if (temple.civId === civId) {
-        counts.set(temple.religion, (counts.get(temple.religion) ?? 0) + temple.faithStrength)
+        counts[temple.religion] = (counts[temple.religion] ?? 0) + temple.faithStrength
       }
     }
     let best: ReligionType | null = null
     let bestVal = 0
-    for (const [r, v] of counts) {
-      if (v > bestVal) { best = r; bestVal = v }
+    for (const r in counts) {
+      const v = counts[r as ReligionType]!
+      if (v > bestVal) { best = r as ReligionType; bestVal = v }
     }
     return best
   }
