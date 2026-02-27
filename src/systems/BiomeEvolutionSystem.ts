@@ -26,6 +26,9 @@ const DIRS = [[-1, 0], [1, 0], [0, -1], [0, 1]] as const
 
 export class BiomeEvolutionSystem {
   private sampleCount: number
+  // Reusable maps to avoid GC per evolution tick (numeric key = cx * 10000 + cy)
+  private _popDensity: Map<number, number> = new Map()
+  private _buildingMap: Map<number, BuildingType> = new Map()
 
   constructor() {
     this.sampleCount = Math.floor(WORLD_WIDTH * WORLD_HEIGHT * SAMPLE_RATIO)
@@ -37,8 +40,10 @@ export class BiomeEvolutionSystem {
     const isLavaCoolTick = tick % LAVA_COOL_INTERVAL === 0
 
     // Build a quick lookup of population density and building positions
-    const popDensity = this.buildPopDensityMap(em)
-    const buildingMap = this.buildBuildingMap(em)
+    const popDensity = this._popDensity
+    const buildingMap = this._buildingMap
+    this.buildPopDensityMap(em, popDensity)
+    this.buildBuildingMap(em, buildingMap)
 
     for (let i = 0; i < this.sampleCount; i++) {
       const x = Math.floor(Math.random() * WORLD_WIDTH)
@@ -117,8 +122,8 @@ export class BiomeEvolutionSystem {
 
   private civInfluence(
     tile: TileType, x: number, y: number,
-    popDensity: Map<string, number>,
-    buildingMap: Map<string, BuildingType>
+    popDensity: Map<number, number>,
+    buildingMap: Map<number, BuildingType>
   ): TileType | null {
     const density = this.getLocalDensity(popDensity, x, y, 6)
 
@@ -178,33 +183,31 @@ export class BiomeEvolutionSystem {
     return result
   }
 
-  private buildPopDensityMap(em: EntityManager): Map<string, number> {
-    const map = new Map<string, number>()
+  private buildPopDensityMap(em: EntityManager, map: Map<number, number>): void {
+    map.clear()
     const entities = em.getEntitiesWithComponents('position', 'creature')
     for (const id of entities) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (!pos) continue
       // Bucket into 8x8 cells
-      const key = `${Math.floor(pos.x / 8)},${Math.floor(pos.y / 8)}`
+      const key = Math.floor(pos.x / 8) * 10000 + Math.floor(pos.y / 8)
       map.set(key, (map.get(key) || 0) + 1)
     }
-    return map
   }
 
-  private buildBuildingMap(em: EntityManager): Map<string, BuildingType> {
-    const map = new Map<string, BuildingType>()
+  private buildBuildingMap(em: EntityManager, map: Map<number, BuildingType>): void {
+    map.clear()
     const entities = em.getEntitiesWithComponents('position', 'building')
     for (const id of entities) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       const bld = em.getComponent<BuildingComponent>(id, 'building')
       if (!pos || !bld) continue
-      const key = `${Math.floor(pos.x)},${Math.floor(pos.y)}`
+      const key = Math.floor(pos.x) * 10000 + Math.floor(pos.y)
       map.set(key, bld.buildingType)
     }
-    return map
   }
 
-  private getLocalDensity(popMap: Map<string, number>, x: number, y: number, radius: number): number {
+  private getLocalDensity(popMap: Map<number, number>, x: number, y: number, radius: number): number {
     const cellSize = 8
     const cx = Math.floor(x / cellSize)
     const cy = Math.floor(y / cellSize)
@@ -212,16 +215,16 @@ export class BiomeEvolutionSystem {
     let total = 0
     for (let dx = -r; dx <= r; dx++) {
       for (let dy = -r; dy <= r; dy++) {
-        total += popMap.get(`${cx + dx},${cy + dy}`) || 0
+        total += popMap.get((cx + dx) * 10000 + (cy + dy)) || 0
       }
     }
     return total
   }
 
-  private hasBuildingNearby(buildingMap: Map<string, BuildingType>, x: number, y: number, radius: number, type: BuildingType): boolean {
+  private hasBuildingNearby(buildingMap: Map<number, BuildingType>, x: number, y: number, radius: number, type: BuildingType): boolean {
     for (let dx = -radius; dx <= radius; dx++) {
       for (let dy = -radius; dy <= radius; dy++) {
-        if (buildingMap.get(`${x + dx},${y + dy}`) === type) return true
+        if (buildingMap.get((x + dx) * 10000 + (y + dy)) === type) return true
       }
     }
     return false
