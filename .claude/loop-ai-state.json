@@ -1,11 +1,12 @@
 {
-  "notes": "迭代26完成。核心工作：代码质量提升（文件拆分）+ 性能优化（字符串键→数值键）。主要成果：1) 拆分WorldEventSystem(813行→359行)，提取EVENT_DEFINITIONS到WorldEventDefinitions.ts；2) 拆分SpriteRenderer(659行→263行)，提取精灵数据到SpriteData.ts；3) 6个系统的字符串模板Map键改为数值编码（NavalSystem/ResourceSystem/DiseaseSystem/ReligionSpreadSystem/BiomeEvolutionSystem/CivManager），消除热路径GC；4) EvolutionSystem复用speciesGroups Map。测试：5434个全部通过，0个失败。关键发现：1) 改Map键类型时必须同步更新测试中的注入代码（ReligionSpreadSystem测试曾因此失败）；2) 世界坐标x最大200，用cx*10000+cy编码完全安全；3) WorldEventDefinitions.ts改变了EVENT_DEFINITIONS内部使用Array.from和randomCiv的位置，需在同一文件export。",
+  "notes": "迭代27完成。核心工作：继续消除热路径GC分配 + 代码质量提升（文件拆分）。主要成果：1) 字符串键→数值键：MigrationSystem(cellKey)/CityLayoutSystem(zones/roadSet/roadEnds/closed/A*visited)/LegendaryBattleSystem(_detectGrid/_visited)/WeatherDisasterSystem(originalTiles)共4个系统；2) EcosystemSystem拆分(548行→422行)，提取WILDLIFE_RULES/MAX_AGE_WILDLIFE等到EcosystemData.ts；3) 29个Creature系系统消除alive Set GC：将'const alive = new Set(em.getEntitiesWithComponent(creature))'替换为直接调用'em.hasComponent(id, creature)'，消除每次update创建Set的分配；4) ReligionSpreadSystem.getDominantReligion用Partial<Record>替代new Map()。测试：5434个全部通过，构建成功。关键发现：1) CityLayoutSystem的zones Map从string改为number时，renderZoning的key解析'[sx,sy]=key.split()'要改为Math.floor(key/10000)+key%10000；2) alive Set模式批量替换时，部分系统有复合条件'!alive.has(id)||other'需手动处理（GamblerSystem/OracleSystem）；3) Partial<Record<K,V>>中for..in可以枚举所有属性，比new Map()更轻量；4) 26+个系统使用同一个alive Set反模式——批量替换是最高效策略。",
   "priorities": [
-    "1. Game.ts仍有4045行（超标8倍）：loop(1038行)是最大候选，风险高但收益最大",
-    "2. WeatherDisasterSystem(741行)超出质量门禁500行，私有方法高度耦合难以拆分",
-    "3. Renderer.ts(988行)超出质量门禁，renderMinimap可���取但需带走相关canvas引用",
-    "4. NavalSystem(550行)、EcosystemSystem(548行)、AISystem(528行)、QuestSystem(501行)仍超标",
-    "5. 继续搜索字符串模板Map键：MigrationSystem/CityLayoutSystem等仍有字符串键空间哈希"
+    "1. Game.ts仍有4045行（超标8倍）：loop(1038行)是最大候选，考虑按功能拆分（输入处理/渲染调用/系统更新分批）",
+    "2. Renderer.ts(988行)超标，可考虑提取renderWarBorders和renderMinimap相关私有方法到帮助类",
+    "3. WeatherDisasterSystem(741行)私有方法高度耦合，可考虑将render*方法拆分",
+    "4. QuestSystem(501行)有QUEST_DESCRIPTIONS数据块可提取（约67行），拆分后可低���500行",
+    "5. NavalSystem(550行)、AISystem(528行)仍超标，看是否有数据块可提取",
+    "6. 搜索Game.ts和Renderer.ts中的new Map/new Set创建：这两个热路径文件可能还有GC优化机会"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -35,7 +36,10 @@
     "DOM构造函数系统（EnhancedTooltipSystem/PerformanceMonitorSystem）无法在Node环境实例化，只能有模块导入测试——是测试上限",
     "【迭代26新增】改Map<string,V>为Map<number,V>时：1)用cx*10000+cy编码（世界200x200安全）；2)必须同步更新测试中的注入代码；3)遍历时用Math.floor(key/10000)取cx，key%10000取cy",
     "【迭代26新增】从大文件拆分数据时，最安全模式是：提取常量/类型到*Definitions.ts，主文件只import并使用；不改变任何逻辑",
-    "【迭代26新增】BiomeEvolutionSystem等系统改成持久化Map时，注意方法签名也要同步更新（Map<string>→Map<number>）"
+    "【迭代27新增】alive Set反模式：'const alive = new Set(em.getEntitiesWithComponent(creature))'在29+个系统存在，可用em.hasComponent(id,'creature')直接替代，零分配",
+    "【迭代27新增】批量替换时Python脚本比sed更灵活——可以提取变量名后动态构造替换模式",
+    "【迭代27新增】getDominantReligion等少量固定key的聚合操作，用Partial<Record<K,number>>比new Map()更轻量",
+    "【迭代27新增】CityLayoutSystem改字符串键为数值键时，renderZoning中的key.split(',').map(Number)要改为Math.floor(key/10000)和key%10000"
   ],
-  "last_updated": "2026-02-27T23:35:00+08:00"
+  "last_updated": "2026-02-27T23:55:00+08:00"
 }
