@@ -15,6 +15,7 @@ export class Renderer {
   private ctx: CanvasRenderingContext2D
   private minimapCanvas: HTMLCanvasElement
   private minimapCtx: CanvasRenderingContext2D
+  private static readonly _EMPTY_DASH: number[] = []
   private waterOffset: number = 0
   showTerritory: boolean = true
   minimapMode: 'normal' | 'territory' | 'heatmap' = 'normal'
@@ -712,7 +713,7 @@ export class Renderer {
       ctx.moveTo(x1, y1)
       ctx.lineTo(x2, y2)
       ctx.stroke()
-      ctx.setLineDash([])
+      ctx.setLineDash(Renderer._EMPTY_DASH)
       ctx.lineDashOffset = 0
 
       // Port markers (small diamonds at endpoints)
@@ -844,7 +845,7 @@ export class Renderer {
     ctx.beginPath()
     ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
     ctx.stroke()
-    ctx.setLineDash([])
+    ctx.setLineDash(Renderer._EMPTY_DASH)
   }
 
   renderMinimap(world: World, camera: Camera, em?: EntityManager, civManager?: CivManager): void {
