@@ -182,7 +182,8 @@ export class WorldDashboardSystem {
 
   // ── 宗教饼图 ──
   private drawReligionPie(ctx: CanvasRenderingContext2D, contentY: number, contentH: number): void {
-    const entries = Array.from(this.religionData.entries());
+    const entries: [string, number][] = []
+    for (const e of this.religionData.entries()) entries.push(e)
     const total = entries.reduce((s, e) => s + e[1], 0);
     if (total === 0) {
       this.drawEmptyHint(ctx, contentY, contentH, '暂无宗教数据');

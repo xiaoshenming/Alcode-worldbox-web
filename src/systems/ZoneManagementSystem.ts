@@ -264,7 +264,8 @@ export class ZoneManagementSystem {
     const rowH = 52;
     const listY = py + 40;
     const maxRows = Math.floor((ph - 50) / rowH);
-    const zones = Array.from(this.zones.values());
+    const zones: Zone[] = []
+    for (const z of this.zones.values()) zones.push(z)
 
     if (zones.length === 0) {
       ctx.fillStyle = 'rgba(180,180,180,0.6)';

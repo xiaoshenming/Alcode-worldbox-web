@@ -44,6 +44,7 @@ export class CreatureLanguageSystem {
   private lastDrift = 0
   // Reusable Set to avoid allocation in evolveLanguages (called every 1200 ticks)
   private _civIdSet: Set<number> = new Set()
+  private _langBuf: Language[] = []
 
   update(dt: number, civIds: Iterable<number>, tick: number): void {
     if (tick - this.lastEvolve >= EVOLVE_INTERVAL) {
@@ -107,7 +108,9 @@ export class CreatureLanguageSystem {
 
   private computeSimilarities(): void {
     this.similarities = []
-    const langs = [...this.languages.values()]
+    const langs = this._langBuf
+    langs.length = 0
+    for (const v of this.languages.values()) langs.push(v)
     for (let i = 0; i < langs.length; i++) {
       for (let j = i + 1; j < langs.length; j++) {
         const a = langs[i], b = langs[j]

@@ -29,6 +29,7 @@ export class WorldStatsOverviewSystem {
   private warCount = 0
   private peaceCount = 0
   private speciesCounts: Map<string, number> = new Map()
+  private _speciesEntriesBuf: [string, number][] = []
   private visible = false
 
   constructor() { /* no-op */ }
@@ -76,6 +77,10 @@ export class WorldStatsOverviewSystem {
     this.peaceCount = peaces >> 1
     this.buildingCount = buildings
     this.resourceTotal = resources
+    // Rebuild sorted species entries cache
+    this._speciesEntriesBuf.length = 0
+    for (const e of this.speciesCounts.entries()) this._speciesEntriesBuf.push(e)
+    this._speciesEntriesBuf.sort((a, b) => b[1] - a[1])
   }
 
   /** Helper: compute chart point coords from ring buffer */
@@ -186,7 +191,7 @@ export class WorldStatsOverviewSystem {
 
     if (this.totalPop > 0) {
       let bx = cX
-      const entries = Array.from(this.speciesCounts.entries()).sort((a, b) => b[1] - a[1])
+      const entries = this._speciesEntriesBuf
       for (const [species, count] of entries) {
         const segW = (count / this.totalPop) * cW
         if (segW < 1) continue

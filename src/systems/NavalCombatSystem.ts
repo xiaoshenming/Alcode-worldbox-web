@@ -37,6 +37,7 @@ export class NavalCombatSystem {
   private battles: Map<number, NavalBattle> = new Map()
   private nextBattleId = 1
   private battleLog: string[] = []
+  private _shipBuf: [EntityId, ShipComponent][] = []
 
   /** Register a ship entity */
   registerShip(entityId: EntityId, ship: ShipComponent): void {
@@ -59,7 +60,9 @@ export class NavalCombatSystem {
     if (tick % 5 !== 0) return
 
     // Detect naval encounters - ships from different civs near water
-    const shipEntities = [...this.ships.entries()]
+    const shipEntities = this._shipBuf
+    shipEntities.length = 0
+    for (const e of this.ships.entries()) shipEntities.push(e)
     if (shipEntities.length < 2) return
 
     // Group ships by proximity
