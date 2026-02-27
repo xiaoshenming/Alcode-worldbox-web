@@ -9,4 +9,7 @@ describe('DiplomaticCouncilSystem', () => {
     ;(sys as any).councils.push({ id: 1 })
     expect(sys.getCouncils()).toHaveLength(1)
   })
+  it('getCouncils返回数组', () => { expect(Array.isArray(sys.getCouncils())).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })

@@ -9,4 +9,7 @@ describe('DiplomaticCommonwealthSystem', () => {
     ;(sys as any).unions.push({ id: 1 })
     expect(sys.getUnions()).toHaveLength(1)
   })
+  it('getUnions返回数组', () => { expect(Array.isArray(sys.getUnions())).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })

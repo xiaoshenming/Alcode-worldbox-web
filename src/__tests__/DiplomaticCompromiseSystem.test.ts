@@ -9,4 +9,7 @@ describe('DiplomaticCompromiseSystem', () => {
     ;(sys as any).agreements.push({ id: 1 })
     expect(sys.getAgreements()).toHaveLength(1)
   })
+  it('getAgreements返回数组', () => { expect(Array.isArray(sys.getAgreements())).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })
