@@ -31,6 +31,20 @@ interface ActiveBubble {
 const MAX_BUBBLES = 10;
 const BUBBLE_DURATION = 120;
 
+// Pre-computed relation colors: 201 steps for val -100..100
+// Fixed alpha 0.7
+const RELATION_COLORS: string[] = (() => {
+  const cols: string[] = []
+  for (let i = 0; i <= 200; i++) {
+    const val = i - 100 // -100..100
+    const t = (val + 100) / 200
+    const r = Math.round(t < 0.5 ? 220 : 220 - (t - 0.5) * 2 * 180)
+    const g = Math.round(t < 0.5 ? t * 2 * 200 : 200)
+    cols.push(`rgba(${r},${g},40,0.7)`)
+  }
+  return cols
+})()
+
 const EVENT_CONFIG: Record<DiplomacyEvent['type'], { text: string; color: string }> = {
   war:      { text: '\u2694 \u5BA3\u6218!', color: '#e74c3c' },
   peace:    { text: '\uD83D\uDD4A \u548C\u5E73',  color: '#2ecc71' },
@@ -338,10 +352,6 @@ export class DiplomacyVisualSystem {
 
   /** 关系值 -> 颜色（红-黄-绿渐变） */
   private relationColor(val: number): string {
-    const t = (val + 100) / 200; // 0..1
-    const r = Math.round(t < 0.5 ? 220 : 220 - (t - 0.5) * 2 * 180);
-    const g = Math.round(t < 0.5 ? t * 2 * 200 : 200);
-    const b = 40;
-    return `rgba(${r},${g},${b},0.7)`;
+    return RELATION_COLORS[Math.min(200, Math.max(0, Math.round(val) + 100))]
   }
 }
