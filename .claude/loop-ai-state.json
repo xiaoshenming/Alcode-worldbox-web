@@ -1,16 +1,16 @@
 {
-  "notes": "迭代50完成。本轮核心工作：继续大规模扩展Creature系列系统测试覆盖。从1039个测试增长到1211个测试（+172个），测试文件从87个增到120个。新增33个测试文件：CreatureCharcoalBurnersSystem(5个，4种CharcoalGrade)、CreatureChaserSystem(5个，注意字段名是hammerControl/reliefDepth非pursuitSpeed)、CreatureCheeseAgerSystem(5个，4种CheeseVariety+active字段)、CreatureChisellerSystem(5个)、CreatureChroniclerSystem(5个，4种specialty+active字段)、CreatureClaspMakersSystem(5个，无getSkill)、CreatureClaustrophobiaSystem(5个)、CreatureCobblerSystem(5个，注意类名是CreatureCobblersSystem)、CreatureCoinerSystem(5个)、CreatureCoinerMintSystem(5个)、CreatureCombMakersSystem(5个，字段名teethFineness非toothPrecision)、CreatureConstellationSystem(5个，5种ConstellationType)、CreatureCooperSystem(5个)、CreatureCoopersSystem(7个，4种BarrelType无getSkill)、CreatureCourierSystem(9个，4种status+4种priority，字段无distance)、CreatureCrimperSystem(5个)、CreatureCrochetMakersSystem(5个，无getSkill)、CreatureCalderersSystem(5个，无getSkill)、CreatureCountersinkerSystem(5个)、CreatureCuriersSystem(5个，无getSkill)、CreatureCartographySystem(9个，6种MapType+4种MapDetail+getSkill)、CreatureChandlersSystem(5个，无getSkill)、CreatureCollectionSystem(8个，getCollection/getCollectionCount/getTopCollectors降序)、CreatureDanceSystem(12个，6种DanceType+6种DanceEffect)、CreatureDiemakerSystem(5个)、CreatureDivinationSystem(9个，6种方式+getRecent+getBelievedCount)、CreatureDowserSystem(5个，4种DowserTool+active字段)、CreatureDrawerSystem(5个)、CreatureDreamSystem(10个，6种DreamType+getRecentDreams+getNightmareCount)、CreatureDrifterSystem(5个)、CreatureDyeingMakersSystem(5个，4种DyeingType)、CreatureDyersSystem(5个，4种DyeSource无getSkill)、CreatureDyerSystem(7个，4种DyeColor+getSkill)。3个commit全部git push成功。TypeScript零错误，构建成功。",
+  "notes": "迭代51完成。本轮核心工作：继续大规模扩展Creature系列系统测试覆盖。从1211个测试增长到1462个测试（+251个），测试文件从120个增到167个。新增47个测试文件覆盖E/F/G系列：E系列10个(Echolocation/Embosser/EmbroideryMakers/Enamalers/Enameller/Enchanting/Engravers/Engraver/Etcher/Exile)、F系列22个(Falconer/Fame/Farrier/Fashion/Felters/FeltingMakers/FeltingMakers2/Fermentation/FerruleMakers/Firewalker/Flanging/Flatter/Fletchers/Fletcher/Foraging/Forger/Founder/FringeMakers/Fuller/FullingMakers/Furbisher/Furriers)、G系列15个(Gambler/Gilders/Gilder/Girdler/Gladiator/Glassblowers/Glassblowing/Glazers/GlazierMaster/Glazier/Gondolier/Grinder/GrommetMakers/Grudge/Guild)。4个commit全部git push成功。TypeScript零错误，构建成功。修复的bug：1)FashionTrend接口无tick字段，2)FameSystem内部字段是fameRecords非fameMap，3)GlassWork缺少tradeValue字段，4)Glazer接口是artistry非reputation。",
   "priorities": [
-    "1. 继续测试更多Creature系列系统（CreatureE/F/G系列：Embroider/Engraver/Falconer/Farmer/Fisher等）",
+    "1. 继续测试更多Creature系列系统（CreatureH/I/J/K/L系列）",
     "2. 探索非Creature系统中有getXxx方法的系统（如PopulationSystem/NavalSystem等）",
     "3. Game.ts仍有4045行（超标8倍）：loop(1038行)是最大候选，但依赖太多系统，风险高",
     "4. WorldEventSystem(813行)、WeatherDisasterSystem(741行) 超出质量门禁 500 行",
-    "5. 目标：继续向1300+测试冲刺，当前1211个"
+    "5. 目标：继续向1600+测试冲刺，当前1462个"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃源 — 已在迭代26彻底清零",
     "子代理并行修复大批量文件非常高效：3组并行代理可在几分钟内修复100+文件",
-    "manualChunks按文件名前缀分组是最安全的代码分割方案 — 不改源码，只改vite配置",
+    "manualChunks按文件名前���分组是最安全的代码分割方案 — 不改源码，只改vite配置",
     "Iterable<T>替代T[]可消除spread分配，但需检查消费端是否用了.length/.includes等数组方法",
     "getAllEntities()返回Array.from()快照 — removeEntity-during-iteration是安全的",
     "queue.shift()在BFS中是O(n²)陷阱 — 用索引指针head++替代",
@@ -67,7 +67,11 @@
     "有些系统没有skillMap/getSkill方法（如Calderers/ClapMakers/Chandlers/CrochetMakers/Coopers/Curiers）——用tail/grep先确认再写测试",
     "CreatureCobblersSystem是文件名CreatureCobblerSystem.ts中导出的类（注意复数）— 类名vs文件名不一定一致",
     "CollectionSystem用Map而非数组存储，需用(sys as any).collections.set(id, data)注入而非.push()",
-    "getDreamLog/getDivinations/getConstellations等返回内部引用（系统日志类型），getRecent/getRecentDreams用slice(-count)返回副本"
+    "getDreamLog/getDivinations/getConstellations等返回内部引用（系统日志类型），getRecent/getRecentDreams用slice(-count)返回副本",
+    "FameSystem内部私有字段是fameRecords（Map<EntityId, FameRecord>）非fameMap，必须用grep确认再注入",
+    "接口字段reputation和artistry容易混淆——Glazer用artistry，而Felters/Furriers/Fletchers等用reputation",
+    "GlassWork接口包含tradeValue字段——写factory function前必须grep -A10确认全部字段",
+    "FashionTrend接口无tick字段——写factory时需用grep确认，有些系统的趋势/事件类型不含tick"
   ],
-  "last_updated": "2026-02-27T16:30:00+08:00"
+  "last_updated": "2026-02-27T16:48:00+08:00"
 }
