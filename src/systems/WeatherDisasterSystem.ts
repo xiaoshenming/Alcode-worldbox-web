@@ -104,29 +104,36 @@ export class WeatherDisasterSystem {
     season: 'spring' | 'summer' | 'autumn' | 'winter',
     weather: 'clear' | 'rain' | 'storm' | 'snow'
   ): void {
-    const activeTypes = new Set(this.activeDisasters.map(d => d.type))
+    // Build active type lookup without allocating a new Set
+    let hasBlizzard = false, hasDrought = false, hasFlood = false, hasHeatwave = false
+    for (const d of this.activeDisasters) {
+      if (d.type === 'blizzard') hasBlizzard = true
+      else if (d.type === 'drought') hasDrought = true
+      else if (d.type === 'flood') hasFlood = true
+      else if (d.type === 'heatwave') hasHeatwave = true
+    }
 
     // Blizzard: winter + storm/snow, 5% chance
     if (season === 'winter' && (weather === 'storm' || weather === 'snow')
-        && !activeTypes.has('blizzard') && Math.random() < 0.05) {
+        && !hasBlizzard && Math.random() < 0.05) {
       this.triggerBlizzard(world, em, particles, tick)
     }
 
     // Drought: summer + clear, 3% chance
     if (season === 'summer' && weather === 'clear'
-        && !activeTypes.has('drought') && Math.random() < 0.03) {
+        && !hasDrought && Math.random() < 0.03) {
       this.triggerDrought(world, em, particles, tick)
     }
 
     // Flood: spring + rain/storm, 4% chance
     if (season === 'spring' && (weather === 'rain' || weather === 'storm')
-        && !activeTypes.has('flood') && Math.random() < 0.04) {
+        && !hasFlood && Math.random() < 0.04) {
       this.triggerFlood(world, em, particles, tick)
     }
 
     // Heatwave: summer + clear, 3% chance
     if (season === 'summer' && weather === 'clear'
-        && !activeTypes.has('heatwave') && Math.random() < 0.03) {
+        && !hasHeatwave && Math.random() < 0.03) {
       this.triggerHeatwave(world, em, particles, tick)
     }
   }
