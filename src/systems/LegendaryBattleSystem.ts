@@ -44,9 +44,9 @@ export class LegendaryBattleSystem {
   private warStories: string[] = []
   private nextBattleId = 1
   private heroBuffs: Map<EntityId, number> = new Map() // entityId -> buff expiry tick
-  // Reusable collections to avoid GC pressure
-  private _detectGrid: Map<string, EntityId[]> = new Map()
-  private _visited: Set<string> = new Set()
+  // Reusable collections to avoid GC pressure (numeric key = cx * 10000 + cy)
+  private _detectGrid: Map<number, EntityId[]> = new Map()
+  private _visited: Set<number> = new Set()
 
   /**
    * Main update loop. Detects new battles, updates existing ones,
@@ -82,7 +82,7 @@ export class LegendaryBattleSystem {
       if (!needs || needs.health <= 0) continue
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (!pos) continue
-      const key = `${Math.floor(pos.x / cellSize)},${Math.floor(pos.y / cellSize)}`
+      const key = Math.floor(pos.x / cellSize) * 10000 + Math.floor(pos.y / cellSize)
       const cell = grid.get(key)
       if (cell) cell.push(id)
       else grid.set(key, [id])
@@ -96,18 +96,16 @@ export class LegendaryBattleSystem {
       visited.add(key)
 
       // Collect entities from this cell and neighbors
-      const [cxStr, cyStr] = key.split(',')
-      const cx = parseInt(cxStr, 10)
-      const cy = parseInt(cyStr, 10)
+      const cx = Math.floor(key / 10000)
+      const cy = key % 10000
       const cluster: EntityId[] = []
 
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
-          const nKey = `${cx + dx},${cy + dy}`
-          const nCell = grid.get(nKey)
+          const nCell = grid.get((cx + dx) * 10000 + (cy + dy))
           if (nCell) {
             cluster.push(...nCell)
-            visited.add(nKey)
+            visited.add((cx + dx) * 10000 + (cy + dy))
           }
         }
       }
