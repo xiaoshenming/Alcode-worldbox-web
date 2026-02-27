@@ -1,0 +1,12 @@
+import { describe, it, expect, beforeEach } from 'vitest'
+import { DiplomaticDisarmamentSystem } from '../systems/DiplomaticDisarmamentSystem'
+function makeSys() { return new DiplomaticDisarmamentSystem() }
+describe('DiplomaticDisarmamentSystem', () => {
+  let sys: DiplomaticDisarmamentSystem
+  beforeEach(() => { sys = makeSys() })
+  it('初始getTreaties为空', () => { expect(sys.getTreaties()).toHaveLength(0) })
+  it('注入后getTreaties返回数据', () => {
+    ;(sys as any).treaties.push({ id: 1 })
+    expect(sys.getTreaties()).toHaveLength(1)
+  })
+})

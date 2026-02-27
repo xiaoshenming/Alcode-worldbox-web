@@ -1,12 +1,12 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代17完成。核心工作：大批量扩展World*系统测试覆盖，突破3000测试里程碑！从2730个测试增长到3029个测试（+299个），测试文件从402增到462个（+60个文件）。本轮新增60个测试文件，分5批commit推送：batch1(+103)WorldWaterspout/WorldLahar/WorldPyroclasticFlow/WorldHotSpring/WorldCenote/WorldMirage/WorldGeyserField/WorldCrystalCave/WorldQuicksand/WorldFumarole/WorldBlowhole/WorldFjord/WorldDelta/WorldCanyon/WorldStalactite/WorldGeothermal/WorldIceCave/WorldUnderground/WorldVolcanicIsland/WorldMangrove；batch2(+77)WorldRiftValley/WorldGorge/WorldHoodoo/WorldMesa/WorldSpire/WorldPinnacle/WorldEscarpment/WorldLavaTube/WorldRockBridge/WorldSandDune/WorldSaltFlat/WorldPeatBog/WorldMossGrowth/WorldFossil/WorldGeoglyph/WorldSacredGrove；batch3(+56)WorldNaturalWonder/WorldNaturalTunnel/WorldUndergroundRiver/WorldArchipelago/WorldAtoll/WorldBarrierIsland/WorldMudFlat/WorldMudPot/WorldMudVolcano/WorldObsidian/WorldCrystalFormation/WorldBalancingRock；batch4(+41)WorldAncientRuin/WorldMemorial/WorldSundial/WorldAqueduct/WorldLabyrinth/WorldNorthernLights/WorldBallLightning/WorldFrostbite；batch5(+22)WorldFrostHollow/WorldDewFormation/WorldFogBank/WorldSeasonalDisaster。TypeScript零错误，构建正常，所有commits推送成功。
+🧠 AI 上轮笔记：迭代19完成。核心工作：完成所有298个World*系统的测试覆盖！从3848个测试增长到3901个测试（+53个），测试文件从646增到660个（+14个文件）。本轮新增14个测试文件：WorldHotSpring2/WorldMigrationRoute/WorldMigrationWave/WorldPurification/WorldSinkholePrev/WorldBorder/WorldDecoration/WorldHeatmap/WorldLaw/WorldEventTimeline/WorldEvent/WorldDashboard/WorldStatsOverview/WorldExport。重要里程碑：所有298个World*系统均已有测试覆盖，comm -23检查结果为空！TypeScript零错误，所有测试通过，commit已推送。
 🎯 AI 自定优先级：[
-  "1. 继续探索未测试的World*系统（WorldWeatherFront/WorldMaelstrom/WorldAcoustic/WorldMagneticField等还有很多）",
-  "2. 探索Spring系列系统（WorldActiniumSpring/WorldAluminumSpring等100+化学元素泉系统）",
-  "3. 当前3029个测试，继续向3500+冲刺",
-  "4. Game.ts仍有4045行（超标8倍）：loop(1038行)是最大候选，但依赖太多系统，风险高",
-  "5. WorldEventSystem(813行)、WeatherDisasterSystem(741行) 超出质量门禁 500 行"
+  "1. 【里程碑达成】所有298个World*系统均已有测试覆盖，下一步扩展非World*系统的测试（如ECS/systems/utils等）",
+  "2. Game.ts仍有4045行（超标8倍）：loop(1038行)是最大候选，但依赖太多系统，风险高",
+  "3. WorldEventSystem(813行)、WeatherDisasterSystem(741行) 超出质量门禁 500 行，考虑拆分",
+  "4. 当前3901个测试，继续向4000+冲刺，探索其他未测试的非World*系统",
+  "5. 检查是否有其他系统文件（非World*前缀）缺少测试覆盖"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃源 — 已在迭代26彻底清零",
@@ -47,10 +47,14 @@
   "WorldMemorialSystem.getByType(type)按类型过滤——比直接返回所有的系统多一层过滤逻辑",
   "WorldWeatherFrontSystem有getFronts()/getCollisions()/getFrontAt()三个getter——FrontCollision是frontA/frontB碰撞对",
   "每轮可以批量创建60+个测试文件，单轮净增300个测试是可行的",
-  "网络断连时先commit本地，待网络恢复后批量push——git会自动合并推送"
+  "网络断连时先commit本地，待网络恢复后批量push——git会自动合并推送",
+  "WorldDecorationSystem用grid二维数组+decorationCount计数器，不是decorations数组——count getter直接返回decorationCount",
+  "有些系统用isVisible()方法而非getter——WorldDashboardSystem/WorldStatsOverviewSystem都是方法调用",
+  "WorldEventSystem.getActiveEvents()返回映射后的新数组（非内部引用），测试时不能用toBe检查引用",
+  "WorldMigrationWaveSystem内部数组名是activeWaves，不是waves——命名与getter名一致"
 ]
 
-迭代轮次: 18/100
+迭代轮次: 20/100
 
 
 🔄 自我进化（每轮必做）：
@@ -59,6 +63,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-02-27T19:21:59+08:00"
+  "last_updated": "2026-02-27T20:02:09+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。

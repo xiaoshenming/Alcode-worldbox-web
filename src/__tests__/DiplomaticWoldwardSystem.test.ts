@@ -1,0 +1,12 @@
+import { describe, it, expect, beforeEach } from 'vitest'
+import { DiplomaticWoldwardSystem } from '../systems/DiplomaticWoldwardSystem'
+function makeSys() { return new DiplomaticWoldwardSystem() }
+describe('DiplomaticWoldwardSystem', () => {
+  let sys: DiplomaticWoldwardSystem
+  beforeEach(() => { sys = makeSys() })
+  it('初始getArrangements为空', () => { expect(sys.getArrangements()).toHaveLength(0) })
+  it('注入后getArrangements返回数据', () => {
+    ;(sys as any).arrangements.push({ id: 1 })
+    expect(sys.getArrangements()).toHaveLength(1)
+  })
+})
