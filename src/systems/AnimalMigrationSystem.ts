@@ -30,6 +30,7 @@ export class AnimalMigrationSystem {
   private hotspots: MigrationHotspot[] = []
   private lastSeason: Season = Season.Spring
   private migrationCooldown: number = 0
+  private _animalsBuf: { id: number; x: number; y: number; species: string }[] = []
 
   private static UPDATE_INTERVAL = 120  // check every 2 seconds
   private static MAX_ROUTES = 20
@@ -92,7 +93,8 @@ export class AnimalMigrationSystem {
     if (this.hotspots.length === 0) return
 
     // Find animal clusters (non-civilized creatures)
-    const animals: { id: number; x: number; y: number; species: string }[] = []
+    const animals = this._animalsBuf
+    animals.length = 0
     for (const id of em.getEntitiesWithComponent('position')) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       const creature = em.getComponent<CreatureComponent>(id, 'creature')
@@ -149,9 +151,7 @@ export class AnimalMigrationSystem {
    * Move migrating animals along their routes
    */
   private advanceRoutes(em: EntityManager): void {
-    const completed: number[] = []
-
-    for (let i = 0; i < this.routes.length; i++) {
+    for (let i = this.routes.length - 1; i >= 0; i--) {
       const route = this.routes[i]
       route.progress = Math.min(1, route.progress + AnimalMigrationSystem.MIGRATION_SPEED)
 
@@ -170,13 +170,8 @@ export class AnimalMigrationSystem {
       }
 
       if (route.progress >= 1) {
-        completed.push(i)
+        this.routes.splice(i, 1)
       }
-    }
-
-    // Remove completed routes (reverse order)
-    for (let i = completed.length - 1; i >= 0; i--) {
-      this.routes.splice(completed[i], 1)
     }
   }
 

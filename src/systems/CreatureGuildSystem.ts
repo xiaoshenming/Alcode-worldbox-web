@@ -101,12 +101,12 @@ export class CreatureGuildSystem {
 
   private tryFormGuild(em: EntityManager, tick: number): void {
     const entities = em.getEntitiesWithComponents('position', 'creature')
-    // Group by rough location
-    const clusters = new Map<string, EntityId[]>()
+    // Group by rough location (numeric key = cx * 10000 + cy)
+    const clusters = new Map<number, EntityId[]>()
     for (const eid of entities) {
       const pos = em.getComponent<PositionComponent>(eid, 'position')
       if (!pos) continue
-      const key = `${Math.floor(pos.x / GUILD_RANGE)},${Math.floor(pos.y / GUILD_RANGE)}`
+      const key = Math.floor(pos.x / GUILD_RANGE) * 10000 + Math.floor(pos.y / GUILD_RANGE)
       let group = clusters.get(key)
       if (!group) {
         group = []
