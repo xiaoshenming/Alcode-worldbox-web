@@ -85,7 +85,7 @@ export class DiplomaticTariffSystem {
       }
     }
 
-    this.tariffs = this.tariffs.filter(t => t.rate > 0.01)
+    for (let _i = this.tariffs.length - 1; _i >= 0; _i--) { if (!((t) => t.rate > 0.01)(this.tariffs[_i])) this.tariffs.splice(_i, 1) }
   }
 
   getTariffs(): Tariff[] {

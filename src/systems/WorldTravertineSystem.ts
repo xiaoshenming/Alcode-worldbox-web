@@ -52,7 +52,7 @@ export class WorldTravertineSystem {
       f.depositionRate = Math.max(3, f.depositionRate - 0.003)
     }
 
-    this.formations = this.formations.filter(f => f.age < 98)
+    for (let _i = this.formations.length - 1; _i >= 0; _i--) { if (!((f) => f.age < 98)(this.formations[_i])) this.formations.splice(_i, 1) }
   }
 
   getFormations(): TravertineFormation[] { return this.formations }

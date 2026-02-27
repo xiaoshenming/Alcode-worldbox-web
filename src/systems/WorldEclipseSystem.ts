@@ -68,7 +68,7 @@ export class WorldEclipseSystem {
   }
 
   private expireEclipses(tick: number): void {
-    this.eclipses = this.eclipses.filter(e => tick - e.startTick < e.duration)
+    for (let _i = this.eclipses.length - 1; _i >= 0; _i--) { if (!((e) => tick - e.startTick < e.duration)(this.eclipses[_i])) this.eclipses.splice(_i, 1) }
   }
 
   private applyEffects(em: EntityManager, tick: number): void {

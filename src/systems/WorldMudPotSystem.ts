@@ -52,7 +52,7 @@ export class WorldMudPotSystem {
       p.bubbleRate = Math.max(5, Math.min(80, p.bubbleRate + (Math.random() - 0.48) * 0.08))
     }
 
-    this.pots = this.pots.filter(p => p.age < 90)
+    for (let _i = this.pots.length - 1; _i >= 0; _i--) { if (!((p) => p.age < 90)(this.pots[_i])) this.pots.splice(_i, 1) }
   }
 
   getPots(): MudPot[] { return this.pots }

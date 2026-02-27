@@ -66,7 +66,7 @@ export class CreatureSleepwalkSystem {
   }
 
   private expireSleepwalkers(tick: number): void {
-    this.sleepwalkers = this.sleepwalkers.filter(sw => tick - sw.startTick < sw.duration)
+    for (let _i = this.sleepwalkers.length - 1; _i >= 0; _i--) { if (!((sw) => tick - sw.startTick < sw.duration)(this.sleepwalkers[_i])) this.sleepwalkers.splice(_i, 1) }
   }
 
   private isSleepwalking(entityId: number): boolean {

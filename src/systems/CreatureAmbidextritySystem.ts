@@ -79,7 +79,7 @@ export class CreatureAmbidextritySystem {
     }
 
     // Remove profiles for dead creatures
-    this.profiles = this.profiles.filter(p => em.hasComponent(p.entityId, 'creature'))
+    for (let _i = this.profiles.length - 1; _i >= 0; _i--) { if (!((p) => em.hasComponent(p.entityId, 'creature'))(this.profiles[_i])) this.profiles.splice(_i, 1) }
   }
 
   getProfiles(): AmbidextrityProfile[] {

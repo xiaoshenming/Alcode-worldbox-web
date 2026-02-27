@@ -52,7 +52,7 @@ export class WorldSiliceousSinterSystem {
       d.thermalActivity = Math.max(8, d.thermalActivity - 0.005)
     }
 
-    this.deposits = this.deposits.filter(d => d.age < 97)
+    for (let _i = this.deposits.length - 1; _i >= 0; _i--) { if (!((d) => d.age < 97)(this.deposits[_i])) this.deposits.splice(_i, 1) }
   }
 
   getDeposits(): SiliceousSinter[] { return this.deposits }

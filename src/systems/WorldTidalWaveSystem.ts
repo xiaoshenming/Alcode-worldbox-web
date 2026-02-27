@@ -93,7 +93,7 @@ export class WorldTidalWaveSystem {
   }
 
   private expireWaves(tick: number): void {
-    this.waves = this.waves.filter(w => tick - w.startTick < w.duration)
+    for (let _i = this.waves.length - 1; _i >= 0; _i--) { if (!((w) => tick - w.startTick < w.duration)(this.waves[_i])) this.waves.splice(_i, 1) }
   }
 
   private applyEffects(em: EntityManager): void {

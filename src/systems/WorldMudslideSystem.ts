@@ -105,7 +105,7 @@ export class WorldMudslideSystem {
     }
 
     // Remove completed mudslides
-    this.mudslides = this.mudslides.filter(s => s.progress < 100)
+    for (let _i = this.mudslides.length - 1; _i >= 0; _i--) { if (!((s) => s.progress < 100)(this.mudslides[_i])) this.mudslides.splice(_i, 1) }
   }
 
   getMudslides(): Mudslide[] {

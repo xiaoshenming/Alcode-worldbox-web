@@ -64,7 +64,7 @@ export class DiplomaticAdjudicationSystem {
       }
     }
 
-    this.cases = this.cases.filter(c => c.verdict === 'pending' || c.duration < 80)
+    for (let _i = this.cases.length - 1; _i >= 0; _i--) { if (!((c) => c.verdict === 'pending' || c.duration < 80)(this.cases[_i])) this.cases.splice(_i, 1) }
   }
 
   getCases(): AdjudicationCase[] { return this.cases }

@@ -61,7 +61,7 @@ export class DiplomaticIntercessionSystem {
       if (a.influence < 20 && a.duration > 50) a.result = 'rejected'
     }
 
-    this.actions = this.actions.filter(a => a.result === 'active')
+    for (let _i = this.actions.length - 1; _i >= 0; _i--) { if (!((a) => a.result === 'active')(this.actions[_i])) this.actions.splice(_i, 1) }
   }
 
   getActions(): IntercessionAction[] { return this.actions }

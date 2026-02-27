@@ -59,7 +59,7 @@ export class DiplomaticMediationSystem {
       if (m.trustLevel < 15 && Math.random() < 0.05) m.outcome = 'breakdown'
     }
 
-    this.mediations = this.mediations.filter(m => m.outcome === 'pending' || m.duration < 50)
+    for (let _i = this.mediations.length - 1; _i >= 0; _i--) { if (!((m) => m.outcome === 'pending' || m.duration < 50)(this.mediations[_i])) this.mediations.splice(_i, 1) }
   }
 
   getMediations(): MediationProcess[] { return this.mediations }

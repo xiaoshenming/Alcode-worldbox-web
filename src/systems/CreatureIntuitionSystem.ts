@@ -128,7 +128,7 @@ export class CreatureIntuitionSystem {
 
   private pruneOld(): void {
     if (this.intuitions.length <= MAX_INTUITIONS) return
-    this.intuitions = this.intuitions.filter(i => !i.triggered)
+    for (let _i = this.intuitions.length - 1; _i >= 0; _i--) { if (!((i) => !i.triggered)(this.intuitions[_i])) this.intuitions.splice(_i, 1) }
     if (this.intuitions.length > MAX_INTUITIONS) {
       this.intuitions.splice(0, this.intuitions.length - MAX_INTUITIONS)
     }

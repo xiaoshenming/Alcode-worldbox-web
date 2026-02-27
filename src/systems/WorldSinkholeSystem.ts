@@ -81,7 +81,7 @@ export class WorldSinkholeSystem {
       }
     }
 
-    this.sinkholes = this.sinkholes.filter(s => s.stage !== 'filled')
+    for (let _i = this.sinkholes.length - 1; _i >= 0; _i--) { if (!((s) => s.stage !== 'filled')(this.sinkholes[_i])) this.sinkholes.splice(_i, 1) }
   }
 
   private applyDamage(em: EntityManager): void {

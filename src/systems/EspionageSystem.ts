@@ -257,7 +257,7 @@ export class EspionageSystem {
             // Can't pay — refuse tribute
             if (existing) {
               this.tributeRefused(weak, strong, civManager, tick)
-              this.tributes = this.tributes.filter(t => !(t.fromCivId === weak.id && t.toCivId === strong.id))
+              for (let _i = this.tributes.length - 1; _i >= 0; _i--) { if (!((t) => !(t.fromCivId === weak.id && t.toCivId === strong.id))(this.tributes[_i])) this.tributes.splice(_i, 1) }
             }
             continue
           }

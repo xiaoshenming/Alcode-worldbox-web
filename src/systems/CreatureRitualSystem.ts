@@ -116,7 +116,7 @@ export class CreatureRitualSystem {
 
   private pruneCompleted(): void {
     if (this.rituals.length <= MAX_RITUALS) return
-    this.rituals = this.rituals.filter(r => r.progress < 100)
+    for (let _i = this.rituals.length - 1; _i >= 0; _i--) { if (!((r) => r.progress < 100)(this.rituals[_i])) this.rituals.splice(_i, 1) }
     if (this.rituals.length > MAX_RITUALS) {
       this.rituals.splice(0, this.rituals.length - MAX_RITUALS)
     }

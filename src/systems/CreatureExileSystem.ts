@@ -83,7 +83,7 @@ export class CreatureExileSystem {
 
   private cleanup(): void {
     // Remove exiles whose entities no longer exist or who wandered long enough
-    this.exiles = this.exiles.filter(e => e.wanderTicks < 5000)
+    for (let _i = this.exiles.length - 1; _i >= 0; _i--) { if (!((e) => e.wanderTicks < 5000)(this.exiles[_i])) this.exiles.splice(_i, 1) }
     if (this.exiles.length > MAX_EXILES) {
       this.exiles.splice(0, this.exiles.length - MAX_EXILES)
     }

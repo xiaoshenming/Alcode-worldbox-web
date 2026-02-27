@@ -135,7 +135,7 @@ export class DiplomaticCouncilSystem {
 
   private pruneOld(): void {
     if (this.councils.length <= MAX_COUNCILS) return
-    this.councils = this.councils.filter(c => !c.resolved)
+    for (let _i = this.councils.length - 1; _i >= 0; _i--) { if (!((c) => !c.resolved)(this.councils[_i])) this.councils.splice(_i, 1) }
     if (this.councils.length > MAX_COUNCILS) {
       this.councils.splice(0, this.councils.length - MAX_COUNCILS)
     }

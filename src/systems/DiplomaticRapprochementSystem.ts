@@ -63,7 +63,7 @@ export class DiplomaticRapprochementSystem {
       }
     }
 
-    this.processes = this.processes.filter(p => p.stage !== 'normalized' || p.duration < 120)
+    for (let _i = this.processes.length - 1; _i >= 0; _i--) { if (!((p) => p.stage !== 'normalized' || p.duration < 120)(this.processes[_i])) this.processes.splice(_i, 1) }
   }
 
   getProcesses(): RapprochementProcess[] { return this.processes }

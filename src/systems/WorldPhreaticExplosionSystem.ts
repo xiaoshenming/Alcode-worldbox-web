@@ -52,7 +52,7 @@ export class WorldPhreaticExplosionSystem {
       e.groundwaterDepth = Math.min(80, e.groundwaterDepth + 0.01)
     }
 
-    this.explosions = this.explosions.filter(e => e.age < 80)
+    for (let _i = this.explosions.length - 1; _i >= 0; _i--) { if (!((e) => e.age < 80)(this.explosions[_i])) this.explosions.splice(_i, 1) }
   }
 
   getExplosions(): PhreaticExplosion[] { return this.explosions }

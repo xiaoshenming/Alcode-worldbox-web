@@ -55,7 +55,7 @@ export class WorldAcousticSystem {
 
   private detectSounds(em: EntityManager, tick: number): void {
     // Remove expired sounds
-    this.sounds = this.sounds.filter(s => tick - s.startedAt < s.duration)
+    for (let _i = this.sounds.length - 1; _i >= 0; _i--) { if (!((s) => tick - s.startedAt < s.duration)(this.sounds[_i])) this.sounds.splice(_i, 1) }
     if (this.sounds.length >= MAX_SOUNDS) return
 
     // Detect battle sounds from fighting creatures

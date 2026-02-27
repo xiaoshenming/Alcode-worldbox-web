@@ -62,7 +62,7 @@ export class CreatureCalligraphySystem {
 
     // Clean up old non-preserved works
     const cutoff = tick - 8000
-    this.works = this.works.filter(w => w.preserved || w.tick > cutoff)
+    for (let _i = this.works.length - 1; _i >= 0; _i--) { if (!((w) => w.preserved || w.tick > cutoff)(this.works[_i])) this.works.splice(_i, 1) }
 
     // Clean skill map for dead creatures
     for (const [eid] of this.skillMap) {

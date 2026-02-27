@@ -52,7 +52,7 @@ export class WorldSteamVentSystem {
       v.mineralContent = Math.min(80, v.mineralContent + 0.008)
     }
 
-    this.vents = this.vents.filter(v => v.age < 92)
+    for (let _i = this.vents.length - 1; _i >= 0; _i--) { if (!((v) => v.age < 92)(this.vents[_i])) this.vents.splice(_i, 1) }
   }
 
   getVents(): SteamVent[] { return this.vents }

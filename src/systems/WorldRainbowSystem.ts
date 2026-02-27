@@ -55,7 +55,7 @@ export class WorldRainbowSystem {
   }
 
   private expireRainbows(tick: number): void {
-    this.rainbows = this.rainbows.filter(r => tick - r.startTick < r.duration)
+    for (let _i = this.rainbows.length - 1; _i >= 0; _i--) { if (!((r) => tick - r.startTick < r.duration)(this.rainbows[_i])) this.rainbows.splice(_i, 1) }
   }
 
   private applyMoraleBoost(em: EntityManager): void {

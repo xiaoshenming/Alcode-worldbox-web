@@ -87,7 +87,7 @@ export class DiplomaticCulturalExchangeSystem {
   }
 
   private expireExchanges(tick: number): void {
-    this.exchanges = this.exchanges.filter(e => tick - e.startTick < e.duration)
+    for (let _i = this.exchanges.length - 1; _i >= 0; _i--) { if (!((e) => tick - e.startTick < e.duration)(this.exchanges[_i])) this.exchanges.splice(_i, 1) }
   }
 
   private cleanup(): void {
