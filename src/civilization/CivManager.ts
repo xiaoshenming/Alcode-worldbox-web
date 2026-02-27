@@ -343,11 +343,12 @@ export class CivManager {
     }
 
     // Farms produce extra food
-    const farms = civ.buildings.filter(id => {
-      const b = this.em.getComponent<BuildingComponent>(id, 'building')
-      return b && b.buildingType === BuildingType.FARM
-    })
-    civ.resources.food += farms.length * 0.1
+    let farmCount = 0
+    for (let i = 0; i < civ.buildings.length; i++) {
+      const b = this.em.getComponent<BuildingComponent>(civ.buildings[i], 'building')
+      if (b && b.buildingType === BuildingType.FARM) farmCount++
+    }
+    civ.resources.food += farmCount * 0.1
 
     // Nature culture bonus: +20% food production
     const foodBonus = this.getCultureBonus(civ.id, 'food')
@@ -574,11 +575,12 @@ export class CivManager {
     civ.resources.gold += taxIncome * civ.population
 
     // Houses boost happiness
-    const houses = civ.buildings.filter(id => {
-      const b = this.em.getComponent<BuildingComponent>(id, 'building')
-      return b && b.buildingType === BuildingType.HOUSE
-    }).length
-    if (houses * 3 >= civ.population) delta += 0.01 // enough housing
+    let houseCount = 0
+    for (let i = 0; i < civ.buildings.length; i++) {
+      const b = this.em.getComponent<BuildingComponent>(civ.buildings[i], 'building')
+      if (b && b.buildingType === BuildingType.HOUSE) houseCount++
+    }
+    if (houseCount * 3 >= civ.population) delta += 0.01 // enough housing
 
     // Temples boost happiness via faith
     if (civ.religion.faith > 50) delta += 0.01
@@ -641,11 +643,13 @@ export class CivManager {
   }
 
   private updateReligion(civ: Civilization): void {
-    // Count temples
-    civ.religion.temples = civ.buildings.filter(id => {
-      const b = this.em.getComponent<BuildingComponent>(id, 'building')
-      return b && b.buildingType === BuildingType.TEMPLE
-    }).length
+    // Count temples (no filter allocation)
+    let templeCount = 0
+    for (let i = 0; i < civ.buildings.length; i++) {
+      const b = this.em.getComponent<BuildingComponent>(civ.buildings[i], 'building')
+      if (b && b.buildingType === BuildingType.TEMPLE) templeCount++
+    }
+    civ.religion.temples = templeCount
 
     // Faith grows with temples, slowly decays without
     if (civ.religion.temples > 0) {
