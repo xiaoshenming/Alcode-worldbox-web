@@ -83,8 +83,7 @@ export class CreatureHomesicknessSystem {
     }
 
     // Remove for dead creatures
-    const alive = new Set(creatures)
-    this.states = this.states.filter(s => alive.has(s.entityId))
+    this.states = this.states.filter(s => em.hasComponent(s.entityId, 'creature'))
   }
 
   getStates(): HomesicknessState[] {
