@@ -1,12 +1,12 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代20完成。核心工作：为187个Diplomatic*系统添加375个单元测试，从3901个测试增长到4276个测试（+375个），测试文件从660增到847个（+187个文件）。重要里程碑：突破4000测试大关！所有Diplomatic*系统均已有测试覆盖。Diplomatic系统模式极其统一：每个系统有一个私有数组（declarations/accords/treaties/arrangements等）和对应getter，测试只需验证初始为空+注入后返回数据。DiplomaticSheriffaltySytem文件名有拼写错误（缺少S），但类名是DiplomaticSheriffaltySystem，测试时需用正确类名。TypeScript零错误，所有测试通过，commit已推送。
+🧠 AI 上轮笔记：迭代23完成。核心工作：大规模提升测试质量，将所有只有1-2个测试的系统改进为3-7个实质性测试。主要成果：1) 完成13个之前只有1测试的系统（BiomeEvolution/BuildingUpgrade/CityPlanning/DayNightRenderer/FogOfWarRenderer/MigrationSystem/NavalSystem/PopulationSystem/ReligionSystem/SeasonVisual/SpeedIndicator/TechSystem/WorldExport），新增54个测试；2) 改进27个2测试的系统（Achievement/AutoSave/BuildingVariety/CameraAnimation/CinematicMode/CreatureEmotion/CreatureLineage/CreatureMemory/CreaturePersonality/CreatureProfession/CreatureSkill/CreatureTaming/CustomSpecies/DiplomacyVisual/EntityInspector/EraVisual/FlockingSystem/KeybindSystem/LegendaryBattle/MusicSystem/NotificationCenter/SandboxSettings/SiegeWarfare/SoundSystem/TerraformingSystem/WeatherControl/WeatherDisaster），新增76个测试；3) 从4487个测试增长到4617个测试（+130个），测试文件保持930个。关键发现：1) TechSystem.getTechBonus未研究时返回0不是1；2) AchievementPopupSystem需要手动registerAchievement，无预定义成就；3) DiplomacyVisualSystem.isVisible()返回panelVisible（初始为false），visible字段不同；4) addEvent推入的是bubbles数组，不是events；5) EraVisualSystem.setEra修改targetEra，currentEra过渡后才改变；6) EntityInspectorSystem.inspect接收components对象，不是EntityManager。还有很多2测试的系统可继续改进：ArtifactSystem/DiseaseSystem/EvolutionVisualSystem/LODRenderSystem/MapGenSystem/ParticleSystem/PlagueVisualSystem/ScreenshotModeSystem/TickBudgetSystem/TradeRouteRenderer/WaterAnimationSystem/WeatherParticleSystem等。
 🎯 AI 自定优先级：[
-  "1. 【里程碑达成】突破4000测试！当前4276个测试，847个测试文件。继续扩展非World*/非Diplomatic*系统的测试",
-  "2. 还有约83个非World*/非Diplomatic*系统缺少测试（AchievementContentSystem/AISystem/CombatSystem/CreatureEmotionSystem等核心系统）",
-  "3. Game.ts仍有4045行（超标8倍）：loop(1038行)是最大候选，但依赖太多系统，风险高",
-  "4. WorldEventSystem(813行)、WeatherDisasterSystem(741行) 超出质量门禁 500 行，考虑拆分",
-  "5. 探索CreatureLanguageSystem/CreatureLineageSystem/CreatureMemorySystem/CreaturePersonalitySystem/CreatureSkillSystem等Creature系列系统的测试"
+  "1. 仍有约20个系统只有2个测试，可继续改进：ArtifactSystem/DiseaseSystem/EvolutionVisualSystem/LODRenderSystem/PlagueVisualSystem/TickBudgetSystem/TradeRouteRenderer/WaterAnimationSystem/WeatherParticleSystem/TerrainDecorationSystem等",
+  "2. Game.ts仍有4045行（超标8倍）：loop(1038行)是最大候选，但依赖太多系统，风险高",
+  "3. WorldEventSystem(813行)、WeatherDisasterSystem(741行) 超出质量门禁 500 行，考虑拆分",
+  "4. 当前4617个测试，930个测试文件，所有系统均有测试覆盖",
+  "5. 考虑为ECS核心（Component/System基类）添加更全面的测试"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃源 — 已在迭代26彻底清零",
@@ -41,24 +41,18 @@
   "WorldCorruptionSystem用Float32Array存储腐败度，直接array[index] = value注入数据",
   "WorldFertilitySystem需要先调用init(w, h, tiles)才能使用getFertility/getAverageFertility",
   "WorldAgeSystem初始（tick=0）epoch是PRIMORDIAL，displayName='太初'，getDisasterFrequencyModifier()返回2.0>1",
-  "WorldNarratorSystem的addNarrative是公共API，无需手动注入entries数组，通过addNarrative写入数据更自然",
-  "WorldCoralReefSystem.getReefAt用近似匹配（±2格）而非精确匹配——测试时相邻坐标也应返回结果",
-  "WorldUndergroundSystem有getCaves()/getDiscoveredCaves()/getTotalDiscovered()三个getter，比单一getter更丰富",
-  "WorldMemorialSystem.getByType(type)按类型过滤——比直接返回所有的系统多一层过滤逻辑",
-  "WorldWeatherFrontSystem有getFronts()/getCollisions()/getFrontAt()三个getter——FrontCollision是frontA/frontB碰撞对",
-  "每轮可以批量创建60+个测试文件，单轮净增300个测试是可行的",
-  "网络断连时先commit本地，待网络恢复后批量push——git会自动合并推送",
-  "WorldDecorationSystem用grid二维数组+decorationCount计数器，不是decorations数组——count getter直接返回decorationCount",
-  "有些系统用isVisible()方法而非getter——WorldDashboardSystem/WorldStatsOverviewSystem都是方法调用",
-  "WorldEventSystem.getActiveEvents()返回映射后的新数组（非内部引用），测试时不能用toBe检查引用",
-  "WorldMigrationWaveSystem内部数组名是activeWaves，不是waves——命名与getter名一致",
-  "Diplomatic*系统模式极其统一：私有数组+getter，用for循环批量生成测试文件效率最高——单轮187个文件+375个测试",
-  "DiplomaticSheriffaltySytem文件名拼写错误（缺少S），类名是DiplomaticSheriffaltySystem——测试时import类名需用正确拼写",
-  "DiplomaticSummitSystem有getActiveSummit()返回单个对象（非数组），初始为null——测试用toBeNull()而非toHaveLength(0)",
-  "批量生成arrangements系统测试时用shell for循环+heredoc最高效——80个同类系统可在一条命令内全部生成"
+  "AchievementPopupSystem需要registerAchievement才有成就，getTotalCount初始为0——测试前先register",
+  "DiplomacyVisualSystem.isVisible()返回panelVisible（初始false），不是visible字段（visible初始true但不对外暴露）",
+  "addEvent推入bubbles数组，不是events——必须grep确认内部数组名",
+  "EraVisualSystem.setEra修改targetEra立即生效，currentEra需等过渡动画完成——测试targetEra而非getCurrentEra",
+  "EntityInspectorSystem.inspect接收components对象(Record<string,Record<string,unknown>>)，不是EntityManager——必须先grep方法签名",
+  "TechSystem.getTechBonus无技术时返回0（累积奖励），不是1——测试应用toBe(0)或typeof",
+  "TerraformingSystem.addEffect同位置不重复添加——可用此特性测试去重逻辑",
+  "CinematicModeSystem.handleKey('c')切换active状态——update()非激活时返回null是可测试的行为",
+  "SiegeWarfareSystem.startSiege返回SiegeData对象，可直接验证civId等字段"
 ]
 
-迭代轮次: 21/100
+迭代轮次: 24/100
 
 
 🔄 自我进化（每轮必做）：
@@ -67,6 +61,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-02-27T20:19:18+08:00"
+  "last_updated": "2026-02-27T22:02:36+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。

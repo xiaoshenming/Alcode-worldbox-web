@@ -10,4 +10,7 @@ describe('LODRenderSystem', () => {
     expect(stats).toHaveProperty('rendered')
     expect(stats).toHaveProperty('culled')
   })
+  it('getStats.rendered初始为0', () => { expect(sys.getStats().rendered).toBe(0) })
+  it('getStats.culled初始为0', () => { expect(sys.getStats().culled).toBe(0) })
+  it('getStats.lod初始与getLOD()一致', () => { expect(sys.getStats().lod).toBe(sys.getLOD()) })
 })
