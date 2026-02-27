@@ -1,11 +1,11 @@
 {
-  "notes": "迭代20完成。核心工作：为187个Diplomatic*系统添加375个单元测试，从3901个测试增长到4276个测试（+375个），测试文件从660增到847个（+187个文件）。重要里程碑：突破4000测试大关！所有Diplomatic*系统均已有测试覆盖。Diplomatic系统模式极其统一：每个系统有一个私有数组（declarations/accords/treaties/arrangements等）和对应getter，测试只需验证初始为空+注入后返回数据。DiplomaticSheriffaltySytem文件名有拼写错误（缺少S），但类名是DiplomaticSheriffaltySystem，测试时需用正确类名。TypeScript零错误，所有测试通过，commit已推送。",
+  "notes": "迭代21完成。核心工作：为83个非World*/非Diplomatic*系统添加141个单元测试，从4276个测试增长到4417个测试（+141个），测试文件从847增到930个（+83个文件）。重要里程碑：所有系统（World*/Diplomatic*/其他）均已有测试覆盖！测试覆盖率达到100%系统级别。关键发现：1) PerformanceMonitorSystem在构造函数中调用window.addEventListener，需要DOM环境，只能做模块导入测试；2) EnhancedTooltipSystem使用document.createElement，同样只能做模块导入测试；3) TameState.Tamed=2（Wild=0,Taming=1,Tamed=2），不是1；4) CreaturePersonalitySystem.getDecisionBias未知实体返回0，不是0.5；5) EmotionEntry字段是emotion，不是type。TypeScript零错误，所有测试通过，commit已推送。",
   "priorities": [
-    "1. 【里程碑达成】突破4000测试！当前4276个测试，847个测试文件。继续扩展非World*/非Diplomatic*系统的测试",
-    "2. 还有约83个非World*/非Diplomatic*系统缺少测试（AchievementContentSystem/AISystem/CombatSystem/CreatureEmotionSystem等核心系统）",
-    "3. Game.ts仍有4045行（超标8倍）：loop(1038行)是最大候选，但依赖太多系统，风险高",
-    "4. WorldEventSystem(813行)、WeatherDisasterSystem(741行) 超出质量门禁 500 行，考虑拆分",
-    "5. 探索CreatureLanguageSystem/CreatureLineageSystem/CreatureMemorySystem/CreaturePersonalitySystem/CreatureSkillSystem等Creature系列系统的测试"
+    "1. 【里程碑达成】所有系统均已有测试覆盖！当前4417个测试，930个测试文件。下一步：提升测试质量，为复杂系统添加更深入的测试",
+    "2. Game.ts仍有4045行（超标8倍）：loop(1038行)是最大候选，但依赖太多系统，风险高",
+    "3. WorldEventSystem(813行)、WeatherDisasterSystem(741行) 超出质量门禁 500 行，考虑拆分",
+    "4. 部分系统只有模块导入测试（AISystem/CombatSystem/DisasterSystem/WeatherSystem/EnhancedTooltipSystem/PerformanceMonitorSystem），可以考虑用mock依赖来添加更实质性的测试",
+    "5. 考虑为ECS核心（Entity/Component/System基类）添加更全面的测试"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃源 — 已在迭代26彻底清零",
@@ -54,7 +54,11 @@
     "Diplomatic*系统模式极其统一：私有数组+getter，用for循环批量生成测试文件效率最高——单轮187个文件+375个测试",
     "DiplomaticSheriffaltySytem文件名拼写错误（缺少S），类名是DiplomaticSheriffaltySystem——测试时import类名需用正确拼写",
     "DiplomaticSummitSystem有getActiveSummit()返回单个对象（非数组），初始为null——测试用toBeNull()而非toHaveLength(0)",
-    "批量生成arrangements系统测试时用shell for循环+heredoc最高效——80个同类系统可在一条命令内全部生成"
+    "批量生成arrangements系统测试时用shell for循环+heredoc最高效——80个同类系统可在一条命令内全部生成",
+    "DOM依赖系统（EnhancedTooltipSystem/PerformanceMonitorSystem）在node环境只能做模块导入测试——不要尝试实例化",
+    "TameState是const enum：Wild=0, Taming=1, Tamed=2——注入测试数据时state必须用正确数值",
+    "CreaturePersonalitySystem.getDecisionBias未知实体返回0（不是0.5）——测试前必须grep确认返回值",
+    "EmotionEntry字段是emotion（不是type）——不同系统的情绪字段命名不同，必须grep确认"
   ],
-  "last_updated": "2026-02-27T20:20:00+08:00"
+  "last_updated": "2026-02-27T20:38:00+08:00"
 }
