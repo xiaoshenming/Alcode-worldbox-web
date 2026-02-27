@@ -119,8 +119,8 @@ export class CreatureBountySystem {
   }
 
   private checkClaims(em: EntityManager, civManager: CivManagerLike, tick: number): void {
-    const active = this.bounties.filter(b => !b.claimed)
-    for (const bounty of active) {
+    for (const bounty of this.bounties) {
+      if (bounty.claimed) continue
       const tp = em.getComponent<PositionComponent>(bounty.targetId, 'position')
       const needs = em.getComponent<NeedsComponent>(bounty.targetId, 'needs')
       if (!tp || !needs || needs.health <= 0) {
