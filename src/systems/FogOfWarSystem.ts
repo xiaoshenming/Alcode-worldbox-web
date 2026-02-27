@@ -130,7 +130,9 @@ export class FogOfWarSystem {
 
       // Phase 2: Territory tiles are always visible
       for (const key of civ.territory) {
-        const [tx, ty] = key.split(',').map(Number);
+        const comma = key.indexOf(',')
+        const tx = +key.substring(0, comma)
+        const ty = +key.substring(comma + 1)
         const idx = ty * WORLD_WIDTH + tx;
         if (fogData.fogMap[idx] === 0) {
           fogData.exploredCount++;
@@ -299,7 +301,9 @@ export class FogOfWarSystem {
       // Check if any of the other civ's territory is now visible (state 2)
       let found = false;
       for (const key of otherCiv.territory) {
-        const [tx, ty] = key.split(',').map(Number);
+        const comma = key.indexOf(',')
+        const tx = +key.substring(0, comma)
+        const ty = +key.substring(comma + 1)
         if (fogData.fogMap[ty * WORLD_WIDTH + tx] === 2) {
           found = true;
           break;
