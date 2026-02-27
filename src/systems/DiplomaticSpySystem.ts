@@ -88,14 +88,28 @@ export class DiplomaticSpySystem {
   }
 
   private tryRecruitSpy(civs: any[], tick: number): void {
-    const eligible = civs.filter((c: any) => c.population >= MIN_POP_FOR_SPIES)
-    if (eligible.length === 0) return
     if (Math.random() > 0.3) return
 
-    const origin = eligible[Math.floor(Math.random() * eligible.length)]
-    const targets = civs.filter((c: any) => c.id !== origin.id)
-    if (targets.length === 0) return
-    const target = targets[Math.floor(Math.random() * targets.length)]
+    // Pick random eligible origin civ (population >= MIN_POP_FOR_SPIES)
+    let eligibleCount = 0
+    for (let _ci = 0; _ci < civs.length; _ci++) { if (civs[_ci].population >= MIN_POP_FOR_SPIES) eligibleCount++ }
+    if (eligibleCount === 0) return
+    let originIdx = Math.floor(Math.random() * eligibleCount)
+    let origin: any
+    for (let _ci = 0; _ci < civs.length; _ci++) {
+      if (civs[_ci].population >= MIN_POP_FOR_SPIES && originIdx-- === 0) { origin = civs[_ci]; break }
+    }
+    if (!origin) return
+
+    // Pick random target (any civ except origin)
+    const targetCount = civs.length - 1
+    if (targetCount <= 0) return
+    let targetIdx = Math.floor(Math.random() * targetCount)
+    let target: any
+    for (let _ci = 0; _ci < civs.length; _ci++) {
+      if (civs[_ci].id !== origin.id && targetIdx-- === 0) { target = civs[_ci]; break }
+    }
+    if (!target) return
 
     const mission = MISSIONS[Math.floor(Math.random() * MISSIONS.length)]
     const skill = 1 + Math.floor(Math.random() * 10)

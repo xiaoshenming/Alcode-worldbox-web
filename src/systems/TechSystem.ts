@@ -4,16 +4,26 @@ import { EventLog } from './EventLog'
 
 export class TechSystem {
   private tickCounter: number = 0
+  private _availBuf: Technology[] = []
 
   /** Get all techs available at a given level */
   private getTechsForLevel(level: number): Technology[] {
-    return TECHNOLOGIES.filter(t => t.level === level)
+    this._availBuf.length = 0
+    for (const t of TECHNOLOGIES) { if (t.level === level) this._availBuf.push(t) }
+    return this._availBuf
   }
 
   /** Get techs a civ can research (current level, not yet completed) */
   private getAvailableTechs(civ: Civilization): Technology[] {
-    return this.getTechsForLevel(civ.techLevel)
-      .filter(t => !civ.research.completed.includes(t.name))
+    const byLevel = this.getTechsForLevel(civ.techLevel)
+    // Note: _availBuf is reused — filter in-place
+    let len = byLevel.length
+    for (let _i = len - 1; _i >= 0; _i--) {
+      if (civ.research.completed.includes(byLevel[_i].name)) {
+        byLevel.splice(_i, 1)
+      }
+    }
+    return byLevel
   }
 
   /** Auto-pick the best tech to research based on civ needs */
