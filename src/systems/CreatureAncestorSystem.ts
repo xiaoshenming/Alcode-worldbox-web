@@ -47,6 +47,9 @@ export class CreatureAncestorSystem {
   private nextCheckTick = CHECK_INTERVAL
   private nextBuffTick = BUFF_INTERVAL
   private deadHeroes: Array<{ name: string; species: string; civId: number; x: number; y: number; power: number }> = []
+  private _lastZoom = -1
+  private _spiritFont = ''
+  private _countFont = ''
 
   getAncestors(): AncestorSpirit[] { return this.ancestors }
 
@@ -164,6 +167,11 @@ export class CreatureAncestorSystem {
 
   render(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {
     if (this.ancestors.length === 0) return
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._spiritFont = `${Math.max(8, 9 * zoom)}px monospace`
+      this._countFont = `${Math.max(6, 7 * zoom)}px monospace`
+    }
     ctx.save()
 
     for (const ancestor of this.ancestors) {
@@ -195,7 +203,7 @@ export class CreatureAncestorSystem {
       // Spirit icon
       ctx.globalAlpha = 0.6 + 0.3 * pulse
       ctx.fillStyle = '#fff'
-      ctx.font = `${Math.max(8, 9 * zoom)}px monospace`
+      ctx.font = this._spiritFont
       ctx.textAlign = 'center'
       ctx.fillText(ancestor.domain[0].toUpperCase(), sx, sy + 3 * zoom)
 
@@ -203,7 +211,7 @@ export class CreatureAncestorSystem {
       if (ancestor.worshippers > 0) {
         ctx.globalAlpha = 0.7
         ctx.fillStyle = color
-        ctx.font = `${Math.max(6, 7 * zoom)}px monospace`
+        ctx.font = this._countFont
         ctx.fillText(`${ancestor.worshippers}`, sx, sy - 8 * zoom)
       }
     }

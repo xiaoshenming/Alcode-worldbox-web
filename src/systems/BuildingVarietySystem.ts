@@ -64,6 +64,9 @@ const ERA_ORDER: Era[] = ['primitive', 'bronze', 'iron', 'medieval', 'renaissanc
 
 export class BuildingVarietySystem {
   private buildings: Map<EntityId, BuildingComponent> = new Map()
+  private _lastZoom = -1
+  private _symbolFont = ''
+  private _nameFont = ''
 
   /** Get available building types for an era */
   getBuildingTypes(era: Era): BuildingType[] {
@@ -112,6 +115,11 @@ export class BuildingVarietySystem {
     camX: number, camY: number, zoom: number,
     em: EntityManager
   ): void {
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._symbolFont = `${Math.max(10, zoom * 0.6)}px serif`
+      this._nameFont = `${Math.max(8, zoom * 0.25)}px monospace`
+    }
     ctx.save()
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
@@ -143,14 +151,13 @@ export class BuildingVarietySystem {
 
       // Symbol
       ctx.globalAlpha = 1
-      const fontSize = Math.max(10, zoom * 0.6)
-      ctx.font = `${fontSize}px serif`
+      ctx.font = this._symbolFont
       ctx.fillStyle = '#fff'
       ctx.fillText(bType.symbol, sx, sy)
 
       // Building name at high zoom
       if (zoom > 16) {
-        ctx.font = `${Math.max(8, zoom * 0.25)}px monospace`
+        ctx.font = this._nameFont
         ctx.fillStyle = '#ccc'
         ctx.fillText(bType.name, sx, sy + h / 2 + 8)
       }
