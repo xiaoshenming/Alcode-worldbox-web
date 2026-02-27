@@ -50,15 +50,15 @@ export class MigrationSystem {
     if (candidates.length < 3) return
 
     // Group candidates by species using spatial proximity
-    // Build spatial hash (8-tile cells)
+    // Build spatial hash (8-tile cells), numeric key = cx * 10000 + cy
     const cellSize = 8
-    const speciesGroups: Map<string, Map<string, EntityId[]>> = new Map()
+    const speciesGroups: Map<string, Map<number, EntityId[]>> = new Map()
 
     for (const id of candidates) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       const creature = em.getComponent<CreatureComponent>(id, 'creature')
       if (!pos || !creature) continue
-      const cellKey = `${Math.floor(pos.x / cellSize)},${Math.floor(pos.y / cellSize)}`
+      const cellKey = Math.floor(pos.x / cellSize) * 10000 + Math.floor(pos.y / cellSize)
 
       if (!speciesGroups.has(creature.species)) {
         speciesGroups.set(creature.species, new Map())
@@ -74,14 +74,14 @@ export class MigrationSystem {
     for (const [species, cells] of speciesGroups) {
       for (const [cellKey, cellMembers] of cells) {
         // Also check neighboring cells
-        const [cx, cy] = cellKey.split(',').map(Number)
+        const cx = Math.floor(cellKey / 10000)
+        const cy = cellKey % 10000
         const nearby = new Set<EntityId>(cellMembers)
 
         for (let dy = -1; dy <= 1; dy++) {
           for (let dx = -1; dx <= 1; dx++) {
             if (dx === 0 && dy === 0) continue
-            const neighborKey = `${cx + dx},${cy + dy}`
-            const neighborMembers = cells.get(neighborKey)
+            const neighborMembers = cells.get((cx + dx) * 10000 + (cy + dy))
             if (neighborMembers) for (const id of neighborMembers) nearby.add(id)
           }
         }
