@@ -152,15 +152,21 @@ export class SeasonSystem {
   }
 
   private getPreviousSeason(): Season {
-    const order = [Season.Spring, Season.Summer, Season.Autumn, Season.Winter]
-    const idx = order.indexOf(this.currentSeason)
-    return order[(idx + 3) % 4]
+    switch (this.currentSeason) {
+      case Season.Spring: return Season.Winter
+      case Season.Summer: return Season.Spring
+      case Season.Autumn: return Season.Summer
+      default: return Season.Autumn
+    }
   }
 
   private getNextSeason(): Season {
-    const order = [Season.Spring, Season.Summer, Season.Autumn, Season.Winter]
-    const idx = order.indexOf(this.currentSeason)
-    return order[(idx + 1) % 4]
+    switch (this.currentSeason) {
+      case Season.Spring: return Season.Summer
+      case Season.Summer: return Season.Autumn
+      case Season.Autumn: return Season.Winter
+      default: return Season.Spring
+    }
   }
 
   update(tick: number): void {
