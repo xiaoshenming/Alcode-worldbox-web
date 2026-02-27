@@ -9,4 +9,7 @@ describe('DiplomaticRansomSystem', () => {
     ;(sys as any).negotiations.push({ id: 1 })
     expect(sys.getNegotiations()).toHaveLength(1)
   })
+  it('getNegotiations返回数组', () => { expect(Array.isArray(sys.getNegotiations())).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })

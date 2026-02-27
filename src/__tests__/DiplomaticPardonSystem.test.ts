@@ -9,4 +9,7 @@ describe('DiplomaticPardonSystem', () => {
     ;(sys as any).decrees.push({ id: 1 })
     expect(sys.getDecrees()).toHaveLength(1)
   })
+  it('getDecrees返回数组', () => { expect(Array.isArray(sys.getDecrees())).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })

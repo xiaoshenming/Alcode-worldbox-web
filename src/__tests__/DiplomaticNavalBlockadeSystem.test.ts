@@ -9,4 +9,7 @@ describe('DiplomaticNavalBlockadeSystem', () => {
     ;(sys as any).blockades.push({ id: 1 })
     expect(sys.getBlockades()).toHaveLength(1)
   })
+  it('getBlockades返回数组', () => { expect(Array.isArray(sys.getBlockades())).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })

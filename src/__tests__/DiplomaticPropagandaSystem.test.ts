@@ -9,4 +9,7 @@ describe('DiplomaticPropagandaSystem', () => {
     ;(sys as any).propaganda.push({ id: 1 })
     expect(sys.getPropaganda()).toHaveLength(1)
   })
+  it('getPropaganda返回数组', () => { expect(Array.isArray(sys.getPropaganda())).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })

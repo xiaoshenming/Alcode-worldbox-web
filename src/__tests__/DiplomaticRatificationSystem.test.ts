@@ -9,4 +9,7 @@ describe('DiplomaticRatificationSystem', () => {
     ;(sys as any).ratifications.push({ id: 1 })
     expect(sys.getRatifications()).toHaveLength(1)
   })
+  it('getRatifications返回数组', () => { expect(Array.isArray(sys.getRatifications())).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })

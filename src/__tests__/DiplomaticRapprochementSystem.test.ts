@@ -9,4 +9,7 @@ describe('DiplomaticRapprochementSystem', () => {
     ;(sys as any).processes.push({ id: 1 })
     expect(sys.getProcesses()).toHaveLength(1)
   })
+  it('getProcesses返回数组', () => { expect(Array.isArray(sys.getProcesses())).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })

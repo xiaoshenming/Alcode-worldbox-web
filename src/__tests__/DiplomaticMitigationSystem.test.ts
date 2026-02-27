@@ -9,4 +9,7 @@ describe('DiplomaticMitigationSystem', () => {
     ;(sys as any).measures.push({ id: 1 })
     expect(sys.getMeasures()).toHaveLength(1)
   })
+  it('getMeasures返回数组', () => { expect(Array.isArray(sys.getMeasures())).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })
