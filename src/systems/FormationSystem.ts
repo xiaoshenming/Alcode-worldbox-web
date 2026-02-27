@@ -38,6 +38,8 @@ const MORALE_MAX = 100
 export class FormationSystem {
   private formations: Map<number, Formation> = new Map()
   private nextId = 1
+  private _lastZoom = -1
+  private _iconFont = ''
 
   createFormation(civId: number, type: FormationType, members: number[]): number {
     if (members.length === 0) return -1
@@ -142,6 +144,10 @@ export class FormationSystem {
   }
 
   render(ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number, zoom: number): void {
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._iconFont = `${Math.max(8, 10 * zoom)}px monospace`
+    }
     for (const f of this.formations.values()) {
       const sx = (f.centerX * TILE_SIZE - cameraX) * zoom
       const sy = (f.centerY * TILE_SIZE - cameraY) * zoom
@@ -182,7 +188,7 @@ export class FormationSystem {
       // Formation type icon (small label)
       ctx.globalAlpha = 0.8
       ctx.fillStyle = '#fff'
-      ctx.font = `${Math.max(8, 10 * zoom)}px monospace`
+      ctx.font = this._iconFont
       ctx.textAlign = 'center'
       const icons: Record<FormationType, string> = {
         line: '=',

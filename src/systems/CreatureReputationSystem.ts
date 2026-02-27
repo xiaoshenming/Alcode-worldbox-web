@@ -42,6 +42,8 @@ export class CreatureReputationSystem {
   private reputations = new Map<EntityId, CreatureReputation>()
   private nextUpdateTick = UPDATE_INTERVAL
   private nextDecayTick = DECAY_INTERVAL
+  private _lastZoom = -1
+  private _tierFont = ''
 
   getReputation(eid: EntityId): CreatureReputation | undefined {
     return this.reputations.get(eid)
@@ -153,6 +155,10 @@ export class CreatureReputationSystem {
   }
 
   render(ctx: CanvasRenderingContext2D, em: EntityManager, camX: number, camY: number, zoom: number): void {
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._tierFont = `${Math.max(6, 8 * zoom)}px monospace`
+    }
     for (const [eid, rep] of this.reputations) {
       if (rep.tier === 'neutral') continue
       const pos = em.getComponent<PositionComponent>(eid, 'position')
@@ -164,7 +170,7 @@ export class CreatureReputationSystem {
       const color = TIER_COLORS[rep.tier]
       ctx.fillStyle = color
       ctx.globalAlpha = 0.8
-      ctx.font = `${Math.max(6, 8 * zoom)}px monospace`
+      ctx.font = this._tierFont
       ctx.textAlign = 'center'
       ctx.fillText(rep.tier[0].toUpperCase(), sx, sy - 6 * zoom)
       ctx.globalAlpha = 1

@@ -72,6 +72,10 @@ export class WorldMythicBeastSystem {
   private nextSpawnTick = SPAWN_INTERVAL
   private nextMoveTick = MOVE_INTERVAL
   private nextAttackTick = ATTACK_INTERVAL
+  private _lastZoom = -1
+  private _nameFont = ''
+  private _typeFont = ''
+  private _hostileFont = ''
 
   getBeasts(): MythicBeast[] { return this.beasts }
   getAliveBeasts(): MythicBeast[] { return this.beasts.filter(b => b.health > 0) }
@@ -211,6 +215,12 @@ export class WorldMythicBeastSystem {
 
   render(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {
     if (this.beasts.length === 0) return
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._nameFont = `bold ${Math.max(8, 9 * zoom)}px monospace`
+      this._typeFont = `${Math.max(10, 12 * zoom)}px monospace`
+      this._hostileFont = `${Math.max(6, 7 * zoom)}px monospace`
+    }
     ctx.save()
 
     const time = Date.now() * 0.003
@@ -260,19 +270,19 @@ export class WorldMythicBeastSystem {
       // Name label
       ctx.globalAlpha = 0.8
       ctx.fillStyle = '#fff'
-      ctx.font = `bold ${Math.max(8, 9 * zoom)}px monospace`
+      ctx.font = this._nameFont
       ctx.textAlign = 'center'
       ctx.fillText(beast.name, sx, sy + size + 10 * zoom)
 
       // Type icon
       ctx.fillStyle = color
-      ctx.font = `${Math.max(10, 12 * zoom)}px monospace`
+      ctx.font = this._typeFont
       ctx.fillText(beast.type[0].toUpperCase(), sx, sy + 4 * zoom)
 
       // Hostile indicator
       if (beast.hostile) {
         ctx.fillStyle = '#f00'
-        ctx.font = `${Math.max(6, 7 * zoom)}px monospace`
+        ctx.font = this._hostileFont
         ctx.fillText('!', sx + size, sy - size)
       }
     }
