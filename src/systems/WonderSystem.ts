@@ -66,9 +66,10 @@ export class WonderSystem {
   getActiveWonders(): ActiveWonder[] { return this.activeWonders }
 
   getAvailableWonders(): WonderDef[] {
-    const builtIds = new Set(this.activeWonders.map(w => w.defId))
-    const buildingIds = new Set(this.constructions.map(c => c.defId))
-    return WONDER_DEFS.filter(d => !builtIds.has(d.id) && !buildingIds.has(d.id))
+    return WONDER_DEFS.filter(d =>
+      !this.activeWonders.some(w => w.defId === d.id) &&
+      !this.constructions.some(c => c.defId === d.id)
+    )
   }
 
   hasWonder(civId: number, wonderId: string): boolean {

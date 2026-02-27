@@ -121,12 +121,12 @@ export class WorldWeatherFrontSystem {
   }
 
   private cleanupFronts(): void {
-    this.fronts = this.fronts.filter(f => {
-      if (f.age >= f.maxAge) return false
-      if (f.x < -20 || f.x > this.worldWidth + 20) return false
-      if (f.y < -20 || f.y > this.worldHeight + 20) return false
-      return true
-    })
+    for (let i = this.fronts.length - 1; i >= 0; i--) {
+      const f = this.fronts[i]
+      if (f.age >= f.maxAge || f.x < -20 || f.x > this.worldWidth + 20 || f.y < -20 || f.y > this.worldHeight + 20) {
+        this.fronts.splice(i, 1)
+      }
+    }
   }
 
   getFronts(): WeatherFront[] {

@@ -94,12 +94,13 @@ export class SiegeWarfareSystem {
       }
     }
 
-    this.particles = this.particles.filter(p => {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.life--;
-      return p.life > 0;
-    });
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i]
+      p.x += p.vx
+      p.y += p.vy
+      p.life--
+      if (p.life <= 0) this.particles.splice(i, 1)
+    }
   }
 
   addSiegeWeapon(siegeId: number, weapon: SiegeWeaponType): boolean {

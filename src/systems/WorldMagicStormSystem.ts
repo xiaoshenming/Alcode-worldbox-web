@@ -87,7 +87,8 @@ export class WorldMagicStormSystem {
   }
 
   private moveStorms(tick: number): void {
-    this.storms = this.storms.filter(s => {
+    for (let i = this.storms.length - 1; i >= 0; i--) {
+      const s = this.storms[i]
       s.x += s.dx
       s.y += s.dy
       s.age++
@@ -102,15 +103,16 @@ export class WorldMagicStormSystem {
         })
         s.mutationsApplied++
       }
-      if (s.age >= s.maxAge) return false
-      if (s.x < -20 || s.x > this.worldWidth + 20) return false
-      if (s.y < -20 || s.y > this.worldHeight + 20) return false
-      return true
-    })
+      if (s.age >= s.maxAge || s.x < -20 || s.x > this.worldWidth + 20 || s.y < -20 || s.y > this.worldHeight + 20) {
+        this.storms.splice(i, 1)
+      }
+    }
   }
 
   private cleanupZones(tick: number): void {
-    this.enchantedZones = this.enchantedZones.filter(z => tick < z.decayAt)
+    for (let i = this.enchantedZones.length - 1; i >= 0; i--) {
+      if (tick >= this.enchantedZones[i].decayAt) this.enchantedZones.splice(i, 1)
+    }
   }
 
   getStorms(): MagicStorm[] {
