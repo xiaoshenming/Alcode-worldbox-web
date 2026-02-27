@@ -41,6 +41,28 @@ const SPAWN_RATE_MULTIPLIER = 3.0
 const RAIN_DENSITY = 12  // particles per call
 const MOON_BASE_RADIUS = 40
 
+// Pre-computed overlay colors: 101 steps for intensity 0.00..1.00
+// overlay.a = 0.18 * intensity => 0.00..0.18
+const _BLOOD_OVERLAY_COLORS: string[] = (() => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) {
+    const a = (0.18 * i / 100).toFixed(3)
+    cols.push(`rgba(180,20,20,${a})`)
+  }
+  return cols
+})()
+
+// Pre-computed streak colors: 101 steps for intensity 0.00..1.00
+// streak alpha = 0.15 + 0.15 * intensity => 0.15..0.30
+const _BLOOD_STREAK_COLORS: string[] = (() => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) {
+    const a = (0.15 + 0.15 * i / 100).toFixed(3)
+    cols.push(`rgba(160,20,20,${a})`)
+  }
+  return cols
+})()
+
 export class BloodMoonSystem {
   private cooldown: number = MIN_COOLDOWN + Math.floor(Math.random() * (MAX_COOLDOWN - MIN_COOLDOWN))
   private elapsed: number = 0
@@ -202,9 +224,9 @@ export class BloodMoonSystem {
     const prevComposite = ctx.globalCompositeOperation
 
     // --- Red overlay ---
-    const overlay = this.getOverlayColor()
+    const intensityIdx = Math.round(intensity * 100)
     ctx.globalCompositeOperation = 'source-over'
-    ctx.fillStyle = `rgba(${overlay.r},${overlay.g},${overlay.b},${overlay.a})`
+    ctx.fillStyle = _BLOOD_OVERLAY_COLORS[intensityIdx]
     ctx.fillRect(0, 0, canvasWidth, canvasHeight)
 
     // --- Moon disc in upper-right sky area ---
@@ -238,16 +260,15 @@ export class BloodMoonSystem {
     ctx.globalCompositeOperation = 'source-over'
     const streakCount = Math.floor(8 * intensity)
     let seed = (tick * 3571 + this.elapsed * 131) | 0
+    ctx.strokeStyle = _BLOOD_STREAK_COLORS[intensityIdx]
+    ctx.lineWidth = 1
     for (let i = 0; i < streakCount; i++) {
       seed = (seed * 1664525 + 1013904223) | 0
       const sx = ((seed >>> 0) / 0xFFFFFFFF) * canvasWidth
       seed = (seed * 1664525 + 1013904223) | 0
       const sy = ((seed >>> 0) / 0xFFFFFFFF) * canvasHeight
       const streakLen = 6 + ((seed >>> 16) & 0xF)
-      const alpha = 0.15 + 0.15 * intensity
 
-      ctx.strokeStyle = `rgba(160,20,20,${alpha})`
-      ctx.lineWidth = 1
       ctx.beginPath()
       ctx.moveTo(sx, sy)
       ctx.lineTo(sx - 1, sy + streakLen)
