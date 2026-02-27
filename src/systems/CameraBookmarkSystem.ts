@@ -72,7 +72,8 @@ export class CameraBookmarkSystem {
     if (!this.panelOpen) return
 
     // Panel
-    const count = this.bookmarks.filter(b => b !== null).length
+    let count = 0
+    for (let _bi = 0; _bi < this.bookmarks.length; _bi++) { if (this.bookmarks[_bi] !== null) count++ }
     const ph = 30 + Math.max(count, 1) * ROW_H + 8
     const px = screenW - PANEL_W - 20, py = 80
 

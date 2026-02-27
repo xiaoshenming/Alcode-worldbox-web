@@ -183,10 +183,14 @@ export class WorldChronicleSystem {
 
   getWorldSummary(tick: number): string {
     const year = tickToYear(tick)
-    const wars = this.chronicles.filter(c => c.category === 'war').length
-    const heroes = this.chronicles.filter(c => c.category === 'hero').length
-    const disasters = this.chronicles.filter(c => c.category === 'disaster').length
-    const legendary = this.chronicles.filter(c => c.importance === 3).length
+    let wars = 0, heroes = 0, disasters = 0, legendary = 0
+    for (let i = 0; i < this.chronicles.length; i++) {
+      const c = this.chronicles[i]
+      if (c.category === 'war') wars++
+      else if (c.category === 'hero') heroes++
+      else if (c.category === 'disaster') disasters++
+      if (c.importance === 3) legendary++
+    }
     return [
       `=== World Chronicle - Year ${year} ===`,
       `Total records: ${this.chronicles.length}`,

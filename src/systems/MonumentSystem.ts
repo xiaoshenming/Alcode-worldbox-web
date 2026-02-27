@@ -159,7 +159,8 @@ export class MonumentSystem {
     ctx.fillStyle = '#d0e8b0'
     ctx.font = 'bold 14px monospace'
     ctx.textAlign = 'left'
-    const done = this.monuments.filter(m => m.completed).length
+    let done = 0
+    for (let _mi = 0; _mi < this.monuments.length; _mi++) { if (this.monuments[_mi].completed) done++ }
     ctx.fillText(`\u{1F3DB}\u{FE0F} 纪念碑 (${done}/${this.monuments.length})`, px + 12, py + 24)
 
     if (this.monuments.length === 0) {
