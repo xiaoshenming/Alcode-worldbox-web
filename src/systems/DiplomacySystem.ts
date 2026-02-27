@@ -266,7 +266,11 @@ export class DiplomacySystem {
       }
 
       // Clean up embassies for dead civs
-      civ.embassies = civ.embassies.filter(e => civManager.civilizations.has(e.civId))
+      for (let i = civ.embassies.length - 1; i >= 0; i--) {
+        if (!civManager.civilizations.has(civ.embassies[i].civId)) {
+          civ.embassies.splice(i, 1)
+        }
+      }
     }
   }
 

@@ -21,7 +21,7 @@ export interface Caravan {
 export class CaravanSystem {
   private caravans: Caravan[] = []
   private nextId: number = 1
-  private spawnTimers: Map<string, number> = new Map() // "fromCivId:toCivId" -> tick countdown
+  private spawnTimers: Map<number, number> = new Map() // civId*10000+partnerId -> tick countdown
 
   update(civManager: CivManager, em: EntityManager, world: World, particles: ParticleSystem): void {
 
@@ -30,7 +30,7 @@ export class CaravanSystem {
       for (const route of civ.tradeRoutes) {
         if (!route.active) continue
 
-        const key = `${civ.id}:${route.partnerId}`
+        const key = civ.id * 10000 + route.partnerId
         const timer = this.spawnTimers.get(key) ?? 0
 
         if (timer <= 0) {
