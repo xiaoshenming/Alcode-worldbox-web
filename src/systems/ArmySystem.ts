@@ -27,6 +27,7 @@ const MAX_SOLDIER_RATIO = 0.3
 
 export class ArmySystem {
   private armies: Map<number, Army> = new Map()
+  private _buildingsToRemoveBuf: number[] = []
 
   getArmies(): Map<number, Army> {
     return this.armies
@@ -245,7 +246,8 @@ export class ArmySystem {
       let baseDamage = army.soldiers.length * 2
       baseDamage *= defenseMultiplier
 
-      const buildingsToRemove: number[] = []
+      const buildingsToRemove = this._buildingsToRemoveBuf
+      buildingsToRemove.length = 0
       for (let i = 0; i < targetCiv.buildings.length; i++) {
         const bId = targetCiv.buildings[i]
         const bPos = em.getComponent<PositionComponent>(bId, 'position')
@@ -300,14 +302,13 @@ export class ArmySystem {
       if (army.state === 'idle') continue
 
       // Remove dead soldiers
-      army.soldiers = army.soldiers.filter(id => {
-        const needs = em.getComponent<NeedsComponent>(id, 'needs')
+      for (let i = army.soldiers.length - 1; i >= 0; i--) {
+        const needs = em.getComponent<NeedsComponent>(army.soldiers[i], 'needs')
         if (!needs || needs.health <= 0) {
           army.morale -= 2
-          return false
+          army.soldiers.splice(i, 1)
         }
-        return true
-      })
+      }
 
       const civ = civManager.civilizations.get(civId)
       const civName = civ?.name ?? `Civ#${civId}`

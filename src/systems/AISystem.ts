@@ -22,6 +22,7 @@ export class AISystem {
   private resources: ResourceSystem | null = null
   /** Batch index for staggered updates — only process 1/3 of entities per tick */
   private batchIndex: number = 0
+  private _newbornsBuf: { species: EntityType; x: number; y: number; motherId: EntityId; fatherId: EntityId }[] = []
 
   constructor(em: EntityManager, world: World, particles: ParticleSystem, factory: CreatureFactory, spatialHash: SpatialHashSystem) {
     this.em = em
@@ -273,7 +274,8 @@ export class AISystem {
   }
 
   private updateBreeding(entities: EntityId[]): void {
-    const newborns: { species: EntityType; x: number; y: number; motherId: EntityId; fatherId: EntityId }[] = []
+    const newborns = this._newbornsBuf
+    newborns.length = 0
 
     for (const id of entities) {
       if (!this.em.hasComponent(id, 'creature')) continue
