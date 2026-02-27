@@ -27,6 +27,8 @@ export class DiplomaticPlebisciteSystem {
   private pacts: PlebiscitePact[] = []
   private nextId = 1
   private lastCheck = 0
+  private _nationsSet = new Set<number>()
+  private _nationsBuf: number[] = []
 
   update(dt: number, world: World, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -81,9 +83,11 @@ export class DiplomaticPlebisciteSystem {
   }
 
   private getNations(em: EntityManager): number[] {
-    const set = new Set<number>()
-    for (const eid of em.getEntitiesWithComponents('creature')) set.add(eid % 6)
-    return Array.from(set)
+    this._nationsSet.clear()
+    for (const eid of em.getEntitiesWithComponents('creature')) this._nationsSet.add(eid % 6)
+    this._nationsBuf.length = 0
+    for (const n of this._nationsSet) this._nationsBuf.push(n)
+    return this._nationsBuf
   }
 
   getPacts(): readonly PlebiscitePact[] { return this.pacts }

@@ -29,6 +29,7 @@ const BONDS = Object.keys(BOND_WEIGHTS) as BeastBond[]
 export class CreatureBeastMasterSystem {
   private records: BeastMasterRecord[] = []
   private nextId = 1
+  private _bondsBuf: BeastMasterRecord[] = []
   private lastCheck = 0
 
   update(dt: number, em: EntityManager, tick: number): void {
@@ -46,10 +47,11 @@ export class CreatureBeastMasterSystem {
     for (const eid of entities) {
       if (Math.random() > TAME_CHANCE) continue
 
-      const others = entities.filter(e => e !== eid)
-      if (others.length === 0) continue
-
-      const beastId = others[Math.floor(Math.random() * others.length)]
+      if (entities.length < 2) continue
+      let beastId: number
+      do {
+        beastId = entities[Math.floor(Math.random() * entities.length)]
+      } while (beastId === eid)
       const bond = this.pickBond()
 
       this.records.push({
@@ -89,7 +91,9 @@ export class CreatureBeastMasterSystem {
 
   getRecords(): BeastMasterRecord[] { return this.records }
   getMasterBonds(masterId: number): BeastMasterRecord[] {
-    return this.records.filter(r => r.masterId === masterId)
+    this._bondsBuf.length = 0
+    for (const r of this.records) { if (r.masterId === masterId) this._bondsBuf.push(r) }
+    return this._bondsBuf
   }
   getAverageLoyalty(): number {
     if (this.records.length === 0) return 0

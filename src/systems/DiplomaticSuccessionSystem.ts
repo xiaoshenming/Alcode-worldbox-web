@@ -33,6 +33,7 @@ export class DiplomaticSuccessionSystem {
   private events: SuccessionEvent[] = []
   private nextId = 1
   private lastCheck = 0
+  private _crisesBuf: SuccessionEvent[] = []
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -96,6 +97,8 @@ export class DiplomaticSuccessionSystem {
 
   getEvents(): SuccessionEvent[] { return this.events }
   getActiveCrises(): SuccessionEvent[] {
-    return this.events.filter(e => e.status === 'contested' || e.status === 'civil_war')
+    this._crisesBuf.length = 0
+    for (const e of this.events) { if (e.status === 'contested' || e.status === 'civil_war') this._crisesBuf.push(e) }
+    return this._crisesBuf
   }
 }

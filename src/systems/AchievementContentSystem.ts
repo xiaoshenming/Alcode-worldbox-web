@@ -91,6 +91,8 @@ const DEFS: Omit<Achievement, 'unlocked' | 'unlockTick'>[] = [
 
 export class AchievementContentSystem {
   private achievements: Achievement[];
+  private _unlockedBuf: Achievement[] = [];
+  private _categoryBuf: Achievement[] = [];
 
   constructor() {
     this.achievements = DEFS.map(d => ({ ...d, unlocked: false, unlockTick: null }));
@@ -113,11 +115,15 @@ export class AchievementContentSystem {
   }
 
   getUnlocked(): Achievement[] {
-    return this.achievements.filter(a => a.unlocked);
+    this._unlockedBuf.length = 0
+    for (const a of this.achievements) { if (a.unlocked) this._unlockedBuf.push(a) }
+    return this._unlockedBuf
   }
 
   getByCategory(cat: AchievementCategory): Achievement[] {
-    return this.achievements.filter(a => a.category === cat);
+    this._categoryBuf.length = 0
+    for (const a of this.achievements) { if (a.category === cat) this._categoryBuf.push(a) }
+    return this._categoryBuf
   }
 
   getById(id: string): Achievement | undefined {
