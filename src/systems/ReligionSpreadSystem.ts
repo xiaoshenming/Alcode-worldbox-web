@@ -36,7 +36,7 @@ const PARTICLE_SPEED = 0.3
 export class ReligionSpreadSystem {
   private temples: Map<EntityId, TempleComponent> = new Map()
   private particles: FaithParticle[] = []
-  private faithMap: Map<string, { religion: ReligionType; strength: number }> = new Map()
+  private faithMap: Map<number, { religion: ReligionType; strength: number }> = new Map()
 
   registerTemple(entityId: EntityId, temple: TempleComponent): void {
     this.temples.set(entityId, temple)
@@ -57,7 +57,7 @@ export class ReligionSpreadSystem {
         for (let dy = -r; dy <= r; dy++) {
           for (let dx = -r; dx <= r; dx++) {
             if (dx * dx + dy * dy > r * r) continue
-            const key = `${Math.floor(pos.x + dx)},${Math.floor(pos.y + dy)}`
+            const key = Math.floor(pos.x + dx) * 10000 + Math.floor(pos.y + dy)
             const dist = Math.sqrt(dx * dx + dy * dy)
             const strength = r > 0 ? temple.faithStrength * (1 - dist / r) * temple.level * 0.5 : 0
             const existing = this.faithMap.get(key)
@@ -100,10 +100,9 @@ export class ReligionSpreadSystem {
     // Render faith influence zones
     ctx.save()
     ctx.globalAlpha = 0.08
-    for (const [key, faith] of this.faithMap) {
-      const [xStr, yStr] = key.split(',')
-      const wx = parseInt(xStr, 10)
-      const wy = parseInt(yStr, 10)
+    for (const [numKey, faith] of this.faithMap) {
+      const wx = Math.floor(numKey / 10000)
+      const wy = numKey % 10000
       const sx = (wx - camX) * zoom
       const sy = (wy - camY) * zoom
       ctx.fillStyle = RELIGION_COLORS[faith.religion]
@@ -166,7 +165,7 @@ export class ReligionSpreadSystem {
   }
 
   getFaithAt(wx: number, wy: number): { religion: ReligionType; strength: number } | null {
-    return this.faithMap.get(`${wx},${wy}`) ?? null
+    return this.faithMap.get(wx * 10000 + wy) ?? null
   }
 
   getDominantReligion(civId: number): ReligionType | null {
