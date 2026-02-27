@@ -87,6 +87,8 @@ export class CreatureSkillSystem {
   private dragging = false
   private dragOX = 0
   private dragOY = 0
+  private _lastBranch: SkillBranch = '' as SkillBranch
+  private _branchSkillCache: SkillDef[] = []
 
   /* ── 公共 API ── */
 
@@ -228,7 +230,11 @@ export class CreatureSkillSystem {
     }
 
     // 技能节点
-    const branchSkills = SKILL_DEFS.filter(s => s.branch === this.activeBranch)
+    if (this.activeBranch !== this._lastBranch) {
+      this._lastBranch = this.activeBranch
+      this._branchSkillCache = SKILL_DEFS.filter(s => s.branch === this.activeBranch)
+    }
+    const branchSkills = this._branchSkillCache
     const startY = py + HEADER_H + TAB_H + 20
     const nodeW = 120, nodeH = 70, gapY = 16
     ctx.textAlign = 'center'
@@ -295,7 +301,9 @@ export class CreatureSkillSystem {
   private handleSkillClick(mx: number, my: number): void {
     const d = this.data.get(this.selectedEntity)
     if (!d) return
-    const branchSkills = SKILL_DEFS.filter(s => s.branch === this.activeBranch)
+    const branchSkills = this._branchSkillCache.length > 0 && this._lastBranch === this.activeBranch
+      ? this._branchSkillCache
+      : SKILL_DEFS.filter(s => s.branch === this.activeBranch)
     const startY = this.panelY + HEADER_H + TAB_H + 20
     const nodeW = 120, nodeH = 70, gapY = 16
     const nx = this.panelX + PANEL_W / 2 - nodeW / 2

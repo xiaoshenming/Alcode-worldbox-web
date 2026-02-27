@@ -57,6 +57,7 @@ export class WorldRelicSystem {
   private nextEffectTick = EFFECT_INTERVAL
   private _lastZoom = -1
   private _nameFont = ''
+  private _relicBuf: Relic[] = []
 
   getRelics(): Relic[] { return this.relics }
 
@@ -113,7 +114,9 @@ export class WorldRelicSystem {
   }
 
   private checkDiscovery(em: EntityManager, tick: number): void {
-    const undiscovered = this.relics.filter(r => r.discoveredBy === null)
+    const undiscovered = this._relicBuf
+    undiscovered.length = 0
+    for (const r of this.relics) { if (r.discoveredBy === null) undiscovered.push(r) }
     if (undiscovered.length === 0) return
 
     const entities = em.getEntitiesWithComponents('position', 'creature', 'civMember')
@@ -136,7 +139,9 @@ export class WorldRelicSystem {
   }
 
   private applyEffects(em: EntityManager): void {
-    const discovered = this.relics.filter(r => r.discoveredBy !== null && r.active)
+    const discovered = this._relicBuf
+    discovered.length = 0
+    for (const r of this.relics) { if (r.discoveredBy !== null && r.active) discovered.push(r) }
     if (discovered.length === 0) return
 
     const entities = em.getEntitiesWithComponents('position', 'creature', 'needs')
