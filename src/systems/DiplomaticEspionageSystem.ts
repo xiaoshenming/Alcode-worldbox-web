@@ -65,6 +65,8 @@ export class DiplomaticEspionageSystem {
   private nextCheckTick = CHECK_INTERVAL
   private nextMissionTick = MISSION_INTERVAL
   private nextDetectTick = DETECT_INTERVAL
+  private _lastZoom = -1
+  private _alertFont = ''
 
   getSpies(): Spy[] { return this.spies }
   getActiveSpies(): Spy[] { return this.spies.filter(s => !s.discovered) }
@@ -187,6 +189,10 @@ export class DiplomaticEspionageSystem {
   }
 
   render(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._alertFont = `${Math.max(7, 9 * zoom)}px monospace`
+    }
     for (const spy of this.spies) {
       const sx = (spy.x - camX) * zoom
       const sy = (spy.y - camY) * zoom
@@ -202,7 +208,7 @@ export class DiplomaticEspionageSystem {
 
       if (spy.discovered) {
         ctx.fillStyle = '#f44'
-        ctx.font = `${Math.max(7, 9 * zoom)}px monospace`
+        ctx.font = this._alertFont
         ctx.textAlign = 'center'
         ctx.fillText('!', sx, sy - 5 * zoom)
       }

@@ -55,6 +55,8 @@ export class MonumentSystem {
   private panelX = 110
   private panelY = 55
   private scrollY = 0
+  private _lastZoom = -1
+  private _iconFont = ''
 
   /* ── 公共 API ── */
 
@@ -213,6 +215,10 @@ export class MonumentSystem {
 
   /** 在世界地图上渲染纪念碑图标 */
   renderWorld(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number, tileSize: number): void {
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._iconFont = `${Math.max(12, 16 * zoom)}px sans-serif`
+    }
     for (const m of this.monuments) {
       if (!m.completed) continue
       const sx = (m.x * tileSize - camX) * zoom
@@ -227,7 +233,7 @@ export class MonumentSystem {
       ctx.stroke()
 
       // 图标
-      ctx.font = `${Math.max(12, 16 * zoom)}px sans-serif`
+      ctx.font = this._iconFont
       ctx.textAlign = 'center'
       ctx.fillText(info.icon, sx, sy + 4)
     }

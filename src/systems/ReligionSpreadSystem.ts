@@ -37,6 +37,8 @@ export class ReligionSpreadSystem {
   private temples: Map<EntityId, TempleComponent> = new Map()
   private particles: FaithParticle[] = []
   private faithMap: Map<number, { religion: ReligionType; strength: number }> = new Map()
+  private _lastZoom = -1
+  private _symbolFont = ''
 
   registerTemple(entityId: EntityId, temple: TempleComponent): void {
     this.temples.set(entityId, temple)
@@ -97,6 +99,10 @@ export class ReligionSpreadSystem {
   }
 
   render(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._symbolFont = `${Math.max(12, zoom * 0.8)}px serif`
+    }
     // Render faith influence zones
     ctx.save()
     ctx.globalAlpha = 0.08
@@ -126,7 +132,7 @@ export class ReligionSpreadSystem {
 
     // Render temple icons
     ctx.save()
-    ctx.font = `${Math.max(12, zoom * 0.8)}px serif`
+    ctx.font = this._symbolFont
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     for (const [_eid, _temple] of this.temples) {

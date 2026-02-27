@@ -46,6 +46,8 @@ export class DiplomacyVisualSystem {
   private hoveredCivId: number | null = null;
   private panelX = 0;
   private panelY = 0;
+  private _lastZoom = -1;
+  private _labelFont = '';
 
   /** 更新文明数据快照 */
   updateCivData(civs: CivRelationData[]): void {
@@ -188,6 +190,10 @@ export class DiplomacyVisualSystem {
   // ---- 私有渲染方法 ----
 
   private renderRelationLines(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._labelFont = `bold ${Math.round(11 * zoom)}px monospace`
+    }
     const tileSize = 16 * zoom;
     for (let i = 0; i < this.civs.length; i++) {
       for (let j = i + 1; j < this.civs.length; j++) {
@@ -277,7 +283,7 @@ export class DiplomacyVisualSystem {
 
       ctx.save();
       ctx.globalAlpha = Math.max(0.1, alpha);
-      ctx.font = `bold ${Math.round(11 * zoom)}px monospace`;
+      ctx.font = this._labelFont;
       const metrics = ctx.measureText(b.text);
       const tw = metrics.width + 12 * zoom;
       const th = 18 * zoom;
