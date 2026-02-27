@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+  test: {
+    environment: 'node',
+  },
   server: { port: 5174 },
   build: {
     outDir: 'dist',
