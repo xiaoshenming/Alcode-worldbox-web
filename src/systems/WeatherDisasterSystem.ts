@@ -17,7 +17,7 @@ export interface ActiveWeatherDisaster {
   duration: number // ticks
   intensity: number // 0.0-1.0
   affectedArea: { x: number; y: number; radius: number } | null // null = global
-  originalTiles: Map<string, TileType> // record modified tiles for restoration
+  originalTiles: Map<number, TileType> // record modified tiles for restoration (key = x * 10000 + y)
 }
 
 const DISASTER_NAMES: Record<WeatherDisasterType, string> = {
@@ -166,7 +166,7 @@ export class WeatherDisasterSystem {
     y: number,
     newType: TileType
   ): void {
-    const key = `${x},${y}`
+    const key = x * 10000 + y
     if (!disaster.originalTiles.has(key)) {
       const current = world.getTile(x, y)
       if (current !== null) {
@@ -615,9 +615,8 @@ export class WeatherDisasterSystem {
 
   private expireDisaster(disaster: ActiveWeatherDisaster, world: World, tick: number): void {
     for (const [key, originalType] of disaster.originalTiles) {
-      const [xStr, yStr] = key.split(',')
-      const x = parseInt(xStr, 10)
-      const y = parseInt(yStr, 10)
+      const x = Math.floor(key / 10000)
+      const y = key % 10000
       if (x >= 0 && x < WORLD_WIDTH && y >= 0 && y < WORLD_HEIGHT) {
         world.setTile(x, y, originalType)
       }
