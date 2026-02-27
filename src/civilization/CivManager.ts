@@ -456,10 +456,12 @@ export class CivManager {
   }
 
   private countBuildings(civ: Civilization, type: BuildingType): number {
-    return civ.buildings.filter(id => {
+    let count = 0
+    for (const id of civ.buildings) {
       const b = this.em.getComponent<BuildingComponent>(id, 'building')
-      return b && b.buildingType === type
-    }).length
+      if (b && b.buildingType === type) count++
+    }
+    return count
   }
 
   private expandTerritory(civ: Civilization): void {
@@ -612,10 +614,17 @@ export class CivManager {
   private triggerRevolt(civ: Civilization): void {
     // Some members leave the civilization
     const members = this.em.getEntitiesWithComponent('civMember')
-    const civMembers = members.filter(id => {
+    let civMembersLen = 0
+    for (const id of members) {
       const m = this.em.getComponent<CivMemberComponent>(id, 'civMember')
-      return m && m.civId === civ.id && m.role !== 'leader'
-    })
+      if (m && m.civId === civ.id && m.role !== 'leader') civMembersLen++
+    }
+    // Collect non-leader members for revolt
+    const civMembers: EntityId[] = []
+    for (const id of members) {
+      const m = this.em.getComponent<CivMemberComponent>(id, 'civMember')
+      if (m && m.civId === civ.id && m.role !== 'leader') civMembers.push(id)
+    }
 
     const revolters = Math.min(Math.ceil(civMembers.length * 0.3), civMembers.length)
     for (let i = 0; i < revolters; i++) {
