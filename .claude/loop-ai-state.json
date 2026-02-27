@@ -1,9 +1,9 @@
 {
-  "notes": "迭代16完成。核心工作：大批量扩展非Creature系统测试覆盖！从2457个测试增长到2730个测试（+273个），测试文件从359增到402个（+43个文件）。本轮新增43个测试文件：修复了上轮遗留的ResourceScarcitySystem字段错误（max→capacity/consumptionRate/productionRate），然后系统性探索所有非Creature系统中有getXxx方法的World*系统，每轮5-10个文件批量创建。覆盖的系统包括：WorldGlacier/WorldMiasma/WorldOasis/WorldRelic/WorldTectonic/WorldAge/WorldChronicle/NaturalDisasterRecovery/SeasonFestival/MapMarker/WorldCorruption/WorldErosion/WorldFertility/WorldIrrigation/WorldFungalNetwork/WorldMythicBeast/WorldNarrator/WorldSeed/WorldBeacon/WorldLeyLine/WorldLighthouse/WorldGeyser/WorldSinkhole/WorldVolcanic/WorldEcho/WorldEclipse/WorldAurora/WorldComet/WorldTidal/WorldRainbow/WorldFloatingIsland/WorldAvalanche/WorldMeteorShower/WorldWhirlpool/WorldAnomaly/WorldMagicStorm/WorldSandstorm/WorldDustStorm/WorldMudslide/WorldPermafrost/WorldBioluminescence/WorldCoralReef/WorldKelpForest。TypeScript零错误，构建正常。8个commit全部git push成功。",
+  "notes": "迭代17完成。核心工作：大批量扩展World*系统测试覆盖，突破3000测试里程碑！从2730个测试增长到3029个测试（+299个），测试文件从402增到462个（+60个文件）。本轮新增60个测试文件，分5批commit推送：batch1(+103)WorldWaterspout/WorldLahar/WorldPyroclasticFlow/WorldHotSpring/WorldCenote/WorldMirage/WorldGeyserField/WorldCrystalCave/WorldQuicksand/WorldFumarole/WorldBlowhole/WorldFjord/WorldDelta/WorldCanyon/WorldStalactite/WorldGeothermal/WorldIceCave/WorldUnderground/WorldVolcanicIsland/WorldMangrove；batch2(+77)WorldRiftValley/WorldGorge/WorldHoodoo/WorldMesa/WorldSpire/WorldPinnacle/WorldEscarpment/WorldLavaTube/WorldRockBridge/WorldSandDune/WorldSaltFlat/WorldPeatBog/WorldMossGrowth/WorldFossil/WorldGeoglyph/WorldSacredGrove；batch3(+56)WorldNaturalWonder/WorldNaturalTunnel/WorldUndergroundRiver/WorldArchipelago/WorldAtoll/WorldBarrierIsland/WorldMudFlat/WorldMudPot/WorldMudVolcano/WorldObsidian/WorldCrystalFormation/WorldBalancingRock；batch4(+41)WorldAncientRuin/WorldMemorial/WorldSundial/WorldAqueduct/WorldLabyrinth/WorldNorthernLights/WorldBallLightning/WorldFrostbite；batch5(+22)WorldFrostHollow/WorldDewFormation/WorldFogBank/WorldSeasonalDisaster。TypeScript零错误，构建正常，所有commits推送成功。",
   "priorities": [
-    "1. 继续探索未测试的World*系统（WorldWaterspout/WorldLahar/WorldPyroclastic等）",
-    "2. 探索更多非World*非Creature系统（FlockingSystem/NavalSystem等有getter的系统）",
-    "3. 当前2730个测试，继续向3000+冲刺",
+    "1. 继续探索未测试的World*系统（WorldWeatherFront/WorldMaelstrom/WorldAcoustic/WorldMagneticField等还有很多）",
+    "2. 探索Spring系列系统（WorldActiniumSpring/WorldAluminumSpring等100+化学元素泉系统）",
+    "3. 当前3029个测试，继续向3500+冲刺",
     "4. Game.ts仍有4045行（超标8倍）：loop(1038行)是最大候选，但依赖太多系统，风险高",
     "5. WorldEventSystem(813行)、WeatherDisasterSystem(741行) 超出质量门禁 500 行"
   ],
@@ -41,7 +41,12 @@
     "WorldFertilitySystem需要先调用init(w, h, tiles)才能使用getFertility/getAverageFertility",
     "WorldAgeSystem初始（tick=0）epoch是PRIMORDIAL，displayName='太初'，getDisasterFrequencyModifier()返回2.0>1",
     "WorldNarratorSystem的addNarrative是公共API，无需手动注入entries数组，通过addNarrative写入数据更自然",
-    "WorldCoralReefSystem.getReefAt用近似匹配（±2格）而非精确匹配——测试时相邻坐标也应返回结果"
+    "WorldCoralReefSystem.getReefAt用近似匹配（±2格）而非精确匹配——测试时相邻坐标也应返回结果",
+    "WorldUndergroundSystem有getCaves()/getDiscoveredCaves()/getTotalDiscovered()三个getter，比单一getter更丰富",
+    "WorldMemorialSystem.getByType(type)按类型过滤——比直接返回所有的系统多一层过滤逻辑",
+    "WorldWeatherFrontSystem有getFronts()/getCollisions()/getFrontAt()三个getter——FrontCollision是frontA/frontB碰撞对",
+    "每轮可以批量创建60+个测试文件，单轮净增300个测试是可行的",
+    "网络断连时先commit本地，待网络恢复后批量push——git会自动合并推送"
   ],
-  "last_updated": "2026-02-27T19:00:00+08:00"
+  "last_updated": "2026-02-27T19:20:00+08:00"
 }
