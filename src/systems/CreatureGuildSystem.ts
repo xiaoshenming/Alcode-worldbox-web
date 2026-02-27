@@ -52,6 +52,8 @@ export class CreatureGuildSystem {
   private guilds: Guild[] = []
   private nextCheckTick = CHECK_INTERVAL
   private nextLevelTick = LEVEL_INTERVAL
+  private _lastZoom = -1
+  private _nameFont = ''
 
   getGuilds(): Guild[] { return this.guilds }
   getActiveGuilds(): Guild[] { return this.guilds.filter(g => g.members.length > 0) }
@@ -171,6 +173,10 @@ export class CreatureGuildSystem {
   }
 
   render(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._nameFont = `${Math.max(8, 10 * zoom)}px monospace`
+    }
     for (const guild of this.guilds) {
       if (guild.members.length === 0) continue
       const sx = (guild.hallX - camX) * zoom
@@ -186,7 +192,7 @@ export class CreatureGuildSystem {
 
       // Label
       ctx.fillStyle = '#fff'
-      ctx.font = `${Math.max(8, 10 * zoom)}px monospace`
+      ctx.font = this._nameFont
       ctx.textAlign = 'center'
       ctx.fillText(`${guild.name} Lv${guild.level}`, sx, sy - 6 * zoom)
       ctx.fillText(`${guild.members.length}/${MAX_MEMBERS}`, sx, sy + 12 * zoom)

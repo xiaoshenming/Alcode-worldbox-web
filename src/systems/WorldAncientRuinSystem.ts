@@ -64,6 +64,8 @@ export class WorldAncientRuinSystem {
   private ruins: AncientRuin[] = []
   private nextSpawnTick = SPAWN_INTERVAL
   private nextExploreTick = EXPLORE_CHECK
+  private _lastZoom = -1
+  private _nameFont = ''
 
   getRuins(): AncientRuin[] { return this.ruins }
   getUnexplored(): AncientRuin[] { return this.ruins.filter(r => !r.explored) }
@@ -166,6 +168,10 @@ export class WorldAncientRuinSystem {
   }
 
   render(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._nameFont = `${Math.max(7, 9 * zoom)}px monospace`
+    }
     for (const ruin of this.ruins) {
       const sx = (ruin.x - camX) * zoom
       const sy = (ruin.y - camY) * zoom
@@ -190,7 +196,7 @@ export class WorldAncientRuinSystem {
 
       // Label
       ctx.fillStyle = '#fff'
-      ctx.font = `${Math.max(7, 9 * zoom)}px monospace`
+      ctx.font = this._nameFont
       ctx.textAlign = 'center'
       ctx.fillText(ruin.name, sx, sy - size - 3)
       if (!ruin.explored) {

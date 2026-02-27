@@ -55,6 +55,8 @@ export class WorldRelicSystem {
   private relics: Relic[] = []
   private nextSpawnTick = SPAWN_INTERVAL
   private nextEffectTick = EFFECT_INTERVAL
+  private _lastZoom = -1
+  private _nameFont = ''
 
   getRelics(): Relic[] { return this.relics }
 
@@ -165,7 +167,10 @@ export class WorldRelicSystem {
 
   render(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {
     if (this.relics.length === 0) return
-
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._nameFont = `${Math.max(8, 10 * zoom)}px monospace`
+    }
     ctx.save()
     for (const relic of this.relics) {
       const sx = (relic.x * 16 - camX) * zoom
@@ -191,7 +196,7 @@ export class WorldRelicSystem {
       ctx.fill()
 
       ctx.fillStyle = '#fff'
-      ctx.font = `${Math.max(8, 10 * zoom)}px monospace`
+      ctx.font = this._nameFont
       ctx.textAlign = 'center'
       ctx.fillText(relic.type[0].toUpperCase(), sx, sy + 3 * zoom)
 

@@ -70,6 +70,8 @@ export class WorldSeasonalDisasterSystem {
   private nextCheckTick = CHECK_INTERVAL
   private nextDamageTick = DAMAGE_INTERVAL
   private currentSeason: SeasonType = 'spring'
+  private _lastZoom = -1
+  private _nameFont = ''
 
   getDisasters(): SeasonalDisaster[] { return this.disasters }
   getActiveCount(): number { return this.disasters.length }
@@ -145,6 +147,10 @@ export class WorldSeasonalDisasterSystem {
   }
 
   render(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._nameFont = `${Math.max(8, 10 * zoom)}px monospace`
+    }
     for (const d of this.disasters) {
       const sx = (d.x - camX) * zoom
       const sy = (d.y - camY) * zoom
@@ -168,7 +174,7 @@ export class WorldSeasonalDisasterSystem {
 
       // Label
       ctx.fillStyle = '#fff'
-      ctx.font = `${Math.max(8, 10 * zoom)}px monospace`
+      ctx.font = this._nameFont
       ctx.textAlign = 'center'
       ctx.fillText(`${d.type} (${d.severity})`, sx, sy - sr - 4)
     }

@@ -56,6 +56,8 @@ export class WorldAnomalySystem {
   private anomalies: WorldAnomaly[] = []
   private nextSpawnTick = SPAWN_INTERVAL
   private nextEffectTick = EFFECT_INTERVAL
+  private _lastZoom = -1
+  private _typeFont = ''
 
   getAnomalies(): WorldAnomaly[] { return this.anomalies }
   getActiveCount(): number { return this.anomalies.length }
@@ -177,6 +179,10 @@ export class WorldAnomalySystem {
 
   render(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {
     if (this.anomalies.length === 0) return
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      this._typeFont = `${Math.max(7, 8 * zoom)}px monospace`
+    }
     ctx.save()
 
     const time = Date.now() * 0.002
@@ -219,7 +225,7 @@ export class WorldAnomalySystem {
       // Label
       ctx.globalAlpha = 0.7
       ctx.fillStyle = '#fff'
-      ctx.font = `${Math.max(7, 8 * zoom)}px monospace`
+      ctx.font = this._typeFont
       ctx.textAlign = 'center'
       ctx.fillText(ANOMALY_LABELS[anomaly.type], sx, sy - sr - 4 * zoom)
     }
