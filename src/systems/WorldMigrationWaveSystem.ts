@@ -121,12 +121,12 @@ export class WorldMigrationWaveSystem {
 
     // Build spatial grid of creature density (cell = 16 tiles)
     const cellSize = 16
-    const cellCounts: Map<string, EntityId[]> = new Map()
+    const cellCounts: Map<number, EntityId[]> = new Map()  // key = cx * 10000 + cy
 
     for (const id of creatures) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (!pos) continue
-      const key = `${Math.floor(pos.x / cellSize)},${Math.floor(pos.y / cellSize)}`
+      const key = Math.floor(pos.x / cellSize) * 10000 + Math.floor(pos.y / cellSize)
       let arr = cellCounts.get(key)
       if (!arr) {
         arr = []
@@ -140,7 +140,8 @@ export class WorldMigrationWaveSystem {
       if (this.activeWaves.length >= WorldMigrationWaveSystem.MAX_WAVES) break
       if (ids.length < WorldMigrationWaveSystem.MIN_CREATURES_FOR_WAVE) continue
 
-      const [cx, cy] = key.split(',').map(Number)
+      const cx = Math.floor(key / 10000)
+      const cy = key % 10000
       const centerX = cx * cellSize + cellSize / 2
       const centerY = cy * cellSize + cellSize / 2
 
