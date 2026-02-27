@@ -99,9 +99,12 @@ export class TradeNegotiationSystem {
     }
 
     // Prune old resolved negotiations
-    this.negotiations = this.negotiations.filter(
-      n => n.status === 'pending' || tick - n.startTick < NEGOTIATION_TIMEOUT * 2
-    )
+    for (let i = this.negotiations.length - 1; i >= 0; i--) {
+      const n = this.negotiations[i]
+      if (n.status !== 'pending' && tick - n.startTick >= NEGOTIATION_TIMEOUT * 2) {
+        this.negotiations.splice(i, 1)
+      }
+    }
   }
 
   private updateDeals(civManager: CivManager, tick: number): void {
@@ -154,13 +157,18 @@ export class TradeNegotiationSystem {
     }
 
     // Prune inactive deals older than 2x duration
-    this.deals = this.deals.filter(
-      d => d.active || (tick - d.startTick < d.duration * 2)
-    )
+    for (let i = this.deals.length - 1; i >= 0; i--) {
+      const d = this.deals[i]
+      if (!d.active && tick - d.startTick >= d.duration * 2) {
+        this.deals.splice(i, 1)
+      }
+    }
   }
 
   private tryInitiateNegotiations(civs: Civilization[], civManager: CivManager, tick: number): void {
-    if (this.negotiations.filter(n => n.status === 'pending').length >= MAX_NEGOTIATIONS) return
+    let pendingCount = 0
+    for (const n of this.negotiations) { if (n.status === 'pending') pendingCount++ }
+    if (pendingCount >= MAX_NEGOTIATIONS) return
 
     for (let i = 0; i < civs.length; i++) {
       for (let j = i + 1; j < civs.length; j++) {
@@ -262,7 +270,9 @@ export class TradeNegotiationSystem {
   }
 
   private createDeal(neg: Negotiation, civManager: CivManager, tick: number): void {
-    if (this.deals.filter(d => d.active).length >= MAX_DEALS) return
+    let activeCount = 0
+    for (const d of this.deals) { if (d.active) activeCount++ }
+    if (activeCount >= MAX_DEALS) return
 
     const deal: TradeDeal = {
       id: nextDealId++,

@@ -16,6 +16,8 @@ export class Renderer {
   private minimapCanvas: HTMLCanvasElement
   private minimapCtx: CanvasRenderingContext2D
   private static readonly _EMPTY_DASH: number[] = []
+  // Pre-allocated dash buffers for setLineDash calls (avoids new array every call)
+  private static readonly _BRUSH_DASH: number[] = [4, 4]
   private waterOffset: number = 0
   showTerritory: boolean = true
   minimapMode: 'normal' | 'territory' | 'heatmap' = 'normal'
@@ -54,6 +56,11 @@ export class Renderer {
   private _territoryColorCache: Map<string, string> = new Map()
   private _particleByColor: Map<string, { sx: number; sy: number; r: number; alpha: number }[]> = new Map()
   private _particleBucketPool: { sx: number; sy: number; r: number; alpha: number }[][] = []
+
+  // Pre-allocated dash buffer for trade route animated lines (avoids new array every frame)
+  private _dashBuf: number[] = [0, 0]
+  // Pre-allocated density buffer for minimap heatmap (avoids new number[][] every frame)
+  private _densityBuf: number[][] = []
 
   constructor(canvas: HTMLCanvasElement, minimapCanvas: HTMLCanvasElement) {
     this.canvas = canvas
@@ -707,7 +714,9 @@ export class Renderer {
       ctx.strokeStyle = route.color
       ctx.globalAlpha = 0.3
       ctx.lineWidth = 1.5 * camera.zoom
-      ctx.setLineDash([4 * camera.zoom, 4 * camera.zoom])
+      this._dashBuf[0] = 4 * camera.zoom
+      this._dashBuf[1] = 4 * camera.zoom
+      ctx.setLineDash(this._dashBuf)
       ctx.lineDashOffset = -dashOffset
       ctx.beginPath()
       ctx.moveTo(x1, y1)
@@ -720,7 +729,9 @@ export class Renderer {
       ctx.globalAlpha = 0.6
       ctx.fillStyle = route.color
       const markerSize = 2.5 * camera.zoom
-      for (const [px, py] of [[x1, y1], [x2, y2]]) {
+      for (let mi = 0; mi < 2; mi++) {
+        const px = mi === 0 ? x1 : x2
+        const py = mi === 0 ? y1 : y2
         ctx.beginPath()
         ctx.moveTo(px, py - markerSize)
         ctx.lineTo(px + markerSize, py)
@@ -841,7 +852,7 @@ export class Renderer {
 
     ctx.strokeStyle = 'rgba(255,255,255,0.6)'
     ctx.lineWidth = 1.5
-    ctx.setLineDash([4, 4])
+    ctx.setLineDash(Renderer._BRUSH_DASH)
     ctx.beginPath()
     ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
     ctx.stroke()
@@ -902,11 +913,13 @@ export class Renderer {
       const gridSize = 10
       const gridW = Math.ceil(world.width / gridSize)
       const gridH = Math.ceil(world.height / gridSize)
-      const density: number[][] = []
+      // Reuse pre-allocated density buffer (grows as needed, never shrinks)
+      const density = this._densityBuf
       for (let gy = 0; gy < gridH; gy++) {
-        density[gy] = []
-        for (let gx = 0; gx < gridW; gx++) {
-          density[gy][gx] = 0
+        if (!density[gy]) density[gy] = new Array(gridW).fill(0)
+        else {
+          const row = density[gy]
+          for (let gx = 0; gx < gridW; gx++) row[gx] = 0
         }
       }
       const entities = em.getEntitiesWithComponents('position')
