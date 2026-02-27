@@ -119,6 +119,7 @@ const creatureTraits: Map<EntityId, Set<string>> = new Map()
 export class EvolutionSystem {
   private speciesData: Map<string, SpeciesEvolution> = new Map()
   private tickCounter: number = 0
+  private _speciesGroups: Map<string, EntityId[]> = new Map()
 
   /** Main update — call every tick, internally throttles to every 60 ticks. */
   update(em: EntityManager, world: World, tick: number): void {
@@ -129,7 +130,8 @@ export class EvolutionSystem {
     if (creatures.length === 0) return
 
     // 1. Group creatures by species and track terrain exposure
-    const speciesGroups: Map<string, EntityId[]> = new Map()
+    const speciesGroups = this._speciesGroups
+    for (const arr of speciesGroups.values()) arr.length = 0
 
     for (const id of creatures) {
       const creature = em.getComponent<CreatureComponent>(id, 'creature')
@@ -140,6 +142,8 @@ export class EvolutionSystem {
       if (!group) {
         group = []
         speciesGroups.set(creature.species, group)
+      } else if (group.length === 0) {
+        // already reset above; reuse
       }
       group.push(id)
 
