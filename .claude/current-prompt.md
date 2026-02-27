@@ -1,11 +1,11 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代34完成。超大规模GC优化扫描。主要成果：1) LoyaltySystem(每120/300tick)：getTerritoryCenter/pickEdgeTerritory 消除split+map+Array.from；2) ReligionSystem(每30/120/300tick)：spawnBlessingParticles/areBordering/spreadReligion/countTemples/updateCulture 消除Array.from+split+filter+for-of临时数组；3) TradeEconomy/Wonder/Era/Diplomacy/CityPlanning/WorldEvent等6个文件消除split+Array.from；4) 批量处理24个系统Array.from(civManager.civilizations.values())→直接迭代；5) CivManager.countBuildings/triggerRevolt消除filter；6) 批量处理120个Creature*系统的this.xxx.filter(a=>a.field>4)→逆序splice；7) 批量处理50个系统复杂条件的this.xxx.filter()→逆序splice；8) slice(-N)/slice(0,N)赋值→splice就地截断。总计：约350+个文件/处优化，测试5434个全通过，TypeScript clean，构建成功。
+🧠 AI 上轮笔记：迭代35完成。深度GC优化扫描。主要成果：1) 消除6个系统复杂filter/splice/spread：CreatureAlliance.decayAlliances多行filter→逆序splice、DiplomaticTradeAgreement.cleanup O(N²)indexOf→双指针、DiplomaticSpy.getActiveSpies热路径计数、RuinsSystem/TradeFleetSystem filter赋值→splice、MythologySystem new Set(arr.map())→布尔检查；2) 消除WorldRelic/WorldSinkhole/CreatureSkill等filter临时数组：_relicBuf/_activeBuf预分配、branchSkills缓存；3) 消除CreatureBounty/DiplomaticExile/CreatureFashion/DiplomaticSanction/DiplomaticWarReparation等filter().length→手动计数；4) 消除PlagueMutation/WorldStats/NavalCombat/CreatureLanguage等Array.from/spread→push循环或预排序缓存；5) render路径字体缓存：CreatureEmotion/MapMarker/TradeFleet/SiegeWarfare/EditorEnhanced；6) 消除ZoneManagement/WorldDashboard/CreatureCollection等Array.from+filter→两阶段采样；7) Object.entries/values缓存为模块级常量：CreatureRivalryDuel/CreatureMentor/CreatureHobby；8) SeasonSystem.getPreviousSeason/getNextSeason改switch消除临时数组。总计：约40+个文件/处优化，测试5434个全通过，TypeScript clean，构建成功。
 🎯 AI 自定优先级：[
-  "1. 仍有一些复杂条件filter未处理(CreatureAllianceSystem/DiplomaticTradeAgreementSystem多行filter)：逻辑复杂，需手动优化",
-  "2. Game.ts(4045行)：主循环密集系统调用，是最大未解决问题，但风险��",
-  "3. Renderer.ts(989行)：继续排查热路径GC，特别是renderMinimap和tile渲染循环",
-  "4. DiplomaticTradeAgreementSystem的cleanup()：有indexOf嵌套O(N²)反模式",
+  "1. ReligionSpreadSystem.render: ctx.font=`${size}px serif`在内层循环，每个temple不同size，需要更复杂的缓存策略",
+  "2. WorldDashboardSystem.render: Object.entries(sample.populations)在render路径，populations是Record<string,number>，改为Map<string,number>需要修改数据结构",
+  "3. Game.ts(4045行)：主循环密集系统调用，是最大未解决问题，但风险极高",
+  "4. Renderer.ts(989行)：继续排查热路径GC，特别是renderMinimap和tile渲染循环",
   "5. 扫描 new Object()/对象字面量 在每帧render路径中的使用——特别是WeatherDisasterSystem渲染"
 ]
 💡 AI 积累经验：[
@@ -28,7 +28,7 @@
   "接口注入模式：提取模块时定义只包含所需字段的接口，Game通过`this as unknown as Interface`传入，避免循环依赖",
   "vite循环chunk警告不影响构建成功和应用运行",
   "Vitest在vite.config.ts中添加test.environment='node'配置即可支持纯逻辑测试",
-  "【重要安全规则】严禁用Write工具创建src/__tests__/目录内的文件！Write工具会将__转义为\\_\\_导致创建错误目录，必须用Bash cat heredoc方式创建测试文件",
+  "【重要安全规则】严禁用Write工具创建src/__tests__/目录内的文件！Write工具会将__转义为\\\\_\\\\_导致创建错误目录，必须用Bash cat heredoc方式创建测试文件",
   "Creature系列系统的测试模式极其统一：直接push到(sys as any).xxx数组/Map注入数据 + 验证getter返回内部引用或过滤结果",
   "批量创建测试文件时用Bash cat heredoc并行执行效率最高",
   "【关键经验】测试前必须先用grep确认接口字段！不同系统同名方法字段可能完全不同",
@@ -63,10 +63,15 @@
   "【迭代34新增】Array.from(civManager.civilizations.values())在24个外交系统普遍存在 — 批量改为const civs:T[]=[]; for(const c of map.values()) civs.push(c)",
   "【迭代34新增】CivLike接口系统不能用Civilization类型替换 — 批量脚本必须检查文件中的局部接口定义",
   "【迭代34新增】this.arr.splice(0, len-N)替代this.arr=this.arr.slice(-N)：就地修改，零新数组分配",
-  "【迭代34新增】areBordering中的for(const [dx,dy] of [[0,1]...])创建4个临时数组 — 手动展开4个if检查，完全消除分配"
+  "【迭代34新增】areBordering中的for(const [dx,dy] of [[0,1]...])创建4个临时数组 — 手动展开4个if检查，完全消除分配",
+  "【迭代35新增】CreatureCollectionSystem: Array.from(map.entries()).filter()→两阶段计数+迭代采样，避免临时数组",
+  "【迭代35新增】WorldStatsOverviewSystem: render每帧Array.from+sort→update时预排序到_speciesEntriesBuf缓存",
+  "【迭代35新增】Object.entries/values缓存为模块级常量：STAKE_ENTRIES/SKILL_ENTRIES/HOBBY_TOTAL，消除每次调用的临时数组分配",
+  "【迭代35新增】SeasonSystem.getPreviousSeason/getNextSeason: 临时数组+indexOf→switch直接返回，零分配",
+  "【迭代35新增】render路径字体缓存模式：_lastZoom+_xxxFont成员，zoom不变时复用，已覆盖10+个系统"
 ]
 
-迭代轮次: 35/100
+迭代轮次: 36/100
 
 
 🔄 自我进化（每轮必做）：
@@ -75,6 +80,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-02-28T02:58:18+08:00"
+  "last_updated": "2026-02-28T04:01:32+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。

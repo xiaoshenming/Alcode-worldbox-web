@@ -102,10 +102,10 @@ export class CreatureRitualSystem {
         ritual.progress = 100
         continue
       }
-      ritual.participants = ritual.participants.filter(id => {
-        const n = em.getComponent<NeedsComponent>(id, 'needs')
-        return n && n.health > 0
-      })
+      for (let _pi = ritual.participants.length - 1; _pi >= 0; _pi--) {
+        const n = em.getComponent<NeedsComponent>(ritual.participants[_pi], 'needs')
+        if (!n || n.health <= 0) ritual.participants.splice(_pi, 1)
+      }
       if (ritual.participants.length < 2) {
         ritual.progress = 100
         continue

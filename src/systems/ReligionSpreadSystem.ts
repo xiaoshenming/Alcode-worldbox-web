@@ -39,6 +39,8 @@ export class ReligionSpreadSystem {
   private faithMap: Map<number, { religion: ReligionType; strength: number }> = new Map()
   private _lastZoom = -1
   private _symbolFont = ''
+  // Per-level font cache (level 1-3, index 0-2), invalidated when zoom changes
+  private _templeFonts: [string, string, string] = ['', '', '']
 
   registerTemple(entityId: EntityId, temple: TempleComponent): void {
     this.temples.set(entityId, temple)
@@ -146,6 +148,13 @@ export class ReligionSpreadSystem {
     ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number,
     em: EntityManager
   ): void {
+    if (zoom !== this._lastZoom) {
+      this._lastZoom = zoom
+      const base = Math.max(14, zoom * 0.8)
+      this._templeFonts[0] = `${base * 1.2}px serif`
+      this._templeFonts[1] = `${base * 1.4}px serif`
+      this._templeFonts[2] = `${base * 1.6}px serif`
+    }
     ctx.save()
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
@@ -154,8 +163,7 @@ export class ReligionSpreadSystem {
       if (!pos) continue
       const sx = (pos.x - camX) * zoom
       const sy = (pos.y - camY) * zoom
-      const size = Math.max(14, zoom * 0.8) * (1 + temple.level * 0.2)
-      ctx.font = `${size}px serif`
+      ctx.font = this._templeFonts[Math.min(2, temple.level - 1)]
       ctx.globalAlpha = 0.9
       ctx.fillText(RELIGION_SYMBOLS[temple.religion], sx, sy)
 

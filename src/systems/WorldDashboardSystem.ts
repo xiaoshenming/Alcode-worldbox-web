@@ -1,7 +1,7 @@
 /** WorldDashboardSystem - 世界统计仪表盘，纯 Canvas 2D 绘制 */
 type TabType = 'religion' | 'population' | 'power';
 interface CivPowerEntry { name: string; power: number; color: string }
-interface PopulationSample { tick: number; populations: Record<string, number> }
+interface PopulationSample { tick: number; populations: Record<string, number>; entries: [string, number][] }
 
 const RELIGION_COLORS: Record<string, string> = {
   sun: '#ffd700', moon: '#c0c0ff', nature: '#44cc44',
@@ -50,11 +50,13 @@ export class WorldDashboardSystem {
   }
 
   addPopulationSample(tick: number, populations: Record<string, number>): void {
+    const pops = { ...populations }
+    const entries = Object.entries(pops) as [string, number][]
     if (this.popSamples.length < MAX_POP_SAMPLES) {
-      this.popSamples.push({ tick, populations: { ...populations } });
+      this.popSamples.push({ tick, populations: pops, entries });
       this.popCount = this.popSamples.length;
     } else {
-      this.popSamples[this.popWriteIndex] = { tick, populations: { ...populations } };
+      this.popSamples[this.popWriteIndex] = { tick, populations: pops, entries };
       this.popWriteIndex = (this.popWriteIndex + 1) % MAX_POP_SAMPLES;
       this.popCount = MAX_POP_SAMPLES;
     }
@@ -266,7 +268,7 @@ export class WorldDashboardSystem {
     const races = new Set<string>();
     let maxPop = 1;
     for (const sample of ordered) {
-      for (const [race, pop] of Object.entries(sample.populations)) {
+      for (const [race, pop] of sample.entries) {
         races.add(race);
         if (pop > maxPop) maxPop = pop;
       }

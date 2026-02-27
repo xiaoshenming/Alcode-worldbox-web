@@ -36,6 +36,15 @@ const MORALE_OUTNUMBER_FACTOR = 0.15;
 const PROGRESS_PER_TICK_BASE = 0.2;
 const MORALE_RETREAT_THRESHOLD = 15;
 const DEFENDER_COUNT_ESTIMATE = 30;
+// Pre-computed particle color palettes indexed by life (0-50) to avoid template literals in render loop
+const PARTICLE_MAX_LIFE = 50;
+const FIRE_COLORS: string[] = [];
+const SMOKE_COLORS: string[] = [];
+for (let life = 0; life <= PARTICLE_MAX_LIFE; life++) {
+  const alpha = life / PARTICLE_MAX_LIFE;
+  FIRE_COLORS.push(`rgba(255,120,0,${alpha.toFixed(3)})`);
+  SMOKE_COLORS.push(`rgba(100,100,100,${(alpha * 0.6).toFixed(3)})`);
+}
 
 export class SiegeWarfareSystem {
   private sieges: Map<number, SiegeData> = new Map();
@@ -198,12 +207,8 @@ export class SiegeWarfareSystem {
     for (const p of this.particles) {
       const px = (p.x - cameraX) * tileSize;
       const py = (p.y - cameraY) * tileSize;
-      const alpha = p.life / 50;
-      if (p.type === 'fire') {
-        ctx.fillStyle = `rgba(255, ${80 + Math.random() * 80}, 0, ${alpha})`;
-      } else {
-        ctx.fillStyle = `rgba(100, 100, 100, ${alpha * 0.6})`;
-      }
+      const lifeIdx = Math.max(0, Math.min(PARTICLE_MAX_LIFE, Math.round(p.life)));
+      ctx.fillStyle = p.type === 'fire' ? FIRE_COLORS[lifeIdx] : SMOKE_COLORS[lifeIdx];
       const size = (p.type === 'smoke' ? 3 : 2) * zoom;
       ctx.fillRect(px - size / 2, py - size / 2, size, size);
     }

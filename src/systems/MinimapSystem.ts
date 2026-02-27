@@ -10,6 +10,16 @@ import { TileType, TILE_SIZE } from '../utils/Constants'
 
 export type MinimapMode = 'terrain' | 'political' | 'population' | 'resources' | 'military'
 
+// Pre-computed heatmap color table: green→red gradient (t from 0.00 to 1.00, step 0.01)
+const HEATMAP_COLORS: string[] = (() => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) {
+    const t = i / 100
+    cols.push(`rgb(${Math.floor(255 * t)},${Math.floor(255 * (1 - t))},0)`)
+  }
+  return cols
+})()
+
 // Terrain colors for minimap (one representative color per tile type)
 const TERRAIN_COLORS: Record<number, string> = {
   [TileType.DEEP_WATER]: '#1a3a5c',
@@ -262,9 +272,7 @@ export class MinimapSystem {
         const v = this.popGrid[r][c]
         if (v <= 0) continue
         const t = Math.min(v / max, 1)
-        const red = Math.floor(255 * t)
-        const green = Math.floor(255 * (1 - t))
-        ctx.fillStyle = `rgb(${red},${green},0)`
+        ctx.fillStyle = HEATMAP_COLORS[Math.round(t * 100)]
         ctx.fillRect(
           Math.floor(c * cellW),
           Math.floor(r * cellH),

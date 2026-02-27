@@ -53,6 +53,19 @@ export class Renderer {
   // Static constants for renderWarBorders
   private static readonly WAR_NEIGHBORS: readonly number[][] = [[0, 1], [0, -1], [1, 0], [-1, 0]]
   private _warPairs: Set<number> = new Set()
+  // Pre-built star/diamond repeat strings for hero rendering (avoid .repeat() in hot loop)
+  private static readonly STARS: readonly string[] = ['', '★', '★★', '★★★', '★★★★', '★★★★★']
+  private static readonly DIAMONDS: readonly string[] = ['', '◆', '◆◆', '◆◆◆', '◆◆◆◆', '◆◆◆◆◆']
+  // Pre-computed lava glow colors (glow integer [-20,20], index = glow + 20)
+  private static readonly LAVA_COLORS: readonly string[] = ((): string[] => {
+    const cols: string[] = []
+    for (let glow = -20; glow <= 20; glow++) {
+      const r = Math.min(255, 255 + glow)
+      const g = Math.min(255, 68 + glow * 2)
+      cols.push(`rgb(${r}, ${g}, 0)`)
+    }
+    return cols
+  })()
 
   // Static hero aura colors
   private static readonly AURA_COLORS: Record<string, string> = {
@@ -202,9 +215,7 @@ export class Renderer {
 
         if (tile === TileType.LAVA) {
           const glow = Math.sin(this.waterOffset * 2 + x * 0.8 + y * 0.6) * 20
-          const r = Math.min(255, 255 + glow)
-          const g = Math.min(255, 68 + glow * 2)
-          ctx.fillStyle = `rgb(${r}, ${g}, 0)`
+          ctx.fillStyle = Renderer.LAVA_COLORS[Math.round(glow) + 20]
         } else {
           ctx.fillStyle = world.getColor(x, y)
         }
@@ -430,7 +441,7 @@ export class Renderer {
         ctx.fillStyle = '#ffd700'
         ctx.font = heroFont
         ctx.textAlign = 'center'
-        const stars = '\u2605'.repeat(Math.min(heroComp.level, 5))
+        const stars = Renderer.STARS[Math.min(heroComp.level, 5)]
         ctx.fillText(stars, cx, cy + spriteSize * 0.7 + 4 * camera.zoom)
         ctx.globalAlpha = 1
 
@@ -441,7 +452,7 @@ export class Renderer {
           ctx.fillStyle = '#ffd700'
           ctx.font = artFont
           ctx.textAlign = 'center'
-          const artSymbols = '\u25C6'.repeat(heroInv.artifacts.length)
+          const artSymbols = Renderer.DIAMONDS[Math.min(heroInv.artifacts.length, 5)]
           ctx.fillText(artSymbols, cx, cy - spriteSize * 0.7 - 6 * camera.zoom)
           ctx.globalAlpha = 1
         }

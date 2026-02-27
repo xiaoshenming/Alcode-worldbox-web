@@ -16,6 +16,15 @@ const MAX_SNOW = 200;
 const MAX_TORNADO = 100;
 const MAX_FOG = 20;
 const TRANSITION_TICKS = 60;
+// Pre-computed tornado color palette (gray 80-139 quantized to 12 steps) to avoid template literals in render loop
+const TORNADO_COLORS: string[] = ((): string[] => {
+  const cols: string[] = []
+  for (let i = 0; i < 12; i++) {
+    const gray = 80 + Math.round(i * 5)
+    cols.push(`rgb(${gray + 40},${gray + 20},${gray})`)
+  }
+  return cols
+})()
 function createPool(count: number): Particle[] {
   const pool: Particle[] = [];
   for (let i = 0; i < count; i++) {
@@ -360,9 +369,9 @@ export class WeatherParticleSystem {
     for (let i = 0; i < this.tornadoPool.length; i++) {
       const p = this.tornadoPool[i];
       if (!p.active) continue;
-      const gray = 80 + Math.floor(Math.random() * 60);
+      const colorIdx = Math.floor(Math.random() * 12)
       ctx.globalAlpha = p.alpha;
-      ctx.fillStyle = `rgb(${gray + 40},${gray + 20},${gray})`;
+      ctx.fillStyle = TORNADO_COLORS[colorIdx];
       ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
     }
     ctx.globalAlpha = 1;

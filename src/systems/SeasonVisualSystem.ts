@@ -19,6 +19,8 @@ interface Particle {
   r: number
   g: number
   b: number
+  /** Cached color string (computed once on spawn) */
+  color: string
   /** Per-type aux value (sway phase for leaves, flicker phase for fireflies, etc.) */
   phase: number
 }
@@ -83,7 +85,7 @@ export class SeasonVisualSystem {
       this.particles[i] = {
         active: false, x: 0, y: 0, vx: 0, vy: 0,
         size: 1, alpha: 0, life: 0, maxLife: 300,
-        r: 255, g: 255, b: 255, phase: 0,
+        r: 255, g: 255, b: 255, color: 'rgb(255,255,255)', phase: 0,
       }
     }
   }
@@ -308,6 +310,7 @@ export class SeasonVisualSystem {
     p.life = 0
     p.maxLife = 300 + (Math.random() * 200) | 0
     p.r = c.r; p.g = c.g; p.b = c.b
+    p.color = `rgb(${c.r},${c.g},${c.b})`
     p.phase = Math.random() * 6.28
   }
 
@@ -322,6 +325,7 @@ export class SeasonVisualSystem {
     p.life = 0
     p.maxLife = 400 + (Math.random() * 200) | 0
     p.r = 240; p.g = 245; p.b = 255
+    p.color = 'rgb(240,245,255)'
     p.phase = Math.random() * 6.28
   }
 
@@ -337,6 +341,7 @@ export class SeasonVisualSystem {
     p.life = 0
     p.maxLife = 250 + (Math.random() * 150) | 0
     p.r = c.r; p.g = c.g; p.b = c.b
+    p.color = `rgb(${c.r},${c.g},${c.b})`
     p.phase = Math.random() * 6.28
   }
 
@@ -351,6 +356,7 @@ export class SeasonVisualSystem {
     p.life = 0
     p.maxLife = 350 + (Math.random() * 250) | 0
     p.r = 180; p.g = 220; p.b = 80
+    p.color = 'rgb(180,220,80)'
     p.phase = Math.random() * 6.28
   }
 
@@ -358,7 +364,7 @@ export class SeasonVisualSystem {
     ctx.save()
     ctx.translate(p.x, p.y)
     ctx.rotate(p.phase + p.life * 0.02)
-    ctx.fillStyle = `rgb(${p.r},${p.g},${p.b})`
+    ctx.fillStyle = p.color
     ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2)
     ctx.restore()
   }
@@ -367,7 +373,7 @@ export class SeasonVisualSystem {
     ctx.save()
     ctx.translate(p.x, p.y)
     ctx.rotate(p.phase)
-    ctx.fillStyle = `rgb(${p.r},${p.g},${p.b})`
+    ctx.fillStyle = p.color
     ctx.beginPath()
     ctx.ellipse(0, 0, p.size, p.size * 0.6, 0, 0, 6.2832)
     ctx.fill()
