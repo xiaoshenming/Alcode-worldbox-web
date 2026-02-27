@@ -21,6 +21,17 @@ export class LODRenderSystem {
   private thresholds: LODThresholds = { ...DEFAULT_THRESHOLDS }
   private currentLOD: LODLevel = 'full'
   private entityCounts = { rendered: 0, culled: 0 }
+  // Cached font strings — rebuilt only when zoom changes
+  private _lastZoom = -1
+  private _fullFont = ''
+  private _mediumFont = ''
+
+  private _rebuildFontsIfNeeded(zoom: number): void {
+    if (zoom === this._lastZoom) return
+    this._lastZoom = zoom
+    this._fullFont = `${Math.max(8, zoom * 0.35)}px monospace`
+    this._mediumFont = `${Math.max(7, zoom * 0.3)}px monospace`
+  }
 
   /** Determine current LOD level based on zoom */
   update(camera: Camera): void {
@@ -98,8 +109,9 @@ export class LODRenderSystem {
 
     // Name label
     if (creature) {
+      this._rebuildFontsIfNeeded(zoom)
       ctx.fillStyle = '#fff'
-      ctx.font = `${Math.max(8, zoom * 0.35)}px monospace`
+      ctx.font = this._fullFont
       ctx.textAlign = 'center'
       ctx.fillText(creature.name, sx, sy - size - 4)
     }
@@ -122,8 +134,9 @@ export class LODRenderSystem {
 
     // Species initial
     if (creature && zoom > 12) {
+      this._rebuildFontsIfNeeded(zoom)
       ctx.fillStyle = '#fff'
-      ctx.font = `${Math.max(7, zoom * 0.3)}px monospace`
+      ctx.font = this._mediumFont
       ctx.textAlign = 'center'
       ctx.fillText(creature.species[0], sx, sy + 3)
     }
