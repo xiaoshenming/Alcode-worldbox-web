@@ -20,7 +20,7 @@ export class FlockingSystem {
   private flocks: Map<string, FlockData> = new Map()  // key = civId:species
   private flockAssignment: Map<EntityId, string> = new Map()
   /** Reusable containers to avoid GC pressure in rebuildFlocks */
-  private _groups: Map<string, EntityId[]> = new Map()
+  private _groups: Map<number, Map<string, EntityId[]>> = new Map()
   private _assigned: Set<EntityId> = new Set()
   private _nearbyBuf: EntityId[] = []
   /** Pool of member arrays to reuse across flock rebuilds */
@@ -93,18 +93,22 @@ export class FlockingSystem {
 
     const entities = em.getEntitiesWithComponents('position', 'creature', 'velocity')
 
-    // Group by civ + species — reuse Map, clear arrays in-place
+    // Group by civ + species — two-level Map avoids per-entity string allocation
     const groups = this._groups
-    for (const arr of groups.values()) arr.length = 0
+    for (const innerMap of groups.values()) {
+      for (const arr of innerMap.values()) arr.length = 0
+    }
     for (const eid of entities) {
       const creature = em.getComponent<CreatureComponent>(eid, 'creature')
       if (!creature) continue
       const civMember = em.getComponent<CivMemberComponent>(eid, 'civMember')
-      const key = `${civMember?.civId ?? -1}:${creature.species}`
+      const civId = civMember?.civId ?? -1
 
-      const group = groups.get(key)
+      let innerMap = groups.get(civId)
+      if (!innerMap) { innerMap = new Map(); groups.set(civId, innerMap) }
+      const group = innerMap.get(creature.species)
       if (group) group.push(eid)
-      else groups.set(key, [eid])
+      else innerMap.set(creature.species, [eid])
     }
 
     // Build spatial flocks within each group
@@ -112,7 +116,8 @@ export class FlockingSystem {
     const nearbyBuf = this._nearbyBuf
     const flockRadiusSq = FLOCK_RADIUS * FLOCK_RADIUS
 
-    for (const [key, members] of groups) {
+    for (const [civId, innerMap] of groups) {
+      for (const [species, members] of innerMap) {
       if (members.length < 3) continue
 
       // Simple clustering: find nearby members
@@ -152,7 +157,7 @@ export class FlockingSystem {
           cx += p.x; cy += p.y
           vx += v.vx; vy += v.vy
         }
-        const flockKey = `${key}:${Math.floor(pos.x)}:${Math.floor(pos.y)}`
+        const flockKey = `${civId}:${species}:${Math.floor(pos.x)}:${Math.floor(pos.y)}`
 
         // Get or reuse a member array from pool
         let flockMembers: EntityId[]
@@ -175,6 +180,7 @@ export class FlockingSystem {
         for (let i = 0; i < n; i++) {
           this.flockAssignment.set(flockMembers[i], flockKey)
         }
+      }
       }
     }
   }
