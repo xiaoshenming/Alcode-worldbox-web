@@ -44,7 +44,7 @@ export class CreatureBasketWeaverSystem {
       w.outputQuality = Math.min(100, w.outputQuality + 0.01)
     }
 
-    this.weavers = this.weavers.filter(w => w.fiberSelection > 4)
+    for (let _i = this.weavers.length - 1; _i >= 0; _i--) { if (this.weavers[_i].fiberSelection <= 4) this.weavers.splice(_i, 1) }
   }
 
   getWeavers(): BasketWeaver[] { return this.weavers }

@@ -44,7 +44,7 @@ export class CreatureNeedlerSystem {
       n.tempeControl = Math.min(100, n.tempeControl + 0.01)
     }
 
-    this.needlers = this.needlers.filter(n => n.needlingSkill > 4)
+    for (let _i = this.needlers.length - 1; _i >= 0; _i--) { if (this.needlers[_i].needlingSkill <= 4) this.needlers.splice(_i, 1) }
   }
 
   getNeedlers(): Needler[] { return this.needlers }

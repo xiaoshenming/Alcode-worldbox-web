@@ -44,7 +44,7 @@ export class CreatureGrinderSystem {
       g.sparkManagement = Math.min(100, g.sparkManagement + 0.01)
     }
 
-    this.grinders = this.grinders.filter(g => g.grindingSkill > 4)
+    for (let _i = this.grinders.length - 1; _i >= 0; _i--) { if (this.grinders[_i].grindingSkill <= 4) this.grinders.splice(_i, 1) }
   }
 
   getGrinders(): Grinder[] { return this.grinders }

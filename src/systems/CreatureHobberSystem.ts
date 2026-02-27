@@ -44,7 +44,7 @@ export class CreatureHobberSystem {
       h.indexAccuracy = Math.min(100, h.indexAccuracy + 0.011)
     }
 
-    this.hobbers = this.hobbers.filter(h => h.hobbingSkill > 4)
+    for (let _i = this.hobbers.length - 1; _i >= 0; _i--) { if (this.hobbers[_i].hobbingSkill <= 4) this.hobbers.splice(_i, 1) }
   }
 
   getHobbers(): Hobber[] { return this.hobbers }

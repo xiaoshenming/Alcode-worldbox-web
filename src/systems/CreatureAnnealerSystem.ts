@@ -44,7 +44,7 @@ export class CreatureAnnealerSystem {
       a.grainRefinement = Math.min(100, a.grainRefinement + 0.01)
     }
 
-    this.annealers = this.annealers.filter(a => a.annealingSkill > 4)
+    for (let _i = this.annealers.length - 1; _i >= 0; _i--) { if (this.annealers[_i].annealingSkill <= 4) this.annealers.splice(_i, 1) }
   }
 
   getAnnealers(): Annealer[] { return this.annealers }

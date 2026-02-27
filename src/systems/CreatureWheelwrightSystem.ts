@@ -44,7 +44,7 @@ export class CreatureWheelwrightSystem {
       w.outputQuality = Math.min(100, w.outputQuality + 0.01)
     }
 
-    this.wheelwrights = this.wheelwrights.filter(w => w.woodBending > 4)
+    for (let _i = this.wheelwrights.length - 1; _i >= 0; _i--) { if (this.wheelwrights[_i].woodBending <= 4) this.wheelwrights.splice(_i, 1) }
   }
 
   getWheelwrights(): Wheelwright[] { return this.wheelwrights }

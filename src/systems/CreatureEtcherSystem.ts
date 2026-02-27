@@ -44,7 +44,7 @@ export class CreatureEtcherSystem {
       e.surfaceFinish = Math.min(100, e.surfaceFinish + 0.01)
     }
 
-    this.etchers = this.etchers.filter(e => e.etchingSkill > 4)
+    for (let _i = this.etchers.length - 1; _i >= 0; _i--) { if (this.etchers[_i].etchingSkill <= 4) this.etchers.splice(_i, 1) }
   }
 
   getEtchers(): Etcher[] { return this.etchers }

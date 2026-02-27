@@ -85,7 +85,7 @@ export class DiplomaticPledgeSystem {
     }
 
     // Clean up dead pledges
-    this.pledges = this.pledges.filter(p => p.strength > 0)
+    for (let _i = this.pledges.length - 1; _i >= 0; _i--) { if (this.pledges[_i].strength <= 0) this.pledges.splice(_i, 1) }
   }
 
   getPledges(): DiplomaticPledge[] {

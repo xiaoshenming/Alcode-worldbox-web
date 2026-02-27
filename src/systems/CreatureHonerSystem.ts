@@ -44,7 +44,7 @@ export class CreatureHonerSystem {
       h.crosshatchAngle = Math.min(100, h.crosshatchAngle + 0.01)
     }
 
-    this.honers = this.honers.filter(h => h.honingSkill > 4)
+    for (let _i = this.honers.length - 1; _i >= 0; _i--) { if (this.honers[_i].honingSkill <= 4) this.honers.splice(_i, 1) }
   }
 
   getHoners(): Honer[] { return this.honers }

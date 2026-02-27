@@ -44,7 +44,7 @@ export class CreatureSpinningMakersSystem {
       m.consistency = Math.min(100, m.consistency + 0.01)
     }
 
-    this.makers = this.makers.filter(m => m.spindleSpeed > 4)
+    for (let _i = this.makers.length - 1; _i >= 0; _i--) { if (this.makers[_i].spindleSpeed <= 4) this.makers.splice(_i, 1) }
   }
 
   getMakers(): SpinningMaker[] { return this.makers }

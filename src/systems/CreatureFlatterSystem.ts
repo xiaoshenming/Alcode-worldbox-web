@@ -44,7 +44,7 @@ export class CreatureFlatterSystem {
       f.thicknessControl = Math.min(100, f.thicknessControl + 0.01)
     }
 
-    this.flatters = this.flatters.filter(f => f.flattingSkill > 4)
+    for (let _i = this.flatters.length - 1; _i >= 0; _i--) { if (this.flatters[_i].flattingSkill <= 4) this.flatters.splice(_i, 1) }
   }
 
   getFlatters(): Flatter[] { return this.flatters }

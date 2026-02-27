@@ -44,7 +44,7 @@ export class CreatureChisellerSystem {
       c.edgeDefinition = Math.min(100, c.edgeDefinition + 0.01)
     }
 
-    this.chisellers = this.chisellers.filter(c => c.chisellingSkill > 4)
+    for (let _i = this.chisellers.length - 1; _i >= 0; _i--) { if (this.chisellers[_i].chisellingSkill <= 4) this.chisellers.splice(_i, 1) }
   }
 
   getChisellers(): Chiseller[] { return this.chisellers }

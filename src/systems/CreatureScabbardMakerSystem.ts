@@ -44,7 +44,7 @@ export class CreatureScabbardMakerSystem {
       m.outputQuality = Math.min(100, m.outputQuality + 0.01)
     }
 
-    this.makers = this.makers.filter(m => m.leatherWorking > 4)
+    for (let _i = this.makers.length - 1; _i >= 0; _i--) { if (this.makers[_i].leatherWorking <= 4) this.makers.splice(_i, 1) }
   }
 
   getMakers(): ScabbardMaker[] { return this.makers }

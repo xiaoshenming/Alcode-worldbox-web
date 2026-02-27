@@ -44,7 +44,7 @@ export class CreatureEnamellerSystem {
       e.outputQuality = Math.min(100, e.outputQuality + 0.01)
     }
 
-    this.enamellers = this.enamellers.filter(e => e.enamelSkill > 4)
+    for (let _i = this.enamellers.length - 1; _i >= 0; _i--) { if (this.enamellers[_i].enamelSkill <= 4) this.enamellers.splice(_i, 1) }
   }
 
   getEnamellers(): Enameller[] { return this.enamellers }

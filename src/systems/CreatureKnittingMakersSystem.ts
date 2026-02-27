@@ -44,7 +44,7 @@ export class CreatureKnittingMakersSystem {
       m.outputRate = Math.min(1, m.outputRate + 0.005)
     }
 
-    this.makers = this.makers.filter(m => m.skillLevel > 5)
+    for (let _i = this.makers.length - 1; _i >= 0; _i--) { if (this.makers[_i].skillLevel <= 5) this.makers.splice(_i, 1) }
   }
 
   getMakers(): KnittingMaker[] { return this.makers }

@@ -44,7 +44,7 @@ export class CreatureFletcherSystem {
       f.outputQuality = Math.min(100, f.outputQuality + 0.01)
     }
 
-    this.fletchers = this.fletchers.filter(f => f.featherCutting > 4)
+    for (let _i = this.fletchers.length - 1; _i >= 0; _i--) { if (this.fletchers[_i].featherCutting <= 4) this.fletchers.splice(_i, 1) }
   }
 
   getFletchers(): Fletcher[] { return this.fletchers }

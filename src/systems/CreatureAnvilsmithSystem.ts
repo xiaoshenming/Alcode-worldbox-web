@@ -44,7 +44,7 @@ export class CreatureAnvilsmithSystem {
       a.outputQuality = Math.min(100, a.outputQuality + 0.01)
     }
 
-    this.anvilsmiths = this.anvilsmiths.filter(a => a.heavyForging > 4)
+    for (let _i = this.anvilsmiths.length - 1; _i >= 0; _i--) { if (this.anvilsmiths[_i].heavyForging <= 4) this.anvilsmiths.splice(_i, 1) }
   }
 
   getAnvilsmiths(): Anvilsmith[] { return this.anvilsmiths }

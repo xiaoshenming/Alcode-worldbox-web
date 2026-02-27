@@ -44,7 +44,7 @@ export class CreatureHammermanSystem {
       h.metalShaping = Math.min(100, h.metalShaping + 0.01)
     }
 
-    this.hammermen = this.hammermen.filter(h => h.hammeringSkill > 4)
+    for (let _i = this.hammermen.length - 1; _i >= 0; _i--) { if (this.hammermen[_i].hammeringSkill <= 4) this.hammermen.splice(_i, 1) }
   }
 
   getHammermen(): Hammerman[] { return this.hammermen }

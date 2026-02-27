@@ -94,7 +94,7 @@ export class WorldGeothermalVentSystem {
     }
 
     // Remove depleted vents
-    this.vents = this.vents.filter(v => v.heatOutput > 2)
+    for (let _i = this.vents.length - 1; _i >= 0; _i--) { if (this.vents[_i].heatOutput <= 2) this.vents.splice(_i, 1) }
   }
 
   getVents(): GeothermalVent[] {

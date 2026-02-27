@@ -44,7 +44,7 @@ export class CreaturePeenerSystem {
       p.stressRelief = Math.min(100, p.stressRelief + 0.01)
     }
 
-    this.peeners = this.peeners.filter(p => p.peeningSkill > 4)
+    for (let _i = this.peeners.length - 1; _i >= 0; _i--) { if (this.peeners[_i].peeningSkill <= 4) this.peeners.splice(_i, 1) }
   }
 
   getPeeners(): Peener[] { return this.peeners }

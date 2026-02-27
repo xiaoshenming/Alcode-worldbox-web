@@ -62,7 +62,7 @@ export class WorldPermafrostSystem {
     for (const z of this.zones) {
       z.depth -= z.thawRate
     }
-    this.zones = this.zones.filter(z => z.depth > 0)
+    for (let _i = this.zones.length - 1; _i >= 0; _i--) { if (this.zones[_i].depth <= 0) this.zones.splice(_i, 1) }
   }
 
   private applyEffects(em: EntityManager): void {

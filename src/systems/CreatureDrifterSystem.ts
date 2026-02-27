@@ -44,7 +44,7 @@ export class CreatureDrifterSystem {
       d.taperControl = Math.min(100, d.taperControl + 0.01)
     }
 
-    this.drifters = this.drifters.filter(d => d.driftingSkill > 4)
+    for (let _i = this.drifters.length - 1; _i >= 0; _i--) { if (this.drifters[_i].driftingSkill <= 4) this.drifters.splice(_i, 1) }
   }
 
   getDrifters(): Drifter[] { return this.drifters }

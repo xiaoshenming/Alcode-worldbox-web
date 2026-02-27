@@ -44,7 +44,7 @@ export class CreatureUpsetterSystem {
       u.headForming = Math.min(100, u.headForming + 0.01)
     }
 
-    this.upsetters = this.upsetters.filter(u => u.upsettingSkill > 4)
+    for (let _i = this.upsetters.length - 1; _i >= 0; _i--) { if (this.upsetters[_i].upsettingSkill <= 4) this.upsetters.splice(_i, 1) }
   }
 
   getUpsetters(): Upsetter[] { return this.upsetters }

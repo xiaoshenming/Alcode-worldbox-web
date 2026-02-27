@@ -50,7 +50,7 @@ export class WorldFumaroleSystem {
       f.temperature = Math.max(50, f.temperature - 0.01)
     }
 
-    this.fumaroles = this.fumaroles.filter(f => f.temperature > 50)
+    for (let _i = this.fumaroles.length - 1; _i >= 0; _i--) { if (this.fumaroles[_i].temperature <= 50) this.fumaroles.splice(_i, 1) }
   }
 
   getFumaroles(): Fumarole[] { return this.fumaroles }

@@ -44,7 +44,7 @@ export class CreatureRopeMakersSystem {
       m.fiberSelection = Math.min(100, m.fiberSelection + 0.01)
     }
 
-    this.makers = this.makers.filter(m => m.twistStrength > 4)
+    for (let _i = this.makers.length - 1; _i >= 0; _i--) { if (this.makers[_i].twistStrength <= 4) this.makers.splice(_i, 1) }
   }
 
   getMakers(): RopeMaker[] { return this.makers }

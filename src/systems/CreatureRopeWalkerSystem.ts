@@ -44,7 +44,7 @@ export class CreatureRopeWalkerSystem {
       r.outputQuality = Math.min(100, r.outputQuality + 0.01)
     }
 
-    this.ropeWalkers = this.ropeWalkers.filter(r => r.fiberBraiding > 4)
+    for (let _i = this.ropeWalkers.length - 1; _i >= 0; _i--) { if (this.ropeWalkers[_i].fiberBraiding <= 4) this.ropeWalkers.splice(_i, 1) }
   }
 
   getRopeWalkers(): RopeWalker[] { return this.ropeWalkers }

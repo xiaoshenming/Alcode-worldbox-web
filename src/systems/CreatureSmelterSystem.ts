@@ -44,7 +44,7 @@ export class CreatureSmelterSystem {
       s.yieldEfficiency = Math.min(100, s.yieldEfficiency + 0.01)
     }
 
-    this.smelters = this.smelters.filter(s => s.smeltingSkill > 4)
+    for (let _i = this.smelters.length - 1; _i >= 0; _i--) { if (this.smelters[_i].smeltingSkill <= 4) this.smelters.splice(_i, 1) }
   }
 
   getSmelters(): Smelter[] { return this.smelters }

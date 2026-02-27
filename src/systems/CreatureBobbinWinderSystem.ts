@@ -44,7 +44,7 @@ export class CreatureBobbinWinderSystem {
       w.consistency = Math.min(100, w.consistency + 0.01)
     }
 
-    this.winders = this.winders.filter(w => w.windingSpeed > 4)
+    for (let _i = this.winders.length - 1; _i >= 0; _i--) { if (this.winders[_i].windingSpeed <= 4) this.winders.splice(_i, 1) }
   }
 
   getWinders(): BobbinWinder[] { return this.winders }

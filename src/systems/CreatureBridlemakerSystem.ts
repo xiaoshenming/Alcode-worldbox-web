@@ -44,7 +44,7 @@ export class CreatureBridlemakerSystem {
       b.outputQuality = Math.min(100, b.outputQuality + 0.01)
     }
 
-    this.bridlemakers = this.bridlemakers.filter(b => b.leatherBraiding > 4)
+    for (let _i = this.bridlemakers.length - 1; _i >= 0; _i--) { if (this.bridlemakers[_i].leatherBraiding <= 4) this.bridlemakers.splice(_i, 1) }
   }
 
   getBridlemakers(): Bridlemaker[] { return this.bridlemakers }

@@ -44,7 +44,7 @@ export class CreatureSwagingSystem {
       w.dieAlignment = Math.min(100, w.dieAlignment + 0.01)
     }
 
-    this.workers = this.workers.filter(w => w.swagingSkill > 4)
+    for (let _i = this.workers.length - 1; _i >= 0; _i--) { if (this.workers[_i].swagingSkill <= 4) this.workers.splice(_i, 1) }
   }
 
   getSwagingWorkers(): SwagingWorker[] { return this.workers }

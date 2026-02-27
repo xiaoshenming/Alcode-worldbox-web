@@ -44,7 +44,7 @@ export class CreaturePlowrightSystem {
       p.outputQuality = Math.min(100, p.outputQuality + 0.01)
     }
 
-    this.plowrights = this.plowrights.filter(p => p.ironForging > 4)
+    for (let _i = this.plowrights.length - 1; _i >= 0; _i--) { if (this.plowrights[_i].ironForging <= 4) this.plowrights.splice(_i, 1) }
   }
 
   getPlowrights(): Plowright[] { return this.plowrights }

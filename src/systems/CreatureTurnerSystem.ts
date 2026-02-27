@@ -44,7 +44,7 @@ export class CreatureTurnerSystem {
       t.outputQuality = Math.min(100, t.outputQuality + 0.01)
     }
 
-    this.turners = this.turners.filter(t => t.turningSkill > 4)
+    for (let _i = this.turners.length - 1; _i >= 0; _i--) { if (this.turners[_i].turningSkill <= 4) this.turners.splice(_i, 1) }
   }
 
   getTurners(): Turner[] { return this.turners }

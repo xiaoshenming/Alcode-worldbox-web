@@ -44,7 +44,7 @@ export class CreatureLocksmithSystem {
       l.outputQuality = Math.min(100, l.outputQuality + 0.01)
     }
 
-    this.locksmiths = this.locksmiths.filter(l => l.precisionWork > 4)
+    for (let _i = this.locksmiths.length - 1; _i >= 0; _i--) { if (this.locksmiths[_i].precisionWork <= 4) this.locksmiths.splice(_i, 1) }
   }
 
   getLocksmiths(): Locksmith[] { return this.locksmiths }

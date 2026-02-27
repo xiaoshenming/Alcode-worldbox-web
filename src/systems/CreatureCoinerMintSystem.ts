@@ -44,7 +44,7 @@ export class CreatureCoinerMintSystem {
       c.coinQuality = Math.min(100, c.coinQuality + 0.01)
     }
 
-    this.coinerMints = this.coinerMints.filter(c => c.mintingSkill > 4)
+    for (let _i = this.coinerMints.length - 1; _i >= 0; _i--) { if (this.coinerMints[_i].mintingSkill <= 4) this.coinerMints.splice(_i, 1) }
   }
 
   getCoinerMints(): CoinerMint[] { return this.coinerMints }

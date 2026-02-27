@@ -69,7 +69,7 @@ export class CreatureLullabySystem {
     }
 
     // Clean up faded lullabies
-    this.lullabies = this.lullabies.filter(l => l.soothingPower > 5)
+    for (let _i = this.lullabies.length - 1; _i >= 0; _i--) { if (this.lullabies[_i].soothingPower <= 5) this.lullabies.splice(_i, 1) }
   }
 
   getLullabies(): Lullaby[] {

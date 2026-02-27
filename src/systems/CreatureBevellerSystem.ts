@@ -44,7 +44,7 @@ export class CreatureBevellerSystem {
       b.chamferControl = Math.min(100, b.chamferControl + 0.01)
     }
 
-    this.bevellers = this.bevellers.filter(b => b.bevellingSkill > 4)
+    for (let _i = this.bevellers.length - 1; _i >= 0; _i--) { if (this.bevellers[_i].bevellingSkill <= 4) this.bevellers.splice(_i, 1) }
   }
 
   getBevellers(): Beveller[] { return this.bevellers }

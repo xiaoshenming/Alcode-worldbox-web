@@ -44,7 +44,7 @@ export class CreatureCooperSystem {
       c.outputQuality = Math.min(100, c.outputQuality + 0.01)
     }
 
-    this.coopers = this.coopers.filter(c => c.staveShaping > 4)
+    for (let _i = this.coopers.length - 1; _i >= 0; _i--) { if (this.coopers[_i].staveShaping <= 4) this.coopers.splice(_i, 1) }
   }
 
   getCoopers(): Cooper[] { return this.coopers }

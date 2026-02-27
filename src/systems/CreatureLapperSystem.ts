@@ -44,7 +44,7 @@ export class CreatureLapperSystem {
       l.mirrorFinish = Math.min(100, l.mirrorFinish + 0.01)
     }
 
-    this.lappers = this.lappers.filter(l => l.lappingSkill > 4)
+    for (let _i = this.lappers.length - 1; _i >= 0; _i--) { if (this.lappers[_i].lappingSkill <= 4) this.lappers.splice(_i, 1) }
   }
 
   getLappers(): Lapper[] { return this.lappers }

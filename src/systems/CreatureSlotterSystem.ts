@@ -44,7 +44,7 @@ export class CreatureSlotterSystem {
       s.feedControl = Math.min(100, s.feedControl + 0.012)
     }
 
-    this.slotters = this.slotters.filter(s => s.slottingSkill > 4)
+    for (let _i = this.slotters.length - 1; _i >= 0; _i--) { if (this.slotters[_i].slottingSkill <= 4) this.slotters.splice(_i, 1) }
   }
 
   getSlotters(): Slotter[] { return this.slotters }

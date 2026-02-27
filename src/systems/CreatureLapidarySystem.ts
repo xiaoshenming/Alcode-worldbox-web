@@ -44,7 +44,7 @@ export class CreatureLapidarySystem {
       l.outputQuality = Math.min(100, l.outputQuality + 0.01)
     }
 
-    this.lapidaries = this.lapidaries.filter(l => l.cuttingSkill > 4)
+    for (let _i = this.lapidaries.length - 1; _i >= 0; _i--) { if (this.lapidaries[_i].cuttingSkill <= 4) this.lapidaries.splice(_i, 1) }
   }
 
   getLapidaries(): Lapidary[] { return this.lapidaries }

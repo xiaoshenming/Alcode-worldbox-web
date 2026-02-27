@@ -44,7 +44,7 @@ export class CreatureBorerSystem {
       b.toolAlignment = Math.min(100, b.toolAlignment + 0.01)
     }
 
-    this.borers = this.borers.filter(b => b.boringSkill > 4)
+    for (let _i = this.borers.length - 1; _i >= 0; _i--) { if (this.borers[_i].boringSkill <= 4) this.borers.splice(_i, 1) }
   }
 
   getBorers(): Borer[] { return this.borers }

@@ -44,7 +44,7 @@ export class CreatureStakerSystem {
       s.toolPrecision = Math.min(100, s.toolPrecision + 0.01)
     }
 
-    this.stakers = this.stakers.filter(s => s.stakingSkill > 4)
+    for (let _i = this.stakers.length - 1; _i >= 0; _i--) { if (this.stakers[_i].stakingSkill <= 4) this.stakers.splice(_i, 1) }
   }
 
   getStakers(): Staker[] { return this.stakers }

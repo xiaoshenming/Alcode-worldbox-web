@@ -44,7 +44,7 @@ export class CreatureSawyerSystem {
       s.outputQuality = Math.min(100, s.outputQuality + 0.01)
     }
 
-    this.sawyers = this.sawyers.filter(s => s.sawingSkill > 4)
+    for (let _i = this.sawyers.length - 1; _i >= 0; _i--) { if (this.sawyers[_i].sawingSkill <= 4) this.sawyers.splice(_i, 1) }
   }
 
   getSawyers(): Sawyer[] { return this.sawyers }

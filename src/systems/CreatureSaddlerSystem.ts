@@ -44,7 +44,7 @@ export class CreatureSaddlerSystem {
       s.outputQuality = Math.min(100, s.outputQuality + 0.01)
     }
 
-    this.saddlers = this.saddlers.filter(s => s.leatherShaping > 4)
+    for (let _i = this.saddlers.length - 1; _i >= 0; _i--) { if (this.saddlers[_i].leatherShaping <= 4) this.saddlers.splice(_i, 1) }
   }
 
   getSaddlers(): Saddler[] { return this.saddlers }

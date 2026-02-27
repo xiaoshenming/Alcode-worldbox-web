@@ -44,7 +44,7 @@ export class CreatureSwageBlockerSystem {
       s.shapeAccuracy = Math.min(100, s.shapeAccuracy + 0.01)
     }
 
-    this.swageBlockers = this.swageBlockers.filter(s => s.swageBlockSkill > 4)
+    for (let _i = this.swageBlockers.length - 1; _i >= 0; _i--) { if (this.swageBlockers[_i].swageBlockSkill <= 4) this.swageBlockers.splice(_i, 1) }
   }
 
   getSwageBlockers(): SwageBlocker[] { return this.swageBlockers }

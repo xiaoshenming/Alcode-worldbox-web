@@ -44,7 +44,7 @@ export class CreatureNibblerSystem {
       n.toolMaintenance = Math.min(100, n.toolMaintenance + 0.01)
     }
 
-    this.nibblers = this.nibblers.filter(n => n.nibblingSkill > 4)
+    for (let _i = this.nibblers.length - 1; _i >= 0; _i--) { if (this.nibblers[_i].nibblingSkill <= 4) this.nibblers.splice(_i, 1) }
   }
 
   getNibblers(): Nibbler[] { return this.nibblers }

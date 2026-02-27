@@ -44,7 +44,7 @@ export class CreatureFullerSystem {
       f.grooveDepth = Math.min(100, f.grooveDepth + 0.01)
     }
 
-    this.fullers = this.fullers.filter(f => f.fulleringSkill > 4)
+    for (let _i = this.fullers.length - 1; _i >= 0; _i--) { if (this.fullers[_i].fulleringSkill <= 4) this.fullers.splice(_i, 1) }
   }
 
   getFullers(): Fuller[] { return this.fullers }

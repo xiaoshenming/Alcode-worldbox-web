@@ -44,7 +44,7 @@ export class CreatureAnodizerSystem {
       a.coatingUniformity = Math.min(100, a.coatingUniformity + 0.01)
     }
 
-    this.anodizers = this.anodizers.filter(a => a.anodizingSkill > 4)
+    for (let _i = this.anodizers.length - 1; _i >= 0; _i--) { if (this.anodizers[_i].anodizingSkill <= 4) this.anodizers.splice(_i, 1) }
   }
 
   getAnodizers(): Anodizer[] { return this.anodizers }

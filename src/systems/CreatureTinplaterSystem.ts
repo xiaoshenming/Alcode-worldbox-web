@@ -44,7 +44,7 @@ export class CreatureTinplaterSystem {
       t.corrosionResistance = Math.min(100, t.corrosionResistance + 0.01)
     }
 
-    this.tinplaters = this.tinplaters.filter(t => t.platingSkill > 4)
+    for (let _i = this.tinplaters.length - 1; _i >= 0; _i--) { if (this.tinplaters[_i].platingSkill <= 4) this.tinplaters.splice(_i, 1) }
   }
 
   getTinplaters(): Tinplater[] { return this.tinplaters }

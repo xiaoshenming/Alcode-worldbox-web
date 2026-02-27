@@ -44,7 +44,7 @@ export class CreatureCountersinkerSystem {
       c.flushAlignment = Math.min(100, c.flushAlignment + 0.01)
     }
 
-    this.countersinkers = this.countersinkers.filter(c => c.countersinkingSkill > 4)
+    for (let _i = this.countersinkers.length - 1; _i >= 0; _i--) { if (this.countersinkers[_i].countersinkingSkill <= 4) this.countersinkers.splice(_i, 1) }
   }
 
   getCountersinkers(): Countersinker[] { return this.countersinkers }

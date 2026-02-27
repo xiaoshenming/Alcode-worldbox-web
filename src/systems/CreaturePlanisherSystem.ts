@@ -44,7 +44,7 @@ export class CreaturePlanisherSystem {
       p.metalAlignment = Math.min(100, p.metalAlignment + 0.01)
     }
 
-    this.planishers = this.planishers.filter(p => p.planishingSkill > 4)
+    for (let _i = this.planishers.length - 1; _i >= 0; _i--) { if (this.planishers[_i].planishingSkill <= 4) this.planishers.splice(_i, 1) }
   }
 
   getPlanishers(): Planisher[] { return this.planishers }

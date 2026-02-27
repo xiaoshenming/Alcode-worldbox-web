@@ -44,7 +44,7 @@ export class CreatureFullingMakersSystem {
       m.finishQuality = Math.min(100, m.finishQuality + 0.01)
     }
 
-    this.makers = this.makers.filter(m => m.poundingForce > 4)
+    for (let _i = this.makers.length - 1; _i >= 0; _i--) { if (this.makers[_i].poundingForce <= 4) this.makers.splice(_i, 1) }
   }
 
   getMakers(): FullingMaker[] { return this.makers }

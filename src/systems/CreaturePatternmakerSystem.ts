@@ -44,7 +44,7 @@ export class CreaturePatternmakerSystem {
       p.outputQuality = Math.min(100, p.outputQuality + 0.01)
     }
 
-    this.patternmakers = this.patternmakers.filter(p => p.patternSkill > 4)
+    for (let _i = this.patternmakers.length - 1; _i >= 0; _i--) { if (this.patternmakers[_i].patternSkill <= 4) this.patternmakers.splice(_i, 1) }
   }
 
   getPatternmakers(): Patternmaker[] { return this.patternmakers }

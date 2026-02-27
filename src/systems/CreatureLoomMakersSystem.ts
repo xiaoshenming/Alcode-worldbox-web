@@ -44,7 +44,7 @@ export class CreatureLoomMakersSystem {
       m.weavingSpeed = Math.min(100, m.weavingSpeed + 0.01)
     }
 
-    this.makers = this.makers.filter(m => m.loomMastery > 4)
+    for (let _i = this.makers.length - 1; _i >= 0; _i--) { if (this.makers[_i].loomMastery <= 4) this.makers.splice(_i, 1) }
   }
 
   getMakers(): LoomMaker[] { return this.makers }

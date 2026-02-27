@@ -87,7 +87,7 @@ export class CreatureOmenBeliefSystem {
     for (const b of this.beliefs) {
       b.conviction -= DECAY_RATE * CHECK_INTERVAL
     }
-    this.beliefs = this.beliefs.filter(b => b.conviction > 5)
+    for (let _i = this.beliefs.length - 1; _i >= 0; _i--) { if (this.beliefs[_i].conviction <= 5) this.beliefs.splice(_i, 1) }
   }
 
   getBeliefs(): OmenBelief[] {

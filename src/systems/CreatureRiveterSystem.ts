@@ -44,7 +44,7 @@ export class CreatureRiveterSystem {
       r.outputQuality = Math.min(100, r.outputQuality + 0.01)
     }
 
-    this.riveters = this.riveters.filter(r => r.holeAlignment > 4)
+    for (let _i = this.riveters.length - 1; _i >= 0; _i--) { if (this.riveters[_i].holeAlignment <= 4) this.riveters.splice(_i, 1) }
   }
 
   getRiveters(): Riveter[] { return this.riveters }

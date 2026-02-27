@@ -44,7 +44,7 @@ export class CreatureTinkerSystem {
       t.outputQuality = Math.min(100, t.outputQuality + 0.01)
     }
 
-    this.tinkers = this.tinkers.filter(t => t.metalRepair > 4)
+    for (let _i = this.tinkers.length - 1; _i >= 0; _i--) { if (this.tinkers[_i].metalRepair <= 4) this.tinkers.splice(_i, 1) }
   }
 
   getTinkers(): Tinker[] { return this.tinkers }

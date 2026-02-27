@@ -44,7 +44,7 @@ export class CreatureScriberSystem {
       s.markingDepth = Math.min(100, s.markingDepth + 0.01)
     }
 
-    this.scribers = this.scribers.filter(s => s.scribingSkill > 4)
+    for (let _i = this.scribers.length - 1; _i >= 0; _i--) { if (this.scribers[_i].scribingSkill <= 4) this.scribers.splice(_i, 1) }
   }
 
   getScribers(): Scriber[] { return this.scribers }

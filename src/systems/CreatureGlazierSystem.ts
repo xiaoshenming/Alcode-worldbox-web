@@ -44,7 +44,7 @@ export class CreatureGlazierSystem {
       g.outputQuality = Math.min(100, g.outputQuality + 0.01)
     }
 
-    this.glaziers = this.glaziers.filter(g => g.glassCutting > 4)
+    for (let _i = this.glaziers.length - 1; _i >= 0; _i--) { if (this.glaziers[_i].glassCutting <= 4) this.glaziers.splice(_i, 1) }
   }
 
   getGlaziers(): Glazier[] { return this.glaziers }

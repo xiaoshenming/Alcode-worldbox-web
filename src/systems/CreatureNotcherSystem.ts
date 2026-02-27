@@ -44,7 +44,7 @@ export class CreatureNotcherSystem {
       n.bladeControl = Math.min(100, n.bladeControl + 0.014)
     }
 
-    this.notchers = this.notchers.filter(n => n.notchingSkill > 4)
+    for (let _i = this.notchers.length - 1; _i >= 0; _i--) { if (this.notchers[_i].notchingSkill <= 4) this.notchers.splice(_i, 1) }
   }
 
   getNotchers(): Notcher[] { return this.notchers }

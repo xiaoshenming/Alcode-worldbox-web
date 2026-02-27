@@ -44,7 +44,7 @@ export class CreatureWelderSystem {
       w.metalBonding = Math.min(100, w.metalBonding + 0.01)
     }
 
-    this.welders = this.welders.filter(w => w.weldingSkill > 4)
+    for (let _i = this.welders.length - 1; _i >= 0; _i--) { if (this.welders[_i].weldingSkill <= 4) this.welders.splice(_i, 1) }
   }
 
   getWelders(): Welder[] { return this.welders }

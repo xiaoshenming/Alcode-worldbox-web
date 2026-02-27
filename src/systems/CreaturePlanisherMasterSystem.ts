@@ -44,7 +44,7 @@ export class CreaturePlanisherMasterSystem {
       m.surfacePerfection = Math.min(100, m.surfacePerfection + 0.01)
     }
 
-    this.masters = this.masters.filter(m => m.masterPlanishSkill > 4)
+    for (let _i = this.masters.length - 1; _i >= 0; _i--) { if (this.masters[_i].masterPlanishSkill <= 4) this.masters.splice(_i, 1) }
   }
 
   getMasters(): PlanisherMaster[] { return this.masters }

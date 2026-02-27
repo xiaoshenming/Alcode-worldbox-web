@@ -44,7 +44,7 @@ export class CreaturePewtererSystem {
       p.outputQuality = Math.min(100, p.outputQuality + 0.01)
     }
 
-    this.pewterers = this.pewterers.filter(p => p.alloyCasting > 4)
+    for (let _i = this.pewterers.length - 1; _i >= 0; _i--) { if (this.pewterers[_i].alloyCasting <= 4) this.pewterers.splice(_i, 1) }
   }
 
   getPewterers(): Pewterer[] { return this.pewterers }

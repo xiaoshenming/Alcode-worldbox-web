@@ -44,7 +44,7 @@ export class CreatureRollerSystem {
       r.surfaceFinish = Math.min(100, r.surfaceFinish + 0.01)
     }
 
-    this.rollers = this.rollers.filter(r => r.rollingSkill > 4)
+    for (let _i = this.rollers.length - 1; _i >= 0; _i--) { if (this.rollers[_i].rollingSkill <= 4) this.rollers.splice(_i, 1) }
   }
 
   getRollers(): Roller[] { return this.rollers }

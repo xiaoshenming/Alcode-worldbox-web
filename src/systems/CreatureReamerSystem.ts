@@ -44,7 +44,7 @@ export class CreatureReamerSystem {
       r.dimensionalTolerance = Math.min(100, r.dimensionalTolerance + 0.01)
     }
 
-    this.reamers = this.reamers.filter(r => r.reamingSkill > 4)
+    for (let _i = this.reamers.length - 1; _i >= 0; _i--) { if (this.reamers[_i].reamingSkill <= 4) this.reamers.splice(_i, 1) }
   }
 
   getReamers(): Reamer[] { return this.reamers }

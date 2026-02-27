@@ -44,7 +44,7 @@ export class CreatureNeedleworkMakersSystem {
       m.outputQuality = Math.min(100, m.outputQuality + 0.01)
     }
 
-    this.makers = this.makers.filter(m => m.stitchPrecision > 4)
+    for (let _i = this.makers.length - 1; _i >= 0; _i--) { if (this.makers[_i].stitchPrecision <= 4) this.makers.splice(_i, 1) }
   }
 
   getMakers(): NeedleworkMaker[] { return this.makers }

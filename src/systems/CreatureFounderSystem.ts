@@ -44,7 +44,7 @@ export class CreatureFounderSystem {
       f.outputQuality = Math.min(100, f.outputQuality + 0.01)
     }
 
-    this.founders = this.founders.filter(f => f.foundingSkill > 4)
+    for (let _i = this.founders.length - 1; _i >= 0; _i--) { if (this.founders[_i].foundingSkill <= 4) this.founders.splice(_i, 1) }
   }
 
   getFounders(): Founder[] { return this.founders }

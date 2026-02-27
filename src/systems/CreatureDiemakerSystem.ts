@@ -44,7 +44,7 @@ export class CreatureDiemakerSystem {
       d.outputQuality = Math.min(100, d.outputQuality + 0.01)
     }
 
-    this.diemakers = this.diemakers.filter(d => d.diemakingSkill > 4)
+    for (let _i = this.diemakers.length - 1; _i >= 0; _i--) { if (this.diemakers[_i].diemakingSkill <= 4) this.diemakers.splice(_i, 1) }
   }
 
   getDiemakers(): Diemaker[] { return this.diemakers }

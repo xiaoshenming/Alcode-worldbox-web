@@ -44,7 +44,7 @@ export class CreatureGilderSystem {
       g.outputQuality = Math.min(100, g.outputQuality + 0.01)
     }
 
-    this.gilders = this.gilders.filter(g => g.gildingSkill > 4)
+    for (let _i = this.gilders.length - 1; _i >= 0; _i--) { if (this.gilders[_i].gildingSkill <= 4) this.gilders.splice(_i, 1) }
   }
 
   getGilders(): Gilder[] { return this.gilders }

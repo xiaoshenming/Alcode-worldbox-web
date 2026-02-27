@@ -44,7 +44,7 @@ export class CreatureTapperSystem {
       t.alignmentAccuracy = Math.min(100, t.alignmentAccuracy + 0.01)
     }
 
-    this.tappers = this.tappers.filter(t => t.tappingSkill > 4)
+    for (let _i = this.tappers.length - 1; _i >= 0; _i--) { if (this.tappers[_i].tappingSkill <= 4) this.tappers.splice(_i, 1) }
   }
 
   getTappers(): Tapper[] { return this.tappers }

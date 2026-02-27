@@ -44,7 +44,7 @@ export class CreatureTemperSystem {
       t.outputQuality = Math.min(100, t.outputQuality + 0.01)
     }
 
-    this.tempers = this.tempers.filter(t => t.temperingSkill > 4)
+    for (let _i = this.tempers.length - 1; _i >= 0; _i--) { if (this.tempers[_i].temperingSkill <= 4) this.tempers.splice(_i, 1) }
   }
 
   getTempers(): Temper[] { return this.tempers }

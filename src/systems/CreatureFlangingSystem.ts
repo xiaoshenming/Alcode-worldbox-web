@@ -44,7 +44,7 @@ export class CreatureFlangingSystem {
       w.flangeInspection = Math.min(100, w.flangeInspection + 0.01)
     }
 
-    this.workers = this.workers.filter(w => w.flangingSkill > 4)
+    for (let _i = this.workers.length - 1; _i >= 0; _i--) { if (this.workers[_i].flangingSkill <= 4) this.workers.splice(_i, 1) }
   }
 
   getFlangingWorkers(): FlangingWorker[] { return this.workers }
