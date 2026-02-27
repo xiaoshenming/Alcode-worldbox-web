@@ -145,8 +145,10 @@ export class BuildingVarietySystem {
       // Health-based tint
       const hpPct = building.health / building.maxHealth
       if (hpPct < 0.5) {
-        ctx.fillStyle = `rgba(255,0,0,${0.3 * (1 - hpPct)})`
+        ctx.globalAlpha = 0.3 * (1 - hpPct)
+        ctx.fillStyle = '#ff0000'
         ctx.fillRect(sx - w / 2, sy - h / 2, w, h)
+        ctx.globalAlpha = 1
       }
 
       // Symbol

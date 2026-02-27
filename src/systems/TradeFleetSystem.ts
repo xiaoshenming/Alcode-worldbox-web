@@ -51,6 +51,17 @@ const CARGO_TTL = 60;
 const MAX_RIPPLES_PER_ROUTE = 4;
 const RIPPLE_MAX_AGE = 40;
 
+// Pre-computed ripple stroke colors: 101 steps for alpha 0.00..0.30 (t 0..1)
+// alpha = 0.3 * (1 - t)
+const RIPPLE_STROKE_COLORS: string[] = (() => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) {
+    const alpha = (0.3 * (1 - i / 100)).toFixed(3)
+    cols.push(`rgba(200,230,255,${alpha})`)
+  }
+  return cols
+})()
+
 export class TradeFleetSystem {
   private routes: Map<number, TradeRoute> = new Map();
   private ships: TradeShip[] = [];
@@ -325,11 +336,10 @@ export class TradeFleetSystem {
     const sy = (ripple.y * TILE_SIZE - camY) * zoom;
     const t = ripple.age / ripple.maxAge;
     const radius = (2 + t * 6) * zoom;
-    const alpha = 0.3 * (1 - t);
 
     ctx.beginPath();
     ctx.arc(sx, sy, radius, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(200, 230, 255, ${alpha})`;
+    ctx.strokeStyle = RIPPLE_STROKE_COLORS[Math.round(t * 100)];
     ctx.lineWidth = Math.max(0.5, 0.7 * zoom);
     ctx.stroke();
   }
