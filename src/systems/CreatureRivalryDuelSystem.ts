@@ -44,6 +44,7 @@ const STAKE_WEIGHTS: Record<DuelStake, number> = {
   leadership: 0.1,
   grudge: 0.2,
 }
+const STAKE_ENTRIES = Object.entries(STAKE_WEIGHTS) as [DuelStake, number][]
 
 export class CreatureRivalryDuelSystem {
   private activeDuels: Duel[] = []
@@ -180,7 +181,7 @@ export class CreatureRivalryDuelSystem {
   private pickStake(): DuelStake {
     const r = Math.random()
     let cumulative = 0
-    for (const [stake, weight] of Object.entries(STAKE_WEIGHTS)) {
+    for (const [stake, weight] of STAKE_ENTRIES) {
       cumulative += weight
       if (r <= cumulative) return stake as DuelStake
     }

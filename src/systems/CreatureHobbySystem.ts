@@ -32,6 +32,7 @@ const HOBBY_WEIGHTS: Record<HobbyType, number> = {
 }
 
 const HOBBY_LIST: HobbyType[] = ['fishing', 'painting', 'stargazing', 'gardening', 'storytelling', 'crafting']
+const HOBBY_TOTAL = Object.values(HOBBY_WEIGHTS).reduce((s, w) => s + w, 0)
 
 export class CreatureHobbySystem {
   private hobbies: Map<EntityId, CreatureHobby> = new Map()
@@ -96,9 +97,7 @@ export class CreatureHobbySystem {
   }
 
   private pickHobby(): HobbyType {
-    let total = 0
-    for (const w of Object.values(HOBBY_WEIGHTS)) total += w
-    let r = Math.random() * total
+    let r = Math.random() * HOBBY_TOTAL
     for (const h of HOBBY_LIST) {
       r -= HOBBY_WEIGHTS[h]
       if (r <= 0) return h

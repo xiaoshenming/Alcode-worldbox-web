@@ -30,6 +30,7 @@ const SKILL_WEIGHTS: Record<MentorSkill, number> = {
   leadership: 0.1,
   survival: 0.15,
 }
+const SKILL_ENTRIES = Object.entries(SKILL_WEIGHTS) as [MentorSkill, number][]
 
 export class CreatureMentorSystem {
   private bonds: MentorBond[] = []
@@ -80,7 +81,7 @@ export class CreatureMentorSystem {
         const roll = Math.random()
         let cumulative = 0
         let skill: MentorSkill = 'survival'
-        for (const [s, w] of Object.entries(SKILL_WEIGHTS) as [MentorSkill, number][]) {
+        for (const [s, w] of SKILL_ENTRIES) {
           cumulative += w
           if (roll <= cumulative) { skill = s; break }
         }
