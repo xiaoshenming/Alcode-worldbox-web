@@ -48,9 +48,9 @@ describe('EspionageSystem.getSpies', () => {
     expect(es.getSpies()).toHaveLength(2)
   })
 
-  it('返回的是过滤新数组', () => {
+  it('返回共享buf引用（buf模式）', () => {
     ;(es as any).spies.push(makeSpy(1, 1, true))
-    expect(es.getSpies()).not.toBe(es.getSpies())
+    expect(es.getSpies()).toBe(es.getSpies())
   })
 })
 

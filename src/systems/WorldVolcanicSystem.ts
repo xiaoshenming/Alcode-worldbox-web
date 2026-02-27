@@ -39,6 +39,7 @@ export class WorldVolcanicSystem {
   private lastState = 0
   private worldWidth = 0
   private worldHeight = 0
+  private _activeVolcBuf: Volcano[] = []
 
   setWorldSize(w: number, h: number): void {
     this.worldWidth = w
@@ -119,6 +120,14 @@ export class WorldVolcanicSystem {
   }
 
   getVolcanoes(): Volcano[] { return this.volcanoes }
-  getActiveVolcanoes(): Volcano[] { return this.volcanoes.filter(v => v.state !== 'dormant' && v.state !== 'cooling') }
-  getEruptingCount(): number { return this.volcanoes.filter(v => v.state === 'erupting').length }
+  getActiveVolcanoes(): Volcano[] {
+    this._activeVolcBuf.length = 0
+    for (const v of this.volcanoes) { if (v.state !== 'dormant' && v.state !== 'cooling') this._activeVolcBuf.push(v) }
+    return this._activeVolcBuf
+  }
+  getEruptingCount(): number {
+    let n = 0
+    for (const v of this.volcanoes) { if (v.state === 'erupting') n++ }
+    return n
+  }
 }

@@ -27,6 +27,8 @@ export class DiplomaticWarReparationSystem {
   private reparations: WarReparation[] = []
   private nextId = 1
   private lastCheck = 0
+  private _activeBuf: WarReparation[] = []
+  private _loserBuf: WarReparation[] = []
 
   update(dt: number, em: EntityManager, civManager: CivManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -113,10 +115,16 @@ export class DiplomaticWarReparationSystem {
   }
 
   getReparations(): WarReparation[] { return this.reparations }
-  getActiveReparations(): WarReparation[] { return this.reparations.filter(r => r.status === 'active') }
+  getActiveReparations(): WarReparation[] {
+    this._activeBuf.length = 0
+    for (const r of this.reparations) { if (r.status === 'active') this._activeBuf.push(r) }
+    return this._activeBuf
+  }
   getCivDebt(civId: number): number {
-    return this.reparations
-      .filter(r => r.loserCivId === civId && r.status === 'active')
-      .reduce((sum, r) => sum + (r.totalAmount - r.paidAmount), 0)
+    let debt = 0
+    for (const r of this.reparations) {
+      if (r.loserCivId === civId && r.status === 'active') debt += (r.totalAmount - r.paidAmount)
+    }
+    return debt
   }
 }

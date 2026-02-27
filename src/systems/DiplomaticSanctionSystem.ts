@@ -47,15 +47,21 @@ export class DiplomaticSanctionSystem {
   private sanctions: Sanction[] = []
   private nextCheckTick = CHECK_INTERVAL
   private nextEffectTick = EFFECT_INTERVAL
+  private _activeBuf: Sanction[] = []
+  private _onCivBuf: Sanction[] = []
 
   getSanctions(): Sanction[] { return this.sanctions }
 
   getActiveSanctions(): Sanction[] {
-    return this.sanctions.filter(s => s.active)
+    this._activeBuf.length = 0
+    for (const s of this.sanctions) { if (s.active) this._activeBuf.push(s) }
+    return this._activeBuf
   }
 
   getSanctionsOn(civId: number): Sanction[] {
-    return this.sanctions.filter(s => s.targetId === civId && s.active)
+    this._onCivBuf.length = 0
+    for (const s of this.sanctions) { if (s.targetId === civId && s.active) this._onCivBuf.push(s) }
+    return this._onCivBuf
   }
 
   update(dt: number, civManager: CivManagerLike, tick: number): void {

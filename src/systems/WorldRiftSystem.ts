@@ -31,6 +31,8 @@ const WARP_TILES = [TileType.GRASS, TileType.FOREST, TileType.SAND, TileType.SNO
 
 export class WorldRiftSystem {
   private rifts: DimensionalRift[] = []
+  private _activeBuf: DimensionalRift[] = []
+  private _stableBuf: DimensionalRift[] = []
   private nextId = 1
   private lastCheck = 0
 
@@ -152,6 +154,14 @@ export class WorldRiftSystem {
   }
 
   getRifts(): DimensionalRift[] { return this.rifts }
-  getActiveRifts(): DimensionalRift[] { return this.rifts.filter(r => r.stage !== 'collapsing') }
-  getStableRifts(): DimensionalRift[] { return this.rifts.filter(r => r.stage === 'stable') }
+  getActiveRifts(): DimensionalRift[] {
+    this._activeBuf.length = 0
+    for (const r of this.rifts) { if (r.stage !== 'collapsing') this._activeBuf.push(r) }
+    return this._activeBuf
+  }
+  getStableRifts(): DimensionalRift[] {
+    this._stableBuf.length = 0
+    for (const r of this.rifts) { if (r.stage === 'stable') this._stableBuf.push(r) }
+    return this._stableBuf
+  }
 }

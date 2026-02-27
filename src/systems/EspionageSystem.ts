@@ -54,6 +54,8 @@ export class EspionageSystem {
   private spies: Spy[] = []
   private tributes: TributeRecord[] = []
   private warJustifications: WarJustification[] = []
+  private _aliveBuf: Spy[] = []
+  private _civSpyBuf: Spy[] = []
 
   update(civManager: CivManager, em: EntityManager, world: World, particles: ParticleSystem, tick: number): void {
     const civs: Civilization[] = []
@@ -348,8 +350,16 @@ export class EspionageSystem {
 
   // --- Public Accessors ---
 
-  getSpies(): Spy[] { return this.spies.filter(s => s.alive) }
-  getSpiesFor(civId: number): Spy[] { return this.spies.filter(s => s.ownerCivId === civId && s.alive) }
+  getSpies(): Spy[] {
+    this._aliveBuf.length = 0
+    for (const s of this.spies) { if (s.alive) this._aliveBuf.push(s) }
+    return this._aliveBuf
+  }
+  getSpiesFor(civId: number): Spy[] {
+    this._civSpyBuf.length = 0
+    for (const s of this.spies) { if (s.ownerCivId === civId && s.alive) this._civSpyBuf.push(s) }
+    return this._civSpyBuf
+  }
   getTributes(): TributeRecord[] { return this.tributes }
   getJustifications(): WarJustification[] { return this.warJustifications }
 }

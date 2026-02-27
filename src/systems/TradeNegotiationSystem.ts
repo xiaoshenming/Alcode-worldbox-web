@@ -64,6 +64,8 @@ let nextDealId = 1
 export class TradeNegotiationSystem {
   private negotiations: Negotiation[] = []
   private deals: TradeDeal[] = []
+  private _activeDealsBuf: TradeDeal[] = []
+  private _civDealsBuf: TradeDeal[] = []
 
   update(dt: number, entityManager: EntityManager, civManager: CivManager, tick: number): void {
     if (tick % CHECK_INTERVAL !== 0) return
@@ -396,12 +398,16 @@ export class TradeNegotiationSystem {
 
   /** Returns all active trade deals. */
   getTradeDeals(): TradeDeal[] {
-    return this.deals.filter(d => d.active)
+    this._activeDealsBuf.length = 0
+    for (const d of this.deals) { if (d.active) this._activeDealsBuf.push(d) }
+    return this._activeDealsBuf
   }
 
   /** Returns deals for a specific civilization. */
   getDealsByCiv(civId: number): TradeDeal[] {
-    return this.deals.filter(d => d.active && (d.civA === civId || d.civB === civId))
+    this._civDealsBuf.length = 0
+    for (const d of this.deals) { if (d.active && (d.civA === civId || d.civB === civId)) this._civDealsBuf.push(d) }
+    return this._civDealsBuf
   }
 }
 
