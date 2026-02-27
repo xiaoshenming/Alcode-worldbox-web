@@ -9,4 +9,7 @@ describe('DiplomaticHostageSystem', () => {
     ;(sys as any).hostages.push({ id: 1 })
     expect(sys.getHostages()).toHaveLength(1)
   })
+  it('getHostages返回数组', () => { expect(Array.isArray(sys.getHostages())).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })

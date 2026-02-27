@@ -9,4 +9,7 @@ describe('DiplomaticMagnanimitySystem', () => {
     ;(sys as any).gestures.push({ id: 1 })
     expect(sys.getGestures()).toHaveLength(1)
   })
+  it('getGestures返回数组', () => { expect(Array.isArray(sys.getGestures())).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })

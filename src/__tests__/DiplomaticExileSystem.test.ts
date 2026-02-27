@@ -9,4 +9,7 @@ describe('DiplomaticExileSystem', () => {
     ;(sys as any).exiles.push({ id: 1 })
     expect(sys.getExiles()).toHaveLength(1)
   })
+  it('getExiles返回数组', () => { expect(Array.isArray(sys.getExiles())).toBe(true) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('lastFate初始为0', () => { expect((sys as any).lastFate).toBe(0) })
 })

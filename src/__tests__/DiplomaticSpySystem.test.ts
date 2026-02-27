@@ -9,4 +9,7 @@ describe('DiplomaticSpySystem', () => {
     ;(sys as any).spies.push({ id: 1 })
     expect(sys.getSpies()).toHaveLength(1)
   })
+  it('getSpies返回数组', () => { expect(Array.isArray(sys.getSpies())).toBe(true) })
+  it('spies初始为空数组', () => { expect((sys as any).spies).toHaveLength(0) })
+  it('nextCheckTick初始大于0', () => { expect((sys as any).nextCheckTick).toBeGreaterThan(0) })
 })

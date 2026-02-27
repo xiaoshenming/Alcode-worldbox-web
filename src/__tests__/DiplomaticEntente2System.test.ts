@@ -9,4 +9,7 @@ describe('DiplomaticEntente2System', () => {
     ;(sys as any).ententes.push({ id: 1 })
     expect(sys.getEntentes()).toHaveLength(1)
   })
+  it('getEntentes返回数组', () => { expect(Array.isArray(sys.getEntentes())).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })
