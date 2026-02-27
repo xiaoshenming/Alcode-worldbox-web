@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { createCivilization, resetCivIdCounter, TECH_TREE, TECHNOLOGIES } from '../civilization/Civilization'
+import {
+  createCivilization, resetCivIdCounter, TECH_TREE, TECHNOLOGIES,
+  BUILDING_COLORS, BUILDING_SIZES, BuildingType,
+  RELIGION_NAMES, RELIGION_TYPES, CULTURE_TRAITS
+} from '../civilization/Civilization'
 
 describe('createCivilization', () => {
   beforeEach(() => {
@@ -132,5 +136,61 @@ describe('TECHNOLOGIES', () => {
     const names = TECHNOLOGIES.map(t => t.name)
     const uniqueNames = new Set(names)
     expect(uniqueNames.size).toBe(names.length)
+  })
+})
+
+describe('BUILDING_COLORS', () => {
+  it('每种建筑类型都有颜色', () => {
+    for (const type of Object.values(BuildingType)) {
+      expect(typeof BUILDING_COLORS[type]).toBe('string')
+      expect(BUILDING_COLORS[type].startsWith('#')).toBe(true)
+    }
+  })
+
+  it('颜色格式为有效的 #RRGGBB', () => {
+    for (const [, color] of Object.entries(BUILDING_COLORS)) {
+      expect(color).toMatch(/^#[0-9a-fA-F]{6}$/)
+    }
+  })
+})
+
+describe('BUILDING_SIZES', () => {
+  it('每种建筑类型都有大小', () => {
+    for (const type of Object.values(BuildingType)) {
+      expect(typeof BUILDING_SIZES[type]).toBe('number')
+      expect(BUILDING_SIZES[type]).toBeGreaterThan(0)
+    }
+  })
+
+  it('HUT 大小为 1（最小建筑）', () => {
+    expect(BUILDING_SIZES[BuildingType.HUT]).toBe(1)
+  })
+
+  it('CASTLE 大小为 3（大型建筑）', () => {
+    expect(BUILDING_SIZES[BuildingType.CASTLE]).toBe(3)
+  })
+})
+
+describe('RELIGION_NAMES', () => {
+  it('每种��教类型都有名字', () => {
+    for (const type of RELIGION_TYPES) {
+      expect(typeof RELIGION_NAMES[type]).toBe('string')
+      expect(RELIGION_NAMES[type].length).toBeGreaterThan(0)
+    }
+  })
+
+  it('共有 5 种宗教类型', () => {
+    expect(RELIGION_TYPES).toHaveLength(5)
+  })
+})
+
+describe('CULTURE_TRAITS', () => {
+  it('共有 5 种文化特质', () => {
+    expect(CULTURE_TRAITS).toHaveLength(5)
+  })
+
+  it('包含 warrior 和 merchant', () => {
+    expect(CULTURE_TRAITS).toContain('warrior')
+    expect(CULTURE_TRAITS).toContain('merchant')
   })
 })
