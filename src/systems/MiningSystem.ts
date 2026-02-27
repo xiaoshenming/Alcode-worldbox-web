@@ -79,6 +79,8 @@ export class MiningSystem {
   private deposits: OreDeposit[] = []
   private readonly WORLD_W = WORLD_WIDTH
   private readonly WORLD_H = WORLD_HEIGHT
+  private _civDepBuf: OreDeposit[] = []
+  private _discovBuf: OreDeposit[] = []
 
   constructor() {
     // Initialize empty ore map
@@ -268,7 +270,9 @@ export class MiningSystem {
   }
 
   getDepositsForCiv(civId: number): OreDeposit[] {
-    return this.deposits.filter(d => d.discoveredBy === civId)
+    this._civDepBuf.length = 0
+    for (const d of this.deposits) { if (d.discoveredBy === civId) this._civDepBuf.push(d) }
+    return this._civDepBuf
   }
 
   getOreAt(x: number, y: number): OreType {
@@ -281,7 +285,9 @@ export class MiningSystem {
   }
 
   getDiscoveredDeposits(): OreDeposit[] {
-    return this.deposits.filter(d => d.discovered)
+    this._discovBuf.length = 0
+    for (const d of this.deposits) { if (d.discovered) this._discovBuf.push(d) }
+    return this._discovBuf
   }
 
   getMiningBonus(oreType: OreType): { military: number; wealth: number; culture: number } {
