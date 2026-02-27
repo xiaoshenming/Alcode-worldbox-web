@@ -34,6 +34,7 @@ export class CreatureOathSystem {
   private oaths: Oath[] = []
   private nextId = 1
   private lastCheck = 0
+  private _activeOathsBuf: Oath[] = []
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -51,10 +52,13 @@ export class CreatureOathSystem {
       if (Math.random() > OATH_CHANCE) continue
 
       const type = this.pickType()
-      const others = entities.filter(e => e !== eid)
-      const targetId = others.length > 0
-        ? others[Math.floor(Math.random() * others.length)]
-        : null
+      let targetId: number | null = null
+      if (entities.length >= 2) {
+        let tidx = Math.floor(Math.random() * (entities.length - 1))
+        for (const other of entities) {
+          if (other !== eid && tidx-- === 0) { targetId = other; break }
+        }
+      }
 
       this.oaths.push({
         id: this.nextId++,
@@ -96,6 +100,14 @@ export class CreatureOathSystem {
   }
 
   getOaths(): Oath[] { return this.oaths }
-  getActiveOaths(): Oath[] { return this.oaths.filter(o => !o.fulfilled) }
-  getFulfilledCount(): number { return this.oaths.filter(o => o.fulfilled).length }
+  getActiveOaths(): Oath[] {
+    this._activeOathsBuf.length = 0
+    for (const o of this.oaths) { if (!o.fulfilled) this._activeOathsBuf.push(o) }
+    return this._activeOathsBuf
+  }
+  getFulfilledCount(): number {
+    let n = 0
+    for (const o of this.oaths) { if (o.fulfilled) n++ }
+    return n
+  }
 }

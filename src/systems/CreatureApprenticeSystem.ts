@@ -43,11 +43,16 @@ export class CreatureApprenticeSystem {
   private nextCheckTick = CHECK_INTERVAL
   private nextTrainTick = TRAIN_INTERVAL
   private _activeBuf: Apprenticeship[] = []
+  private _candidatesBuf: Array<{ id: EntityId; age: number; civId: number; x: number; y: number }> = []
+  private _mastersBuf: Array<{ id: EntityId; age: number; civId: number; x: number; y: number }> = []
+  private _youngBuf: Array<{ id: EntityId; age: number; civId: number; x: number; y: number }> = []
 
   getApprenticeships(): Apprenticeship[] { return this.apprenticeships }
 
   getActiveCount(): number {
-    return this.apprenticeships.filter(a => !a.graduated).length
+    let n = 0
+    for (const a of this.apprenticeships) { if (!a.graduated) n++ }
+    return n
   }
 
   update(dt: number, em: EntityManager, tick: number): void {
@@ -81,19 +86,25 @@ export class CreatureApprenticeSystem {
     if (activeCount >= MAX_APPRENTICESHIPS) return
 
     const entities = em.getEntitiesWithComponents('position', 'creature', 'civMember')
-    const candidates: Array<{ id: EntityId; age: number; civId: number; x: number; y: number }> = []
+    this._candidatesBuf.length = 0
+    this._mastersBuf.length = 0
+    this._youngBuf.length = 0
 
     for (const eid of entities) {
       const cc = em.getComponent<CreatureComponent>(eid, 'creature')
       const pos = em.getComponent<PositionComponent>(eid, 'position')
       const cm = em.getComponent<CivMemberComponent>(eid, 'civMember')
+
       if (!cc || !pos || !cm) continue
-      candidates.push({ id: eid, age: cc.age, civId: cm.civId, x: pos.x, y: pos.y })
+      const cand = { id: eid, age: cc.age, civId: cm.civId, x: pos.x, y: pos.y }
+      this._candidatesBuf.push(cand)
+      if (cc.age >= MIN_AGE_MASTER) this._mastersBuf.push(cand)
+      else if (cc.age < MIN_AGE_MASTER * 0.6) this._youngBuf.push(cand)
     }
 
     // Find potential masters (old) and apprentices (young)
-    const masters = candidates.filter(c => c.age >= MIN_AGE_MASTER)
-    const young = candidates.filter(c => c.age < MIN_AGE_MASTER * 0.6)
+    const masters = this._mastersBuf
+    const young = this._youngBuf
 
     for (const master of masters) {
       if (activeCount >= MAX_APPRENTICESHIPS) break
