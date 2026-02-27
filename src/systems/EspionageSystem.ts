@@ -74,15 +74,18 @@ export class EspionageSystem {
     this.checkAllianceWars(civManager, tick)
 
     // Decay old war justifications (expire after 6000 ticks)
-    this.warJustifications = this.warJustifications.filter(j => tick - j.tick < 6000)
+    for (let i = this.warJustifications.length - 1; i >= 0; i--) {
+      if (tick - this.warJustifications[i].tick >= 6000) this.warJustifications.splice(i, 1)
+    }
   }
 
   // --- Spy Recruitment ---
 
   private recruitSpies(civs: Civilization[], civManager: CivManager): void {
     for (const civ of civs) {
-      const ownedSpies = this.spies.filter(s => s.ownerCivId === civ.id && s.alive)
-      if (ownedSpies.length >= MAX_SPIES_PER_CIV) continue
+      let ownedCount = 0
+      for (const s of this.spies) { if (s.ownerCivId === civ.id && s.alive) ownedCount++ }
+      if (ownedCount >= MAX_SPIES_PER_CIV) continue
       if (civ.techLevel < 2 || civ.resources.gold < 10) continue
 
       // Find a hostile target
@@ -155,7 +158,9 @@ export class EspionageSystem {
     }
 
     // Clean up dead spies
-    this.spies = this.spies.filter(s => s.alive)
+    for (let i = this.spies.length - 1; i >= 0; i--) {
+      if (!this.spies[i].alive) this.spies.splice(i, 1)
+    }
   }
 
   private missionSuccess(spy: Spy, owner: Civilization, target: Civilization, em: EntityManager, civManager: CivManager, tick: number): void {

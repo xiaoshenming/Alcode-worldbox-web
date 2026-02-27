@@ -80,10 +80,11 @@ export class DiplomacyVisualSystem {
 
   /** 每 tick 更新气泡生命周期 */
   update(tick: number): void {
-    for (const b of this.bubbles) {
-      if (b.startTick < 0) b.startTick = tick;
+    for (let i = this.bubbles.length - 1; i >= 0; i--) {
+      const b = this.bubbles[i]
+      if (b.startTick < 0) b.startTick = tick
+      if (tick - b.startTick >= BUBBLE_DURATION) this.bubbles.splice(i, 1)
     }
-    this.bubbles = this.bubbles.filter(b => tick - b.startTick < BUBBLE_DURATION);
   }
 
   /** 在世界坐标中渲染关系连线、气泡、领土高亮 */
