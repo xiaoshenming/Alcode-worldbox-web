@@ -31,6 +31,8 @@ export class AllianceSystem {
   private readonly TECH_SHARE_RATE = 0.005
   // Reusable buffer to avoid Array.from() every 180 ticks
   private _civsBuf: Civilization[] = []
+  // Reusable map for tryAllianceWar enemy scoring
+  private _enemyScoresBuf: Map<number, number> = new Map()
 
   update(civManager: CivManager, em: EntityManager, world: World, particles: ParticleSystem, tick: number): void {
     if (tick % this.TICK_INTERVAL !== 0) return
@@ -169,7 +171,8 @@ export class AllianceSystem {
     for (const alliance of this.alliances) {
       if (Math.random() > 0.02) continue
       // Find a common enemy: majority of members have relation < -30
-      const enemyScores = new Map<number, number>()
+      const enemyScores = this._enemyScoresBuf
+      enemyScores.clear()
       for (const memberId of alliance.members) {
         const civ = civManager.civilizations.get(memberId)
         if (!civ) continue
