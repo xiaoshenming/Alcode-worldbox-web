@@ -67,6 +67,8 @@ export class AchievementProgressSystem {
   private panelOpen = false;
   private filter: AchievementCategory | null = null;
   private scrollOffset = 0;
+  private _filteredBuf: Achievement[] = [];
+  private _categoryBuf: Achievement[] = [];
 
   constructor() {
     this.achievements = makeAchievements();
@@ -93,12 +95,16 @@ export class AchievementProgressSystem {
   }
 
   getByCategory(category: string): Achievement[] {
-    return this.achievements.filter(a => a.category === category);
+    this._categoryBuf.length = 0;
+    for (const a of this.achievements) { if (a.category === category) this._categoryBuf.push(a); }
+    return this._categoryBuf;
   }
 
   getCompletionRate(): number {
     if (this.achievements.length === 0) return 0;
-    return this.achievements.filter(a => a.completed).length / this.achievements.length;
+    let completed = 0;
+    for (const a of this.achievements) { if (a.completed) completed++; }
+    return completed / this.achievements.length;
   }
 
   togglePanel(): void { this.panelOpen = !this.panelOpen; }
@@ -114,11 +120,17 @@ export class AchievementProgressSystem {
   }
 
   private getFiltered(): Achievement[] {
-    const list = this.filter ? this.achievements.filter(a => a.category === this.filter) : this.achievements;
-    return list.sort((a, b) => {
+    this._filteredBuf.length = 0;
+    if (this.filter) {
+      for (const a of this.achievements) { if (a.category === this.filter) this._filteredBuf.push(a); }
+    } else {
+      for (const a of this.achievements) this._filteredBuf.push(a);
+    }
+    this._filteredBuf.sort((a, b) => {
       const order: Record<AchievementStatus, number> = { in_progress: 0, pending: 1, completed: 2 };
       return order[this.getStatus(a)] - order[this.getStatus(b)];
     });
+    return this._filteredBuf;
   }
 
   private panelRect(screenW: number, screenH: number) {

@@ -27,6 +27,7 @@ export interface WorldStats {
 
 export class AchievementSystem {
   private achievements: Achievement[] = []
+  private _unlockedBuf: Achievement[] = []
   private notifications: { text: string; icon: string; alpha: number; y: number }[] = []
   private stats: WorldStats = {
     totalPopulation: 0, totalCivs: 0, totalBuildings: 0,
@@ -168,7 +169,9 @@ export class AchievementSystem {
   }
 
   getUnlocked(): Achievement[] {
-    return this.achievements.filter(a => a.unlocked)
+    this._unlockedBuf.length = 0
+    for (const a of this.achievements) { if (a.unlocked) this._unlockedBuf.push(a) }
+    return this._unlockedBuf
   }
 
   getAll(): Achievement[] {
@@ -176,10 +179,9 @@ export class AchievementSystem {
   }
 
   getProgress(): { unlocked: number; total: number } {
-    return {
-      unlocked: this.achievements.filter(a => a.unlocked).length,
-      total: this.achievements.length
-    }
+    let unlocked = 0
+    for (const a of this.achievements) { if (a.unlocked) unlocked++ }
+    return { unlocked, total: this.achievements.length }
   }
 
   // Increment counters for events that happen once (deaths, births, wars)
