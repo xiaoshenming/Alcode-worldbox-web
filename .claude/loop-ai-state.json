@@ -1,11 +1,11 @@
 {
-  "notes": "迭代49完成。本轮核心工作：继续大规模扩展Creature系列系统测试覆盖。从906个测试增长到1039个测试（+133个），测试文件从63个增到87个。新增24个测试文件：CreatureAnodizerSystem(5个)、CreatureAnvilsmithSystem(5个)、CreatureBasketWeaverSystem(5个)、CreatureBobbinWinderSystem(5个)、CreatureBorerSystem(5个)、CreatureBobbinLaceMakersSystem(5个，覆盖全4种LacePattern)、CreatureBobbinMakersSystem(5个，覆盖全4种BobbinType)、CreatureBellMakersSystem(5个，覆盖全4种BellType)、CreatureAmbidextritySystem(8个，覆盖getProfiles/getByEntity全3种HandDominance)、CreatureBeekeepingSystem(8个，覆盖getApiaries全6种HiveProduct+getSkill)、CreatureBookbinderSystem(8个，覆盖getBookbinders全4种BindingStyle+getSkill)、CreatureBountySystem(10个，覆盖getActiveBounties/getBountyOn过滤逻辑)、CreatureBraidMakersSystem(5个，覆盖全4种BraidType)、CreatureBridlemakerSystem(5个)、CreatureBroacherSystem(5个)、CreatureBroomMakersSystem(5个，覆盖全4种BroomType)、CreatureBuckleMakersSystem(5个，覆盖全4种BuckleType)、CreatureBurnisherSystem(5个)、CreatureBurnOuterSystem(5个)、CreatureCalligraphySystem(9个，覆盖getWorks全6种ScriptStyle+getByAuthor过滤)、CreatureCardingMakersSystem(5个)、CreatureCartographerSystem(7个，覆盖getCartographers全4种MapType+getSkill)、CreatureChainmakerSystem(5个)、CreatureChandlerSystem(7个，覆盖getChandlers全4种WickType+getSkill)。4个commit全部git push成功。TypeScript零错误，构建成功。测试数量突破1000大关！",
+  "notes": "迭代50完成。本轮核心工作：继续大规模扩展Creature系列系统测试覆盖。从1039个测试增长到1211个测试（+172个），测试文件从87个增到120个。新增33个测试文件：CreatureCharcoalBurnersSystem(5个，4种CharcoalGrade)、CreatureChaserSystem(5个，注意字段名是hammerControl/reliefDepth非pursuitSpeed)、CreatureCheeseAgerSystem(5个，4种CheeseVariety+active字段)、CreatureChisellerSystem(5个)、CreatureChroniclerSystem(5个，4种specialty+active字段)、CreatureClaspMakersSystem(5个，无getSkill)、CreatureClaustrophobiaSystem(5个)、CreatureCobblerSystem(5个，注意类名是CreatureCobblersSystem)、CreatureCoinerSystem(5个)、CreatureCoinerMintSystem(5个)、CreatureCombMakersSystem(5个，字段名teethFineness非toothPrecision)、CreatureConstellationSystem(5个，5种ConstellationType)、CreatureCooperSystem(5个)、CreatureCoopersSystem(7个，4种BarrelType无getSkill)、CreatureCourierSystem(9个，4种status+4种priority，字段无distance)、CreatureCrimperSystem(5个)、CreatureCrochetMakersSystem(5个，无getSkill)、CreatureCalderersSystem(5个，无getSkill)、CreatureCountersinkerSystem(5个)、CreatureCuriersSystem(5个，无getSkill)、CreatureCartographySystem(9个，6种MapType+4种MapDetail+getSkill)、CreatureChandlersSystem(5个，无getSkill)、CreatureCollectionSystem(8个，getCollection/getCollectionCount/getTopCollectors降序)、CreatureDanceSystem(12个，6种DanceType+6种DanceEffect)、CreatureDiemakerSystem(5个)、CreatureDivinationSystem(9个，6种方式+getRecent+getBelievedCount)、CreatureDowserSystem(5个，4种DowserTool+active字段)、CreatureDrawerSystem(5个)、CreatureDreamSystem(10个，6种DreamType+getRecentDreams+getNightmareCount)、CreatureDrifterSystem(5个)、CreatureDyeingMakersSystem(5个，4种DyeingType)、CreatureDyersSystem(5个，4种DyeSource无getSkill)、CreatureDyerSystem(7个，4种DyeColor+getSkill)。3个commit全部git push成功。TypeScript零错误，构建成功。",
   "priorities": [
-    "1. 继续测试更多Creature系列系统（还有大量未测系统如CharcoalBurners/Chaser/CheeseAger/Chronicler等）",
+    "1. 继续测试更多Creature系列系统（CreatureE/F/G系列：Embroider/Engraver/Falconer/Farmer/Fisher等）",
     "2. 探索非Creature系统中有getXxx方法的系统（如PopulationSystem/NavalSystem等）",
     "3. Game.ts仍有4045行（超标8倍）：loop(1038行)是最大候选，但依赖太多系统，风险高",
     "4. WorldEventSystem(813行)、WeatherDisasterSystem(741行) 超出质量门禁 500 行",
-    "5. 目标：继续向1100+测试冲刺，当前1039个，还差61个"
+    "5. 目标：继续向1300+测试冲刺，当前1211个"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃源 — 已在迭代26彻底清零",
@@ -60,16 +60,14 @@
     "DiplomacySystem.getTreaties()过滤未破坏条约，返回新数组；getEvents()用slice返回副本——两者行为测试模式不同",
     "【重要安全规则】严禁用Write工具创建src/__tests__/目录内的文件！Write工具会将__转义为\\_\\_导致创建错误目录，必须用Bash cat heredoc方式创建测试文件",
     "rm -rf命令可能误删整个src目录（路径中含转义字符时）——立即git restore src/可恢复跟踪文件，但未跟踪的新文件会永久丢失",
-    "CultureSystem.getCultureBonus累加所有trait对应type的bonus，8种trait各有不同bonus字段（如seafaring的naval=0.25最高）",
-    "EspionageSystem.hasJustification检查攻防方向（A→B ≠ B→A），addBorderConflict/addReligiousTension各自独立去重",
-    "ClonePowerSystem.clone在第5+代添加unstable trait，colorTint=180+gen*15（gen越高越蓝偏紫）",
-    "ChartPanelSystem用环形缓冲区（head+count），超过MAX_BUFFER=500后head递增覆盖最旧数据，count保持500",
-    "Artwork接口不含civId字段 — 创建测试时工厂函数字面量多了不存在的字段会导致tsc报错，要先grep确认接口定义",
     "Creature系列系统的测试模式极其统一：直接push到(sys as any).xxx数组/Map注入数据 + 验证getter返回内部引用或过滤结果",
     "大量Creature专业工匠系统（Annealer/Assayer/Beveller等）结构完全相同：单数组+getXxx()返回引用，测试5个最小覆盖已足够",
-    "getAverageLoyalty/getActiveCount等计算型getter需额外验证边界（空集合返回0、混合状态只统计目标子集）",
     "批量创建测试文件时用Bash cat heredoc并行执行效率最高 — 单轮可创建12-24个测试文件",
-    "测试数量突破1000后，vitest运行时间从1.3s增长到1.8s，仍在可接受范围内"
+    "【关键经验】测试前必须先用grep确认接口字段！不同系统的同名方法字段可能完全不同（如Chaser.chasingSkill vs hammerControl，Cobbler类名是CreatureCobblersSystem）",
+    "有些系统没有skillMap/getSkill方法（如Calderers/ClapMakers/Chandlers/CrochetMakers/Coopers/Curiers）——用tail/grep先确认再写测试",
+    "CreatureCobblersSystem是文件名CreatureCobblerSystem.ts中导出的类（注意复数）— 类名vs文件名不一定一致",
+    "CollectionSystem用Map而非数组存储，需用(sys as any).collections.set(id, data)注入而非.push()",
+    "getDreamLog/getDivinations/getConstellations等返回内部引用（系统日志类型），getRecent/getRecentDreams用slice(-count)返回副本"
   ],
-  "last_updated": "2026-02-27T16:07:00+08:00"
+  "last_updated": "2026-02-27T16:30:00+08:00"
 }
