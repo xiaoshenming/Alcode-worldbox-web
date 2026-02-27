@@ -56,8 +56,12 @@ export class SeasonFestivalSystem {
   private lastSeason = ''
   private displayAlpha = 0
 
+  private _activeFestivalsBuf: Festival[] = []
+
   getActiveFestivals(): Festival[] {
-    return this.festivals.filter(f => f.active)
+    this._activeFestivalsBuf.length = 0
+    for (const f of this.festivals) { if (f.active) this._activeFestivalsBuf.push(f) }
+    return this._activeFestivalsBuf
   }
 
   update(dt: number, civManager: CivManagerLike, season: SeasonLike, tick: number): void {

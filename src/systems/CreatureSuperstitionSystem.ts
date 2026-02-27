@@ -127,7 +127,17 @@ export class CreatureSuperstitionSystem {
     }
   }
 
+  private _positiveBuf: Superstition[] = []
+  private _negativeBuf: Superstition[] = []
   getSuperstitions(): Superstition[] { return this.superstitions }
-  getPositiveSuperstitions(): Superstition[] { return this.superstitions.filter(s => s.positive) }
-  getNegativeSuperstitions(): Superstition[] { return this.superstitions.filter(s => !s.positive) }
+  getPositiveSuperstitions(): Superstition[] {
+    this._positiveBuf.length = 0
+    for (const s of this.superstitions) { if (s.positive) this._positiveBuf.push(s) }
+    return this._positiveBuf
+  }
+  getNegativeSuperstitions(): Superstition[] {
+    this._negativeBuf.length = 0
+    for (const s of this.superstitions) { if (!s.positive) this._negativeBuf.push(s) }
+    return this._negativeBuf
+  }
 }

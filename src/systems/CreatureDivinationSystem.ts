@@ -84,5 +84,9 @@ export class CreatureDivinationSystem {
 
   getDivinations(): Divination[] { return this.divinations }
   getRecent(count: number): Divination[] { return this.divinations.slice(-count) }
-  getBelievedCount(): number { return this.divinations.filter(d => d.believed).length }
+  getBelievedCount(): number {
+    let n = 0
+    for (const d of this.divinations) { if (d.believed) n++ }
+    return n
+  }
 }

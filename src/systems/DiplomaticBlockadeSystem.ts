@@ -60,10 +60,12 @@ export class DiplomaticBlockadeSystem {
 
     for (const civ of civs) {
       if (Math.random() > BLOCKADE_CHANCE) continue
-      const targets = civs.filter(c => c.id !== civ.id)
-      if (targets.length === 0) continue
-
-      const target = targets[Math.floor(Math.random() * targets.length)]
+      // Pick a random target that is not the current civ
+      if (civs.length < 2) continue
+      let target: typeof civs[0]
+      do {
+        target = civs[Math.floor(Math.random() * civs.length)]
+      } while (target.id === civ.id)
       if (this.blockades.some(b => b.blockaderId === civ.id && b.targetId === target.id)) continue
 
       const types: BlockadeType[] = ['naval', 'land', 'trade', 'total']
@@ -101,9 +103,12 @@ export class DiplomaticBlockadeSystem {
     }
   }
 
+  private _blockadesBuf: Blockade[] = []
   getBlockades(): Blockade[] { return this.blockades }
   getBlockadesAgainst(civId: number): Blockade[] {
-    return this.blockades.filter(b => b.targetId === civId)
+    this._blockadesBuf.length = 0
+    for (const b of this.blockades) { if (b.targetId === civId) this._blockadesBuf.push(b) }
+    return this._blockadesBuf
   }
   getTotalImposed(): number { return this.totalImposed }
   getTotalBroken(): number { return this.totalBroken }

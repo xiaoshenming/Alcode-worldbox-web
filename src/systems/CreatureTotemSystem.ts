@@ -136,11 +136,14 @@ export class CreatureTotemSystem {
     return this.totems.find(t => t.x === x && t.y === y)
   }
 
+  private _nearbyTotemsBuf: Totem[] = []
   getNearbyTotems(x: number, y: number, radius: number): Totem[] {
     const r2 = radius * radius
-    return this.totems.filter(t => {
+    this._nearbyTotemsBuf.length = 0
+    for (const t of this.totems) {
       const dx = t.x - x, dy = t.y - y
-      return dx * dx + dy * dy <= r2
-    })
+      if (dx * dx + dy * dy <= r2) this._nearbyTotemsBuf.push(t)
+    }
+    return this._nearbyTotemsBuf
   }
 }

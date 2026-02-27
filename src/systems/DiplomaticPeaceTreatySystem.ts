@@ -93,10 +93,13 @@ export class DiplomaticPeaceTreatySystem {
     }
   }
 
+  private _treatiesBuf: PeaceTreaty[] = []
   getTreaties(): readonly PeaceTreaty[] { return this.treaties }
   getTreatiesBetween(civA: number, civB: number): PeaceTreaty[] {
-    return this.treaties.filter(t =>
-      (t.civAId === civA && t.civBId === civB) || (t.civAId === civB && t.civBId === civA)
-    )
+    this._treatiesBuf.length = 0
+    for (const t of this.treaties) {
+      if ((t.civAId === civA && t.civBId === civB) || (t.civAId === civB && t.civBId === civA)) this._treatiesBuf.push(t)
+    }
+    return this._treatiesBuf
   }
 }

@@ -81,5 +81,9 @@ export class CreatureDreamSystem {
 
   getDreamLog(): Dream[] { return this.dreamLog }
   getRecentDreams(count: number): Dream[] { return this.dreamLog.slice(-count) }
-  getNightmareCount(): number { return this.dreamLog.filter(d => d.type === 'nightmare').length }
+  getNightmareCount(): number {
+    let n = 0
+    for (const d of this.dreamLog) { if (d.type === 'nightmare') n++ }
+    return n
+  }
 }

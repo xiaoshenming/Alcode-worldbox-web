@@ -44,10 +44,12 @@ export class CreatureTelepathySystem {
       power = Math.min(100, power + POWER_GROWTH)
       this.powerMap.set(eid, power)
 
-      // Find a nearby creature to link with
-      const others = creatures.filter(o => o !== eid)
-      if (others.length === 0) continue
-      const target = others[Math.floor(Math.random() * others.length)]
+      // Find a nearby creature to link with — pick random excluding self
+      if (creatures.length < 2) continue
+      let target: number
+      do {
+        target = creatures[Math.floor(Math.random() * creatures.length)]
+      } while (target === eid)
 
       const ability = ABILITIES[Math.floor(Math.random() * ABILITIES.length)]
 

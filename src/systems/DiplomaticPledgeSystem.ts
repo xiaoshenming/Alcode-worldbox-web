@@ -88,11 +88,14 @@ export class DiplomaticPledgeSystem {
     for (let _i = this.pledges.length - 1; _i >= 0; _i--) { if (this.pledges[_i].strength <= 0) this.pledges.splice(_i, 1) }
   }
 
+  private _pledgesBuf: DiplomaticPledge[] = []
   getPledges(): DiplomaticPledge[] {
     return this.pledges
   }
 
   getByCiv(civId: number): DiplomaticPledge[] {
-    return this.pledges.filter(p => p.fromCivId === civId || p.toCivId === civId)
+    this._pledgesBuf.length = 0
+    for (const p of this.pledges) { if (p.fromCivId === civId || p.toCivId === civId) this._pledgesBuf.push(p) }
+    return this._pledgesBuf
   }
 }

@@ -92,5 +92,9 @@ export class CreatureLegacySystem {
 
   getLegacies(): Legacy[] { return this.legacies }
   getRecentLegacies(count: number): Legacy[] { return this.legacies.slice(-count) }
-  getHeroicCount(): number { return this.legacies.filter(l => l.type === 'heroic').length }
+  getHeroicCount(): number {
+    let n = 0
+    for (const l of this.legacies) { if (l.type === 'heroic') n++ }
+    return n
+  }
 }

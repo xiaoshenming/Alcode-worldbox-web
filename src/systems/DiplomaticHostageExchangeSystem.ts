@@ -82,8 +82,11 @@ export class DiplomaticHostageExchangeSystem {
     }
   }
 
+  private _exchangesBuf: HostageExchange[] = []
   getExchanges(): readonly HostageExchange[] { return this.exchanges }
   getExchangesByCiv(civId: number): HostageExchange[] {
-    return this.exchanges.filter(e => (e.civA === civId || e.civB === civId) && e.status === 'active')
+    this._exchangesBuf.length = 0
+    for (const e of this.exchanges) { if ((e.civA === civId || e.civB === civId) && e.status === 'active') this._exchangesBuf.push(e) }
+    return this._exchangesBuf
   }
 }

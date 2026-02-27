@@ -94,7 +94,10 @@ export class CreatureOmenBeliefSystem {
     return this.beliefs
   }
 
+  private _entityBeliefsBuf: OmenBelief[] = []
   getByEntity(entityId: number): OmenBelief[] {
-    return this.beliefs.filter(b => b.entityId === entityId)
+    this._entityBeliefsBuf.length = 0
+    for (const b of this.beliefs) { if (b.entityId === entityId) this._entityBeliefsBuf.push(b) }
+    return this._entityBeliefsBuf
   }
 }

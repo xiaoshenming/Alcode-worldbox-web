@@ -117,7 +117,12 @@ export class CreatureRivalrySystem {
     }
   }
 
+  private _activeRivalriesBuf: Rivalry[] = []
   getRivalries(): Rivalry[] { return this.rivalries }
-  getActiveRivalries(): Rivalry[] { return this.rivalries.filter(r => r.stage !== 'resolved') }
+  getActiveRivalries(): Rivalry[] {
+    this._activeRivalriesBuf.length = 0
+    for (const r of this.rivalries) { if (r.stage !== 'resolved') this._activeRivalriesBuf.push(r) }
+    return this._activeRivalriesBuf
+  }
   getResolvedCount(): number { return this.resolvedCount }
 }

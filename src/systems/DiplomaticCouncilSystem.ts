@@ -141,7 +141,12 @@ export class DiplomaticCouncilSystem {
     }
   }
 
+  private _activeCouncilsBuf: Council[] = []
   getCouncils(): Council[] { return this.councils }
-  getActiveCouncils(): Council[] { return this.councils.filter(c => !c.resolved) }
+  getActiveCouncils(): Council[] {
+    this._activeCouncilsBuf.length = 0
+    for (const c of this.councils) { if (!c.resolved) this._activeCouncilsBuf.push(c) }
+    return this._activeCouncilsBuf
+  }
   getResolvedCount(): number { return this.resolvedCount }
 }

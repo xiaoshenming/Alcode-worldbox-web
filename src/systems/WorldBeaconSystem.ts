@@ -120,9 +120,14 @@ export class WorldBeaconSystem {
     }
   }
 
+  private _litBeaconsBuf: Beacon[] = []
   getBeacons(): Beacon[] { return this.beacons }
   getBeaconCount(): number { return this.beacons.length }
-  getLitBeacons(): Beacon[] { return this.beacons.filter(b => b.lit) }
+  getLitBeacons(): Beacon[] {
+    this._litBeaconsBuf.length = 0
+    for (const b of this.beacons) { if (b.lit) this._litBeaconsBuf.push(b) }
+    return this._litBeaconsBuf
+  }
 
   getBeaconAt(x: number, y: number): Beacon | null {
     return this.beacons.find(b => b.x === x && b.y === y) ?? null

@@ -78,7 +78,10 @@ export class CreatureHandicraftSystem {
     return this.crafts
   }
 
+  private _crafterBuf: Handicraft[] = []
   getByCrafter(entityId: number): Handicraft[] {
-    return this.crafts.filter(c => c.crafterId === entityId)
+    this._crafterBuf.length = 0
+    for (const c of this.crafts) { if (c.crafterId === entityId) this._crafterBuf.push(c) }
+    return this._crafterBuf
   }
 }

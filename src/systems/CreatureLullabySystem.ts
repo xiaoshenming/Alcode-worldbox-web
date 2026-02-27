@@ -76,7 +76,10 @@ export class CreatureLullabySystem {
     return this.lullabies
   }
 
+  private _singerBuf: Lullaby[] = []
   getBySinger(entityId: number): Lullaby[] {
-    return this.lullabies.filter(l => l.singerId === entityId)
+    this._singerBuf.length = 0
+    for (const l of this.lullabies) { if (l.singerId === entityId) this._singerBuf.push(l) }
+    return this._singerBuf
   }
 }

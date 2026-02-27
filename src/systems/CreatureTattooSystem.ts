@@ -88,12 +88,17 @@ export class CreatureTattooSystem {
     }
   }
 
+  private _tattoosBuf: Tattoo[] = []
   private getTattooCount(entityId: number): number {
-    return this.tattoos.filter(t => t.entityId === entityId).length
+    let n = 0
+    for (const t of this.tattoos) { if (t.entityId === entityId) n++ }
+    return n
   }
 
   getTattoos(): Tattoo[] { return this.tattoos }
   getEntityTattoos(entityId: number): Tattoo[] {
-    return this.tattoos.filter(t => t.entityId === entityId)
+    this._tattoosBuf.length = 0
+    for (const t of this.tattoos) { if (t.entityId === entityId) this._tattoosBuf.push(t) }
+    return this._tattoosBuf
   }
 }

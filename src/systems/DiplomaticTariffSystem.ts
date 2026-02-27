@@ -88,11 +88,14 @@ export class DiplomaticTariffSystem {
     for (let _i = this.tariffs.length - 1; _i >= 0; _i--) { if (!((t) => t.rate > 0.01)(this.tariffs[_i])) this.tariffs.splice(_i, 1) }
   }
 
+  private _tariffsBuf: Tariff[] = []
   getTariffs(): Tariff[] {
     return this.tariffs
   }
 
   getByTarget(civId: number): Tariff[] {
-    return this.tariffs.filter(t => t.targetCivId === civId)
+    this._tariffsBuf.length = 0
+    for (const t of this.tariffs) { if (t.targetCivId === civId) this._tariffsBuf.push(t) }
+    return this._tariffsBuf
   }
 }

@@ -126,8 +126,13 @@ export class WorldAcousticSystem {
     }
   }
 
+  private _activeSoundsBuf: SoundSource[] = []
   getSounds(): SoundSource[] { return this.sounds }
-  getActiveSounds(): SoundSource[] { return this.sounds.filter(s => s.volume > 0) }
+  getActiveSounds(): SoundSource[] {
+    this._activeSoundsBuf.length = 0
+    for (const s of this.sounds) { if (s.volume > 0) this._activeSoundsBuf.push(s) }
+    return this._activeSoundsBuf
+  }
   getLoudestArea(): { x: number; y: number; volume: number } | null {
     if (this.sounds.length === 0) return null
     const loudest = this.sounds.reduce((a, b) => a.volume > b.volume ? a : b)

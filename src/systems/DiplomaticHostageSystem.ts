@@ -75,8 +75,11 @@ export class DiplomaticHostageSystem {
     }
   }
 
+  private _hostagesBuf: Hostage[] = []
   getHostages(): readonly Hostage[] { return this.hostages }
   getHostagesByCiv(civId: number): Hostage[] {
-    return this.hostages.filter(h => h.captor === civId && h.status !== 'exchanged')
+    this._hostagesBuf.length = 0
+    for (const h of this.hostages) { if (h.captor === civId && h.status !== 'exchanged') this._hostagesBuf.push(h) }
+    return this._hostagesBuf
   }
 }

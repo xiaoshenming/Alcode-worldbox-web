@@ -86,7 +86,10 @@ export class CreatureSomniloquySystem {
   getRecentTalks(count: number): SleepTalk[] {
     return [...this.talks].sort((a, b) => b.tick - a.tick).slice(0, count)
   }
+  private _propheciesBuf: SleepTalk[] = []
   getProphecies(): SleepTalk[] {
-    return this.talks.filter(t => t.talkType === 'prophecy')
+    this._propheciesBuf.length = 0
+    for (const t of this.talks) { if (t.talkType === 'prophecy') this._propheciesBuf.push(t) }
+    return this._propheciesBuf
   }
 }

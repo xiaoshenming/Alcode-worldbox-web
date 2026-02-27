@@ -1,12 +1,12 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代35完成。深度GC优化扫描。主要成果：1) 消除6个系统复杂filter/splice/spread：CreatureAlliance.decayAlliances多行filter→逆序splice、DiplomaticTradeAgreement.cleanup O(N²)indexOf→双指针、DiplomaticSpy.getActiveSpies热路径计数、RuinsSystem/TradeFleetSystem filter赋值→splice、MythologySystem new Set(arr.map())→布尔检查；2) 消除WorldRelic/WorldSinkhole/CreatureSkill等filter临时数组：_relicBuf/_activeBuf预分配、branchSkills缓存；3) 消除CreatureBounty/DiplomaticExile/CreatureFashion/DiplomaticSanction/DiplomaticWarReparation等filter().length→手动计数；4) 消除PlagueMutation/WorldStats/NavalCombat/CreatureLanguage等Array.from/spread→push循环或预排序缓存；5) render路径字体缓存：CreatureEmotion/MapMarker/TradeFleet/SiegeWarfare/EditorEnhanced；6) 消除ZoneManagement/WorldDashboard/CreatureCollection等Array.from+filter→两阶段采样；7) Object.entries/values缓存为模块级常量：CreatureRivalryDuel/CreatureMentor/CreatureHobby；8) SeasonSystem.getPreviousSeason/getNextSeason改switch消除临时数组。总计：约40+个文件/处优化，测试5434个全通过，TypeScript clean，构建成功。
+🧠 AI 上轮笔记：迭代37完成。深度GC优化扫描 — render路径模板字符串+filter消除。主要成果：1) 消除20+个系统render路径模板字符串：MinimapEnhanced热力图101步颜色表预计算(最多10000次/帧)、BloodMoon overlay/streak颜色表、WorldBorder 91步颜色表+globalAlpha、EventNotification/SeasonVisual firefly改globalAlpha、EraVisual overlay缓存、WorldNarrator改globalAlpha、BuildingVariety/TradeFleet改globalAlpha+颜色表、SiegeWarfare siege ring 41步颜色表、WorldHeatmap 101步颜色表、DiplomacyVisual 201步颜色表、ZoneManagement zone label字体缓存；2) 消除10+个系统filter().length GC：WorldChronicle 4个filter合并为单次循环、CreatureAncestor/CameraBookmark/Monument改手动计数、CreatureMigrationMemory改两阶段计数+迭代采样、CreatureBounty/DiplomaticSpy改for+continue；3) 消除PortalSystem.getPortals().length改getPortalCount()直接返回size。总计：约30+个文件/处优化，测试5434个全通过，TypeScript clean，构建成功。
 🎯 AI 自定优先级：[
-  "1. ReligionSpreadSystem.render: ctx.font=`${size}px serif`在内层循环，每个temple不同size，需要更复杂的缓存策略",
-  "2. WorldDashboardSystem.render: Object.entries(sample.populations)在render路径，populations是Record<string,number>，改为Map<string,number>需要修改数据结构",
-  "3. Game.ts(4045行)：主循环密集系统调用，是最大未解决问题，但风险极高",
-  "4. Renderer.ts(989行)：继续排查热路径GC，特别是renderMinimap和tile渲染循环",
-  "5. 扫描 new Object()/对象字面量 在每帧render路径中的使用——特别是WeatherDisasterSystem渲染"
+  "1. Game.ts(4045行)：主循环密集系统调用，是最大未解决问题，但风险极高",
+  "2. Renderer.ts(989行)：继续排查热路径GC，特别是renderMinimap和tile渲染循环",
+  "3. 扫描 new Object()/对象字面量 在每帧render路径中的使用——特别是WeatherDisasterSystem渲染",
+  "4. 扫描剩余filter()在update路径中的使用：AchievementProgressSystem/CreatureTamingSystem/CreatureSkillSystem等",
+  "5. 扫描剩余Array.from()在热路径中的使用：CreatureReputationSystem/FormationSystem/QuestSystem等getter"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
@@ -68,10 +68,30 @@
   "【迭代35新增】WorldStatsOverviewSystem: render每帧Array.from+sort→update时预排序到_speciesEntriesBuf缓存",
   "【迭代35新增】Object.entries/values缓存为模块级常量：STAKE_ENTRIES/SKILL_ENTRIES/HOBBY_TOTAL，消除每次调用的临时数组分配",
   "【迭代35新增】SeasonSystem.getPreviousSeason/getNextSeason: 临时数组+indexOf→switch直接返回，零分配",
-  "【迭代35新增】render路径字体缓存模式：_lastZoom+_xxxFont成员，zoom不变时复用，已覆盖10+个系统"
+  "【迭代35新增】render路径字体缓存模式：_lastZoom+_xxxFont成员，zoom不变时复用，已覆盖10+个系统",
+  "【迭代36新增】ReligionSpreadSystem temple字体：level 1-3用_templeFonts[0-2]数组缓存，zoom变化时重建",
+  "【迭代36新增】粒子颜色预计算模式：Siege/Tornado/Plague/Season等系统用IIFE生成颜色表，量化alpha/life到离散档位",
+  "【迭代36新增】Tile渲染颜色表：Pollution/Corruption/Minimap等系统预计算100档颜色表，避免每tile模板字符串",
+  "【迭代36新增】Particle.color字段模式：Season/Achievement等系统在spawn时计算color字符串存入粒子，render直接用",
+  "【迭代36新增】WorldDashboard.PopulationSample.entries预计算：addPopulationSample时计算Object.entries存入，render直接用",
+  "【迭代36新增】CreaturePilgrimage.cleanup partition模式：手动partition active/completed，避免两次filter+spread",
+  "【迭代36新增】CropSystem.FARM_OFFSETS常量：提取循环内const offsets数组为模块级readonly常量",
+  "【迭代37新增】MinimapEnhancedSystem热力图：预计算101步rgba颜色表，消除最多10000次/帧模板字符串GC（最高收益优化）",
+  "【迭代37新增】globalAlpha替换rgba模板字符串：EventNotification/SeasonVisual/WorldBorder/BuildingVariety等系统改用ctx.globalAlpha+固定颜色，消除连续alpha值的模板字符串",
+  "【迭代37新增】BloodMoonSystem颜色表：overlay 101步+streak 101步预计算，消除每帧模板字符串+移strokeStyle出循环",
+  "【迭代37新增】WorldBorder颜色表：每个style预计算91步alpha颜色表，高光/漩涡改globalAlpha，消除tile循环GC",
+  "【迭代37新增】EraVisualSystem overlay缓存：_overlayFillStyle+_overlayTintR/G/B/Alpha，只在style变化时重建",
+  "【迭代37新增】TradeFleetSystem ripple颜色表：101步alpha 0.00..0.30预计算，消除ripple渲染GC",
+  "【迭代37新增】SiegeWarfareSystem siege ring颜色表：41步alpha 0.20..0.60预计算，消除Date.now()模板字符串",
+  "【迭代37新增】WorldHeatmapSystem颜色表：101步t 0.00..1.00预计算，消除逐像素renderOverlay中的valueToColor调用",
+  "【迭代37新增】DiplomacyVisualSystem relationColor：201步val -100..100预计算，消除外交矩阵渲染GC",
+  "【迭代37新增】WorldChronicle.getWorldSummary：4个filter合并为单次循环，wars/heroes/disasters/legendary同时计数",
+  "【迭代37新增】CreatureMigrationMemory elderMemories：filter改两阶段计数+迭代采样，消除临时数组分配",
+  "【迭代37新增】PortalSystem.getPortalCount()：Game.ts中getPortals().length改为直接返回portals.size，消除Array.from快照",
+  "【迭代37新增】ZoneManagement zone label字体：zone._lastZoom+_labelFont缓存，消除renderZones中最后一个ctx.font模板字符串"
 ]
 
-迭代轮次: 36/100
+迭代轮次: 39/100
 
 
 🔄 自我进化（每轮必做）：
@@ -80,6 +100,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-02-28T04:01:32+08:00"
+  "last_updated": "2026-02-28T07:08:25+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。
