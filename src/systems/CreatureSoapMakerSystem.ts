@@ -78,9 +78,8 @@ export class CreatureSoapMakerSystem {
     }
 
     // Remove makers whose creatures no longer exist
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.makers.length - 1; i >= 0; i--) {
-      if (!alive.has(this.makers[i].entityId)) this.makers.splice(i, 1)
+      if (!em.hasComponent(this.makers[i].entityId, 'creature')) this.makers.splice(i, 1)
     }
   }
 

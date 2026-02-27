@@ -88,9 +88,8 @@ export class CreatureGladiatorSystem {
     }
 
     // Remove gladiators whose creatures no longer exist
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.gladiators.length - 1; i >= 0; i--) {
-      if (!alive.has(this.gladiators[i].entityId)) this.gladiators.splice(i, 1)
+      if (!em.hasComponent(this.gladiators[i].entityId, 'creature')) this.gladiators.splice(i, 1)
     }
   }
 

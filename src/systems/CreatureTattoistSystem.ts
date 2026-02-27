@@ -65,9 +65,8 @@ export class CreatureTattoistSystem {
     }
 
     // Remove tattoos of dead creatures
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.tattoos.length - 1; i >= 0; i--) {
-      if (!alive.has(this.tattoos[i].creatureId)) this.tattoos.splice(i, 1)
+      if (!em.hasComponent(this.tattoos[i].creatureId, 'creature')) this.tattoos.splice(i, 1)
     }
   }
 

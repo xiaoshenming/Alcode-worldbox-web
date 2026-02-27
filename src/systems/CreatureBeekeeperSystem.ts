@@ -84,9 +84,8 @@ export class CreatureBeekeeperSystem {
     }
 
     // Remove beekeepers whose creatures no longer exist
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.beekeepers.length - 1; i >= 0; i--) {
-      if (!alive.has(this.beekeepers[i].entityId)) this.beekeepers.splice(i, 1)
+      if (!em.hasComponent(this.beekeepers[i].entityId, 'creature')) this.beekeepers.splice(i, 1)
     }
   }
 

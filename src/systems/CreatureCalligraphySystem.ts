@@ -65,9 +65,8 @@ export class CreatureCalligraphySystem {
     this.works = this.works.filter(w => w.preserved || w.tick > cutoff)
 
     // Clean skill map for dead creatures
-    const alive = new Set(creatures)
     for (const [eid] of this.skillMap) {
-      if (!alive.has(eid)) this.skillMap.delete(eid)
+      if (!em.hasComponent(eid, 'creature')) this.skillMap.delete(eid)
     }
   }
 

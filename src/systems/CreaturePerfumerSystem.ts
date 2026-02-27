@@ -81,9 +81,8 @@ export class CreaturePerfumerSystem {
     }
 
     // Remove perfumers whose creatures no longer exist
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.perfumers.length - 1; i >= 0; i--) {
-      if (!alive.has(this.perfumers[i].entityId)) this.perfumers.splice(i, 1)
+      if (!em.hasComponent(this.perfumers[i].entityId, 'creature')) this.perfumers.splice(i, 1)
     }
   }
 

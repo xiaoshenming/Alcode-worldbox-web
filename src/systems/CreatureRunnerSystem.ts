@@ -73,9 +73,8 @@ export class CreatureRunnerSystem {
       }
     }
 
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.runners.length - 1; i >= 0; i--) {
-      if (!alive.has(this.runners[i].creatureId)) this.runners.splice(i, 1)
+      if (!em.hasComponent(this.runners[i].creatureId, 'creature')) this.runners.splice(i, 1)
     }
   }
 

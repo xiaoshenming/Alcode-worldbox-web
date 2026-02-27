@@ -69,9 +69,8 @@ export class CreatureFirewalkerSystem {
       }
     }
 
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.firewalkers.length - 1; i >= 0; i--) {
-      if (!alive.has(this.firewalkers[i].entityId)) this.firewalkers.splice(i, 1)
+      if (!em.hasComponent(this.firewalkers[i].entityId, 'creature')) this.firewalkers.splice(i, 1)
     }
   }
 

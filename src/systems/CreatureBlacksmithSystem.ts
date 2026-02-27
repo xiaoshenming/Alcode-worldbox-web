@@ -66,9 +66,8 @@ export class CreatureBlacksmithSystem {
       }
     }
 
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.smiths.length - 1; i >= 0; i--) {
-      if (!alive.has(this.smiths[i].entityId)) this.smiths.splice(i, 1)
+      if (!em.hasComponent(this.smiths[i].entityId, 'creature')) this.smiths.splice(i, 1)
     }
   }
 

@@ -64,9 +64,8 @@ export class CreatureJesterSystem {
       }
     }
 
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.jesters.length - 1; i >= 0; i--) {
-      if (!alive.has(this.jesters[i].creatureId)) this.jesters.splice(i, 1)
+      if (!em.hasComponent(this.jesters[i].creatureId, 'creature')) this.jesters.splice(i, 1)
     }
   }
 

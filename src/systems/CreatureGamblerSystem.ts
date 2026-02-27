@@ -71,10 +71,9 @@ export class CreatureGamblerSystem {
     }
 
     // Remove gamblers whose creatures no longer exist or went bankrupt
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.gamblers.length - 1; i >= 0; i--) {
       const g = this.gamblers[i]
-      if (!alive.has(g.entityId) || (g.wealth <= 0 && g.gamesPlayed > 10)) {
+      if (!em.hasComponent(g.entityId, 'creature') || (g.wealth <= 0 && g.gamesPlayed > 10)) {
         this.gamblers.splice(i, 1)
       }
     }

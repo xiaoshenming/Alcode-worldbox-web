@@ -72,9 +72,8 @@ export class CreatureCheeseAgerSystem {
     }
 
     // Remove agers whose creatures no longer exist
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.agers.length - 1; i >= 0; i--) {
-      if (!alive.has(this.agers[i].entityId)) this.agers.splice(i, 1)
+      if (!em.hasComponent(this.agers[i].entityId, 'creature')) this.agers.splice(i, 1)
     }
   }
 

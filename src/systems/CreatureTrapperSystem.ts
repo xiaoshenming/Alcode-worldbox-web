@@ -80,9 +80,8 @@ export class CreatureTrapperSystem {
     }
 
     // Remove trappers whose creatures no longer exist
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.trappers.length - 1; i >= 0; i--) {
-      if (!alive.has(this.trappers[i].entityId)) this.trappers.splice(i, 1)
+      if (!em.hasComponent(this.trappers[i].entityId, 'creature')) this.trappers.splice(i, 1)
     }
   }
 

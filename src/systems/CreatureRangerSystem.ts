@@ -65,9 +65,8 @@ export class CreatureRangerSystem {
       }
     }
 
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.rangers.length - 1; i >= 0; i--) {
-      if (!alive.has(this.rangers[i].creatureId)) this.rangers.splice(i, 1)
+      if (!em.hasComponent(this.rangers[i].creatureId, 'creature')) this.rangers.splice(i, 1)
     }
   }
 

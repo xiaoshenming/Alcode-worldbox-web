@@ -75,9 +75,8 @@ export class CreatureHeraldSystem {
     }
 
     // Remove heralds of dead creatures
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.heralds.length - 1; i >= 0; i--) {
-      if (!alive.has(this.heralds[i].creatureId)) this.heralds.splice(i, 1)
+      if (!em.hasComponent(this.heralds[i].creatureId, 'creature')) this.heralds.splice(i, 1)
     }
   }
 

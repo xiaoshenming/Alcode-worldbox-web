@@ -86,9 +86,8 @@ export class CreatureMushroomForagerSystem {
     }
 
     // Remove foragers whose creatures no longer exist
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.foragers.length - 1; i >= 0; i--) {
-      if (!alive.has(this.foragers[i].entityId)) this.foragers.splice(i, 1)
+      if (!em.hasComponent(this.foragers[i].entityId, 'creature')) this.foragers.splice(i, 1)
     }
   }
 

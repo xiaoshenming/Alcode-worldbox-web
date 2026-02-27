@@ -62,9 +62,8 @@ export class CreatureChroniclerSystem {
       }
     }
 
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.chroniclers.length - 1; i >= 0; i--) {
-      if (!alive.has(this.chroniclers[i].entityId)) this.chroniclers.splice(i, 1)
+      if (!em.hasComponent(this.chroniclers[i].entityId, 'creature')) this.chroniclers.splice(i, 1)
     }
   }
 

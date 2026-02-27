@@ -70,9 +70,8 @@ export class CreatureNomadSystem {
       }
     }
 
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.tribes.length - 1; i >= 0; i--) {
-      if (!alive.has(this.tribes[i].leaderId)) this.tribes.splice(i, 1)
+      if (!em.hasComponent(this.tribes[i].leaderId, 'creature')) this.tribes.splice(i, 1)
     }
   }
 

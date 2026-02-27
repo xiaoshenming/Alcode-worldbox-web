@@ -86,9 +86,8 @@ export class CreatureHerbalistSystem {
     }
 
     // Remove herbalists whose creatures no longer exist
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.herbalists.length - 1; i >= 0; i--) {
-      if (!alive.has(this.herbalists[i].entityId)) this.herbalists.splice(i, 1)
+      if (!em.hasComponent(this.herbalists[i].entityId, 'creature')) this.herbalists.splice(i, 1)
     }
   }
 

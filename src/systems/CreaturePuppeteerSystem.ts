@@ -60,9 +60,8 @@ export class CreaturePuppeteerSystem {
       }
     }
 
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.puppeteers.length - 1; i >= 0; i--) {
-      if (!alive.has(this.puppeteers[i].creatureId)) this.puppeteers.splice(i, 1)
+      if (!em.hasComponent(this.puppeteers[i].creatureId, 'creature')) this.puppeteers.splice(i, 1)
     }
   }
 

@@ -64,9 +64,8 @@ export class CreatureOracleSystem {
       if (o.followers <= 0 && Math.random() < 0.01) o.active = false
     }
 
-    const alive = new Set(em.getEntitiesWithComponent('creature'))
     for (let i = this.oracles.length - 1; i >= 0; i--) {
-      if (!alive.has(this.oracles[i].entityId) || !this.oracles[i].active) {
+      if (!em.hasComponent(this.oracles[i].entityId, 'creature') || !this.oracles[i].active) {
         this.oracles.splice(i, 1)
       }
     }
