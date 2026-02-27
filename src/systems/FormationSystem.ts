@@ -40,6 +40,7 @@ export class FormationSystem {
   private nextId = 1
   private _lastZoom = -1
   private _iconFont = ''
+  private _formationsBuf: Formation[] = []
 
   createFormation(civId: number, type: FormationType, members: number[]): number {
     if (members.length === 0) return -1
@@ -249,7 +250,9 @@ export class FormationSystem {
   }
 
   getFormations(): Formation[] {
-    return Array.from(this.formations.values())
+    this._formationsBuf.length = 0
+    for (const f of this.formations.values()) this._formationsBuf.push(f)
+    return this._formationsBuf
   }
 
   getFormationForEntity(entityId: number): Formation | null {

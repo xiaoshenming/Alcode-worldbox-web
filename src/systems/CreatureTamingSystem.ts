@@ -57,6 +57,7 @@ export class CreatureTamingSystem {
   private scrollY = 0
   private dragging = false
   private dragOX = 0
+  private _renderBuf: TameRecord[] = []
   private dragOY = 0
 
   /* ── 公共 API ── */
@@ -165,8 +166,9 @@ export class CreatureTamingSystem {
   handleWheel(mx: number, my: number, dy: number): boolean {
     if (!this.visible) return false
     if (mx >= this.panelX && mx <= this.panelX + PANEL_W && my >= this.panelY + HEADER_H && my <= this.panelY + PANEL_H) {
-      const items = this.records.filter(r => r.ownerId === this.selectedOwner)
-      this.scrollY = clamp(this.scrollY + dy * 0.5, 0, Math.max(0, items.length * ROW_H - (PANEL_H - HEADER_H)))
+      let count = 0
+      for (const r of this.records) { if (r.ownerId === this.selectedOwner) count++ }
+      this.scrollY = clamp(this.scrollY + dy * 0.5, 0, Math.max(0, count * ROW_H - (PANEL_H - HEADER_H)))
       return true
     }
     return false
@@ -177,7 +179,11 @@ export class CreatureTamingSystem {
   render(ctx: CanvasRenderingContext2D): void {
     if (!this.visible) return
     const px = this.panelX, py = this.panelY
-    const items = this.records.filter(r => r.ownerId === this.selectedOwner || this.selectedOwner < 0)
+    this._renderBuf.length = 0
+    for (const r of this.records) {
+      if (r.ownerId === this.selectedOwner || this.selectedOwner < 0) this._renderBuf.push(r)
+    }
+    const items = this._renderBuf
 
     ctx.fillStyle = 'rgba(12,10,8,0.93)'
     ctx.beginPath(); ctx.roundRect(px, py, PANEL_W, PANEL_H, 8); ctx.fill()
@@ -221,8 +227,7 @@ export class CreatureTamingSystem {
         const barVal = r.state === TameState.Tamed ? r.loyalty : r.progress
         ctx.fillStyle = 'rgba(50,45,30,0.5)'
         ctx.fillRect(px + 38, drawY + 42, 140, 5)
-        const hue = barVal > 0.5 ? 40 : barVal > 0.25 ? 20 : 0
-        ctx.fillStyle = `hsl(${hue},70%,55%)`
+        ctx.fillStyle = barVal > 0.5 ? 'hsl(40,70%,55%)' : barVal > 0.25 ? 'hsl(20,70%,55%)' : 'hsl(0,70%,55%)'
         ctx.fillRect(px + 38, drawY + 42, 140 * barVal, 5)
       }
       drawY += ROW_H

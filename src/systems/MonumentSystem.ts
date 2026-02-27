@@ -203,8 +203,7 @@ export class MonumentSystem {
         // 耐久度条
         ctx.fillStyle = 'rgba(40,45,30,0.5)'
         ctx.fillRect(px + 38, drawY + 56, 120, 5)
-        const hue = m.durability > 0.5 ? 100 : m.durability > 0.25 ? 50 : 0
-        ctx.fillStyle = `hsl(${hue},60%,50%)`
+        ctx.fillStyle = m.durability > 0.5 ? 'hsl(100,60%,50%)' : m.durability > 0.25 ? 'hsl(50,60%,50%)' : 'hsl(0,60%,50%)'
         ctx.fillRect(px + 38, drawY + 56, 120 * m.durability, 5)
       }
       drawY += ROW_H

@@ -53,6 +53,24 @@ function clamp(v: number, lo: number, hi: number): number { return v < lo ? lo :
 
 let nextStrainId = 1
 
+/** 预计算 infectRate/lethality 颜色表 — 0到1映射到hsl(0..120,70%,50%) / hsl(0..120,70%,45%) */
+const INFECT_COLORS: string[] = (() => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) {
+    const hue = Math.round((1 - i / 100) * 120)
+    cols.push(`hsl(${hue},70%,50%)`)
+  }
+  return cols
+})()
+const LETHAL_COLORS: string[] = (() => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) {
+    const hue = Math.round((1 - i / 100) * 120)
+    cols.push(`hsl(${hue},70%,45%)`)
+  }
+  return cols
+})()
+
 function randomName(): string {
   return PLAGUE_NAMES_PREFIX[Math.floor(Math.random() * PLAGUE_NAMES_PREFIX.length)] +
     PLAGUE_NAMES_SUFFIX[Math.floor(Math.random() * PLAGUE_NAMES_SUFFIX.length)]
@@ -65,6 +83,7 @@ export class PlagueMutationSystem {
   private panelY = 60
   private scrollY = 0
   private tickCounter = 0
+  private _activeStrainsBuf: PlagueStrain[] = []
 
   /* ── 公共 API ── */
 
@@ -88,7 +107,9 @@ export class PlagueMutationSystem {
 
   /** 获取活跃毒株 */
   getActiveStrains(): readonly PlagueStrain[] {
-    return this.strains.filter(s => !s.extinct)
+    this._activeStrainsBuf.length = 0
+    for (const s of this.strains) { if (!s.extinct) this._activeStrainsBuf.push(s) }
+    return this._activeStrainsBuf
   }
 
   /** 记录感染 */
@@ -236,7 +257,7 @@ export class PlagueMutationSystem {
         // 传染率条
         ctx.fillStyle = 'rgba(50,30,30,0.5)'
         ctx.fillRect(px + 200, drawY + 48, 100, 5)
-        ctx.fillStyle = `hsl(${(1 - s.infectRate) * 120},70%,50%)`
+        ctx.fillStyle = INFECT_COLORS[Math.min(100, Math.round(s.infectRate * 100))]
         ctx.fillRect(px + 200, drawY + 48, 100 * s.infectRate, 5)
         ctx.fillStyle = '#777'; ctx.font = '9px monospace'
         ctx.fillText(`传染${(s.infectRate * 100).toFixed(0)}%`, px + 305, drawY + 55)
@@ -244,7 +265,7 @@ export class PlagueMutationSystem {
         // 致死率条
         ctx.fillStyle = 'rgba(50,30,30,0.5)'
         ctx.fillRect(px + 200, drawY + 36, 100, 5)
-        ctx.fillStyle = `hsl(${(1 - s.lethality) * 120},70%,45%)`
+        ctx.fillStyle = LETHAL_COLORS[Math.min(100, Math.round(s.lethality * 100))]
         ctx.fillRect(px + 200, drawY + 36, 100 * clamp(s.lethality * 3, 0, 1), 5)
         ctx.fillText(`致死${(s.lethality * 100).toFixed(1)}%`, px + 305, drawY + 43)
       }

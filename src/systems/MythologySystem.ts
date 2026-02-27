@@ -63,7 +63,19 @@ const MAX_MYTHS_PER_CIV = 8
 
 function clamp(v: number, lo: number, hi: number): number { return v < lo ? lo : v > hi ? hi : v }
 
+/** 预计算belief条颜色表 — 0到1映射到hsl(270,60%,40%..70%) */
+const BELIEF_COLORS: string[] = (() => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) {
+    const lightness = Math.round(40 + i * 0.3)
+    cols.push(`hsl(270,60%,${lightness}%)`)
+  }
+  return cols
+})()
+
 let nextMythId = 1
+
+const ALL_MYTH_TYPES: MythType[] = ['creation', 'hero', 'disaster', 'divine', 'prophecy', 'origin']
 
 export class MythologySystem {
   private myths = new Map<number, Myth[]>()
@@ -88,12 +100,16 @@ export class MythologySystem {
     const a = this.myths.get(civA)
     const b = this.myths.get(civB)
     if (!a || !b || a.length === 0 || b.length === 0) return 0
-    // Count unique type sets without allocating Set objects
-    const typesA = new Set(a.map(m => m.type))
-    const typesB = new Set(b.map(m => m.type))
-    let shared = 0
-    typesA.forEach(t => { if (typesB.has(t)) shared++ })
-    return shared / Math.max(typesA.size, typesB.size)
+    // Count shared unique types without Set allocation
+    let shared = 0, totalUnique = 0
+    for (const t of ALL_MYTH_TYPES) {
+      let inA = false, inB = false
+      for (let _i = 0; _i < a.length; _i++) { if (a[_i].type === t) { inA = true; break } }
+      for (let _i = 0; _i < b.length; _i++) { if (b[_i].type === t) { inB = true; break } }
+      if (inA || inB) totalUnique++
+      if (inA && inB) shared++
+    }
+    return totalUnique > 0 ? shared / totalUnique : 0
   }
 
   setSelectedCiv(civId: number): void { this.selectedCivId = civId }
@@ -226,7 +242,7 @@ export class MythologySystem {
         // 信仰条
         ctx.fillStyle = 'rgba(50,40,60,0.5)'
         ctx.fillRect(px + 38, drawY + 50, 120, 5)
-        ctx.fillStyle = `hsl(270,60%,${40 + m.belief * 30}%)`
+        ctx.fillStyle = BELIEF_COLORS[Math.min(100, Math.round(m.belief * 100))]
         ctx.fillRect(px + 38, drawY + 50, 120 * m.belief, 5)
 
         ctx.fillStyle = '#777'; ctx.font = '10px monospace'

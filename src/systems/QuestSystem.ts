@@ -39,13 +39,19 @@ export class QuestSystem {
   private legends: Map<number, Legend> = new Map()
   private nextQuestId: number = 1
   private lastGenerateTick: number = 0
+  private _activeQuestsBuf: Quest[] = []
+  private _legendsBuf: Legend[] = []
 
   getActiveQuests(): Quest[] {
-    return this.quests.filter(q => !q.completed && !q.failed)
+    this._activeQuestsBuf.length = 0
+    for (const q of this.quests) { if (!q.completed && !q.failed) this._activeQuestsBuf.push(q) }
+    return this._activeQuestsBuf
   }
 
   getLegends(): Legend[] {
-    return Array.from(this.legends.values())
+    this._legendsBuf.length = 0
+    for (const l of this.legends.values()) this._legendsBuf.push(l)
+    return this._legendsBuf
   }
 
   update(em: EntityManager, world: World, civManager: CivManager, particles: ParticleSystem, tick: number): void {
@@ -84,12 +90,20 @@ export class QuestSystem {
 
     // Prune old completed/failed quests (keep last 50)
     if (this.quests.length > 100) {
-      const finished = this.quests.filter(q => q.completed || q.failed)
-      if (finished.length > 50) {
-        const toRemove = finished.slice(0, finished.length - 50)
-        for (const q of toRemove) {
-          const idx = this.quests.indexOf(q)
-          if (idx !== -1) this.quests.splice(idx, 1)
+      let finishedCount = 0
+      for (let _qi = 0; _qi < this.quests.length; _qi++) {
+        const q = this.quests[_qi]
+        if (q.completed || q.failed) finishedCount++
+      }
+      if (finishedCount > 50) {
+        let toRemove = finishedCount - 50
+        for (let _qi = 0; _qi < this.quests.length && toRemove > 0; ) {
+          if (this.quests[_qi].completed || this.quests[_qi].failed) {
+            this.quests.splice(_qi, 1)
+            toRemove--
+          } else {
+            _qi++
+          }
         }
       }
     }

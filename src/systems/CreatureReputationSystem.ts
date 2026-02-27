@@ -44,6 +44,7 @@ export class CreatureReputationSystem {
   private nextDecayTick = DECAY_INTERVAL
   private _lastZoom = -1
   private _tierFont = ''
+  private _repBuf: CreatureReputation[] = []
 
   getReputation(eid: EntityId): CreatureReputation | undefined {
     return this.reputations.get(eid)
@@ -55,9 +56,11 @@ export class CreatureReputationSystem {
   }
 
   getTopReputation(count: number): CreatureReputation[] {
-    return Array.from(this.reputations.values())
-      .sort((a, b) => b.score - a.score)
-      .slice(0, count)
+    this._repBuf.length = 0
+    for (const rep of this.reputations.values()) this._repBuf.push(rep)
+    this._repBuf.sort((a, b) => b.score - a.score)
+    if (this._repBuf.length > count) this._repBuf.length = count
+    return this._repBuf
   }
 
   addReputation(eid: EntityId, amount: number, action: string, tick: number): void {
@@ -115,9 +118,13 @@ export class CreatureReputationSystem {
 
     // Cap tracked reputations
     if (this.reputations.size > MAX_TRACKED) {
-      const sorted = Array.from(this.reputations.entries())
-        .sort((a, b) => Math.abs(b[1].score) - Math.abs(a[1].score))
-      this.reputations = new Map(sorted.slice(0, MAX_TRACKED))
+      this._repBuf.length = 0
+      for (const rep of this.reputations.values()) this._repBuf.push(rep)
+      this._repBuf.sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
+      for (let _ri = MAX_TRACKED; _ri < this._repBuf.length; _ri++) {
+        this.reputations.delete(this._repBuf[_ri].entityId)
+      }
+      this._repBuf.length = 0
     }
 
     // Simulate reputation events
