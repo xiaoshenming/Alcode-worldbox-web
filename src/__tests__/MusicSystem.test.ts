@@ -6,4 +6,5 @@ describe('MusicSystem', () => {
   beforeEach(() => { sys = makeSys() })
   it('初始ctx为null', () => { expect((sys as any).ctx).toBeNull() })
   it('初始masterVolume为正数', () => { expect((sys as any).masterVolume).toBeGreaterThan(0) })
+  it('初始targetMood为peaceful', () => { expect((sys as any).targetMood).toBe('peaceful') })
 })

@@ -9,4 +9,5 @@ describe('WeatherDisasterSystem', () => {
     ;(sys as any).activeDisasters.push({ type: 'tornado', x: 5, y: 5, intensity: 1, tick: 0 })
     expect(sys.getActiveDisasters()).toHaveLength(1)
   })
+  it('getActiveDisasters返回数组', () => { expect(Array.isArray(sys.getActiveDisasters())).toBe(true) })
 })

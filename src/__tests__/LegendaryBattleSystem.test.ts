@@ -6,4 +6,6 @@ describe('LegendaryBattleSystem', () => {
   beforeEach(() => { sys = makeSys() })
   it('getActiveBattles初始为空', () => { expect(sys.getActiveBattles()).toHaveLength(0) })
   it('getBattleAt无战斗时返回null', () => { expect(sys.getBattleAt(0, 0, 5)).toBeNull() })
+  it('getActiveBattles返回数组', () => { expect(Array.isArray(sys.getActiveBattles())).toBe(true) })
 })
+

@@ -6,4 +6,5 @@ describe('SoundSystem', () => {
   beforeEach(() => { sys = makeSys() })
   it('初始ctx为null', () => { expect((sys as any).ctx).toBeNull() })
   it('初始muted为false', () => { expect((sys as any).muted).toBe(false) })
+  it('isMuted 初始为false', () => { expect(sys.isMuted).toBe(false) })
 })
