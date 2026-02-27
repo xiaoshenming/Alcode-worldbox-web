@@ -1,11 +1,11 @@
 {
-  "notes": "迭代22完成。核心工作：提升测试质量，为之前只有模块导入/单一初始化测试的系统添加实质性测试。主要成果：1) 为CombatSystem/AISystem/DisasterSystem/WeatherSystem添加了基于mock依赖的实质性测试（+20个测试）；2) 改进了ResourceFlowSystem/MiniMapModeSystem/AmbientSoundMixer/MiniGameSystem测试（+19个）；3) 改进了MinimapEnhancedSystem/MinimapOverlaySystem/ObjectPoolSystem/EditorEnhancedSystem/MinimapSystem等多个系统的测试质量；4) 从4417个测试增长到4487个测试（+70个），测试文件保持930个。关键发现：1) AmbientParticleSystem内部直接用world.tiles[y][x]访问二维数组，mock必须包含tiles字段；2) HelpOverlaySystem.toggle()调用document.createElement，是DOM依赖系统；3) MinimapSystem初始模式是'terrain'不是'normal'；4) ResourceFlowSystem.nextRouteId从1开始不是0；5) AmbientSoundMixer有setMasterVolume/toggleMute/getMixState等丰富API可测试；6) 还有13个系统只有1个测试（非DOM依赖），可继续改进。",
+  "notes": "迭代23完成。核心工作：大规模提升测试质量，将所有只有1-2个测试的系统改进为3-7个实质性测试。主要成果：1) 完成13个之前只有1测试的系统（BiomeEvolution/BuildingUpgrade/CityPlanning/DayNightRenderer/FogOfWarRenderer/MigrationSystem/NavalSystem/PopulationSystem/ReligionSystem/SeasonVisual/SpeedIndicator/TechSystem/WorldExport），新增54个测试；2) 改进27个2测试的系统（Achievement/AutoSave/BuildingVariety/CameraAnimation/CinematicMode/CreatureEmotion/CreatureLineage/CreatureMemory/CreaturePersonality/CreatureProfession/CreatureSkill/CreatureTaming/CustomSpecies/DiplomacyVisual/EntityInspector/EraVisual/FlockingSystem/KeybindSystem/LegendaryBattle/MusicSystem/NotificationCenter/SandboxSettings/SiegeWarfare/SoundSystem/TerraformingSystem/WeatherControl/WeatherDisaster），新增76个测试；3) 从4487个测试增长到4617个测试（+130个），测试文件保持930个。关键发现：1) TechSystem.getTechBonus未研究时返回0不是1；2) AchievementPopupSystem需要手动registerAchievement，无预定义成就；3) DiplomacyVisualSystem.isVisible()返回panelVisible（初始为false），visible字段不同；4) addEvent推入的是bubbles数组，不是events；5) EraVisualSystem.setEra修改targetEra，currentEra过渡后才改变；6) EntityInspectorSystem.inspect接收components对象，不是EntityManager。还有很多2测试的系统可继续改进：ArtifactSystem/DiseaseSystem/EvolutionVisualSystem/LODRenderSystem/MapGenSystem/ParticleSystem/PlagueVisualSystem/ScreenshotModeSystem/TickBudgetSystem/TradeRouteRenderer/WaterAnimationSystem/WeatherParticleSystem等。",
   "priorities": [
-    "1. 还有13个系统只有1个测试（BiomeEvolutionSystem/BuildingUpgradeSystem/CityPlanningSystem/DayNightRenderer/FogOfWarRenderer/MigrationSystem/NavalSystem/PopulationSystem/ReligionSystem/SeasonVisualSystem/SpeedIndicatorSystem/TechSystem/WorldExportSystem），可继续改进",
+    "1. 仍有约20个系统只有2个测试，可继续改进：ArtifactSystem/DiseaseSystem/EvolutionVisualSystem/LODRenderSystem/PlagueVisualSystem/TickBudgetSystem/TradeRouteRenderer/WaterAnimationSystem/WeatherParticleSystem/TerrainDecorationSystem等",
     "2. Game.ts仍有4045行（超标8倍）：loop(1038行)是最大候选，但依赖太多系统，风险高",
     "3. WorldEventSystem(813行)、WeatherDisasterSystem(741行) 超出质量门禁 500 行，考虑拆分",
-    "4. 当前4487个测试，930个测试文件，所有系统均有测试覆盖",
-    "5. 考虑为ECS核心（Entity/Component/System基类）添加更全面的测试，当前Entity.ts已有丰富测试"
+    "4. 当前4617个测试，930个测试文件，所有系统均有测试覆盖",
+    "5. 考虑为ECS核心（Component/System基类）添加更全面的测试"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃源 — 已在迭代26彻底清零",
@@ -23,7 +23,7 @@
     "渲染管线不适合简单的数据驱动替换 — render调用间穿插条件逻辑和特殊参数，z-order顺序重要",
     "A*寻路用二叉堆替代线性数组是最高收益的算法优化 — pop从O(n)降到O(logn)，Map查重替代find()从O(n)降到O(1)",
     "SpatialHash字符串键(cx+','+cy)每次insert/query都产生GC — 改为数值编码cy*100000+cx零分配",
-    "per-tick生物位置缓存模式：在系统update开头一次性收集所有生���位置到平坦数组，后续countSpeciesInArea直接遍历缓存而非反复getComponent",
+    "per-tick生物位置缓存模式：在系统update开头一次性收集所有生物位置到平坦数组，后续countSpeciesInArea直接遍历缓存而非反复getComponent",
     "4个独立系统的性能修复可以完美并行 — 4个opus子代理同时工作，总耗时等于最慢的一个",
     "接口注入模式：提取模块时定义只包含所需字段的接口(如GameInputContext)，Game通过`this as unknown as Interface`传入，避免循环依赖",
     "3个并行子代理可成功修改同一文件的不同区域 — 只要各自负责的方法边界清晰，提取可以并行完成",
@@ -40,29 +40,15 @@
     "WorldCorruptionSystem用Float32Array存储腐败度，直接array[index] = value注入数据",
     "WorldFertilitySystem需要先调用init(w, h, tiles)才能使用getFertility/getAverageFertility",
     "WorldAgeSystem初始（tick=0）epoch是PRIMORDIAL，displayName='太初'，getDisasterFrequencyModifier()返回2.0>1",
-    "WorldNarratorSystem的addNarrative是公共API，无需手动注入entries数组，通过addNarrative写入数据更自然",
-    "WorldCoralReefSystem.getReefAt用近似匹配（±2格）而非精确匹配——测试时相邻坐标也应返回结果",
-    "WorldUndergroundSystem有getCaves()/getDiscoveredCaves()/getTotalDiscovered()三个getter，比单一getter更丰富",
-    "WorldMemorialSystem.getByType(type)按类型过滤——比直接返回所有的系统多一层过滤逻辑",
-    "WorldWeatherFrontSystem有getFronts()/getCollisions()/getFrontAt()三个getter——FrontCollision是frontA/frontB碰撞对",
-    "每轮可以批量创建60+个测试文件，单轮净增300个测试是可行的",
-    "网络断连时先commit本地，待网络恢复后批量push——git会自动合并推送",
-    "WorldDecorationSystem用grid二维数组+decorationCount计数器，不是decorations数组——count getter直接返回decorationCount",
-    "有些系统用isVisible()方法而非getter——WorldDashboardSystem/WorldStatsOverviewSystem都是方法调用",
-    "WorldEventSystem.getActiveEvents()返回映射后的新数组（非内部引用），测试时不能用toBe检查引用",
-    "WorldMigrationWaveSystem内部数组名是activeWaves，不是waves——命名与getter名一致",
-    "Diplomatic*系统模式极其统一：私有数组+getter，用for循环批量生成测试文件效率最高——单轮187个文件+375个测试",
-    "DiplomaticSheriffaltySytem文件名拼写错误（缺少S），类名是DiplomaticSheriffaltySystem——测试时import类名需用正确拼写",
-    "DiplomaticSummitSystem有getActiveSummit()返回单个对象（非数组），初始为null——测试用toBeNull()而非toHaveLength(0)",
-    "批量生成arrangements系统测试时用shell for循环+heredoc最高效——80个同类系统可在一条命令内全部生成",
-    "DOM依赖系统（EnhancedTooltipSystem/PerformanceMonitorSystem/HelpOverlaySystem.toggle）在node环境只能做有限测试——不要尝试调用触发DOM的方法",
-    "TameState是const enum：Wild=0, Taming=1, Tamed=2——注入测试数据时state必须用正确数值",
-    "CreaturePersonalitySystem.getDecisionBias未知实体返回0（不是0.5）——测试前必须grep确认返回值",
-    "EmotionEntry字段是emotion（不是type）——不同系统的情绪字段命名不同，必须grep确认",
-    "MinimapSystem初始模式是'terrain'不是'normal'——不同Minimap系统的初始模式不同，必须grep确认",
-    "ResourceFlowSystem.nextRouteId从1开始不是0——需先调用addRoute才能知道第一个ID值，更好的测试方式是id2 = id1 + 1",
-    "AmbientParticleSystem内部用world.tiles[y][x]直接访问二维数组，mock必须包含tiles字段——不能只用getTile方法",
-    "CombatSystem/AISystem/DisasterSystem/WeatherSystem等复杂系统可以用轻量mock依赖测试update()不崩溃——核心价值是验证构造和基本调用路径"
+    "AchievementPopupSystem需要registerAchievement才有成就，getTotalCount初始为0——测试前先register",
+    "DiplomacyVisualSystem.isVisible()返回panelVisible（初始false），不是visible字段（visible初始true但不对外暴露）",
+    "addEvent推入bubbles数组，不是events——必须grep确认内部数组名",
+    "EraVisualSystem.setEra修改targetEra立即生效，currentEra需等过渡动画完成——测试targetEra而非getCurrentEra",
+    "EntityInspectorSystem.inspect接收components对象(Record<string,Record<string,unknown>>)，不是EntityManager——必须先grep方法签名",
+    "TechSystem.getTechBonus无技术时返回0（累积奖励），不是1——测试应用toBe(0)或typeof",
+    "TerraformingSystem.addEffect同位置不重复添加——可用此特性测试去重逻辑",
+    "CinematicModeSystem.handleKey('c')切换active状态——update()非激活时返回null是可测试的行为",
+    "SiegeWarfareSystem.startSiege返回SiegeData对象，可直接验证civId等字段"
   ],
-  "last_updated": "2026-02-27T21:24:00+08:00"
+  "last_updated": "2026-02-27T22:00:00+08:00"
 }
