@@ -33,7 +33,7 @@ const GRID_CELL_SIZE = 10
 
 export class ResourceSystem {
   nodes: ResourceNode[] = []
-  private grid: Map<string, ResourceNode[]> = new Map()
+  private grid: Map<number, ResourceNode[]> = new Map()
   private world: World
   private em: EntityManager
   private civManager: CivManager
@@ -47,8 +47,8 @@ export class ResourceSystem {
     this.particles = particles
   }
 
-  private gridKey(x: number, y: number): string {
-    return `${Math.floor(x / GRID_CELL_SIZE)},${Math.floor(y / GRID_CELL_SIZE)}`
+  private gridKey(x: number, y: number): number {
+    return Math.floor(x / GRID_CELL_SIZE) * 10000 + Math.floor(y / GRID_CELL_SIZE)
   }
 
   private addToGrid(node: ResourceNode): void {
@@ -80,7 +80,7 @@ export class ResourceSystem {
 
     for (let cx = minCx; cx <= maxCx; cx++) {
       for (let cy = minCy; cy <= maxCy; cy++) {
-        const cell = this.grid.get(`${cx},${cy}`)
+        const cell = this.grid.get(cx * 10000 + cy)
         if (!cell) continue
         for (const node of cell) {
           const dx = node.x - x
