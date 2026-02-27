@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isWalkable, findPath } from '../utils/Pathfinding'
+import { isWalkable, findPath, findNextStep } from '../utils/Pathfinding'
 import { TileType } from '../utils/Constants'
 
 // Mock World 对象
@@ -145,5 +145,97 @@ describe('findPath', () => {
     const world = makeMockWorld(tiles, 10, 10)
     const path = findPath(world as any, 0, 0, 5, 0, true)
     expect(path).toBeNull()
+  })
+
+  it('大地图（50x50）可以找到路径', () => {
+    const world = grassWorld(50, 50)
+    const path = findPath(world as any, 0, 0, 49, 49)
+    expect(path).not.toBeNull()
+    const last = path![path!.length - 1]
+    expect(last.x).toBe(49)
+    expect(last.y).toBe(49)
+  })
+
+  it('对角线路径：终点在右下角', () => {
+    const world = grassWorld(20, 20)
+    const path = findPath(world as any, 0, 0, 10, 10)
+    expect(path).not.toBeNull()
+    expect(path!.length).toBeGreaterThan(0)
+    // 对角线步数应该比曼哈顿距离少（A* 支持8方向）
+    expect(path!.length).toBeLessThanOrEqual(10)
+  })
+
+  it('混合地形（中间有水障碍但有绕路）', () => {
+    const tiles: TileType[][] = Array.from({ length: 10 }, () =>
+      Array.from({ length: 10 }, () => TileType.GRASS)
+    )
+    // 竖向水墙，x=5，y=0~8（留 y=9 通道）
+    for (let y = 0; y < 9; y++) {
+      tiles[y][5] = TileType.DEEP_WATER
+    }
+    const world = makeMockWorld(tiles, 10, 10)
+    const path = findPath(world as any, 0, 0, 9, 0)
+    expect(path).not.toBeNull()
+    // 路径要绕过水墙，经过 y=9 附近
+  })
+})
+
+// ── findNextStep ─────────────────────────────────────────────────────────────
+
+describe('findNextStep', () => {
+  it('已在目标附近（距离 < 0.5）时返回 null', () => {
+    const world = grassWorld()
+    // from=(5,5), to=(5.3,5.3)，距离 < 0.5
+    const result = findNextStep(world as any, 5, 5, 5.3, 5.3)
+    expect(result).toBeNull()
+  })
+
+  it('向右移动时 x 方向正确', () => {
+    const world = grassWorld()
+    const step = findNextStep(world as any, 0, 5, 9, 5)
+    expect(step).not.toBeNull()
+    expect(step!.x).toBeGreaterThan(0)
+  })
+
+  it('向下移动时 y 方向正确', () => {
+    const world = grassWorld()
+    const step = findNextStep(world as any, 5, 0, 5, 9)
+    expect(step).not.toBeNull()
+    expect(step!.y).toBeGreaterThan(0)
+  })
+
+  it('遇到不可行走地形时返回 null（四面都是水）', () => {
+    const tiles: TileType[][] = Array.from({ length: 10 }, () =>
+      Array.from({ length: 10 }, () => TileType.GRASS)
+    )
+    // 把 (5,5) 四面八方都设成水
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        if (dx === 0 && dy === 0) continue
+        tiles[5 + dy][5 + dx] = TileType.DEEP_WATER
+      }
+    }
+    const world = makeMockWorld(tiles, 10, 10)
+    const result = findNextStep(world as any, 5, 5, 9, 9)
+    expect(result).toBeNull()
+  })
+
+  it('返回值中 x 和 y 的绝对值 <= 1（只走相邻格）', () => {
+    const world = grassWorld()
+    const step = findNextStep(world as any, 3, 3, 8, 8)
+    expect(step).not.toBeNull()
+    expect(Math.abs(step!.x)).toBeLessThanOrEqual(1)
+    expect(Math.abs(step!.y)).toBeLessThanOrEqual(1)
+  })
+
+  it('飞行单位可以穿越深水', () => {
+    const tiles: TileType[][] = Array.from({ length: 10 }, () =>
+      Array.from({ length: 10 }, () => TileType.DEEP_WATER)
+    )
+    // 只保留 (0,0) 是草地
+    tiles[0][0] = TileType.GRASS
+    const world = makeMockWorld(tiles, 10, 10)
+    const step = findNextStep(world as any, 0, 0, 9, 0, true)
+    expect(step).not.toBeNull()
   })
 })
