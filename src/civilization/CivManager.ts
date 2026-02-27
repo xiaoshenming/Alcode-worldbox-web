@@ -9,7 +9,7 @@ export class CivManager {
   private world: World
   civilizations: Map<number, Civilization> = new Map()
   territoryMap: number[][] = [] // civId per tile, 0 = unclaimed
-  private previousRelations: Map<string, number> = new Map() // "civA:civB" -> previous relation
+  private previousRelations: Map<number, number> = new Map() // civA * 10000 + civB -> previous relation
   private updateTick: number = 0
 
   constructor(em: EntityManager, world: World) {
@@ -176,7 +176,7 @@ export class CivManager {
       if (otherId === civ.id) continue
 
       // Track previous relation for threshold detection
-      const relKey = `${civ.id}:${otherId}`
+      const relKey = civ.id * 10000 + otherId
       const prevRelation = this.previousRelations.get(relKey) ?? (civ.relations.get(otherId) ?? 0)
       let relation = civ.relations.get(otherId) ?? 0
 
