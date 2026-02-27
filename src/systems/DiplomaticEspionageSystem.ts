@@ -124,7 +124,7 @@ export class DiplomaticEspionageSystem {
 
     // Cap reports
     if (this.reports.length > 50) {
-      this.reports = this.reports.slice(-30)
+      this.reports.splice(0, this.reports.length - 30)
     }
   }
 

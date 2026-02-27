@@ -82,7 +82,7 @@ export class AnimalMigrationSystem {
 
     // Sort by attractiveness, keep top spots
     this.hotspots.sort((a, b) => b.attractiveness - a.attractiveness)
-    this.hotspots = this.hotspots.slice(0, 30)
+    if (this.hotspots.length > 30) this.hotspots.splice(30)
   }
 
   /**

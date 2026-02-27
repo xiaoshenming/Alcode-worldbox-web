@@ -77,7 +77,7 @@ export class DiplomaticSpySystem {
 
     // Cap incidents
     if (this.incidents.length > 60) {
-      this.incidents = this.incidents.slice(-40)
+      this.incidents.splice(0, this.incidents.length - 40)
     }
   }
 
