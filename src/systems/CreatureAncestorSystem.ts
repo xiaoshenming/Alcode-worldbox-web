@@ -51,10 +51,13 @@ export class CreatureAncestorSystem {
   private _spiritFont = ''
   private _countFont = ''
 
+  private _civAncestorsBuf: AncestorSpirit[] = []
   getAncestors(): AncestorSpirit[] { return this.ancestors }
 
   getAncestorsForCiv(civId: number): AncestorSpirit[] {
-    return this.ancestors.filter(a => a.civId === civId)
+    this._civAncestorsBuf.length = 0
+    for (const a of this.ancestors) { if (a.civId === civId) this._civAncestorsBuf.push(a) }
+    return this._civAncestorsBuf
   }
 
   /** Called when a hero dies - candidate for ancestor worship */

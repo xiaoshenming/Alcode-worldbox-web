@@ -204,9 +204,12 @@ export class CreatureMigrationMemorySystem {
     }
   }
 
+  private _creatureMemsBuf: HabitatMemory[] = []
   getMemories(): HabitatMemory[] { return this.memories }
   getRoutes(): MigrationRoute[] { return this.routes }
   getCreatureMemories(creatureId: number): HabitatMemory[] {
-    return this.memories.filter(m => m.creatureId === creatureId)
+    this._creatureMemsBuf.length = 0
+    for (const m of this.memories) { if (m.creatureId === creatureId) this._creatureMemsBuf.push(m) }
+    return this._creatureMemsBuf
   }
 }

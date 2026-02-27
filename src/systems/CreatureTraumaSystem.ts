@@ -122,8 +122,11 @@ export class CreatureTraumaSystem {
     return sources[Math.floor(Math.random() * sources.length)]
   }
 
+  private _traumasBuf: Trauma[] = []
   getTraumas(): Trauma[] { return this.traumas }
   getCreatureTraumas(creatureId: number): Trauma[] {
-    return this.traumas.filter(t => t.creatureId === creatureId)
+    this._traumasBuf.length = 0
+    for (const t of this.traumas) { if (t.creatureId === creatureId) this._traumasBuf.push(t) }
+    return this._traumasBuf
   }
 }

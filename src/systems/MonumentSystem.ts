@@ -86,14 +86,20 @@ export class MonumentSystem {
     return result
   }
 
+  private _civMonumentsBuf: Monument[] = []
+  private _completedMonumentsBuf: Monument[] = []
   /** 获取某文明的纪念碑 */
   getMonumentsForCiv(civId: number): readonly Monument[] {
-    return this.monuments.filter(m => m.civId === civId)
+    this._civMonumentsBuf.length = 0
+    for (const m of this.monuments) { if (m.civId === civId) this._civMonumentsBuf.push(m) }
+    return this._civMonumentsBuf
   }
 
   /** 获取所有已完工纪念碑 */
   getCompletedMonuments(): readonly Monument[] {
-    return this.monuments.filter(m => m.completed)
+    this._completedMonumentsBuf.length = 0
+    for (const m of this.monuments) { if (m.completed) this._completedMonumentsBuf.push(m) }
+    return this._completedMonumentsBuf
   }
 
   /** 对纪念碑造成伤害 */

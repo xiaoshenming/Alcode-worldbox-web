@@ -155,7 +155,8 @@ export class BiomeEvolutionSystem {
   private erosion(tile: TileType, neighbors: TileType[]): TileType | null {
     if (tile === TileType.SAND) {
       // Water erosion: sand next to water can be consumed
-      const waterCount = neighbors.filter(n => n === TileType.SHALLOW_WATER || n === TileType.DEEP_WATER).length
+      let waterCount = 0
+      for (const n of neighbors) { if (n === TileType.SHALLOW_WATER || n === TileType.DEEP_WATER) waterCount++ }
       if (waterCount >= 2 && Math.random() < 0.02) {
         return TileType.SHALLOW_WATER
       }
@@ -163,7 +164,8 @@ export class BiomeEvolutionSystem {
 
     if (tile === TileType.MOUNTAIN) {
       // Mountain edge erosion
-      const nonMountain = neighbors.filter(n => n !== TileType.MOUNTAIN && n !== TileType.SNOW).length
+      let nonMountain = 0
+      for (const n of neighbors) { if (n !== TileType.MOUNTAIN && n !== TileType.SNOW) nonMountain++ }
       if (nonMountain >= 3 && Math.random() < 0.01) {
         return TileType.GRASS
       }

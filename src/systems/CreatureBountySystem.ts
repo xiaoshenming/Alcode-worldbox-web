@@ -37,9 +37,12 @@ export class CreatureBountySystem {
   private nextCheckTick = BOUNTY_CHECK_INTERVAL
   private showPanel = false
 
+  private _activeBountiesBuf: Bounty[] = []
   /** Get all active (unclaimed) bounties. */
   getActiveBounties(): Bounty[] {
-    return this.bounties.filter(b => !b.claimed)
+    this._activeBountiesBuf.length = 0
+    for (const b of this.bounties) { if (!b.claimed) this._activeBountiesBuf.push(b) }
+    return this._activeBountiesBuf
   }
 
   private countActiveBounties(): number {

@@ -18,6 +18,7 @@ const FOOD_PER_CAPITA_LOW = 1.0      // below this → loyalty penalty
 export class LoyaltySystem {
   /** civId → loyalty (0-100) */
   private loyalty: Map<number, number> = new Map()
+  private _civMembersBuf: number[] = []
 
   getLoyalty(civId: number): number {
     return this.loyalty.get(civId) ?? 70
@@ -126,10 +127,12 @@ export class LoyaltySystem {
   ): void {
     // Gather non-leader members
     const members = em.getEntitiesWithComponent('civMember')
-    const civMembers = members.filter(id => {
+    this._civMembersBuf.length = 0
+    for (const id of members) {
       const m = em.getComponent<CivMemberComponent>(id, 'civMember')
-      return m && m.civId === civ.id && m.role !== 'leader'
-    })
+      if (m && m.civId === civ.id && m.role !== 'leader') this._civMembersBuf.push(id)
+    }
+    const civMembers = this._civMembersBuf
     if (civMembers.length === 0) return
 
     // 15-40% of population rebels
@@ -180,10 +183,12 @@ export class LoyaltySystem {
   ): void {
     // Split: create a new rebel civilization
     const members = em.getEntitiesWithComponent('civMember')
-    const civMembers = members.filter(id => {
+    this._civMembersBuf.length = 0
+    for (const id of members) {
       const m = em.getComponent<CivMemberComponent>(id, 'civMember')
-      return m && m.civId === civ.id && m.role !== 'leader'
-    })
+      if (m && m.civId === civ.id && m.role !== 'leader') this._civMembersBuf.push(id)
+    }
+    const civMembers = this._civMembersBuf
     if (civMembers.length < 4) return
 
     // ~40% of population joins the rebel civ

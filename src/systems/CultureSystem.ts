@@ -301,11 +301,21 @@ export class CultureSystem {
 
     // Trait adoption: if gap > 40 and weaker has room, small chance to adopt a trait
     if (gap > 40 && weaker.traits.length < 5) {
-      const missing = stronger.traits.filter(t => !weaker.traits.includes(t))
-      if (missing.length > 0 && Math.random() < 0.04) {
-        const adopted = pick(missing)
-        weaker.traits.push(adopted)
-        EventLog.log('culture', `${weaker.name} adopted ${TRAIT_DEFS[adopted].label} from ${stronger.name}`, tick)
+      // Count and sample missing traits without allocation
+      let missingCount = 0
+      for (const t of stronger.traits) { if (!weaker.traits.includes(t)) missingCount++ }
+      if (missingCount > 0 && Math.random() < 0.04) {
+        let targetIdx = Math.floor(Math.random() * missingCount)
+        let adopted: CultureTraitType | undefined
+        for (const t of stronger.traits) {
+          if (!weaker.traits.includes(t)) {
+            if (targetIdx-- === 0) { adopted = t; break }
+          }
+        }
+        if (adopted) {
+          weaker.traits.push(adopted)
+          EventLog.log('culture', `${weaker.name} adopted ${TRAIT_DEFS[adopted].label} from ${stronger.name}`, tick)
+        }
       }
     }
 

@@ -74,9 +74,12 @@ export class CreatureTamingSystem {
     })
   }
 
+  private _tamedAnimalsBuf: TameRecord[] = []
   /** 获取某生物的驯化动物 */
   getTamedAnimals(ownerId: number): readonly TameRecord[] {
-    return this.records.filter(r => r.ownerId === ownerId && r.state === TameState.Tamed)
+    this._tamedAnimalsBuf.length = 0
+    for (const r of this.records) { if (r.ownerId === ownerId && r.state === TameState.Tamed) this._tamedAnimalsBuf.push(r) }
+    return this._tamedAnimalsBuf
   }
 
   /** 检查动物是否已被驯化 */

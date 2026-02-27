@@ -75,6 +75,9 @@ function matchTier(value: number, tiers: { min: number; titles: string[] }[]): s
 
 export class WorldChronicleSystem {
   private chronicles: Chronicle[] = []
+  private _chroniclesBuf: Chronicle[] = []
+  private _entityChroniclesBuf: Chronicle[] = []
+  private _civChroniclesBuf: Chronicle[] = []
   private warNames: Map<string, string> = new Map()
   private nextId: number = 0
   private lastSummaryTick: number = 0
@@ -175,10 +178,14 @@ export class WorldChronicleSystem {
   }
 
   getChronicles(filter?: { category?: string; minImportance?: number }): Chronicle[] {
-    let result = this.chronicles
-    if (filter?.category) result = result.filter(c => c.category === filter.category)
-    if (filter?.minImportance) result = result.filter(c => c.importance >= filter.minImportance!)
-    return result
+    if (!filter?.category && !filter?.minImportance) return this.chronicles
+    this._chroniclesBuf.length = 0
+    for (const c of this.chronicles) {
+      if (filter.category && c.category !== filter.category) continue
+      if (filter.minImportance && c.importance < filter.minImportance) continue
+      this._chroniclesBuf.push(c)
+    }
+    return this._chroniclesBuf
   }
 
   getWorldSummary(tick: number): string {
@@ -203,11 +210,15 @@ export class WorldChronicleSystem {
   }
 
   getChroniclesByEntity(entityId: number): Chronicle[] {
-    return this.chronicles.filter(c => c.involvedEntities.includes(entityId))
+    this._entityChroniclesBuf.length = 0
+    for (const c of this.chronicles) { if (c.involvedEntities.includes(entityId)) this._entityChroniclesBuf.push(c) }
+    return this._entityChroniclesBuf
   }
 
   getChroniclesByCiv(civId: number): Chronicle[] {
-    return this.chronicles.filter(c => c.involvedCivs.includes(civId))
+    this._civChroniclesBuf.length = 0
+    for (const c of this.chronicles) { if (c.involvedCivs.includes(civId)) this._civChroniclesBuf.push(c) }
+    return this._civChroniclesBuf
   }
 
   // --- Internal ---
