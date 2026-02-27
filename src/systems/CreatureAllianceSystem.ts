@@ -44,8 +44,7 @@ export class CreatureAllianceSystem {
 
   private formAlliances(em: EntityManager, tick: number): void {
     if (this.alliances.length >= MAX_ALLIANCES) return
-    const creatures = em.getEntitiesWithComponents('creature', 'position')
-    const creatureList = [...creatures]
+    const creatureList = em.getEntitiesWithComponents('creature', 'position')
     // Sample random pairs
     for (let attempt = 0; attempt < 5; attempt++) {
       if (this.alliances.length >= MAX_ALLIANCES) break

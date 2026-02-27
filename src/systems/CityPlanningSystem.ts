@@ -240,18 +240,18 @@ export class CityPlanningSystem {
     const territory = Array.from(civ.territory)
     if (territory.length === 0) return null
 
-    // Occupied positions set for fast lookup
-    const occupied = new Set<string>()
+    // Occupied positions set for fast lookup (numeric key = x * 10000 + y)
+    const occupied = new Set<number>()
     for (const id of civ.buildings) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
-      if (pos) occupied.add(`${Math.floor(pos.x)},${Math.floor(pos.y)}`)
+      if (pos) occupied.add(Math.floor(pos.x) * 10000 + Math.floor(pos.y))
     }
 
     // Try up to 20 random spots
     for (let i = 0; i < 20; i++) {
       const key = territory[Math.floor(Math.random() * territory.length)]
-      if (occupied.has(key)) continue
       const [x, y] = key.split(',').map(Number)
+      if (occupied.has(x * 10000 + y)) continue
       const tile = world.getTile(x, y)
       if (tile === TileType.DEEP_WATER || tile === TileType.SHALLOW_WATER || tile === TileType.LAVA || tile === TileType.MOUNTAIN) continue
       return { x, y }

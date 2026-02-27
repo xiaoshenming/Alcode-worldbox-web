@@ -77,6 +77,8 @@ export class CreatureProfessionSystem {
   private panelX = 140
   private panelY = 70
   private selectedEntity = -1
+  // Pre-allocated map for assignProfessions grouping (every 120 ticks)
+  private _byCivBuf: Map<number, EntityId[]> = new Map()
 
   setCivManager(cm: CivManager): void { this.civManager = cm }
   setSelectedEntity(id: number): void { this.selectedEntity = id }
@@ -105,7 +107,10 @@ export class CreatureProfessionSystem {
 
   private assignProfessions(em: EntityManager, tick: number): void {
     const civCreatures = em.getEntitiesWithComponents('creature', 'civMember', 'position')
-    const byCiv = new Map<number, EntityId[]>()
+    const byCiv = this._byCivBuf
+    // Clear map and all cached arrays before reuse
+    for (const arr of byCiv.values()) arr.length = 0
+    byCiv.clear()
     for (const id of civCreatures) {
       if (this.professions.has(id)) continue
       const civ = em.getComponent<CivMemberComponent>(id, 'civMember')
