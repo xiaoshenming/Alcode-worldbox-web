@@ -47,6 +47,9 @@ export class LegendaryBattleSystem {
   // Reusable collections to avoid GC pressure (numeric key = cx * 10000 + cy)
   private _detectGrid: Map<number, EntityId[]> = new Map()
   private _visited: Set<number> = new Set()
+  // Reusable cluster buffer and civCounts map for battle detection (every 10 ticks)
+  private _clusterBuf: EntityId[] = []
+  private _civCounts: Map<number, EntityId[]> = new Map()
 
   /**
    * Main update loop. Detects new battles, updates existing ones,
@@ -98,13 +101,14 @@ export class LegendaryBattleSystem {
       // Collect entities from this cell and neighbors
       const cx = Math.floor(key / 10000)
       const cy = key % 10000
-      const cluster: EntityId[] = []
+      const cluster = this._clusterBuf
+      cluster.length = 0
 
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
           const nCell = grid.get((cx + dx) * 10000 + (cy + dy))
           if (nCell) {
-            cluster.push(...nCell)
+            for (let k = 0; k < nCell.length; k++) cluster.push(nCell[k])
             visited.add((cx + dx) * 10000 + (cy + dy))
           }
         }
@@ -113,7 +117,8 @@ export class LegendaryBattleSystem {
       if (cluster.length < 10) continue
 
       // Count civs in cluster
-      const civCounts = new Map<number, EntityId[]>()
+      const civCounts = this._civCounts
+      civCounts.clear()
       let sumX = 0
       let sumY = 0
       let posCount = 0

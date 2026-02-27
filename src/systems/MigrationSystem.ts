@@ -19,6 +19,8 @@ let nextBandId = 1
 
 export class MigrationSystem {
   private bands: Map<number, NomadBand> = new Map()
+  // Reusable Set for nearby-member aggregation in tryFormBands inner loop
+  private _nearbyBuf: Set<EntityId> = new Set()
 
   update(em: EntityManager, world: World, civManager: CivManager, particles: ParticleSystem): void {
     const tick = world.tick
@@ -76,7 +78,9 @@ export class MigrationSystem {
         // Also check neighboring cells
         const cx = Math.floor(cellKey / 10000)
         const cy = cellKey % 10000
-        const nearby = new Set<EntityId>(cellMembers)
+        const nearby = this._nearbyBuf
+        nearby.clear()
+        for (const id of cellMembers) nearby.add(id)
 
         for (let dy = -1; dy <= 1; dy++) {
           for (let dx = -1; dx <= 1; dx++) {
