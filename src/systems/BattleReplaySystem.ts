@@ -62,7 +62,9 @@ export class BattleReplaySystem {
     if (rec.frames.length === 0) {
       rec.startTick = frame.tick;
       for (const side of rec.sides) {
-        side.startCount = frame.units.filter(u => u.side === side.civId).length;
+        let cnt = 0;
+        for (const u of frame.units) { if (u.side === side.civId) cnt++ }
+        side.startCount = cnt;
       }
     }
     rec.endTick = frame.tick;
@@ -80,7 +82,9 @@ export class BattleReplaySystem {
     const last = rec.frames[rec.frames.length - 1];
     if (last) {
       for (const side of rec.sides) {
-        side.endCount = last.units.filter(u => u.side === side.civId && u.alive).length;
+        let cnt = 0;
+        for (const u of last.units) { if (u.side === side.civId && u.alive) cnt++ }
+        side.endCount = cnt;
       }
       if (rec.sides.length >= 2) {
         rec.sides[0].kills = rec.sides[1].startCount - rec.sides[1].endCount;
@@ -157,13 +161,13 @@ export class BattleReplaySystem {
     if (!frame) return;
     ctx.save();
     // 战场范围虚线圈
-    const alive = frame.units.filter(u => u.alive);
-    if (alive.length >= 2) {
-      let cx = 0, cy = 0;
-      for (const u of alive) { cx += u.x; cy += u.y; }
-      cx /= alive.length; cy /= alive.length;
+    let aliveCount = 0, cxSum = 0, cySum = 0;
+    for (const u of frame.units) { if (u.alive) { cxSum += u.x; cySum += u.y; aliveCount++ } }
+    if (aliveCount >= 2) {
+      let cx = cxSum / aliveCount, cy = cySum / aliveCount;
       let maxDist = 0;
-      for (const u of alive) {
+      for (const u of frame.units) {
+        if (!u.alive) continue;
         const d = Math.sqrt((u.x - cx) ** 2 + (u.y - cy) ** 2);
         if (d > maxDist) maxDist = d;
       }
