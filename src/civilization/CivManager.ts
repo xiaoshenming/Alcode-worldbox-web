@@ -387,11 +387,15 @@ export class CivManager {
     // Builder culture: reduce resource costs
     const costMult = this.getCultureBonus(civ.id, 'buildCost')
 
-    // Find a random territory tile to build on
-    const territoryArr = Array.from(civ.territory)
-    if (territoryArr.length === 0) return
-
-    const key = territoryArr[Math.floor(Math.random() * territoryArr.length)]
+    // Find a random territory tile to build on — iterate without Array.from
+    const terrSize = civ.territory.size
+    if (terrSize === 0) return
+    let targetIdx = Math.floor(Math.random() * terrSize)
+    let key: string | undefined
+    for (const k of civ.territory) {
+      if (targetIdx-- === 0) { key = k; break }
+    }
+    if (!key) return
     const comma = key.indexOf(',')
     const x = +key.substring(0, comma)
     const y = +key.substring(comma + 1)
