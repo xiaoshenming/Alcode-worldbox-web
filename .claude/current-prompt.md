@@ -1,17 +1,17 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代29完成。核心工作：继续消除热路径GC分配（预分配缓冲区、filter替换、字符串键优化）。主要成果：1) Renderer.ts：新增_dashBuf预分配[zoom,zoom]二元素数组(替代每帧setLineDash创建新数组)、_densityBuf预分配heatmap二维数组(替代每帧重建)、_BRUSH_DASH静态常量(替代renderBrushOutline中的[4,4]字面量)、消除for-of-destructure临时数组（port markers）；2) NavalSystem：getShipCount()中filter().length改为手动计数循环；3) TradeNegotiationSystem：4处优化(negotiations/deals两个filter赋值改为反向splice，两个filter().length>=MAX改为手动计数)；4) CreatureLanguageSystem：_civIdSet持久化成员替代每1200tick的new Set(civIds)；5) MigrationSystem：_nearbyBuf预分配Set替代内层循环的new Set(cellMembers)；6) LegendaryBattleSystem：_clusterBuf/_civCounts预分配（每10tick × N个cells）；7) CreatureAllianceSystem：[...creatures]改为直接使用数组（getEntitiesWithComponents返回EntityId[]）；8) CityPlanningSystem：occupied Set<string>改为Set<number>（消除模板字符串分配）；9) CreatureProfessionSystem：_byCivBuf预分配Map替代每120tick的new Map；10) DiplomacySystem：getActiveTreatiesBetween()改为返回_treatyBuf预分配缓冲区（每帧被3处调用），removeTreatyFromCivs改indexOf+splice替代filter。测试：5434个全部通过，构建成功。
+🧠 AI 上轮笔记：迭代33完成。核心工作：大规模字体字符串缓存扫描+其他GC优化。主要成果：1) CivManager.autoBuild：Array.from(civ.territory)→迭代器+计数随机采样，零分配；2) MigrationSystem.tryFormBands(每60tick)：预分配_candidatesBuf/_speciesGroups/_cellPool/_cellPoolNext，消除每次调用new Map()/[]；3) BuildingVarietySystem/CreatureAncestorSystem/WorldMythicBeastSystem/CreatureReputationSystem/FormationSystem/WorldAncientRuinSystem/WorldRelicSystem/WorldSeasonalDisasterSystem/WorldAnomalySystem/CreatureGuildSystem/ReligionSpreadSystem/DiplomacyVisualSystem/MonumentSystem/DiplomaticEspionageSystem：共14个系统添加_lastZoom+字体缓存字段，zoom不变时不重建字符串；4) FogOfWarSystem(每10tick)：两处key.split(',').map(Number)→indexOf+substring+单字符转数字，消除split数组+map数组分配。测试：5434个全部通过，构建成功。
 🎯 AI 自定优先级：[
   "1. Game.ts仍有4045行（超标8倍）：无filter/map，主要是系统调用密集；loop方法是最大拆分候选但风险高",
   "2. Renderer.ts(989行)仍超标：已完成主要GC优化；可考虑提取renderMinimap为独立方法文件",
   "3. WeatherDisasterSystem(747行)：render*私有方法仍耦合度高，拆分需要传递大量参数",
-  "4. FlockingSystem(每15tick重建flocks)：rebuildFlocks中的模板字符串键每次创建新字符串，但species是字符串无法数值化",
-  "5. 继续搜索每帧/每10tick执行路径中的GC：特别是EcosystemSystem(每3tick updateBehaviors)中的O(N²)全局扫描问题",
-  "6. CultureSystem.generateNameFromLang中两个filter(phonemes.filter)在每次命名生成时调用，可改为手动循环"
+  "4. 继续扫描其他territory/split(',')模式：CivManager/TerrainSystem等可能还有key.split(',')创建临时数组",
+  "5. FogOfWarSystem.render()：还有更多潜在GC源值得检查（图块渲染循环）",
+  "6. 检查civilization/目录：CivManager之外的文明系统文件是否有热路径GC"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
-  "子代理并行修复大批量文件极高效：4组并行代理可在几分钟内修复160+文件",
+  "子代理并��修复大批量文件极高效：4组并行代理可在几分钟内修复160+文件",
   "manualChunks按文件名前缀分组是最安全的代码分割方案 — 不改源码，只改vite配置",
   "Iterable<T>替代T[]可消除spread分配，但需检查消费端是否用了.length/.includes等数组方法",
   "getAllEntities()返回Array.from()快照 — removeEntity-during-iteration是安全的",
@@ -47,10 +47,22 @@
   "【迭代29新增】getEntitiesWithComponents()已返回EntityId[]，不需要[...spread]拷贝",
   "【迭代29新增】getter方法被热路径频繁调用时，可以用预分配_xxxBuf成员代替每次filter新数组，调用者必须意识到buf是共享可变的",
   "【迭代29新增】ctx.setLineDash([a*zoom,a*zoom])每帧新建数组 — 用_dashBuf[0]=val; _dashBuf[1]=val + setLineDash(_dashBuf)消除",
-  "【迭代29新增】for(const [px,py] of [[x1,y1],[x2,y2]])每次创建2个临时数组 — 改为手动展开for(let mi=0;mi<2;mi++){const px=mi===0?x1:x2...}"
+  "【迭代29新增】for(const [px,py] of [[x1,y1],[x2,y2]])每次创建2个临时数组 — 改为手动展开for(let mi=0;mi<2;mi++){const px=mi===0?x1:x2...}",
+  "【迭代30新增】O(N²)热路径识别：内层循环中重复调用em.getEntitiesWithComponents()是O(N²)陷阱 — 在外层循环前一次性获取并传入",
+  "【迭代30新增】语言/配置数据的filter分类结果可缓存到Map<id,{vowels,consonants}>，只在首次访问时计算",
+  "【迭代30新增】对象数组{x,y,species}可改为平坦并行数组_xBuf/_yBuf/_speciesBuf，消除每元素对象分配",
+  "【迭代30新增】Array.from(map.values())在每N tick执行的系统中可改为_buf.length=0; for(const v of map.values()) _buf.push(v)复用数组",
+  "【迭代30新增】对象池模式：_memberPool: T[][]，_memberPoolNext=0在每次rebuild时重置，从池中取数组而非new Array(n)",
+  "【迭代31新增】两层Map模式：Map<number,Map<string,T>>比Map<string,T>（key=`${num}:${str}`）更高效，外层数值键零分配，内层字符串键已存在无新分配",
+  "【迭代31新增】渲染函数中的字体字符串缓存：_lastZoom + _xxxFont成员，zoom不变时直接复用，避免每帧模板字符串分配",
+  "【迭代31新增】civ.buildings.filter(b => b.buildingType===X).length模式在每帧循环中是高GC源 — 改为手动for计数(0分配)",
+  "【迭代33新增】Array.from(set)→迭代器+计数索引采样：targetIdx--===0时记录key，break退出，零分配",
+  "【迭代33新增】key.split(',').map(Number)是双分配（split数组+map数组）— 用indexOf+substring+一元+操作符替代，零分配",
+  "【迭代33新增】预分配Map结构：内层Map.clear()而不是new Map()，outer Map只在新key时new Map，首次调用后快速复用",
+  "【迭代33新增】字体缓存覆盖面扫描：grep -rn 'ctx.font.*zoom'找到所有模板字符串，批量添加_lastZoom/_xxxFont缓存模式"
 ]
 
-迭代轮次: 30/100
+迭代轮次: 34/100
 
 
 🔄 自我进化（每轮必做）：
@@ -59,6 +71,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-02-28T01:06:15+08:00"
+  "last_updated": "2026-02-28T02:37:01+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。

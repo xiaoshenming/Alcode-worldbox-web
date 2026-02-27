@@ -121,19 +121,25 @@ export class ReligionSystem {
 
   private spawnBlessingParticles(civ: Civilization, particles: ParticleSystem): void {
     const color = RELIGION_COLORS[civ.religion.type]
-    const territory = Array.from(civ.territory)
-    if (territory.length === 0) return
+    const size = civ.territory.size
+    if (size === 0) return
 
-    const count = Math.min(3, territory.length)
+    const count = Math.min(3, size)
     for (let i = 0; i < count; i++) {
-      const key = territory[Math.floor(Math.random() * territory.length)]
-      const [x, y] = key.split(',').map(Number)
-      particles.spawnAura(x, y, color, 1.5)
+      let targetIdx = Math.floor(Math.random() * size)
+      for (const key of civ.territory) {
+        if (targetIdx-- === 0) {
+          const comma = key.indexOf(',')
+          particles.spawnAura(+key.substring(0, comma), +key.substring(comma + 1), color, 1.5)
+          break
+        }
+      }
     }
   }
 
   private spreadReligion(civManager: CivManager, tick: number): void {
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
 
     for (let i = 0; i < civs.length; i++) {
       for (let j = i + 1; j < civs.length; j++) {
@@ -171,10 +177,11 @@ export class ReligionSystem {
       if (civ.culture.strength < 100) {
         let growth = 1
         // Academy bonus
-        const academies = civ.buildings.filter(id => {
+        let academies = 0
+        for (const id of civ.buildings) {
           const b = em.getComponent<BuildingComponent>(id, 'building')
-          return b && b.buildingType === BuildingType.ACADEMY
-        }).length
+          if (b && b.buildingType === BuildingType.ACADEMY) academies++
+        }
         growth += academies * 2
         civ.culture.strength = Math.min(100, civ.culture.strength + growth)
       }
@@ -201,7 +208,8 @@ export class ReligionSystem {
   }
 
   private checkHolyWar(civManager: CivManager, tick: number): void {
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
 
     for (let i = 0; i < civs.length; i++) {
       for (let j = i + 1; j < civs.length; j++) {
@@ -225,23 +233,27 @@ export class ReligionSystem {
   }
 
   private areBordering(a: Civilization, b: Civilization, civManager: CivManager): boolean {
+    const mapH = civManager.territoryMap.length
+    const mapW = civManager.territoryMap[0]?.length ?? 0
     for (const key of a.territory) {
-      const [x, y] = key.split(',').map(Number)
-      for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
-        const nx = x + dx, ny = y + dy
-        if (ny >= 0 && ny < civManager.territoryMap.length &&
-            nx >= 0 && nx < (civManager.territoryMap[0]?.length ?? 0)) {
-          if (civManager.territoryMap[ny][nx] === b.id) return true
-        }
-      }
+      const comma = key.indexOf(',')
+      const x = +key.substring(0, comma)
+      const y = +key.substring(comma + 1)
+      // Check 4 neighbours without creating temporary arrays
+      if (y - 1 >= 0 && civManager.territoryMap[y - 1][x] === b.id) return true
+      if (y + 1 < mapH && civManager.territoryMap[y + 1][x] === b.id) return true
+      if (x - 1 >= 0 && civManager.territoryMap[y][x - 1] === b.id) return true
+      if (x + 1 < mapW && civManager.territoryMap[y][x + 1] === b.id) return true
     }
     return false
   }
 
   private countTemples(civ: Civilization, em: EntityManager): number {
-    return civ.buildings.filter(id => {
+    let count = 0
+    for (const id of civ.buildings) {
       const b = em.getComponent<BuildingComponent>(id, 'building')
-      return b && b.buildingType === BuildingType.TEMPLE
-    }).length
+      if (b && b.buildingType === BuildingType.TEMPLE) count++
+    }
+    return count
   }
 }

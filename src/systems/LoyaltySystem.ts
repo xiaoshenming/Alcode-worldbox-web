@@ -263,20 +263,26 @@ export class LoyaltySystem {
     if (civ.territory.size === 0) return null
     let sx = 0, sy = 0, n = 0
     for (const key of civ.territory) {
-      const [x, y] = key.split(',').map(Number)
-      sx += x; sy += y; n++
+      const comma = key.indexOf(',')
+      sx += +key.substring(0, comma); sy += +key.substring(comma + 1); n++
       if (n >= 200) break
     }
     return { x: Math.round(sx / n), y: Math.round(sy / n) }
   }
 
   private pickEdgeTerritory(civ: Civilization): { x: number; y: number } | null {
-    const arr = Array.from(civ.territory)
-    if (arr.length === 0) return null
+    const size = civ.territory.size
+    if (size === 0) return null
     // Sample from the last quarter of territory entries (likely edge tiles)
-    const start = Math.max(0, arr.length - Math.ceil(arr.length / 4))
-    const pick = arr[start + Math.floor(Math.random() * (arr.length - start))]
-    const [x, y] = pick.split(',').map(Number)
-    return { x, y }
+    const start = Math.max(0, size - Math.ceil(size / 4))
+    const targetIdx = start + Math.floor(Math.random() * (size - start))
+    let i = 0
+    for (const key of civ.territory) {
+      if (i++ === targetIdx) {
+        const comma = key.indexOf(',')
+        return { x: +key.substring(0, comma), y: +key.substring(comma + 1) }
+      }
+    }
+    return null
   }
 }
