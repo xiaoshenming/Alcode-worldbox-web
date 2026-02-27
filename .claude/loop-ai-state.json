@@ -1,12 +1,12 @@
 {
-  "notes": "迭代30完成。核心工作：继续消除热路径GC分配。主要成果：1) EcosystemSystem.updateBehaviors(每3tick)：findNearestThreat/findNearestPrey内部各自调用em.getEntitiesWithComponents()导致O(N²)，改为在updateBehaviors开头一次性获取allCreaturePos共享传入，降为O(N)；2) CultureSystem.generateNameFromLang：两个phonemes.filter()改为_phonemeCache缓存(Map<langId,{vowels,consonants}>)，只在首次调用时计算；3) FlockingSystem.rebuildFlocks(每15tick)：new Array<EntityId>(n)改为_memberPool对象池，_memberPoolNext指针重置复用；4) AmbientSoundMixer._expireEvents(每帧)：filter改为逆序splice；5) CaravanSystem.update(每帧)：spawnTimers键从模板字符串'${civId}:${partnerId}'改为数值civId*10000+partnerId；6) DiplomacySystem.updateEmbassies(每帧)：civ.embassies=civ.embassies.filter(...)改为逆序splice；7) EcosystemSystem.rebuildCreatureCache(每100tick)：{species,x,y}对象数组改为三个平坦数组(_cacheSpecies/_cacheX/_cacheY/_cacheLen)，消除N个对象分配；8) AllianceSystem(每180tick)：Array.from(civManager.civilizations.values())改为_civsBuf预分配，两处this.alliances=this.alliances.filter()改为逆序splice，tryAllianceWar中new Map()改为_enemyScoresBuf预分配。测试：5434个全部通过，构建成功。",
+  "notes": "迭代31完成。核心工作：继续消除热路径GC分配。主要成果：1) FlockingSystem._groups从Map<string,EntityId[]>改为Map<number,Map<string,EntityId[]>>两层结构，消除每实体每15tick的模板字符串分配'${civId}:${species}'；2) FormationSystem.update(每帧)：f.members=f.members.filter()改为逆序splice，消除每帧每个formation的数组分配；3) TradeFleetSystem.update(每8tick)：ripples.filter()改为手动for计数；4) Renderer.ts：3个字体字符串(heroFont/artFont/stateFont)和resourceFont改为zoom缓存，zoom变化时才重建；5) LODRenderSystem.ts：两个字体字符串(fullFont/mediumFont)改为zoom缓存；6) CivManager.ts(每帧)：gatherResources中farms.filter()、updateHappiness中houses.filter()、updateReligion中temples.filter()三处都改为手动for计数，消除每帧每文明3次数组分配。测试：5434个全部通过，构建成功。",
   "priorities": [
     "1. Game.ts仍有4045行（超标8倍）：无filter/map，主要是系统调用密集；loop方法是最大拆分候选但风险高",
     "2. Renderer.ts(989行)仍超标：已完成主要GC优化；可考虑提取renderMinimap为独立方法文件",
     "3. WeatherDisasterSystem(747行)：render*私有方法仍耦合度高，拆分需要传递大量参数",
-    "4. FlockingSystem：rebuildFlocks中的模板字符串键`${key}:${Math.floor(pos.x)}:${Math.floor(pos.y)}`每次创建新字符串(第151行)，但flockKey只用于Map.set，可改为数值编码",
-    "5. DiplomacySystem.tryBuildEmbassy：Array.from(host.territory)但有0.02%概率保护，低优先级",
-    "6. 继续搜索每帧/每10tick执行路径中的GC：特别是CombatSystem(批处理1/10实体)中的spatialHash.query返回值是否创建新数组"
+    "4. CivManager.autoBuild(0.2%概率)：Array.from(civ.territory)每次执行都创建数组，改为手动随机采样（用迭代器+计数）",
+    "5. MigrationSystem.tryFormBands(每60tick)：speciesGroups每次都new Map()/new Map()创建临时数据结构，可改为预分配",
+    "6. 继续扫描渲染系统中的字体字符串：BuildingVarietySystem、WorldMythicBeastSystem等渲染函数中还有字体字符串每帧创建"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -51,7 +51,10 @@
     "【迭代30新增】语言/配置数据的filter分类结果可缓存到Map<id,{vowels,consonants}>，只在首次访问时计算",
     "【迭代30新增】对象数组{x,y,species}可改为平坦并行数组_xBuf/_yBuf/_speciesBuf，消除每元素对象分配",
     "【迭代30新增】Array.from(map.values())在每N tick执行的系统中可改为_buf.length=0; for(const v of map.values()) _buf.push(v)复用数组",
-    "【迭代30新增】对象池模式：_memberPool: T[][]，_memberPoolNext=0在每次rebuild时重置，从池中取数组而非new Array(n)"
+    "【迭代30新增】对象池模式：_memberPool: T[][]，_memberPoolNext=0在每次rebuild时重置，从池中取数组而非new Array(n)",
+    "【迭代31新增】两层Map模式：Map<number,Map<string,T>>比Map<string,T>（key=`${num}:${str}`）更高效，外层数值键零分配，内层字符串键已存在无新分配",
+    "【迭代31新增】渲染函数中的字体字符串缓存：_lastZoom + _xxxFont成员，zoom不变时直接复用，避免每帧模板字符串分配",
+    "【迭代31新增】civ.buildings.filter(b => b.buildingType===X).length模式在每帧循环中是高GC源 — 改为手动for计数(0分配)"
   ],
-  "last_updated": "2026-02-28T09:31:00+08:00"
+  "last_updated": "2026-02-28T10:10:00+08:00"
 }
