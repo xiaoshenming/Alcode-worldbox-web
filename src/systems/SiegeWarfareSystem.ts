@@ -120,7 +120,9 @@ export class SiegeWarfareSystem {
   }
 
   getActiveSieges(): SiegeData[] {
-    return [...this.sieges.values()].filter(s => !s.resolved);
+    const result: SiegeData[] = []
+    for (const s of this.sieges.values()) { if (!s.resolved) result.push(s) }
+    return result
   }
 
   resolveSiege(siegeId: number): SiegeOutcome {

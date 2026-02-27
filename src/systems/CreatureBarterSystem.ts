@@ -41,7 +41,7 @@ export class CreatureBarterSystem {
   private attemptBarters(em: EntityManager, tick: number): void {
     if (this.deals.length >= MAX_DEALS) return
     const entities = em.getEntitiesWithComponents('creature')
-    const arr = Array.from(entities)
+    const arr = entities
     if (arr.length < 2) return
 
     for (let i = 0; i < arr.length; i++) {

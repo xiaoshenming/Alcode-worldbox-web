@@ -336,11 +336,12 @@ export class EraTransitionSystem {
     }
 
     // 收集所有文明名
-    const civNames = new Set<string>();
+    const civNameSet = new Set<string>();
     for (const s of this.popSamples) {
-      s.populations.forEach((_, name) => civNames.add(name));
+      s.populations.forEach((_, name) => civNameSet.add(name));
     }
-    const civList = Array.from(civNames);
+    const civList: string[] = []
+    for (const n of civNameSet) civList.push(n)
 
     // 计算最大堆叠值
     let maxTotal = 1;

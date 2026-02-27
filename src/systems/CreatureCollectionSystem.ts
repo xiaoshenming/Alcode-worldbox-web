@@ -100,10 +100,12 @@ export class CreatureCollectionSystem {
         if (dx * dx + dy * dy > 25) continue
 
         // Transfer a random item
-        const items = Array.from(col.items.entries()).filter(([, c]) => c > 0)
-        if (items.length === 0) break
-
-        const [type] = items[Math.floor(Math.random() * items.length)]
+        let eligibleCount = 0
+        for (const c of col.items.values()) { if (c > 0) eligibleCount++ }
+        if (eligibleCount === 0) break
+        let pick = Math.floor(Math.random() * eligibleCount)
+        let type: CollectibleType = 'gem'
+        for (const [t, c] of col.items.entries()) { if (c > 0 && pick-- === 0) { type = t; break } }
         col.items.set(type, (col.items.get(type) ?? 1) - 1)
         col.totalValue -= ITEM_VALUES[type]
 
@@ -137,10 +139,12 @@ export class CreatureCollectionSystem {
         if (dx * dx + dy * dy > 16) continue
 
         // Steal one item
-        const items = Array.from(victimCol.items.entries()).filter(([, c]) => c > 0)
-        if (items.length === 0) break
-
-        const [type] = items[Math.floor(Math.random() * items.length)]
+        let eligibleCount = 0
+        for (const c of victimCol.items.values()) { if (c > 0) eligibleCount++ }
+        if (eligibleCount === 0) break
+        let pick = Math.floor(Math.random() * eligibleCount)
+        let type: CollectibleType = 'gem'
+        for (const [t, c] of victimCol.items.entries()) { if (c > 0 && pick-- === 0) { type = t; break } }
         victimCol.items.set(type, (victimCol.items.get(type) ?? 1) - 1)
         victimCol.totalValue -= ITEM_VALUES[type]
         victimCol.pride = Math.max(0, victimCol.pride - 10)
