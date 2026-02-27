@@ -5,4 +5,6 @@ describe('EventNotificationSystem', () => {
   let sys: EventNotificationSystem
   beforeEach(() => { sys = makeSys() })
   it('getRecentEvents初始为空', () => { expect(sys.getRecentEvents(10)).toHaveLength(0) })
+  it('clear 不崩溃', () => { expect(() => sys.clear()).not.toThrow() })
+  it('getRecentEvents count=0 返回空数组', () => { expect(sys.getRecentEvents(0)).toHaveLength(0) })
 })
