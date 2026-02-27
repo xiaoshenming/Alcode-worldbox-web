@@ -121,7 +121,7 @@ describe('ReligionSpreadSystem.getFaithAt', () => {
   })
 
   it('注入 faithMap 后可查询', () => {
-    ;(rss as any).faithMap.set('10,20', { religion: 'nature', strength: 60 })
+    ;(rss as any).faithMap.set(10 * 10000 + 20, { religion: 'nature', strength: 60 })
     const faith = rss.getFaithAt(10, 20)
     expect(faith).not.toBeNull()
     expect(faith!.religion).toBe('nature')
@@ -129,8 +129,8 @@ describe('ReligionSpreadSystem.getFaithAt', () => {
   })
 
   it('不同坐标独立', () => {
-    ;(rss as any).faithMap.set('0,0', { religion: 'sun', strength: 80 })
-    ;(rss as any).faithMap.set('5,5', { religion: 'war', strength: 40 })
+    ;(rss as any).faithMap.set(0 * 10000 + 0, { religion: 'sun', strength: 80 })
+    ;(rss as any).faithMap.set(5 * 10000 + 5, { religion: 'war', strength: 40 })
     expect(rss.getFaithAt(0, 0)!.religion).toBe('sun')
     expect(rss.getFaithAt(5, 5)!.religion).toBe('war')
     expect(rss.getFaithAt(1, 1)).toBeNull()
@@ -138,7 +138,7 @@ describe('ReligionSpreadSystem.getFaithAt', () => {
 
   it('支持所有 6 种宗教类型', () => {
     const types: ReligionType[] = ['sun', 'moon', 'nature', 'war', 'sea', 'ancestor']
-    types.forEach((r, i) => { ;(rss as any).faithMap.set(`${i},0`, { religion: r, strength: 50 }) })
+    types.forEach((r, i) => { ;(rss as any).faithMap.set(i * 10000 + 0, { religion: r, strength: 50 }) })
     types.forEach((r, i) => { expect(rss.getFaithAt(i, 0)!.religion).toBe(r) })
   })
 })
