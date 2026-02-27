@@ -167,8 +167,8 @@ export class WonderSystem {
   private findTerritoryCenter(territory: Set<string>): { x: number; y: number } {
     let sumX = 0, sumY = 0, count = 0
     for (const key of territory) {
-      const [x, y] = key.split(',').map(Number)
-      sumX += x; sumY += y; count++
+      const comma = key.indexOf(',')
+      sumX += +key.substring(0, comma); sumY += +key.substring(comma + 1); count++
     }
     return count === 0 ? { x: 100, y: 100 } : { x: Math.round(sumX / count), y: Math.round(sumY / count) }
   }

@@ -239,11 +239,18 @@ export class DiplomacySystem {
     if (builder.embassies.some(e => e.civId === host.id)) return
 
     // Find a tile in host territory to place embassy
-    const hostTerritory = Array.from(host.territory)
-    if (hostTerritory.length === 0) return
+    const hostTerritorySize = host.territory.size
+    if (hostTerritorySize === 0) return
 
-    const key = hostTerritory[Math.floor(Math.random() * hostTerritory.length)]
-    const [x, y] = key.split(',').map(Number)
+    let targetIdx = Math.floor(Math.random() * hostTerritorySize)
+    let x = 0, y = 0
+    for (const key of host.territory) {
+      if (targetIdx-- === 0) {
+        const comma = key.indexOf(',')
+        x = +key.substring(0, comma); y = +key.substring(comma + 1)
+        break
+      }
+    }
 
     builder.embassies.push({ civId: host.id, x, y })
 

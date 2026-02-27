@@ -237,8 +237,8 @@ export class CityPlanningSystem {
   }
 
   private findBuildSite(civ: Civilization, em: EntityManager, world: World): { x: number; y: number } | null {
-    const territory = Array.from(civ.territory)
-    if (territory.length === 0) return null
+    const territory = civ.territory
+    if (territory.size === 0) return null
 
     // Occupied positions set for fast lookup (numeric key = x * 10000 + y)
     const occupied = new Set<number>()
@@ -248,9 +248,14 @@ export class CityPlanningSystem {
     }
 
     // Try up to 20 random spots
+    const terrSize = territory.size
     for (let i = 0; i < 20; i++) {
-      const key = territory[Math.floor(Math.random() * territory.length)]
-      const [x, y] = key.split(',').map(Number)
+      let targetIdx = Math.floor(Math.random() * terrSize)
+      let key = ''
+      for (const k of territory) { if (targetIdx-- === 0) { key = k; break } }
+      if (!key) continue
+      const comma = key.indexOf(',')
+      const x = +key.substring(0, comma), y = +key.substring(comma + 1)
       if (occupied.has(x * 10000 + y)) continue
       const tile = world.getTile(x, y)
       if (tile === TileType.DEEP_WATER || tile === TileType.SHALLOW_WATER || tile === TileType.LAVA || tile === TileType.MOUNTAIN) continue

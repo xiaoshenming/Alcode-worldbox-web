@@ -442,24 +442,37 @@ export const EVENT_DEFINITIONS: WorldEventDef[] = [
         return b && b.buildingType === BuildingType.CASTLE
       })
       if (!hasCastle) {
-        const terr = Array.from(civ.territory)
-        if (terr.length > 0) {
-          const key = terr[Math.floor(Math.random() * terr.length)]
-          const [bx, by] = key.split(',').map(Number)
-          const tile = ctx.world.getTile(bx, by)
-          if (tile !== null && tile !== TileType.DEEP_WATER && tile !== TileType.SHALLOW_WATER && tile !== TileType.LAVA) {
-            ctx.civManager.placeBuilding(civ.id, BuildingType.CASTLE, bx, by)
+        const terrSize = civ.territory.size
+        if (terrSize > 0) {
+          let targetIdx = Math.floor(Math.random() * terrSize)
+          for (const key of civ.territory) {
+            if (targetIdx-- === 0) {
+              const comma = key.indexOf(',')
+              const bx = +key.substring(0, comma), by = +key.substring(comma + 1)
+              const tile = ctx.world.getTile(bx, by)
+              if (tile !== null && tile !== TileType.DEEP_WATER && tile !== TileType.SHALLOW_WATER && tile !== TileType.LAVA) {
+                ctx.civManager.placeBuilding(civ.id, BuildingType.CASTLE, bx, by)
+              }
+              break
+            }
           }
         }
       }
 
       // Spawn golden particles at a territory center
-      const terr = Array.from(civ.territory)
-      if (terr.length > 0) {
-        const mid = terr[Math.floor(terr.length / 2)]
-        const [px, py] = mid.split(',').map(Number)
-        ctx.particles.spawn(px, py, 20, '#ffd700', 3)
-        ctx.particles.spawn(px, py, 15, '#ffffff', 2)
+      if (civ.territory.size > 0) {
+        // Sample the middle-ish tile for the center
+        const midIdx = Math.floor(civ.territory.size / 2)
+        let i = 0
+        for (const mid of civ.territory) {
+          if (i++ === midIdx) {
+            const comma = mid.indexOf(',')
+            const px = +mid.substring(0, comma), py = +mid.substring(comma + 1)
+            ctx.particles.spawn(px, py, 20, '#ffd700', 3)
+            ctx.particles.spawn(px, py, 15, '#ffffff', 2)
+            break
+          }
+        }
       }
 
       EventLog.log('world_event', `Divine Intervention! The gods bless ${civ.name} with miraculous aid!`, ctx.tick)

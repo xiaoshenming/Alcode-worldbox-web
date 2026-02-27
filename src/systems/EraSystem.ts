@@ -210,8 +210,8 @@ export class EraSystem {
     if (civ.territory.size === 0) return null
     let sx = 0, sy = 0, count = 0
     for (const key of civ.territory) {
-      const [x, y] = key.split(',')
-      sx += +x; sy += +y; count++
+      const comma = key.indexOf(',')
+      sx += +key.substring(0, comma); sy += +key.substring(comma + 1); count++
       if (count >= 200) break // sample cap for perf
     }
     return { x: Math.round(sx / count), y: Math.round(sy / count) }

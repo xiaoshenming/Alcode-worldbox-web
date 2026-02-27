@@ -45,11 +45,8 @@ export class TradeEconomySystem {
 
     this.updateGlobalPrices(civManager)
 
-    const civs = Array.from(civManager.civilizations.values())
-    for (const civ of civs) {
-      this.updateLocalPrices(civ)
-      this.updateGuild(civ, em, tick)
-    }
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
 
     // Evaluate trade between all civ pairs
     for (let i = 0; i < civs.length; i++) {
@@ -236,8 +233,8 @@ export class TradeEconomySystem {
     let sx = 0, sy = 0, n = 0
     // Sample up to 20 tiles for performance
     for (const key of civ.territory) {
-      const [x, y] = key.split(',').map(Number)
-      sx += x; sy += y; n++
+      const comma = key.indexOf(',')
+      sx += +key.substring(0, comma); sy += +key.substring(comma + 1); n++
       if (n >= 20) break
     }
     return { x: sx / n, y: sy / n }
