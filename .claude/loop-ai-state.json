@@ -1,12 +1,12 @@
 {
-  "notes": "迭代29完成。核心工作：继续消除热路径GC分配（预分配缓冲区、filter替换、字符串键优化）。主要成果：1) Renderer.ts：新增_dashBuf预分配[zoom,zoom]二元素数组(替代每帧setLineDash创建新数组)、_densityBuf预分配heatmap二维数组(替代每帧重建)、_BRUSH_DASH静态常量(替代renderBrushOutline中的[4,4]字面量)、消除for-of-destructure临时数组（port markers）；2) NavalSystem：getShipCount()中filter().length改为手动计数循环；3) TradeNegotiationSystem：4处优化(negotiations/deals两个filter赋值改为反向splice，两个filter().length>=MAX改为手动计数)；4) CreatureLanguageSystem：_civIdSet持久化成员替代每1200tick的new Set(civIds)；5) MigrationSystem：_nearbyBuf预分配Set替代内层循环的new Set(cellMembers)；6) LegendaryBattleSystem：_clusterBuf/_civCounts预分配（每10tick × N个cells）；7) CreatureAllianceSystem：[...creatures]改为直接使用数组（getEntitiesWithComponents返回EntityId[]）；8) CityPlanningSystem：occupied Set<string>改为Set<number>（消除模板字符串分配）；9) CreatureProfessionSystem：_byCivBuf预分配Map替代每120tick的new Map；10) DiplomacySystem：getActiveTreatiesBetween()改为返回_treatyBuf预分配缓冲区（每帧被3处调用），removeTreatyFromCivs改indexOf+splice替代filter。测试：5434个全部通过，构建成功。",
+  "notes": "迭代30完成。核心工作：继续消除热路径GC分配。主要成果：1) EcosystemSystem.updateBehaviors(每3tick)：findNearestThreat/findNearestPrey内部各自调用em.getEntitiesWithComponents()导致O(N²)，改为在updateBehaviors开头一次性获取allCreaturePos共享传入，降为O(N)；2) CultureSystem.generateNameFromLang：两个phonemes.filter()改为_phonemeCache缓存(Map<langId,{vowels,consonants}>)，只在首次调用时计算；3) FlockingSystem.rebuildFlocks(每15tick)：new Array<EntityId>(n)改为_memberPool对象池，_memberPoolNext指针重置复用；4) AmbientSoundMixer._expireEvents(每帧)：filter改为逆序splice；5) CaravanSystem.update(每帧)：spawnTimers键从模板字符串'${civId}:${partnerId}'改为数值civId*10000+partnerId；6) DiplomacySystem.updateEmbassies(每帧)：civ.embassies=civ.embassies.filter(...)改为逆序splice；7) EcosystemSystem.rebuildCreatureCache(每100tick)：{species,x,y}对象数组改为三个平坦数组(_cacheSpecies/_cacheX/_cacheY/_cacheLen)，消除N个对象分配；8) AllianceSystem(每180tick)：Array.from(civManager.civilizations.values())改为_civsBuf预分配，两处this.alliances=this.alliances.filter()改为逆序splice，tryAllianceWar中new Map()改为_enemyScoresBuf预分配。测试：5434个全部通过，构建成功。",
   "priorities": [
     "1. Game.ts仍有4045行（超标8倍）：无filter/map，主要是系统调用密集；loop方法是最大拆分候选但风险高",
     "2. Renderer.ts(989行)仍超标：已完成主要GC优化；可考虑提取renderMinimap为独立方法文件",
     "3. WeatherDisasterSystem(747行)：render*私有方法仍耦合度高，拆分需要传递大量参数",
-    "4. FlockingSystem(每15tick重建flocks)：rebuildFlocks中的模板字符串键每次创建新字符串，但species是字符串无法数值化",
-    "5. 继续搜索每帧/每10tick执行路径中的GC：特别是EcosystemSystem(每3tick updateBehaviors)中的O(N²)全局扫描问题",
-    "6. CultureSystem.generateNameFromLang中两个filter(phonemes.filter)在每次命名生成时调用，可改为手动循环"
+    "4. FlockingSystem：rebuildFlocks中的模板字符串键`${key}:${Math.floor(pos.x)}:${Math.floor(pos.y)}`每次创建新字符串(第151行)，但flockKey只用于Map.set，可改为数值编码",
+    "5. DiplomacySystem.tryBuildEmbassy：Array.from(host.territory)但有0.02%概率保护，低优先级",
+    "6. 继续搜索每帧/每10tick执行路径中的GC：特别是CombatSystem(批处理1/10实体)中的spatialHash.query返回值是否创建新数组"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -46,7 +46,12 @@
     "【迭代29新增】getEntitiesWithComponents()已返回EntityId[]，不需要[...spread]拷贝",
     "【迭代29新增】getter方法被热路径频繁调用时，可以用预分配_xxxBuf成员代替每次filter新数组，调用者必须意识到buf是共享可变的",
     "【迭代29新增】ctx.setLineDash([a*zoom,a*zoom])每帧新建数组 — 用_dashBuf[0]=val; _dashBuf[1]=val + setLineDash(_dashBuf)消除",
-    "【迭代29新增】for(const [px,py] of [[x1,y1],[x2,y2]])每次创建2个临时数组 — 改为手动展开for(let mi=0;mi<2;mi++){const px=mi===0?x1:x2...}"
+    "【迭代29新增】for(const [px,py] of [[x1,y1],[x2,y2]])每次创建2个临时数组 — 改为手动展开for(let mi=0;mi<2;mi++){const px=mi===0?x1:x2...}",
+    "【迭代30新增】O(N²)热路径识别：内层循环中重复调用em.getEntitiesWithComponents()是O(N²)陷阱 — 在外层循环前一次性获取并传入",
+    "【迭代30新增】语言/配置数据的filter分类结果可缓存到Map<id,{vowels,consonants}>，只在首次访问时计算",
+    "【迭代30新增】对象数组{x,y,species}可改为平坦并行数组_xBuf/_yBuf/_speciesBuf，消除每元素对象分配",
+    "【迭代30新增】Array.from(map.values())在每N tick执行的系统中可改为_buf.length=0; for(const v of map.values()) _buf.push(v)复用数组",
+    "【迭代30新增】对象池模式：_memberPool: T[][]，_memberPoolNext=0在每次rebuild时重置，从池中取数组而非new Array(n)"
   ],
-  "last_updated": "2026-02-28T01:04:00+08:00"
+  "last_updated": "2026-02-28T09:31:00+08:00"
 }
