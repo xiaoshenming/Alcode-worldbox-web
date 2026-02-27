@@ -1,14 +1,14 @@
 {
-  "notes": "迭代25完成。核心工作：大规模批量改进测试质量，将所有3-4测试以下的系统提升到5个测试。主要成果：1) 120个World地理系统（*Spring/*地形系统）从4测试提升到5测试，新增约120测试；2) 25个3测试系统（AutoSave/Music/Sound/Flocking等）提升到5测试，新增约50测试；3) 20个4测试非World系统（Creature*/Minimap/Diplomacy等）提升到5测试，新增约20测试；4) 从5244个测试增长到5434个测试（+190个），测试文件保持930个。当前状态：所有930个系统中仅剩2个DOM依赖系统（EnhancedTooltipSystem/PerformanceMonitorSystem）只有1个测试，其余所有系统均有≥5个测试。测试质量目标已全面达成。关键发现：1) Python rfind('})') 模式是最安全的测试追加方法，不破坏现有结构；2) 4个并行子代理处理165个系统耗时约7-8分钟；3) Spring系统都有nextId/lastCheck字段，模式完全统一；4) 需要验证getZones()方法名——少数系统用getActiveWaves()等不同名称。",
+  "notes": "迭代26完成。核心工作：代码质量提升（文件拆分）+ 性能优化（字符串键→数值键）。主要成果：1) 拆分WorldEventSystem(813行→359行)，提取EVENT_DEFINITIONS到WorldEventDefinitions.ts；2) 拆分SpriteRenderer(659行→263行)，提取精灵数据到SpriteData.ts；3) 6个系统的字符串模板Map键改为数值编码（NavalSystem/ResourceSystem/DiseaseSystem/ReligionSpreadSystem/BiomeEvolutionSystem/CivManager），消除热路径GC；4) EvolutionSystem复用speciesGroups Map。测试：5434个全部通过，0个失败。关键发现：1) 改Map键类型时必须同步更新测试中的注入代码（ReligionSpreadSystem测试曾因此失败）；2) 世界坐标x最大200，用cx*10000+cy编码完全安全；3) WorldEventDefinitions.ts改变了EVENT_DEFINITIONS内部使用Array.from和randomCiv的位置，需在同一文件export。",
   "priorities": [
-    "1. 当前5434个测试，930个测试文件，除2个DOM构造系统外所有系统均有≥5个测试——测试质量目标已达成",
-    "2. Game.ts仍有4045行（超标8倍）：loop(1038行)是最大候选，风险高但收益最大",
-    "3. WorldEventSystem(813行)、WeatherDisasterSystem(741行) 超出质量门禁500行，可考虑拆分",
-    "4. 为ArtifactSystem/DiseaseSystem等复杂系统添加集成测试（使用mock EntityManager）",
-    "5. 考虑为Game.ts的loop方法提取出独立模块（如WorldTickController），减少Game.ts体积"
+    "1. Game.ts仍有4045行（超标8倍）：loop(1038行)是最大候选，风险高但收益最大",
+    "2. WeatherDisasterSystem(741行)超出质量门禁500行，私有方法高度耦合难以拆分",
+    "3. Renderer.ts(988行)超出质量门禁，renderMinimap可���取但需带走相关canvas引用",
+    "4. NavalSystem(550行)、EcosystemSystem(548行)、AISystem(528行)、QuestSystem(501行)仍超标",
+    "5. 继续搜索字符串模板Map键：MigrationSystem/CityLayoutSystem等仍有字符串键空间哈希"
   ],
   "lessons": [
-    "非空断言(!)是最常见的崩溃���",
+    "非空断言(!)是最常见的崩溃点",
     "子代理并行修复大批量文件极高效：4组并行代理可在几分钟内修复160+文件",
     "manualChunks按文件名前缀分组是最安全的代码分割方案 — 不改源码，只改vite配置",
     "Iterable<T>替代T[]可消除spread分配，但需检查消费端是否用了.length/.includes等数组方法",
@@ -25,7 +25,7 @@
     "SpatialHash字符串键每次insert/query都产生GC — 改为数值编码零分配",
     "per-tick生物位置缓存模式：在系统update开头一次性收集所有生物位置到平坦数组",
     "接口注入模式：提取模块时定义只包含所需字段的接口，Game通过`this as unknown as Interface`传入，避免循环依赖",
-    "vite循环chunk警告不影响构建成功和��用运行",
+    "vite循环chunk警告不影响构建成功和应用运行",
     "Vitest在vite.config.ts中添加test.environment='node'配置即可支持纯逻辑测试",
     "【重要安全规则】严禁用Write工具创建src/__tests__/目录内的文件！Write工具会将__转义为\\_\\_导致创建错误目录，必须用Bash cat heredoc方式创建测试文件",
     "Creature系列系统的测试模式极其统一：直接push到(sys as any).xxx数组/Map注入数据 + 验证getter返回内部引用或过滤结果",
@@ -33,10 +33,9 @@
     "【关键经验】测试前必须先用grep确认接口字段！不同系统同名方法字段可能完全不同",
     "【重要】tsc --noEmit是必须步骤！每批创建后必须运行tsc验证，防止接口字段遗漏",
     "DOM构造函数系统（EnhancedTooltipSystem/PerformanceMonitorSystem）无法在Node环境实例化，只能有模块导入测试——是测试上限",
-    "【迭代25新增】Python rfind('})') 是最安全的测试追加方法：content[:idx] + new_test + content[idx:]，不破坏现有文件结构",
-    "【迭代25新增】World*Spring系统都有nextId/lastCheck私有字段，是最简单的第5个测试目标",
-    "【迭代25新增】批量Python脚本处理测试追加时，先grep源文件确认字段名（nextId vs lastCheck），避免无效测试",
-    "【迭代25新增】4个子代理同时处理4批系统时，若多个子代理都成功commit但只有1个能push，后续子代理push会包含前者commit——Git自动合并"
+    "【迭代26新增】改Map<string,V>为Map<number,V>时：1)用cx*10000+cy编码（世界200x200安全）；2)必须同步更新测试中的注入代码；3)遍历时用Math.floor(key/10000)取cx，key%10000取cy",
+    "【迭代26新增】从大文件拆分数据时，最安全模式是：提取常量/类型到*Definitions.ts，主文件只import并使用；不改变任何逻辑",
+    "【迭代26新增】BiomeEvolutionSystem等系统改成持久化Map时，注意方法签名也要同步更新（Map<string>→Map<number>）"
   ],
-  "last_updated": "2026-02-27T22:54:00+08:00"
+  "last_updated": "2026-02-27T23:35:00+08:00"
 }
