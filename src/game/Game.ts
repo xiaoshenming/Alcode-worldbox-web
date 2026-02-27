@@ -3192,7 +3192,7 @@ export class Game {
           as.totalTicks = tick
           as.totalCivs = this.civManager.civilizations.size
           as.clonedCreatures = this.clonePower.getCloneCount()
-          as.portalPairs = this.portalSystem.getPortals().length / 2
+          as.portalPairs = this.portalSystem.getPortalCount() / 2
           this.achievementContent.check(as)
         }
         }

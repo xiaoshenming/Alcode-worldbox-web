@@ -101,9 +101,11 @@ export class DiplomaticSpySystem {
     const skill = 1 + Math.floor(Math.random() * 10)
 
     // Counter-intel from target: count active counter_spy missions targeting this civ
-    const counterSpies = this.spies.filter(
-      s => s.status === 'active' && s.originCivId === target.id && s.mission === 'counter_spy'
-    ).length
+    let counterSpies = 0
+    for (let _si = 0; _si < this.spies.length; _si++) {
+      const s = this.spies[_si]
+      if (s.status === 'active' && s.originCivId === target.id && s.mission === 'counter_spy') counterSpies++
+    }
     const successChance = Math.min(0.95, Math.max(0.1,
       BASE_SUCCESS + (skill - 5) * 0.06 - counterSpies * COUNTER_INTEL_BONUS
     ))

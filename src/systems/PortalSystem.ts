@@ -258,6 +258,10 @@ export class PortalSystem {
     return Array.from(this.portals.values());
   }
 
+  getPortalCount(): number {
+    return this.portals.size;
+  }
+
   getPortalAt(x: number, y: number): Portal | null {
     for (const portal of this.portals.values()) {
       const dx = portal.x - x;
