@@ -43,6 +43,12 @@ export class Renderer {
   private _fallbackByColor: Map<string, { id: number; cx: number; cy: number; size: number }[]> = new Map()
   private _fallbackBucketPool: { id: number; cx: number; cy: number; size: number }[][] = []
 
+  // Font string cache — invalidated when zoom changes
+  private _lastFontZoom = -1
+  private _heroFont = ''
+  private _artFont = ''
+  private _stateFont = ''
+
   // Static constants for renderWarBorders
   private static readonly WAR_NEIGHBORS: readonly number[][] = [[0, 1], [0, -1], [1, 0], [-1, 0]]
   private _warPairs: Set<number> = new Set()
@@ -376,9 +382,15 @@ export class Renderer {
     }
 
     // Draw creatures (sprites + overlays)
-    const heroFont = `${Math.max(6, 8 * camera.zoom)}px monospace`
-    const artFont = `${Math.max(6, 7 * camera.zoom)}px monospace`
-    const stateFont = `${Math.max(8, 10 * camera.zoom)}px monospace`
+    if (camera.zoom !== this._lastFontZoom) {
+      this._lastFontZoom = camera.zoom
+      this._heroFont = `${Math.max(6, 8 * camera.zoom)}px monospace`
+      this._artFont = `${Math.max(6, 7 * camera.zoom)}px monospace`
+      this._stateFont = `${Math.max(8, 10 * camera.zoom)}px monospace`
+    }
+    const heroFont = this._heroFont
+    const artFont = this._artFont
+    const stateFont = this._stateFont
     for (const id of creatureBatch) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       const render = em.getComponent<RenderComponent>(id, 'render')
@@ -548,7 +560,7 @@ export class Renderer {
       if (camera.zoom > 0.6) {
         ctx.globalAlpha = 0.85
         ctx.fillStyle = '#ffd700'
-        ctx.font = `${Math.max(6, 7 * camera.zoom)}px monospace`
+        ctx.font = artFont
         ctx.textAlign = 'center'
         ctx.fillText(artifact.name, cx, cy + diamondSize + 6 * camera.zoom)
         ctx.globalAlpha = 1
