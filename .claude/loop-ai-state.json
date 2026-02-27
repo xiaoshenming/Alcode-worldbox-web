@@ -1,16 +1,16 @@
 {
-  "notes": "迭代31完成。核心工作：继续消除热路径GC分配。主要成果：1) FlockingSystem._groups从Map<string,EntityId[]>改为Map<number,Map<string,EntityId[]>>两层结构，消除每实体每15tick的模板字符串分配'${civId}:${species}'；2) FormationSystem.update(每帧)：f.members=f.members.filter()改为逆序splice，消除每帧每个formation的数组分配；3) TradeFleetSystem.update(每8tick)：ripples.filter()改为手动for计数；4) Renderer.ts：3个字体字符串(heroFont/artFont/stateFont)和resourceFont改为zoom缓存，zoom变化时才重建；5) LODRenderSystem.ts：两个字体字符串(fullFont/mediumFont)改为zoom缓存；6) CivManager.ts(每帧)：gatherResources中farms.filter()、updateHappiness中houses.filter()、updateReligion中temples.filter()三处都改为手动for计数，消除每帧每文明3次数组分配。测试：5434个全部通过，构建成功。",
+  "notes": "迭代33完成。核心工作：大规模字体字符串缓存扫描+其他GC优化。主要成果：1) CivManager.autoBuild：Array.from(civ.territory)→迭代器+计数随机采样，零分配；2) MigrationSystem.tryFormBands(每60tick)：预分配_candidatesBuf/_speciesGroups/_cellPool/_cellPoolNext，消除每次调用new Map()/[]；3) BuildingVarietySystem/CreatureAncestorSystem/WorldMythicBeastSystem/CreatureReputationSystem/FormationSystem/WorldAncientRuinSystem/WorldRelicSystem/WorldSeasonalDisasterSystem/WorldAnomalySystem/CreatureGuildSystem/ReligionSpreadSystem/DiplomacyVisualSystem/MonumentSystem/DiplomaticEspionageSystem：共14个系统添加_lastZoom+字体缓存字段，zoom不变时不重建字符串；4) FogOfWarSystem(每10tick)：两处key.split(',').map(Number)→indexOf+substring+单字符转数字，消除split数组+map数组分配。测试：5434个全部通过，构建成功。",
   "priorities": [
     "1. Game.ts仍有4045行（超标8倍）：无filter/map，主要是系统调用密集；loop方法是最大拆分候选但风险高",
     "2. Renderer.ts(989行)仍超标：已完成主要GC优化；可考虑提取renderMinimap为独立方法文件",
     "3. WeatherDisasterSystem(747行)：render*私有方法仍耦合度高，拆分需要传递大量参数",
-    "4. CivManager.autoBuild(0.2%概率)：Array.from(civ.territory)每次执行都创建数组，改为手动随机采样（用迭代器+计数）",
-    "5. MigrationSystem.tryFormBands(每60tick)：speciesGroups每次都new Map()/new Map()创建临时数据结构，可改为预分配",
-    "6. 继续扫描渲染系统中的字体字符串：BuildingVarietySystem、WorldMythicBeastSystem等渲染函数中还有字体字符串每帧创建"
+    "4. 继续扫描其他territory/split(',')模式：CivManager/TerrainSystem等可能还有key.split(',')创建临时数组",
+    "5. FogOfWarSystem.render()：还有更多潜在GC源值得检查（图块渲染循环）",
+    "6. 检查civilization/目录：CivManager之外的文明系统文件是否有热路径GC"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
-    "子代理并行修复大批量文件极高效：4组并行代理可在几分钟内修复160+文件",
+    "子代理并��修复大批量文件极高效：4组并行代理可在几分钟内修复160+文件",
     "manualChunks按文件名前缀分组是最安全的代码分割方案 — 不改源码，只改vite配置",
     "Iterable<T>替代T[]可消除spread分配，但需检查消费端是否用了.length/.includes等数组方法",
     "getAllEntities()返回Array.from()快照 — removeEntity-during-iteration是安全的",
@@ -54,7 +54,11 @@
     "【迭代30新增】对象池模式：_memberPool: T[][]，_memberPoolNext=0在每次rebuild时重置，从池中取数组而非new Array(n)",
     "【迭代31新增】两层Map模式：Map<number,Map<string,T>>比Map<string,T>（key=`${num}:${str}`）更高效，外层数值键零分配，内层字符串键已存在无新分配",
     "【迭代31新增】渲染函数中的字体字符串缓存：_lastZoom + _xxxFont成员，zoom不变时直接复用，避免每帧模板字符串分配",
-    "【迭代31新增】civ.buildings.filter(b => b.buildingType===X).length模式在每帧循环中是高GC源 — 改为手动for计数(0分配)"
+    "【迭代31新增】civ.buildings.filter(b => b.buildingType===X).length模式在每帧循环中是高GC源 — 改为手动for计数(0分配)",
+    "【迭代33新增】Array.from(set)→迭代器+计数索引采样：targetIdx--===0时记录key，break退出，零分配",
+    "【迭代33新增】key.split(',').map(Number)是双分配（split数组+map数组）— 用indexOf+substring+一元+操作符替代，零分配",
+    "【迭代33新增】预分配Map结构：内层Map.clear()而不是new Map()，outer Map只在新key时new Map，首次调用后快速复用",
+    "【迭代33新增】字体缓存覆盖面扫描：grep -rn 'ctx.font.*zoom'找到所有模板字符串，批量添加_lastZoom/_xxxFont缓存模式"
   ],
-  "last_updated": "2026-02-28T10:10:00+08:00"
+  "last_updated": "2026-02-28T10:35:00+08:00"
 }
