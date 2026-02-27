@@ -30,8 +30,8 @@ const BLOCKADE_INTERVAL = 80
 export class NavalSystem {
   // Track how many ships each port has spawned: portEntityId -> count
   private portShipCount: Map<EntityId, number> = new Map()
-  // Reusable spatial hash to avoid GC pressure
-  private _combatGrid: Map<string, EntityId[]> = new Map()
+  // Reusable spatial hash to avoid GC pressure (numeric key = cx * 10000 + cy)
+  private _combatGrid: Map<number, EntityId[]> = new Map()
 
   update(em: EntityManager, world: World, civManager: CivManager, particles: ParticleSystem, tick: number): void {
     // Spawn ships from ports
@@ -239,7 +239,7 @@ export class NavalSystem {
     for (const id of ships) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (!pos) continue
-      const key = `${Math.floor(pos.x / 8)},${Math.floor(pos.y / 8)}`
+      const key = Math.floor(pos.x / 8) * 10000 + Math.floor(pos.y / 8)
       let cell = grid.get(key)
       if (!cell) { cell = []; grid.set(key, cell) }
       cell.push(id)
@@ -256,7 +256,7 @@ export class NavalSystem {
 
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
-          const cell = grid.get(`${cx + dx},${cy + dy}`)
+          const cell = grid.get((cx + dx) * 10000 + (cy + dy))
           if (!cell) continue
 
           for (const otherId of cell) {
@@ -304,7 +304,7 @@ export class NavalSystem {
         let enemyNearby = false
         for (let dy = -1; dy <= 1 && !enemyNearby; dy++) {
           for (let dx = -1; dx <= 1 && !enemyNearby; dx++) {
-            const cell = grid.get(`${cx + dx},${cy + dy}`)
+            const cell = grid.get((cx + dx) * 10000 + (cy + dy))
             if (!cell) continue
             for (const oid of cell) {
               if (oid === id) continue
