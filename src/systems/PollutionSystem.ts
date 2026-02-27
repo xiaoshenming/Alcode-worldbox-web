@@ -27,6 +27,19 @@ const HEALTH_THRESHOLD = 0.4
 const CROP_PENALTY_THRESHOLD = 0.3
 const UPDATE_INTERVAL = 10
 const OVERLAY_ALPHA_MAX = 0.55
+// Pre-computed pollution overlay colors (p quantized to 100 steps, 0.01-1.00)
+const POLLUTION_COLORS: string[] = (() => {
+  const cols: string[] = ['']  // index 0 unused (p < 0.01 skipped)
+  for (let i = 1; i <= 100; i++) {
+    const p = i / 100
+    const r = Math.floor(80 + p * 175)
+    const g = Math.floor(180 * (1 - p))
+    const b = Math.floor(p * 120)
+    const alpha = (p * OVERLAY_ALPHA_MAX).toFixed(3)
+    cols.push(`rgba(${r},${g},${b},${alpha})`)
+  }
+  return cols
+})()
 
 function clamp01(v: number): number { return v < 0 ? 0 : v > 1 ? 1 : v }
 
@@ -150,12 +163,7 @@ export class PollutionSystem {
       for (let tx = startTX; tx < endTX; tx++) {
         const p = this.grid[ty * this.w + tx]
         if (p < 0.01) continue
-        const alpha = p * OVERLAY_ALPHA_MAX
-        // 低污染绿黄，高污染红紫
-        const r = Math.floor(80 + p * 175)
-        const g = Math.floor(180 * (1 - p))
-        const b = Math.floor(p * 120)
-        ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`
+        ctx.fillStyle = POLLUTION_COLORS[Math.max(1, Math.min(100, Math.round(p * 100)))]
         ctx.fillRect(tx * tileSize, ty * tileSize, tileSize, tileSize)
       }
     }

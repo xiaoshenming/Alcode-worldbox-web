@@ -22,6 +22,9 @@ const BTN_H = 20
 export class MiniMapModeSystem {
   private mode: MinimapMode = 'normal'
   private modeIdx = 0
+  // Cache for renderHeatmapOverlay color palette (keyed by r<<16|g<<8|b)
+  private _heatColorKey = -1
+  private _heatPalette: string[] = []
 
   getMode(): MinimapMode { return this.mode }
 
@@ -109,13 +112,23 @@ export class MiniMapModeSystem {
     canvasW: number, canvasH: number,
     color: [number, number, number]
   ): void {
+    const colorKey = (color[0] << 16) | (color[1] << 8) | color[2]
+    if (colorKey !== this._heatColorKey) {
+      this._heatColorKey = colorKey
+      this._heatPalette = []
+      for (let i = 0; i <= 100; i++) {
+        const v = i / 100
+        this._heatPalette.push(`rgba(${color[0]},${color[1]},${color[2]},${(v * 0.7).toFixed(2)})`)
+      }
+    }
+    const palette = this._heatPalette
     const sx = canvasW / worldW, sy = canvasH / worldH
     ctx.save()
     for (let y = 0; y < worldH; y++) {
       for (let x = 0; x < worldW; x++) {
         const v = heat[y * worldW + x]
         if (v < 0.05) continue
-        ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},${(v * 0.7).toFixed(2)})`
+        ctx.fillStyle = palette[Math.round(v * 100)]
         ctx.fillRect(x * sx, y * sy, Math.ceil(sx), Math.ceil(sy))
       }
     }

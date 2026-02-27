@@ -38,6 +38,20 @@ const HIGH_R = 50, HIGH_G = 0, HIGH_B = 80, HIGH_A = 0.55
 function lerp(a: number, b: number, t: number): number { return a + (b - a) * t }
 function clamp01(v: number): number { return v < 0 ? 0 : v > 1 ? 1 : v }
 
+// Pre-computed corruption overlay colors (t quantized to 100 steps)
+const CORRUPTION_COLORS: string[] = (() => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) {
+    const t = i / 100
+    const r = Math.round(lerp(LOW_R, HIGH_R, t))
+    const g = Math.round(lerp(LOW_G, HIGH_G, t))
+    const b = Math.round(lerp(LOW_B, HIGH_B, t))
+    const a = lerp(LOW_A, HIGH_A, t)
+    cols.push(`rgba(${r},${g},${b},${a.toFixed(2)})`)
+  }
+  return cols
+})()
+
 export class WorldCorruptionSystem {
   private corruptionMap: Float32Array
   private sources: CorruptionSource[] = []
@@ -224,13 +238,9 @@ export class WorldCorruptionSystem {
         const corruption = this.corruptionMap[y * WORLD_WIDTH + x]
         if (corruption < CORRUPTION_THRESHOLD) continue
         const t = clamp01((corruption - CORRUPTION_THRESHOLD) / (1 - CORRUPTION_THRESHOLD))
-        const r = Math.round(lerp(LOW_R, HIGH_R, t))
-        const g = Math.round(lerp(LOW_G, HIGH_G, t))
-        const b = Math.round(lerp(LOW_B, HIGH_B, t))
-        const a = lerp(LOW_A, HIGH_A, t)
         const sx = (x * tileSize - camX) * zoom
         const sy = (y * tileSize - camY) * zoom
-        ctx.fillStyle = `rgba(${r},${g},${b},${a.toFixed(2)})`
+        ctx.fillStyle = CORRUPTION_COLORS[Math.round(t * 100)]
         ctx.fillRect(sx, sy, tileScreen, tileScreen)
       }
     }
