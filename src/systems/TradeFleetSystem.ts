@@ -145,10 +145,12 @@ export class TradeFleetSystem {
     // 沿路线生成波纹（轻量：每 8 tick 每条路线一个）
     if (_tick % 8 === 0) {
       this.routes.forEach(route => {
-        const count = this.ripples.filter(r =>
-          Math.abs(r.x - route.fromX) + Math.abs(r.y - route.fromY) <
-          Math.abs(route.toX - route.fromX) + Math.abs(route.toY - route.fromY) + 2
-        ).length;
+        const threshold = Math.abs(route.toX - route.fromX) + Math.abs(route.toY - route.fromY) + 2
+        let count = 0
+        for (let i = 0; i < this.ripples.length; i++) {
+          const r = this.ripples[i]
+          if (Math.abs(r.x - route.fromX) + Math.abs(r.y - route.fromY) < threshold) count++
+        }
         if (count < MAX_RIPPLES_PER_ROUTE) {
           const t = Math.random();
           this.ripples.push({

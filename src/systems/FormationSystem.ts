@@ -67,7 +67,9 @@ export class FormationSystem {
   update(em: EntityManager, _world: World, _tick: number): void {
     for (const f of this.formations.values()) {
       // Remove dead members (entities that no longer exist in the EntityManager)
-      f.members = f.members.filter(eid => em.hasComponent(eid, 'position'))
+      for (let i = f.members.length - 1; i >= 0; i--) {
+        if (!em.hasComponent(f.members[i], 'position')) f.members.splice(i, 1)
+      }
 
       // Auto-dissolve if too few members remain
       if (f.members.length === 0) {
