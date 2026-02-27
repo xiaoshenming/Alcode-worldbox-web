@@ -36,6 +36,8 @@ interface Zone {
   type: string;
   name: string;
   description: string;
+  _lastZoom?: number;
+  _labelFont?: string;
 }
 
 /**
@@ -211,7 +213,11 @@ export class ZoneManagementSystem {
       // 区域名称标签
       if (sw > 40 && sh > 20) {
         ctx.setLineDash([]);
-        ctx.font = `${Math.min(14, Math.max(10, sw / 8))}px monospace`;
+        if (zone._lastZoom !== zoom) {
+          zone._lastZoom = zoom;
+          zone._labelFont = `${Math.min(14, Math.max(10, sw / 8))}px monospace`;
+        }
+        ctx.font = zone._labelFont!;
         ctx.fillStyle = colors.stroke;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
