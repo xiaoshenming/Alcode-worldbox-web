@@ -10,4 +10,6 @@ describe('DiplomaticSummitSystem', () => {
     ;(sys as any).activeSummit = { id: 1 }
     expect(sys.getActiveSummit()).not.toBeNull()
   })
+  it('nextSummitTick初始为正数', () => { expect((sys as any).nextSummitTick).toBeGreaterThan(0) })
+  it('displayAlpha初始为0', () => { expect((sys as any).displayAlpha).toBe(0) })
 })

@@ -16,4 +16,5 @@ describe('CreaturePersonalitySystem', () => {
   it('setSelectedEntity 不崩溃', () => {
     expect(() => sys.setSelectedEntity(1)).not.toThrow()
   })
+  it('visible初始为false', () => { expect((sys as any).visible).toBe(false) })
 })
