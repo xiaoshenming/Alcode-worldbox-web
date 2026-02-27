@@ -25,7 +25,7 @@ interface CityLayout {
   roads: RoadSegment[]
   walls: Array<{x: number; y: number}>
   gates: Array<{x: number; y: number}>
-  zones: Map<string, ZoneType>
+  zones: Map<number, ZoneType>  // key = x * 10000 + y
   dirty: boolean
 }
 
@@ -105,7 +105,8 @@ export class CityLayoutSystem {
     ctx.save()
     this.layouts.forEach((layout) => {
       layout.zones.forEach((zone, key) => {
-        const [sx, sy] = key.split(',').map(Number)
+        const sx = Math.floor(key / 10000)
+        const sy = key % 10000
         const px = (sx * TILE - camX) * zoom
         const py = (sy * TILE - camY) * zoom
         const s = TILE * zoom
@@ -160,7 +161,7 @@ export class CityLayoutSystem {
     // 市中心 3x3
     for (let dx = -1; dx <= 1; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
-        layout.zones.set(`${cx + dx},${cy + dy}`, 'center')
+        layout.zones.set((cx + dx) * 10000 + (cy + dy), 'center')
       }
     }
     // 按距离分配其余建筑所在 tile
@@ -173,7 +174,7 @@ export class CityLayoutSystem {
     const threshold = Math.max(maxDist * 0.4, 3)
     const edgeThreshold = Math.max(maxDist * 0.75, 5)
     for (const b of city.buildings) {
-      const key = `${b.x},${b.y}`
+      const key = b.x * 10000 + b.y
       if (layout.zones.has(key)) continue
       const d = Math.abs(b.x - cx) + Math.abs(b.y - cy)
       if (d >= edgeThreshold) layout.zones.set(key, 'military')
@@ -218,16 +219,17 @@ export class CityLayoutSystem {
       }
     }
     // 次级道路：连接未在主干道上的建筑到最近主干道点
-    const roadSet = new Set<string>()
+    const roadSet = new Set<number>()
     for (const r of layout.roads) {
-      roadSet.add(`${r.x1},${r.y1}`)
-      roadSet.add(`${r.x2},${r.y2}`)
+      roadSet.add(r.x1 * 10000 + r.y1)
+      roadSet.add(r.x2 * 10000 + r.y2)
     }
     for (const b of city.buildings) {
-      if (roadSet.has(`${b.x},${b.y}`)) continue
+      if (roadSet.has(b.x * 10000 + b.y)) continue
       let bestDist = Infinity, bestPt = {x: cx, y: cy}
       roadSet.forEach((k) => {
-        const [rx, ry] = k.split(',').map(Number)
+        const rx = Math.floor(k / 10000)
+        const ry = k % 10000
         const d = Math.abs(b.x - rx) + Math.abs(b.y - ry)
         if (d < bestDist) { bestDist = d; bestPt = {x: rx, y: ry} }
       })
@@ -249,8 +251,7 @@ export class CityLayoutSystem {
     getTerrain: (x: number, y: number) => number
   ): Array<{x: number; y: number}> {
     const open: AStarNode[] = []
-    const closed = new Set<string>()
-    const key = (x: number, y: number) => `${x},${y}`
+    const closed = new Set<number>()  // numeric key = x * 10000 + y
     const h = (x: number, y: number) => Math.abs(x - ex) + Math.abs(y - ey)
 
     open.push({x: sx, y: sy, g: 0, h: h(sx, sy), f: h(sx, sy), parent: null})
@@ -274,12 +275,11 @@ export class CityLayoutSystem {
         return path
       }
 
-      closed.add(key(cur.x, cur.y))
+      closed.add(cur.x * 10000 + cur.y)
       const neighbors: [number, number][] = [[1,0],[-1,0],[0,1],[0,-1]]
       for (const [dx, dy] of neighbors) {
         const nx = cur.x + dx, ny = cur.y + dy
-        const k = key(nx, ny)
-        if (closed.has(k)) continue
+        if (closed.has(nx * 10000 + ny)) continue
         if (IMPASSABLE.has(getTerrain(nx, ny))) continue
         const g = cur.g + 1
         const existing = open.find(n => n.x === nx && n.y === ny)
@@ -327,14 +327,14 @@ export class CityLayoutSystem {
     }
 
     // 城门：主干道与城墙交叉处
-    const roadEnds = new Set<string>()
+    const roadEnds = new Set<number>()
     for (const r of layout.roads) {
       if (r.isPrimary) {
-        roadEnds.add(`${r.x2},${r.y2}`)
+        roadEnds.add(r.x2 * 10000 + r.y2)
       }
     }
     for (const w of layout.walls) {
-      if (roadEnds.has(`${w.x},${w.y}`)) {
+      if (roadEnds.has(w.x * 10000 + w.y)) {
         layout.gates.push({x: w.x, y: w.y})
       }
     }
