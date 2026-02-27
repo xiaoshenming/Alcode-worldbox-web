@@ -59,10 +59,13 @@ export class WorldRelicSystem {
   private _nameFont = ''
   private _relicBuf: Relic[] = []
 
+  private _discoveredRelicsBuf: Relic[] = []
   getRelics(): Relic[] { return this.relics }
 
   getDiscoveredRelics(): Relic[] {
-    return this.relics.filter(r => r.discoveredBy !== null)
+    this._discoveredRelicsBuf.length = 0
+    for (const r of this.relics) { if (r.discoveredBy !== null) this._discoveredRelicsBuf.push(r) }
+    return this._discoveredRelicsBuf
   }
 
   update(dt: number, em: EntityManager, world: WorldLike): void {

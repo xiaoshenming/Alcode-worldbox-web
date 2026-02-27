@@ -142,6 +142,11 @@ export class WorldOasisSystem {
     }
   }
 
+  private _activeOasesBuf: Oasis[] = []
   getOases(): Oasis[] { return this.oases }
-  getActiveOases(): Oasis[] { return this.oases.filter(o => o.waterLevel > 0) }
+  getActiveOases(): Oasis[] {
+    this._activeOasesBuf.length = 0
+    for (const o of this.oases) { if (o.waterLevel > 0) this._activeOasesBuf.push(o) }
+    return this._activeOasesBuf
+  }
 }

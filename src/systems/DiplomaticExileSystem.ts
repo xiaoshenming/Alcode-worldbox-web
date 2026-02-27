@@ -112,11 +112,16 @@ export class DiplomaticExileSystem {
     return this.exiles
   }
 
+  private _activeExilesBuf: Exile[] = []
   getActiveExiles(): Exile[] {
-    return this.exiles.filter(e => e.status === 'wandering')
+    this._activeExilesBuf.length = 0
+    for (const e of this.exiles) { if (e.status === 'wandering') this._activeExilesBuf.push(e) }
+    return this._activeExilesBuf
   }
 
   getExileCount(): number {
-    return this.exiles.filter(e => e.status === 'wandering').length
+    let n = 0
+    for (const e of this.exiles) { if (e.status === 'wandering') n++ }
+    return n
   }
 }

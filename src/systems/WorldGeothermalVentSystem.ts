@@ -101,12 +101,15 @@ export class WorldGeothermalVentSystem {
     return this.vents
   }
 
+  private _nearbyVentsBuf: GeothermalVent[] = []
   getNearby(x: number, y: number, radius: number): GeothermalVent[] {
     const r2 = radius * radius
-    return this.vents.filter(v => {
+    this._nearbyVentsBuf.length = 0
+    for (const v of this.vents) {
       const dx = v.x - x
       const dy = v.y - y
-      return dx * dx + dy * dy <= r2
-    })
+      if (dx * dx + dy * dy <= r2) this._nearbyVentsBuf.push(v)
+    }
+    return this._nearbyVentsBuf
   }
 }

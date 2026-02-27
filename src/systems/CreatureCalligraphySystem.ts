@@ -74,7 +74,10 @@ export class CreatureCalligraphySystem {
     return this.works
   }
 
+  private _authorWorksBuf: CalligraphyWork[] = []
   getByAuthor(entityId: number): CalligraphyWork[] {
-    return this.works.filter(w => w.authorId === entityId)
+    this._authorWorksBuf.length = 0
+    for (const w of this.works) { if (w.authorId === entityId) this._authorWorksBuf.push(w) }
+    return this._authorWorksBuf
   }
 }

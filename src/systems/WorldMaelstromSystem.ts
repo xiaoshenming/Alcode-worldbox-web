@@ -136,6 +136,11 @@ export class WorldMaelstromSystem {
     }
   }
 
+  private _activeMaelstromsBuf: Maelstrom[] = []
   getMaelstroms(): Maelstrom[] { return this.maelstroms }
-  getActiveMaelstroms(): Maelstrom[] { return this.maelstroms.filter(m => m.active) }
+  getActiveMaelstroms(): Maelstrom[] {
+    this._activeMaelstromsBuf.length = 0
+    for (const m of this.maelstroms) { if (m.active) this._activeMaelstromsBuf.push(m) }
+    return this._activeMaelstromsBuf
+  }
 }

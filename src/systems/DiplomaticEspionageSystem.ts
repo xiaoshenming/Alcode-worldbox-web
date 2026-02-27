@@ -68,8 +68,13 @@ export class DiplomaticEspionageSystem {
   private _lastZoom = -1
   private _alertFont = ''
 
+  private _activeSpiesBuf: Spy[] = []
   getSpies(): Spy[] { return this.spies }
-  getActiveSpies(): Spy[] { return this.spies.filter(s => !s.discovered) }
+  getActiveSpies(): Spy[] {
+    this._activeSpiesBuf.length = 0
+    for (const s of this.spies) { if (!s.discovered) this._activeSpiesBuf.push(s) }
+    return this._activeSpiesBuf
+  }
   getReports(): EspionageReport[] { return this.reports }
 
   update(dt: number, em: EntityManager, civs: CivLike[], tick: number): void {
@@ -130,9 +135,11 @@ export class DiplomaticEspionageSystem {
 
   private deploySpy(em: EntityManager, civs: CivLike[], tick: number): void {
     const originCiv = civs[Math.floor(Math.random() * civs.length)]
-    const targetCiv = civs.filter(c => c.id !== originCiv.id)
-    if (targetCiv.length === 0) return
-    const target = targetCiv[Math.floor(Math.random() * targetCiv.length)]
+    if (civs.length < 2) return
+    let target: CivLike
+    do {
+      target = civs[Math.floor(Math.random() * civs.length)]
+    } while (target.id === originCiv.id)
 
     // Pick a creature from origin civ
     const entities = em.getEntitiesWithComponents('position', 'creature')

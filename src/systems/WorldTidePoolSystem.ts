@@ -88,6 +88,11 @@ export class WorldTidePoolSystem {
     }
   }
 
+  private _activePoolsBuf: TidePool[] = []
   getPools(): TidePool[] { return this.pools }
-  getActivePools(): TidePool[] { return this.pools.filter(p => p.active) }
+  getActivePools(): TidePool[] {
+    this._activePoolsBuf.length = 0
+    for (const p of this.pools) { if (p.active) this._activePoolsBuf.push(p) }
+    return this._activePoolsBuf
+  }
 }

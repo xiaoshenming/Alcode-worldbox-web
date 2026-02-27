@@ -108,6 +108,11 @@ export class WorldSinkholeSystem {
     }
   }
 
+  private _activeSinkholesBuf: Sinkhole[] = []
   getSinkholes(): Sinkhole[] { return this.sinkholes }
-  getActiveSinkholes(): Sinkhole[] { return this.sinkholes.filter(s => s.stage === 'active') }
+  getActiveSinkholes(): Sinkhole[] {
+    this._activeSinkholesBuf.length = 0
+    for (const s of this.sinkholes) { if (s.stage === 'active') this._activeSinkholesBuf.push(s) }
+    return this._activeSinkholesBuf
+  }
 }

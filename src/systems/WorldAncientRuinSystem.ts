@@ -67,8 +67,13 @@ export class WorldAncientRuinSystem {
   private _lastZoom = -1
   private _nameFont = ''
 
+  private _unexploredBuf: AncientRuin[] = []
   getRuins(): AncientRuin[] { return this.ruins }
-  getUnexplored(): AncientRuin[] { return this.ruins.filter(r => !r.explored) }
+  getUnexplored(): AncientRuin[] {
+    this._unexploredBuf.length = 0
+    for (const r of this.ruins) { if (!r.explored) this._unexploredBuf.push(r) }
+    return this._unexploredBuf
+  }
 
   update(dt: number, em: EntityManager, world: WorldLike): void {
     const tick = world.tick

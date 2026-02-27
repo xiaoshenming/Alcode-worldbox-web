@@ -124,7 +124,12 @@ export class WorldMiasmaSystem {
     return maxIntensity
   }
 
+  private _toxicZonesBuf: MiasmaZone[] = []
   getZones(): MiasmaZone[] { return this.zones }
   getZoneCount(): number { return this.zones.length }
-  getToxicZones(): MiasmaZone[] { return this.zones.filter(z => z.intensity > 60) }
+  getToxicZones(): MiasmaZone[] {
+    this._toxicZonesBuf.length = 0
+    for (const z of this.zones) { if (z.intensity > 60) this._toxicZonesBuf.push(z) }
+    return this._toxicZonesBuf
+  }
 }

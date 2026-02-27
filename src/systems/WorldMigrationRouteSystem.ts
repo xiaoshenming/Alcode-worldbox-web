@@ -90,8 +90,11 @@ export class WorldMigrationRouteSystem {
     return this.routes
   }
 
+  private _activeRoutesBuf: MigrationRoute[] = []
   getActiveRoutes(): MigrationRoute[] {
-    return this.routes.filter(r => r.active)
+    this._activeRoutesBuf.length = 0
+    for (const r of this.routes) { if (r.active) this._activeRoutesBuf.push(r) }
+    return this._activeRoutesBuf
   }
 
   getRouteCount(): number {

@@ -55,8 +55,14 @@ export class CreatureGuildSystem {
   private _lastZoom = -1
   private _nameFont = ''
 
+  private _activeGuildsBuf: Guild[] = []
+  private _unguildedBuf: EntityId[] = []
   getGuilds(): Guild[] { return this.guilds }
-  getActiveGuilds(): Guild[] { return this.guilds.filter(g => g.members.length > 0) }
+  getActiveGuilds(): Guild[] {
+    this._activeGuildsBuf.length = 0
+    for (const g of this.guilds) { if (g.members.length > 0) this._activeGuildsBuf.push(g) }
+    return this._activeGuildsBuf
+  }
 
   getGuildForEntity(eid: EntityId): Guild | undefined {
     return this.guilds.find(g => g.members.includes(eid))
@@ -120,15 +126,16 @@ export class CreatureGuildSystem {
     for (const [, group] of clusters) {
       if (group.length < MIN_MEMBERS_TO_FORM) continue
       // Check if any are already in a guild
-      const unguilded = group.filter(eid => !this.getGuildForEntity(eid))
-      if (unguilded.length < MIN_MEMBERS_TO_FORM) continue
+      this._unguildedBuf.length = 0
+      for (const eid of group) { if (!this.getGuildForEntity(eid)) this._unguildedBuf.push(eid) }
+      if (this._unguildedBuf.length < MIN_MEMBERS_TO_FORM) continue
 
       const guildType = this.pickGuildType()
       const names = GUILD_NAMES[guildType]
       const name = names[Math.floor(Math.random() * names.length)]
-      const firstPos = em.getComponent<PositionComponent>(unguilded[0], 'position')
+      const firstPos = em.getComponent<PositionComponent>(this._unguildedBuf[0], 'position')
       if (!firstPos) continue
-      const members = unguilded.slice(0, MAX_MEMBERS)
+      const members = this._unguildedBuf.slice(0, MAX_MEMBERS)
 
       const guild: Guild = {
         id: nextGuildId++,

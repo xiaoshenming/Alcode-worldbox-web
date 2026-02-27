@@ -120,7 +120,12 @@ export class WorldUndergroundSystem {
     return null
   }
 
+  private _discoveredCavesBuf: CaveNode[] = []
   getCaves(): CaveNode[] { return this.caves }
-  getDiscoveredCaves(): CaveNode[] { return this.caves.filter(c => c.discovered) }
+  getDiscoveredCaves(): CaveNode[] {
+    this._discoveredCavesBuf.length = 0
+    for (const c of this.caves) { if (c.discovered) this._discoveredCavesBuf.push(c) }
+    return this._discoveredCavesBuf
+  }
   getTotalDiscovered(): number { return this.totalDiscovered }
 }

@@ -316,8 +316,11 @@ export class DiplomacySystem {
     }
   }
 
+  private _activeTreatiesBuf: Treaty[] = []
   getTreaties(): Treaty[] {
-    return this.treaties.filter(t => !t.broken)
+    this._activeTreatiesBuf.length = 0
+    for (const t of this.treaties) { if (!t.broken) this._activeTreatiesBuf.push(t) }
+    return this._activeTreatiesBuf
   }
 
   getEvents(count: number = 20): DiplomaticEvent[] {

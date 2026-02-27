@@ -58,11 +58,11 @@ describe('DiplomacySystem.getTreaties', () => {
     expect(ds.getTreaties()).toHaveLength(4)
   })
 
-  it('getTreaties 返回的是过滤后的新数组（非内部引用）', () => {
+  it('getTreaties 返回共享buf引用（buf模式）', () => {
     ;(ds as any).treaties.push(makeTreaty(1))
     const r1 = ds.getTreaties()
     const r2 = ds.getTreaties()
-    expect(r1).not.toBe(r2)  // 每次 filter 返回新数组
+    expect(r1).toBe(r2)  // 共享buf，同一引用
   })
 })
 

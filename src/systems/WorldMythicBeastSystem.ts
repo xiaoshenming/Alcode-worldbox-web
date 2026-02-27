@@ -77,8 +77,13 @@ export class WorldMythicBeastSystem {
   private _typeFont = ''
   private _hostileFont = ''
 
+  private _aliveBeastsBuf: MythicBeast[] = []
   getBeasts(): MythicBeast[] { return this.beasts }
-  getAliveBeasts(): MythicBeast[] { return this.beasts.filter(b => b.health > 0) }
+  getAliveBeasts(): MythicBeast[] {
+    this._aliveBeastsBuf.length = 0
+    for (const b of this.beasts) { if (b.health > 0) this._aliveBeastsBuf.push(b) }
+    return this._aliveBeastsBuf
+  }
 
   update(dt: number, em: EntityManager, world: WorldLike): void {
     const tick = world.tick

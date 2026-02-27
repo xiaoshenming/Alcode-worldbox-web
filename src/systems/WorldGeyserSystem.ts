@@ -70,8 +70,11 @@ export class WorldGeyserSystem {
     }
   }
 
+  private _activeGeysersBuf: Geyser[] = []
   getGeysers(): Geyser[] { return this.geysers }
   getActiveGeysers(): Geyser[] {
-    return this.geysers.filter(g => g.active)
+    this._activeGeysersBuf.length = 0
+    for (const g of this.geysers) { if (g.active) this._activeGeysersBuf.push(g) }
+    return this._activeGeysersBuf
   }
 }

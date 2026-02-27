@@ -89,8 +89,11 @@ export class CreatureFashionSystem {
     return this.trends
   }
 
+  private _civTrendsBuf: FashionTrend[] = []
   getTrendsForCiv(civId: number): FashionTrend[] {
-    return this.trends.filter(t => t.civId === civId)
+    this._civTrendsBuf.length = 0
+    for (const t of this.trends) { if (t.civId === civId) this._civTrendsBuf.push(t) }
+    return this._civTrendsBuf
   }
 
   getTrendCount(): number {

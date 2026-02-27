@@ -96,6 +96,11 @@ export class DiplomaticTradeAgreementSystem {
     }
   }
 
+  private _activeAgreementsBuf: TradeAgreement[] = []
   getAgreements(): TradeAgreement[] { return this.agreements }
-  getActive(): TradeAgreement[] { return this.agreements.filter(a => a.status === 'active') }
+  getActive(): TradeAgreement[] {
+    this._activeAgreementsBuf.length = 0
+    for (const a of this.agreements) { if (a.status === 'active') this._activeAgreementsBuf.push(a) }
+    return this._activeAgreementsBuf
+  }
 }

@@ -124,6 +124,11 @@ export class WorldWhirlpoolSystem {
     }
   }
 
+  private _activeWhirlpoolsBuf: Whirlpool[] = []
   getWhirlpools(): Whirlpool[] { return this.whirlpools }
-  getActiveWhirlpools(): Whirlpool[] { return this.whirlpools.filter(w => w.active) }
+  getActiveWhirlpools(): Whirlpool[] {
+    this._activeWhirlpoolsBuf.length = 0
+    for (const w of this.whirlpools) { if (w.active) this._activeWhirlpoolsBuf.push(w) }
+    return this._activeWhirlpoolsBuf
+  }
 }

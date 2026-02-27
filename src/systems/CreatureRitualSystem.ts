@@ -122,7 +122,17 @@ export class CreatureRitualSystem {
     }
   }
 
+  private _activeRitualsBuf: Ritual[] = []
+  private _typeRitualsBuf: Ritual[] = []
   getRituals(): Ritual[] { return this.rituals }
-  getActiveRituals(): Ritual[] { return this.rituals.filter(r => r.progress < 100) }
-  getRitualsByType(type: RitualType): Ritual[] { return this.rituals.filter(r => r.type === type) }
+  getActiveRituals(): Ritual[] {
+    this._activeRitualsBuf.length = 0
+    for (const r of this.rituals) { if (r.progress < 100) this._activeRitualsBuf.push(r) }
+    return this._activeRitualsBuf
+  }
+  getRitualsByType(type: RitualType): Ritual[] {
+    this._typeRitualsBuf.length = 0
+    for (const r of this.rituals) { if (r.type === type) this._typeRitualsBuf.push(r) }
+    return this._typeRitualsBuf
+  }
 }

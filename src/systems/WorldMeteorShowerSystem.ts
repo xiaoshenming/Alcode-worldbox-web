@@ -75,8 +75,11 @@ export class WorldMeteorShowerSystem {
     }
   }
 
+  private _activeMeteorsBuf: Meteor[] = []
   getMeteors(): readonly Meteor[] { return this.meteors }
   getActiveMeteors(): Meteor[] {
-    return this.meteors.filter(m => m.damage > 0)
+    this._activeMeteorsBuf.length = 0
+    for (const m of this.meteors) { if (m.damage > 0) this._activeMeteorsBuf.push(m) }
+    return this._activeMeteorsBuf
   }
 }

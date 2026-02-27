@@ -70,8 +70,11 @@ export class WorldPurificationSystem {
     }
   }
 
+  private _activeSitesBuf: PurificationSite[] = []
   getSites(): PurificationSite[] { return this.sites }
   getActiveSites(): PurificationSite[] {
-    return this.sites.filter(s => s.active)
+    this._activeSitesBuf.length = 0
+    for (const s of this.sites) { if (s.active) this._activeSitesBuf.push(s) }
+    return this._activeSitesBuf
   }
 }
