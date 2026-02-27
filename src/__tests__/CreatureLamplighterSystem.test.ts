@@ -5,7 +5,7 @@ import type { Lamplighter, FuelType } from '../systems/CreatureLamplighterSystem
 let nextId = 1
 function makeSys(): CreatureLamplighterSystem { return new CreatureLamplighterSystem() }
 function makeLamplighter(entityId: number, fuelType: FuelType = 'oil'): Lamplighter {
-  return { id: nextId++, entityId, skill: 60, lampsLit: 50, lampsMaintained: 30, fuelType, routeLength: 20, efficiency: 80, tick: 0 }
+  return { id: nextId++, entityId, skill: 60, lampsLit: 50, lampsMaintained: 30, fuelType, routeLength: 20, efficiency: 80, nightsWorked: 5, tick: 0 }
 }
 
 describe('CreatureLamplighterSystem.getLamplighters', () => {

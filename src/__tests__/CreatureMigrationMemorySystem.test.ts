@@ -5,7 +5,7 @@ import type { HabitatMemory, MigrationRoute } from '../systems/CreatureMigration
 let nextId = 1
 function makeSys(): CreatureMigrationMemorySystem { return new CreatureMigrationMemorySystem() }
 function makeMemory(creatureId: number): HabitatMemory {
-  return { id: nextId++, creatureId, x: 10, y: 20, quality: 70, season: 0, visits: 3, lastVisitTick: 0 }
+  return { id: nextId++, creatureId, x: 10, y: 20, quality: 70, season: 0, visits: 3, lastVisitTick: 0, inherited: false }
 }
 function makeRoute(raceType = 'human'): MigrationRoute {
   return { id: nextId++, raceType, waypoints: [{ x: 5, y: 5, quality: 80 }], followers: 10, age: 100 }

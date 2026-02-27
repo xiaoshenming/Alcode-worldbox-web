@@ -5,7 +5,7 @@ import type { MasonryProject, StoneProject, ProjectPhase } from '../systems/Crea
 let nextId = 1
 function makeSys(): CreatureMasonrySystem { return new CreatureMasonrySystem() }
 function makeProject(masonId: number, type: StoneProject = 'wall', phase: ProjectPhase = 'building'): MasonryProject {
-  return { id: nextId++, masonId, type, phase, x: 10, y: 10, quality: 70, progress: 50 }
+  return { id: nextId++, masonId, type, phase, x: 10, y: 10, quality: 70, progress: 50, tick: 0 }
 }
 
 describe('CreatureMasonrySystem.getProjects', () => {

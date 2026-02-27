@@ -5,7 +5,7 @@ import type { NomadTribe, NomadTradition } from '../systems/CreatureNomadSystem'
 let nextId = 1
 function makeSys(): CreatureNomadSystem { return new CreatureNomadSystem() }
 function makeTribe(leaderId: number, tradition: NomadTradition = 'herders'): NomadTribe {
-  return { id: nextId++, leaderId, tradition, memberCount: 20, migrationSpeed: 5, tradeGoods: 10, campX: 50, campY: 50 }
+  return { id: nextId++, leaderId, tradition, memberCount: 20, migrationSpeed: 5, tradeGoods: 10, campX: 50, campY: 50, tick: 0 }
 }
 
 describe('CreatureNomadSystem.getTribes', () => {

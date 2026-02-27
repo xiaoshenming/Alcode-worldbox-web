@@ -4,7 +4,7 @@ import type { Handicraft, CraftType } from '../systems/CreatureHandicraftSystem'
 
 let nextId = 1
 function makeSys(): CreatureHandicraftSystem { return new CreatureHandicraftSystem() }
-function makeCraft(crafterId: number, type: CraftType = 'carving'): Handicraft {
+function makeCraft(crafterId: number, type: CraftType = 'jewelry'): Handicraft {
   return { id: nextId++, crafterId, type, quality: 70, prestige: 20, traded: false, tick: 0 }
 }
 
@@ -14,8 +14,8 @@ describe('CreatureHandicraftSystem.getCrafts', () => {
 
   it('初始无手工艺', () => { expect(sys.getCrafts()).toHaveLength(0) })
   it('注入后可查询', () => {
-    ;(sys as any).crafts.push(makeCraft(1, 'weaving'))
-    expect(sys.getCrafts()[0].type).toBe('weaving')
+    ;(sys as any).crafts.push(makeCraft(1, 'textile'))
+    expect(sys.getCrafts()[0].type).toBe('textile')
   })
   it('返回内部引用', () => {
     ;(sys as any).crafts.push(makeCraft(1))
