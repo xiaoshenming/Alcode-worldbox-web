@@ -3,6 +3,7 @@
 
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
+import { Civilization } from '../civilization/Civilization'
 
 export type ExchangeStatus = 'proposed' | 'active' | 'completed' | 'broken'
 
@@ -32,7 +33,8 @@ export class DiplomaticHostageExchangeSystem {
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
     if (this.exchanges.length < MAX_EXCHANGES && Math.random() < SPAWN_CHANCE) {

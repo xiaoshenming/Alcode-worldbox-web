@@ -56,7 +56,8 @@ export class EspionageSystem {
   private warJustifications: WarJustification[] = []
 
   update(civManager: CivManager, em: EntityManager, world: World, particles: ParticleSystem, tick: number): void {
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
     // Spy missions execute every SPY_INTERVAL ticks

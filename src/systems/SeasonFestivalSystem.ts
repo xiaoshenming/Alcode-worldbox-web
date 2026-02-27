@@ -90,7 +90,8 @@ export class SeasonFestivalSystem {
     const festType = FESTIVAL_TYPES[season]
     if (!festType) return
 
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: CivLike[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     for (const civ of civs) {
       if (civ.population < 5) continue
       if (this.festivals.some(f => f.civId === civ.id)) continue

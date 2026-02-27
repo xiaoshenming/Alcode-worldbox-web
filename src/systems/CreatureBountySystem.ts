@@ -69,7 +69,8 @@ export class CreatureBountySystem {
   }
 
   private tryPostBounty(em: EntityManager, civManager: CivManagerLike, tick: number): void {
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: CivLike[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
     const poster = civs[Math.floor(Math.random() * civs.length)]

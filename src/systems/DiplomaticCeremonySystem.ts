@@ -2,6 +2,7 @@
 // Coronations, peace treaties, trade pacts, and victory celebrations affect diplomacy
 
 import { CivManager } from '../civilization/CivManager'
+import { Civilization } from '../civilization/Civilization'
 
 export type CeremonyType = 'coronation' | 'peace_treaty' | 'trade_pact' | 'victory' | 'mourning' | 'festival'
 export type CeremonyStatus = 'preparing' | 'active' | 'completed' | 'disrupted'
@@ -62,7 +63,8 @@ export class DiplomaticCeremonySystem {
     if (this.ceremonies.length >= MAX_CEREMONIES) return
     if (Math.random() > INITIATE_CHANCE) return
 
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 1) return
 
     const host = civs[Math.floor(Math.random() * civs.length)]
@@ -83,9 +85,9 @@ export class DiplomaticCeremonySystem {
     const territoryKey = territoryIter.value as string | undefined
     let lx = 100, ly = 100
     if (territoryKey) {
-      const parts = territoryKey.split(',')
-      lx = parseInt(parts[0], 10)
-      ly = parseInt(parts[1], 10)
+      const comma = territoryKey.indexOf(',')
+      lx = +territoryKey.substring(0, comma)
+      ly = +territoryKey.substring(comma + 1)
     }
 
     this.ceremonies.push({

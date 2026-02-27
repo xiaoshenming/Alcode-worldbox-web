@@ -1,6 +1,7 @@
 // Diplomatic War Reparations System (v3.150) - Defeated side pays reparations
 // Payments are tracked over time; defaulting may trigger new conflicts
 
+import { Civilization } from '../civilization/Civilization'
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
@@ -33,7 +34,8 @@ export class DiplomaticWarReparationsSystem {
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
     // Initiate new reparation agreements

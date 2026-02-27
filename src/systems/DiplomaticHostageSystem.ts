@@ -1,6 +1,7 @@
 // Diplomatic Hostage System (v3.88) - Hostage capture and exchange between civilizations
 // Hostages influence negotiations, treaties, and diplomatic leverage
 
+import { Civilization } from '../civilization/Civilization'
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 
@@ -32,7 +33,8 @@ export class DiplomaticHostageSystem {
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
     // Capture new hostages during conflicts

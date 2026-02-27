@@ -68,7 +68,8 @@ export class TradeNegotiationSystem {
   update(dt: number, entityManager: EntityManager, civManager: CivManager, tick: number): void {
     if (tick % CHECK_INTERVAL !== 0) return
 
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
 
     this.updateNegotiations(civManager, tick)
     this.updateDeals(civManager, tick)

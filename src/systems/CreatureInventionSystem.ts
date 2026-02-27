@@ -2,6 +2,7 @@
 // Inventions spread between creatures and boost civilization progress
 // Rare breakthrough inventions can shift the balance of power
 
+import { Civilization } from '../civilization/Civilization'
 import { EntityManager, EntityId, CreatureComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 
@@ -75,7 +76,8 @@ export class CreatureInventionSystem {
 
       if (isBreakthrough) this.breakthroughs++
 
-      const civs = Array.from(civManager.civilizations.values())
+      const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
       let civId: number | null = null
       if (civs.length > 0) {
         civId = civs[Math.floor(Math.random() * civs.length)].id

@@ -1,6 +1,7 @@
 // Diplomatic Marriage System (v3.93) - Political marriages forge alliances between civilizations
 // Royal, noble, and strategic unions stabilize relations and extend influence
 
+import { Civilization } from '../civilization/Civilization'
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 
@@ -37,7 +38,8 @@ export class DiplomaticMarriageSystem {
 
     // Arrange new marriages
     if (this.marriages.length < MAX_MARRIAGES && civManager?.civilizations) {
-      const civs = Array.from(civManager.civilizations.values())
+      const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
       if (civs.length >= 2 && Math.random() < MARRIAGE_CHANCE) {
         const a = civs[Math.floor(Math.random() * civs.length)]
         let b = civs[Math.floor(Math.random() * civs.length)]

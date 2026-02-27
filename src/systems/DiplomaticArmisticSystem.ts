@@ -1,6 +1,7 @@
 // Diplomatic Armistice System (v3.160) - Temporary ceasefire agreements
 // Warring civilizations negotiate armistices that may hold or collapse
 
+import { Civilization } from '../civilization/Civilization'
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
@@ -32,7 +33,8 @@ export class DiplomaticArmisticSystem {
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
     // Propose new armistices between warring factions

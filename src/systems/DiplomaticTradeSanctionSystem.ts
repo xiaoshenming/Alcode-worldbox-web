@@ -1,6 +1,7 @@
 // Diplomatic Trade Sanction System (v3.68) - Targeted sanctions on specific goods
 // Sanctions restrict specific trade categories, forcing economic adaptation
 
+import { Civilization } from '../civilization/Civilization'
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 
@@ -38,7 +39,8 @@ export class DiplomaticTradeSanctionSystem {
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
     // Propose new sanctions

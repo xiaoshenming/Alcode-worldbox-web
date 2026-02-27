@@ -3,6 +3,7 @@
 
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
+import { Civilization } from '../civilization/Civilization'
 
 export type PledgeType = 'non_aggression' | 'resource_sharing' | 'mutual_defense' | 'border_respect' | 'trade_priority'
 
@@ -36,7 +37,8 @@ export class DiplomaticPledgeSystem {
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
     // Form new pledges

@@ -3,6 +3,7 @@
 
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
+import { Civilization } from '../civilization/Civilization'
 
 export type EmbargoSeverity = 'partial' | 'full' | 'blockade'
 export type EmbargoStatus = 'active' | 'weakening' | 'lifted'
@@ -45,7 +46,8 @@ export class DiplomaticEmbargoSystem {
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
     // Start new embargoes

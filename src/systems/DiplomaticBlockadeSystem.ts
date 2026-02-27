@@ -2,6 +2,7 @@
 // Blockades cut off supply routes and starve enemy cities
 // Can be broken by military force or diplomatic negotiation
 
+import { Civilization } from '../civilization/Civilization'
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 
@@ -53,7 +54,8 @@ export class DiplomaticBlockadeSystem {
 
   private evaluateBlockades(civManager: CivManager, tick: number): void {
     if (this.blockades.length >= MAX_BLOCKADES) return
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
     for (const civ of civs) {

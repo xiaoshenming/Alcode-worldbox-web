@@ -3,6 +3,7 @@
 
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
+import { Civilization } from '../civilization/Civilization'
 
 export type GuildType = 'merchants' | 'artisans' | 'miners' | 'farmers' | 'sailors' | 'bankers'
 
@@ -36,7 +37,8 @@ export class DiplomaticTradeGuildSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
     // Form new guilds

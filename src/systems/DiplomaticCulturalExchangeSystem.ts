@@ -1,6 +1,7 @@
 // Diplomatic Cultural Exchange System (v3.38) - Civs share culture and knowledge
 // Cultural exchanges improve relations and spread technology between civilizations
 
+import { Civilization } from '../civilization/Civilization'
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 
@@ -51,7 +52,8 @@ export class DiplomaticCulturalExchangeSystem {
     if (!civManager?.civilizations) return
     if (this.exchanges.length >= MAX_EXCHANGES) return
 
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
     for (const civ of civs) {

@@ -93,7 +93,8 @@ export class DiplomaticSanctionSystem {
     const active = this.sanctions.filter(s => s.active)
     if (active.length >= MAX_SANCTIONS) return
 
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: CivLike[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
     // Pick a random civ to consider imposing sanctions

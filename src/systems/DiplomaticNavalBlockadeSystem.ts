@@ -3,6 +3,7 @@
 
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
+import { Civilization } from '../civilization/Civilization'
 
 export type BlockadeStrength = 'light' | 'moderate' | 'heavy' | 'total'
 
@@ -32,7 +33,8 @@ export class DiplomaticNavalBlockadeSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
     if (this.blockades.length < MAX_BLOCKADES && Math.random() < BLOCKADE_CHANCE) {

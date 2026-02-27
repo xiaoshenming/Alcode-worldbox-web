@@ -1,6 +1,7 @@
 // Diplomatic Peace Treaty System (v3.63) - Formal peace treaties between civilizations
 // Treaties end wars, establish borders, and create lasting diplomatic bonds
 
+import { Civilization } from '../civilization/Civilization'
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 
@@ -37,7 +38,8 @@ export class DiplomaticPeaceTreatySystem {
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
     // Start new treaty negotiations

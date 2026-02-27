@@ -1,6 +1,7 @@
 // Diplomatic War Reparations System (v3.33) - Losers pay reparations after wars
 // Defeated civilizations transfer resources to victors over time
 
+import { Civilization } from '../civilization/Civilization'
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 
@@ -41,7 +42,8 @@ export class DiplomaticWarReparationSystem {
     if (!civManager?.civilizations) return
     if (this.reparations.length >= MAX_REPARATIONS) return
 
-    const civs = Array.from(civManager.civilizations.values())
+    const civs: Civilization[] = []
+    for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
     for (const civ of civs) {
