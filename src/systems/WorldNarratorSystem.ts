@@ -235,9 +235,10 @@ export class WorldNarratorSystem {
 
   private renderEntry(ctx: CanvasRenderingContext2D, e: NarrativeEntry, x: number, y: number, w: number, h: number): void {
     // 背景
-    const alpha = 0.15 + e.importance * 0.05
-    ctx.fillStyle = `rgba(40,35,50,${alpha})`
+    ctx.globalAlpha = 0.15 + e.importance * 0.05
+    ctx.fillStyle = '#28233a'
     ctx.beginPath(); ctx.roundRect(x, y, w, h, 4); ctx.fill()
+    ctx.globalAlpha = 1
 
     // 左侧色条
     ctx.fillStyle = TYPE_COLORS[e.type]

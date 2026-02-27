@@ -115,6 +115,13 @@ export class EraVisualSystem {
   private indicatorTimer: number = 0
   private readonly INDICATOR_DURATION = 300
 
+  // Cached overlay fill style string — rebuilt only when style changes
+  private _overlayFillStyle = ''
+  private _overlayTintR = NaN
+  private _overlayTintG = NaN
+  private _overlayTintB = NaN
+  private _overlayAlpha = NaN
+
   constructor() {}
 
   /** Set the current era (called by EraSystem). Starts transition if different. */
@@ -157,11 +164,15 @@ export class EraVisualSystem {
     // Apply color overlay
     ctx.save()
     ctx.globalCompositeOperation = 'multiply'
-    // Compute overlay RGB from tint values
+    // Compute overlay RGB from tint values — cache to avoid per-frame string allocation
     const r = Math.round(128 + style.tintR * 255)
     const g = Math.round(128 + style.tintG * 255)
     const b = Math.round(128 + style.tintB * 255)
-    ctx.fillStyle = `rgba(${r},${g},${b},${style.overlayAlpha})`
+    if (r !== this._overlayTintR || g !== this._overlayTintG || b !== this._overlayTintB || style.overlayAlpha !== this._overlayAlpha) {
+      this._overlayTintR = r; this._overlayTintG = g; this._overlayTintB = b; this._overlayAlpha = style.overlayAlpha
+      this._overlayFillStyle = `rgba(${r},${g},${b},${style.overlayAlpha})`
+    }
+    ctx.fillStyle = this._overlayFillStyle
     ctx.fillRect(0, 0, width, height)
     ctx.restore()
 
