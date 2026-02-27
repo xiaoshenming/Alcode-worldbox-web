@@ -21,6 +21,11 @@ export class MigrationSystem {
   private bands: Map<number, NomadBand> = new Map()
   // Reusable Set for nearby-member aggregation in tryFormBands inner loop
   private _nearbyBuf: Set<EntityId> = new Set()
+  // Pre-allocated structures for tryFormBands (every 60 ticks)
+  private _candidatesBuf: EntityId[] = []
+  private _speciesGroups: Map<string, Map<number, EntityId[]>> = new Map()
+  private _cellPool: EntityId[][] = []
+  private _cellPoolNext = 0
 
   update(em: EntityManager, world: World, civManager: CivManager, particles: ParticleSystem): void {
     const tick = world.tick
@@ -37,8 +42,9 @@ export class MigrationSystem {
   private tryFormBands(em: EntityManager, world: World, civManager: CivManager, _particles: ParticleSystem): void {
     const entities = em.getEntitiesWithComponents('position', 'ai', 'creature', 'needs')
 
-    // Collect unaffiliated civilized creatures (no civMember, no nomad)
-    const candidates: EntityId[] = []
+    // Collect unaffiliated civilized creatures — reuse buffer
+    const candidates = this._candidatesBuf
+    candidates.length = 0
     for (const id of entities) {
       if (em.hasComponent(id, 'civMember')) continue
       if (em.hasComponent(id, 'nomad')) continue
@@ -54,7 +60,10 @@ export class MigrationSystem {
     // Group candidates by species using spatial proximity
     // Build spatial hash (8-tile cells), numeric key = cx * 10000 + cy
     const cellSize = 8
-    const speciesGroups: Map<string, Map<number, EntityId[]>> = new Map()
+    // Reuse pre-allocated speciesGroups: clear inner maps, keep Map objects
+    const speciesGroups = this._speciesGroups
+    for (const innerMap of speciesGroups.values()) innerMap.clear()
+    this._cellPoolNext = 0
 
     for (const id of candidates) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
@@ -62,14 +71,22 @@ export class MigrationSystem {
       if (!pos || !creature) continue
       const cellKey = Math.floor(pos.x / cellSize) * 10000 + Math.floor(pos.y / cellSize)
 
-      if (!speciesGroups.has(creature.species)) {
-        speciesGroups.set(creature.species, new Map())
+      let cells = speciesGroups.get(creature.species)
+      if (!cells) { cells = new Map(); speciesGroups.set(creature.species, cells) }
+      if (!cells.has(cellKey)) {
+        // Get or reuse a cell array from pool
+        let arr: EntityId[]
+        if (this._cellPoolNext < this._cellPool.length) {
+          arr = this._cellPool[this._cellPoolNext++]
+          arr.length = 0
+        } else {
+          arr = []
+          this._cellPool.push(arr)
+          this._cellPoolNext++
+        }
+        cells.set(cellKey, arr)
       }
-      const cells = speciesGroups.get(creature.species)
-      if (!cells) continue
-      if (!cells.has(cellKey)) cells.set(cellKey, [])
-      const cellArr = cells.get(cellKey)
-      if (cellArr) cellArr.push(id)
+      cells.get(cellKey)!.push(id)
     }
 
     // For each species, find clusters of 3+ within 8 tiles
