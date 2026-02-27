@@ -18,7 +18,6 @@ function makeArtSys(): CreatureArtSystem {
 function makeArtwork(quality: number, form: ArtForm = 'painting'): Artwork {
   return {
     id: nextArtId++,
-    civId: 1,
     creatorId: 1,
     creatorName: 'Bob',
     form,
