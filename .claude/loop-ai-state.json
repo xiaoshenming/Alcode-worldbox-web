@@ -1,11 +1,11 @@
 {
-  "notes": "迭代54完成。核心工作：完成全部Creature系列测试覆盖！从2026个测试增长到2347个测试（+321个），测试文件从292增到337个。新增45个测试文件：S后半段17个（SmockingMakers/SoapMakers/SoapMaker/Somniloquy/SpindleMakers/Spinner/SpinningMakers/Spotfacer/Staker/Stamper/StringMaker/Summoning/Superstition/SwageBlocker/Swager/Swaging/Swedger）、T系列20个（Tanner/Tapper/TasselMakers/TatamiMakers/TattingMakers/Tattooist/Tattoo/Telepathy/Temper/Thatchers/ThimbleMakers/Tinker/Tinplater/Tinsmiths/Toolsmith/Totem/TradeSkill/Trapper/Trauma/Turner）、U/V/W系列16个（Upholsterers/Upsetter/Ventriloquism/VinegarMakers/Vintner/Vision/Wainwrights/WarpingMakers/Weaver/WeavingMakers/Weaving/Welder/Wheelers/Wheelwrights/Wheelwright/Wiredrawer）、剩余杂项9个（Assayers/BasketWeavers/Bellfounder/BobbinLace2Makers/Bookbinders/Falconry/FeltingMakers2/RivalryDuel/Yokemaker）。发现并修复2个类型错误：SwagingSystem用getSwagingWorkers而非getWorkers、DuelRecord无outcome字段。4个commit全部git push成功。TypeScript零错误，构建正常。里程碑：Creature系列303个系统中287个有测试（未测试的16个是：EmotionSystem/LanguageSystem/LineageSystem/MemorySystem/PersonalitySystem/PetSystem/ProfessionSystem/SkillSystem/TamingSystem —— 这些是复杂UI/复杂数据结构系统，难以纯注入测试）",
+  "notes": "迭代16完成。核心工作：大批量扩展非Creature系统测试覆盖！从2457个测试增长到2730个测试（+273个），测试文件从359增到402个（+43个文件）。本轮新增43个测试文件：修复了上轮遗留的ResourceScarcitySystem字段错误（max→capacity/consumptionRate/productionRate），然后系统性探索所有非Creature系统中有getXxx方法的World*系统，每轮5-10个文件批量创建。覆盖的系统包括：WorldGlacier/WorldMiasma/WorldOasis/WorldRelic/WorldTectonic/WorldAge/WorldChronicle/NaturalDisasterRecovery/SeasonFestival/MapMarker/WorldCorruption/WorldErosion/WorldFertility/WorldIrrigation/WorldFungalNetwork/WorldMythicBeast/WorldNarrator/WorldSeed/WorldBeacon/WorldLeyLine/WorldLighthouse/WorldGeyser/WorldSinkhole/WorldVolcanic/WorldEcho/WorldEclipse/WorldAurora/WorldComet/WorldTidal/WorldRainbow/WorldFloatingIsland/WorldAvalanche/WorldMeteorShower/WorldWhirlpool/WorldAnomaly/WorldMagicStorm/WorldSandstorm/WorldDustStorm/WorldMudslide/WorldPermafrost/WorldBioluminescence/WorldCoralReef/WorldKelpForest。TypeScript零错误，构建正常。8个commit全部git push成功。",
   "priorities": [
-    "1. 探索非Creature系统（如PopulationSystem/NavalSystem/WorldEventSystem等）中有getXxx方法的系统并添加测试",
-    "2. 当前2347个测试，继续向2500+冲刺",
-    "3. Game.ts仍有4045行（超标8倍）：loop(1038行)是最大候选，但依赖太多系统，风险高",
-    "4. WorldEventSystem(813行)、WeatherDisasterSystem(741行) 超出质量门禁 500 行",
-    "5. 探索非Creature类系统文件（ls src/systems/*.ts不含Creature前缀）找可测试的系统"
+    "1. 继续探索未测试的World*系统（WorldWaterspout/WorldLahar/WorldPyroclastic等）",
+    "2. 探索更多非World*非Creature系统（FlockingSystem/NavalSystem等有getter的系统）",
+    "3. 当前2730个测试，继续向3000+冲刺",
+    "4. Game.ts仍有4045行（超标8倍）：loop(1038行)是最大候选，但依赖太多系统，风险高",
+    "5. WorldEventSystem(813行)、WeatherDisasterSystem(741行) 超出质量门禁 500 行"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃源 — 已在迭代26彻底清零",
@@ -32,15 +32,16 @@
     "【重要安全规则】严禁用Write工具创建src/__tests__/目录内的文件！Write工具会将__转义为\\_\\_导致创建错误目录，必须用Bash cat heredoc方式创建测试文件",
     "Creature系列系统的测试模式极其统一：直接push到(sys as any).xxx数组/Map注入数据 + 验证getter返回内部引用或过滤结果",
     "批量创建测试文件时用Bash cat heredoc并行执行效率最高 — 单轮可创建12-24个测试文件",
-    "【关键经验】测试前必须先用grep确认接口字段！不同系统���同名方法字段可能完全不同",
+    "【关键经验】测试前必须先用grep确认接口字段！不同系统同名方法字段可能完全不同",
     "有些系统没有skillMap/getSkill方法——用grep先确认再写测试",
     "【重要】tsc --noEmit是必须步骤！每批创建后必须运行tsc验证，防止接口字段遗漏",
-    "SwagingSystem的getter是getSwagingWorkers而非getWorkers — 类命名和getter命名可能不一致",
-    "DuelRecord接口字段是rounds而非outcome — 历史记录不记胜负结果字段",
-    "WainwrightsSystem的getter是getWainwrights而非getMakers — 需要grep确认实际方法名",
-    "已测试287个Creature系统，跳过9个复杂UI/数据结构系统（EmotionSystem/LanguageSystem/LineageSystem/MemorySystem/PersonalitySystem/PetSystem/ProfessionSystem/SkillSystem/TamingSystem）",
-    "VisionSystem用Map<entityId, VisionData>存储，getVision(id)返回undefined当无记录",
-    "TradeSkillSystem用Map<EntityId, CreatureTradeSkill>存储，getTrader/getTraders/getTraderCount是标准getter组合"
+    "ResourceScarcitySystem的ResourceStock字段是capacity/consumptionRate/productionRate，不是max/production/consumption",
+    "for循环中的(sys as any).xxx.push()前面不能有分号——分号会让push成为独立语句而非循环体",
+    "WorldCorruptionSystem用Float32Array存储腐败度，直接array[index] = value注入数据",
+    "WorldFertilitySystem需要先调用init(w, h, tiles)才能使用getFertility/getAverageFertility",
+    "WorldAgeSystem初始（tick=0）epoch是PRIMORDIAL，displayName='太初'，getDisasterFrequencyModifier()返回2.0>1",
+    "WorldNarratorSystem的addNarrative是公共API，无需手动注入entries数组，通过addNarrative写入数据更自然",
+    "WorldCoralReefSystem.getReefAt用近似匹配（±2格）而非精确匹配——测试时相邻坐标也应返回结果"
   ],
-  "last_updated": "2026-02-27T18:00:00+08:00"
+  "last_updated": "2026-02-27T19:00:00+08:00"
 }
