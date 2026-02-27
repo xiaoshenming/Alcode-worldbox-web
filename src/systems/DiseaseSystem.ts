@@ -29,9 +29,9 @@ export class DiseaseSystem {
   totalRecovered: number = 0
 
   private tickCounter: number = 0
-  // Reusable maps to avoid GC pressure in hot paths
-  private _outbreakGrid: Map<string, EntityId[]> = new Map()
-  private _spreadGrid: Map<string, EntityId[]> = new Map()
+  // Reusable maps to avoid GC pressure in hot paths (numeric key = cx * 10000 + cy)
+  private _outbreakGrid: Map<number, EntityId[]> = new Map()
+  private _spreadGrid: Map<number, EntityId[]> = new Map()
 
   update(em: EntityManager, world: World, civManager: CivManager, particles: ParticleSystem): void {
     this.tickCounter++
@@ -78,7 +78,7 @@ export class DiseaseSystem {
     for (const id of creatures) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (!pos) continue
-      const key = `${Math.floor(pos.x / 10)},${Math.floor(pos.y / 10)}`
+      const key = Math.floor(pos.x / 10) * 10000 + Math.floor(pos.y / 10)
       let cell = grid.get(key)
       if (!cell) { cell = []; grid.set(key, cell) }
       cell.push(id)
@@ -126,7 +126,7 @@ export class DiseaseSystem {
     for (const id of allCreatures) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (!pos) continue
-      const key = `${Math.floor(pos.x / 5)},${Math.floor(pos.y / 5)}`
+      const key = Math.floor(pos.x / 5) * 10000 + Math.floor(pos.y / 5)
       let cell = grid.get(key)
       if (!cell) { cell = []; grid.set(key, cell) }
       cell.push(id)
@@ -159,7 +159,7 @@ export class DiseaseSystem {
       // Check nearby cells (3 tile range -> 1 cell radius)
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
-          const cell = grid.get(`${cx + dx},${cy + dy}`)
+          const cell = grid.get((cx + dx) * 10000 + (cy + dy))
           if (!cell) continue
 
           for (const otherId of cell) {
