@@ -67,6 +67,24 @@ export class Renderer {
     return cols
   })()
 
+  // Pre-computed night overlay colors (darkness 0..1, 101 steps)
+  private static readonly NIGHT_COLORS: readonly string[] = ((): string[] => {
+    const cols: string[] = []
+    for (let i = 0; i <= 100; i++) {
+      cols.push(`rgba(0, 0, 30, ${(i / 100).toFixed(2)})`)
+    }
+    return cols
+  })()
+
+  // Pre-computed fog overlay colors (alpha 0..1, 101 steps)
+  private static readonly FOG_COLORS: readonly string[] = ((): string[] => {
+    const cols: string[] = []
+    for (let i = 0; i <= 100; i++) {
+      cols.push(`rgba(180, 190, 200, ${(i / 100).toFixed(2)})`)
+    }
+    return cols
+  })()
+
   // Static hero aura colors
   private static readonly AURA_COLORS: Record<string, string> = {
     warrior: '#ffd700', ranger: '#44ff44', healer: '#ffffff', berserker: '#ff4444'
@@ -169,13 +187,13 @@ export class Renderer {
     const brightness = world.getDayBrightness()
     if (brightness < 1.0) {
       const darkness = 1.0 - brightness
-      ctx.fillStyle = `rgba(0, 0, 30, ${darkness})`
+      ctx.fillStyle = Renderer.NIGHT_COLORS[Math.min(100, Math.round(darkness * 100))]
       ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
     }
 
     // Fog overlay
     if (fogAlpha && fogAlpha > 0) {
-      ctx.fillStyle = `rgba(180, 190, 200, ${fogAlpha})`
+      ctx.fillStyle = Renderer.FOG_COLORS[Math.min(100, Math.round(fogAlpha * 100))]
       ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
     }
   }
@@ -387,8 +405,10 @@ export class Renderer {
         // Red tint overlay on heavily damaged building
         if (hpPct < 0.5) {
           const flash = Math.sin(now * 0.006 + id) * 0.1 + 0.15
-          ctx.fillStyle = `rgba(255, 0, 0, ${flash})`
+          ctx.globalAlpha = flash
+          ctx.fillStyle = '#ff0000'
           ctx.fillRect(screenX + tileSize / 2 - bSize / 2, screenY + tileSize / 2 - bSize / 2, bSize, bSize)
+          ctx.globalAlpha = 1
         }
       }
     }
