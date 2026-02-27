@@ -382,12 +382,14 @@ export class SeasonVisualSystem {
 
   private drawFirefly(ctx: CanvasRenderingContext2D, p: Particle): void {
     // Glow
-    ctx.fillStyle = `rgba(${p.r},${p.g},${p.b},${p.alpha * 0.3})`
+    ctx.globalAlpha = p.alpha * 0.3
+    ctx.fillStyle = p.color
     ctx.beginPath()
     ctx.arc(p.x, p.y, p.size * 3, 0, 6.2832)
     ctx.fill()
     // Core
-    ctx.fillStyle = `rgba(${p.r},${p.g},${p.b},${p.alpha})`
+    ctx.globalAlpha = p.alpha
+    ctx.fillStyle = p.color
     ctx.beginPath()
     ctx.arc(p.x, p.y, p.size, 0, 6.2832)
     ctx.fill()

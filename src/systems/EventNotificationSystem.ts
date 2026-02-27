@@ -85,7 +85,8 @@ export class EventNotificationSystem {
   render(ctx: CanvasRenderingContext2D, screenWidth: number, screenHeight: number): void {
     if (this.flashAlpha > 0) {
       ctx.save();
-      ctx.fillStyle = `rgba(255,0,0,${this.flashAlpha * 0.3})`;
+      ctx.globalAlpha = this.flashAlpha * 0.3;
+      ctx.fillStyle = '#ff0000';
       ctx.fillRect(0, 0, screenWidth, screenHeight);
       ctx.restore();
     }

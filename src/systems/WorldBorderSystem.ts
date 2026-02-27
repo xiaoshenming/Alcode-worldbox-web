@@ -28,6 +28,18 @@ const STYLE_COLORS: Record<BorderStyle, { r: number; g: number; b: number }> = {
 }
 
 const BORDER_WIDTH = 8
+
+// Pre-computed base color tables: 91 steps alpha 0.00..0.90
+// Indexed by Math.round(alpha * 100), alpha max 0.9
+const STYLE_COLOR_TABLES: Record<BorderStyle, string[]> = {} as Record<BorderStyle, string[]>
+;(['VOID', 'OCEAN', 'MIST', 'FIRE'] as BorderStyle[]).forEach(style => {
+  const c = STYLE_COLORS[style]
+  const tbl: string[] = []
+  for (let i = 0; i <= 90; i++) {
+    tbl.push(`rgba(${c.r},${c.g},${c.b},${(i / 100).toFixed(2)})`)
+  }
+  STYLE_COLOR_TABLES[style] = tbl
+})
 const MAX_PARTICLES = 40
 const REPULSION_STRENGTH = 0.6
 
@@ -79,7 +91,7 @@ export class WorldBorderSystem {
     viewEndY: number
   ): void {
     const tileScreen = TILE_SIZE * zoom
-    const color = STYLE_COLORS[this.style]
+    const colorTable = STYLE_COLOR_TABLES[this.style]
 
     for (let ty = viewStartY; ty <= viewEndY; ty++) {
       for (let tx = viewStartX; tx <= viewEndX; tx++) {
@@ -97,15 +109,20 @@ export class WorldBorderSystem {
         // 风格特有动画调制
         alpha = this.modulateAlpha(alpha, tx, ty, depth)
 
-        ctx.fillStyle = `rgba(${color.r},${color.g},${color.b},${Math.min(0.9, Math.max(0, alpha))})`
+        const alphaIdx = Math.min(90, Math.max(0, Math.round(alpha * 100)))
+        ctx.fillStyle = colorTable[alphaIdx]
         ctx.fillRect(sx, sy, tileScreen + 1, tileScreen + 1)
 
         // 火焰风格叠加亮色高光
         if (this.style === 'FIRE' && depth > 0.3) {
           const flicker = Math.sin(this.animTime * 6 + tx * 1.3 + ty * 0.9) * 0.5 + 0.5
           const highlightAlpha = depth * 0.25 * flicker
-          ctx.fillStyle = `rgba(255,200,50,${Math.max(0, highlightAlpha)})`
-          ctx.fillRect(sx, sy, tileScreen + 1, tileScreen + 1)
+          if (highlightAlpha > 0) {
+            ctx.globalAlpha = highlightAlpha
+            ctx.fillStyle = '#ffc832'
+            ctx.fillRect(sx, sy, tileScreen + 1, tileScreen + 1)
+            ctx.globalAlpha = 1
+          }
         }
 
         // 迷雾风格叠加白色漩涡
@@ -113,8 +130,12 @@ export class WorldBorderSystem {
           const swirl = Math.sin(this.animTime * 1.5 + tx * 0.4 + ty * 0.6)
             * Math.cos(this.animTime * 0.8 + ty * 0.5)
           const swirlAlpha = depth * 0.15 * (swirl * 0.5 + 0.5)
-          ctx.fillStyle = `rgba(255,255,255,${Math.max(0, swirlAlpha)})`
-          ctx.fillRect(sx, sy, tileScreen + 1, tileScreen + 1)
+          if (swirlAlpha > 0) {
+            ctx.globalAlpha = swirlAlpha
+            ctx.fillStyle = '#ffffff'
+            ctx.fillRect(sx, sy, tileScreen + 1, tileScreen + 1)
+            ctx.globalAlpha = 1
+          }
         }
       }
     }
