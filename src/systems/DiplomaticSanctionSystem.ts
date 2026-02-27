@@ -90,8 +90,9 @@ export class DiplomaticSanctionSystem {
   }
 
   private tryImposeSanction(civManager: CivManagerLike, tick: number): void {
-    const active = this.sanctions.filter(s => s.active)
-    if (active.length >= MAX_SANCTIONS) return
+    let activeCount = 0
+    for (const s of this.sanctions) { if (s.active) activeCount++ }
+    if (activeCount >= MAX_SANCTIONS) return
 
     const civs: CivLike[] = []
     for (const civ of civManager.civilizations.values()) civs.push(civ)
@@ -106,7 +107,10 @@ export class DiplomaticSanctionSystem {
     for (const [civId, rel] of imposer.relations) {
       if (rel < worstRelation && civManager.civilizations.has(civId)) {
         // Check not already sanctioned by this imposer
-        const alreadySanctioned = active.some(s => s.imposerId === imposer.id && s.targetId === civId)
+        let alreadySanctioned = false
+        for (const s of this.sanctions) {
+          if (s.active && s.imposerId === imposer.id && s.targetId === civId) { alreadySanctioned = true; break }
+        }
         if (!alreadySanctioned) {
           worstRelation = rel
           targetId = civId
@@ -141,18 +145,17 @@ export class DiplomaticSanctionSystem {
   }
 
   private applyEffects(civManager: CivManagerLike): void {
-    const active = this.sanctions.filter(s => s.active)
-    if (active.length === 0) return
-
-    // Aggregate sanctions per target
+    // Aggregate sanctions per target (only active)
     const sanctionMap = new Map<number, number>()
-    for (const s of active) {
+    let hasActive = false
+    for (const s of this.sanctions) {
+      if (!s.active) continue
+      hasActive = true
       const impact = SEVERITY_IMPACT[s.severity]
       const current = sanctionMap.get(s.targetId) ?? 0
       sanctionMap.set(s.targetId, Math.min(0.9, current + impact))
     }
-
-    // Apply gold drain
+    if (!hasActive) return
     for (const [civId, totalImpact] of sanctionMap) {
       const civ = civManager.civilizations.get(civId)
       if (!civ) continue

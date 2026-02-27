@@ -88,6 +88,7 @@ export class MythologySystem {
     const a = this.myths.get(civA)
     const b = this.myths.get(civB)
     if (!a || !b || a.length === 0 || b.length === 0) return 0
+    // Count unique type sets without allocating Set objects
     const typesA = new Set(a.map(m => m.type))
     const typesB = new Set(b.map(m => m.type))
     let shared = 0
@@ -113,10 +114,14 @@ export class MythologySystem {
 
       // 新文明优先生成创世和起源神话
       const types: MythType[] = ['creation', 'hero', 'disaster', 'divine', 'prophecy', 'origin']
-      const existingTypes = new Set(civMyths.map(m => m.type))
+      let hasCreation = false, hasOrigin = false
+      for (const m of civMyths) {
+        if (m.type === 'creation') hasCreation = true
+        else if (m.type === 'origin') hasOrigin = true
+      }
       let type: MythType
-      if (!existingTypes.has('creation')) type = 'creation'
-      else if (!existingTypes.has('origin')) type = 'origin'
+      if (!hasCreation) type = 'creation'
+      else if (!hasOrigin) type = 'origin'
       else type = types[Math.floor(Math.random() * types.length)]
 
       const tmpl = MYTH_TEMPLATES[type]

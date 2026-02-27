@@ -80,11 +80,19 @@ export class DiplomaticTradeAgreementSystem {
   }
 
   private cleanup(): void {
-    const inactive = this.agreements.filter(a => a.status !== 'active')
-    if (inactive.length > 20) {
-      this.agreements = this.agreements.filter(a =>
-        a.status === 'active' || this.agreements.indexOf(a) > this.agreements.length - 20
-      )
+    let inactiveCount = 0
+    for (let _i = 0; _i < this.agreements.length; _i++) {
+      if (this.agreements[_i].status !== 'active') inactiveCount++
+    }
+    if (inactiveCount > 20) {
+      // Keep all active + last 20 inactive (from end of array)
+      let keptInactive = 0
+      for (let _i = this.agreements.length - 1; _i >= 0; _i--) {
+        if (this.agreements[_i].status !== 'active') {
+          if (keptInactive < 20) { keptInactive++; continue }
+          this.agreements.splice(_i, 1)
+        }
+      }
     }
   }
 

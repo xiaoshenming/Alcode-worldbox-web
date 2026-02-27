@@ -42,6 +42,12 @@ export class CreatureBountySystem {
     return this.bounties.filter(b => !b.claimed)
   }
 
+  private countActiveBounties(): number {
+    let n = 0
+    for (const b of this.bounties) { if (!b.claimed) n++ }
+    return n
+  }
+
   /** Get bounty on a specific creature. */
   getBountyOn(targetId: EntityId): Bounty | null {
     return this.bounties.find(b => b.targetId === targetId && !b.claimed) ?? null
@@ -59,7 +65,7 @@ export class CreatureBountySystem {
     // Post new bounties periodically
     if (tick >= this.nextCheckTick) {
       this.nextCheckTick = tick + BOUNTY_CHECK_INTERVAL
-      if (this.bounties.filter(b => !b.claimed).length < MAX_ACTIVE_BOUNTIES) {
+      if (this.countActiveBounties() < MAX_ACTIVE_BOUNTIES) {
         this.tryPostBounty(em, civManager, tick)
       }
     }

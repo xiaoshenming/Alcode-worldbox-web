@@ -46,6 +46,12 @@ export class DiplomaticSpySystem {
   getActiveSpies(): Spy[] { return this.spies.filter(s => s.status === 'active') }
   getIncidents(): SpyIncident[] { return this.incidents }
 
+  private countActiveSpies(): number {
+    let n = 0
+    for (const s of this.spies) { if (s.status === 'active') n++ }
+    return n
+  }
+
   update(dt: number, civManager: any, tick: number): void {
     if (tick < this.nextCheckTick) return
     this.nextCheckTick = tick + CHECK_INTERVAL
@@ -54,7 +60,7 @@ export class DiplomaticSpySystem {
     if (!civs || civs.length < 2) return
 
     // Recruit new spies
-    if (this.getActiveSpies().length < MAX_SPIES) {
+    if (this.countActiveSpies() < MAX_SPIES) {
       this.tryRecruitSpy(civs, tick)
     }
 

@@ -41,11 +41,15 @@ export class DiplomaticExileSystem {
     }
   }
 
+  private countWanderingExiles(): number {
+    let n = 0
+    for (const e of this.exiles) { if (e.status === 'wandering') n++ }
+    return n
+  }
+
   private exileCreatures(em: EntityManager, civManager: { civilizations: Map<number, any> }, tick: number): void {
-    if (this.exiles.filter(e => e.status === 'wandering').length >= MAX_EXILES) return
-    const civs = [...civManager.civilizations.entries()]
-    for (const [civId, _civ] of civs) {
-      if (Math.random() > 0.04) continue
+    if (this.countWanderingExiles() >= MAX_EXILES) return
+    for (const [civId, _civ] of civManager.civilizations.entries()) {      if (Math.random() > 0.04) continue
       const creatures = em.getEntitiesWithComponents('creature', 'civMember')
       for (const id of creatures) {
         const member = em.getComponent<CivMemberComponent>(id, 'civMember')
@@ -75,10 +79,22 @@ export class DiplomaticExileSystem {
       const roll = Math.random()
       if (roll < 0.05) {
         // Join another civ
-        const otherCivs = [...civManager.civilizations.keys()].filter(id => id !== exile.originCivId)
-        if (otherCivs.length > 0) {
+        let newCivId = -1
+        for (const id of civManager.civilizations.keys()) {
+          if (id !== exile.originCivId) { newCivId = id; break }
+        }
+        // Pick random other civ
+        const otherCount = civManager.civilizations.size - 1
+        if (otherCount > 0) {
+          let skip = Math.floor(Math.random() * otherCount)
+          for (const id of civManager.civilizations.keys()) {
+            if (id === exile.originCivId) continue
+            if (skip-- === 0) { newCivId = id; break }
+          }
+        }
+        if (newCivId >= 0) {
           exile.status = 'joined_other'
-          exile.newCivId = otherCivs[Math.floor(Math.random() * otherCivs.length)]
+          exile.newCivId = newCivId
         }
       } else if (roll < 0.08) {
         exile.status = 'bandit'

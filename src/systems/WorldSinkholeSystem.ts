@@ -26,6 +26,7 @@ export class WorldSinkholeSystem {
   private sinkholes: Sinkhole[] = []
   private nextId = 1
   private lastCheck = 0
+  private _activeBuf: Sinkhole[] = []
 
   update(dt: number, world: any, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck >= CHECK_INTERVAL) {
@@ -85,7 +86,9 @@ export class WorldSinkholeSystem {
   }
 
   private applyDamage(em: EntityManager): void {
-    const activeSinkholes = this.sinkholes.filter(s => s.stage === 'active')
+    const activeSinkholes = this._activeBuf
+    activeSinkholes.length = 0
+    for (const s of this.sinkholes) { if (s.stage === 'active') activeSinkholes.push(s) }
     if (activeSinkholes.length === 0) return
 
     const entities = em.getEntitiesWithComponents('position', 'needs')

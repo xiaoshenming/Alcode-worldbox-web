@@ -54,7 +54,9 @@ export class CreatureFashionSystem {
     if (this.trends.length >= MAX_TRENDS) return
     for (const civId of civIds) {
       if (Math.random() > 0.06) continue
-      if (this.trends.filter(t => t.civId === civId).length >= 4) continue
+      let civTrendCount = 0
+      for (const t of this.trends) { if (t.civId === civId) civTrendCount++ }
+      if (civTrendCount >= 4) continue
       const category = FASHION_CATEGORIES[Math.floor(Math.random() * FASHION_CATEGORIES.length)]
       const names = FASHION_NAMES[category]
       this.trends.push({

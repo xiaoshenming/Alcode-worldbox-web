@@ -191,7 +191,8 @@ export class PlagueMutationSystem {
     ctx.fillStyle = '#ffb0b0'
     ctx.font = 'bold 14px monospace'
     ctx.textAlign = 'left'
-    const active = this.strains.filter(s => !s.extinct).length
+    let active = 0
+    for (const s of this.strains) { if (!s.extinct) active++ }
     ctx.fillText(`\u{1F9A0} 瘟疫毒株 (${active} 活跃 / ${this.strains.length} 总计)`, px + 12, py + 24)
 
     if (this.strains.length === 0) {

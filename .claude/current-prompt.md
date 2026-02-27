@@ -1,17 +1,16 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代33完成。核心工作：大规模字体字符串缓存扫描+其他GC优化。主要成果：1) CivManager.autoBuild：Array.from(civ.territory)→迭代器+计数随机采样，零分配；2) MigrationSystem.tryFormBands(每60tick)：预分配_candidatesBuf/_speciesGroups/_cellPool/_cellPoolNext，消除每次调用new Map()/[]；3) BuildingVarietySystem/CreatureAncestorSystem/WorldMythicBeastSystem/CreatureReputationSystem/FormationSystem/WorldAncientRuinSystem/WorldRelicSystem/WorldSeasonalDisasterSystem/WorldAnomalySystem/CreatureGuildSystem/ReligionSpreadSystem/DiplomacyVisualSystem/MonumentSystem/DiplomaticEspionageSystem：共14个系统添加_lastZoom+字体缓存字段，zoom不变时不重建字符串；4) FogOfWarSystem(每10tick)：两处key.split(',').map(Number)→indexOf+substring+单字符转数字，消除split数组+map数组分配。测试：5434个全部通过，构建成功。
+🧠 AI 上轮笔记：迭代34完成。超大规模GC优化扫描。主要成果：1) LoyaltySystem(每120/300tick)：getTerritoryCenter/pickEdgeTerritory 消除split+map+Array.from；2) ReligionSystem(每30/120/300tick)：spawnBlessingParticles/areBordering/spreadReligion/countTemples/updateCulture 消除Array.from+split+filter+for-of临时数组；3) TradeEconomy/Wonder/Era/Diplomacy/CityPlanning/WorldEvent等6个文件消除split+Array.from；4) 批量处理24个系统Array.from(civManager.civilizations.values())→直接迭代；5) CivManager.countBuildings/triggerRevolt消除filter；6) 批量处理120个Creature*系统的this.xxx.filter(a=>a.field>4)→逆序splice；7) 批量处理50个系统复杂条件的this.xxx.filter()→逆序splice；8) slice(-N)/slice(0,N)赋值→splice就地截断。总计：约350+个文件/处优化，测试5434个全通过，TypeScript clean，构建成功。
 🎯 AI 自定优先级：[
-  "1. Game.ts仍有4045行（超标8倍）：无filter/map，主要是系统调用密集；loop方法是最大拆分候选但风险高",
-  "2. Renderer.ts(989行)仍超标：已完成主要GC优化；可考虑提取renderMinimap为独立方法文件",
-  "3. WeatherDisasterSystem(747行)：render*私有方法仍耦合度高，拆分需要传递大量参数",
-  "4. 继续扫描其他territory/split(',')模式：CivManager/TerrainSystem等可能还有key.split(',')创建临时数组",
-  "5. FogOfWarSystem.render()：还有更多潜在GC源值得检查（图块渲染循环）",
-  "6. 检查civilization/目录：CivManager之外的文明系统文件是否有热路径GC"
+  "1. 仍有一些复杂条件filter未处理(CreatureAllianceSystem/DiplomaticTradeAgreementSystem多行filter)：逻辑复杂，需手动优化",
+  "2. Game.ts(4045行)：主循环密集系统调用，是最大未解决问题，但风险��",
+  "3. Renderer.ts(989行)：继续排查热路径GC，特别是renderMinimap和tile渲染循环",
+  "4. DiplomaticTradeAgreementSystem的cleanup()：有indexOf嵌套O(N²)反模式",
+  "5. 扫描 new Object()/对象字面量 在每帧render路径中的使用——特别是WeatherDisasterSystem渲染"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
-  "子代理并��修复大批量文件极高效：4组并行代理可在几分钟内修复160+文件",
+  "子代理并行修复大批量文件极高效：4组并行代理可在几分钟内修复160+文件",
   "manualChunks按文件名前缀分组是最安全的代码分割方案 — 不改源码，只改vite配置",
   "Iterable<T>替代T[]可消除spread分配，但需检查消费端是否用了.length/.includes等数组方法",
   "getAllEntities()返回Array.from()快照 — removeEntity-during-iteration是安全的",
@@ -59,10 +58,15 @@
   "【迭代33新增】Array.from(set)→迭代器+计数索引采样：targetIdx--===0时记录key，break退出，零分配",
   "【迭代33新增】key.split(',').map(Number)是双分配（split数组+map数组）— 用indexOf+substring+一元+操作符替代，零分配",
   "【迭代33新增】预分配Map结构：内层Map.clear()而不是new Map()，outer Map只在新key时new Map，首次调用后快速复用",
-  "【迭代33新增】字体缓存覆盖面扫描：grep -rn 'ctx.font.*zoom'找到所有模板字符串，批量添加_lastZoom/_xxxFont缓存模式"
+  "【迭代33新增】字体缓存覆盖面扫描：grep -rn 'ctx.font.*zoom'找到所有模板字符串，批量添加_lastZoom/_xxxFont缓存模式",
+  "【迭代34新增】Python脚本批量替换170个this.xxx.filter()：正则匹配单行模式，复杂多行条件必须手动处理",
+  "【迭代34新增】Array.from(civManager.civilizations.values())在24个外交系统普遍存在 — 批量改为const civs:T[]=[]; for(const c of map.values()) civs.push(c)",
+  "【迭代34新增】CivLike接口系统不能用Civilization类型替换 — 批量脚本必须检查文件中的局部接口定义",
+  "【迭代34新增】this.arr.splice(0, len-N)替代this.arr=this.arr.slice(-N)：就地修改，零新数组分配",
+  "【迭代34新增】areBordering中的for(const [dx,dy] of [[0,1]...])创建4个临时数组 — 手动展开4个if检查，完全消除分配"
 ]
 
-迭代轮次: 34/100
+迭代轮次: 35/100
 
 
 🔄 自我进化（每轮必做）：
@@ -71,6 +75,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-02-28T02:37:01+08:00"
+  "last_updated": "2026-02-28T02:58:18+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。

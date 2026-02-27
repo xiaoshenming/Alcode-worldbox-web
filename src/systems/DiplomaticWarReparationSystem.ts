@@ -88,11 +88,24 @@ export class DiplomaticWarReparationSystem {
   }
 
   private cleanup(): void {
-    // Keep only recent completed/defaulted, all active
-    const active = this.reparations.filter(r => r.status === 'active')
-    const finished = this.reparations.filter(r => r.status !== 'active')
-    finished.sort((a, b) => b.startTick - a.startTick)
-    this.reparations = [...active, ...finished.slice(0, MAX_REPARATIONS - active.length)]
+    // Sort so most recent finished are at end
+    this.reparations.sort((a, b) => {
+      const aActive = a.status === 'active' ? 1 : 0
+      const bActive = b.status === 'active' ? 1 : 0
+      if (aActive !== bActive) return bActive - aActive // active first
+      return b.startTick - a.startTick
+    })
+    // Count active to determine how many finished to keep
+    let activeCount = 0
+    for (const r of this.reparations) { if (r.status === 'active') activeCount++ }
+    const maxFinished = MAX_REPARATIONS - activeCount
+    let finishedSeen = 0
+    for (let _i = this.reparations.length - 1; _i >= 0; _i--) {
+      if (this.reparations[_i].status !== 'active') {
+        finishedSeen++
+        if (finishedSeen > maxFinished) this.reparations.splice(_i, 1)
+      }
+    }
   }
 
   private hasActiveReparation(loserId: number, victorId: number): boolean {

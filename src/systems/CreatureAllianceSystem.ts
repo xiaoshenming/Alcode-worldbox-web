@@ -74,10 +74,11 @@ export class CreatureAllianceSystem {
   }
 
   private decayAlliances(em: EntityManager, tick: number): void {
-    this.alliances = this.alliances.filter(a => {
+    for (let _i = this.alliances.length - 1; _i >= 0; _i--) {
+      const a = this.alliances[_i]
       // Remove if either member is dead
       if (!em.getComponent(a.memberA, 'creature') || !em.getComponent(a.memberB, 'creature')) {
-        return false
+        this.alliances.splice(_i, 1); continue
       }
       // Strengthen if nearby
       const posA = em.getComponent<PositionComponent>(a.memberA, 'position')
@@ -87,13 +88,13 @@ export class CreatureAllianceSystem {
         if (dx * dx + dy * dy <= ALLIANCE_RANGE * ALLIANCE_RANGE) {
           a.strength = Math.min(100, a.strength + BOND_GAIN)
           a.lastInteraction = tick
-          return true
+          continue
         }
       }
       // Decay if apart
       a.strength -= BOND_DECAY
-      return a.strength >= MIN_BOND
-    })
+      if (a.strength < MIN_BOND) this.alliances.splice(_i, 1)
+    }
   }
 
   private hasAlliance(a: EntityId, b: EntityId): boolean {
