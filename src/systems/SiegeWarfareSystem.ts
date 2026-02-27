@@ -46,6 +46,16 @@ for (let life = 0; life <= PARTICLE_MAX_LIFE; life++) {
   SMOKE_COLORS.push(`rgba(100,100,100,${(alpha * 0.6).toFixed(3)})`);
 }
 
+// Pre-computed siege ring colors: 41 steps for alpha 0.20..0.60
+const SIEGE_RING_COLORS: string[] = (() => {
+  const cols: string[] = []
+  for (let i = 0; i <= 40; i++) {
+    const a = (0.2 + i / 100).toFixed(2)
+    cols.push(`rgba(200,50,50,${a})`)
+  }
+  return cols
+})()
+
 export class SiegeWarfareSystem {
   private sieges: Map<number, SiegeData> = new Map();
   private nextId = 1;
@@ -198,7 +208,8 @@ export class SiegeWarfareSystem {
       // Siege ring
       ctx.beginPath();
       ctx.arc(sx, sy, tileSize * 0.6, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(200, 50, 50, ${0.4 + Math.sin(Date.now() * 0.005) * 0.2})`;
+      const ringAlpha = 0.4 + Math.sin(Date.now() * 0.005) * 0.2
+      ctx.strokeStyle = SIEGE_RING_COLORS[Math.min(40, Math.max(0, Math.round((ringAlpha - 0.2) * 100)))];
       ctx.lineWidth = 2 * zoom;
       ctx.stroke();
     }
