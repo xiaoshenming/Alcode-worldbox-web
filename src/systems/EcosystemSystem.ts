@@ -5,148 +5,22 @@ import { EntityManager, EntityId, PositionComponent, CreatureComponent, NeedsCom
 import { CivManager } from '../civilization/CivManager';
 import { ParticleSystem } from '../systems/ParticleSystem';
 import { EventLog } from '../systems/EventLog';
-import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants';
+import { WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants';
 import { World } from '../game/World';
 import { generateName } from '../utils/NameGenerator';
+import {
+  WildlifeType,
+  WildlifeSpawnRule,
+  WILDLIFE_RULES,
+  MAX_WILDLIFE,
+  SPAWN_INTERVAL,
+  HUNT_RANGE,
+  FLEE_RANGE,
+  AREA_CHECK_SIZE,
+  MAX_AGE_WILDLIFE,
+} from './EcosystemData'
 
-export type WildlifeType = 'deer' | 'bear' | 'fish' | 'eagle' | 'snake' | 'rabbit' | 'boar' | 'fox';
-
-export interface WildlifeSpawnRule {
-  species: WildlifeType;
-  biome: number[];
-  spawnChance: number;
-  maxPerBiome: number;
-  predator: boolean;
-  prey: string[];
-  fleeFrom: string[];
-  speed: number;
-  damage: number;
-  color: string;
-  size: number;
-}
-
-const WILDLIFE_RULES: WildlifeSpawnRule[] = [
-  {
-    species: 'deer',
-    biome: [TileType.GRASS, TileType.FOREST],
-    spawnChance: 0.0001,
-    maxPerBiome: 4,
-    predator: false,
-    prey: [],
-    fleeFrom: ['wolf', 'bear', 'human', 'orc', 'fox'],
-    speed: 1.2,
-    damage: 2,
-    color: '#c4a060',
-    size: 3
-  },
-  {
-    species: 'bear',
-    biome: [TileType.FOREST, TileType.MOUNTAIN],
-    spawnChance: 0.0001,
-    maxPerBiome: 2,
-    predator: true,
-    prey: ['deer', 'sheep', 'fish'],
-    fleeFrom: ['dragon'],
-    speed: 0.8,
-    damage: 15,
-    color: '#6a4a2a',
-    size: 5
-  },
-  {
-    species: 'fish',
-    biome: [TileType.SHALLOW_WATER],
-    spawnChance: 0.0001,
-    maxPerBiome: 6,
-    predator: false,
-    prey: [],
-    fleeFrom: ['bear', 'eagle'],
-    speed: 0.6,
-    damage: 0,
-    color: '#88aacc',
-    size: 2
-  },
-  {
-    species: 'eagle',
-    biome: [TileType.MOUNTAIN, TileType.FOREST],
-    spawnChance: 0.0001,
-    maxPerBiome: 2,
-    predator: true,
-    prey: ['rabbit', 'snake', 'fish'],
-    fleeFrom: ['dragon'],
-    speed: 2.0,
-    damage: 8,
-    color: '#8a7a5a',
-    size: 3
-  },
-  {
-    species: 'snake',
-    biome: [TileType.SAND, TileType.GRASS],
-    spawnChance: 0.0001,
-    maxPerBiome: 3,
-    predator: true,
-    prey: ['rabbit'],
-    fleeFrom: ['eagle', 'boar', 'human'],
-    speed: 0.7,
-    damage: 5,
-    color: '#5a8a3a',
-    size: 2
-  },
-  {
-    species: 'rabbit',
-    biome: [TileType.GRASS],
-    spawnChance: 0.0001,
-    maxPerBiome: 5,
-    predator: false,
-    prey: [],
-    fleeFrom: ['wolf', 'fox', 'eagle', 'snake', 'bear', 'human', 'orc', 'boar'],
-    speed: 1.5,
-    damage: 0,
-    color: '#ccbb99',
-    size: 2
-  },
-  {
-    species: 'boar',
-    biome: [TileType.FOREST],
-    spawnChance: 0.0001,
-    maxPerBiome: 3,
-    predator: false,
-    prey: [],
-    fleeFrom: ['bear', 'wolf', 'dragon'],
-    speed: 0.9,
-    damage: 10,
-    color: '#7a5a3a',
-    size: 4
-  },
-  {
-    species: 'fox',
-    biome: [TileType.GRASS, TileType.FOREST],
-    spawnChance: 0.0001,
-    maxPerBiome: 3,
-    predator: true,
-    prey: ['rabbit', 'fish'],
-    fleeFrom: ['wolf', 'bear', 'eagle', 'human'],
-    speed: 1.3,
-    damage: 6,
-    color: '#cc7733',
-    size: 3
-  }
-];
-
-const MAX_WILDLIFE = 200;
-const SPAWN_INTERVAL = 100;
-const HUNT_RANGE = 8;
-const FLEE_RANGE = 10;
-const AREA_CHECK_SIZE = 20;
-const MAX_AGE_WILDLIFE: Record<WildlifeType, [number, number]> = {
-  deer: [400, 700],
-  bear: [600, 1000],
-  fish: [200, 400],
-  eagle: [500, 800],
-  snake: [300, 500],
-  rabbit: [200, 350],
-  boar: [400, 650],
-  fox: [350, 550]
-};
+export type { WildlifeType, WildlifeSpawnRule }
 
 export class EcosystemSystem {
   private wildlifeCounts: Map<string, number> = new Map();
