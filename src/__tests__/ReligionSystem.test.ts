@@ -37,4 +37,5 @@ describe('ReligionSystem', () => {
       for (let i = 0; i < 3; i++) sys.update(civManager as any, em, world as any, particles as any, i)
     }).not.toThrow()
   })
+  it('blessingCooldowns初始为空Map', () => { expect((sys as any).blessingCooldowns.size).toBe(0) })
 })

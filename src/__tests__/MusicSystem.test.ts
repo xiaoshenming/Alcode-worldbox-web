@@ -7,4 +7,6 @@ describe('MusicSystem', () => {
   it('初始ctx为null', () => { expect((sys as any).ctx).toBeNull() })
   it('初始masterVolume为正数', () => { expect((sys as any).masterVolume).toBeGreaterThan(0) })
   it('初始targetMood为peaceful', () => { expect((sys as any).targetMood).toBe('peaceful') })
+  it('musicVolume初始为正数', () => { expect((sys as any).musicVolume).toBeGreaterThan(0) })
+  it('muted初始为false', () => { expect((sys as any).muted).toBe(false) })
 })

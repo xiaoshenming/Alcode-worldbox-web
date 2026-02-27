@@ -10,4 +10,6 @@ describe('RenderCullingSystem', () => {
   })
   it('getStats返回对象', () => { expect(typeof sys.getStats()).toBe('object') })
   it('getVisibleTileBounds返回对象', () => { expect(typeof sys.getVisibleTileBounds()).toBe('object') })
+  it('worldW初始为200', () => { expect((sys as any).worldW).toBe(200) })
+  it('worldH初始为200', () => { expect((sys as any).worldH).toBe(200) })
 })

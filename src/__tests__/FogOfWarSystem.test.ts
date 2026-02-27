@@ -7,4 +7,6 @@ describe('FogOfWarSystem', () => {
   it('getCivFog未知civId返回undefined', () => { expect(sys.getCivFog(999)).toBeUndefined() })
   it('getExplorationPercent未知civId返回0', () => { expect(sys.getExplorationPercent(999)).toBe(0) })
   it('getDiscoveries未知civId返回空数组', () => { expect(sys.getDiscoveries(999)).toHaveLength(0) })
+  it('_memberPositions初始为空Map', () => { expect((sys as any)._memberPositions.size).toBe(0) })
+  it('discoveredCivs初始为空Map', () => { expect((sys as any).discoveredCivs.size).toBe(0) })
 })

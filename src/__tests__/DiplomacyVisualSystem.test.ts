@@ -11,4 +11,5 @@ describe('DiplomacyVisualSystem', () => {
     sys.addEvent({ type: 'war', civA: 'civ1', civB: 'civ2', x: 10, y: 20 })
     expect((sys as any).bubbles.length).toBeGreaterThan(0)
   })
+  it('visible初始为true', () => { expect((sys as any).visible).toBe(true) })
 })

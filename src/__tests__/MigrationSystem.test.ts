@@ -38,4 +38,5 @@ describe('MigrationSystem', () => {
       for (let i = 0; i < 3; i++) sys.update(em, world as any, civManager as any, particles as any)
     }).not.toThrow()
   })
+  it('bands初始为空Map', () => { expect((sys as any).bands.size).toBe(0) })
 })

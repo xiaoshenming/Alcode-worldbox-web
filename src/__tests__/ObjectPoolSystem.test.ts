@@ -14,4 +14,6 @@ describe('ObjectPoolSystem', () => {
     const stats = sys.getAllStats()
     expect(stats.particles.hitRate).toBe(0)
   })
+  it('particles池totalCreated等于initialSize(64)', () => { expect((sys as any).particles.totalCreated).toBe(64) })
+  it('particles池acquireCount初始为0', () => { expect((sys as any).particles.acquireCount).toBe(0) })
 })

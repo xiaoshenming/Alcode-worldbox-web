@@ -16,4 +16,6 @@ describe('WorldHeatmapSystem.currentMode', () => {
     ;(sys as any).modeIndex = 2
     expect(sys.currentMode).toBe('resource')
   })
+  it('grids包含population模式数据', () => { expect((sys as any).grids.has('population')).toBe(true) })
+  it('maxValues初始population值为0', () => { expect((sys as any).maxValues.get('population')).toBe(0) })
 })

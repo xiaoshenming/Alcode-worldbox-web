@@ -14,4 +14,5 @@ describe('MinimapSystem', () => {
     sys.setMode('resources')
     expect(sys.getMode()).toBe('resources')
   })
+  it('mode初始为terrain', () => { expect((sys as any).mode).toBe('terrain') })
 })

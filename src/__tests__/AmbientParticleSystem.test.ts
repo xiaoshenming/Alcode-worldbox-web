@@ -31,4 +31,12 @@ describe('AmbientParticleSystem', () => {
     const nightWorld = { ...makeMockWorld(), isDay: () => false }
     expect(() => sys.update(nightWorld as any, mockParticles as any, 0, 0, 0, 20, 20)).not.toThrow()
   })
+  it('update() 冬季不崩溃', () => {
+    const winterWorld = { ...makeMockWorld(), season: 'winter' }
+    expect(() => sys.update(winterWorld as any, mockParticles as any, 0, 0, 0, 20, 20)).not.toThrow()
+  })
+  it('多次update不崩溃', () => {
+    const w = makeMockWorld()
+    expect(() => { for(let i=0;i<5;i++) sys.update(w as any, mockParticles as any, 0, 0, 0, 20, 20) }).not.toThrow()
+  })
 })

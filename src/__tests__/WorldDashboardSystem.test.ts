@@ -17,4 +17,6 @@ describe('WorldDashboardSystem', () => {
     sys.toggle()
     expect(sys.isVisible()).toBe(false)
   })
+  it('activeTab初始为religion', () => { expect((sys as any).activeTab).toBe('religion') })
+  it('popSamples初始为空数组', () => { expect((sys as any).popSamples).toHaveLength(0) })
 })

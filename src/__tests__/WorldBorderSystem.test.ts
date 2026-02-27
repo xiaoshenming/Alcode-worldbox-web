@@ -20,4 +20,6 @@ describe('WorldBorderSystem', () => {
     expect(f.fx).toBeGreaterThan(0)
     expect(f.fy).toBeGreaterThan(0)
   })
+  it('animTime初始为0', () => { expect((sys as any).animTime).toBe(0) })
+  it('particles初始为空数组', () => { expect((sys as any).particles).toHaveLength(0) })
 })

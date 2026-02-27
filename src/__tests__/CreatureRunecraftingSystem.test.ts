@@ -26,4 +26,5 @@ describe('CreatureRunecraftingSystem.getRunes', () => {
     types.forEach((t, i) => { ;(sys as any).runes.push(makeRune(i + 1, t)) })
     expect(sys.getRunes()).toHaveLength(7)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

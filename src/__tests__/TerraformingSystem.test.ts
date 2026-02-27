@@ -19,4 +19,5 @@ describe('TerraformingSystem', () => {
     sys.addEffect(5, 5, TileType.GRASS, TileType.MOUNTAIN, 'erode')
     expect(sys.getActiveEffects()).toHaveLength(1)
   })
+  it('effects初始为空数组', () => { expect((sys as any).effects).toHaveLength(0) })
 })

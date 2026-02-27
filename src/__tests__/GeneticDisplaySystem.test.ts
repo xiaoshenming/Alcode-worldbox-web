@@ -13,4 +13,6 @@ describe('GeneticDisplaySystem', () => {
   it('getFamilyTree 未知实体返回null', () => {
     expect(sys.getFamilyTree(999, em)).toBeNull()
   })
+  it('getTraits返回Array类型', () => { expect(Array.isArray(sys.getTraits(999, em))).toBe(true) })
+  it('getFamilyTree结果类型为null或object', () => { const r = sys.getFamilyTree(999, em); expect(r === null || typeof r === 'object').toBe(true) })
 })

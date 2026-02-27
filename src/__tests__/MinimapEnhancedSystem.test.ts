@@ -14,4 +14,5 @@ describe('MinimapEnhancedSystem', () => {
     sys.cycleMode()
     expect(sys.getMode()).not.toBe('terrain')
   })
+  it('tick初始为0', () => { expect((sys as any).tick).toBe(0) })
 })

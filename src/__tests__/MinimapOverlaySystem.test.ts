@@ -15,4 +15,5 @@ describe('MinimapOverlaySystem', () => {
     expect(typeof next).toBe('string')
     expect(sys.getMode()).toBe(next)
   })
+  it('mode初始为terrain', () => { expect((sys as any).mode).toBe('terrain') })
 })

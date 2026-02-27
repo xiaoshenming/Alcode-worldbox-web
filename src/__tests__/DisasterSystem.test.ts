@@ -38,4 +38,5 @@ describe('DisasterSystem', () => {
       expect(() => sys.update()).not.toThrow()
     }
   })
+  it('tickCounter初始为0', () => { const { sys: s } = makeSys(); expect((s as any).tickCounter).toBe(0) })
 })

@@ -16,4 +16,5 @@ describe('EraVisualSystem', () => {
     // targetEra立即改变，currentEra在过渡动画后改变
     expect((sys as any).targetEra).toBe('bronze')
   })
+  it('currentEra初始为stone', () => { expect((sys as any).currentEra).toBe('stone') })
 })

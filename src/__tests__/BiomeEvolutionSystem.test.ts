@@ -47,4 +47,5 @@ describe('BiomeEvolutionSystem', () => {
       for (let i = 0; i < 3; i++) sys.update(world as any, civManager as any, em, particles as any, i)
     }).not.toThrow()
   })
+  it('update() 传入null实体管理器以外的替代：sampleCount类型为number', () => { expect(typeof (sys as any).sampleCount).toBe('number') })
 })

@@ -8,4 +8,5 @@ describe('HistoryReplaySystem', () => {
   it('getReplayIndex初始为-1', () => { expect(sys.getReplayIndex()).toBe(-1) })
   it('getSnapshot越界返回null', () => { expect(sys.getSnapshot(0)).toBeNull() })
   it('getCurrentReplaySnapshot初始为null', () => { expect(sys.getCurrentReplaySnapshot()).toBeNull() })
+  it('recording初始为true', () => { expect((sys as any).recording).toBe(true) })
 })

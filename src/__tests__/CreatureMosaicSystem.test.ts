@@ -28,4 +28,5 @@ describe('CreatureMosaicSystem.getMosaics', () => {
     const all = sys.getMosaics()
     styles.forEach((s, i) => { expect(all[i].style).toBe(s) })
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

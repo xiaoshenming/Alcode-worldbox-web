@@ -10,4 +10,9 @@ describe('WeatherDisasterSystem', () => {
     expect(sys.getActiveDisasters()).toHaveLength(1)
   })
   it('getActiveDisasters返回数组', () => { expect(Array.isArray(sys.getActiveDisasters())).toBe(true) })
+  it('lastCheckTick初始为0', () => { expect((sys as any).lastCheckTick).toBe(0) })
+  it('注入后清空activeDisasters恢复为空', () => {
+    ;(sys as any).activeDisasters = []
+    expect(sys.getActiveDisasters()).toHaveLength(0)
+  })
 })

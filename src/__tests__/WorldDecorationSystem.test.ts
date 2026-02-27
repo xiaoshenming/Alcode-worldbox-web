@@ -16,4 +16,6 @@ describe('WorldDecorationSystem.count', () => {
     ;(sys as any).decorationCount = 0
     expect(sys.count).toBe(0)
   })
+  it('worldWidth初始为0', () => { expect((sys as any).worldWidth).toBe(0) })
+  it('worldHeight初始为0', () => { expect((sys as any).worldHeight).toBe(0) })
 })

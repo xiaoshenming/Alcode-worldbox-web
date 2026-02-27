@@ -14,4 +14,5 @@ describe('NotificationCenterSystem', () => {
   it('push 带坐标不崩溃', () => {
     expect(() => sys.push('Test message', 'warning', 10, 20)).not.toThrow()
   })
+  it('cursor初始为0', () => { expect((sys as any).cursor).toBe(0) })
 })

@@ -17,4 +17,6 @@ describe('WorldErosionSystem.getTotalErosions', () => {
   it('返回数值类型', () => {
     expect(typeof sys.getTotalErosions()).toBe('number')
   })
+  it('lastUpdate初始为0', () => { expect((sys as any).lastUpdate).toBe(0) })
+  it('worldWidth初始为200', () => { expect((sys as any).worldWidth).toBe(200) })
 })

@@ -17,4 +17,6 @@ describe('WorldStatsOverviewSystem', () => {
     sys.toggle()
     expect(sys.isVisible()).toBe(false)
   })
+  it('totalPop初始为0', () => { expect((sys as any).totalPop).toBe(0) })
+  it('warCount初始为0', () => { expect((sys as any).warCount).toBe(0) })
 })

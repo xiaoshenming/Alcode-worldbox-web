@@ -15,4 +15,5 @@ describe('PowerFavoriteSystem', () => {
   it('addFavorite 超出范围的槽位不崩溃', () => {
     expect(() => sys.addFavorite(99, 'fire', 'Fire', '#ff0000')).not.toThrow()
   })
+  it('selectedIndex初始为-1', () => { expect((sys as any).selectedIndex).toBe(-1) })
 })

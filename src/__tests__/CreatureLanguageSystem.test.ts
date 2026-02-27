@@ -11,4 +11,5 @@ describe('CreatureLanguageSystem', () => {
     ;(sys as any).languages.set(1, { civId: 1, name: 'TestLang', words: {} })
     expect(sys.getLanguageCount()).toBe(1)
   })
+  it('lastEvolve初始为0', () => { expect((sys as any).lastEvolve).toBe(0) })
 })

@@ -11,4 +11,6 @@ describe('MiniGameSystem', () => {
     const h2 = sys.getHistory()
     expect(h1).not.toBe(h2)
   })
+  it('nextTriggerTick是正数', () => { expect((sys as any).nextTriggerTick).toBeGreaterThan(0) })
+  it('active初始为null', () => { expect((sys as any).active).toBeNull() })
 })

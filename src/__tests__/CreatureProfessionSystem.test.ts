@@ -16,4 +16,5 @@ describe('CreatureProfessionSystem', () => {
   it('setSelectedEntity 不崩溃', () => {
     expect(() => sys.setSelectedEntity(1)).not.toThrow()
   })
+  it('selectedEntity初始为-1', () => { expect((sys as any).selectedEntity).toBe(-1) })
 })

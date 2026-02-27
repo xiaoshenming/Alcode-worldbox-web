@@ -26,4 +26,5 @@ describe('CreatureRumorSystem.getRumors', () => {
     topics.forEach((t, i) => { ;(sys as any).rumors.push(makeRumor(i + 1, t)) })
     expect(sys.getRumors()).toHaveLength(6)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
 })

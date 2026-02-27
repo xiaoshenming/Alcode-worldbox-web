@@ -11,4 +11,5 @@ describe('CreaturePetSystem', () => {
     ;(sys as any).pets.set(1, { ownerId: 1, petId: 2, bond: 50 })
     expect(sys.getPetCount()).toBe(1)
   })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })
