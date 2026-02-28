@@ -23,6 +23,7 @@ function makeSpirit(civId: number, domain: AncestorDomain = 'valor', power = 0.5
     power,
     domain,
     worshippers: 10,
+    worshippersStr: '10',
     createdTick: 0,
     shrineBuilt: false,
   }

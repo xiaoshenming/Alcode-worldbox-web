@@ -15,6 +15,8 @@ export interface AncestorSpirit {
   power: number           // 0.1 - 1.0
   domain: AncestorDomain
   worshippers: number
+  /** Pre-computed render string for worshipper count */
+  worshippersStr: string
   createdTick: number
   shrineBuilt: boolean
 }
@@ -109,6 +111,7 @@ export class CreatureAncestorSystem {
         power: hero.power,
         domain,
         worshippers: 0,
+        worshippersStr: '0',
         createdTick: tick,
         shrineBuilt: false,
       }
@@ -131,6 +134,7 @@ export class CreatureAncestorSystem {
         if (dx * dx + dy * dy < r2) count++
       }
       ancestor.worshippers = count
+      ancestor.worshippersStr = String(count)
       if (count >= WORSHIP_THRESHOLD && !ancestor.shrineBuilt) {
         ancestor.shrineBuilt = true
         ancestor.power = Math.min(1.0, ancestor.power + 0.2)
@@ -222,7 +226,7 @@ export class CreatureAncestorSystem {
         ctx.globalAlpha = 0.7
         ctx.fillStyle = color
         ctx.font = this._countFont
-        ctx.fillText(`${ancestor.worshippers}`, sx, sy - 8 * zoom)
+        ctx.fillText(ancestor.worshippersStr, sx, sy - 8 * zoom)
       }
     }
     ctx.restore()
