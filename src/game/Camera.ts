@@ -20,17 +20,15 @@ export class Camera {
   }
 
   screenToWorld(screenX: number, screenY: number): { x: number; y: number } {
-    return {
-      x: Math.floor((screenX / this.zoom + this.x) / TILE_SIZE),
-      y: Math.floor((screenY / this.zoom + this.y) / TILE_SIZE)
-    }
+    this._worldPos.x = Math.floor((screenX / this.zoom + this.x) / TILE_SIZE)
+    this._worldPos.y = Math.floor((screenY / this.zoom + this.y) / TILE_SIZE)
+    return this._worldPos
   }
 
   worldToScreen(worldX: number, worldY: number): { x: number; y: number } {
-    return {
-      x: (worldX * TILE_SIZE - this.x) * this.zoom,
-      y: (worldY * TILE_SIZE - this.y) * this.zoom
-    }
+    this._worldPos.x = (worldX * TILE_SIZE - this.x) * this.zoom
+    this._worldPos.y = (worldY * TILE_SIZE - this.y) * this.zoom
+    return this._worldPos
   }
 
   pan(dx: number, dy: number): void {
@@ -80,6 +78,8 @@ export class Camera {
 
   // Reusable bounds object to avoid GC in hot path
   private _bounds = { startX: 0, startY: 0, endX: 0, endY: 0 }
+  // Reusable world position object for screenToWorld/worldToScreen
+  private readonly _worldPos = { x: 0, y: 0 }
 
   getVisibleBounds(): { startX: number; startY: number; endX: number; endY: number } {
     this._bounds.startX = Math.max(0, Math.floor(this.x / TILE_SIZE))
