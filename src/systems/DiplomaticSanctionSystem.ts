@@ -12,6 +12,8 @@ export interface Sanction {
   startTick: number
   duration: number
   active: boolean
+  /** Pre-computed display string — computed at creation, never changes */
+  displayStr: string
 }
 
 export type SanctionSeverity = 'light' | 'moderate' | 'severe' | 'total'
@@ -151,6 +153,7 @@ export class DiplomaticSanctionSystem {
       startTick: tick,
       duration: SANCTION_DURATION,
       active: true,
+      displayStr: `#${nextSanctionId - 1} [${severity}] - ${reason}`,
     }
     this.sanctions.push(sanction)
     EventLog.log('diplomacy', `${imposer.name} imposed ${severity} sanctions on ${target.name} for ${reason}`, tick)
@@ -198,7 +201,7 @@ export class DiplomaticSanctionSystem {
     for (let i = 0; i < active.length; i++) {
       const s = active[i]
       ctx.fillStyle = severityColors[s.severity]
-      ctx.fillText(`#${s.id} [${s.severity}] - ${s.reason}`, x + 8, y + 32 + i * 20)
+      ctx.fillText(s.displayStr, x + 8, y + 32 + i * 20)
     }
     ctx.restore()
   }

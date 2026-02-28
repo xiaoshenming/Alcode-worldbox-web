@@ -15,6 +15,8 @@ export interface CreatureReputation {
   builds: number
   lastAction: string
   lastActionTick: number
+  /** Pre-computed panel display string — rebuilt when score/tier changes */
+  displayStr: string
 }
 
 const UPDATE_INTERVAL = 600
@@ -53,6 +55,8 @@ export class CreatureReputationSystem {
   private _lastZoom = -1
   private _tierFont = ''
   private _repBuf: CreatureReputation[] = []
+  private _prevSize = -1
+  private _headerStr = 'Reputation (0)'
 
   getReputation(eid: EntityId): CreatureReputation | undefined {
     return this.reputations.get(eid)
@@ -84,6 +88,7 @@ export class CreatureReputationSystem {
         builds: 0,
         lastAction: '',
         lastActionTick: 0,
+        displayStr: `#${eid} neutral (0)`,
       }
       this.reputations.set(eid, rep)
     }
@@ -91,6 +96,7 @@ export class CreatureReputationSystem {
     rep.lastAction = action
     rep.lastActionTick = tick
     rep.tier = this.calcTier(rep.score)
+    rep.displayStr = `#${eid} ${rep.tier} (${rep.score})`
   }
 
   recordKill(eid: EntityId, tick: number): void {
@@ -157,6 +163,7 @@ export class CreatureReputationSystem {
         if (rep.score > 0) rep.score = Math.max(0, rep.score - DECAY_AMOUNT)
         else if (rep.score < 0) rep.score = Math.min(0, rep.score + DECAY_AMOUNT)
         rep.tier = this.calcTier(rep.score)
+        rep.displayStr = `#${rep.entityId} ${rep.tier} (${rep.score})`
       }
     }
   }
@@ -199,12 +206,14 @@ export class CreatureReputationSystem {
     ctx.fillRect(x, y, 200, 20 + top.length * 18)
     ctx.fillStyle = '#fc4'
     ctx.font = '12px monospace'
-    ctx.fillText(`Reputation (${this.reputations.size})`, x + 8, y + 14)
+    const sz = this.reputations.size
+    if (sz !== this._prevSize) { this._prevSize = sz; this._headerStr = `Reputation (${sz})` }
+    ctx.fillText(this._headerStr, x + 8, y + 14)
 
     for (let i = 0; i < top.length; i++) {
       const r = top[i]
       ctx.fillStyle = TIER_COLORS[r.tier]
-      ctx.fillText(`#${r.entityId} ${r.tier} (${r.score})`, x + 8, y + 32 + i * 18)
+      ctx.fillText(r.displayStr, x + 8, y + 32 + i * 18)
     }
   }
 }

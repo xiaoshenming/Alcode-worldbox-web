@@ -4,7 +4,7 @@ import type { CreatureReputation, ReputationTier } from '../systems/CreatureRepu
 
 function makeSys(): CreatureReputationSystem { return new CreatureReputationSystem() }
 function makeRep(entityId: number, score: number, tier: ReputationTier = 'neutral'): CreatureReputation {
-  return { entityId, score, tier, kills: 0, heals: 0, trades: 0, builds: 0, lastAction: '', lastActionTick: 0 }
+  return { entityId, score, tier, kills: 0, heals: 0, trades: 0, builds: 0, lastAction: '', lastActionTick: 0, displayStr: `#${entityId} ${tier} (${score})` }
 }
 
 describe('CreatureReputationSystem.getReputation', () => {
