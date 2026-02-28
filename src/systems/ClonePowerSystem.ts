@@ -40,6 +40,18 @@ export interface ClonePosition {
 export class ClonePowerSystem {
   static readonly MAX_CLONE_GENERATION = 5;
 
+  // 预计算各 generation 的颜色字符串（gen 0-5，hue = 180+gen*15）
+  private static readonly _GEN_FILL: string[] = (() => {
+    const a: string[] = []
+    for (let g = 0; g <= 5; g++) a.push(`hsl(${180 + g * 15}, 80%, 70%)`)
+    return a
+  })()
+  private static readonly _GEN_STROKE: string[] = (() => {
+    const a: string[] = []
+    for (let g = 0; g <= 5; g++) a.push(`hsl(${180 + g * 15 + 40}, 90%, 50%)`)
+    return a
+  })()
+
   private totalClones = 0;
   private lineage = new Map<number, { sourceId: number; generation: number }>();
   private nextCloneId = 1;
@@ -154,18 +166,17 @@ export class ClonePowerSystem {
       const sy = (c.y - cameraY) * zoom;
       const size = Math.max(4, 8 * zoom);
       const alpha = 0.3 + 0.1 * Math.sin(Date.now() * 0.005 + c.x * 7 + c.y * 13);
-      const hue = 180 + c.generation * 15;
 
       ctx.globalAlpha = alpha;
       // hue = 180 + gen*15，用固定hsl+globalAlpha替代hsla模板字符串
-      ctx.fillStyle = `hsl(${hue}, 80%, 70%)`;
+      ctx.fillStyle = ClonePowerSystem._GEN_FILL[Math.min(c.generation, 5)];
       ctx.beginPath();
       ctx.arc(sx, sy, size, 0, Math.PI * 2);
       ctx.fill();
 
       if (c.generation >= 3) {
         ctx.globalAlpha = alpha * 0.6;
-        ctx.strokeStyle = `hsl(${hue + 40}, 90%, 50%)`;
+        ctx.strokeStyle = ClonePowerSystem._GEN_STROKE[Math.min(c.generation, 5)];
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.arc(sx, sy, size * 1.4, 0, Math.PI * 2);
