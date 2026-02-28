@@ -17,6 +17,13 @@ import type { StatsPanel } from '../ui/StatsPanel'
 import type { TechTreePanel } from '../ui/TechTreePanel'
 import type { CivManager } from '../civilization/CivManager'
 
+// Pre-computed highlight pulse colors: 101 steps for alpha 0.40..1.00
+const _HIGHLIGHT_PULSE_COLORS: string[] = (() => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) cols.push(`rgba(255,255,100,${(0.4 + 0.6 * i / 100).toFixed(3)})`)
+  return cols
+})()
+
 /**
  * Interface exposing the subset of Game properties needed by GameUIHelper.
  * Avoids circular dependency on the full Game class.
@@ -259,7 +266,8 @@ export class GameUIHelper {
     const radius = 6 * this.g.camera.zoom
 
     const pulse = Math.sin(performance.now() * 0.005) * 0.3 + 0.7
-    ctx.strokeStyle = `rgba(255, 255, 100, ${pulse})`
+    const pulseIdx = Math.min(100, Math.round((pulse - 0.4) / 0.6 * 100))
+    ctx.strokeStyle = _HIGHLIGHT_PULSE_COLORS[pulseIdx]
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.arc(screenX, screenY, radius, 0, Math.PI * 2)

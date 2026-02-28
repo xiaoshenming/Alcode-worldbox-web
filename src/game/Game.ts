@@ -1796,6 +1796,15 @@ export class Game {
   private _miningCivRace = new Map<number, string>()
   private _miningCivBuf: { id: number; cities: { x: number; y: number }[]; techLevel: number; race: string }[] = []
   private _siegeSoldiersBuf: number[] = []
+  // Pre-computed sky darken color table for disaster warning overlay (101 steps, alpha = intensity*0.4*0-1)
+  private _skyDarkenTable: string[] = (() => {
+    const t: string[] = []
+    for (let i = 0; i <= 100; i++) t.push(`rgba(0,0,0,${(i / 100 * 0.4).toFixed(3)})`)
+    return t
+  })()
+  // Cached world-age overlay fill style (only regenerated when overlay changes)
+  private _worldAgeOverlayStyle = ''
+  private _lastWorldAgeOverlayA = -1
 
   constructor() {
     this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement
@@ -3688,7 +3697,12 @@ export class Game {
     {
       const overlay = this.worldAge.getColorOverlay()
       if (overlay.a > 0) {
-        ctx.fillStyle = `rgba(${overlay.r},${overlay.g},${overlay.b},${overlay.a})`
+        // Cache overlay string — only regenerate when alpha changes
+        if (overlay.a !== this._lastWorldAgeOverlayA) {
+          this._lastWorldAgeOverlayA = overlay.a
+          this._worldAgeOverlayStyle = `rgba(${overlay.r},${overlay.g},${overlay.b},${overlay.a})`
+        }
+        ctx.fillStyle = this._worldAgeOverlayStyle
         ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
       }
     }
@@ -3698,7 +3712,8 @@ export class Game {
       const effects = this.disasterWarning.getVisualEffects()
       for (const effect of effects) {
         if (effect.kind === 'SkyDarken') {
-          ctx.fillStyle = `rgba(0,0,0,${effect.intensity * 0.4})`
+          const skyIdx = Math.min(100, Math.round(effect.intensity * 100))
+          ctx.fillStyle = this._skyDarkenTable[skyIdx]
           ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
         }
       }
