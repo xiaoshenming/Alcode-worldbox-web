@@ -132,8 +132,6 @@ export class NavalCombatSystem {
 
   private updateBattle(tick: number, battle: NavalBattle, em: EntityManager): void {
     battle.lastTick = tick
-    const allShips: ShipComponent[] = []
-    for (const ships of battle.ships.values()) allShips.push(...ships)
 
     // Broadside phase - exchange cannon fire
     if (battle.state === 'broadside') {
