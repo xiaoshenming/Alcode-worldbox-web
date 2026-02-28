@@ -8,6 +8,7 @@ export interface EvolutionNode {
   population: number
   avgTraits: Record<string, number>
   mutations: string[]
+  traitStr?: string  // pre-computed top-3 trait display string
 }
 
 export interface EvolutionEvent {
@@ -40,7 +41,19 @@ export class EvolutionVisualSystem {
   // Cached stat card map — cleared and reused each render call to avoid per-frame new Map()
   private _smCache = new Map<string, { total: number; nodes: EvolutionNode[] }>()
 
-  addNode(node: EvolutionNode): void { this.nodes.set(node.id, { ...node }) }
+  addNode(node: EvolutionNode): void {
+    const stored = { ...node }
+    // Pre-compute top-3 trait display string to avoid toFixed(0) in render loop
+    const entries = Object.entries(node.avgTraits)
+    let ts = ''
+    const len = Math.min(3, entries.length)
+    for (let ti = 0; ti < len; ti++) {
+      if (ti > 0) ts += ' '
+      ts += `${entries[ti][0].slice(0, 3)}:${entries[ti][1].toFixed(0)}`
+    }
+    stored.traitStr = ts
+    this.nodes.set(node.id, stored)
+  }
 
   updatePopulation(nodeId: number, population: number): void {
     const n = this.nodes.get(nodeId)
@@ -182,13 +195,15 @@ export class EvolutionVisualSystem {
       ctx.fillText(sp.toUpperCase(), ox + 6, cy + 4)
       ctx.fillStyle = TXT; ctx.font = '9px monospace'
       ctx.fillText(`Total: ${data.total}`, ox + 6, cy + 18)
-      const traits = Object.entries(data.nodes[0].avgTraits)
       ctx.fillStyle = DIM
       // 手动拼接前3个trait，消除slice+map+join临时数组
-      let traitStr = ''
-      for (let ti = 0; ti < Math.min(3, traits.length); ti++) {
-        if (ti > 0) traitStr += ' '
-        traitStr += `${traits[ti][0].slice(0, 3)}:${traits[ti][1].toFixed(0)}`
+      let traitStr = data.nodes[0].traitStr ?? ''
+      if (!traitStr) {
+        const traits = Object.entries(data.nodes[0].avgTraits)
+        for (let ti = 0; ti < Math.min(3, traits.length); ti++) {
+          if (ti > 0) traitStr += ' '
+          traitStr += `${traits[ti][0].slice(0, 3)}:${traits[ti][1].toFixed(0)}`
+        }
       }
       ctx.fillText(traitStr, ox + 6, cy + 32)
       let evo = 0; for (const n of data.nodes) evo += n.mutations.length
