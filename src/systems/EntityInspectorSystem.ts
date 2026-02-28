@@ -5,6 +5,8 @@ interface PropNode {
   value: string
   children: PropNode[]
   expanded: boolean
+  /** Cached measureText width of "key: " at '12px monospace' — set on first render */
+  keyWidth: number
 }
 
 const PANEL_W = 320
@@ -141,7 +143,8 @@ export class EntityInspectorSystem {
 
       // Value (if leaf)
       if (!hasChildren) {
-        const keyW = ctx.measureText(row.node.key + ': ').width
+        if (row.node.keyWidth === 0) row.node.keyWidth = ctx.measureText(row.node.key + ': ').width
+        const keyW = row.node.keyWidth
         ctx.fillStyle = '#ccc'
         const valText = row.node.value.length > 30 ? row.node.value.slice(0, 30) + '...' : row.node.value
         ctx.fillText(': ' + valText, px + indent + keyW - 2, ry + ROW_H / 2)
@@ -157,24 +160,25 @@ export class EntityInspectorSystem {
     const nodes: PropNode[] = []
     for (const [key, val] of Object.entries(obj)) {
       if (val === null || val === undefined) {
-        nodes.push({ key, value: String(val), children: [], expanded: false })
+        nodes.push({ key, value: String(val), children: [], expanded: false, keyWidth: 0 })
       } else if (typeof val === 'object' && !Array.isArray(val)) {
         nodes.push({
           key,
           value: '',
           children: this.buildTree(val as Record<string, unknown>, depth + 1),
           expanded: depth < 1,
+          keyWidth: 0,
         })
       } else if (Array.isArray(val)) {
         const children = val.slice(0, 10).map((item, i) => {
           if (typeof item === 'object' && item !== null) {
-            return { key: `[${i}]`, value: '', children: this.buildTree(item as Record<string, unknown>, depth + 2), expanded: false }
+            return { key: `[${i}]`, value: '', children: this.buildTree(item as Record<string, unknown>, depth + 2), expanded: false, keyWidth: 0 }
           }
-          return { key: `[${i}]`, value: String(item), children: [], expanded: false }
+          return { key: `[${i}]`, value: String(item), children: [], expanded: false, keyWidth: 0 }
         })
-        nodes.push({ key: `${key} (${val.length})`, value: '', children, expanded: false })
+        nodes.push({ key: `${key} (${val.length})`, value: '', children, expanded: false, keyWidth: 0 })
       } else {
-        nodes.push({ key, value: String(val), children: [], expanded: false })
+        nodes.push({ key, value: String(val), children: [], expanded: false, keyWidth: 0 })
       }
     }
     return nodes
