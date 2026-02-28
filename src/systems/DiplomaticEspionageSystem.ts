@@ -20,6 +20,8 @@ export interface Spy {
   progress: number        // 0-100
   discovered: boolean
   startTick: number
+  /** Pre-computed render string — avoids template literal per frame */
+  statusStr: string
 }
 
 export interface EspionageReport {
@@ -102,6 +104,7 @@ export class DiplomaticEspionageSystem {
       for (const spy of this.spies) {
         if (spy.discovered) continue
         spy.progress += PROGRESS_PER_TICK + Math.floor(spy.skill / 3)
+        spy.statusStr = `${spy.mission} ${Math.min(spy.progress, 100)}% cov:${spy.cover}`
         if (spy.progress >= MISSION_COMPLETE) {
           this.completeMission(spy, tick)
         }
@@ -171,7 +174,9 @@ export class DiplomaticEspionageSystem {
       progress: 0,
       discovered: false,
       startTick: tick,
+      statusStr: '',
     }
+    spy.statusStr = `${spy.mission} 0% cov:${spy.cover}`
     this.spies.push(spy)
     EventLog.log('diplomacy', `Civ#${originCiv.id} deployed spy to civ#${target.id} (${mission})`, 0)
   }
@@ -237,7 +242,7 @@ export class DiplomaticEspionageSystem {
     for (let i = 0; i < Math.min(5, active.length); i++) {
       const s = active[i]
       ctx.fillStyle = MISSION_COLORS[s.mission]
-      ctx.fillText(`${s.mission} ${s.progress}% cov:${s.cover}`, x + 8, y + 32 + i * 18)
+      ctx.fillText(s.statusStr, x + 8, y + 32 + i * 18)
     }
   }
 }
