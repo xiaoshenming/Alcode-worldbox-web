@@ -36,6 +36,9 @@ const SOURCE_BASE_FAME: Record<FameSource, number> = {
   sacrifice: 20,
 }
 
+/** 预计算的FameSource键数组，避免热路径中Object.keys()分配 */
+const FAME_SOURCES: FameSource[] = Object.keys(SOURCE_BASE_FAME) as FameSource[]
+
 /** Title thresholds (descending order for lookup) */
 const TITLE_THRESHOLDS: { min: number; title: FameTitle; rank: number }[] = [
   { min: 500, title: 'mythical', rank: 4 },
@@ -94,7 +97,7 @@ export class CreatureFameSystem {
       record.totalFame = Math.max(0, record.totalFame - decay)
 
       // Proportionally decay each source
-      for (const source of Object.keys(record.fameBreakdown) as FameSource[]) {
+      for (const source of FAME_SOURCES) {
         const val = record.fameBreakdown[source]
         if (val > 0) {
           record.fameBreakdown[source] = Math.max(0, val - val * DECAY_RATE)

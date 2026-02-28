@@ -58,6 +58,8 @@ export class EraTransitionSystem {
   private history: HistoryEntry[] = [];
   private historyVisible = false;
   private historyScroll = 0;
+  private _civNameSet: Set<string> = new Set();
+  private _civList: string[] = [];
 
   private popSamples: CivPopSample[] = [];
   private chartVisible = false;
@@ -336,11 +338,13 @@ export class EraTransitionSystem {
     }
 
     // 收集所有文明名
-    const civNameSet = new Set<string>();
+    const civNameSet = this._civNameSet;
+    civNameSet.clear();
     for (const s of this.popSamples) {
       s.populations.forEach((_, name) => civNameSet.add(name));
     }
-    const civList: string[] = []
+    const civList = this._civList
+    civList.length = 0
     for (const n of civNameSet) civList.push(n)
 
     // 计算最大堆叠值

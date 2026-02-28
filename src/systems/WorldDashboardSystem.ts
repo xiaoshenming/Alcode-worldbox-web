@@ -32,6 +32,7 @@ export class WorldDashboardSystem {
   private panelY = 0;
   private panelW = 0;
   private panelH = 0;
+  private _racesSet: Set<string> = new Set();
 
   toggle(): void {
     this.visible = !this.visible;
@@ -265,7 +266,8 @@ export class WorldDashboardSystem {
     const ordered = this.getOrderedSamples();
 
     // 找出所有种族和最大值
-    const races = new Set<string>();
+    const races = this._racesSet;
+    races.clear();
     let maxPop = 1;
     for (const sample of ordered) {
       for (const [race, pop] of sample.entries) {
