@@ -160,7 +160,7 @@ export class WeatherControlSystem {
     ctx.fillRect(sliderX, cy - 5, sliderW * this.intensity, 10)
     ctx.fillStyle = '#fff'
     ctx.textAlign = 'right'
-    ctx.fillText(this.intensity.toFixed(2), this.px + PW - 12, cy)
+    ctx.fillText(this._intensityStr, this.px + PW - 12, cy)
     cy += 22
 
     // Duration buttons
