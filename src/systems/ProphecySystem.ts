@@ -35,6 +35,8 @@ interface Prophecy {
   probability: number
   /** Pre-computed render string — avoids toFixed per frame */
   probabilityStr: string
+  /** Pre-computed '"text"' quoted display string — computed at creation */
+  quotedText: string
   /** 关联文明 ID（-1 表示全局） */
   civId: number
   /** 是否已通知玩家 */
@@ -106,6 +108,7 @@ export class ProphecySystem {
       id: nextProphecyId++, type, text, state: ProphecyState.Active,
       createdTick: tick, deadlineTick: tick + durationTicks,
       probability, probabilityStr: (probability * 100).toFixed(0),
+      quotedText: `"${text}"`,
       civId, notified: false,
     })
   }
@@ -124,6 +127,7 @@ export class ProphecySystem {
         id: nextProphecyId++, type: tmpl.type, text, state: ProphecyState.Active,
         createdTick: tick, deadlineTick: tick + tmpl.durationTicks,
         probability: prob, probabilityStr: (prob * 100).toFixed(0),
+        quotedText: `"${text}"`,
         civId: -1, notified: false,
       })
     }
@@ -248,7 +252,7 @@ export class ProphecySystem {
     // 文本
     ctx.fillStyle = isActive ? TYPE_COLORS[p.type] : '#666'
     ctx.font = isActive ? _PROPHECY_ACTIVE_FONT : _PROPHECY_INACTIVE_FONT
-    ctx.fillText(`"${p.text}"`, px + 40, ry + 22)
+    ctx.fillText(p.quotedText, px + 40, ry + 22)
 
     // 状态
     ctx.font = '11px monospace'

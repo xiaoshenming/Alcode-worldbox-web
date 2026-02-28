@@ -27,6 +27,7 @@ interface AchievementState {
   unlockTickStr: string
   displayProgress: number
   progressPctStr: string  // cached for panel list — rebuilt when progress changes
+  progressLine: string    // Pre-computed "进度: N%" — rebuilt when progressPctStr changes
   _prevPctQ: number       // quantized pct for tracker cache (step=5)
   trackerPctStr: string   // cached for tracker — rebuilt when displayProgress crosses 5% threshold
 }
@@ -90,7 +91,7 @@ export class AchievementPopupSystem {
     if (this.achievements.has(def.id)) return
     this.achievements.set(def.id, {
       def, progress: 0, unlocked: false, unlockTick: 0, unlockTickStr: '', displayProgress: 0,
-      progressPctStr: '0', _prevPctQ: 0, trackerPctStr: '0%'
+      progressPctStr: '0', progressLine: '进度: 0%', _prevPctQ: 0, trackerPctStr: '0%'
     })
     this._panelHeaderStr = `成就总览  ${this._unlockedCount}/${this.achievements.size}`
   }
@@ -105,6 +106,7 @@ export class AchievementPopupSystem {
     state.progress = state.def.maxProgress
     state.displayProgress = state.def.maxProgress
     state.progressPctStr = '100'
+    state.progressLine = '进度: 100%'
     state._prevPctQ = 100
     state.trackerPctStr = '100%'
     this._unlockedCount++
@@ -118,6 +120,7 @@ export class AchievementPopupSystem {
     if (!state || state.unlocked) return
     state.progress = Math.min(progress, state.def.maxProgress)
     state.progressPctStr = String(Math.floor((state.progress / state.def.maxProgress) * 100))
+    state.progressLine = `进度: ${state.progressPctStr}%`
   }
 
   /** 获取成就当前进度 */
@@ -394,7 +397,7 @@ export class AchievementPopupSystem {
         ctx.fillText(s.unlockTickStr, px + 48, iy + 36)
       } else if (s.progress > 0) {
         ctx.fillStyle = '#555'
-        ctx.fillText(`进度: ${s.progressPctStr}%`, px + 48, iy + 36)
+        ctx.fillText(s.progressLine, px + 48, iy + 36)
       }
       ctx.globalAlpha = 1
       // 稀有度指示条

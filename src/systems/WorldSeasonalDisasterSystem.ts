@@ -23,6 +23,8 @@ export interface SeasonalDisaster {
   panelLabel: string      // Pre-computed "${type} sev${severity}" for panel render
   /** Pre-computed percentage string — updated when pct changes by 1 */
   pctStr: string
+  /** Pre-computed "panelLabel pct%" display string — updated when pctStr changes */
+  panelLine: string
   _lastPct: number
 }
 
@@ -97,7 +99,7 @@ export class WorldSeasonalDisasterSystem {
         this.disasters.splice(i, 1)
       } else {
         const pct = Math.round(100 * d.duration / d.maxDuration)
-        if (pct !== d._lastPct) { d._lastPct = pct; d.pctStr = String(pct) }
+        if (pct !== d._lastPct) { d._lastPct = pct; d.pctStr = String(pct); d.panelLine = `${d.panelLabel} ${d.pctStr}%` }
       }
     }
 
@@ -137,6 +139,7 @@ export class WorldSeasonalDisasterSystem {
       label: `${type} (${severity})`,
       panelLabel: `${type} sev${severity}`,
       pctStr: '100',
+      panelLine: `${type} sev${severity} 100%`,
       _lastPct: 100,
     }
     this.disasters.push(disaster)
@@ -209,7 +212,7 @@ export class WorldSeasonalDisasterSystem {
     for (let i = 0; i < this.disasters.length; i++) {
       const d = this.disasters[i]
       ctx.fillStyle = DISASTER_COLORS[d.type]
-      ctx.fillText(`${d.panelLabel} ${d.pctStr}%`, x + 8, y + 32 + i * 18)
+      ctx.fillText(d.panelLine, x + 8, y + 32 + i * 18)
     }
   }
 }

@@ -40,7 +40,7 @@ export class EvolutionVisualSystem {
   private pr = { x: 0, y: 0, w: 0, h: 0 }
   private tlZoom = 1
   // Cached stat card map — cleared and reused each render call to avoid per-frame new Map()
-  private _smCache = new Map<string, { total: number; nodes: EvolutionNode[]; totalStr: string; evoStr: string }>()
+  private _smCache = new Map<string, { total: number; nodes: EvolutionNode[]; totalStr: string; totalDisplayStr: string; evoStr: string }>()
 
   addNode(node: EvolutionNode): void {
     const stored = { ...node }
@@ -185,12 +185,13 @@ export class EvolutionVisualSystem {
     for (const entry of sm.values()) { entry.total = 0; entry.nodes.length = 0; entry.evoStr = '' }
     for (const nd of this.nodes.values()) {
       let e = sm.get(nd.species)
-      if (!e) { e = { total: 0, nodes: [], totalStr: '0', evoStr: '' }; sm.set(nd.species, e) }
+      if (!e) { e = { total: 0, nodes: [], totalStr: '0', totalDisplayStr: 'Total: 0', evoStr: '' }; sm.set(nd.species, e) }
       e.total += nd.population; e.nodes.push(nd)
     }
     // Pre-compute totalStr after accumulation
     for (const entry of sm.values()) {
       entry.totalStr = String(entry.total)
+      entry.totalDisplayStr = `Total: ${entry.totalStr}`
       let evo = 0; for (const n of entry.nodes) evo += n.mutations.length
       entry.evoStr = `Evolutions: ${evo}`
     }
@@ -205,7 +206,7 @@ export class EvolutionVisualSystem {
       ctx.fillStyle = c; ctx.font = 'bold 10px monospace'; ctx.textBaseline = 'top'
       ctx.fillText(sp.toUpperCase(), ox + 6, cy + 4)
       ctx.fillStyle = TXT; ctx.font = '9px monospace'
-      ctx.fillText(`Total: ${data.totalStr}`, ox + 6, cy + 18)
+      ctx.fillText(data.totalDisplayStr, ox + 6, cy + 18)
       ctx.fillStyle = DIM
       // 手动拼接前3个trait，消除slice+map+join临时数组
       let traitStr = data.nodes[0].traitStr ?? ''
