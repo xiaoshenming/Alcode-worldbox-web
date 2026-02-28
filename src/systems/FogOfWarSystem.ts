@@ -35,6 +35,14 @@ const VISION_SOLDIER = 8;
 const VISION_WORKER = 4;
 const VISION_LEADER = 6;
 
+const DISCOVERY_COLORS: Record<DiscoveryEvent['type'], string> = {
+  ruins: '#ffd700',
+  treasure: '#ffaa00',
+  ancient_monument: '#00e5ff',
+  resource_deposit: '#8bc34a',
+  lost_tribe: '#ff9800',
+};
+
 // Discovery descriptions
 const DISCOVERY_DESC: Record<DiscoveryEvent['type'], string[]> = {
   ruins: ['Ancient ruins with hidden treasures', 'Crumbling temple of a forgotten god', 'Abandoned fortress with gold reserves'],
@@ -48,8 +56,11 @@ export class FogOfWarSystem {
   private civFogMap: Map<number, CivFogData> = new Map();
   // Track which civs have already been "discovered" by each civ to avoid repeat diplomacy events
   private discoveredCivs: Map<number, Set<number>> = new Map();
-  // Reusable map to avoid GC pressure in hot path
-  private _memberPositions: Map<number, { x: number; y: number; radius: number }[]> = new Map();
+  // Reusable flat buffers for member positions (zero object alloc per member)
+  private _mpCivId: number[] = []
+  private _mpX: number[] = []
+  private _mpY: number[] = []
+  private _mpR: number[] = []
 
   getCivFog(civId: number): CivFogData | undefined {
     return this.civFogMap.get(civId);
@@ -94,9 +105,11 @@ export class FogOfWarSystem {
       }
     }
 
-    // Collect civ member positions grouped by civId
-    const memberPositions = this._memberPositions;
-    memberPositions.clear();
+    // Collect civ member positions into flat buffers (zero object alloc per member)
+    const mpCivId = this._mpCivId; mpCivId.length = 0
+    const mpX = this._mpX; mpX.length = 0
+    const mpY = this._mpY; mpY.length = 0
+    const mpR = this._mpR; mpR.length = 0
     const civMemberIds = em.getEntitiesWithComponent('civMember');
     for (const id of civMemberIds) {
       const member = em.getComponent<CivMemberComponent>(id, 'civMember');
@@ -107,12 +120,10 @@ export class FogOfWarSystem {
         : member.role === 'leader' ? VISION_LEADER
         : VISION_WORKER;
 
-      let list = memberPositions.get(member.civId);
-      if (!list) {
-        list = [];
-        memberPositions.set(member.civId, list);
-      }
-      list.push({ x: Math.floor(pos.x), y: Math.floor(pos.y), radius });
+      mpCivId.push(member.civId)
+      mpX.push(Math.floor(pos.x))
+      mpY.push(Math.floor(pos.y))
+      mpR.push(radius)
     }
 
     // Process each civ
@@ -141,11 +152,9 @@ export class FogOfWarSystem {
       }
 
       // Phase 3: Civ members reveal fog in a radius
-      const positions = memberPositions.get(civId);
-      if (positions) {
-        for (const { x: cx, y: cy, radius } of positions) {
-          this.revealRadius(fogData, world, civManager, particles, tick, civId, cx, cy, radius);
-        }
+      for (let mi = 0; mi < mpCivId.length; mi++) {
+        if (mpCivId[mi] !== civId) continue
+        this.revealRadius(fogData, world, civManager, particles, tick, civId, mpX[mi], mpY[mi], mpR[mi]);
       }
 
       // Phase 4: Check for discovery of other civs' territory
@@ -227,14 +236,7 @@ export class FogOfWarSystem {
     this.claimDiscovery(event, civId);
 
     // Spawn particles at discovery location
-    const colors: Record<DiscoveryEvent['type'], string> = {
-      ruins: '#ffd700',
-      treasure: '#ffaa00',
-      ancient_monument: '#00e5ff',
-      resource_deposit: '#8bc34a',
-      lost_tribe: '#ff9800',
-    };
-    particles.spawn(x, y, 8, colors[type], 1.5);
+    particles.spawn(x, y, 8, DISCOVERY_COLORS[type], 1.5);
 
     EventLog.log('artifact', `${type.replace('_', ' ')} discovered at (${x},${y}): ${description}`, tick);
   }

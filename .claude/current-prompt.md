@@ -1,12 +1,12 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代45完成。深度GC优化第五轮 — 专注渲染路径对象字面量、环形缓冲区替代shift()、Game.ts多处预分配。主要成果：1) EventNotificationSystem：预分配_candidatesBuf消除每帧候选数组，marqueeQueue.shift()改头指针出队消除O(N)移位；2) RenderCullingSystem：预分配_visibleBuf+getStats直接返回内部对象；3) EventLog：改用环形缓冲区(_buf+_head+_count)，消除每次shift()的O(N)移位，getRecent升序返回；4) WorldStatsOverviewSystem.chartPt：消除每点[x,y]元组分配，改为写入_cpx/_cpy成员字段，每帧省最多600次数组创建；5) WorldDashboardSystem.drawReligionPie：预分配_religionEntriesBuf；6) Renderer.ts：添加fallback实体和粒子对象池(_fallbackObjPool/_particleObjPool)，消除每帧每实体/粒子的对象字面量分配；7) Game.ts多处预分配：_civDataBuf(每120tick)、_tradeRoutesBuf(每120tick)、_fortsBuf(每120tick)、_miningCityPool(每10tick)，civSnap改用_civSnapBuf+slot复用。总计9批commit，约30+处优化，5434个测试全通过，TypeScript clean。
+🧠 AI 上轮笔记：迭代49完成。深度GC优化第八轮 — 专注高频update路径的Array分配消除、死代码删除、对象spread替换。主要成果：1) MigrationSystem+AllianceSystem+TerraformingSystem：预分配_bandsToRemoveBuf/_validBuf/_toRemoveBuf，TerraformEffect缓存混合色字符串（51档量化）；2) ArmySystem.cleanupAndCheckEnd：预分配_civsToRemoveBuf（每tick）；3) NavalCombatSystem.updateBattle：删除allShips死代码数组+spread（每5tick）；4) VolcanoSystem.updateLavaFlows：预分配_lavaToRemoveBuf（eruption期间每帧）；5) SiegeSystem：预分配_siegesToRemoveBuf+_soldiersNearBuf，countSoldiersNear改为直接计数消除临时数组分配；6) WorldMigrationWaveSystem.advanceWaves：预分配_wavesToRemoveBuf（每2tick）；7) ArtifactSystem.updateHeroQuesting：unclaimed对象数组改为3个平坦Float缓冲区，nearest对象spread改为索引查找，消除每帧的对象分配。总计7批commit，5434测试全通过，TypeScript clean。
 🎯 AI 自定优先级：[
-  "1. Game.ts继续扫描：_politicalData.push({color,territory})和_clonePositions.push({x,y,generation})是否高频",
-  "2. 扫描Renderer.ts density[gy] = new Array(gridW).fill(0)每帧创建行数组 — 改为预分配二维缓冲区",
-  "3. 扫描HistoryReplaySystem.snapshots.shift()每60tick — 改为环形缓冲区",
-  "4. 扫描更多render路径中的[x,y]元组返回值 — 改为写入成员字段",
-  "5. 扫描Game.ts中tick%10/20/30等中频路径的剩余对象字面量分配"
+  "1. FogOfWarSystem.memberPositions：每10tick clear后 list=[] 创建新数组 — 可用pool模式复用数组（map.get返回后length=0 reset），但需要确保每次clear后旧list正确归还",
+  "2. 扫描QuestSystem/CropSystem/ArtifactSystem等系统的update路径中是否还有对象字面量分配",
+  "3. ArtifactSystem.applyBuffs()是否每帧有GC来源 — 值得检查",
+  "4. 扫描render路径中的Math.sqrt调用 — 有些可以改为距离平方比较（已知NavalCombatSystem等已有这类优化）",
+  "5. 扫描DisasterChainSystem/EcosystemSystem等未检查的高频系统中的数组分配"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
@@ -28,7 +28,7 @@
   "接口注入模式：提取模块时定义只包含所需字段的接口，Game通过`this as unknown as Interface`传入，避免循环依赖",
   "vite循环chunk警告不影响构建成功和应用运行",
   "Vitest在vite.config.ts中添加test.environment='node'配置即可支持纯逻辑测试",
-  "【重要安全规则】严禁用Write工具创建src/__tests__/目录内的文件！Write工具会将__转义为\\\\_\\\\_导致创建错误目录，必须用Bash cat heredoc方式创建测试文件",
+  "【重要安全规则】严禁用Write工具创建src/__tests__/目录内的文件！Write工具会将__转义为\\_\\_导致创建错误目录，必须用Bash cat heredoc方式创建测试文件",
   "Creature系列系统的测试模式极其统一：直接push到(sys as any).xxx数组/Map注入数据 + 验证getter返回内部引用或过滤结果",
   "批量创建测试文件时用Bash cat heredoc并行执行效率最高",
   "【关键经验】测试前必须先用grep确认接口字段！不同系统同名方法字段可能完全不同",
@@ -48,70 +48,25 @@
   "【迭代29新增】ctx.setLineDash([a*zoom,a*zoom])每帧新建数组 — 用_dashBuf[0]=val; _dashBuf[1]=val + setLineDash(_dashBuf)消除",
   "【迭代29新增】for(const [px,py] of [[x1,y1],[x2,y2]])每次创建2个临时数组 — 改为手动展开for(let mi=0;mi<2;mi++){const px=mi===0?x1:x2...}",
   "【迭代30新增】O(N²)热路径识别：内层循环中重复调用em.getEntitiesWithComponents()是O(N²)陷阱 — 在外层循环前一次性获取并传入",
-  "【迭代30新增】语言/配置数据的filter分类结果可缓存到Map<id,{vowels,consonants}>，只在首次访问时计算",
-  "【迭代30新增】对象数组{x,y,species}可改为平坦并行数组_xBuf/_yBuf/_speciesBuf，消除每元素对象分配",
-  "【迭代30新增】Array.from(map.values())在每N tick执行的系统中可改为_buf.length=0; for(const v of map.values()) _buf.push(v)复用数组",
-  "【迭代30新增】对象池模式：_memberPool: T[][]，_memberPoolNext=0在每次rebuild时重置，从池中取数组而非new Array(n)",
-  "【迭代31新增】两层Map模式：Map<number,Map<string,T>>比Map<string,T>（key=`${num}:${str}`）更高效，外层数值键零分配，内层字符串键已存在无新分配",
-  "【迭代31新增】渲染函数中的字体字符串缓存：_lastZoom + _xxxFont成员，zoom不变时直接复用，避免每帧模板字符串分配",
-  "【迭代31新增】civ.buildings.filter(b => b.buildingType===X).length模式在每帧循环中是高GC源 — 改为手动for计数(0分配)",
-  "【迭代33新增】Array.from(set)→迭代器+计数索引采样：targetIdx--===0时记录key，break退出，零分配",
-  "【迭代33新增】key.split(',').map(Number)是双分配（split数组+map数组）— 用indexOf+substring+一元+操作符替代，零分配",
-  "【迭代33新增】预分配Map结构：内层Map.clear()而不是new Map()，outer Map只在新key时new Map，首次调用后快速复用",
-  "【迭代33新增】字体缓存覆盖面扫描：grep -rn 'ctx.font.*zoom'找到所有模板字符串，批量添加_lastZoom/_xxxFont缓存模式",
-  "【迭代34新增】Python脚本批量替换170个this.xxx.filter()：正则匹配单行模式，复杂多行条件必须手动处理",
-  "【迭代34新增】Array.from(civManager.civilizations.values())在24个外交系统普遍存在 — 批量改为const civs:T[]=[]; for(const c of map.values()) civs.push(c)",
-  "【迭代34新增】CivLike接口系统不能用Civilization类型替换 — 批量脚本必须检查文件中的局部接口定义",
-  "【迭代34新增】this.arr.splice(0, len-N)替代this.arr=this.arr.slice(-N)：就地修改，零新数组分配",
-  "【迭代34新增】areBordering中的for(const [dx,dy] of [[0,1]...])创建4个临时数组 — 手动展开4个if检查，完全消除分配",
-  "【迭代35新增】CreatureCollectionSystem: Array.from(map.entries()).filter()→两阶段计数+迭代采样，避免临时数组",
-  "【迭代35新增】WorldStatsOverviewSystem: render每帧Array.from+sort→update时预排序到_speciesEntriesBuf缓存",
-  "【迭代35新增】Object.entries/values缓存为模块级常量：STAKE_ENTRIES/SKILL_ENTRIES/HOBBY_TOTAL，消除每次调用的临时数组分配",
-  "【迭代35新增】SeasonSystem.getPreviousSeason/getNextSeason: 临时数组+indexOf→switch直接返回，零分配",
-  "【迭代35新增】render路径字体缓存模式：_lastZoom+_xxxFont成员，zoom不变时复用，已覆盖10+个系统",
-  "【迭代36新增】ReligionSpreadSystem temple字体：level 1-3用_templeFonts[0-2]数组缓存，zoom变化时重建",
-  "【迭代36新增】粒子颜色预计算模式：Siege/Tornado/Plague/Season等系统用IIFE生成颜色表，量化alpha/life到离散档位",
-  "【迭代36新增】Tile渲染颜色表：Pollution/Corruption/Minimap等系统预计算100档颜色表，避免每tile模板字符串",
-  "【迭代36新增】Particle.color字段模式：Season/Achievement等系统在spawn时计算color字符串存入粒子，render直接用",
-  "【迭代36新增】WorldDashboard.PopulationSample.entries预计算：addPopulationSample时计算Object.entries存入，render直接用",
-  "【迭代36新增】CreaturePilgrimage.cleanup partition模式：手动partition active/completed，避免两次filter+spread",
-  "【迭代36新增】CropSystem.FARM_OFFSETS常量：提取循环内const offsets数组为模块级readonly常量",
-  "【迭代37新增】MinimapEnhancedSystem热力图：预计算101步rgba颜色表，消除最多10000次/帧模板字符串GC（最高收益优化）",
-  "【迭代37新增】globalAlpha替换rgba模板字符串：EventNotification/SeasonVisual/WorldBorder/BuildingVariety等系统改用ctx.globalAlpha+固定颜色，消除连续alpha值的模板字符串",
-  "【迭代37新增】BloodMoonSystem颜色表：overlay 101步+streak 101步预计算，消除每帧模板字符串+移strokeStyle出循环",
-  "【迭代37新增】WorldBorder颜色表：每个style预计算91步alpha颜色表，高光/漩涡改globalAlpha，消除tile循环GC",
-  "【迭代37新增】EraVisualSystem overlay缓存：_overlayFillStyle+_overlayTintR/G/B/Alpha，只在style变化时重建",
-  "【迭代37新增】TradeFleetSystem ripple颜色表：101步alpha 0.00..0.30预计算，消除ripple渲染GC",
-  "【迭代37新增】SiegeWarfareSystem siege ring颜色表：41步alpha 0.20..0.60预计算，消除Date.now()模板字符串",
-  "【迭代37新增】WorldHeatmapSystem颜色表：101步t 0.00..1.00预计算，消除逐像素renderOverlay中的valueToColor调用",
-  "【迭代37新增】DiplomacyVisualSystem relationColor：201步val -100..100预计算，消除外交矩阵渲染GC",
-  "【迭代37新增】WorldChronicle.getWorldSummary：4个filter合并为单次循环，wars/heroes/disasters/legendary同时计数",
-  "【迭代37新增】CreatureMigrationMemory elderMemories：filter改两阶段计数+迭代采样，消除临时数组分配",
-  "【迭代37新增】PortalSystem.getPortalCount()：Game.ts中getPortals().length改为直接返回portals.size，消除Array.from快照",
-  "【迭代37新增】ZoneManagement zone label字体：zone._lastZoom+_labelFont缓存，消除renderZones中最后一个ctx.font模板字符串",
-  "【迭代38新增】FormationSystem/QuestSystem/CreatureReputation/CreatureTaming/MonumentSystem/PlagueMutation/MythologySystem：预分配buf替代filter，颜色表替代hsl模板字符串",
-  "【迭代38新增】DiplomaticCensus/Succession/Plebiscite/CreatureBeastMaster/AchievementContent：消除filter+Array.from+new Set GC",
-  "【迭代38新增】Renderer.ts：夜晚/雾气叠加层颜色表预计算(101步)，建筑损坏闪烁改globalAlpha",
-  "【迭代38新增】AchievementProgress/AchievementSystem/DiplomaticSpy/TechSystem/CreatureOath/CreatureApprentice/BattleReplay：filter改预分配buf，手动计数替代filter().length",
-  "【迭代38新增】Sanction/Volcanic/Rift/Espionage/TradeNegotiation/WarReparation/MiningSystem：预分配_activeBuf/_civBuf替代filter",
-  "【迭代39新增】批量消除80+个系统getter的filter()临时数组：Creature/Diplomatic/World系统预分配_xxxBuf替代，共享buf模式测试更新",
-  "【迭代39新增】WorldChronicle.getChronicles()：合并双filter为单次循环，零分配",
-  "【迭代39新增】LoyaltySystem.triggerRebellion/triggerCivilWar：预分配_civMembersBuf替代filter，复用buf避免重复分配",
-  "【迭代39新增】BiomeEvolutionSystem.erosion()：neighbors.filter()改手动计数，消除临时数组",
-  "【迭代39新增】CultureSystem trait adoption：filter+pick改两阶段计数+迭代采样，零分配",
-  "【迭代39新增】HeroLegendSystem.getLeaderboard()：Array.from+filter+sort+slice改预分配buf+sort+length截断",
-  "【迭代39新增】TechSystem templeCount：civ.buildings.filter()改手动for计数",
-  "【迭代39新增】WorldEventSystem.tryTriggerRandomEvent：EVENT_DEFINITIONS.filter()改预分配_availEventsBuf",
-  "【迭代39新增】CreatureConstellationSystem：NAMES.filter()改两阶段计数+迭代采样，零分配",
   "【迭代45新增】EventLog环形缓冲区模式：_buf[MAX]+_head+_count，shift()→_head=(head+1)%MAX；getRecent升序遍历：从head-n到head-1逆向读取后反转",
   "【迭代45新增】chartPt/类似方法：返回[x,y]元组改为写入成员字段_cpx/_cpy，渲染循环中每点省一次数组分配",
-  "【迭代45新增】Renderer.ts渲染对象池模式：_xxxObjPool+_xxxObjNext指针，每帧开始reset到0，按需grow；bucket数组本身已用pool，但内部对象也需要pool",
-  "【迭代45新增】Game.ts每N tick分配的数组+对象：用_xxxBuf+slot复用模式，slot.field=value替代push({...})，.length=count截断",
+  "【迭代45新增】Renderer.ts渲染对象池模式：_xxxObjPool+_xxxObjNext指针，每帧开始reset到0，按需grow",
   "【迭代45新增】marqueeQueue.shift()改头指针：_mqHead指针++替代shift()，超过MAX_QUEUE时用splice(0,mqHead)+mqHead=0紧凑化",
-  "【迭代45新增】getRecent顺序问题：改变迭代方向时必须同时更新单元测试的预期顺序"
+  "【迭代47新增】预计算查找表模式（Record<EnumType,string>）：消除render路径中type[0].toUpperCase()等固定枚举的字符串操作",
+  "【迭代47新增】接口字段预计算模式：在数据创建时计算render需要的字符串（label/typeUpper/panelLabel等），避免每帧重复计算，需同步更新测试mock",
+  "【迭代47新增】Map复用模式：不new Map()而是复用_xxxCache，reset各entry字段；若entry数量不固定，用for-of values reset后按需insert新key",
+  "【迭代47新增】往接口添加新字段必须同步更新所有测试中的mock对象（TypeScript编译会报TS2739）",
+  "【迭代47新增】EventLog引用安全规则：ring buffer slot不能被外部存储引用后继续复用 — EventPanel.push(e)保存了引用，所以EventLog不能做slot reuse",
+  "【迭代48新增】字符串缓存模式：对于固定或低频变化的显示字符串（如seed、season label），缓存完整字符串，仅在值变化时重建",
+  "【迭代48新增】整数查找表模式：0-10范围的整数用预计算的_INT_STR=['0','1',...,'10']查找表，避免String(n)分配",
+  "【迭代48新增】接口字段预计算适用于level/name等组合字段：Guild.nameLabel=`${name} Lv${level}`在创建和level up时更新，render直接用",
+  "【迭代49新增】死代码Array检测：grep方法创建的数组后续未使用 — 如NavalCombatSystem.allShips创建后从未引用，直接删除",
+  "【迭代49新增】对象数组→平坦缓冲区模式：unclaimed:{id,x,y}[]改为_idBuf/_xBuf/_yBuf三个数组，nearest:{...art,dist}改为nearestIdx+nearestDist，完全消除对象分配",
+  "【迭代49新增】countXxx方法调用getXxx().length是常见陷阱 — 直接实现计数循环，零数组分配",
+  "【迭代49新增】TerraformEffect混色缓存：_lastProgressQ=Math.round(t*50)量化51档，仅在进阶时重建字符串，每效果每帧平均节省一次lerpColor分配"
 ]
 
-迭代轮次: 46/100
+迭代轮次: 50/100
 
 
 🔄 自我进化（每轮必做）：
@@ -120,6 +75,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-02-28T12:34:13+08:00"
+  "last_updated": "2026-02-28T16:04:48+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。
