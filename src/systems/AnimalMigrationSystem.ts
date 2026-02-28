@@ -31,6 +31,7 @@ export class AnimalMigrationSystem {
   private lastSeason: Season = Season.Spring
   private migrationCooldown: number = 0
   private _animalsBuf: { id: number; x: number; y: number; species: string }[] = []
+  private _usedSet: Set<number> = new Set()
 
   private static UPDATE_INTERVAL = 120  // check every 2 seconds
   private static MAX_ROUTES = 20
@@ -103,7 +104,8 @@ export class AnimalMigrationSystem {
     }
 
     // Group nearby animals of same species into flocks
-    const used = new Set<number>()
+    const used = this._usedSet
+    used.clear()
     for (const animal of animals) {
       if (used.has(animal.id)) continue
 

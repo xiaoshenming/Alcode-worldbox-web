@@ -37,6 +37,7 @@ const HOUSING_CAPACITY: Partial<Record<BuildingType, number>> = {
 
 export class CityPlanningSystem {
   private buildingCounts: Map<number, Map<BuildingType, number>> = new Map()
+  private _occupiedSet: Set<number> = new Set()
 
   getCityLevel(civ: Civilization): CityLevel {
     const pop = civ.population
@@ -70,12 +71,17 @@ export class CityPlanningSystem {
   // --- Building count cache ---
 
   private cacheBuildingCounts(civ: Civilization, em: EntityManager): void {
-    const counts = new Map<BuildingType, number>()
+    let counts = this.buildingCounts.get(civ.id)
+    if (!counts) {
+      counts = new Map<BuildingType, number>()
+      this.buildingCounts.set(civ.id, counts)
+    } else {
+      counts.clear()
+    }
     for (const id of civ.buildings) {
       const b = em.getComponent<BuildingComponent>(id, 'building')
       if (b) counts.set(b.buildingType, (counts.get(b.buildingType) ?? 0) + 1)
     }
-    this.buildingCounts.set(civ.id, counts)
   }
 
   private count(civId: number, type: BuildingType): number {
@@ -241,7 +247,8 @@ export class CityPlanningSystem {
     if (territory.size === 0) return null
 
     // Occupied positions set for fast lookup (numeric key = x * 10000 + y)
-    const occupied = new Set<number>()
+    const occupied = this._occupiedSet
+    occupied.clear()
     for (const id of civ.buildings) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (pos) occupied.add(Math.floor(pos.x) * 10000 + Math.floor(pos.y))

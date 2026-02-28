@@ -49,6 +49,7 @@ export class PortalSystem {
   private particles: PortalParticle[] = [];
   private flashes: TeleportFlash[] = [];
   private animTick = 0;
+  private _drawnSet: Set<number> = new Set();
 
   createPortalPair(x1: number, y1: number, x2: number, y2: number): [number, number] | null {
     if (this.pairCount >= MAX_PORTAL_PAIRS) return null;
@@ -327,7 +328,8 @@ export class PortalSystem {
     zoom: number, time: number,
   ): void {
     const tileZoom = TILE_SIZE * zoom;
-    const drawn = new Set<number>();
+    const drawn = this._drawnSet;
+    drawn.clear();
 
     for (const portal of this.portals.values()) {
       if (!portal.active || drawn.has(portal.id)) continue;
