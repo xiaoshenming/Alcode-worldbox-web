@@ -80,6 +80,8 @@ export class CameraAnimationSystem {
   private _barsEnabled = false;
   private _barsProgress = 0; // 0‥1
   private _barsHeight = 0.12; // fraction of screen height
+  // Pre-allocated result object — callers may cache the reference
+  private _result = { x: 0, y: 0, zoom: 1 };
 
   // ────────────────────────────────────────────────────────────────────────────
   // Follow
@@ -257,7 +259,10 @@ export class CameraAnimationSystem {
       this._barsProgress = barsTarget;
     }
 
-    return { x, y, zoom };
+    this._result.x = x;
+    this._result.y = y;
+    this._result.zoom = zoom;
+    return this._result;
   }
 
   // ────────────────────────────────────────────────────────────────────────────
