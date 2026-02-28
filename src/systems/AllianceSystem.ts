@@ -33,6 +33,8 @@ export class AllianceSystem {
   private _civsBuf: Civilization[] = []
   // Reusable map for tryAllianceWar enemy scoring
   private _enemyScoresBuf: Map<number, number> = new Map()
+  // Reusable buffer for checkMemberLeave per-alliance removal list
+  private _toRemoveBuf: number[] = []
 
   update(civManager: CivManager, em: EntityManager, world: World, particles: ParticleSystem, tick: number): void {
     if (tick % this.TICK_INTERVAL !== 0) return
@@ -119,8 +121,9 @@ export class AllianceSystem {
 
   /** Members with relation < 0 toward any other member leave */
   private checkMemberLeave(civs: Civilization[]): void {
+    const toRemove = this._toRemoveBuf
     for (const alliance of this.alliances) {
-      const toRemove: number[] = []
+      toRemove.length = 0
       for (const memberId of alliance.members) {
         const civ = civs.find(c => c.id === memberId)
         if (!civ) continue

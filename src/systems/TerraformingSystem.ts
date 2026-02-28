@@ -14,6 +14,9 @@ export interface TerraformEffect {
   duration: number      // total ticks
   elapsed: number
   particleCooldown: number
+  // Cached blended color — recomputed only when progress quantile changes
+  _cachedColor: string
+  _lastProgressQ: number  // Math.round(progress * 50) — 51 levels
 }
 
 // Per-effect-type visual config
@@ -50,6 +53,8 @@ export class TerraformingSystem {
       duration: MIN_DURATION + Math.floor(Math.random() * (MAX_DURATION - MIN_DURATION + 1)),
       elapsed: 0,
       particleCooldown: 0,
+      _cachedColor: TILE_COLORS[fromTile][0],
+      _lastProgressQ: -1,
     })
   }
 
@@ -122,15 +127,17 @@ export class TerraformingSystem {
       const sz = TILE_SIZE * zoom
       const t = e.progress
 
-      // Blend from-color toward to-color
-      const fromColors = TILE_COLORS[e.fromTile]
-      const toColors = TILE_COLORS[e.toTile]
-      const fromHex = fromColors[0]
-      const toHex = toColors[0]
-      const blended = this.lerpColor(fromHex, toHex, t)
+      // Blend from-color toward to-color — use cached string, update only when quantized progress changes
+      const pq = Math.round(t * 50)
+      if (pq !== e._lastProgressQ) {
+        e._lastProgressQ = pq
+        const fromColors = TILE_COLORS[e.fromTile]
+        const toColors = TILE_COLORS[e.toTile]
+        e._cachedColor = this.lerpColor(fromColors[0], toColors[0], t)
+      }
 
       ctx.globalAlpha = 0.7 + t * 0.3
-      ctx.fillStyle = blended
+      ctx.fillStyle = e._cachedColor
       ctx.fillRect(sx, sy, sz, sz)
 
       // Overlay glow for active effects

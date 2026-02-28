@@ -26,6 +26,9 @@ export class MigrationSystem {
   private _speciesGroups: Map<string, Map<number, EntityId[]>> = new Map()
   private _cellPool: EntityId[][] = []
   private _cellPoolNext = 0
+  // Reusable buffers for updateBands (every tick) and valid filter (every 60 ticks)
+  private _bandsToRemoveBuf: number[] = []
+  private _validBuf: EntityId[] = []
 
   update(em: EntityManager, world: World, civManager: CivManager, particles: ParticleSystem): void {
     const tick = world.tick
@@ -110,7 +113,8 @@ export class MigrationSystem {
         if (nearby.size < 3) continue
 
         // Filter to only those still valid (not already assigned to a band this tick)
-        const valid: EntityId[] = []
+        const valid = this._validBuf
+        valid.length = 0
         for (const id of nearby) {
           if (!em.hasComponent(id, 'nomad')) valid.push(id)
         }
@@ -274,7 +278,8 @@ export class MigrationSystem {
   }
 
   private updateBands(em: EntityManager, world: World, civManager: CivManager, particles: ParticleSystem): void {
-    const bandsToRemove: number[] = []
+    const bandsToRemove = this._bandsToRemoveBuf
+    bandsToRemove.length = 0
 
     for (const [bandId, band] of this.bands) {
       // Check leader alive
