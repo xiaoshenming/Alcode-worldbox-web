@@ -40,6 +40,10 @@ export class WeatherControlSystem {
   private panelOpen = false
   private px = 0
   private py = 0
+  // Cached render strings — avoids toFixed/template literal allocation every frame
+  private _intensityStr = '0.50'
+  private _statusStr = ''
+  private _durStr = ''
 
   constructor() { /* no deps needed */ }
 
@@ -54,6 +58,7 @@ export class WeatherControlSystem {
 
   setIntensity(value: number): void {
     this.intensity = Math.max(0, Math.min(1, value))
+    this._intensityStr = this.intensity.toFixed(2)
   }
 
   getIntensity(): number { return this.intensity }
@@ -117,7 +122,7 @@ export class WeatherControlSystem {
     ctx.fillStyle = ACCENT
     ctx.font = '12px monospace'
     ctx.textAlign = 'left'
-    ctx.fillText(`${icon} ${label}  Int:${this.intensity.toFixed(2)}`, this.px + 12, cy)
+    ctx.fillText(`${icon} ${label}  Int:${this._intensityStr}`, this.px + 12, cy)
     cy += 16
     const durText = this.duration === 0 ? 'Infinite' : `${this.remaining}/${this.duration}`
     const lockText = this.locked ? ' [LOCKED]' : ''
