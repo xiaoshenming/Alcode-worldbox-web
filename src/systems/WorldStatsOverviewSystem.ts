@@ -31,6 +31,9 @@ export class WorldStatsOverviewSystem {
   private speciesCounts: Map<string, number> = new Map()
   private _speciesEntriesBuf: [string, number][] = []
   private visible = false
+  // Pre-allocated chart point to avoid [x,y] tuple allocation per point
+  private _cpx = 0
+  private _cpy = 0
 
   constructor() { /* no-op */ }
 
@@ -83,10 +86,11 @@ export class WorldStatsOverviewSystem {
     this._speciesEntriesBuf.sort((a, b) => b[1] - a[1])
   }
 
-  /** Helper: compute chart point coords from ring buffer */
-  private chartPt(i: number, n: number, chartX: number, chartY: number, chartW: number, chartH: number, maxVal: number): [number, number] {
+  /** Helper: compute chart point coords from ring buffer — writes to _cpx/_cpy, no allocation */
+  private chartPt(i: number, n: number, chartX: number, chartY: number, chartW: number, chartH: number, maxVal: number): void {
     const idx = n < MAX_HISTORY ? i : (this.histHead + i) % MAX_HISTORY
-    return [chartX + (n > 1 ? i * (chartW / (n - 1)) : 0), chartY + chartH - (maxVal > 0 ? (this.popHistory[idx] / maxVal) * chartH : 0)]
+    this._cpx = chartX + (n > 1 ? i * (chartW / (n - 1)) : 0)
+    this._cpy = chartY + chartH - (maxVal > 0 ? (this.popHistory[idx] / maxVal) * chartH : 0)
   }
 
   /** Render the overlay panel (screen-space, top-right corner). */
@@ -154,7 +158,7 @@ export class WorldStatsOverviewSystem {
       // Filled area
       ctx.beginPath()
       ctx.moveTo(cX, cY + cH)
-      for (let i = 0; i < n; i++) { const [px, py] = this.chartPt(i, n, cX, cY, cW, cH, maxVal); ctx.lineTo(px, py) }
+      for (let i = 0; i < n; i++) { this.chartPt(i, n, cX, cY, cW, cH, maxVal); ctx.lineTo(this._cpx, this._cpy) }
       ctx.lineTo(cX + cW, cY + cH)
       ctx.closePath()
       ctx.fillStyle = 'rgba(79,195,247,0.15)'
@@ -162,8 +166,8 @@ export class WorldStatsOverviewSystem {
       // Line
       ctx.beginPath()
       for (let i = 0; i < n; i++) {
-        const [px, py] = this.chartPt(i, n, cX, cY, cW, cH, maxVal)
-        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)
+        this.chartPt(i, n, cX, cY, cW, cH, maxVal)
+        i === 0 ? ctx.moveTo(this._cpx, this._cpy) : ctx.lineTo(this._cpx, this._cpy)
       }
       ctx.strokeStyle = '#4fc3f7'
       ctx.lineWidth = 1.5
