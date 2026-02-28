@@ -1,11 +1,11 @@
 {
-  "notes": "迭代67完成。深度GC优化第十六轮 — 继续消除render路径字符串分配。主要成果：1) ChartPanelSystem._xLabels缓存（5个X轴刻度标签，tMin/tRange变化时重建，消除5次Math.round().toString()）；2) WorldStatsOverviewSystem._maxValStr缓存（maxVal变化时重建，消除render路径String(Math.round())）；3) CameraBookmarkSystem.Bookmark.coordStr接口字段（save/load时预计算，消除render循环Math.round模板字符串）；4) DiplomaticEspionageSystem.Spy.statusStr接口字段（每500tick进度更新时同步，消除renderPanel每帧模板字符串）；5) CreatureAncestorSystem.AncestorSpirit.worshippersStr接口字段（updateWorshippers时同步，消除renderWorld每帧模板字符串）；6) WorldSeasonalDisasterSystem.SeasonalDisaster.pctStr字段（duration每tick减少时同步更新）；7) EraTransitionSystem.TechEntry.progressStr字段（setTechData时批量计算）；8) BattleReplaySystem._frameStr/_speedStr缓存（frame/speed变化时更新）；9) WorldAncientRuinSystem.AncientRuin.panelStr字段（创建/explored时更新）；10) WeatherControlSystem._durStr复用（setDuration/update时更新）；11) WorldExportSystem._importProgressStr缓存（import进度节点时预设）；12) WorldDashboardSystem._religionRatioStrs/_religionLegendStrs缓存（updateReligionData时批量预计算，消除render路径toFixed+模板字符串）。总计11个commit，5434测试全通过，TypeScript clean。",
+  "notes": "迭代68完成。深度GC优化第十七轮 — 继续消除render路径字符串分配，并推送了迭代67的积累提交。主要成果：1) WorldDashboardSystem人口Y轴刻度标签缓存（_popYLabels[5]，maxPop变化时重建）和文明实力powerStr缓存（updatePowerData时批量计算）；2) AchievementPopupSystem三重优化：progressPctStr（updateProgress时更新）、trackerPctStr（量化到5%精度）、_panelHeaderStr（register/unlock时更新）；3) EvolutionVisualSystem多项预计算：traitStr（已有）+nodeInfoStr（population/appearTick拼接，updatePopulation时更新）+_smCache.totalStr（render累积后更新）；4) WorldNarratorSystem._unreadStr缓存（addNarrative/toggle时更新）；5) CreatureSkillSystem.CreatureSkillData.xpStr（addXP后更新）；6) CreatureProfessionSystem.ProfessionData.expStr（gainExperience中floor变化时更新）；7) EditorEnhancedSystem._brushSizeStr（setBrushSize时更新）；8) EraTransitionSystem._maxTotalStr（render中maxTotal变化时更新）。总计7个perf commit，5434测试全通过，TypeScript clean。网络恢复后成功推送所有迭代67+68的提交。",
   "priorities": [
-    "1. 推送本轮所有提交（网络恢复后：http_proxy=http://127.0.0.1:7897 https_proxy=http://127.0.0.1:7897 git push origin main）",
-    "2. 扫描update方法中创建的new对象（间隔执行路径中push({...})）—— 这是新增GC的主要来源",
-    "3. 扫描WorldDashboardSystem的人口折线图和实力面板中剩余字符串（Y轴刻度String(val)、civ.power的String(Math.round())）",
-    "4. 扫描EvolutionVisualSystem中循环内traits[ti][1].toFixed(0)，考虑量化缓存",
-    "5. 扫描AchievementPopupSystem的进度百分比Math.floor(pct * 100)，考虑量化到5%精度缓存"
+    "1. 继续扫描render路径中的模板字符串（ctx.fillText中的``表达式和String()调用）",
+    "2. 重点扫描CreatureReputationSystem、DiplomaticSanctionSystem等排行榜/列表的每帧字符串拼接",
+    "3. 扫描还有无render路径中的new对象（比如fillStyle使用rgba()字符串 — 已有预计算，确认覆盖情况）",
+    "4. 考虑EraTransitionSystem人口图表中cumulative: number[][]的每帧分配 — 可用平坦缓冲区替代",
+    "5. 扫描是否有render路径的临时数组（filter/slice/map）未经处理"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -73,7 +73,11 @@
     "【迭代67新增】外部设置数据时批量预计算字符串：updateReligionData/setTechData等在接收外部数据时一次性预计算所有render需要的字符串缓存，不需要修改接口",
     "【迭代67新增】CameraBookmark坐标字符串在save()和load()两处都要计算coordStr——load时从JSON恢复的数据没有预计算字段，需要补充计算",
     "【迭代67新增】duration每tick减少的pct字符串：量化级别可以设为1%精度（每tick检查是否变化），仅在pct变化时更新，即使duration每帧更新也最多每秒更新若干次",
-    "【迭代67新增】已有缓存成员但未使用的情况（如WeatherControlSystem._durStr）：直接在update/setter处填入值并在render处使用，无需添加新成员"
+    "【迭代67新增】已有缓存成员但未使用的情况（如WeatherControlSystem._durStr）：直接在update/setter处填入值并在render处使用，无需添加新成员",
+    "【迭代68新增】量化到5%精度的tracker进度字符串：displayProgress每5%一档缓存，大幅减少连续动画中的字符串分配（每个5%步骤才触发一次String重建）",
+    "【迭代68新增】_smCache条目加totalStr字段：render内累积后一次性更新String(total)，消除每species每帧一次模板字符串",
+    "【迭代68新增】expStr量化缓存：经验字符串在Math.floor(experience)变化时才重建（每整数步骤一次），gainExperience每tick+1时平均每次更新都触发，比displayProgress动画更频繁但面板不常打开",
+    "【迭代68新增】Map入口中同时存totalStr避免临时分配：_smCache重置时totalStr=0初始化，累积后批量更新——总比每帧进入loop时创建临时对象好"
   ],
-  "last_updated": "2026-03-01T03:35:00+08:00"
+  "last_updated": "2026-03-01T04:05:00+08:00"
 }
