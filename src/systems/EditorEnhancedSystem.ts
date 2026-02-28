@@ -17,6 +17,13 @@ const MIN_BRUSH_SIZE = 1;
 const MAX_BRUSH_SIZE = 20;
 const MAX_FLOOD_FILL = 500;
 const GRID_MIN_ZOOM = 8;
+/** Pre-allocated 4-directional offsets — avoids per-flood-fill object literal array creation */
+const _FLOOD_DIRS = [
+  { dx: 0, dy: -1 },
+  { dx: 0, dy: 1 },
+  { dx: -1, dy: 0 },
+  { dx: 1, dy: 0 },
+] as const
 
 export class EditorEnhancedSystem {
   // 画笔状态
@@ -161,12 +168,7 @@ export class EditorEnhancedSystem {
     queue.push({ x: startX, y: startY });
     visited.add(key(startX, startY));
 
-    const dirs = [
-      { dx: 0, dy: -1 },
-      { dx: 0, dy: 1 },
-      { dx: -1, dy: 0 },
-      { dx: 1, dy: 0 },
-    ];
+    const dirs = _FLOOD_DIRS;
 
     let head = 0
 

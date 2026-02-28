@@ -14,6 +14,15 @@ import {
 } from './SpriteData'
 import { BuildingType } from '../civilization/Civilization'
 
+/** Pre-computed building type list — avoids per-init literal array creation */
+const _BUILDING_SPRITE_TYPES = [
+  BuildingType.HUT, BuildingType.HOUSE, BuildingType.FARM,
+  BuildingType.BARRACKS, BuildingType.TOWER, BuildingType.CASTLE,
+  BuildingType.MINE, BuildingType.PORT,
+] as const
+/** Pre-computed ship type list — avoids per-init literal array creation */
+const _SHIP_SPRITE_TYPES = ['warship', 'trader', 'explorer', 'fishing'] as const
+
 // ============================================================
 // SpriteRenderer class
 // ============================================================
@@ -123,11 +132,7 @@ export class SpriteRenderer {
   }
 
   private generateBuildingSprites(): void {
-    const buildingTypes = [
-      BuildingType.HUT, BuildingType.HOUSE, BuildingType.FARM,
-      BuildingType.BARRACKS, BuildingType.TOWER, BuildingType.CASTLE,
-      BuildingType.MINE, BuildingType.PORT,
-    ]
+    const buildingTypes = _BUILDING_SPRITE_TYPES
 
     for (const bt of buildingTypes) {
       const pixels = BUILDING_SPRITES[bt]
@@ -158,7 +163,7 @@ export class SpriteRenderer {
   }
 
   private generateShipSprites(): void {
-    const shipTypes = ['warship', 'trader', 'explorer', 'fishing']
+    const shipTypes = _SHIP_SPRITE_TYPES
     const shipColors: Record<string, string[]> = {
       warship: ['#8a4a4a', '#aa3333', '#cc4444', '#666666'],
       trader: ['#8a7a4a', '#aa9933', '#ccbb44', '#886644'],

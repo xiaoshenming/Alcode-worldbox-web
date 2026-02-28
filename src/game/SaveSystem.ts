@@ -10,6 +10,8 @@ const SLOT_PREFIX = 'worldbox_slot_'
 const AUTO_SAVE_KEY = 'worldbox_autosave'
 const META_KEY = 'worldbox_save_meta'
 const MAX_SLOTS = 3
+/** Pre-computed component type list for serialization — avoids per-save literal array creation */
+const _SERIALIZE_COMPONENT_TYPES = ['position', 'velocity', 'render', 'needs', 'ai', 'creature', 'building', 'civMember'] as const
 
 export interface SaveSlotMeta {
   slot: number | 'auto'
@@ -232,7 +234,7 @@ export class SaveSystem {
 
   private static serializeEntities(em: EntityManager): SavedEntity[] {
     const result: SavedEntity[] = []
-    const componentTypes = ['position', 'velocity', 'render', 'needs', 'ai', 'creature', 'building', 'civMember']
+    const componentTypes = _SERIALIZE_COMPONENT_TYPES
 
     for (const id of em.getAllEntities()) {
       const components: Record<string, any> = {}
