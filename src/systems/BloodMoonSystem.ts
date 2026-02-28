@@ -63,6 +63,35 @@ const _BLOOD_STREAK_COLORS: string[] = (() => {
   return cols
 })()
 
+// Pre-computed glow gradient colors: 101 steps for intensity 0.00..1.00
+const _BLOOD_GLOW_COLORS0: string[] = (() => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) cols.push(`rgba(200,30,30,${(0.25 * i / 100).toFixed(3)})`)
+  return cols
+})()
+const _BLOOD_GLOW_COLORS1: string[] = (() => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) cols.push(`rgba(150,10,10,${(0.10 * i / 100).toFixed(3)})`)
+  return cols
+})()
+
+// Pre-computed moon gradient colors: 101 steps for intensity 0.00..1.00
+const _BLOOD_MOON_COLORS0: string[] = (() => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) cols.push(`rgba(220,50,40,${(0.9 * i / 100).toFixed(3)})`)
+  return cols
+})()
+const _BLOOD_MOON_COLORS1: string[] = (() => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) cols.push(`rgba(180,20,20,${(0.7 * i / 100).toFixed(3)})`)
+  return cols
+})()
+const _BLOOD_MOON_COLORS2: string[] = (() => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) cols.push(`rgba(120,10,10,${(0.3 * i / 100).toFixed(3)})`)
+  return cols
+})()
+
 export class BloodMoonSystem {
   private cooldown: number = MIN_COOLDOWN + Math.floor(Math.random() * (MAX_COOLDOWN - MIN_COOLDOWN))
   private elapsed: number = 0
@@ -239,8 +268,8 @@ export class BloodMoonSystem {
     // Outer glow
     ctx.globalCompositeOperation = 'lighter'
     const glowGrad = ctx.createRadialGradient(moonX, moonY, finalRadius * 0.3, moonX, moonY, finalRadius * 2.5)
-    glowGrad.addColorStop(0, `rgba(200,30,30,${0.25 * intensity})`)
-    glowGrad.addColorStop(0.5, `rgba(150,10,10,${0.1 * intensity})`)
+    glowGrad.addColorStop(0, _BLOOD_GLOW_COLORS0[intensityIdx])
+    glowGrad.addColorStop(0.5, _BLOOD_GLOW_COLORS1[intensityIdx])
     glowGrad.addColorStop(1, 'rgba(100,0,0,0)')
     ctx.fillStyle = glowGrad
     ctx.fillRect(moonX - finalRadius * 3, moonY - finalRadius * 3, finalRadius * 6, finalRadius * 6)
@@ -248,9 +277,9 @@ export class BloodMoonSystem {
     // Moon body
     ctx.globalCompositeOperation = 'source-over'
     const moonGrad = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, finalRadius)
-    moonGrad.addColorStop(0, `rgba(220,50,40,${0.9 * intensity})`)
-    moonGrad.addColorStop(0.7, `rgba(180,20,20,${0.7 * intensity})`)
-    moonGrad.addColorStop(1, `rgba(120,10,10,${0.3 * intensity})`)
+    moonGrad.addColorStop(0, _BLOOD_MOON_COLORS0[intensityIdx])
+    moonGrad.addColorStop(0.7, _BLOOD_MOON_COLORS1[intensityIdx])
+    moonGrad.addColorStop(1, _BLOOD_MOON_COLORS2[intensityIdx])
     ctx.beginPath()
     ctx.arc(moonX, moonY, finalRadius, 0, Math.PI * 2)
     ctx.fillStyle = moonGrad
