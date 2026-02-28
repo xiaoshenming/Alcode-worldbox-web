@@ -22,6 +22,8 @@ export interface AncientRuin {
   discoveredTick: number
   exploredTick: number
   dangerLabel: string     // Pre-computed "Danger: ${dangerLevel}" for render
+  /** Pre-computed panel row string — avoids template literal per frame */
+  panelStr: string
 }
 
 const SPAWN_INTERVAL = 4000
@@ -124,6 +126,7 @@ export class WorldAncientRuinSystem {
       discoveredTick: tick,
       exploredTick: 0,
       dangerLabel: `Danger: ${dangerLevel}`,
+      panelStr: `${name} danger:${dangerLevel}`,
     }
     this.ruins.push(ruin)
     EventLog.log('world_event', `Ancient ruin "${name}" (${type}) discovered!`, 0)
@@ -150,6 +153,7 @@ export class WorldAncientRuinSystem {
     ruin.explored = true
     ruin.exploredBy = eid
     ruin.exploredTick = tick
+    ruin.panelStr = `${ruin.name} explored`
 
     const needs = em.getComponent<NeedsComponent>(eid, 'needs')
 
@@ -229,8 +233,7 @@ export class WorldAncientRuinSystem {
     for (let i = 0; i < Math.min(5, this.ruins.length); i++) {
       const r = this.ruins[i]
       ctx.fillStyle = r.explored ? '#666' : RUIN_COLORS[r.type]
-      const status = r.explored ? 'explored' : `danger:${r.dangerLevel}`
-      ctx.fillText(`${r.name} ${status}`, x + 8, y + 32 + i * 18)
+      ctx.fillText(r.panelStr, x + 8, y + 32 + i * 18)
     }
   }
 }
