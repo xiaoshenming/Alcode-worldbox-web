@@ -30,6 +30,8 @@ interface CreatureSkillData {
   skills: Set<string>
   /** 各分支经验 */
   branchXP: Record<SkillBranch, number>
+  /** pre-computed XP display string — rebuilt after addXP */
+  xpStr: string
 }
 
 /** 经验值表 */
@@ -103,6 +105,7 @@ export class CreatureSkillSystem {
       d.level++
       this.autoUnlock(d)
     }
+    d.xpStr = d.level >= MAX_LEVEL ? 'XP: MAX' : `XP: ${Math.round(d.xp)}/${(d.level + 1) * XP_PER_LEVEL}`
   }
 
   /** 检查生物是否拥有某技能 */
@@ -215,7 +218,7 @@ export class CreatureSkillSystem {
     ctx.fillStyle = '#ffcc44'
     ctx.fillRect(px + 200, py + 10, 240 * xpPct, 14)
     ctx.fillStyle = '#fff'; ctx.font = '10px monospace'
-    ctx.fillText(`XP: ${d.xp}/${d.level >= MAX_LEVEL ? 'MAX' : xpForNext}`, px + 205, py + 22)
+    ctx.fillText(d.xpStr, px + 205, py + 22)
 
     // 分支标签
     const tabW = PANEL_W / BRANCHES.length
@@ -281,7 +284,7 @@ export class CreatureSkillSystem {
   private getOrCreate(entityId: number): CreatureSkillData {
     let d = this.data.get(entityId)
     if (!d) {
-      d = { xp: 0, level: 0, skills: new Set(), branchXP: { combat: 0, gather: 0, build: 0, magic: 0, leader: 0 } }
+      d = { xp: 0, level: 0, skills: new Set(), branchXP: { combat: 0, gather: 0, build: 0, magic: 0, leader: 0 }, xpStr: `XP: 0/${XP_PER_LEVEL}` }
       this.data.set(entityId, d)
     }
     return d
