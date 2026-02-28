@@ -30,6 +30,9 @@ export class ArmySystem {
   private _buildingsToRemoveBuf: number[] = []
   // Reusable buffer for cleanupAndCheckEnd (every tick)
   private _civsToRemoveBuf: number[] = []
+  // Reusable buffer for findNearestEnemyBuilding (called every tick via updateMarching)
+  private _bestTargetBuf = { x: 0, y: 0 }
+  private _bestTargetFound = false
 
   getArmies(): Map<number, Army> {
     return this.armies
@@ -154,15 +157,15 @@ export class ArmySystem {
     if (count === 0) return null
     ox /= count; oy /= count
 
-    let best: { x: number; y: number } | null = null
     let bestDist = Infinity
+    this._bestTargetFound = false
     for (const id of enemyBuildings) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (!pos) continue
       const d = (pos.x - ox) ** 2 + (pos.y - oy) ** 2
-      if (d < bestDist) { bestDist = d; best = { x: pos.x, y: pos.y } }
+      if (d < bestDist) { bestDist = d; this._bestTargetBuf.x = pos.x; this._bestTargetBuf.y = pos.y; this._bestTargetFound = true }
     }
-    return best
+    return this._bestTargetFound ? this._bestTargetBuf : null
   }
 
   private gatherSoldiers(em: EntityManager, civId: number): EntityId[] {
