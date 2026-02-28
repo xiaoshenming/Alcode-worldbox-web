@@ -1802,6 +1802,8 @@ export class Game {
   private _civDataBuf: { id: number; name: string; color: string; capitalX: number; capitalY: number; relations: Map<number, number> }[] = []
   // Pre-allocated trade route buffer
   private _tradeRoutesBuf: { fromX: number; fromY: number; toX: number; toY: number; volume: number; active: boolean }[] = []
+  // Pre-allocated fortification buffer
+  private _fortsBuf: CityFortification[] = []
   // Pre-allocated chronicle snapshot to avoid per-60tick allocation
   private _chronicleCivsBuf: { id: number; name: string; population: number; cities: number }[] = []
   private _chronicleSnapshot: WorldSnapshot = { totalPopulation: 0, totalCities: 0, activeWars: 0, civilizations: this._chronicleCivsBuf, era: '' }
@@ -3367,7 +3369,8 @@ export class Game {
         this.tutorial.update()
         // Build fortification data from civilizations
         if (tick % 120 === 0) {
-          const forts: CityFortification[] = []
+          const forts = this._fortsBuf; forts.length = 0
+          let fortIdx = 0
           for (const [civId, civ] of this.civManager.civilizations) {
             if (civ.buildings.length === 0) continue
             const pos = this.em.getComponent<PositionComponent>(civ.buildings[0], 'position')
@@ -3375,15 +3378,16 @@ export class Game {
             const era = this.eraSystem.getEra(civId)
             const level = era === 'stone' ? 'wooden' as const : era === 'bronze' || era === 'iron' ? 'stone' as const : 'castle' as const
             let hasWar = false; for (const r of civ.relations.values()) { if (r < -30) { hasWar = true; break } }
-            forts.push({
-              cityId: civ.buildings[0], civId, centerX: Math.floor(pos.x), centerY: Math.floor(pos.y),
-              radius: Math.min(8, 3 + Math.floor(civ.territory.size / 50)),
-              level, health: 100, maxHealth: 100,
-              towerCount: Math.min(4, 1 + Math.floor(civ.techLevel / 2)),
-              hasMoat: era === 'iron' || era === 'medieval' || era === 'renaissance',
-              isUnderAttack: hasWar, color: civ.color
-            })
+            let fslot = forts[fortIdx]
+            if (!fslot) { fslot = { cityId: 0, civId: 0, centerX: 0, centerY: 0, radius: 0, level: 'wooden', health: 100, maxHealth: 100, towerCount: 0, hasMoat: false, isUnderAttack: false, color: '' }; forts.push(fslot) }
+            fslot.cityId = civ.buildings[0]; fslot.civId = civId; fslot.centerX = Math.floor(pos.x); fslot.centerY = Math.floor(pos.y)
+            fslot.radius = Math.min(8, 3 + Math.floor(civ.territory.size / 50)); fslot.level = level
+            fslot.health = 100; fslot.maxHealth = 100; fslot.towerCount = Math.min(4, 1 + Math.floor(civ.techLevel / 2))
+            fslot.hasMoat = era === 'iron' || era === 'medieval' || era === 'renaissance'
+            fslot.isUnderAttack = hasWar; fslot.color = civ.color
+            fortIdx++
           }
+          forts.length = fortIdx
           this.fortificationRenderer.updateFortifications(forts)
           // Siege-formation linkage: auto-trigger sieges when civs are at war
           for (const [civId, civ] of this.civManager.civilizations) {
