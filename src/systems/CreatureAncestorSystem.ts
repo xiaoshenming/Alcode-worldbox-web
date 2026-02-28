@@ -39,6 +39,10 @@ const DOMAIN_COLORS: Record<AncestorDomain, string> = {
   craft: '#fa0',
   wisdom: '#c8f',
 }
+// Pre-computed first-char uppercase for render — avoids per-ancestor string allocation
+const DOMAIN_ICON_LABEL: Record<AncestorDomain, string> = {
+  valor: 'V', harvest: 'H', healing: 'H', craft: 'C', wisdom: 'W',
+}
 
 let nextAncestorId = 1
 
@@ -211,7 +215,7 @@ export class CreatureAncestorSystem {
       ctx.fillStyle = '#fff'
       ctx.font = this._spiritFont
       ctx.textAlign = 'center'
-      ctx.fillText(ancestor.domain[0].toUpperCase(), sx, sy + 3 * zoom)
+      ctx.fillText(DOMAIN_ICON_LABEL[ancestor.domain], sx, sy + 3 * zoom)
 
       // Worshipper count
       if (ancestor.worshippers > 0) {

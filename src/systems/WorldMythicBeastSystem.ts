@@ -64,6 +64,10 @@ const BEAST_STATS: Record<BeastType, { hp: number; dmg: number; spd: number; ter
   griffin: { hp: 400, dmg: 20, spd: 2.0, territory: 30 },
   hydra: { hp: 700, dmg: 35, spd: 0.7, territory: 18 },
 }
+// Pre-computed first-char uppercase for render — avoids per-beast string allocation
+const BEAST_ICON_LABEL: Record<BeastType, string> = {
+  phoenix: 'P', leviathan: 'L', behemoth: 'B', griffin: 'G', hydra: 'H',
+}
 
 let nextBeastId = 1
 
@@ -280,7 +284,7 @@ export class WorldMythicBeastSystem {
       // Type icon
       ctx.fillStyle = color
       ctx.font = this._typeFont
-      ctx.fillText(beast.type[0].toUpperCase(), sx, sy + 4 * zoom)
+      ctx.fillText(BEAST_ICON_LABEL[beast.type], sx, sy + 4 * zoom)
 
       // Hostile indicator
       if (beast.hostile) {
