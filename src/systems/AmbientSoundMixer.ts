@@ -6,6 +6,9 @@
  */
 
 export type SoundLayer = 'nature' | 'weather' | 'season' | 'war' | 'civilization';
+
+/** Pre-computed layer list — avoids per-constructor literal array creation */
+const _DEFAULT_LAYERS: readonly SoundLayer[] = ['nature', 'weather', 'season', 'war', 'civilization']
 export type SoundEvent = 'battle_start' | 'building_complete' | 'disaster' | 'achievement' | 'era_change';
 
 export interface LayerState {
@@ -100,7 +103,7 @@ export class AmbientSoundMixer {
   constructor(fadeTicks: number = DEFAULT_FADE_TICKS) {
     this._fadeTicks = fadeTicks;
 
-    const defaultLayers: SoundLayer[] = ['nature', 'weather', 'season', 'war', 'civilization'];
+    const defaultLayers = _DEFAULT_LAYERS;
     this._layers = new Map();
     for (const l of defaultLayers) {
       this._layers.set(l, {

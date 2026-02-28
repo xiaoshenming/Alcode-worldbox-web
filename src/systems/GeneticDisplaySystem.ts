@@ -1,6 +1,9 @@
 /** GeneticDisplaySystem - family tree traits visualization in creature panel */
 import { EntityManager, EntityId, CreatureComponent, GeneticsComponent } from '../ecs/Entity'
 
+/** Pre-computed grandparent x-offsets — avoids per-render literal array creation */
+const _GP_POSITIONS = [-55, -20, 20, 55] as const
+
 export interface TraitDisplay {
   name: string
   value: number
@@ -181,7 +184,7 @@ export class GeneticDisplaySystem {
 
     // Grandparents
     const gpY = parentY - levelGap
-    const gpPositions = [-55, -20, 20, 55]
+    const gpPositions = _GP_POSITIONS
     for (let i = 0; i < Math.min(tree.grandparents.length, 4); i++) {
       this.drawNode(ctx, x + gpPositions[i], gpY, nodeW - 10, nodeH - 2, tree.grandparents[i])
       const parentX = i < 2 ? x - 35 : x + 35

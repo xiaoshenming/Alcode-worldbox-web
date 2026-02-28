@@ -1,5 +1,10 @@
 // Procedural sound effects via Web Audio API (oscillator-based, no files)
 
+/** Pre-computed achievement notes — avoids per-call array creation */
+const _ACHIEVEMENT_NOTES = [523, 659, 784, 1047] as const // C5, E5, G5, C6
+/** Pre-computed level-up frequencies — avoids per-call array creation */
+const _LEVELUP_FREQS = [400, 500, 600, 800] as const
+
 export class SoundSystem {
   private ctx: AudioContext | null = null
   private muted: boolean = false
@@ -158,7 +163,7 @@ export class SoundSystem {
   playAchievement(): void {
     if (this.muted) return
     const ctx = this.getCtx()
-    const notes = [523, 659, 784, 1047] // C5, E5, G5, C6
+    const notes = _ACHIEVEMENT_NOTES
     notes.forEach((freq, i) => {
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
@@ -202,7 +207,7 @@ export class SoundSystem {
   playLevelUp(): void {
     if (this.muted) return
     const ctx = this.getCtx()
-    const freqs = [400, 500, 600, 800]
+    const freqs = _LEVELUP_FREQS
     freqs.forEach((freq, i) => {
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
