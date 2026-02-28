@@ -21,6 +21,9 @@ const PRESETS: Preset[] = [
   { label: 'Dense Fog', type: 'fog', intensity: 0.7, duration: 800 },
 ]
 
+const DUR_OPTS = [0, 300, 600, 1200] as const
+const DUR_LABELS = ['Inf', '300', '600', '1200'] as const
+
 const PW = 280
 const PH = 340
 const BG = 'rgba(10,15,25,0.88)'
@@ -159,17 +162,15 @@ export class WeatherControlSystem {
     ctx.textAlign = 'left'
     ctx.fillStyle = '#8899aa'
     ctx.fillText('Duration', this.px + 12, cy)
-    const durOpts = [0, 300, 600, 1200]
-    const durLabels = ['Inf', '300', '600', '1200']
     const dw = Math.floor((PW - 100) / 4)
-    for (let i = 0; i < durOpts.length; i++) {
+    for (let i = 0; i < DUR_OPTS.length; i++) {
       const dx = this.px + 80 + i * (dw + 3)
-      const active = this.duration === durOpts[i]
+      const active = this.duration === DUR_OPTS[i]
       ctx.fillStyle = active ? 'rgba(79,195,247,0.35)' : 'rgba(40,50,70,0.7)'
       ctx.fillRect(dx, cy - 9, dw, 18)
       ctx.fillStyle = active ? '#fff' : '#99aabb'
       ctx.textAlign = 'center'
-      ctx.fillText(durLabels[i], dx + dw / 2, cy)
+      ctx.fillText(DUR_LABELS[i], dx + dw / 2, cy)
     }
     cy += 24
 
@@ -238,7 +239,7 @@ export class WeatherControlSystem {
     cy += 22
 
     // Duration buttons
-    const durOpts = [0, 300, 600, 1200]
+    const durOpts = DUR_OPTS
     const dw = Math.floor((PW - 100) / 4)
     for (let i = 0; i < durOpts.length; i++) {
       const dx = px + 80 + i * (dw + 3)

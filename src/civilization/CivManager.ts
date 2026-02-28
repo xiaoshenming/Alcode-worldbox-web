@@ -4,6 +4,11 @@ import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { Civilization, createCivilization, BuildingType, BuildingComponent, CivMemberComponent, RELIGION_NAMES } from './Civilization'
 import { EventLog } from '../systems/EventLog'
 
+/** Tax penalty per taxRate level (0-3) — avoids per-call literal array creation in updateHappiness */
+const _TAX_PENALTY: readonly number[] = [0, -0.01, -0.03, -0.06] as const
+/** Tax income per taxRate level (0-3) — avoids per-call literal array creation in updateHappiness */
+const _TAX_INCOME: readonly number[] = [0, 0.02, 0.05, 0.1] as const
+
 /** Pre-computed blessings array — avoids per-call literal array creation in grantBlessing */
 const _BLESSINGS: ReadonlyArray<readonly [string, string]> = [
   ['harvest', 'Divine Harvest - bonus food production'],
@@ -590,11 +595,11 @@ export class CivManager {
     else if (civ.resources.food < civ.population) delta -= 0.02
 
     // Tax impact: higher tax = less happy
-    const taxPenalty = [0, -0.01, -0.03, -0.06][civ.taxRate] ?? 0
+    const taxPenalty = _TAX_PENALTY[civ.taxRate] ?? 0
     delta += taxPenalty
 
     // Tax generates gold
-    const taxIncome = [0, 0.02, 0.05, 0.1][civ.taxRate] ?? 0
+    const taxIncome = _TAX_INCOME[civ.taxRate] ?? 0
     civ.resources.gold += taxIncome * civ.population
 
     // Houses boost happiness
