@@ -53,8 +53,17 @@ export class CreatureVisionSystem {
       const terrainMod = TERRAIN_VISION_MOD[tile] ?? 0
       const effectiveRange = Math.max(2, BASE_VISION + terrainMod)
 
-      // Find visible entities within range
-      const visible: number[] = []
+      // Find visible entities within range — reuse existing array if present
+      let existing = this.visionMap.get(eid)
+      if (!existing) {
+        existing = { entityId: eid, range: BASE_VISION, effectiveRange, visibleEntities: [], lastUpdate: tick }
+        this.visionMap.set(eid, existing)
+      } else {
+        existing.effectiveRange = effectiveRange
+        existing.lastUpdate = tick
+      }
+      const visible = existing.visibleEntities
+      visible.length = 0
       const allPos = em.getEntitiesWithComponents('position')
 
       for (const other of allPos) {
@@ -68,14 +77,6 @@ export class CreatureVisionSystem {
           visible.push(other)
         }
       }
-
-      this.visionMap.set(eid, {
-        entityId: eid,
-        range: BASE_VISION,
-        effectiveRange,
-        visibleEntities: visible,
-        lastUpdate: tick,
-      })
     }
   }
 

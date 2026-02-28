@@ -34,6 +34,13 @@ export class WorldStatsOverviewSystem {
   // Pre-allocated chart point to avoid [x,y] tuple allocation per point
   private _cpx = 0
   private _cpy = 0
+  // Pre-allocated stats row to avoid 4-element object array creation per render
+  private _statsRow: Array<{ l: string; v: number; c: string }> = [
+    { l: 'Pop', v: 0, c: '#4fc3f7' },
+    { l: 'Civs', v: 0, c: '#aed581' },
+    { l: 'Bldg', v: 0, c: '#ffb74d' },
+    { l: 'Res', v: 0, c: '#ce93d8' },
+  ]
 
   constructor() { /* no-op */ }
 
@@ -118,12 +125,11 @@ export class WorldStatsOverviewSystem {
     // Summary row
     const sy = y + 28
     ctx.font = '10px monospace'
-    const stats = [
-      { l: 'Pop', v: this.totalPop, c: '#4fc3f7' },
-      { l: 'Civs', v: this.civCount, c: '#aed581' },
-      { l: 'Bldg', v: this.buildingCount, c: '#ffb74d' },
-      { l: 'Res', v: Math.round(this.resourceTotal), c: '#ce93d8' },
-    ]
+    const stats = this._statsRow
+    stats[0].v = this.totalPop
+    stats[1].v = this.civCount
+    stats[2].v = this.buildingCount
+    stats[3].v = Math.round(this.resourceTotal)
     const colW = (PANEL_W - 20) / stats.length
     for (let i = 0; i < stats.length; i++) {
       const lx = x + 10 + i * colW

@@ -1,12 +1,12 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代49完成。深度GC优化第八轮 — 专注高频update路径的Array分配消除、死代码删除、对象spread替换。主要成果：1) MigrationSystem+AllianceSystem+TerraformingSystem：预分配_bandsToRemoveBuf/_validBuf/_toRemoveBuf，TerraformEffect缓存混合色字符串（51档量化）；2) ArmySystem.cleanupAndCheckEnd：预分配_civsToRemoveBuf（每tick）；3) NavalCombatSystem.updateBattle：删除allShips死代码数组+spread（每5tick）；4) VolcanoSystem.updateLavaFlows：预分配_lavaToRemoveBuf（eruption期间每帧）；5) SiegeSystem：预分配_siegesToRemoveBuf+_soldiersNearBuf，countSoldiersNear改为直接计数消除临时数组分配；6) WorldMigrationWaveSystem.advanceWaves：预分配_wavesToRemoveBuf（每2tick）；7) ArtifactSystem.updateHeroQuesting：unclaimed对象数组改为3个平坦Float缓冲区，nearest对象spread改为索引查找，消除每帧的对象分配。总计7批commit，5434测试全通过，TypeScript clean。
+🧠 AI 上轮笔记：迭代53完成。深度GC优化第九轮 — 专注方法内字面量数组提取为模块级常量、Set预分配、临时数组消除。主要成果：1) 7个系统方法内字面量数组改为_civsBuf/_aliveCivsBuf/_participantsBuf等预分配（DiplomaticSummitSystem 3个buf + DiplomaticCouncilSystem/TradeGuildSystem/PeaceTreatySystem的usedIdxSet预分配）；2) CreatureMentorSystem _mentorsBuf/_apprenticesBuf预分配；3) CreatureScribeSystem _scribesBuf预分配；4) CreatureTraumaSystem.pickSource()/CreatureGuildSystem/DiplomaticBlockadeSystem/DiplomaticCeremonySystem/MythologySystem/WorldAncientRuinSystem/WorldEchoSystem中的字面量数组提取为模块级常量（消除每次调用重建）；5) AchievementPopupSystem/AchievementProgressSystem的cats/allCats字面量改为模块级常量；6) EspionageSystem/DiplomaticEspionageSystem/PlagueMutationSystem/WorldDustStormSystem/WorldTectonicSystem/TradeEconomySystem/TradeNegotiationSystem的字面量数组提取；7) MusicSystem的valid Moods提取；8) FogOfWarSystem._pendingRewards=[]改为.length=0；9) CreatureRitualSystem消除nearby.slice(0,5)的spread分配。总计3批commit，5434测试全通过，TypeScript clean，构建3.06s成功。
 🎯 AI 自定优先级：[
-  "1. FogOfWarSystem.memberPositions：每10tick clear后 list=[] 创建新数组 — 可用pool模式复用数组（map.get返回后length=0 reset），但需要确保每次clear后旧list正确归还",
-  "2. 扫描QuestSystem/CropSystem/ArtifactSystem等系统的update路径中是否还有对象字面量分配",
-  "3. ArtifactSystem.applyBuffs()是否每帧有GC来源 — 值得检查",
-  "4. 扫描render路径中的Math.sqrt调用 — 有些可以改为距离平方比较（已知NavalCombatSystem等已有这类优化）",
-  "5. 扫描DisasterChainSystem/EcosystemSystem等未检查的高频系统中的数组分配"
+  "1. 扫描更多热路径中的对象字面量 push（.push({...}) 模式）— 在每tick/高频执行的方法里，每次创建对象比预分配对象池代价高",
+  "2. BattleReplaySystem.recordFrame() 中的 units.map(u=>({...u})) 和 attacks.map() — 战斗期间每帧调用，对象spread分配较多，考虑平坦数组优化",
+  "3. 检查 BuildingVarietySystem.getAvailableBuildings() 中的 result.push(...spread) — 如果被频繁调用可以预计算",
+  "4. FormationSystem.calcMemberTarget() — 每成员每帧调用Math.sqrt，`count = formation.members.length` 固定，考虑缓存cols变量",
+  "5. 继续扫描还有没有热路径中的 new Set()、new Map()、{} 对象字面量未处理"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
@@ -63,10 +63,14 @@
   "【迭代49新增】死代码Array检测：grep方法创建的数组后续未使用 — 如NavalCombatSystem.allShips创建后从未引用，直接删除",
   "【迭代49新增】对象数组→平坦缓冲区模式：unclaimed:{id,x,y}[]改为_idBuf/_xBuf/_yBuf三个数组，nearest:{...art,dist}改为nearestIdx+nearestDist，完全消除对象分配",
   "【迭代49新增】countXxx方法调用getXxx().length是常见陷阱 — 直接实现计数循环，零数组分配",
-  "【迭代49新增】TerraformEffect混色缓存：_lastProgressQ=Math.round(t*50)量化51档，仅在进阶时重建字符串，每效果每帧平均节省一次lerpColor分配"
+  "【迭代49新增】TerraformEffect混色缓存：_lastProgressQ=Math.round(t*50)量化51档，仅在进阶时重建字符串，每效果每帧平均节省一次lerpColor分配",
+  "【迭代53新增】方法内字面量数组反模式：const types: FooType[] = ['a','b','c'] 在每次调用时重建 — 提取为模块级常量，消除GC，适用于type别名对应的值数组（包括Union类型字符串集合）",
+  "【迭代53新增】DiplomaticSummitSystem的applySuccess/applyFailure中的participants.map(c=>c.name).join()改为手动字符串拼接，消除map创建的临时数组",
+  "【迭代53新增】this.xxx = []清空反模式 — 改为this.xxx.length = 0，避免创建新数组（适用于_pendingRewards等重置场景）",
+  "【迭代53新增】new Set()作为随机采样去重集合若在热路径中反复创建 — 提取为预分配私有成员_usedIdxSet，clear()后复用"
 ]
 
-迭代轮次: 53/100
+迭代轮次: 54/100
 
 
 🔄 自我进化（每轮必做）：
@@ -75,6 +79,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-02-28T18:54:30+08:00"
+  "last_updated": "2026-02-28T19:28:10+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。

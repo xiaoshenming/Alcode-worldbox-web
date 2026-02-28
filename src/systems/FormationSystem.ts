@@ -44,6 +44,8 @@ export class FormationSystem {
   // Reusable flat buffers for render() positions (avoids {x,y}[] alloc per formation per frame)
   private _renderPosXBuf: number[] = []
   private _renderPosYBuf: number[] = []
+  private _tx = 0
+  private _ty = 0
 
   createFormation(civId: number, type: FormationType, members: number[]): number {
     if (members.length === 0) return -1
@@ -115,11 +117,11 @@ export class FormationSystem {
 
       // Calculate target positions for each member and nudge them toward it
       for (let i = 0; i < f.members.length; i++) {
-        const target = this.calcMemberTarget(f, i)
+        const hasTarget = this.calcMemberTarget(f, i)
         const pos = em.getComponent<PositionComponent>(f.members[i], 'position')
-        if (pos && target) {
-          const dx = target.x - pos.x
-          const dy = target.y - pos.y
+        if (pos && hasTarget) {
+          const dx = this._tx - pos.x
+          const dy = this._ty - pos.y
           const dist = Math.sqrt(dx * dx + dy * dy)
           if (dist > 1) {
             const step = Math.min(dist, 0.5)
@@ -162,10 +164,10 @@ export class FormationSystem {
       const posX = this._renderPosXBuf; posX.length = 0
       const posY = this._renderPosYBuf; posY.length = 0
       for (let i = 0; i < f.members.length; i++) {
-        const target = this.calcMemberTarget(f, i)
-        if (target) {
-          posX.push((target.x * TILE_SIZE - cameraX) * zoom)
-          posY.push((target.y * TILE_SIZE - cameraY) * zoom)
+        const hasTarget = this.calcMemberTarget(f, i)
+        if (hasTarget) {
+          posX.push((this._tx * TILE_SIZE - cameraX) * zoom)
+          posY.push((this._ty * TILE_SIZE - cameraY) * zoom)
         }
       }
 
@@ -266,9 +268,9 @@ export class FormationSystem {
 
   // --- Internal helpers ---
 
-  private calcMemberTarget(f: Formation, index: number): { x: number; y: number } | null {
+  private calcMemberTarget(f: Formation, index: number): boolean {
     const count = f.members.length
-    if (count === 0) return null
+    if (count === 0) return false
 
     const cos = Math.cos(f.facing)
     const sin = Math.sin(f.facing)
@@ -330,10 +332,9 @@ export class FormationSystem {
       }
     }
 
-    // Rotate by facing and offset from center
-    return {
-      x: f.centerX + lx * cos - ly * sin,
-      y: f.centerY + lx * sin + ly * cos,
-    }
+    // Rotate by facing and offset from center — write into shared _tx/_ty fields
+    this._tx = f.centerX + lx * cos - ly * sin
+    this._ty = f.centerY + lx * sin + ly * cos
+    return true
   }
 }
