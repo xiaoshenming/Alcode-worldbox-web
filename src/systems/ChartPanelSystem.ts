@@ -28,6 +28,7 @@ export class ChartPanelSystem {
   private chartIndex = 0;
   private timeRange = 5000;
   isVisible = false;
+  private _ptsBuf: { px: number; py: number }[] = [];
 
   addDataPoint(tick: number, data: Omit<ChartDataPoint, 'tick'>): void {
     const point: ChartDataPoint = { tick, ...data };
@@ -64,11 +65,14 @@ export class ChartPanelSystem {
     return result;
   }
 
+  private _filteredBuf: ChartDataPoint[] = [];
   private filterByRange(data: ChartDataPoint[]): ChartDataPoint[] {
-    if (data.length === 0) return [];
+    if (data.length === 0) return data;
     const maxTick = data[data.length - 1].tick;
     const minTick = maxTick - this.timeRange;
-    return data.filter(d => d.tick >= minTick);
+    this._filteredBuf.length = 0;
+    for (const d of data) { if (d.tick >= minTick) this._filteredBuf.push(d); }
+    return this._filteredBuf;
   }
 
   private niceScale(maxVal: number): { max: number; step: number } {
@@ -107,10 +111,14 @@ export class ChartPanelSystem {
 
     const data = this.filterByRange(this.getOrderedData());
     const key = cfg.key;
-    const values = data.map(d => d[key] as number);
-    const rawMax = values.length > 0 ? Math.max(...values) : 0;
+    let rawMax = 0;
+    let currentVal = 0;
+    for (const d of data) {
+      const v = d[key] as number;
+      if (v > rawMax) rawMax = v;
+      currentVal = v;
+    }
     const { max: yMax, step: yStep } = this.niceScale(rawMax);
-    const currentVal = values.length > 0 ? values[values.length - 1] : 0;
 
     // Title + current value
     ctx.fillStyle = cfg.color;
@@ -171,10 +179,14 @@ export class ChartPanelSystem {
       const tMax = data[data.length - 1].tick;
       const tRange = tMax - tMin || 1;
 
-      const pts: { px: number; py: number }[] = data.map(d => ({
-        px: cx + ((d.tick - tMin) / tRange) * cw,
-        py: cy + ch - ((d[key] as number) / yMax) * ch,
-      }));
+      // 预分配坐标buf，避免每帧 new {px,py} 对象
+      const pts = this._ptsBuf;
+      pts.length = data.length;
+      for (let i = 0; i < data.length; i++) {
+        if (!pts[i]) pts[i] = { px: 0, py: 0 };
+        pts[i].px = cx + ((data[i].tick - tMin) / tRange) * cw;
+        pts[i].py = cy + ch - ((data[i][key] as number) / yMax) * ch;
+      }
 
       // Filled area
       ctx.beginPath();

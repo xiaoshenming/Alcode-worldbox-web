@@ -38,9 +38,11 @@ export class DiplomaticNavalBlockadeSystem {
     if (civs.length < 2) return
 
     if (this.blockades.length < MAX_BLOCKADES && Math.random() < BLOCKADE_CHANCE) {
-      const shuffled = [...civs].sort(() => Math.random() - 0.5)
-      const blockader = shuffled[0]
-      const target = shuffled[1]
+      const i = Math.floor(Math.random() * civs.length)
+      let j = Math.floor(Math.random() * (civs.length - 1))
+      if (j >= i) j++
+      const blockader = civs[i]
+      const target = civs[j]
 
       const strengthIdx = Math.floor(Math.random() * STRENGTHS.length)
       const strength = STRENGTHS[strengthIdx]

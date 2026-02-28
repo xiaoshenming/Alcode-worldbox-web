@@ -37,6 +37,7 @@ const REASONS: Record<NicknameTitle, string> = {
 export class CreatureNicknameSystem {
   private nicknames: Nickname[] = []
   private nextId = 1
+  private _famousBuf: Nickname[] = []
   private lastCheck = 0
 
   update(dt: number, em: EntityManager, tick: number): void {
@@ -107,6 +108,10 @@ export class CreatureNicknameSystem {
     return this.nicknames.find(n => n.entityId === entityId)
   }
   getFamous(count: number): Nickname[] {
-    return [...this.nicknames].sort((a, b) => b.fame - a.fame).slice(0, count)
+    this._famousBuf.length = 0
+    for (const n of this.nicknames) this._famousBuf.push(n)
+    this._famousBuf.sort((a, b) => b.fame - a.fame)
+    if (this._famousBuf.length > count) this._famousBuf.length = count
+    return this._famousBuf
   }
 }

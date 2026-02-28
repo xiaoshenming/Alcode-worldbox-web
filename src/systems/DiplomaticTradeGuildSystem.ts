@@ -46,8 +46,13 @@ export class DiplomaticTradeGuildSystem {
       const guildType = GUILD_TYPES[Math.floor(Math.random() * GUILD_TYPES.length)]
       const name = GUILD_NAMES[Math.floor(Math.random() * GUILD_NAMES.length)]
       const memberCount = 2 + Math.floor(Math.random() * Math.min(3, civs.length - 1))
-      const shuffled = [...civs].sort(() => Math.random() - 0.5)
-      const memberCivs = shuffled.slice(0, memberCount).map(c => c.id)
+      // 随机选择 memberCount 个文明（零分配，Fisher-Yates partial shuffle 思路）
+      const memberCivs: number[] = []
+      const used = new Set<number>()
+      while (memberCivs.length < memberCount) {
+        const idx = Math.floor(Math.random() * civs.length)
+        if (!used.has(idx)) { used.add(idx); memberCivs.push(civs[idx].id) }
+      }
 
       this.guilds.push({
         id: this.nextId++,

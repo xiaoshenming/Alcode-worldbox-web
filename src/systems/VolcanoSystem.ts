@@ -226,7 +226,8 @@ export class VolcanoSystem {
     if (!data) return
     this.volcanoes = data.volcanoes ?? []
     if (this.volcanoes.length > 0) {
-      nextVolcanoId = Math.max(...this.volcanoes.map(v => v.id)) + 1
+      let maxId = 0; for (const v of this.volcanoes) { if (v.id > maxId) maxId = v.id }
+      nextVolcanoId = maxId + 1
     }
   }
 }

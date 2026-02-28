@@ -129,6 +129,11 @@ export class WorldTidalWaveSystem {
   getWaves(): TidalWave[] { return this.waves }
   isWaveActive(): boolean { return this.waves.length > 0 }
   getStrongestWave(): TidalWave | undefined {
-    return [...this.waves].sort((a, b) => DAMAGE_MAP[b.intensity] - DAMAGE_MAP[a.intensity])[0]
+    if (this.waves.length === 0) return undefined
+    let best = this.waves[0]
+    for (let i = 1; i < this.waves.length; i++) {
+      if (DAMAGE_MAP[this.waves[i].intensity] > DAMAGE_MAP[best.intensity]) best = this.waves[i]
+    }
+    return best
   }
 }
