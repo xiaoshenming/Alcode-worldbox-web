@@ -28,6 +28,7 @@ export class RenderCullingSystem {
   private chunksX = 0;
   private chunksY = 0;
   private visibleChunks: Set<number> = new Set();
+  private _visibleBuf: number[] = [];
 
   private stats: CullingStats = {
     totalEntities: 0,
@@ -69,7 +70,7 @@ export class RenderCullingSystem {
 
   cullEntities(entities: Array<{ id: number; x: number; y: number }>): number[] {
     this.stats.totalEntities = entities.length;
-    const visible: number[] = [];
+    const visible = this._visibleBuf; visible.length = 0;
 
     for (let i = 0; i < entities.length; i++) {
       const e = entities[i];
@@ -121,7 +122,7 @@ export class RenderCullingSystem {
   }
 
   getStats(): CullingStats {
-    return { ...this.stats };
+    return this.stats;
   }
 
   isChunkVisible(chunkX: number, chunkY: number): boolean {

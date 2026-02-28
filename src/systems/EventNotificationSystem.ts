@@ -55,6 +55,7 @@ export class EventNotificationSystem {
   private histCount = 0;
   private histVisible = false;
   private flashAlpha = 0;
+  private _candidatesBuf: GameEvent[] = [];
 
   constructor() {
     this.histBuf = new Array<GameEvent | null>(HIST_CAP).fill(null);
@@ -153,7 +154,7 @@ export class EventNotificationSystem {
     camX: number, camY: number, sw: number, sh: number, zoom: number
   ): void {
     this.indicators.length = 0;
-    const candidates: GameEvent[] = [];
+    const candidates = this._candidatesBuf; candidates.length = 0;
     for (let i = 0; i < this.histCount && candidates.length < MAX_IND * 2; i++) {
       const evt = this.histBuf[(this.histHead - 1 - i + HIST_CAP) % HIST_CAP];
       if (!evt || (evt.priority !== 'critical' && evt.priority !== 'high')) continue;
