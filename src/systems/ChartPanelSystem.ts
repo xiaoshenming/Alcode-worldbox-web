@@ -41,6 +41,9 @@ export class ChartPanelSystem {
   private _xLabels: string[] = ['', '', '', '', ''];
   private _prevXTMin = -1;
   private _prevXTRange = -1;
+  /** Cached label text width — rebuilt when chart type changes */
+  private _labelWidth = 0;
+  private _prevLabelType: ChartType = '' as ChartType;
 
   addDataPoint(tick: number, data: Omit<ChartDataPoint, 'tick'>): void {
     let slot: ChartDataPoint
@@ -156,7 +159,8 @@ export class ChartPanelSystem {
       this._prevCurrentKey = key;
       this._currentValStr = currentVal.toFixed(key === 'avgTechLevel' ? 1 : 0);
     }
-    ctx.fillText(this._currentValStr, x + 12 + ctx.measureText(cfg.label).width + 10, y + 11);
+    if (type !== this._prevLabelType) { this._prevLabelType = type; this._labelWidth = ctx.measureText(cfg.label).width; }
+    ctx.fillText(this._currentValStr, x + 12 + this._labelWidth + 10, y + 11);
 
     // Nav arrows
     ctx.fillStyle = 'rgba(255,255,255,0.45)';

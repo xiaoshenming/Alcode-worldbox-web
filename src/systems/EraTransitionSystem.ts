@@ -132,7 +132,13 @@ export class EraTransitionSystem {
 
   /** 设置科技数据 */
   setTechData(techs: Array<{ name: string; researched: boolean; progress: number }>): void {
-    this.techs = techs.map(t => ({ ...t, progressStr: `${Math.round(t.progress * 100)}%` }));
+    this.techs.length = techs.length
+    for (let i = 0; i < techs.length; i++) {
+      const t = techs[i]
+      const e = this.techs[i]
+      if (e) { e.name = t.name; e.researched = t.researched; e.progress = t.progress; e.progressStr = `${Math.round(t.progress * 100)}%` }
+      else this.techs[i] = { name: t.name, researched: t.researched, progress: t.progress, progressStr: `${Math.round(t.progress * 100)}%` }
+    }
   }
 
   toggleTechPreview(): void {
