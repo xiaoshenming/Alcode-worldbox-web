@@ -28,6 +28,8 @@ const SPECIES_COLORS: Record<string, string> = {
 const SPECIES_SIZES: Record<string, number> = {
   human: 3, elf: 3, dwarf: 3, orc: 4, sheep: 3, wolf: 3, dragon: 6,
 }
+/** Pre-computed Set for O(1) hostile species lookup in birth path */
+const HOSTILE_SPECIES = new Set(['wolf', 'orc', 'dragon'])
 const SPECIES_MAX_AGE: Record<string, [number, number]> = {
   human: [600, 900], elf: [1200, 2000], dwarf: [800, 1200], orc: [400, 700],
   sheep: [300, 500], wolf: [400, 600], dragon: [2000, 4000],
@@ -229,7 +231,7 @@ export class PopulationSystem {
         species,
         speed: species === 'dragon' ? 2 : species === 'wolf' ? 1.5 : 1,
         damage: species === 'dragon' ? 50 : species === 'wolf' ? 10 : 5,
-        isHostile: ['wolf', 'orc', 'dragon'].includes(species),
+        isHostile: HOSTILE_SPECIES.has(species),
         name: generateName(species),
         age: 0,
         maxAge,
