@@ -24,6 +24,8 @@ interface TameRecord {
   state: TameState
   /** 驯化进度 0-1 */
   progress: number
+  /** Pre-computed render string — avoids toFixed per frame */
+  progressStr: string
   /** 驯化开始 tick */
   startTick: number
   /** 动物名字 */
@@ -68,7 +70,8 @@ export class CreatureTamingSystem {
     if (this.records.some(r => r.animalId === animalId)) return
     this.records.push({
       animalId, ownerId, animalType, state: TameState.Taming,
-      progress: 0, startTick: tick,
+      progress: 0, progressStr: '0',
+      startTick: tick,
       name: NAMES[Math.floor(Math.random() * NAMES.length)],
       loyalty: 0.3,
     })
@@ -123,6 +126,7 @@ export class CreatureTamingSystem {
       if (r.state === TameState.Taming) {
         const info = ANIMAL_INFO[r.animalType]
         r.progress = clamp((tick - r.startTick) / info.tameTicks, 0, 1)
+        r.progressStr = (r.progress * 100).toFixed(0)
         if (r.progress >= 1) {
           r.state = TameState.Tamed
           r.loyalty = 0.6 + Math.random() * 0.3
@@ -223,7 +227,7 @@ export class CreatureTamingSystem {
         ctx.fillText(`${r.name} (${info.label})`, px + 38, drawY + 18)
 
         ctx.fillStyle = '#999'; ctx.font = '11px monospace'
-        const stateLabel = r.state === TameState.Taming ? `驯化中 ${(r.progress * 100).toFixed(0)}%` : `已驯化 | ${info.bonus}`
+        const stateLabel = r.state === TameState.Taming ? `驯化中 ${r.progressStr}%` : `已驯化 | ${info.bonus}`
         ctx.fillText(stateLabel, px + 38, drawY + 34)
 
         // 忠诚度/进度条

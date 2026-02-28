@@ -12,6 +12,8 @@ interface LawParam {
   defaultValue: number
   min: number
   max: number
+  /** Pre-computed render string — avoids toFixed per frame */
+  valueStr: string
 }
 
 /** 法则分类定义 */
@@ -31,7 +33,7 @@ function clamp(v: number, lo: number, hi: number): number {
 
 function buildCategories(): LawCategory[] {
   const make = (name: string, label: string, def = 1.0): LawParam => ({
-    name, label, value: def, defaultValue: def, min: 0.1, max: 5.0
+    name, label, value: def, defaultValue: def, min: 0.1, max: 5.0, valueStr: def.toFixed(2)
   })
   return [
     {
@@ -98,7 +100,7 @@ export class WorldLawSystem {
     const cat = this.categories.find(c => c.key === category)
     if (!cat) return
     const p = cat.params.find(pp => pp.name === name)
-    if (p) p.value = clamp(value, p.min, p.max)
+    if (p) { p.value = clamp(value, p.min, p.max); p.valueStr = p.value.toFixed(2) }
   }
 
   /**
@@ -161,6 +163,7 @@ export class WorldLawSystem {
         const ratio = clamp((lx - sliderStartX) / sliderW, 0, 1)
         const p = cat.params[i]
         p.value = Math.round((p.min + ratio * (p.max - p.min)) * 100) / 100
+        p.valueStr = p.value.toFixed(2)
         return true
       }
     }
@@ -259,7 +262,7 @@ export class WorldLawSystem {
       ctx.fillStyle = '#ffdd57'
       ctx.font = 'bold 12px monospace'
       ctx.textAlign = 'right'
-      ctx.fillText(p.value.toFixed(2) + 'x', contentX + contentW, sy + SLIDER_H / 2 + 1)
+      ctx.fillText(p.valueStr + 'x', contentX + contentW, sy + SLIDER_H / 2 + 1)
     }
 
     // 重置按钮
@@ -286,6 +289,7 @@ export class WorldLawSystem {
     for (const cat of this.categories) {
       for (const p of cat.params) {
         p.value = p.defaultValue
+        p.valueStr = p.defaultValue.toFixed(2)
       }
     }
   }
