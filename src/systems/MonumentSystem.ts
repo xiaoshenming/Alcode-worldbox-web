@@ -22,6 +22,8 @@ interface Monument {
   y: number
   /** 建造进度 0-1 */
   buildProgress: number
+  /** Pre-computed render string — avoids toFixed per frame */
+  buildProgressStr: string
   /** 耐久度 0-1 */
   durability: number
   /** 增益半径 */
@@ -65,7 +67,7 @@ export class MonumentSystem {
     const info = MONUMENT_INFO[type]
     const m: Monument = {
       id: nextMonumentId++, type, name: `${info.label}#${nextMonumentId - 1}`,
-      civId, x, y, buildProgress: 0, durability: 1,
+      civId, x, y, buildProgress: 0, buildProgressStr: '0', durability: 1,
       radius: info.radius, buffs: [...info.buffs],
       createdTick: tick, completed: false,
     }
@@ -123,6 +125,7 @@ export class MonumentSystem {
       if (!m.completed) {
         const info = MONUMENT_INFO[m.type]
         m.buildProgress = clamp((tick - m.createdTick) / info.buildTicks, 0, 1)
+        m.buildProgressStr = (m.buildProgress * 100).toFixed(0)
         if (m.buildProgress >= 1) m.completed = true
       } else {
         // 缓慢老化
@@ -194,7 +197,7 @@ export class MonumentSystem {
         ctx.fillText(`${m.name} (${info.label})`, px + 38, drawY + 18)
 
         ctx.fillStyle = '#999'; ctx.font = '11px monospace'
-        const status = m.completed ? `已完工 | 半径${m.radius}` : `建造中 ${(m.buildProgress * 100).toFixed(0)}%`
+        const status = m.completed ? `已完工 | 半径${m.radius}` : `建造中 ${m.buildProgressStr}%`
         ctx.fillText(status, px + 38, drawY + 34)
 
         // 增益标签
