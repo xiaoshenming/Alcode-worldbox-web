@@ -49,6 +49,7 @@ export class DiplomaticSanctionSystem {
   private nextEffectTick = EFFECT_INTERVAL
   private _activeBuf: Sanction[] = []
   private _onCivBuf: Sanction[] = []
+  private _sanctionMap: Map<number, number> = new Map()
 
   getSanctions(): Sanction[] { return this.sanctions }
 
@@ -152,7 +153,8 @@ export class DiplomaticSanctionSystem {
 
   private applyEffects(civManager: CivManagerLike): void {
     // Aggregate sanctions per target (only active)
-    const sanctionMap = new Map<number, number>()
+    const sanctionMap = this._sanctionMap
+    sanctionMap.clear()
     let hasActive = false
     for (const s of this.sanctions) {
       if (!s.active) continue
