@@ -71,7 +71,7 @@ export class EvolutionVisualSystem {
     if (!this.visible) return
     const pw = Math.min(720, screenWidth - 40), ph = Math.min(560, screenHeight - 40)
     const px = (screenWidth - pw) / 2, py = (screenHeight - ph) / 2
-    this.pr = { x: px, y: py, w: pw, h: ph }
+    const pr = this.pr; pr.x = px; pr.y = py; pr.w = pw; pr.h = ph
     ctx.save()
     // Panel bg
     ctx.fillStyle = BG
