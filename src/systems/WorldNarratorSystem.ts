@@ -103,6 +103,8 @@ export class WorldNarratorSystem {
   private dragOY = 0
   private unreadCount = 0
   private _unreadStr = '0'
+  /** Pre-computed panel header — rebuilt when entries.length changes */
+  private _headerStr = '📜 世界编年史 (0 条记录)'
 
   /* ── 公共 API ── */
 
@@ -114,6 +116,7 @@ export class WorldNarratorSystem {
     if (this.entries.length > MAX_ENTRIES) {
       this.entries.shift()
     }
+    this._headerStr = `\u{1F4DC} 世界编年史 (${this.entries.length} 条记录)`
   }
 
   /** 使用模板生成叙事 */
@@ -206,7 +209,7 @@ export class WorldNarratorSystem {
     ctx.fillStyle = '#ffe0c0'
     ctx.font = 'bold 14px monospace'
     ctx.textAlign = 'left'
-    ctx.fillText(`\u{1F4DC} 世界编年史 (${this.entries.length} 条记录)`, px + 12, py + 24)
+    ctx.fillText(this._headerStr, px + 12, py + 24)
 
     if (this.entries.length === 0) {
       ctx.fillStyle = '#888'; ctx.font = '13px monospace'; ctx.textAlign = 'center'

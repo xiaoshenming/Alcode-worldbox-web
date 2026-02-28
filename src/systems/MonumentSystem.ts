@@ -34,6 +34,8 @@ interface Monument {
   createdTick: number
   /** 是否已完工 */
   completed: boolean
+  /** Pre-computed "name (label)" display string — avoids template per frame */
+  nameLabel: string
 }
 
 const MONUMENT_INFO: Record<MonumentType, { icon: string; label: string; buildTicks: number; radius: number; buffs: { type: BuffType; value: number; label: string }[] }> = {
@@ -76,11 +78,13 @@ export class MonumentSystem {
   /** 开始建造纪念碑 */
   build(civId: number, type: MonumentType, x: number, y: number, tick: number): Monument {
     const info = MONUMENT_INFO[type]
+    const name = `${info.label}#${nextMonumentId}`
     const m: Monument = {
-      id: nextMonumentId++, type, name: `${info.label}#${nextMonumentId - 1}`,
+      id: nextMonumentId++, type, name,
       civId, x, y, buildProgress: 0, buildProgressStr: '0', durability: 1,
       radius: info.radius, buffs: [...info.buffs],
       createdTick: tick, completed: false,
+      nameLabel: `${name} (${info.label})`,
     }
     this.monuments.push(m)
     this._rebuildHeaderCache()
@@ -206,7 +210,7 @@ export class MonumentSystem {
 
         ctx.fillStyle = m.completed ? '#d0e8b0' : '#aaa'
         ctx.font = 'bold 12px monospace'
-        ctx.fillText(`${m.name} (${info.label})`, px + 38, drawY + 18)
+        ctx.fillText(m.nameLabel, px + 38, drawY + 18)
 
         ctx.fillStyle = '#999'; ctx.font = '11px monospace'
         const status = m.completed ? `已完工 | 半径${m.radius}` : `建造中 ${m.buildProgressStr}%`

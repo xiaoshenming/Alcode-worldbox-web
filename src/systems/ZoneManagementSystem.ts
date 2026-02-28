@@ -38,6 +38,8 @@ interface Zone {
   description: string;
   _lastZoom?: number;
   _labelFont?: string;
+  /** Pre-computed panel info string — avoids template literal per frame */
+  panelInfoStr: string;
 }
 
 /**
@@ -74,7 +76,8 @@ export class ZoneManagementSystem {
   addZone(x: number, y: number, w: number, h: number, type: string, name: string): number {
     const resolvedType = ZONE_TYPES.includes(type) ? type : 'forbidden';
     const id = this.nextId++;
-    this.zones.set(id, { id, x, y, w, h, type: resolvedType, name, description: '' });
+    const label = ZONE_LABELS[resolvedType] ?? resolvedType;
+    this.zones.set(id, { id, x, y, w, h, type: resolvedType, name, description: '', panelInfoStr: `[${label}] ${w}x${h}` });
     return id;
   }
 
@@ -309,7 +312,7 @@ export class ZoneManagementSystem {
       ctx.fillText(`${zone.name}`, px + 26, ry + 4);
       ctx.fillStyle = 'rgba(180,180,180,0.7)';
       ctx.font = '10px monospace';
-      ctx.fillText(`[${label}] ${zone.w}x${zone.h}`, px + 26, ry + 20);
+      ctx.fillText(zone.panelInfoStr, px + 26, ry + 20);
 
       // 描述（截断）
       if (zone.description) {

@@ -32,6 +32,8 @@ interface TameRecord {
   name: string
   /** 忠诚度 0-1 */
   loyalty: number
+  /** Pre-computed name+type label — avoids template per frame */
+  nameLabel: string
 }
 
 const ANIMAL_INFO: Record<AnimalType, { icon: string; label: string; tameTicks: number; bonus: string }> = {
@@ -71,12 +73,15 @@ export class CreatureTamingSystem {
   startTaming(ownerId: number, animalId: number, animalType: AnimalType, tick: number): void {
     // 检查是否已在驯化
     if (this.records.some(r => r.animalId === animalId)) return
+    const name = NAMES[Math.floor(Math.random() * NAMES.length)]
+    const info = ANIMAL_INFO[animalType]
     this.records.push({
       animalId, ownerId, animalType, state: TameState.Taming,
       progress: 0, progressStr: '0',
       startTick: tick,
-      name: NAMES[Math.floor(Math.random() * NAMES.length)],
+      name,
       loyalty: 0.3,
+      nameLabel: `${name} (${info.label})`,
     })
   }
 
@@ -229,7 +234,7 @@ export class CreatureTamingSystem {
 
         ctx.fillStyle = r.state === TameState.Tamed ? '#ffe0a0' : '#aaa'
         ctx.font = 'bold 12px monospace'
-        ctx.fillText(`${r.name} (${info.label})`, px + 38, drawY + 18)
+        ctx.fillText(r.nameLabel, px + 38, drawY + 18)
 
         ctx.fillStyle = '#999'; ctx.font = '11px monospace'
         const stateLabel = r.state === TameState.Taming ? `驯化中 ${r.progressStr}%` : `已驯化 | ${info.bonus}`
