@@ -75,8 +75,7 @@ export class WorldPermafrostSystem {
       for (const z of this.zones) {
         const dx = pos.x - z.x
         const dy = pos.y - z.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist < z.radius) {
+        if (dx * dx + dy * dy < z.radius * z.radius) {
           // Cold damage from permafrost
           if (needs.health > 10) {
             needs.health -= COLD_DAMAGE * (z.depth * 0.01)
@@ -91,7 +90,7 @@ export class WorldPermafrostSystem {
     return this.zones.some(z => {
       const dx = x - z.x
       const dy = y - z.y
-      return Math.sqrt(dx * dx + dy * dy) < z.radius
+      return dx * dx + dy * dy < z.radius * z.radius
     })
   }
 }

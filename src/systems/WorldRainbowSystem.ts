@@ -69,8 +69,8 @@ export class WorldRainbowSystem {
       for (const rb of this.rainbows) {
         const dx = pos.x - rb.x
         const dy = pos.y - rb.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist < MORALE_RADIUS + rb.span * 0.5) {
+        const threshold = MORALE_RADIUS + rb.span * 0.5
+        if (dx * dx + dy * dy < threshold * threshold) {
           needs.health = Math.min(100, needs.health + MORALE_BOOST * (rb.brightness * 0.01))
         }
       }

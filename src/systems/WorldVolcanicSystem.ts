@@ -109,10 +109,10 @@ export class WorldVolcanicSystem {
         if (dx * dx + dy * dy > r * r) continue
         const tx = volcano.x + dx, ty = volcano.y + dy
         if (tx < 0 || tx >= this.worldWidth || ty < 0 || ty >= this.worldHeight) continue
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist < r * 0.4) {
+        const distSq = dx * dx + dy * dy
+        if (distSq < r * r * 0.16) {
           world.setTile(tx, ty, TileType.LAVA)
-        } else if (dist < r * 0.7 && Math.random() < 0.5) {
+        } else if (distSq < r * r * 0.49 && Math.random() < 0.5) {
           world.setTile(tx, ty, TileType.LAVA)
         }
       }

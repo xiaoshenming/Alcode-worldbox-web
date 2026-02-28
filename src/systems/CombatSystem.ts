@@ -338,8 +338,7 @@ export class CombatSystem {
 
         const dx = cPos.x - bPos.x
         const dy = cPos.y - bPos.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist > 3) continue
+        if (dx * dx + dy * dy > 9) continue
 
         // Deal siege damage
         const damage = creature.damage * (0.3 + Math.random() * 0.4)

@@ -100,8 +100,8 @@ export class WorldSinkholeSystem {
       for (const s of activeSinkholes) {
         const dx = pos.x - s.x
         const dy = pos.y - s.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist < DAMAGE_RADIUS + s.radius) {
+        const threshold = DAMAGE_RADIUS + s.radius
+        if (dx * dx + dy * dy < threshold * threshold) {
           needs.health -= DAMAGE_AMOUNT * (s.depth * 0.01)
         }
       }

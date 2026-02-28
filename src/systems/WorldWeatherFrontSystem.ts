@@ -103,8 +103,7 @@ export class WorldWeatherFrontSystem {
       for (let j = i + 1; j < this.fronts.length; j++) {
         const a = this.fronts[i], b = this.fronts[j]
         const dx = a.x - b.x, dy = a.y - b.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist < COLLISION_DIST) {
+        if (dx * dx + dy * dy < COLLISION_DIST * COLLISION_DIST) {
           // Different front types colliding creates extreme weather
           if (a.type !== b.type) {
             this.collisions.push({
