@@ -70,7 +70,9 @@ export class ClonePowerSystem {
 
     this.lineage.set(cloneId, { sourceId: sourceEntityId, generation });
 
-    const traits = [...stats.traits.filter(t => t !== 'clone'), 'clone'];
+    const traits: string[] = []
+    for (const t of stats.traits) { if (t !== 'clone') traits.push(t) }
+    traits.push('clone');
     if (generation >= ClonePowerSystem.MAX_CLONE_GENERATION) {
       traits.push('unstable');
     }

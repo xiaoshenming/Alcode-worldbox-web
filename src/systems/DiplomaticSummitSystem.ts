@@ -55,6 +55,7 @@ export class DiplomaticSummitSystem {
   private activeSummit: Summit | null = null
   private nextSummitTick: number = SUMMIT_INTERVAL
   private displayAlpha: number = 0
+  private _usedIdxSet: Set<number> = new Set()
 
   update(_dt: number, civManager: CivManagerLike, tick: number): void {
     if (this.activeSummit) {
@@ -149,10 +150,22 @@ export class DiplomaticSummitSystem {
     const civs = this.getAliveCivs(civManager)
     if (civs.length < 2) return
 
-    const shuffled = civs.slice().sort(() => Math.random() - 0.5)
-    const count = Math.min(shuffled.length, 2 + Math.floor(Math.random() * 3))
-    const participants = shuffled.slice(0, count)
-    const participantIds = participants.map(c => c.id)
+    const count = Math.min(civs.length, 2 + Math.floor(Math.random() * 3))
+    // Random sampling without shuffle
+    const usedIdx = this._usedIdxSet; usedIdx.clear()
+    const participants: CivLike[] = []
+    while (participants.length < count) {
+      const idx = Math.floor(Math.random() * civs.length)
+      if (!usedIdx.has(idx)) { usedIdx.add(idx); participants.push(civs[idx]) }
+    }
+
+    const participantIds: number[] = []
+    let names = ''
+    for (let i = 0; i < participants.length; i++) {
+      participantIds.push(participants[i].id)
+      if (i > 0) names += ', '
+      names += participants[i].name
+    }
 
     const topic = this.pickTopic(participants)
 
@@ -167,7 +180,6 @@ export class DiplomaticSummitSystem {
     }
 
     this.activeSummit = summit
-    const names = participants.map(c => c.name).join(', ')
     EventLog.log(
       'diplomacy',
       `Diplomatic summit on ${TOPIC_LABELS[topic]} begins: ${names}`,

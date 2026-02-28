@@ -1,12 +1,12 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代37完成。深度GC优化扫描 — render路径模板字符串+filter消除。主要成果：1) 消除20+个系统render路径模板字符串：MinimapEnhanced热力图101步颜色表预计算(最多10000次/帧)、BloodMoon overlay/streak颜色表、WorldBorder 91步颜色表+globalAlpha、EventNotification/SeasonVisual firefly改globalAlpha、EraVisual overlay缓存、WorldNarrator改globalAlpha、BuildingVariety/TradeFleet改globalAlpha+颜色表、SiegeWarfare siege ring 41步颜色表、WorldHeatmap 101步颜色表、DiplomacyVisual 201步颜色表、ZoneManagement zone label字体缓存；2) 消除10+个系统filter().length GC：WorldChronicle 4个filter合并为单次循环、CreatureAncestor/CameraBookmark/Monument改手动计数、CreatureMigrationMemory改两阶段计数+迭代采样、CreatureBounty/DiplomaticSpy改for+continue；3) 消除PortalSystem.getPortals().length改getPortalCount()直接返回size。总计：约30+个文件/处优化，测试5434个全通过，TypeScript clean，构建成功。
+🧠 AI 上轮笔记：迭代39完成。深度GC优化扫描 — 批量消除80+个系统getter的filter()临时数组。主要成果：1) 消除25+个Creature系统getter：Grudge/Dance/Rivalry/Intuition/Superstition/Art/Tattoo/Divination/Dream/Legacy/Handicraft/Invention/Lullaby/OmenBelief/Phobia/Somniloquy/Totem/Telepathy/Trauma/Ancestor/MigrationMemory/Bounty/Taming/Calligraphy/Alliance/Fashion/Ritual/Pilgrimage；2) 消除35+个World/Diplomatic系统getter：Fossil/Geyser/Glacier/Maelstrom/Miasma/MigrationRoute/Oasis/Purification/TidePool/Underground/Whirlpool/AncientRuin/Sinkhole/Relic/MythicBeast/MeteorShower/GeothermalVent/Embargo/Hostage/Marriage/PeaceTreaty/Pledge/Propaganda/Ratification/Referendum/Tariff/TradeSanction/HostageExchange/CulturalExchange/Blockade/Espionage/TradeAgreement/Diplomacy/Exile/Guild/Memorial；3) 消除20+个系统update路径filter：WorldChronicle.getChronicles()合并双filter为单次循环、LoyaltySystem.triggerRebellion/triggerCivilWar改预分配buf、BiomeEvolutionSystem.erosion()改手动计数、CultureSystem trait adoption改两阶段采样、HeroLegendSystem.getLeaderboard()改buf+sort、TechSystem templeCount改手动计数、WorldEventSystem.tryTriggerRandomEvent改buf、CreatureConstellationSystem改两阶段采样；4) 修复DiplomacySystem/EspionageSystem测试（共享buf模式）。总计：约100+处优化，测试5434个全通过，TypeScript clean，构建成功。
 🎯 AI 自定优先级：[
   "1. Game.ts(4045行)：主循环密集系统调用，是最大未解决问题，但风险极高",
   "2. Renderer.ts(989行)：继续排查热路径GC，特别是renderMinimap和tile渲染循环",
   "3. 扫描 new Object()/对象字面量 在每帧render路径中的使用——特别是WeatherDisasterSystem渲染",
-  "4. 扫描剩余filter()在update路径中的使用：AchievementProgressSystem/CreatureTamingSystem/CreatureSkillSystem等",
-  "5. 扫描剩余Array.from()在热路径中的使用：CreatureReputationSystem/FormationSystem/QuestSystem等getter"
+  "4. 扫描剩余filter()在update路径中的使用：ArtifactSystem/ChartPanelSystem/ClonePowerSystem/CreatureSkillSystem等",
+  "5. 扫描剩余Array.from()在热路径中的使用"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
@@ -88,10 +88,24 @@
   "【迭代37新增】WorldChronicle.getWorldSummary：4个filter合并为单次循环，wars/heroes/disasters/legendary同时计数",
   "【迭代37新增】CreatureMigrationMemory elderMemories：filter改两阶段计数+迭代采样，消除临时数组分配",
   "【迭代37新增】PortalSystem.getPortalCount()：Game.ts中getPortals().length改为直接返回portals.size，消除Array.from快照",
-  "【迭代37新增】ZoneManagement zone label字体：zone._lastZoom+_labelFont缓存，消除renderZones中最后一个ctx.font模板字符串"
+  "【迭代37新增】ZoneManagement zone label字体：zone._lastZoom+_labelFont缓存，消除renderZones中最后一个ctx.font模板字符串",
+  "【迭代38新增】FormationSystem/QuestSystem/CreatureReputation/CreatureTaming/MonumentSystem/PlagueMutation/MythologySystem：预分配buf替代filter，颜色表替代hsl模板字符串",
+  "【迭代38新增】DiplomaticCensus/Succession/Plebiscite/CreatureBeastMaster/AchievementContent：消除filter+Array.from+new Set GC",
+  "【迭代38新增】Renderer.ts：夜晚/雾气叠加层颜色表预计算(101步)，建筑损坏闪烁改globalAlpha",
+  "【迭代38新增】AchievementProgress/AchievementSystem/DiplomaticSpy/TechSystem/CreatureOath/CreatureApprentice/BattleReplay：filter改预分配buf，手动计数替代filter().length",
+  "【迭代38新增】Sanction/Volcanic/Rift/Espionage/TradeNegotiation/WarReparation/MiningSystem：预分配_activeBuf/_civBuf替代filter",
+  "【迭代39新增】批量消除80+个系统getter的filter()临时数组：Creature/Diplomatic/World系统预分配_xxxBuf替代，共享buf模式测试更新",
+  "【迭代39新增】WorldChronicle.getChronicles()：合并双filter为单次循环，零分配",
+  "【迭代39新增】LoyaltySystem.triggerRebellion/triggerCivilWar：预分配_civMembersBuf替代filter，复用buf避免重复分配",
+  "【迭代39新增】BiomeEvolutionSystem.erosion()：neighbors.filter()改手动计数，消除临时数组",
+  "【迭代39新增】CultureSystem trait adoption：filter+pick改两阶段计数+迭代采样，零分配",
+  "【迭代39新增】HeroLegendSystem.getLeaderboard()：Array.from+filter+sort+slice改预分配buf+sort+length截断",
+  "【迭代39新增】TechSystem templeCount：civ.buildings.filter()改手动for计数",
+  "【迭代39新增】WorldEventSystem.tryTriggerRandomEvent：EVENT_DEFINITIONS.filter()改预分配_availEventsBuf",
+  "【迭代39新增】CreatureConstellationSystem：NAMES.filter()改两阶段计数+迭代采样，零分配"
 ]
 
-迭代轮次: 39/100
+迭代轮次: 41/100
 
 
 🔄 自我进化（每轮必做）：
@@ -100,6 +114,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-02-28T07:08:25+08:00"
+  "last_updated": "2026-02-28T08:46:10+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。

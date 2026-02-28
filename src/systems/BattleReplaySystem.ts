@@ -38,6 +38,7 @@ export class BattleReplaySystem {
   private replayPlaying = false;
   private replayAccum = 0;
   private showStats = false;
+  private _dmgMap: Map<number, number> = new Map();
 
   constructor() {
     for (let i = 0; i < MAX_FRAMES; i++) {
@@ -328,7 +329,7 @@ export class BattleReplaySystem {
   }
 
   private findMVP(rec: BattleRecord): {id: number; dmg: number} | null {
-    const dmg = new Map<number, number>();
+    const dmg = this._dmgMap; dmg.clear();
     for (let i = 1; i < rec.frames.length; i++) {
       const prev = rec.frames[i - 1], curr = rec.frames[i];
       for (const cu of curr.units) {

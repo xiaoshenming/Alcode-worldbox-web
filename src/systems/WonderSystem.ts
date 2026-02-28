@@ -52,6 +52,7 @@ const PARTICLE_INTERVAL = 60
 export class WonderSystem {
   private activeWonders: ActiveWonder[] = []
   private constructions: WonderConstruction[] = []
+  private _availBuf: WonderDef[] = []
   private lastCheckTick = 0
 
   update(civManager: CivManager, em: EntityManager, world: World, particles: ParticleSystem, tick: number): void {
@@ -66,10 +67,14 @@ export class WonderSystem {
   getActiveWonders(): ActiveWonder[] { return this.activeWonders }
 
   getAvailableWonders(): WonderDef[] {
-    return WONDER_DEFS.filter(d =>
-      !this.activeWonders.some(w => w.defId === d.id) &&
-      !this.constructions.some(c => c.defId === d.id)
-    )
+    const buf = this._availBuf; buf.length = 0
+    for (const d of WONDER_DEFS) {
+      if (!this.activeWonders.some(w => w.defId === d.id) &&
+          !this.constructions.some(c => c.defId === d.id)) {
+        buf.push(d)
+      }
+    }
+    return buf
   }
 
   hasWonder(civId: number, wonderId: string): boolean {
