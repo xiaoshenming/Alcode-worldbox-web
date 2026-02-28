@@ -24,6 +24,8 @@ const CAT_COLORS: Record<AchievementCategory, string> = {
   exploration: '#4fc3f7', civilization: '#aed581', combat: '#ef5350', nature: '#81c784', special: '#ce93d8',
 };
 const STORAGE_KEY = 'worldbox_achievements';
+/** Pre-computed sort order for achievement status — avoids per-sort object literal creation */
+const _STATUS_ORDER: Record<AchievementStatus, number> = { in_progress: 0, pending: 1, completed: 2 }
 const PANEL_W = 380;
 const PANEL_H = 420;
 const ROW_H = 52;
@@ -128,8 +130,7 @@ export class AchievementProgressSystem {
       for (const a of this.achievements) this._filteredBuf.push(a);
     }
     this._filteredBuf.sort((a, b) => {
-      const order: Record<AchievementStatus, number> = { in_progress: 0, pending: 1, completed: 2 };
-      return order[this.getStatus(a)] - order[this.getStatus(b)];
+      return _STATUS_ORDER[this.getStatus(a)] - _STATUS_ORDER[this.getStatus(b)];
     });
     return this._filteredBuf;
   }
