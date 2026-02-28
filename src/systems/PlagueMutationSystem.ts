@@ -88,8 +88,19 @@ export class PlagueMutationSystem {
   private scrollY = 0
   private tickCounter = 0
   private _activeStrainsBuf: PlagueStrain[] = []
+  /** Cached active strain count and header string — rebuilt when strains change */
+  private _activeCount = 0
+  private _headerStr = '\u{1F9A0} 瘟疫毒株 (0 活跃 / 0 总计)'
 
   /* ── 公共 API ── */
+
+  /** Rebuild active count and header string cache */
+  private _rebuildHeaderCache(): void {
+    let active = 0
+    for (const s of this.strains) { if (!s.extinct) active++ }
+    this._activeCount = active
+    this._headerStr = `\u{1F9A0} 瘟疫毒株 (${active} 活跃 / ${this.strains.length} 总计)`
+  }
 
   /** 创建原始毒株 */
   createStrain(tick: number, symptoms?: Symptom[]): PlagueStrain {
@@ -109,6 +120,7 @@ export class PlagueMutationSystem {
     strain.infectStr = `传染${Math.round(strain.infectRate * 100)}%`
     strain.lethalStr = `致死${(strain.lethality * 100).toFixed(1)}%`
     this.strains.push(strain)
+    this._rebuildHeaderCache()
     return strain
   }
 
@@ -134,7 +146,10 @@ export class PlagueMutationSystem {
   /** 标记灭绝 */
   markExtinct(strainId: number): void {
     const s = this.strains.find(s => s.id === strainId)
-    if (s) s.extinct = true
+    if (s && !s.extinct) {
+      s.extinct = true
+      this._rebuildHeaderCache()
+    }
   }
 
   /* ── 更新 ── */
@@ -181,6 +196,7 @@ export class PlagueMutationSystem {
     child.infectStr = `传染${Math.round(child.infectRate * 100)}%`
     child.lethalStr = `致死${(child.lethality * 100).toFixed(1)}%`
     this.strains.push(child)
+    this._rebuildHeaderCache()
   }
 
   private randomSymptom(): Symptom {
@@ -222,9 +238,7 @@ export class PlagueMutationSystem {
     ctx.fillStyle = '#ffb0b0'
     ctx.font = 'bold 14px monospace'
     ctx.textAlign = 'left'
-    let active = 0
-    for (const s of this.strains) { if (!s.extinct) active++ }
-    ctx.fillText(`\u{1F9A0} 瘟疫毒株 (${active} 活跃 / ${this.strains.length} 总计)`, px + 12, py + 24)
+    ctx.fillText(this._headerStr, px + 12, py + 24)
 
     if (this.strains.length === 0) {
       ctx.fillStyle = '#888'; ctx.font = '13px monospace'; ctx.textAlign = 'center'
