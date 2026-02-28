@@ -50,6 +50,7 @@ export class EventNotificationSystem {
   private indicators: EdgeIndicator[] = [];
   private activeMarquee: Marquee | null = null;
   private marqueeQueue: GameEvent[] = [];
+  private mqHead = 0;  // head pointer for shift()-free dequeue
   private histBuf: (GameEvent | null)[];
   private histHead = 0;
   private histCount = 0;
@@ -128,6 +129,7 @@ export class EventNotificationSystem {
     this.indicators.length = 0;
     this.activeMarquee = null;
     this.marqueeQueue.length = 0;
+    this.mqHead = 0;
     this.histBuf.fill(null);
     this.histHead = 0;
     this.histCount = 0;
@@ -143,7 +145,8 @@ export class EventNotificationSystem {
   }
 
   private enqueueMarquee(evt: GameEvent): void {
-    if (this.marqueeQueue.length >= MAX_QUEUE) return;
+    const qLen = this.marqueeQueue.length - this.mqHead;
+    if (qLen >= MAX_QUEUE) return;
     const last = this.marqueeQueue[this.marqueeQueue.length - 1];
     if (last && last.id === evt.id) return;
     if (this.activeMarquee && this.activeMarquee.event.id === evt.id) return;
@@ -195,8 +198,13 @@ export class EventNotificationSystem {
       this.activeMarquee.x -= MQ_SPEED;
       if (this.activeMarquee.x + this.activeMarquee.textWidth < 0) this.activeMarquee = null;
     }
-    if (!this.activeMarquee && this.marqueeQueue.length > 0) {
-      const evt = this.marqueeQueue.shift()!;
+    if (!this.activeMarquee && this.mqHead < this.marqueeQueue.length) {
+      const evt = this.marqueeQueue[this.mqHead++];
+      // Compact queue when head is past halfway
+      if (this.mqHead > MAX_QUEUE) {
+        this.marqueeQueue.splice(0, this.mqHead);
+        this.mqHead = 0;
+      }
       this.activeMarquee = { event: evt, x: screenWidth, textWidth: 0 };
     }
   }
