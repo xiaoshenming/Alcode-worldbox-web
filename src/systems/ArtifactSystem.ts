@@ -21,6 +21,10 @@ export class ArtifactSystem {
   private maxArtifacts: number = 6
   private lastSpawnTick: number = 0
   private _existingTypesSet: Set<string> = new Set()
+  // Reusable buffers for updateHeroQuesting (every tick)
+  private _unclaimedIdBuf: EntityId[] = []
+  private _unclaimedXBuf: number[] = []
+  private _unclaimedYBuf: number[] = []
 
   update(em: EntityManager, world: World, particles: ParticleSystem, tick: number): void {
     // Spawn new artifacts periodically
@@ -98,16 +102,25 @@ export class ArtifactSystem {
     const heroes = em.getEntitiesWithComponents('position', 'hero', 'ai', 'creature')
     const artifactEntities = em.getEntitiesWithComponent('artifact')
 
-    // Collect unclaimed artifact positions
-    const unclaimed: { id: EntityId; x: number; y: number }[] = []
+    // Collect unclaimed artifact positions into flat buffers (zero object alloc)
+    const unclaimedId = this._unclaimedIdBuf
+    const unclaimedX = this._unclaimedXBuf
+    const unclaimedY = this._unclaimedYBuf
+    unclaimedId.length = 0
+    unclaimedX.length = 0
+    unclaimedY.length = 0
     for (const artId of artifactEntities) {
       const art = em.getComponent<ArtifactComponent>(artId, 'artifact')
       if (!art || art.claimed) continue
       const pos = em.getComponent<PositionComponent>(artId, 'position')
-      if (pos) unclaimed.push({ id: artId, x: pos.x, y: pos.y })
+      if (pos) {
+        unclaimedId.push(artId)
+        unclaimedX.push(pos.x)
+        unclaimedY.push(pos.y)
+      }
     }
 
-    if (unclaimed.length === 0) return
+    if (unclaimedId.length === 0) return
 
     for (const heroId of heroes) {
       const inv = em.getComponent<InventoryComponent>(heroId, 'inventory')
@@ -118,30 +131,29 @@ export class ArtifactSystem {
       const ai = em.getComponent<AIComponent>(heroId, 'ai')
       if (!heroPos || !ai) continue
 
-      // Find nearest unclaimed artifact
-      let nearest: { id: EntityId; x: number; y: number; dist: number } | null = null
-      for (const art of unclaimed) {
-        const dx = art.x - heroPos.x
-        const dy = art.y - heroPos.y
+      // Find nearest unclaimed artifact using flat buffers (no object alloc)
+      let nearestIdx = -1
+      let nearestDist = Infinity
+      for (let i = 0; i < unclaimedId.length; i++) {
+        const dx = unclaimedX[i] - heroPos.x
+        const dy = unclaimedY[i] - heroPos.y
         const dist = Math.sqrt(dx * dx + dy * dy)
-        if (!nearest || dist < nearest.dist) {
-          nearest = { ...art, dist }
-        }
+        if (dist < nearestDist) { nearestDist = dist; nearestIdx = i }
       }
 
-      if (!nearest) continue
+      if (nearestIdx < 0) continue
 
       // Check if hero is close enough to claim
-      if (nearest.dist < 1.5) {
-        this.claimArtifact(em, heroId, nearest.id)
+      if (nearestDist < 1.5) {
+        this.claimArtifact(em, heroId, unclaimedId[nearestIdx])
         continue
       }
 
       // Direct hero towards artifact if idle or wandering
       if (ai.state === 'idle' || ai.state === 'wandering') {
         ai.state = 'wandering'
-        ai.targetX = nearest.x
-        ai.targetY = nearest.y
+        ai.targetX = unclaimedX[nearestIdx]
+        ai.targetY = unclaimedY[nearestIdx]
       }
     }
   }
