@@ -121,6 +121,7 @@ export class EvolutionSystem {
   private speciesData: Map<string, SpeciesEvolution> = new Map()
   private tickCounter: number = 0
   private _speciesGroups: Map<string, EntityId[]> = new Map()
+  private _traitsBuf: EvolutionTrait[] = []
 
   /** Main update — call every tick, internally throttles to every 60 ticks. */
   update(em: EntityManager, world: World, tick: number): void {
@@ -241,7 +242,7 @@ export class EvolutionSystem {
     const specData = this.speciesData.get(species)
     if (!specData) return []
 
-    const result: EvolutionTrait[] = []
+    const result = this._traitsBuf; result.length = 0
 
     // Environment traits (unlocked when adaptation reaches threshold)
     for (const [terrainKey, progress] of specData.adaptationProgress) {

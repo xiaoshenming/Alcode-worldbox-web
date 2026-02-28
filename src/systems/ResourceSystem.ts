@@ -39,6 +39,7 @@ export class ResourceSystem {
   private civManager: CivManager
   private particles: ParticleSystem
   private initialized: boolean = false
+  private _nodesNearBuf: ResourceNode[] = []
 
   constructor(world: World, em: EntityManager, civManager: CivManager, particles: ParticleSystem) {
     this.world = world
@@ -71,7 +72,7 @@ export class ResourceSystem {
   }
 
   getNodesNear(x: number, y: number, range: number): ResourceNode[] {
-    const result: ResourceNode[] = []
+    const result = this._nodesNearBuf; result.length = 0
     const minCx = Math.floor((x - range) / GRID_CELL_SIZE)
     const maxCx = Math.floor((x + range) / GRID_CELL_SIZE)
     const minCy = Math.floor((y - range) / GRID_CELL_SIZE)
