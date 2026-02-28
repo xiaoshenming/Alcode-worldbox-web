@@ -1798,6 +1798,9 @@ export class Game {
   private _siegeSoldiersBuf: number[] = []
   private _speciesCountsMap = new Map<string, number>()  // reused in getSpeciesCounts callback
   private _civSnapBuf: { id: number; name: string; pop: number; color: string }[] = []
+  // Pre-allocated chronicle snapshot to avoid per-60tick allocation
+  private _chronicleCivsBuf: { id: number; name: string; population: number; cities: number }[] = []
+  private _chronicleSnapshot: WorldSnapshot = { totalPopulation: 0, totalCities: 0, activeWars: 0, civilizations: this._chronicleCivsBuf, era: '' }
   // Pre-computed sky darken color table for disaster warning overlay (101 steps, alpha = intensity*0.4*0-1)
   private _skyDarkenTable: string[] = (() => {
     const t: string[] = []
@@ -3422,21 +3425,19 @@ export class Game {
         // === EVERY 60 TICKS: World chronicle, diplomacy, building upgrades ===
         if (tick % 60 === 20) {
         {
-          const civs: { id: number; name: string; population: number; cities: number }[] = []
+          const civsBuf = this._chronicleCivsBuf
+          civsBuf.length = 0
           let totalPop = 0, totalCities = 0
           for (const c of this.civManager.civilizations.values()) {
-            civs.push({ id: c.id, name: c.name, population: c.population, cities: c.buildings.length })
+            civsBuf.push({ id: c.id, name: c.name, population: c.population, cities: c.buildings.length })
             totalPop += c.population
             totalCities += c.buildings.length
           }
-          const snapshot: WorldSnapshot = {
-            totalPopulation: totalPop,
-            totalCities,
-            activeWars: 0,
-            civilizations: civs,
-            era: this.timeline.getCurrentEra().name,
-          }
-          this.worldChronicle.update(tick, snapshot)
+          const snap = this._chronicleSnapshot
+          snap.totalPopulation = totalPop
+          snap.totalCities = totalCities
+          snap.era = this.timeline.getCurrentEra().name
+          this.worldChronicle.update(tick, snap)
         }
         this.diplomacySystem.update(this.civManager, this.world, this.em)
         this.buildingUpgradeSystem.update(this.em, this.civManager, tick)
