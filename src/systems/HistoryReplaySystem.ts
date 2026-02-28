@@ -11,12 +11,16 @@ export interface HistorySnapshot {
 
 const MAX_SNAPSHOTS = 600  // ~10 minutes at 1/sec
 const SNAPSHOT_INTERVAL = 60  // every 60 ticks
+const _EMPTY_EVENTS: string[] = []
 
 export class HistoryReplaySystem {
   private snapshots: HistorySnapshot[] = []
   private recording = true
   private replayIndex = -1  // -1 = live mode
   private scrubbing = false
+  // Object pool for civData entries — reused across snapshots
+  private _civDataPool: { id: number; name: string; pop: number; color: string }[] = []
+  private _civDataPoolNext = 0
 
   /** Record a snapshot of current world state */
   recordSnapshot(
@@ -30,15 +34,31 @@ export class HistoryReplaySystem {
     if (!this.recording) return
     if (tick % SNAPSHOT_INTERVAL !== 0) return
 
+    // Evict oldest snapshot and reclaim its civData objects into pool
+    if (this.snapshots.length >= MAX_SNAPSHOTS) {
+      const evicted = this.snapshots.shift()!
+      for (const obj of evicted.civData) this._civDataPool.push(obj)
+      this._civDataPoolNext = Math.max(0, this._civDataPoolNext - evicted.civData.length)
+    }
+
+    // Build civData array using pooled objects
+    const civDataCopy: { id: number; name: string; pop: number; color: string }[] = []
+    for (const c of civData) {
+      let obj = this._civDataPool[this._civDataPoolNext]
+      if (!obj) { obj = { id: 0, name: '', pop: 0, color: '' }; this._civDataPool.push(obj) }
+      this._civDataPoolNext++
+      obj.id = c.id; obj.name = c.name; obj.pop = c.pop; obj.color = c.color
+      civDataCopy.push(obj)
+    }
+
+    // Share empty events reference (no slice needed for empty arrays)
+    const eventsSnap = events.length === 0 ? _EMPTY_EVENTS : events.slice(-5)
+
     this.snapshots.push({
       tick, population, civCount, wars,
-      events: events.slice(-5),  // keep last 5 events
-      civData: civData.map(c => ({ id: c.id, name: c.name, pop: c.pop, color: c.color })),
+      events: eventsSnap,
+      civData: civDataCopy,
     })
-
-    if (this.snapshots.length > MAX_SNAPSHOTS) {
-      this.snapshots.shift()
-    }
   }
 
   /** Get snapshot at a specific index */
