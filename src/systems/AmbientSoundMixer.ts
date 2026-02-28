@@ -46,6 +46,15 @@ const EVENT_COOLDOWN: Record<SoundEvent, number> = {
 
 /** Distance (in tiles) at which a source has zero influence. */
 const MAX_INFLUENCE_DIST = 200;
+/** Pre-computed layer colors — avoids per-render object literal creation */
+const _LAYER_COLORS: Record<string, string> = {
+  nature: '#4caf50', weather: '#2196f3', season: '#ff9800',
+  war: '#f44336', civilization: '#9c27b0',
+}
+/** Pre-computed season base volumes — avoids per-update object literal creation */
+const _SEASON_BASE_VOL: Record<string, number> = {
+  spring: 0.5, summer: 0.6, autumn: 0.4, winter: 0.3,
+}
 
 function clamp01(v: number): number {
   return v < 0 ? 0 : v > 1 ? 1 : v;
@@ -210,13 +219,7 @@ export class AmbientSoundMixer {
     offsetY += gap;
 
     // Per-layer
-    const colors: Record<SoundLayer, string> = {
-      nature: '#4caf50',
-      weather: '#2196f3',
-      season: '#ff9800',
-      war: '#f44336',
-      civilization: '#9c27b0',
-    };
+    const colors = _LAYER_COLORS;
 
     for (const [layer, ls] of this._layers) {
       const effective = this._muted || ls.muted ? 0 : ls.volume * this._masterVolume;
@@ -266,13 +269,7 @@ export class AmbientSoundMixer {
     const sl = this._layers.get('season');
     if (sl) {
       sl.activeSound = seasonSound(season);
-      const seasonBase: Record<string, number> = {
-        spring: 0.5,
-        summer: 0.6,
-        autumn: 0.4,
-        winter: 0.3,
-      };
-      sl.targetVolume = seasonBase[season] ?? 0.3;
+      sl.targetVolume = _SEASON_BASE_VOL[season] ?? 0.3;
     }
 
     // --- War ---
