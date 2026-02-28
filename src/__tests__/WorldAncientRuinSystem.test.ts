@@ -5,7 +5,7 @@ import type { AncientRuin, RuinType, RuinReward } from '../systems/WorldAncientR
 function makeSys(): WorldAncientRuinSystem { return new WorldAncientRuinSystem() }
 let nextId = 1
 function makeRuin(type: RuinType = 'temple', explored = false): AncientRuin {
-  return { id: nextId++, type, name: 'Test Ruin', x: 20, y: 30, explored, exploredBy: null, dangerLevel: 3, reward: 'treasure', rewardValue: 100, discoveredTick: 0, exploredTick: 0 }
+  return { id: nextId++, type, name: 'Test Ruin', x: 20, y: 30, explored, exploredBy: null, dangerLevel: 3, reward: 'treasure', rewardValue: 100, discoveredTick: 0, exploredTick: 0, dangerLabel: `Danger: 3` }
 }
 
 describe('WorldAncientRuinSystem.getRuins', () => {

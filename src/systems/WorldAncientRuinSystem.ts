@@ -20,6 +20,7 @@ export interface AncientRuin {
   rewardValue: number
   discoveredTick: number
   exploredTick: number
+  dangerLabel: string     // Pre-computed "Danger: ${dangerLevel}" for render
 }
 
 const SPAWN_INTERVAL = 4000
@@ -121,6 +122,7 @@ export class WorldAncientRuinSystem {
       rewardValue: dangerLevel * 10 + Math.floor(Math.random() * 50),
       discoveredTick: tick,
       exploredTick: 0,
+      dangerLabel: `Danger: ${dangerLevel}`,
     }
     this.ruins.push(ruin)
     EventLog.log('world_event', `Ancient ruin "${name}" (${type}) discovered!`, 0)
@@ -206,7 +208,7 @@ export class WorldAncientRuinSystem {
       ctx.fillText(ruin.name, sx, sy - size - 3)
       if (!ruin.explored) {
         ctx.fillStyle = '#f84'
-        ctx.fillText(`Danger: ${ruin.dangerLevel}`, sx, sy + size + 10)
+        ctx.fillText(ruin.dangerLabel, sx, sy + size + 10)
       }
       ctx.globalAlpha = 1
     }
