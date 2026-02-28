@@ -46,6 +46,7 @@ export class LegendaryBattleSystem {
   private heroBuffs: Map<EntityId, number> = new Map() // entityId -> buff expiry tick
   // Reusable collections to avoid GC pressure (numeric key = cx * 10000 + cy)
   private _detectGrid: Map<number, EntityId[]> = new Map()
+  private _detectCellPool: EntityId[][] = []
   private _visited: Set<number> = new Set()
   // Reusable cluster buffer and civCounts map for battle detection (every 10 ticks)
   private _clusterBuf: EntityId[] = []
@@ -80,6 +81,8 @@ export class LegendaryBattleSystem {
     // Build spatial grid (cell size = DETECT_RADIUS)
     const cellSize = BATTLE_DETECT_RADIUS
     const grid = this._detectGrid
+    // Return all cells to pool before clearing
+    for (const arr of grid.values()) { arr.length = 0; this._detectCellPool.push(arr) }
     grid.clear()
     for (const id of fighters) {
       const needs = em.getComponent<NeedsComponent>(id, 'needs')
@@ -89,7 +92,10 @@ export class LegendaryBattleSystem {
       const key = Math.floor(pos.x / cellSize) * 10000 + Math.floor(pos.y / cellSize)
       const cell = grid.get(key)
       if (cell) cell.push(id)
-      else grid.set(key, [id])
+      else {
+        const nc = this._detectCellPool.length > 0 ? this._detectCellPool.pop()! : []
+        nc.push(id); grid.set(key, nc)
+      }
     }
 
     // Scan each cell + neighbors for multi-civ clusters
