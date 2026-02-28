@@ -15,6 +15,8 @@ export interface Bounty {
   claimed: boolean
   claimedBy: EntityId | null
   expiresAt: number
+  /** Pre-computed display string — computed at creation, never changes */
+  displayStr: string
 }
 
 type CivLike = { id: number; name: string; resources: { gold: number }; relations: Map<number, number> }
@@ -107,8 +109,9 @@ export class CreatureBountySystem {
 
     const reward = MIN_REWARD + Math.floor(Math.random() * (MAX_REWARD - MIN_REWARD))
     const reason = REASONS[Math.floor(Math.random() * REASONS.length)]
+    const bountyId = nextBountyId++
     const bounty: Bounty = {
-      id: nextBountyId++,
+      id: bountyId,
       targetId: target,
       posterId: poster.id,
       reward,
@@ -117,6 +120,7 @@ export class CreatureBountySystem {
       claimed: false,
       claimedBy: null,
       expiresAt: tick + BOUNTY_DURATION,
+      displayStr: `#${bountyId} - ${reward}g - ${reason}`,
     }
     this.bounties.push(bounty)
     EventLog.log('diplomacy', `${poster.name} posted a bounty of ${reward}g for ${reason}`, tick)
@@ -173,7 +177,7 @@ export class CreatureBountySystem {
     for (let i = 0; i < active.length; i++) {
       const b = active[i]
       ctx.fillStyle = '#faa'
-      ctx.fillText(`#${b.id} - ${b.reward}g - ${b.reason}`, x + 8, y + 36 + i * 22)
+      ctx.fillText(b.displayStr, x + 8, y + 36 + i * 22)
     }
     ctx.restore()
   }

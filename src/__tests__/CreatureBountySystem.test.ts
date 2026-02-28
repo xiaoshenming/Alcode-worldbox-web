@@ -7,7 +7,7 @@ function makeSys(): CreatureBountySystem { return new CreatureBountySystem() }
 function makeBounty(targetId: number, claimed = false): Bounty {
   return {
     id: nextId++, targetId, posterId: 1, reward: 100,
-    reason: 'enemy', postedTick: 0, claimed, claimedBy: null, expiresAt: 9999
+    reason: 'enemy', postedTick: 0, claimed, claimedBy: null, expiresAt: 9999, displayStr: '#1 - 100g - enemy'
   }
 }
 

@@ -35,6 +35,8 @@ interface PlagueStrain {
   /** Pre-computed render strings — avoids toFixed per frame */
   infectStr: string
   lethalStr: string
+  /** Pre-computed stats string — rebuilt when infected/deaths changes */
+  statsStr: string
 }
 
 const SYMPTOM_INFO: Record<Symptom, { icon: string; label: string; lethalityMod: number }> = {
@@ -115,7 +117,7 @@ export class PlagueMutationSystem {
       symptoms: syms,
       infected: 0, deaths: 0,
       createdTick: tick, extinct: false,
-      infectStr: '', lethalStr: '',
+      infectStr: '', lethalStr: '', statsStr: '感染:0 死亡:0',
     }
     strain.infectStr = `传染${Math.round(strain.infectRate * 100)}%`
     strain.lethalStr = `致死${(strain.lethality * 100).toFixed(1)}%`
@@ -134,13 +136,13 @@ export class PlagueMutationSystem {
   /** 记录感染 */
   recordInfection(strainId: number): void {
     const s = this.strains.find(s => s.id === strainId)
-    if (s) s.infected++
+    if (s) { s.infected++; s.statsStr = `感染:${s.infected} 死亡:${s.deaths}` }
   }
 
   /** 记录死亡 */
   recordDeath(strainId: number): void {
     const s = this.strains.find(s => s.id === strainId)
-    if (s) s.deaths++
+    if (s) { s.deaths++; s.statsStr = `感染:${s.infected} 死亡:${s.deaths}` }
   }
 
   /** 标记灭绝 */
@@ -191,7 +193,7 @@ export class PlagueMutationSystem {
       symptoms: newSymptoms,
       infected: 0, deaths: 0,
       createdTick: tick, extinct: false,
-      infectStr: '', lethalStr: '',
+      infectStr: '', lethalStr: '', statsStr: '感染:0 死亡:0',
     }
     child.infectStr = `传染${Math.round(child.infectRate * 100)}%`
     child.lethalStr = `致死${(child.lethality * 100).toFixed(1)}%`
@@ -276,7 +278,7 @@ export class PlagueMutationSystem {
 
         // 统计
         ctx.fillStyle = '#999'; ctx.font = '11px monospace'
-        ctx.fillText(`感染:${s.infected} 死亡:${s.deaths}`, px + 10, drawY + 56)
+        ctx.fillText(s.statsStr, px + 10, drawY + 56)
 
         // 传染率条
         ctx.fillStyle = 'rgba(50,30,30,0.5)'
