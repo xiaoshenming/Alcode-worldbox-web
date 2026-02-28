@@ -7,6 +7,8 @@ interface Bookmark {
   label: string
   /** Pre-computed coordinate display string — avoids Math.round per frame */
   coordStr: string
+  /** Pre-computed "[N] label" row display string — computed at save time */
+  rowLabel: string
 }
 
 const MAX_BOOKMARKS = 9
@@ -26,7 +28,7 @@ export class CameraBookmarkSystem {
   /** Save current camera position to slot (0-8). */
   save(slot: number, x: number, y: number, zoom: number): void {
     if (slot < 0 || slot >= MAX_BOOKMARKS) return
-    this.bookmarks[slot] = { x, y, zoom, label: `Bookmark ${slot + 1}`, coordStr: `(${Math.round(x)},${Math.round(y)})` }
+    this.bookmarks[slot] = { x, y, zoom, label: `Bookmark ${slot + 1}`, coordStr: `(${Math.round(x)},${Math.round(y)})`, rowLabel: `[${slot + 1}] Bookmark ${slot + 1}` }
     this.persist()
     this.showToast(`Saved bookmark ${slot + 1}`)
   }
@@ -104,7 +106,7 @@ export class CameraBookmarkSystem {
       hasAny = true
       ctx.fillStyle = '#aaa'
       ctx.font = '10px monospace'
-      ctx.fillText(`[${i + 1}] ${b.label}`, px + 10, ry + ROW_H / 2)
+      ctx.fillText(b.rowLabel, px + 10, ry + ROW_H / 2)
       ctx.fillStyle = '#666'
       ctx.textAlign = 'right'
       ctx.fillText(b.coordStr, px + PANEL_W - 10, ry + ROW_H / 2)
@@ -140,6 +142,7 @@ export class CameraBookmarkSystem {
           const b = data[i]
           if (b && typeof b.x === 'number' && typeof b.y === 'number') {
             b.coordStr = `(${Math.round(b.x)},${Math.round(b.y)})`
+            if (!b.rowLabel) b.rowLabel = `[${i + 1}] ${b.label ?? `Bookmark ${i + 1}`}`
           }
           this.bookmarks[i] = b
         }

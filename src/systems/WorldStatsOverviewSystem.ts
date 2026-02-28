@@ -35,6 +35,8 @@ export class WorldStatsOverviewSystem {
   private _speciesEntriesBuf: [string, number][] = []
   /** Cached count strings for species distribution bar — rebuilt in update() */
   private _speciesCountStrs: Map<string, string> = new Map()
+  /** Cached bar label strings "species count" — rebuilt in update() */
+  private _speciesBarLabelStrs: Map<string, string> = new Map()
   /** Cached population max label string — rebuilt when maxVal changes */
   private _prevMaxVal = -1
   private _maxValStr = ''
@@ -100,9 +102,12 @@ export class WorldStatsOverviewSystem {
     // Rebuild sorted species entries cache + count strings
     this._speciesEntriesBuf.length = 0
     this._speciesCountStrs.clear()
+    this._speciesBarLabelStrs.clear()
     for (const e of this.speciesCounts.entries()) {
       this._speciesEntriesBuf.push(e)
-      this._speciesCountStrs.set(e[0], String(e[1]))
+      const countStr = String(e[1])
+      this._speciesCountStrs.set(e[0], countStr)
+      this._speciesBarLabelStrs.set(e[0], `${e[0]} ${countStr}`)
     }
     this._speciesEntriesBuf.sort((a, b) => b[1] - a[1])
   }
@@ -227,7 +232,7 @@ export class WorldStatsOverviewSystem {
           ctx.fillStyle = '#000'
           ctx.font = '8px monospace'
           const countStr = this._speciesCountStrs.get(species) ?? String(count)
-          ctx.fillText(`${species} ${countStr}`, bx + 3, barY + 3)
+          ctx.fillText(this._speciesBarLabelStrs.get(species) ?? `${species} ${countStr}`, bx + 3, barY + 3)
         }
         bx += segW
       }
