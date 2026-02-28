@@ -31,6 +31,7 @@ export interface ExportData {
 export class WorldExportSystem {
   private importing = false
   private importProgress = 0
+  private _importProgressStr = 'Importing... 0%'
 
   constructor() {}
 
@@ -86,15 +87,15 @@ export class WorldExportSystem {
   /** Parse an imported file, validate format, return data or null */
   async importWorld(file: File): Promise<ExportData | null> {
     this.importing = true
-    this.importProgress = 0
+    this.importProgress = 0; this._importProgressStr = 'Importing... 0%'
     try {
-      this.importProgress = 0.3
+      this.importProgress = 0.3; this._importProgressStr = 'Importing... 30%'
       const text = await file.text()
-      this.importProgress = 0.6
+      this.importProgress = 0.6; this._importProgressStr = 'Importing... 60%'
       const data = JSON.parse(text) as ExportData
 
       if (!this.validate(data)) return null
-      this.importProgress = 1
+      this.importProgress = 1; this._importProgressStr = 'Importing... 100%'
       return data
     } catch {
       return null
@@ -132,7 +133,7 @@ export class WorldExportSystem {
     ctx.font = '14px monospace'
     ctx.textAlign = 'center'
     ctx.fillText(
-      `Importing... ${Math.round(this.importProgress * 100)}%`,
+      this._importProgressStr,
       screenW / 2, y + barH + 20
     )
   }
