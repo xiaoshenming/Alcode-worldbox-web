@@ -98,7 +98,7 @@ export class CreaturePilgrimageSystem {
 
       const dx = p.targetX - pos.x
       const dy = p.targetY - pos.y
-      if (Math.sqrt(dx * dx + dy * dy) < 3) {
+      if (dx * dx + dy * dy < 9) {
         p.completed = true
       }
     }

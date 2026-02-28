@@ -110,9 +110,8 @@ export class WorldTidalWaveSystem {
 
         const dx = pos.x - waveFrontX
         const dy = pos.y - waveFrontY
-        const dist = Math.sqrt(dx * dx + dy * dy)
-
-        if (dist < w.reach * 0.3) {
+        const threshold = w.reach * 0.3
+        if (dx * dx + dy * dy < threshold * threshold) {
           // Damage and push
           const dmg = DAMAGE_MAP[w.intensity]
           if (needs.health > 5) {

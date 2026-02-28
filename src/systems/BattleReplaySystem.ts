@@ -339,10 +339,10 @@ export class BattleReplaySystem {
         if (!pu || pu.hp <= cu.hp) continue;
         const loss = pu.hp - cu.hp;
         for (const atk of curr.attacks) {
-          if (Math.sqrt((atk.toX - cu.x) ** 2 + (atk.toY - cu.y) ** 2) >= 3) continue;
+          if ((atk.toX - cu.x) ** 2 + (atk.toY - cu.y) ** 2 >= 9) continue;
           for (const au of curr.units) {
             if (au.side === cu.side) continue;
-            if (Math.sqrt((atk.fromX - au.x) ** 2 + (atk.fromY - au.y) ** 2) < 3) {
+            if ((atk.fromX - au.x) ** 2 + (atk.fromY - au.y) ** 2 < 9) {
               dmg.set(au.id, (dmg.get(au.id) || 0) + loss);
               break;
             }
