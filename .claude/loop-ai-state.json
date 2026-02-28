@@ -1,11 +1,11 @@
 {
-  "notes": "迭代47完成。深度GC优化第六轮 — 专注render路径toUpperCase/模板字符串消除、预计算字段注入、Map复用。主要成果：1) WorldRelicSystem：预计算RELIC_ICON_LABEL查找表，消除每帧relic.type[0].toUpperCase()；2) WorldMythicBeastSystem+CreatureAncestorSystem：同样模式预计算BEAST_ICON_LABEL/DOMAIN_ICON_LABEL；3) MinimapSystem：_modeUpper缓存+setMode时更新；4) GeneticDisplaySystem：TraitDisplay接口新增abbr字段，getTraits()时预计算，render用abbr；5) WorldEventTimelineSystem：WorldEvent接口新增typeUpper字段，addEvent时预计算；6) AchievementPopupSystem：预计算RARITY_LABELS查找表；7) WorldEventSystem banner：WorldEventDefinitions.ts新增RARITY_UPPER导出，消除每帧rarity.toUpperCase()；8) WorldSeasonalDisasterSystem：SeasonalDisaster接口新增label+panelLabel字段，spawnDisaster时预计算，render直接用；9) EvolutionVisualSystem：renderCards改用_smCache复用Map+entries，消除每帧new Map()和内部{total,nodes}对象。总计9批commit，5434测试全通过，TypeScript clean。",
+  "notes": "迭代49完成。深度GC优化第八轮 — 专注高频update路径的Array分配消除、死代码删除、对象spread替换。主要成果：1) MigrationSystem+AllianceSystem+TerraformingSystem：预分配_bandsToRemoveBuf/_validBuf/_toRemoveBuf，TerraformEffect缓存混合色字符串（51档量化）；2) ArmySystem.cleanupAndCheckEnd：预分配_civsToRemoveBuf（每tick）；3) NavalCombatSystem.updateBattle：删除allShips死代码数组+spread（每5tick）；4) VolcanoSystem.updateLavaFlows：预分配_lavaToRemoveBuf（eruption期间每帧）；5) SiegeSystem：预分配_siegesToRemoveBuf+_soldiersNearBuf，countSoldiersNear改为直接计数消除临时数组分配；6) WorldMigrationWaveSystem.advanceWaves：预分配_wavesToRemoveBuf（每2tick）；7) ArtifactSystem.updateHeroQuesting：unclaimed对象数组改为3个平坦Float缓冲区，nearest对象spread改为索引查找，消除每帧的对象分配。总计7批commit，5434测试全通过，TypeScript clean。",
   "priorities": [
-    "1. 扫描更多系统render路径中的toFixed/Math.round模板字符串 — PerformanceMonitorSystem每帧多处，但属于调试UI，优先级中等",
-    "2. HistoryReplaySystem.snapshots.shift()每60tick当满600条时 — 可改为真正的环形缓冲区，消除O(N)移位，但影响索引逻辑较复杂",
-    "3. 扫描还有哪些系统在render循环里有动态字符串构造 — 可用grep -rn 'fillText.*\\${' src/systems/ 快速发现",
-    "4. 扫描EvolutionVisualSystem中sp.toUpperCase() — 在sm Map迭代的render循环，species种类少，影响有限",
-    "5. 扫描NavalSystem/MigrationSystem/EcosystemSystem等较大系统的render路径GC"
+    "1. FogOfWarSystem.memberPositions：每10tick clear后 list=[] 创建新数组 — 可用pool模式复用数组（map.get返回后length=0 reset），但需要确保每次clear后旧list正确归还",
+    "2. 扫描QuestSystem/CropSystem/ArtifactSystem等系统的update路径中是否还有对象字面量分配",
+    "3. ArtifactSystem.applyBuffs()是否每帧有GC来源 — 值得检查",
+    "4. 扫描render路径中的Math.sqrt调用 — 有些可以改为距离平方比较（已知NavalCombatSystem等已有这类优化）",
+    "5. 扫描DisasterChainSystem/EcosystemSystem等未检查的高频系统中的数组分配"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -55,7 +55,14 @@
     "【迭代47新增】接口字段预计算模式：在数据创建时计算render需要的字符串（label/typeUpper/panelLabel等），避免每帧重复计算，需同步更新测试mock",
     "【迭代47新增】Map复用模式：不new Map()而是复用_xxxCache，reset各entry字段；若entry数量不固定，用for-of values reset后按需insert新key",
     "【迭代47新增】往接口添加新字段必须同步更新所有测试中的mock对象（TypeScript编译会报TS2739）",
-    "【迭代47新增】EventLog引用安全规则：ring buffer slot不能被外部存储引用后继续复用 — EventPanel.push(e)保存了引用，所以EventLog不能做slot reuse"
+    "【迭代47新增】EventLog引用安全规则：ring buffer slot不能被外部存储引用后继续复用 — EventPanel.push(e)保存了引用，所以EventLog不能做slot reuse",
+    "【迭代48新增】字符串缓存模式：对于固定或低频变化的显示字符串（如seed、season label），缓存完整字符串，仅在值变化时重建",
+    "【迭代48新增】整数查找表模式：0-10范围的整数用预计算的_INT_STR=['0','1',...,'10']查找表，避免String(n)分配",
+    "【迭代48新增】接口字段预计算适用于level/name等组合字段：Guild.nameLabel=`${name} Lv${level}`在创建和level up时更新，render直接用",
+    "【迭代49新增】死代码Array检测：grep方法创建的数组后续未使用 — 如NavalCombatSystem.allShips创建后从未引用，直接删除",
+    "【迭代49新增】对象数组→平坦缓冲区模式：unclaimed:{id,x,y}[]改为_idBuf/_xBuf/_yBuf三个数组，nearest:{...art,dist}改为nearestIdx+nearestDist，完全消除对象分配",
+    "【迭代49新增】countXxx方法调用getXxx().length是常见陷阱 — 直接实现计数循环，零数组分配",
+    "【迭代49新增】TerraformEffect混色缓存：_lastProgressQ=Math.round(t*50)量化51档，仅在进阶时重建字符串，每效果每帧平均节省一次lerpColor分配"
   ],
-  "last_updated": "2026-02-28T13:58:00+08:00"
+  "last_updated": "2026-02-28T16:05:00+08:00"
 }
