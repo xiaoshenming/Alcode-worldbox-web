@@ -57,6 +57,7 @@ const CORRUPTION_COLORS: string[] = (() => {
 
 export class WorldCorruptionSystem {
   private corruptionMap: Float32Array
+  private _snapBuf: Float32Array  // pre-allocated snapshot buffer for diffusion step
   private sources: CorruptionSource[] = []
   private purifiers: Array<{ x: number; y: number }> = []
   private weather: WeatherType = 'clear'
@@ -64,6 +65,7 @@ export class WorldCorruptionSystem {
 
   constructor() {
     this.corruptionMap = new Float32Array(WORLD_WIDTH * WORLD_HEIGHT)
+    this._snapBuf = new Float32Array(WORLD_WIDTH * WORLD_HEIGHT)
   }
 
   /** Register a new corruption source (battlefield, mass death, etc.) */
@@ -162,7 +164,8 @@ export class WorldCorruptionSystem {
     }
 
     // Phase 2: Neighbor-based diffusion (snapshot to avoid read-write hazard)
-    const snap = new Float32Array(this.corruptionMap)
+    const snap = this._snapBuf
+    snap.set(this.corruptionMap)
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         const idx = y * w + x
