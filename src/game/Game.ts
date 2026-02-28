@@ -1798,6 +1798,10 @@ export class Game {
   private _siegeSoldiersBuf: number[] = []
   private _speciesCountsMap = new Map<string, number>()  // reused in getSpeciesCounts callback
   private _civSnapBuf: { id: number; name: string; pop: number; color: string }[] = []
+  // Pre-allocated diplomacy visual civData buffer
+  private _civDataBuf: { id: number; name: string; color: string; capitalX: number; capitalY: number; relations: Map<number, number> }[] = []
+  // Pre-allocated trade route buffer
+  private _tradeRoutesBuf: { fromX: number; fromY: number; toX: number; toY: number; volume: number; active: boolean }[] = []
   // Pre-allocated chronicle snapshot to avoid per-60tick allocation
   private _chronicleCivsBuf: { id: number; name: string; population: number; cities: number }[] = []
   private _chronicleSnapshot: WorldSnapshot = { totalPopulation: 0, totalCities: 0, activeWars: 0, civilizations: this._chronicleCivsBuf, era: '' }
@@ -3317,11 +3321,16 @@ export class Game {
 
         // Diplomacy visual - update civ relation data
         if (tick % 120 === 0) {
-          const civData: { id: number; name: string; color: string; capitalX: number; capitalY: number; relations: Map<number, number> }[] = []
+          const civData = this._civDataBuf; civData.length = 0
+          let civDataIdx = 0
           for (const [id, c] of this.civManager.civilizations) {
             const pos = c.buildings.length > 0 ? this.em.getComponent<PositionComponent>(c.buildings[0], 'position') : null
-            civData.push({ id, name: c.name, color: c.color, capitalX: pos?.x ?? 0, capitalY: pos?.y ?? 0, relations: c.relations })
+            let slot = civData[civDataIdx]
+            if (!slot) { slot = { id: 0, name: '', color: '', capitalX: 0, capitalY: 0, relations: c.relations }; civData.push(slot) }
+            slot.id = id; slot.name = c.name; slot.color = c.color; slot.capitalX = pos?.x ?? 0; slot.capitalY = pos?.y ?? 0; slot.relations = c.relations
+            civDataIdx++
           }
+          civData.length = civDataIdx
           this.diplomacyVisual.updateCivData(civData)
         }
 
@@ -3411,7 +3420,8 @@ export class Game {
         }
         // Update trade route visualization from caravan data
         if (tick % 120 === 0) {
-          const routes: TradeRoute[] = []
+          const routes = this._tradeRoutesBuf; routes.length = 0
+          let routeIdx = 0
           for (const [, civ] of this.civManager.civilizations) {
             for (const [otherId, rel] of civ.relations) {
               if (rel > 10) {
@@ -3420,12 +3430,18 @@ export class Game {
                   const p1 = this.em.getComponent<PositionComponent>(civ.buildings[0], 'position')
                   const p2 = this.em.getComponent<PositionComponent>(other.buildings[0], 'position')
                   if (p1 && p2) {
-                    routes.push({ fromX: Math.floor(p1.x), fromY: Math.floor(p1.y), toX: Math.floor(p2.x), toY: Math.floor(p2.y), volume: Math.min(100, rel), active: true })
+                    let rslot = routes[routeIdx]
+                    if (!rslot) { rslot = { fromX: 0, fromY: 0, toX: 0, toY: 0, volume: 0, active: true }; routes.push(rslot) }
+                    rslot.fromX = Math.floor(p1.x); rslot.fromY = Math.floor(p1.y)
+                    rslot.toX = Math.floor(p2.x); rslot.toY = Math.floor(p2.y)
+                    rslot.volume = Math.min(100, rel); rslot.active = true
+                    routeIdx++
                   }
                 }
               }
             }
           }
+          routes.length = routeIdx
           this.tradeRouteRenderer.setRoutes(routes)
         }
         // === EVERY 60 TICKS: World chronicle, diplomacy, building upgrades ===
