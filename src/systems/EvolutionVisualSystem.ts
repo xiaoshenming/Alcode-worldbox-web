@@ -37,6 +37,8 @@ export class EvolutionVisualSystem {
   private scrollY = 0
   private pr = { x: 0, y: 0, w: 0, h: 0 }
   private tlZoom = 1
+  // Cached stat card map — cleared and reused each render call to avoid per-frame new Map()
+  private _smCache = new Map<string, { total: number; nodes: EvolutionNode[] }>()
 
   addNode(node: EvolutionNode): void { this.nodes.set(node.id, { ...node }) }
 
@@ -160,11 +162,12 @@ export class EvolutionVisualSystem {
   // --- Stat cards ---
 
   private renderCards(ctx: CanvasRenderingContext2D, ox: number, oy: number, w: number, maxH: number): void {
-    const sm = new Map<string, { total: number; nodes: EvolutionNode[] }>()
+    const sm = this._smCache
+    // Reset cached entries without allocating new objects
+    for (const entry of sm.values()) { entry.total = 0; entry.nodes.length = 0 }
     for (const nd of this.nodes.values()) {
-      if (!sm.has(nd.species)) sm.set(nd.species, { total: 0, nodes: [] })
-      const e = sm.get(nd.species)
-      if (!e) continue
+      let e = sm.get(nd.species)
+      if (!e) { e = { total: 0, nodes: [] }; sm.set(nd.species, e) }
       e.total += nd.population; e.nodes.push(nd)
     }
     let cy = oy
