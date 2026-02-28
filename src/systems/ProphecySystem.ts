@@ -37,6 +37,8 @@ interface Prophecy {
   probabilityStr: string
   /** Pre-computed '"text"' quoted display string — computed at creation */
   quotedText: string
+  /** Pre-computed remaining+probability display line — updated each tick in update() */
+  statusLine: string
   /** 关联文明 ID（-1 表示全局） */
   civId: number
   /** 是否已通知玩家 */
@@ -109,6 +111,7 @@ export class ProphecySystem {
       createdTick: tick, deadlineTick: tick + durationTicks,
       probability, probabilityStr: (probability * 100).toFixed(0),
       quotedText: `"${text}"`,
+      statusLine: `概率: ${(probability * 100).toFixed(0)}%  剩余: ${durationTicks} ticks`,
       civId, notified: false,
     })
   }
@@ -128,6 +131,7 @@ export class ProphecySystem {
         createdTick: tick, deadlineTick: tick + tmpl.durationTicks,
         probability: prob, probabilityStr: (prob * 100).toFixed(0),
         quotedText: `"${text}"`,
+        statusLine: `概率: ${(prob * 100).toFixed(0)}%  剩余: ${tmpl.durationTicks} ticks`,
         civId: -1, notified: false,
       })
     }
@@ -146,6 +150,12 @@ export class ProphecySystem {
         this.history.push(p)
         this.prophecies[i] = this.prophecies[this.prophecies.length - 1]
         this.prophecies.pop()
+      } else {
+        // Update statusLine — only when panel is visible to avoid per-tick alloc
+        if (this.visible) {
+          const remaining = p.deadlineTick - tick
+          p.statusLine = `概率: ${p.probabilityStr}%  剩余: ${remaining > 0 ? remaining : 0} ticks`
+        }
       }
     }
 
@@ -261,7 +271,7 @@ export class ProphecySystem {
       const span = p.deadlineTick - p.createdTick
       const pct = span > 0 ? Math.max(0, remaining / span) : 0
       ctx.fillStyle = '#aaa'
-      ctx.fillText(`概率: ${p.probabilityStr}%  剩余: ${remaining > 0 ? remaining : 0} ticks`, px + 40, ry + 42)
+      ctx.fillText(p.statusLine, px + 40, ry + 42)
       // 进度条
       ctx.fillStyle = 'rgba(60,60,80,0.5)'
       ctx.fillRect(px + 40, ry + 50, 200, 4)
