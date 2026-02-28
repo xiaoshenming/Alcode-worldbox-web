@@ -16,6 +16,10 @@ interface WorldEvent {
   worldX: number;
   worldY: number;
   hasLocation: boolean;
+  /** Cached truncated description — invalidated when maxTextW changes */
+  descTruncated: string;
+  /** The maxTextW used when descTruncated was computed */
+  descTruncatedMaxW: number;
 }
 
 /** 事件类型对应的颜色映射 */
@@ -89,6 +93,8 @@ export class WorldEventTimelineSystem {
       worldX: worldX ?? 0,
       worldY: worldY ?? 0,
       hasLocation: worldX !== undefined && worldY !== undefined,
+      descTruncated: '',
+      descTruncatedMaxW: -1,
     };
     // 插入排序，保持按 tick 升序
     let i = this.events.length;
@@ -291,8 +297,11 @@ export class WorldEventTimelineSystem {
       ctx.fillStyle = TEXT_PRIMARY;
       ctx.font = '12px monospace';
       const maxTextW = p.w - 50 - SCROLLBAR_WIDTH;
-      const desc = this.truncateText(ctx, evt.description, maxTextW);
-      ctx.fillText(desc, p.x + 32, rowY + 34);
+      if (evt.descTruncatedMaxW !== maxTextW) {
+        evt.descTruncatedMaxW = maxTextW;
+        evt.descTruncated = this.truncateText(ctx, evt.description, maxTextW);
+      }
+      ctx.fillText(evt.descTruncated, p.x + 32, rowY + 34);
 
       // 位置图标
       if (evt.hasLocation) {
