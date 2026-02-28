@@ -11,6 +11,7 @@ interface WorldEvent {
   tick: number;
   type: string;
   typeUpper: string;  // Pre-computed type.toUpperCase() for render
+  tickStr: string;    // Pre-computed "T:${tick}" for render
   description: string;
   worldX: number;
   worldY: number;
@@ -83,6 +84,7 @@ export class WorldEventTimelineSystem {
       tick,
       type,
       typeUpper: type.toUpperCase(),
+      tickStr: `T:${tick}`,
       description,
       worldX: worldX ?? 0,
       worldY: worldY ?? 0,
@@ -278,7 +280,7 @@ export class WorldEventTimelineSystem {
       // tick 标签
       ctx.fillStyle = TEXT_SECONDARY;
       ctx.font = '10px monospace';
-      ctx.fillText(`T:${evt.tick}`, p.x + 32, rowY + 14);
+      ctx.fillText(evt.tickStr, p.x + 32, rowY + 14);
 
       // 类型标签
       ctx.fillStyle = color;
