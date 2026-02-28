@@ -86,9 +86,12 @@ export class CreatureTradeSkillSystem {
   }
 
   private getAverageSkill(trader: CreatureTradeSkill): number {
-    const values = Object.values(trader.skills).filter((v): v is number => v !== undefined)
-    if (values.length === 0) return 0
-    return values.reduce((a, b) => a + b, 0) / values.length
+    let sum = 0, count = 0
+    for (const k of TRADE_SKILL_LIST) {
+      const v = trader.skills[k]
+      if (v !== undefined) { sum += v; count++ }
+    }
+    return count === 0 ? 0 : sum / count
   }
 
   getTrader(id: EntityId): CreatureTradeSkill | undefined {

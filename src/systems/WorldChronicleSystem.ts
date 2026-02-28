@@ -102,7 +102,8 @@ export class WorldChronicleSystem {
   }
 
   recordWar(tick: number, civA: number, civB: number, result: string, civAName?: string, civBName?: string): void {
-    const warKey = [Math.min(civA, civB), Math.max(civA, civB)].join('-')
+    const lo = Math.min(civA, civB), hi = Math.max(civA, civB)
+    const warKey = `${lo}-${hi}`
     const nameA = civAName ?? `Civilization ${civA}`
     const nameB = civBName ?? `Civilization ${civB}`
     if (!this.warStartTicks.has(warKey)) this.warStartTicks.set(warKey, tick)
