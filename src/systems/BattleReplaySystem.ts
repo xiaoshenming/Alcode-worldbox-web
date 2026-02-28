@@ -46,6 +46,12 @@ export class BattleReplaySystem {
   private showStats = false;
   private _dmgMap: Map<number, number> = new Map();
   private _sideColorMap: Map<number, string> = new Map();
+  /** Cached frame display string and speed string — rebuild when values change */
+  private _frameStr = '0/0';
+  private _prevFrameNum = -1;
+  private _prevFrameTotal = -1;
+  private _speedStr = '1x';
+  private _prevSpeed = -1;
 
   constructor() {
     for (let i = 0; i < MAX_FRAMES; i++) {
@@ -280,10 +286,19 @@ export class BattleReplaySystem {
     // 帧号
     ctx.fillStyle = '#aaa';
     ctx.font = '11px monospace';
-    ctx.fillText(`${this.replayFrame + 1}/${rec.frames.length}`, progX + progW + 8, y + 20);
+    const fn = this.replayFrame + 1, ft = rec.frames.length;
+    if (fn !== this._prevFrameNum || ft !== this._prevFrameTotal) {
+      this._prevFrameNum = fn; this._prevFrameTotal = ft;
+      this._frameStr = `${fn}/${ft}`;
+    }
+    ctx.fillText(this._frameStr, progX + progW + 8, y + 20);
     // 当前速度
+    if (this.replaySpeed !== this._prevSpeed) {
+      this._prevSpeed = this.replaySpeed;
+      this._speedStr = `${this.replaySpeed}x`;
+    }
     ctx.fillStyle = '#ff0';
-    ctx.fillText(`${this.replaySpeed}x`, barW - 30, y + 20);
+    ctx.fillText(this._speedStr, barW - 30, y + 20);
     // 关闭
     ctx.fillStyle = '#f55';
     ctx.font = '16px monospace';
