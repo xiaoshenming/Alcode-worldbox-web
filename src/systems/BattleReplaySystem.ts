@@ -41,6 +41,7 @@ export class BattleReplaySystem {
   private replayAccum = 0;
   private showStats = false;
   private _dmgMap: Map<number, number> = new Map();
+  private _sideColorMap: Map<number, string> = new Map();
 
   constructor() {
     for (let i = 0; i < MAX_FRAMES; i++) {
@@ -162,6 +163,9 @@ export class BattleReplaySystem {
     if (!rec || !this.replaying) return;
     const frame = rec.frames[this.replayFrame];
     if (!frame) return;
+    // Build side color map to avoid find() closure per unit
+    const sideColorMap = this._sideColorMap; sideColorMap.clear();
+    for (const s of rec.sides) sideColorMap.set(s.civId, s.color);
     ctx.save();
     // 战场范围虚线圈
     let aliveCount = 0, cxSum = 0, cySum = 0;
@@ -197,11 +201,11 @@ export class BattleReplaySystem {
     for (const u of frame.units) {
       const sx = (u.x - camX) * zoom, sy = (u.y - camY) * zoom;
       const r = Math.max(3, 4 * zoom);
-      const sideData = rec.sides.find(s => s.civId === u.side);
+      const sideColor = sideColorMap.get(u.side);
       if (u.alive) {
         ctx.beginPath();
         ctx.arc(sx, sy, r, 0, Math.PI * 2);
-        ctx.fillStyle = sideData ? sideData.color : '#fff';
+        ctx.fillStyle = sideColor ?? '#fff';
         ctx.globalAlpha = 0.5 + 0.5 * (u.hp / u.maxHp);
         ctx.fill();
         ctx.globalAlpha = 1;
