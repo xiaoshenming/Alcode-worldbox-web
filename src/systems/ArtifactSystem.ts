@@ -133,18 +133,18 @@ export class ArtifactSystem {
 
       // Find nearest unclaimed artifact using flat buffers (no object alloc)
       let nearestIdx = -1
-      let nearestDist = Infinity
+      let nearestDistSq = Infinity
       for (let i = 0; i < unclaimedId.length; i++) {
         const dx = unclaimedX[i] - heroPos.x
         const dy = unclaimedY[i] - heroPos.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist < nearestDist) { nearestDist = dist; nearestIdx = i }
+        const distSq = dx * dx + dy * dy
+        if (distSq < nearestDistSq) { nearestDistSq = distSq; nearestIdx = i }
       }
 
       if (nearestIdx < 0) continue
 
       // Check if hero is close enough to claim
-      if (nearestDist < 1.5) {
+      if (nearestDistSq < 2.25) {  // 1.5² = 2.25
         this.claimArtifact(em, heroId, unclaimedId[nearestIdx])
         continue
       }

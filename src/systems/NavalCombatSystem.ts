@@ -81,10 +81,10 @@ export class NavalCombatSystem {
 
         const dx = posA.x - posB.x
         const dy = posA.y - posB.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
+        const distSq = dx * dx + dy * dy
 
-        if (dist < BROADSIDE_RANGE) {
-          this.engageBattle(tick, idA, shipA, posA, idB, shipB, posB, dist, civManager)
+        if (distSq < BROADSIDE_RANGE * BROADSIDE_RANGE) {
+          this.engageBattle(tick, idA, shipA, posA, idB, shipB, posB, distSq, civManager)
         }
       }
     }
@@ -99,14 +99,14 @@ export class NavalCombatSystem {
     tick: number,
     idA: EntityId, shipA: ShipComponent, posA: PositionComponent,
     idB: EntityId, shipB: ShipComponent, posB: PositionComponent,
-    dist: number, civManager: CivManager
+    distSq: number, civManager: CivManager
   ): void {
     // Check if already in a battle
     for (const battle of this.battles.values()) {
       if (battle.ships.has(shipA.civId) || battle.ships.has(shipB.civId)) return
     }
 
-    const state: NavalBattleState = dist < BOARDING_RANGE ? 'boarding' : 'broadside'
+    const state: NavalBattleState = distSq < BOARDING_RANGE * BOARDING_RANGE ? 'boarding' : 'broadside'
 
     const battle: NavalBattle = {
       id: this.nextBattleId++,

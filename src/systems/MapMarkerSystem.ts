@@ -126,15 +126,15 @@ export class MapMarkerSystem {
   /** Returns the marker ID at screen-space position, or null */
   handleClick(worldX: number, worldY: number): number | null {
     let bestId: number | null = null
-    let bestDist = HIT_RADIUS
+    let bestDistSq = HIT_RADIUS * HIT_RADIUS
     for (let i = 0; i < MAX_MARKERS; i++) {
       const m = this.pool[i]
       if (!m) continue
       const dx = m.x - worldX
       const dy = m.y - worldY
-      const dist = Math.sqrt(dx * dx + dy * dy)
-      if (dist < bestDist) {
-        bestDist = dist
+      const distSq = dx * dx + dy * dy
+      if (distSq < bestDistSq) {
+        bestDistSq = distSq
         bestId = m.id
       }
     }

@@ -366,8 +366,7 @@ export const EVENT_DEFINITIONS: WorldEventDef[] = [
         const pos = ctx.em.getComponent<PositionComponent>(bid, 'position')
         const b = ctx.em.getComponent<BuildingComponent>(bid, 'building')
         if (!pos || !b) continue
-        const dist = Math.sqrt((pos.x - cx) ** 2 + (pos.y - cy) ** 2)
-        if (dist < radius) {
+        if ((pos.x - cx) ** 2 + (pos.y - cy) ** 2 < radius * radius) {
           const dmg = Math.floor(30 + Math.random() * 40)
           b.health = Math.max(0, b.health - dmg)
         }

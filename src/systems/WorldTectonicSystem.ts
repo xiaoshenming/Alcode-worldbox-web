@@ -80,8 +80,8 @@ export class WorldTectonicSystem {
         const b = this.plates[j]
         const dx = a.centerX - b.centerX
         const dy = a.centerY - b.centerY
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist < a.radius + b.radius) {
+        const threshold = a.radius + b.radius
+        if (dx * dx + dy * dy < threshold * threshold) {
           const boundaries: BoundaryType[] = ['convergent', 'divergent', 'transform']
           this.faults.push({
             x1: a.centerX, y1: a.centerY,

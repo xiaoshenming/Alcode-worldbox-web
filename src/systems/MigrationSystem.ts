@@ -264,8 +264,7 @@ export class MigrationSystem {
       }
 
       // Distance from origin (prefer not too close)
-      const d = Math.sqrt((tx - fromX) ** 2 + (ty - fromY) ** 2)
-      if (d > 25) score += 20
+      if ((tx - fromX) ** 2 + (ty - fromY) ** 2 > 625) score += 20  // dist > 25
 
       if (score > bestScore) {
         bestScore = score

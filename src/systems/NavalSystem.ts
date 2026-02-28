@@ -192,9 +192,8 @@ export class NavalSystem {
       // Assign a new random target if idle or reached destination
       const dx = ship.targetX - pos.x
       const dy = ship.targetY - pos.y
-      const dist = Math.sqrt(dx * dx + dy * dy)
 
-      if (ship.state === 'idle' || dist < 1) {
+      if (ship.state === 'idle' || dx * dx + dy * dy < 1) {
         this.assignNewTarget(ship, pos, world)
         ship.state = 'sailing'
       }
@@ -288,8 +287,7 @@ export class NavalSystem {
             if (!otherPos) continue
             const ddx = pos.x - otherPos.x
             const ddy = pos.y - otherPos.y
-            const dist = Math.sqrt(ddx * ddx + ddy * ddy)
-            if (dist > 6) continue // Out of naval combat range
+            if (ddx * ddx + ddy * ddy > 36) continue // Out of naval combat range
 
             // Engage combat
             ship.state = 'combat'

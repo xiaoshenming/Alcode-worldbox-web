@@ -303,8 +303,7 @@ export class WorldMigrationWaveSystem {
       }
 
       // Distance bonus (not too close)
-      const d = Math.sqrt((tx - fromX) ** 2 + (ty - fromY) ** 2)
-      if (d > 30) score += 15
+      if ((tx - fromX) ** 2 + (ty - fromY) ** 2 > 900) score += 15  // dist > 30
 
       if (score > bestScore) {
         bestScore = score

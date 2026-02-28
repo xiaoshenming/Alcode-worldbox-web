@@ -336,12 +336,12 @@ export class QuestSystem {
 
     const dx = heroPos.x - quest.targetX
     const dy = heroPos.y - quest.targetY
-    const dist = Math.sqrt(dx * dx + dy * dy)
+    const distSq = dx * dx + dy * dy
 
     // Progress increases when near target
-    if (dist < 5) {
+    if (distSq < 25) {  // dist < 5
       // Faster progress the closer the hero is
-      const progressRate = dist < 2 ? 3 : 1.5
+      const progressRate = distSq < 4 ? 3 : 1.5  // distSq < 4 means dist < 2
       quest.progress = Math.min(100, quest.progress + progressRate)
 
       // Special: slay_dragon requires the dragon to actually die nearby
