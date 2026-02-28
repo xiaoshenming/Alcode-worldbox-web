@@ -124,7 +124,9 @@ export class GodPowerSystem {
     // Initial eruption: set center to lava + mountain ring
     if (e.ticksLeft === EFFECT_DURATION.volcano - 1) {
       world.setTile(e.x, e.y, TileType.LAVA)
-      for (const [dx, dy] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+      for (let di = 0; di < 4; di++) {
+        const dx = di === 0 ? -1 : di === 1 ? 1 : 0
+        const dy = di < 2 ? 0 : di === 2 ? -1 : 1
         const nx = e.x + dx, ny = e.y + dy
         if (nx >= 0 && nx < world.width && ny >= 0 && ny < world.height) {
           world.setTile(nx, ny, TileType.MOUNTAIN)
