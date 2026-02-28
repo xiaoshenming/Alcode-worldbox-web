@@ -1797,6 +1797,7 @@ export class Game {
   private _miningCivBuf: { id: number; cities: { x: number; y: number }[]; techLevel: number; race: string }[] = []
   private _siegeSoldiersBuf: number[] = []
   private _speciesCountsMap = new Map<string, number>()  // reused in getSpeciesCounts callback
+  private _civSnapBuf: { id: number; name: string; pop: number; color: string }[] = []
   // Pre-computed sky darken color table for disaster warning overlay (101 steps, alpha = intensity*0.4*0-1)
   private _skyDarkenTable: string[] = (() => {
     const t: string[] = []

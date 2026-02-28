@@ -33,7 +33,7 @@ export class HistoryReplaySystem {
     this.snapshots.push({
       tick, population, civCount, wars,
       events: events.slice(-5),  // keep last 5 events
-      civData: civData.map(c => ({ ...c })),
+      civData: civData.map(c => ({ id: c.id, name: c.name, pop: c.pop, color: c.color })),
     })
 
     if (this.snapshots.length > MAX_SNAPSHOTS) {

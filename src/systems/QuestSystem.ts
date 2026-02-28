@@ -9,6 +9,16 @@ import { QUEST_DESCRIPTIONS, BALLAD_TEMPLATES } from './QuestData'
 
 export type QuestType = 'slay_dragon' | 'explore_ruins' | 'defend_village' | 'find_artifact' | 'escort_caravan' | 'holy_pilgrimage'
 
+// Pre-allocated base rewards to avoid object literal allocation on quest generation
+const BASE_REWARDS: Record<QuestType, Readonly<{ xp: number; gold: number; fame: number }>> = {
+  slay_dragon:     { xp: 80, gold: 30, fame: 50 },
+  explore_ruins:   { xp: 30, gold: 10, fame: 15 },
+  defend_village:  { xp: 50, gold: 15, fame: 30 },
+  find_artifact:   { xp: 40, gold: 20, fame: 25 },
+  escort_caravan:  { xp: 35, gold: 25, fame: 20 },
+  holy_pilgrimage: { xp: 25, gold: 5,  fame: 35 },
+} as const
+
 export interface Quest {
   id: number
   type: QuestType
@@ -291,15 +301,8 @@ export class QuestSystem {
     return null
   }
 
-  private getBaseReward(type: QuestType): { xp: number; gold: number; fame: number } {
-    switch (type) {
-      case 'slay_dragon':     return { xp: 80, gold: 30, fame: 50 }
-      case 'explore_ruins':   return { xp: 30, gold: 10, fame: 15 }
-      case 'defend_village':  return { xp: 50, gold: 15, fame: 30 }
-      case 'find_artifact':   return { xp: 40, gold: 20, fame: 25 }
-      case 'escort_caravan':  return { xp: 35, gold: 25, fame: 20 }
-      case 'holy_pilgrimage': return { xp: 25, gold: 5,  fame: 35 }
-    }
+  private getBaseReward(type: QuestType): Readonly<{ xp: number; gold: number; fame: number }> {
+    return BASE_REWARDS[type]
   }
 
   private pickDescription(type: QuestType): string {
