@@ -29,6 +29,7 @@ const EFFECT_DURATION: Record<GodPowerType, number> = {
 
 export class GodPowerSystem {
   private effects: ActiveEffect[] = []
+  private _entitiesInRadiusBuf: number[] = []
 
   activatePower(power: GodPowerType, x: number, y: number): void {
     this.effects.push({
@@ -233,7 +234,7 @@ export class GodPowerSystem {
 
   private entitiesInRadius(em: EntityManager, cx: number, cy: number, radius: number): number[] {
     const r2 = radius * radius
-    const result: number[] = []
+    const result = this._entitiesInRadiusBuf; result.length = 0
     for (const id of em.getEntitiesWithComponent('position')) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (!pos) continue

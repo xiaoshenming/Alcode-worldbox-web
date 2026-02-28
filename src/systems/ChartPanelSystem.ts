@@ -66,8 +66,8 @@ export class ChartPanelSystem {
   setTimeRange(ticks: number): void { this.timeRange = Math.max(100, ticks); }
 
   private getOrderedData(): ChartDataPoint[] {
-    if (this.count === 0) return [];
-    const result: ChartDataPoint[] = [];
+    if (this.count === 0) return this._orderedBuf;
+    const result = this._orderedBuf; result.length = 0;
     const start = this.count < MAX_BUFFER ? 0 : this.head;
     for (let i = 0; i < this.count; i++) {
       result.push(this.buffer[(start + i) % MAX_BUFFER]);
@@ -76,6 +76,7 @@ export class ChartPanelSystem {
   }
 
   private _filteredBuf: ChartDataPoint[] = [];
+  private _orderedBuf: ChartDataPoint[] = [];
   private filterByRange(data: ChartDataPoint[]): ChartDataPoint[] {
     if (data.length === 0) return data;
     const maxTick = data[data.length - 1].tick;

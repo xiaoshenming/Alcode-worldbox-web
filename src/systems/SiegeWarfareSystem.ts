@@ -62,6 +62,7 @@ export class SiegeWarfareSystem {
   private particles: { x: number; y: number; life: number; vx: number; vy: number; type: 'fire' | 'smoke' }[] = [];
   private _lastZoom = -1;
   private _iconFont = '';
+  private _activeSiegesBuf: SiegeData[] = [];
 
   startSiege(attackerCivId: number, defenderCivId: number, cityX: number, cityY: number, attackerCount: number): SiegeData {
     const siege: SiegeData = {
@@ -139,7 +140,7 @@ export class SiegeWarfareSystem {
   }
 
   getActiveSieges(): SiegeData[] {
-    const result: SiegeData[] = []
+    const result = this._activeSiegesBuf; result.length = 0
     for (const s of this.sieges.values()) { if (!s.resolved) result.push(s) }
     return result
   }

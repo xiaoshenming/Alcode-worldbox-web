@@ -76,6 +76,7 @@ function tileToTerrainKey(tile: TileType): string | null {
 }
 
 const ADAPTATION_THRESHOLD = 1000 // ticks of exposure needed to unlock a trait
+const SELECTION_TRAIT_NAMES: readonly string[] = ['Battle Hardened', 'Efficient Metabolism', 'Disease Resistant']
 const INHERITANCE_RATIO = 0.6     // 60% of species must have trait for auto-inherit
 const SELECTION_DEATH_THRESHOLD = 20 // deaths before natural selection kicks in
 
@@ -256,7 +257,7 @@ export class EvolutionSystem {
       if (result.some(t => t.name === traitName)) continue
       if (stat.count > 0 || stat.total === 0) {
         // Find matching selection trait
-        const selectionTraits = ['Battle Hardened', 'Efficient Metabolism', 'Disease Resistant']
+        const selectionTraits = SELECTION_TRAIT_NAMES
         if (selectionTraits.includes(traitName)) {
           const cause = traitName === 'Battle Hardened' ? 'combat'
             : traitName === 'Efficient Metabolism' ? 'hunger'
