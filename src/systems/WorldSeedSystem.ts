@@ -3,10 +3,13 @@
 export class WorldSeedSystem {
   private seed: number
   private state: number
+  // Pre-computed display text — updated only when seed changes
+  private _displayText: string
 
   constructor(seed?: number) {
     this.seed = seed ?? (Math.random() * 0xFFFFFFFF) >>> 0
     this.state = this.seed
+    this._displayText = `Seed: ${this.seed.toString(16).toUpperCase().padStart(8, '0')}`
   }
 
   getSeed(): number {
@@ -16,6 +19,7 @@ export class WorldSeedSystem {
   setSeed(seed: number): void {
     this.seed = seed >>> 0
     this.state = this.seed
+    this._displayText = `Seed: ${this.seed.toString(16).toUpperCase().padStart(8, '0')}`
   }
 
   /** Hash a user-provided string into a 32-bit integer seed */
@@ -57,7 +61,7 @@ export class WorldSeedSystem {
 
   /** Render seed display in the bottom-left corner */
   render(ctx: CanvasRenderingContext2D, screenWidth: number): void {
-    const text = `Seed: ${this.getSeedString()}`
+    const text = this._displayText
     const x = 8
     const y = ctx.canvas.height - 10
 
