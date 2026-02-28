@@ -20,7 +20,7 @@ export interface EvolutionEvent {
 }
 
 interface LayoutNode { node: EvolutionNode; x: number; y: number; children: LayoutNode[] }
-interface MutationNotif { event: EvolutionEvent; startTick: number; alpha: number }
+interface MutationNotif { event: EvolutionEvent; startTick: number; alpha: number; speciesMutStr: string }
 
 const COLORS: Record<string, string> = { human: '#4488ff', elf: '#44cc66', dwarf: '#aa7744', orc: '#dd4444' }
 const BG = 'rgba(10,10,20,0.88)', BORDER = 'rgba(100,140,255,0.5)'
@@ -40,7 +40,7 @@ export class EvolutionVisualSystem {
   private pr = { x: 0, y: 0, w: 0, h: 0 }
   private tlZoom = 1
   // Cached stat card map — cleared and reused each render call to avoid per-frame new Map()
-  private _smCache = new Map<string, { total: number; nodes: EvolutionNode[]; totalStr: string }>()
+  private _smCache = new Map<string, { total: number; nodes: EvolutionNode[]; totalStr: string; evoStr: string }>()
 
   addNode(node: EvolutionNode): void {
     const stored = { ...node }
@@ -68,7 +68,7 @@ export class EvolutionVisualSystem {
   pushEvent(event: EvolutionEvent): void {
     this.events.push(event)
     if (this.notifs.length >= MAX_NOTIF) this.notifs.shift()
-    this.notifs.push({ event, startTick: -1, alpha: 1 })
+    this.notifs.push({ event, startTick: -1, alpha: 1, speciesMutStr: `${event.species}: ${event.mutation}` })
   }
 
   toggle(): void { this.visible = !this.visible }
@@ -182,14 +182,18 @@ export class EvolutionVisualSystem {
   private renderCards(ctx: CanvasRenderingContext2D, ox: number, oy: number, w: number, maxH: number): void {
     const sm = this._smCache
     // Reset cached entries without allocating new objects
-    for (const entry of sm.values()) { entry.total = 0; entry.nodes.length = 0 }
+    for (const entry of sm.values()) { entry.total = 0; entry.nodes.length = 0; entry.evoStr = '' }
     for (const nd of this.nodes.values()) {
       let e = sm.get(nd.species)
-      if (!e) { e = { total: 0, nodes: [], totalStr: '0' }; sm.set(nd.species, e) }
+      if (!e) { e = { total: 0, nodes: [], totalStr: '0', evoStr: '' }; sm.set(nd.species, e) }
       e.total += nd.population; e.nodes.push(nd)
     }
     // Pre-compute totalStr after accumulation
-    for (const entry of sm.values()) { entry.totalStr = String(entry.total) }
+    for (const entry of sm.values()) {
+      entry.totalStr = String(entry.total)
+      let evo = 0; for (const n of entry.nodes) evo += n.mutations.length
+      entry.evoStr = `Evolutions: ${evo}`
+    }
     let cy = oy
     for (const [sp, data] of sm) {
       if (cy - oy > maxH - 60) break
@@ -213,8 +217,7 @@ export class EvolutionVisualSystem {
         }
       }
       ctx.fillText(traitStr, ox + 6, cy + 32)
-      let evo = 0; for (const n of data.nodes) evo += n.mutations.length
-      ctx.fillText(`Evolutions: ${evo}`, ox + 6, cy + 44)
+      ctx.fillText(data.evoStr, ox + 6, cy + 44)
       cy += cardH + 6
     }
   }
@@ -235,7 +238,7 @@ export class EvolutionVisualSystem {
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
       ctx.fillText('Evolution!', cx, cy - 20)
       ctx.fillStyle = TXT; ctx.font = '12px monospace'
-      ctx.fillText(`${n.event.species}: ${n.event.mutation}`, cx, cy + 4)
+      ctx.fillText(n.speciesMutStr, cx, cy + 4)
       ctx.fillStyle = DIM; ctx.font = '10px monospace'
       ctx.fillText(n.event.description, cx, cy + 20)
     }
