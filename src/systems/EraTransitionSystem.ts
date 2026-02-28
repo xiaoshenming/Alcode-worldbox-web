@@ -10,11 +10,15 @@ export interface HistoryEntry {
   type: 'era_change' | 'war' | 'civ_fall' | 'wonder' | 'hero_born';
   description: string;
   icon: string;
+  /** Pre-computed "T:${tick}" display string — set by addHistoryEntry */
+  tickStr?: string;
 }
 
 export interface CivPopSample {
   tick: number;
   populations: Map<string, number>;
+  /** Pre-computed "T:${tick}" display string — set by addPopulationSample */
+  tickStr?: string;
 }
 
 const ERA_COLORS: Record<EraName, string> = {
@@ -88,6 +92,7 @@ export class EraTransitionSystem {
 
   /** 添加历史事件 */
   addHistoryEntry(entry: HistoryEntry): void {
+    if (!entry.tickStr) entry.tickStr = `T:${entry.tick}`
     this.history.push(entry);
     if (this.history.length > MAX_HISTORY) {
       this.history.shift();
@@ -108,6 +113,7 @@ export class EraTransitionSystem {
 
   /** 添加人口采样 */
   addPopulationSample(sample: CivPopSample): void {
+    if (!sample.tickStr) sample.tickStr = `T:${sample.tick}`
     this.popSamples.push(sample);
     if (this.popSamples.length > MAX_SAMPLES) {
       this.popSamples.shift();
@@ -295,7 +301,7 @@ export class EraTransitionSystem {
       // tick
       ctx.font = '10px monospace';
       ctx.fillStyle = '#AAA';
-      ctx.fillText(`T:${entry.tick}`, lineX + 14, ey + 32);
+      ctx.fillText(entry.tickStr ?? `T:${entry.tick}`, lineX + 14, ey + 32);
 
       // 描述
       ctx.font = '12px sans-serif';
@@ -418,8 +424,8 @@ export class EraTransitionSystem {
     ctx.fillText(this._maxTotalStr, cx - 4, cy + 10);
     ctx.fillText('0', cx - 4, cy + ch);
     ctx.textAlign = 'center';
-    ctx.fillText(`T:${this.popSamples[0].tick}`, cx, cy + ch + 14);
-    ctx.fillText(`T:${this.popSamples[n - 1].tick}`, cx + cw, cy + ch + 14);
+    ctx.fillText(this.popSamples[0].tickStr ?? `T:${this.popSamples[0].tick}`, cx, cy + ch + 14);
+    ctx.fillText(this.popSamples[n - 1].tickStr ?? `T:${this.popSamples[n - 1].tick}`, cx + cw, cy + ch + 14);
 
     // 图例
     ctx.textAlign = 'left';

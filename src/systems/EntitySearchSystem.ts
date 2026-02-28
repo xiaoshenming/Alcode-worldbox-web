@@ -5,6 +5,8 @@ interface SearchResult {
   label: string
   x: number
   y: number
+  /** Pre-computed "(x,y)" coordinate string — computed in search() */
+  coordStr: string
 }
 
 export class EntitySearchSystem {
@@ -29,7 +31,7 @@ export class EntitySearchSystem {
     this.results = entities
       .filter(e => e.label.toLowerCase().includes(this.query))
       .slice(0, 20)
-      .map(e => ({ entityId: e.id, label: e.label, x: e.x, y: e.y }))
+      .map(e => ({ entityId: e.id, label: e.label, x: e.x, y: e.y, coordStr: `(${e.x},${e.y})` }))
     this.selectedIdx = this.results.length > 0 ? 0 : -1
   }
 
@@ -92,7 +94,7 @@ export class EntitySearchSystem {
       ctx.fillStyle = '#666'
       ctx.font = '9px monospace'
       ctx.textAlign = 'right'
-      ctx.fillText(`(${r.x},${r.y})`, px + pw - 14, ry + 10)
+      ctx.fillText(r.coordStr, px + pw - 14, ry + 10)
       ctx.textAlign = 'left'
       ry += 24
     }
