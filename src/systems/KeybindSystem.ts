@@ -1,6 +1,7 @@
 /** KeybindSystem - customizable keyboard shortcut system with localStorage persistence */
 
 const STORAGE_KEY = 'worldbox_keybinds';
+const MODIFIER_KEYS = new Set(['Control', 'Shift', 'Alt', 'Meta'])
 
 interface Binding {
   action: string;
@@ -249,7 +250,7 @@ export class KeybindSystem {
     let k = e.key;
     if (k === ' ') k = 'Space';
     if (k.length === 1) k = k.toUpperCase();
-    if (!['Control', 'Shift', 'Alt', 'Meta'].includes(k)) parts.push(k);
+    if (!MODIFIER_KEYS.has(k)) parts.push(k);
     return parts.join('+');
   }
 

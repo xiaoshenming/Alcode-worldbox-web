@@ -140,7 +140,7 @@ export class DisasterWarningSystem {
   getVisualEffects(): VisualEffect[] {
     if (!this.effectsDirty) return this.cachedEffects
 
-    const effects: VisualEffect[] = []
+    const effects = this.cachedEffects; effects.length = 0
 
     for (const w of this.warnings) {
       if (w.intensity < 0.01) continue
@@ -164,7 +164,6 @@ export class DisasterWarningSystem {
       }
     }
 
-    this.cachedEffects = effects
     this.effectsDirty = false
     return effects
   }

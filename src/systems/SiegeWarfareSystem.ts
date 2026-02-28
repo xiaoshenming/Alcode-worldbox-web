@@ -63,6 +63,7 @@ export class SiegeWarfareSystem {
   private _lastZoom = -1;
   private _iconFont = '';
   private _activeSiegesBuf: SiegeData[] = [];
+  private _seenWeaponsBuf: SiegeWeaponType[] = [];
 
   startSiege(attackerCivId: number, defenderCivId: number, cityX: number, cityY: number, attackerCount: number): SiegeData {
     const siege: SiegeData = {
@@ -193,7 +194,7 @@ export class SiegeWarfareSystem {
       ctx.strokeRect(moraleX, moraleY, moraleW, barH * 0.7);
 
       // Weapon icons — deduplicate without allocating a Set per frame
-      const seen: SiegeWeaponType[] = [];
+      const seen = this._seenWeaponsBuf; seen.length = 0;
       for (const w of siege.siegeWeapons) {
         if (!seen.includes(w)) seen.push(w);
       }

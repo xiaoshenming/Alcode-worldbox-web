@@ -59,6 +59,7 @@ export class ZoneManagementSystem {
   private dashOffset = 0;
   private readonly _zoneDashBuf: number[] = [6, 4];
   private readonly _emptyDash: number[] = [];
+  private _zonesBuf: Zone[] = [];
 
   /**
    * 添加一个矩形区域
@@ -272,7 +273,7 @@ export class ZoneManagementSystem {
     const rowH = 52;
     const listY = py + 40;
     const maxRows = Math.floor((ph - 50) / rowH);
-    const zones: Zone[] = []
+    const zones = this._zonesBuf; zones.length = 0
     for (const z of this.zones.values()) zones.push(z)
 
     if (zones.length === 0) {

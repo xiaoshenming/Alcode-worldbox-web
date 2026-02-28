@@ -33,6 +33,7 @@ const MUTATIONS: MutationDef[] = [
 const TRAIT_MIN = 0.3
 const TRAIT_MAX = 2.5
 const MUTATION_CHANCE = 0.05
+const GENETIC_TRAIT_KEYS: readonly (keyof GeneticTraits)[] = ['strength', 'vitality', 'agility', 'fertility', 'longevity', 'intelligence']
 
 function clampTrait(v: number): number {
   return Math.max(TRAIT_MIN, Math.min(TRAIT_MAX, v))
@@ -68,7 +69,7 @@ export class GeneticsSystem {
 
   /** Inherit traits from two parents. Each trait randomly picks one parent's value + small variation. */
   static inheritTraits(parentA: GeneticsComponent, parentB: GeneticsComponent, parentAId: EntityId, parentBId: EntityId): GeneticsComponent {
-    const traitKeys: (keyof GeneticTraits)[] = ['strength', 'vitality', 'agility', 'fertility', 'longevity', 'intelligence']
+    const traitKeys = GENETIC_TRAIT_KEYS
 
     const childTraits: GeneticTraits = {
       strength: 1, vitality: 1, agility: 1, fertility: 1, longevity: 1, intelligence: 1,
