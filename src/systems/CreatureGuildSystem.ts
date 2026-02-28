@@ -18,6 +18,7 @@ export interface Guild {
   hallY: number
   founded: number         // tick
   bonus: number           // percentage bonus to members
+  nameLabel: string       // Pre-computed "${name} Lv${level}" for render
 }
 
 const CHECK_INTERVAL = 800
@@ -96,6 +97,7 @@ export class CreatureGuildSystem {
           guild.experience -= EXP_PER_LEVEL
           guild.level++
           guild.bonus = guild.level * BONUS_PER_LEVEL
+          guild.nameLabel = `${guild.name} Lv${guild.level}`
           EventLog.log('culture', `Guild "${guild.name}" reached level ${guild.level}!`, 0)
         }
       }
@@ -149,6 +151,7 @@ export class CreatureGuildSystem {
         hallY: firstPos.y,
         founded: tick,
         bonus: BONUS_PER_LEVEL,
+        nameLabel: `${name} Lv1`,
       }
       this.guilds.push(guild)
       EventLog.log('culture', `Guild "${name}" (${guildType}) founded with ${members.length} members`, 0)
@@ -201,7 +204,7 @@ export class CreatureGuildSystem {
       ctx.fillStyle = '#fff'
       ctx.font = this._nameFont
       ctx.textAlign = 'center'
-      ctx.fillText(`${guild.name} Lv${guild.level}`, sx, sy - 6 * zoom)
+      ctx.fillText(guild.nameLabel, sx, sy - 6 * zoom)
       ctx.fillText(`${guild.members.length}/${MAX_MEMBERS}`, sx, sy + 12 * zoom)
     }
   }
