@@ -59,8 +59,19 @@ export class MonumentSystem {
   private scrollY = 0
   private _lastZoom = -1
   private _iconFont = ''
+  /** Cached completed count and panel header string */
+  private _doneCount = 0
+  private _headerStr = '\u{1F3DB}\u{FE0F} 纪念碑 (0/0)'
 
   /* ── 公共 API ── */
+
+  /** Rebuild header cache (done count + string) */
+  private _rebuildHeaderCache(): void {
+    let done = 0
+    for (let i = 0; i < this.monuments.length; i++) { if (this.monuments[i].completed) done++ }
+    this._doneCount = done
+    this._headerStr = `\u{1F3DB}\u{FE0F} 纪念碑 (${done}/${this.monuments.length})`
+  }
 
   /** 开始建造纪念碑 */
   build(civId: number, type: MonumentType, x: number, y: number, tick: number): Monument {
@@ -72,6 +83,7 @@ export class MonumentSystem {
       createdTick: tick, completed: false,
     }
     this.monuments.push(m)
+    this._rebuildHeaderCache()
     return m
   }
 
@@ -121,17 +133,19 @@ export class MonumentSystem {
   update(tick: number): void {
     if (tick % BUILD_CHECK_INTERVAL !== 0) return
 
+    let anyCompleted = false
     for (const m of this.monuments) {
       if (!m.completed) {
         const info = MONUMENT_INFO[m.type]
         m.buildProgress = clamp((tick - m.createdTick) / info.buildTicks, 0, 1)
         m.buildProgressStr = (m.buildProgress * 100).toFixed(0)
-        if (m.buildProgress >= 1) m.completed = true
+        if (m.buildProgress >= 1) { m.completed = true; anyCompleted = true }
       } else {
         // 缓慢老化
         m.durability = Math.max(0.1, m.durability - 0.0002)
       }
     }
+    if (anyCompleted) this._rebuildHeaderCache()
   }
 
   /* ── 输入 ── */
@@ -168,9 +182,7 @@ export class MonumentSystem {
     ctx.fillStyle = '#d0e8b0'
     ctx.font = 'bold 14px monospace'
     ctx.textAlign = 'left'
-    let done = 0
-    for (let _mi = 0; _mi < this.monuments.length; _mi++) { if (this.monuments[_mi].completed) done++ }
-    ctx.fillText(`\u{1F3DB}\u{FE0F} 纪念碑 (${done}/${this.monuments.length})`, px + 12, py + 24)
+    ctx.fillText(this._headerStr, px + 12, py + 24)
 
     if (this.monuments.length === 0) {
       ctx.fillStyle = '#888'; ctx.font = '13px monospace'; ctx.textAlign = 'center'
