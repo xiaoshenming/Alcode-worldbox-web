@@ -33,6 +33,10 @@ const RELIC_COLORS: Record<RelicType, string> = {
   arcane: '#c4f',
   prosperity: '#ffd700',
 }
+// Pre-computed first-char uppercase for render — avoids per-relic string allocation
+const RELIC_ICON_LABEL: Record<RelicType, string> = {
+  wisdom: 'W', war: 'W', nature: 'N', arcane: 'A', prosperity: 'P',
+}
 
 const SPAWN_INTERVAL = 5000
 const MAX_RELICS = 10
@@ -206,7 +210,7 @@ export class WorldRelicSystem {
       ctx.fillStyle = '#fff'
       ctx.font = this._nameFont
       ctx.textAlign = 'center'
-      ctx.fillText(relic.type[0].toUpperCase(), sx, sy + 3 * zoom)
+      ctx.fillText(RELIC_ICON_LABEL[relic.type], sx, sy + 3 * zoom)
 
       // Effect radius ring for discovered relics
       if (relic.discoveredBy !== null) {
