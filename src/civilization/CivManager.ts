@@ -14,6 +14,8 @@ export class CivManager {
   // Reusable flat buffers for expandTerritory (called per-civ per ~200 ticks)
   private _borderXBuf: number[] = []
   private _borderYBuf: number[] = []
+  // Reusable buffer for getAllTradeRoutes (called every render frame)
+  private _tradeRoutesBuf: { from: { x: number; y: number }; to: { x: number; y: number }; color: string }[] = []
 
   constructor(em: EntityManager, world: World) {
     this.em = em
@@ -824,7 +826,7 @@ export class CivManager {
   }
 
   getAllTradeRoutes(): { from: { x: number; y: number }; to: { x: number; y: number }; color: string }[] {
-    const routes: { from: { x: number; y: number }; to: { x: number; y: number }; color: string }[] = []
+    const routes = this._tradeRoutesBuf; routes.length = 0
     for (const [, civ] of this.civilizations) {
       for (const route of civ.tradeRoutes) {
         if (!route.active) continue
