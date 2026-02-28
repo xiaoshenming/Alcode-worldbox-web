@@ -53,6 +53,17 @@ export class PerformanceMonitorSystem {
   private frameCount = 0
   private fpsUpdateTimer = 0
 
+  // Pre-computed display strings — updated only when underlying value changes
+  private _fpsStr = 'FPS: 0'
+  private _entStr = 'Entities: 0'
+  private _memStr = 'Memory: N/A'
+  private _tickStr = 'Tick: 0  Speed: 1x'
+  private _lastFpsRounded = -1
+  private _lastEntCount = -1
+  private _lastMemRounded = -1
+  private _lastTick = -1
+  private _lastSpeed = -1
+
   // Keyboard listener reference (for potential cleanup)
   private boundKeyHandler: (e: KeyboardEvent) => void
 
@@ -137,8 +148,12 @@ export class PerformanceMonitorSystem {
     let ty = y + PANEL_PAD
     const tx = x + PANEL_PAD
 
-    // FPS with warning color
+    // FPS with warning color — use cached string, update only when value changes
     const fpsRounded = this.fps | 0
+    if (fpsRounded !== this._lastFpsRounded) {
+      this._lastFpsRounded = fpsRounded
+      this._fpsStr = `FPS: ${fpsRounded}`
+    }
     if (fpsRounded < CRIT_FPS) {
       ctx.fillStyle = CRIT_COLOR
     } else if (fpsRounded < WARN_FPS) {
@@ -146,7 +161,7 @@ export class PerformanceMonitorSystem {
     } else {
       ctx.fillStyle = GRAPH_COLOR
     }
-    ctx.fillText(`FPS: ${fpsRounded}`, tx, ty)
+    ctx.fillText(this._fpsStr, tx, ty)
 
     // Warning label
     if (fpsRounded < CRIT_FPS) {
@@ -157,18 +172,35 @@ export class PerformanceMonitorSystem {
 
     ty += LINE_H
     ctx.fillStyle = TEXT_COLOR
-    ctx.fillText(`Entities: ${this.entityCount}`, tx, ty)
+    // Entity count — cache string, update only when count changes
+    if (this.entityCount !== this._lastEntCount) {
+      this._lastEntCount = this.entityCount
+      this._entStr = `Entities: ${this.entityCount}`
+    }
+    ctx.fillText(this._entStr, tx, ty)
 
     ty += LINE_H
     if (this.memoryMB > 0) {
-      ctx.fillText(`Memory: ${this.memoryMB.toFixed(1)} MB`, tx, ty)
+      // Memory rounds to 1 decimal — only rebuild when rounded value changes
+      const memRounded = this.memoryMB * 10 | 0
+      if (memRounded !== this._lastMemRounded) {
+        this._lastMemRounded = memRounded
+        this._memStr = `Memory: ${this.memoryMB.toFixed(1)} MB`
+      }
+      ctx.fillText(this._memStr, tx, ty)
     } else {
       ctx.fillText('Memory: N/A', tx, ty)
     }
 
     ty += LINE_H
-    const speedLabel = this.speed === 0 ? 'PAUSED' : `${this.speed}x`
-    ctx.fillText(`Tick: ${this.tick}  Speed: ${speedLabel}`, tx, ty)
+    // Tick + speed — cache string, update when either changes
+    if (this.tick !== this._lastTick || this.speed !== this._lastSpeed) {
+      this._lastTick = this.tick
+      this._lastSpeed = this.speed
+      const speedLabel = this.speed === 0 ? 'PAUSED' : `${this.speed}x`
+      this._tickStr = `Tick: ${this.tick}  Speed: ${speedLabel}`
+    }
+    ctx.fillText(this._tickStr, tx, ty)
 
     // --- FPS history sparkline ---
     ty += LINE_H + 4
