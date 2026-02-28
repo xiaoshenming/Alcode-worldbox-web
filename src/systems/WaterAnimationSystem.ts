@@ -48,7 +48,7 @@ export class WaterAnimationSystem {
   // OffscreenCanvas cache for water effects
   private waterCache: OffscreenCanvas | null = null
   private waterCacheCtx: OffscreenCanvasRenderingContext2D | null = null
-  private cacheBounds: { startX: number; startY: number; endX: number; endY: number; camX: number; camY: number; zoom: number } | null = null
+  private cacheBounds = { startX: 0, startY: 0, endX: -1, endY: -1, camX: 0, camY: 0, zoom: 0 }
   private readonly CACHE_INTERVAL = 5 // re-render water every N frames (raised from 3)
   private frameCounter: number = 0
 
@@ -136,11 +136,12 @@ export class WaterAnimationSystem {
     this.frameCounter++
 
     // Check if we need to re-render the water cache
-    const boundsChanged = !this.cacheBounds ||
-      this.cacheBounds.startX !== x0 || this.cacheBounds.startY !== y0 ||
-      this.cacheBounds.endX !== x1 || this.cacheBounds.endY !== y1 ||
-      this.cacheBounds.camX !== cameraX || this.cacheBounds.camY !== cameraY ||
-      this.cacheBounds.zoom !== zoom
+    const cb = this.cacheBounds
+    const boundsChanged = cb.endX < 0 ||
+      cb.startX !== x0 || cb.startY !== y0 ||
+      cb.endX !== x1 || cb.endY !== y1 ||
+      cb.camX !== cameraX || cb.camY !== cameraY ||
+      cb.zoom !== zoom
 
     const needsRedraw = boundsChanged || this.frameCounter % this.CACHE_INTERVAL === 0
 
@@ -176,7 +177,8 @@ export class WaterAnimationSystem {
         }
       }
 
-      this.cacheBounds = { startX: x0, startY: y0, endX: x1, endY: y1, camX: cameraX, camY: cameraY, zoom }
+      const cb = this.cacheBounds
+      cb.startX = x0; cb.startY = y0; cb.endX = x1; cb.endY = y1; cb.camX = cameraX; cb.camY = cameraY; cb.zoom = zoom
     }
 
     // Blit cached water effects

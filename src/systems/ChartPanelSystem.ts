@@ -20,6 +20,7 @@ const CHART_CONFIG: Record<ChartType, { label: string; color: string; fill: stri
 };
 
 const MAX_BUFFER = 500;
+const CHART_PAD = { top: 38, right: 14, bottom: 28, left: 52 };
 
 export class ChartPanelSystem {
   private buffer: ChartDataPoint[] = [];
@@ -102,7 +103,7 @@ export class ChartPanelSystem {
 
     const type = CHART_TYPES[this.chartIndex];
     const cfg = CHART_CONFIG[type];
-    const pad = { top: 38, right: 14, bottom: 28, left: 52 };
+    const pad = CHART_PAD;
     const cw = width - pad.left - pad.right;
     const ch = height - pad.top - pad.bottom;
     const cx = x + pad.left;
