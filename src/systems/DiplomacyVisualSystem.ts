@@ -38,6 +38,13 @@ const _STYLE_FRIEND:  LineStyle = { color: '#a8e6a3', dash: [8, 4],  width: 1.5,
 const _STYLE_NEUTRAL: LineStyle = { color: '#888',    dash: [2, 4],  width: 1,   alpha: 0.4 }
 const _STYLE_HOSTILE: LineStyle = { color: '#e67e22', dash: [6, 4],  width: 1.5, alpha: 0.7 }
 const _STYLE_WAR:     LineStyle = { color: '#e74c3c', dash: [],      width: 3,   alpha: 0.9 }
+/** Pre-computed relation value strings [-100, 100] — avoids String(val) per-cell per-frame in matrix panel */
+const _REL_STR: readonly string[] = (() => {
+  const a: string[] = []
+  for (let v = -100; v <= 100; v++) a.push(String(v))
+  return a
+})()
+const _relStr = (v: number): string => _REL_STR[Math.max(-100, Math.min(100, v)) + 100]
 const _EMPTY_DASH: number[] = []
 
 // Pre-computed relation colors: 201 steps for val -100..100
@@ -184,7 +191,7 @@ export class DiplomacyVisualSystem {
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
         ctx.font = '10px monospace';
-        ctx.fillText(String(val), cx + cellSize / 2, ry + cellSize / 2);
+        ctx.fillText(_relStr(val), cx + cellSize / 2, ry + cellSize / 2);
       }
     }
     ctx.restore();
