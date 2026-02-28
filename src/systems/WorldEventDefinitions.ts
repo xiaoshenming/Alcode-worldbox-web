@@ -42,6 +42,8 @@ export interface ActiveEvent {
   startTick: number
   remainingTicks: number
   data: Record<string, unknown>  // per-instance state
+  /** Pre-computed "${def.icon} ${def.name}" display string */
+  headerLabel: string
 }
 
 export interface EventBanner {

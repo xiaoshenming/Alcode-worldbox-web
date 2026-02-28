@@ -135,7 +135,8 @@ export class WorldEventSystem {
       def,
       startTick: tick,
       remainingTicks: def.duration,
-      data: {}
+      data: {},
+      headerLabel: `${def.icon} ${def.name}`,
     }
 
     // Hack to let effect store data on the active event
@@ -353,7 +354,7 @@ export class WorldEventSystem {
       ctx.textAlign = 'left'
       ctx.textBaseline = 'middle'
       ctx.fillStyle = '#ffffff'
-      ctx.fillText(`${active.def.icon} ${active.def.name}`, x + 8, y + 14)
+      ctx.fillText(active.headerLabel, x + 8, y + 14)
 
       y += 34
     }

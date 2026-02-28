@@ -15,6 +15,8 @@ interface NarrativeEntry {
   type: NarrativeType
   text: string
   tick: number
+  /** Pre-computed "tick ${tick}" display string */
+  tickStr: string
   /** 重要程度 1-5 */
   importance: number
   /** 是否已读 */
@@ -106,7 +108,7 @@ export class WorldNarratorSystem {
 
   /** 添加叙事（由其他系统调用） */
   addNarrative(type: NarrativeType, text: string, tick: number, importance = 3): void {
-    this.entries.push({ id: nextNarrId++, type, text, tick, importance, read: false })
+    this.entries.push({ id: nextNarrId++, type, text, tick, tickStr: `tick ${tick}`, importance, read: false })
     this.unreadCount++
     this._unreadStr = this.unreadCount > 9 ? '9+' : String(this.unreadCount)
     if (this.entries.length > MAX_ENTRIES) {
@@ -254,7 +256,7 @@ export class WorldNarratorSystem {
     ctx.fillStyle = '#777'
     ctx.font = '10px monospace'
     ctx.textAlign = 'right'
-    ctx.fillText(`tick ${e.tick}`, x + w - 4, y + 16)
+    ctx.fillText(e.tickStr, x + w - 4, y + 16)
     ctx.textAlign = 'left'
 
     // 文本

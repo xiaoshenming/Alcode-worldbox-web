@@ -23,6 +23,8 @@ interface AchievementState {
   progress: number
   unlocked: boolean
   unlockTick: number
+  /** Pre-computed "Tick ${unlockTick} 解锁" display string — set at unlock time */
+  unlockTickStr: string
   displayProgress: number
   progressPctStr: string  // cached for panel list — rebuilt when progress changes
   _prevPctQ: number       // quantized pct for tracker cache (step=5)
@@ -87,7 +89,7 @@ export class AchievementPopupSystem {
   registerAchievement(def: AchievementDef): void {
     if (this.achievements.has(def.id)) return
     this.achievements.set(def.id, {
-      def, progress: 0, unlocked: false, unlockTick: 0, displayProgress: 0,
+      def, progress: 0, unlocked: false, unlockTick: 0, unlockTickStr: '', displayProgress: 0,
       progressPctStr: '0', _prevPctQ: 0, trackerPctStr: '0%'
     })
     this._panelHeaderStr = `成就总览  ${this._unlockedCount}/${this.achievements.size}`
@@ -99,6 +101,7 @@ export class AchievementPopupSystem {
     if (!state || state.unlocked) return
     state.unlocked = true
     state.unlockTick = tick
+    state.unlockTickStr = `Tick ${tick} 解锁`
     state.progress = state.def.maxProgress
     state.displayProgress = state.def.maxProgress
     state.progressPctStr = '100'
@@ -388,7 +391,7 @@ export class AchievementPopupSystem {
       ctx.font = '9px sans-serif'
       if (s.unlocked) {
         ctx.fillStyle = '#666'
-        ctx.fillText(`Tick ${s.unlockTick} 解锁`, px + 48, iy + 36)
+        ctx.fillText(s.unlockTickStr, px + 48, iy + 36)
       } else if (s.progress > 0) {
         ctx.fillStyle = '#555'
         ctx.fillText(`进度: ${s.progressPctStr}%`, px + 48, iy + 36)
