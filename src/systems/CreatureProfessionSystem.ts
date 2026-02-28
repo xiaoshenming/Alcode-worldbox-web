@@ -82,6 +82,11 @@ export class CreatureProfessionSystem {
   // Pre-allocated needs/aptitude buffers — avoids 2 Record object literals per entity per 120 ticks
   private _needsBuf: Record<ProfessionType, number> = { farmer: 0, miner: 0, builder: 0, soldier: 0, merchant: 0, scholar: 0, priest: 0, blacksmith: 0 }
   private _aptitudeBuf: Record<ProfessionType, number> = { farmer: 0, miner: 0, builder: 0, soldier: 0, merchant: 0, scholar: 0, priest: 0, blacksmith: 0 }
+  /** Pre-allocated bonus percentage strings — rebuilt per render to avoid toFixed in loop */
+  private _bonusPctStrs: Record<BonusKey, string> = {
+    foodOutput: '0', combatDamage: '0', buildSpeed: '0', miningRate: '0',
+    tradeIncome: '0', researchRate: '0', faithGain: '0', craftQuality: '0',
+  }
 
   setCivManager(cm: CivManager): void { this.civManager = cm }
   setSelectedEntity(id: number): void { this.selectedEntity = id }
@@ -243,11 +248,15 @@ export class CreatureProfessionSystem {
     ctx.fillText('\u804C\u4E1A\u52A0\u6210:', px + 16, drawY)
     drawY += 20
     const bonus = this.getBonus(this.selectedEntity)
+    // Pre-compute percentage strings to avoid toFixed in loop
+    for (const key of BONUS_KEYS) {
+      const val = bonus[key]
+      this._bonusPctStrs[key] = ((val - 1) * 100).toFixed(0)
+    }
     for (const key of BONUS_KEYS) {
       const val = bonus[key]
       ctx.fillStyle = val > 1.01 ? '#aed581' : '#666'; ctx.font = '11px monospace'
-      const pct = ((val - 1) * 100).toFixed(0)
-      ctx.fillText(`  ${BONUS_LABELS[key]}: ${val >= 1 ? '+' : ''}${pct}%`, px + 16, drawY)
+      ctx.fillText(`  ${BONUS_LABELS[key]}: ${val >= 1 ? '+' : ''}${this._bonusPctStrs[key]}%`, px + 16, drawY)
       drawY += 18
     }
     ctx.textAlign = 'left'
