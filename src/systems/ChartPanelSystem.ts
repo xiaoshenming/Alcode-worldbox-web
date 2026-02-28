@@ -31,14 +31,23 @@ export class ChartPanelSystem {
   private _ptsBuf: { px: number; py: number }[] = [];
 
   addDataPoint(tick: number, data: Omit<ChartDataPoint, 'tick'>): void {
-    const point: ChartDataPoint = { tick, ...data };
+    let slot: ChartDataPoint
     if (this.count < MAX_BUFFER) {
-      this.buffer[this.count] = point;
-      this.count++;
+      if (!this.buffer[this.count]) {
+        this.buffer[this.count] = { tick: 0, population: 0, civCount: 0, warCount: 0, avgTechLevel: 0, totalTerritory: 0 }
+      }
+      slot = this.buffer[this.count]
+      this.count++
     } else {
-      this.buffer[this.head] = point;
-      this.head = (this.head + 1) % MAX_BUFFER;
+      slot = this.buffer[this.head]
+      this.head = (this.head + 1) % MAX_BUFFER
     }
+    slot.tick = tick
+    slot.population = data.population
+    slot.civCount = data.civCount
+    slot.warCount = data.warCount
+    slot.avgTechLevel = data.avgTechLevel
+    slot.totalTerritory = data.totalTerritory
   }
 
   setChartType(type: ChartType): void {
