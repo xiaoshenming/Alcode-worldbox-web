@@ -1,11 +1,11 @@
 {
-  "notes": "迭代65完成。深度GC优化第十五轮 — 继续消除render路径字符串分配。主要成果：1) WorldStatsOverviewSystem.speciesCountStrs缓存（Map<string,string>，update()中重建，消除render循环String(count)分配）；2) CreatureProfessionSystem._bonusPctStrs预分配Record（8个键，render时一次性计算后复用，消除8次toFixed(0)）；3) PlagueMutationSystem._headerStr缓存（活跃数+总计字符串，createStrain/mutate/markExtinct时更新，消除render路径循环计数+模板字符串）；4) CreatureGuildSystem.memberCountStr+panelLabel字段（members变化时同步更新，消除render/renderPanel循环模板字符串）；5) MonumentSystem._headerStr缓存（done count + header string，build/update完工时更新，消除render路径循环计数+模板字符串）；6) ChartPanelSystem._yLabels缓存（6个Y轴刻度字符串，yStep变化时重建）+_currentValStr缓存（currentVal变化时重建，消除7次per-frame toFixed）。总计6批commit，5434测试全通过，TypeScript clean。",
+  "notes": "迭代67完成。深度GC优化第十六轮 — 继续消除render路径字符串分配。主要成果：1) ChartPanelSystem._xLabels缓存（5个X轴刻度标签，tMin/tRange变化时重建，消除5次Math.round().toString()）；2) WorldStatsOverviewSystem._maxValStr缓存（maxVal变化时重建，消除render路径String(Math.round())）；3) CameraBookmarkSystem.Bookmark.coordStr接口字段（save/load时预计算，消除render循环Math.round模板字符串）；4) DiplomaticEspionageSystem.Spy.statusStr接口字段（每500tick进度更新时同步，消除renderPanel每帧模板字符串）；5) CreatureAncestorSystem.AncestorSpirit.worshippersStr接口字段（updateWorshippers时同步，消除renderWorld每帧模板字符串）；6) WorldSeasonalDisasterSystem.SeasonalDisaster.pctStr字段（duration每tick减少时同步更新）；7) EraTransitionSystem.TechEntry.progressStr字段（setTechData时批量计算）；8) BattleReplaySystem._frameStr/_speedStr缓存（frame/speed变化时更新）；9) WorldAncientRuinSystem.AncientRuin.panelStr字段（创建/explored时更新）；10) WeatherControlSystem._durStr复用（setDuration/update时更新）；11) WorldExportSystem._importProgressStr缓存（import进度节点时预设）；12) WorldDashboardSystem._religionRatioStrs/_religionLegendStrs缓存（updateReligionData时批量预计算，消除render路径toFixed+模板字符串）。总计11个commit，5434测试全通过，TypeScript clean。",
   "priorities": [
     "1. 推送本轮所有提交（网络恢复后：http_proxy=http://127.0.0.1:7897 https_proxy=http://127.0.0.1:7897 git push origin main）",
-    "2. 继续扫描render方法中循环内的数字格式化：DiplomaticEspionageSystem.progress字段、CameraBookmarkSystem坐标显示（Math.round）、CreatureAncestorSystem.worshippers数字显示",
-    "3. 扫描WorldDashboardSystem饼图ratio字符串（循环中，可量化100档缓存）",
-    "4. 扫描WorldStatsOverviewSystem.maxVal显示（String(Math.round(maxVal))）和ChartPanelSystem X轴刻度（Math.round(t).toString()）",
-    "5. 扫描update方法中创建的new对象（特别是间隔执行路径中push({...})���"
+    "2. 扫描update方法中创建的new对象（间隔执行路径中push({...})）—— 这是新增GC的主要来源",
+    "3. 扫描WorldDashboardSystem的人口折线图和实力面板中剩余字符串（Y轴刻度String(val)、civ.power的String(Math.round())）",
+    "4. 扫描EvolutionVisualSystem中循环内traits[ti][1].toFixed(0)，考虑量化缓存",
+    "5. 扫描AchievementPopupSystem的进度百分比Math.floor(pct * 100)，考虑量化到5%精度缓存"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -15,7 +15,7 @@
     "getAllEntities()返回Array.from()快照 — removeEntity-during-iteration是安全的",
     "queue.shift()在BFS中是O(n²)陷阱 — 用索引指针head++替代",
     "Camera.getVisibleBounds()等热路径方法应返回缓存对象而非每次new — 每帧调用4次累积显著GC压力",
-    "渲染路径中的闭包/对象字面���/getBoundingClientRect()都是隐性GC源 — 预分配+脏标记是标准修复模式",
+    "渲染路径中的闭包/对象字面量/getBoundingClientRect()都是隐性GC源 — 预分配+脏标记是标准修复模式",
     "数据驱动批量调度：703个系统调用按签名分类为6种类型(A-F)，用数组+for循环替代逐个调用，净减1147行",
     "预分配缓冲区模式：_xxxBuf数组只增长不收缩，_xxx.length=0重置视图，避免每次new对象",
     "IIFE闭包在tick路径中是隐性GC源 — 改为外部循环+持久化Set/变量",
@@ -64,30 +64,16 @@
     "【迭代49新增】countXxx方法调用getXxx().length是常见陷阱 — 直接实现计数循环，零数组分配",
     "【迭代49新增】TerraformEffect混色缓存：_lastProgressQ=Math.round(t*50)量化51档，仅在进阶时重建字符串，每效果每帧平均节省一次lerpColor分配",
     "【迭代53新增】方法内字面量数组反模式：const types: FooType[] = ['a','b','c'] 在每次调用时重建 — 提取为模块级常量，消除GC，适用于type别名对应的值数组（包括Union类型字符串集合）",
-    "【迭代53新增】DiplomaticSummitSystem的applySuccess/applyFailure中的participants.map(c=>c.name).join()改为手动字符串拼接，消除map创建的临时数组",
     "【迭代53新增】this.xxx = []清空反模式 — 改为this.xxx.length = 0，避免创建新数组（适用于_pendingRewards等重置场景）",
-    "【迭代53新增】new Set()作为随机采样去重集合若在热路径中反复创建 — 提取为预分配私有成员_usedIdxSet，clear()后复用",
-    "【迭代56新增】Python3脚本用indent>=4启发式规则可快速找出方法内的字面量数组，比grep更精确",
-    "【迭代56新增】World.update()中的seasons数组是每tick GC最高价值目标之一 — 文件顶部类型定义下方加模块级常量是最佳位置",
     "【迭代56新增】EcosystemSystem热路径：findNearestThreat/findNearestPrey是per-wildlife-entity per-3-tick调用，Array.includes→Set.has是最高收益优化",
-    "【迭代56新增】seasonNames Record在每次季节变化时创建——即使低频也值得提取，可同时消除Record对象分配",
     "【迭代63新增】render路径字符串缓存模式：对于低频变化的显示值（intensity、avgPollution、completionRate），在值变化时重建缓存字符串，render直接用缓存",
     "【迭代63新增】整数范围查找表模式：-100~100的关系值用_REL_STR[v+100]查找，比String(v)快且零分配",
-    "【迭代63新增】接口字段预计算适用于PlagueStrain.infectStr/lethalStr：在createStrain和mutate时计算，render循环直接用",
-    "【迭代63新增】corners平坦化模式：4个{cx,cy}对象→_CORNER_DX/_CORNER_DY两个as const数组，render循环中用cx=x+_CORNER_DX[i]*size计算，零对象分配",
-    "【迭代63新增】预分配成员Record对象模式：assessCivNeeds/pickBestProfession的w/a对象改为_needsBuf/_aptitudeBuf成员，每次调用前手动reset各字段，避免new对象",
-    "【迭代64新增】接口字段预计算适用于Prophecy.probabilityStr/SpeciesConfig.baseSpeedStr/Mutation.magnitudeStr：在对象创建时计算，render直接用",
-    "【迭代64新增】Personality字符串缓存模式：traitStrs/sociabilityStr/stabilityStr在assign/inherit/drift时更新，render直接用，消除每帧5+2次toFixed",
-    "【迭代64新增】_biasesBuf预分配+valStr缓存：5个{label,val,valStr}对象预分配，render时用_setB辅助函数更新val+valStr，消除每帧5个对象+5次toFixed",
-    "【迭代64新增】LawParam/TameRecord/Achievement/Monument字符串缓存模式：valueStr/progressStr/buildProgressStr在值变化时更新，render直接用",
-    "【迭代64新增】SandboxSettingsSystem.valueStrs缓存模式：Record<string,string>成员，set/reset时更新，render循环直接用，消除每帧N次toFixed(decimals)",
-    "【迭代64新增】WorldHeatmapSystem.maxValStrs缓存模式：Map<string,string>成员，setData/clearData时更新，render直接用，消除每帧条件toFixed",
-    "【迭代65新增】系统级header字符串缓存模式：PlagueMutationSystem._headerStr/MonumentSystem._headerStr，在数据变化（push/extinct/build完工）时重建，render直接用，消除render路径循环计数+模板字符串",
-    "【迭代65新增】接口多字段联动更新模式：Guild.memberCountStr+panelLabel在同一处members变化时同步更新，确保所有render使用的缓存字符串一致性",
-    "【迭代65新增】预分配Record缓冲区+render前批量计算模式：CreatureProfessionSystem._bonusPctStrs在render时一次性计算8个键，避免渲染循环内逐一调用toFixed",
-    "【迭代65新增】数据源Map缓存伴生字符串模式：WorldStatsOverviewSystem._speciesCountStrs与speciesCounts同步更新，render时用Map.get()代替String()转换",
-    "【迭代65新增】ChartPanelSystem Y轴标签缓存：_yLabels[6]数组仅在_prevYStep变化时重建，配合_prevCurrentVal检测，完全消除render路径per-frame toFixed/toString调用",
-    "【迭代65新增】loop-ai-state.json中包含Unicode转义字符时，Edit工具无法匹配——必须用Python3 json.dump()方式覆写"
+    "【迭代65新增】系统级header字符串缓存模式：PlagueMutationSystem._headerStr/MonumentSystem._headerStr，在数据变化时重建，render直接用，消除render路径循环计数+模板字符串",
+    "【迭代65新增】loop-ai-state.json中包含Unicode转义字符时，Edit工具无法匹配——必须用Python3 json.dump()方式覆写",
+    "【迭代67新增】外部设置数据时批量预计算字符串：updateReligionData/setTechData等在接收外部数据时一次性预计算所有render需要的字符串缓存，不需要修改接口",
+    "【迭代67新增】CameraBookmark坐标字符串在save()和load()两处都要计算coordStr——load时从JSON恢复的数据没有预计算字段，需要补充计算",
+    "【迭代67新增】duration每tick减少的pct字符串：量化级别可以设为1%精度（每tick检查是否变化），仅在pct变化时更新，即使duration每帧更新也最多每秒更新若干次",
+    "【迭代67新增】已有缓存成员但未使用的情况（如WeatherControlSystem._durStr）：直接在update/setter处填入值并在render处使用，无需添加新成员"
   ],
-  "last_updated": "2026-03-01T03:15:00+08:00"
+  "last_updated": "2026-03-01T03:35:00+08:00"
 }
