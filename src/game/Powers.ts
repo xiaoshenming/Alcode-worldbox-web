@@ -6,6 +6,9 @@ import { CivManager } from '../civilization/CivManager'
 import { ParticleSystem } from '../systems/ParticleSystem'
 import { SoundSystem } from '../systems/SoundSystem'
 
+/** Pre-computed civilized species set — avoids per-spawn literal array in spawnEntity */
+const _CIVILIZED_SPECIES = new Set(['human', 'elf', 'dwarf', 'orc'])
+
 interface Power {
   type: PowerType
   name: string
@@ -139,8 +142,7 @@ export class Powers {
 
     // Civilized species auto-create/join civilization
     const species = entityType
-    const civilized = ['human', 'elf', 'dwarf', 'orc']
-    if (civilized.includes(species)) {
+    if (_CIVILIZED_SPECIES.has(species)) {
       // Search nearby area for existing civilization (radius 15)
       const nearbyCiv = this.civManager.getNearestCiv(x, y, 15)
       if (nearbyCiv) {
