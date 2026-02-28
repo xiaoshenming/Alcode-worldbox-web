@@ -5,6 +5,8 @@ interface Bookmark {
   y: number
   zoom: number
   label: string
+  /** Pre-computed coordinate display string — avoids Math.round per frame */
+  coordStr: string
 }
 
 const MAX_BOOKMARKS = 9
@@ -24,7 +26,7 @@ export class CameraBookmarkSystem {
   /** Save current camera position to slot (0-8). */
   save(slot: number, x: number, y: number, zoom: number): void {
     if (slot < 0 || slot >= MAX_BOOKMARKS) return
-    this.bookmarks[slot] = { x, y, zoom, label: `Bookmark ${slot + 1}` }
+    this.bookmarks[slot] = { x, y, zoom, label: `Bookmark ${slot + 1}`, coordStr: `(${Math.round(x)},${Math.round(y)})` }
     this.persist()
     this.showToast(`Saved bookmark ${slot + 1}`)
   }
@@ -105,7 +107,7 @@ export class CameraBookmarkSystem {
       ctx.fillText(`[${i + 1}] ${b.label}`, px + 10, ry + ROW_H / 2)
       ctx.fillStyle = '#666'
       ctx.textAlign = 'right'
-      ctx.fillText(`(${Math.round(b.x)},${Math.round(b.y)})`, px + PANEL_W - 10, ry + ROW_H / 2)
+      ctx.fillText(b.coordStr, px + PANEL_W - 10, ry + ROW_H / 2)
       ctx.textAlign = 'left'
       ry += ROW_H
     }
@@ -135,7 +137,11 @@ export class CameraBookmarkSystem {
       const data = JSON.parse(raw)
       if (Array.isArray(data)) {
         for (let i = 0; i < MAX_BOOKMARKS && i < data.length; i++) {
-          this.bookmarks[i] = data[i]
+          const b = data[i]
+          if (b && typeof b.x === 'number' && typeof b.y === 'number') {
+            b.coordStr = `(${Math.round(b.x)},${Math.round(b.y)})`
+          }
+          this.bookmarks[i] = b
         }
       }
     } catch { /* ignore */ }
