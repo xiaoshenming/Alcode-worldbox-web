@@ -293,12 +293,11 @@ export class WorldBorderSystem {
       // Use pre-computed particle glow colors for this style
       const glowTbl = PARTICLE_GLOW_TABLE[this.style]
       const alphaIdx = Math.min(50, Math.round(alpha * 100))
-      const grad = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, radius)
-      grad.addColorStop(0, glowTbl.stop0[alphaIdx])
-      grad.addColorStop(1, glowTbl.stop1)
-
-      ctx.fillStyle = grad
-      ctx.fillRect(screenX - radius, screenY - radius, radius * 2, radius * 2)
+      // Draw solid colored circle instead of createRadialGradient to avoid per-particle gradient allocation
+      ctx.fillStyle = glowTbl.stop0[alphaIdx]
+      ctx.beginPath()
+      ctx.arc(screenX, screenY, radius, 0, Math.PI * 2)
+      ctx.fill()
     }
 
     ctx.globalCompositeOperation = prev
