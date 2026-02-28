@@ -31,6 +31,28 @@ const FOG_ALPHA_PALETTE: string[] = ((): string[] => {
   for (let i = 0; i <= 1000; i++) cols.push(`rgba(220,220,220,${(i / 1000).toFixed(3)})`)
   return cols
 })()
+// Pre-computed splash alpha palette: 0..1 in 100 steps => 'rgba(150,190,255,X.XX)'
+const SPLASH_ALPHA_PALETTE: string[] = ((): string[] => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) cols.push(`rgba(150,190,255,${(i / 100).toFixed(2)})`)
+  return cols
+})()
+// Pre-computed lightning overlay palette: 0..1 in 100 steps
+const LIGHTNING_OVERLAY_PALETTE: string[] = ((): string[] => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) cols.push(`rgba(255,255,255,${(i / 100 * 0.15).toFixed(3)})`)
+  return cols
+})()
+const LIGHTNING_GLOW_PALETTE: string[] = ((): string[] => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) cols.push(`rgba(200,200,255,${(i / 100 * 0.4).toFixed(3)})`)
+  return cols
+})()
+const LIGHTNING_BOLT_PALETTE: string[] = ((): string[] => {
+  const cols: string[] = []
+  for (let i = 0; i <= 100; i++) cols.push(`rgba(255,255,255,${(i / 100 * 0.9).toFixed(3)})`)
+  return cols
+})()
 function createPool(count: number): Particle[] {
   const pool: Particle[] = [];
   for (let i = 0; i < count; i++) {
@@ -63,12 +85,6 @@ export class WeatherParticleSystem {
 
   /** Reusable lightning style pairs [color, lineWidth] — avoids array alloc per frame */
   private readonly _lightningStyles: [string, number][] = [['', 6], ['', 2]];
-  /** Cached splash style keyed by alpha to reduce template-literal GC */
-  private _cachedSplashAlpha = -1;
-  private _cachedSplashStyle = '';
-  /** Cached flash overlay style */
-  private _cachedFlashAlpha = -1;
-  private _cachedFlashStyle = '';
 
   /** 切换天气类型，触发平滑过渡 */
   setWeather(type: WeatherType): void {
@@ -240,11 +256,7 @@ export class WeatherParticleSystem {
       if (!s.active) continue;
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-      if (s.alpha !== this._cachedSplashAlpha) {
-        this._cachedSplashAlpha = s.alpha;
-        this._cachedSplashStyle = `rgba(150,190,255,${s.alpha})`;
-      }
-      ctx.strokeStyle = this._cachedSplashStyle;
+      ctx.strokeStyle = SPLASH_ALPHA_PALETTE[Math.min(100, Math.round(s.alpha * 100))];
       ctx.stroke();
     }
   }
@@ -279,17 +291,12 @@ export class WeatherParticleSystem {
   private renderLightning(ctx: CanvasRenderingContext2D, width: number, height: number): void {
     if (this.lightningFlash <= 0) return;
     const flashAlpha = this.lightningFlash / 5;
-    // Cache flash overlay style
-    if (flashAlpha !== this._cachedFlashAlpha) {
-      this._cachedFlashAlpha = flashAlpha;
-      this._cachedFlashStyle = `rgba(255,255,255,${flashAlpha * 0.15})`;
-      // Update reusable lightning stroke styles in-place
-      this._lightningStyles[0][0] = `rgba(200,200,255,${flashAlpha * 0.4})`;
-      this._lightningStyles[1][0] = `rgba(255,255,255,${flashAlpha * 0.9})`;
-    }
-    ctx.fillStyle = this._cachedFlashStyle;
+    const alphaIdx = Math.min(100, Math.round(flashAlpha * 100))
+    ctx.fillStyle = LIGHTNING_OVERLAY_PALETTE[alphaIdx];
     ctx.fillRect(0, 0, width, height);
     if (this.lightningSegments.length < 4) return;
+    this._lightningStyles[0][0] = LIGHTNING_GLOW_PALETTE[alphaIdx]
+    this._lightningStyles[1][0] = LIGHTNING_BOLT_PALETTE[alphaIdx]
     for (const [color, lw] of this._lightningStyles) {
       ctx.strokeStyle = color; ctx.lineWidth = lw;
       ctx.beginPath();
