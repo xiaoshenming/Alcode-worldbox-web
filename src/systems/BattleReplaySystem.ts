@@ -29,6 +29,7 @@ export interface BattleRecord {
 const MAX_FRAMES = 300;
 const MAX_RECORDS = 5;
 const SPEEDS = [0.25, 0.5, 1, 2];
+const SPEED_LABELS = SPEEDS.map(s => `${s}x`);  // Pre-computed speed label strings
 const BAR_H = 48;
 const STATS_W = 320;
 const STATS_H = 220;
@@ -308,7 +309,7 @@ export class BattleReplaySystem {
     for (let i = 0; i < SPEEDS.length; i++) {
       const sx = barW - 100 + i * 22;
       ctx.fillStyle = this.replaySpeed === SPEEDS[i] ? '#ff0' : '#666';
-      ctx.fillText(SPEEDS[i] + 'x', sx, y + 40);
+      ctx.fillText(SPEED_LABELS[i], sx, y + 40);
     }
   }
 

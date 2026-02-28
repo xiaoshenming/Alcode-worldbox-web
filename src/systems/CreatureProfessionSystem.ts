@@ -89,6 +89,11 @@ export class CreatureProfessionSystem {
     foodOutput: '0', combatDamage: '0', buildSpeed: '0', miningRate: '0',
     tradeIncome: '0', researchRate: '0', faithGain: '0', craftQuality: '0',
   }
+  /** Pre-allocated complete bonus line strings — rebuilt per render */
+  private _bonusLineStrs: Record<BonusKey, string> = {
+    foodOutput: '', combatDamage: '', buildSpeed: '', miningRate: '',
+    tradeIncome: '', researchRate: '', faithGain: '', craftQuality: '',
+  }
 
   setCivManager(cm: CivManager): void { this.civManager = cm }
   setSelectedEntity(id: number): void { this.selectedEntity = id }
@@ -257,15 +262,17 @@ export class CreatureProfessionSystem {
     ctx.fillText('\u804C\u4E1A\u52A0\u6210:', px + 16, drawY)
     drawY += 20
     const bonus = this.getBonus(this.selectedEntity)
-    // Pre-compute percentage strings to avoid toFixed in loop
+    // Pre-compute percentage strings and complete line strings to avoid toFixed+template in draw loop
     for (const key of BONUS_KEYS) {
       const val = bonus[key]
-      this._bonusPctStrs[key] = ((val - 1) * 100).toFixed(0)
+      const pct = ((val - 1) * 100).toFixed(0)
+      this._bonusPctStrs[key] = pct
+      this._bonusLineStrs[key] = `  ${BONUS_LABELS[key]}: ${val >= 1 ? '+' : ''}${pct}%`
     }
     for (const key of BONUS_KEYS) {
       const val = bonus[key]
       ctx.fillStyle = val > 1.01 ? '#aed581' : '#666'; ctx.font = '11px monospace'
-      ctx.fillText(`  ${BONUS_LABELS[key]}: ${val >= 1 ? '+' : ''}${this._bonusPctStrs[key]}%`, px + 16, drawY)
+      ctx.fillText(this._bonusLineStrs[key], px + 16, drawY)
       drawY += 18
     }
     ctx.textAlign = 'left'
