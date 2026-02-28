@@ -72,6 +72,8 @@ export class AchievementProgressSystem {
   private scrollOffset = 0;
   private _filteredBuf: Achievement[] = [];
   private _categoryBuf: Achievement[] = [];
+  // Cached header string — avoids toFixed(0) per frame when panel is open
+  private _rateStr = '0'
 
   constructor() {
     this.achievements = makeAchievements();
@@ -85,6 +87,7 @@ export class AchievementProgressSystem {
       a.completed = true;
       a.completedAt = Date.now();
     }
+    this._rateStr = Math.round(this.getCompletionRate() * 100).toString()
   }
 
   isCompleted(id: string): boolean {
@@ -164,7 +167,7 @@ export class AchievementProgressSystem {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     const rate = this.getCompletionRate();
-    ctx.fillText(`成就  ${(rate * 100).toFixed(0)}%`, x + 14, y + HEADER_H / 2);
+    ctx.fillText(`成就  ${this._rateStr}%`, x + 14, y + HEADER_H / 2);
     // close btn
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.font = '16px monospace';
