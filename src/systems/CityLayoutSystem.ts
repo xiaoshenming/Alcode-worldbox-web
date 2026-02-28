@@ -55,6 +55,10 @@ const CARDINAL_DIRS: readonly [number, number][] = [[1, 0], [-1, 0], [0, 1], [0,
 export class CityLayoutSystem {
   private layouts = new Map<number, CityLayout>()
   private cities = new Map<number, CityData>()
+  /** Pre-allocated sets reused across rebuildLayout calls — avoids per-city-update GC */
+  private _roadSet = new Set<number>()
+  private _closedSet = new Set<number>()
+  private _roadEndsSet = new Set<number>()
 
   /** 更新/注册城市数据并标记需要重算布局 */
   updateCity(city: CityData, getTerrain: (x: number, y: number) => number): void {
@@ -220,7 +224,7 @@ export class CityLayoutSystem {
       }
     }
     // 次级道路：连接未在主干道上的建筑到最近主干道点
-    const roadSet = new Set<number>()
+    const roadSet = this._roadSet; roadSet.clear()
     for (const r of layout.roads) {
       roadSet.add(r.x1 * 10000 + r.y1)
       roadSet.add(r.x2 * 10000 + r.y2)
@@ -252,7 +256,7 @@ export class CityLayoutSystem {
     getTerrain: (x: number, y: number) => number
   ): Array<{x: number; y: number}> {
     const open: AStarNode[] = []
-    const closed = new Set<number>()  // numeric key = x * 10000 + y
+    const closed = this._closedSet; closed.clear()  // numeric key = x * 10000 + y
     const h = (x: number, y: number) => Math.abs(x - ex) + Math.abs(y - ey)
 
     open.push({x: sx, y: sy, g: 0, h: h(sx, sy), f: h(sx, sy), parent: null})
@@ -327,7 +331,7 @@ export class CityLayoutSystem {
     }
 
     // 城门：主干道与城墙交叉处
-    const roadEnds = new Set<number>()
+    const roadEnds = this._roadEndsSet; roadEnds.clear()
     for (const r of layout.roads) {
       if (r.isPrimary) {
         roadEnds.add(r.x2 * 10000 + r.y2)

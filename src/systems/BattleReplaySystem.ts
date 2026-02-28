@@ -6,10 +6,14 @@
 /** 单帧战斗快照 */
 const _EMPTY_DASH: number[] = []
 const _DASH_6_4: number[] = [6, 4]
+
+export interface BattleUnit { id: number; x: number; y: number; hp: number; maxHp: number; side: number; alive: boolean }
+export interface BattleAttack { fromX: number; fromY: number; toX: number; toY: number }
+
 export interface BattleFrame {
   tick: number
-  units: Array<{id: number; x: number; y: number; hp: number; maxHp: number; side: number; alive: boolean}>
-  attacks: Array<{fromX: number; fromY: number; toX: number; toY: number}>
+  units: BattleUnit[]
+  attacks: BattleAttack[]
 }
 
 /** 完整战役录像 */
@@ -72,11 +76,20 @@ export class BattleReplaySystem {
       }
     }
     rec.endTick = frame.tick;
-    rec.frames.push({
-      tick: frame.tick,
-      units: frame.units.map(u => ({ ...u })),
-      attacks: frame.attacks.map(a => ({ ...a }))
-    });
+    // Copy unit/attack data field-by-field to avoid spread allocation overhead
+    const uLen = frame.units.length
+    const units: BattleUnit[] = new Array(uLen)
+    for (let i = 0; i < uLen; i++) {
+      const src = frame.units[i]
+      units[i] = { id: src.id, x: src.x, y: src.y, hp: src.hp, maxHp: src.maxHp, side: src.side, alive: src.alive }
+    }
+    const aLen = frame.attacks.length
+    const attacks: BattleAttack[] = new Array(aLen)
+    for (let i = 0; i < aLen; i++) {
+      const src = frame.attacks[i]
+      attacks[i] = { fromX: src.fromX, fromY: src.fromY, toX: src.toX, toY: src.toY }
+    }
+    rec.frames.push({ tick: frame.tick, units, attacks });
   }
 
   stopRecording(winnerId: number): void {

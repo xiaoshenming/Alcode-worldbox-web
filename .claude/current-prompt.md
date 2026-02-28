@@ -1,15 +1,15 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代53完成。深度GC优化第九轮 — 专注方法内字面量数组提取为模块级常量、Set预分配、临时数组消除。主要成果：1) 7个系统方法内字面量数组改为_civsBuf/_aliveCivsBuf/_participantsBuf等预分配（DiplomaticSummitSystem 3个buf + DiplomaticCouncilSystem/TradeGuildSystem/PeaceTreatySystem的usedIdxSet预分配）；2) CreatureMentorSystem _mentorsBuf/_apprenticesBuf预分配；3) CreatureScribeSystem _scribesBuf预分配；4) CreatureTraumaSystem.pickSource()/CreatureGuildSystem/DiplomaticBlockadeSystem/DiplomaticCeremonySystem/MythologySystem/WorldAncientRuinSystem/WorldEchoSystem中的字面量数组提取为模块级常量（消除每次调用重建）；5) AchievementPopupSystem/AchievementProgressSystem的cats/allCats字面量改为模块级常量；6) EspionageSystem/DiplomaticEspionageSystem/PlagueMutationSystem/WorldDustStormSystem/WorldTectonicSystem/TradeEconomySystem/TradeNegotiationSystem的字面量数组提取；7) MusicSystem的valid Moods提取；8) FogOfWarSystem._pendingRewards=[]改为.length=0；9) CreatureRitualSystem消除nearby.slice(0,5)的spread分配。总计3批commit，5434测试全通过，TypeScript clean，构建3.06s成功。
+🧠 AI 上轮笔记：迭代56完成。深度GC优化第十轮 — 继续扫描并消除方法内字面量数组创建。主要成果：1) EcosystemSystem预构建fleeFromSet/preySet/biomeSet消除每生物每3tick的Array.includes O(n)查找；2) PopulationSystem/CivManager字面量数组提取（HOSTILE_SPECIES Set + _BLESSINGS）；3) WeatherControlSystem.render/handleClick的DUR_OPTS/DUR_LABELS提取；4) CivManager.updateHappiness的_TAX_PENALTY/_TAX_INCOME（每tick每文明）；5) EvolutionSystem._DEATH_CAUSES（每10tick每物种）；6) CreatureFactory.HOSTILE_SPECIES_SET（每次生物创建）；7) WeatherSystem 5个季节天气池（_WEATHER_WINTER等）；8) CreatureReputationSystem._REPUTATION_ACTIONS（每600tick内循环）；9) DiplomaticSuccession/TradeAgreement._CIV_POOL；10) WorldEventDefinitions._QUAKE_TILE_OPTIONS（地震逻辑内循环）；11) World.update() seasons数组+seasonNames Record（最重要！每tick执行）；12) TradeEconomySystem._GUILD_LEVEL_THRESHOLDS（每120tick每文明）；13) Powers._CIVILIZED_SPECIES Set（每次放置生物）。总计8个commit，5434测试全通过，TypeScript clean。
 🎯 AI 自定优先级：[
-  "1. 扫描更多热路径中的对象字面量 push（.push({...}) 模式）— 在每tick/高频执行的方法里，每次创建对象比预分配对象池代价高",
-  "2. BattleReplaySystem.recordFrame() 中的 units.map(u=>({...u})) 和 attacks.map() — 战斗期间每帧调用，对象spread分配较多，考虑平坦数组优化",
-  "3. 检查 BuildingVarietySystem.getAvailableBuildings() 中的 result.push(...spread) — 如果被频繁调用可以预计算",
-  "4. FormationSystem.calcMemberTarget() — 每成员每帧调用Math.sqrt，`count = formation.members.length` 固定，考虑缓存cols变量",
-  "5. 继续扫描还有没有热路径中的 new Set()、new Map()、{} 对象字面量未处理"
+  "1. 扫描 src/game/ 目录还有没有每帧/每tick调用的方法中的对象字面量分配",
+  "2. 检查 CityLayoutSystem 的A*寻路节点对象池化机会（每120tick，但创建大量{x,y,g,h,f,parent}节点）",
+  "3. 检查 BattleReplaySystem.recordFrame() — 战斗期间每帧的units.map/attacks.map对象分配",
+  "4. 考虑是否还有 .push({...}) 在循环中创建对象的高频热路径",
+  "5. 回顾更多World.ts和CivManager.ts方法中的高频GC源"
 ]
 💡 AI 积累经验：[
-  "非空断言(!)是最常见的崩溃点",
+  "非空断言(!)是最常见的��溃点",
   "子代理并行修复大批量文件极高效：4组并行代理可在几分钟内修复160+文件",
   "manualChunks按文件名前缀分组是最安全的代码分割方案 — 不改源码，只改vite配置",
   "Iterable<T>替代T[]可消除spread分配，但需检查消费端是否用了.length/.includes等数组方法",
@@ -67,10 +67,14 @@
   "【迭代53新增】方法内字面量数组反模式：const types: FooType[] = ['a','b','c'] 在每次调用时重建 — 提取为模块级常量，消除GC，适用于type别名对应的值数组（包括Union类型字符串集合）",
   "【迭代53新增】DiplomaticSummitSystem的applySuccess/applyFailure中的participants.map(c=>c.name).join()改为手动字符串拼接，消除map创建的临时数组",
   "【迭代53新增】this.xxx = []清空反模式 — 改为this.xxx.length = 0，避免创建新数组（适用于_pendingRewards等重置场景）",
-  "【迭代53新增】new Set()作为随机采样去重集合若在热路径中反复创建 — 提取为预分配私有成员_usedIdxSet，clear()后复用"
+  "【迭代53新增】new Set()作为随机采样去重集合若在热路径中反复创建 — 提取为预分配私有成员_usedIdxSet，clear()后复用",
+  "【迭代56新增】Python3脚本用indent>=4启发式规则可快速找出方法内的字面量数组，比grep更精确",
+  "【迭代56新增】World.update()中的seasons数组是每tick GC最高价值目标之一 — 文件顶部类型定义下方加模块级常量是最佳位置",
+  "【迭代56新增】EcosystemSystem热路径：findNearestThreat/findNearestPrey是per-wildlife-entity per-3-tick调用，Array.includes→Set.has是最高收益优化",
+  "【迭代56新增】seasonNames Record在每次季节变化时创建——即使低频也值得提取，可同时消除Record对象分配"
 ]
 
-迭代轮次: 56/100
+迭代轮次: 58/100
 
 
 🔄 自我进化（每轮必做）：
@@ -79,6 +83,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-02-28T21:17:17+08:00"
+  "last_updated": "2026-02-28T22:33:10+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。
