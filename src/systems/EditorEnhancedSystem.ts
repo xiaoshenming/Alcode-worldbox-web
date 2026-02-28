@@ -28,6 +28,7 @@ const _FLOOD_DIRS = [
 export class EditorEnhancedSystem {
   // 画笔状态
   private brushSize: number = 3;
+  private _brushSizeStr: string = '3';
   private softEdge: boolean = false;
 
   // 预览状态
@@ -56,6 +57,7 @@ export class EditorEnhancedSystem {
   /** 设置画笔大小，钳制到 [1, 20] */
   setBrushSize(size: number): void {
     this.brushSize = Math.max(MIN_BRUSH_SIZE, Math.min(MAX_BRUSH_SIZE, Math.round(size)));
+    this._brushSizeStr = String(this.brushSize);
   }
 
   /** 获取当前画笔大小 */
@@ -244,7 +246,7 @@ export class EditorEnhancedSystem {
     ctx.font = this._brushFont;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(String(this.brushSize), centerScreenX, centerScreenY - radius - zoom * 0.8);
+    ctx.fillText(this._brushSizeStr, centerScreenX, centerScreenY - radius - zoom * 0.8);
 
     ctx.restore();
   }

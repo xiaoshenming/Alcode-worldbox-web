@@ -65,6 +65,8 @@ export class EraTransitionSystem {
 
   private popSamples: CivPopSample[] = [];
   private chartVisible = false;
+  private _prevMaxTotal = -1;
+  private _maxTotalStr = '1';
 
   private techs: TechEntry[] = [];
   private techVisible = false;
@@ -356,6 +358,10 @@ export class EraTransitionSystem {
       for (const name of civList) total += s.populations.get(name) ?? 0;
       if (total > maxTotal) maxTotal = total;
     }
+    if (maxTotal !== this._prevMaxTotal) {
+      this._prevMaxTotal = maxTotal;
+      this._maxTotalStr = String(maxTotal);
+    }
 
     const n = this.popSamples.length;
     const dx = n > 1 ? cw / (n - 1) : 0;
@@ -406,7 +412,7 @@ export class EraTransitionSystem {
     ctx.font = '10px monospace';
     ctx.fillStyle = '#AAA';
     ctx.textAlign = 'right';
-    ctx.fillText(String(maxTotal), cx - 4, cy + 10);
+    ctx.fillText(this._maxTotalStr, cx - 4, cy + 10);
     ctx.fillText('0', cx - 4, cy + ch);
     ctx.textAlign = 'center';
     ctx.fillText(`T:${this.popSamples[0].tick}`, cx, cy + ch + 14);
