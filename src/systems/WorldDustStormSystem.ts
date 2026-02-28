@@ -90,8 +90,8 @@ export class WorldDustStormSystem {
       for (const s of this.storms) {
         const dx = pos.x - s.x
         const dy = pos.y - s.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist < s.radius) {
+        const distSq = dx * dx + dy * dy
+        if (distSq < s.radius * s.radius) {
           const dmg = DAMAGE_MAP[s.intensity]
           if (needs.health > 5) {
             needs.health -= dmg
@@ -106,7 +106,7 @@ export class WorldDustStormSystem {
     return this.storms.some(s => {
       const dx = x - s.x
       const dy = y - s.y
-      return Math.sqrt(dx * dx + dy * dy) < s.radius
+      return dx * dx + dy * dy < s.radius * s.radius
     })
   }
 }

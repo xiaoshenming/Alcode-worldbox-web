@@ -226,7 +226,7 @@ export class WeatherSystem {
         if (!pos) continue
         const dx = pos.x - lx
         const dy = pos.y - ly
-        if (Math.sqrt(dx * dx + dy * dy) < 3 && Math.random() < 0.3) {
+        if (dx * dx + dy * dy < 9 && Math.random() < 0.3) {
           const needs = this.em.getComponent<NeedsComponent>(id, 'needs')
           if (needs) needs.health -= 30
         }
@@ -267,7 +267,7 @@ export class WeatherSystem {
       if (!pos || !b) continue
       const dx = pos.x - this.tornadoX
       const dy = pos.y - this.tornadoY
-      if (Math.sqrt(dx * dx + dy * dy) < 2) {
+      if (dx * dx + dy * dy < 4) {
         b.health -= 10
       }
     }
@@ -280,7 +280,7 @@ export class WeatherSystem {
       if (!pos || !needs) continue
       const dx = pos.x - this.tornadoX
       const dy = pos.y - this.tornadoY
-      if (Math.sqrt(dx * dx + dy * dy) < 5) {
+      if (dx * dx + dy * dy < 25) {
         needs.health -= 5
       }
     }
