@@ -106,7 +106,7 @@ export class TerrainDecorationSystem {
   // OffscreenCanvas cache for static decorations (flowers, rocks)
   private staticCache: OffscreenCanvas | null = null;
   private staticCacheCtx: OffscreenCanvasRenderingContext2D | null = null;
-  private staticCacheBounds: { sx: number; sy: number; ex: number; ey: number; camX: number; camY: number; zoom: number } | null = null;
+  private staticCacheBounds = { sx: 0, sy: 0, ex: -1, ey: -1, camX: 0, camY: 0, zoom: 0 };
   private staticCacheDirty = true;
 
   // Grass rendering frame skip
@@ -161,11 +161,12 @@ export class TerrainDecorationSystem {
     this.frameCounter++;
 
     // --- Static decorations (flowers, rock cracks) cached ---
-    const boundsChanged = !this.staticCacheBounds ||
-      this.staticCacheBounds.sx !== sx || this.staticCacheBounds.sy !== sy ||
-      this.staticCacheBounds.ex !== ex || this.staticCacheBounds.ey !== ey ||
-      this.staticCacheBounds.camX !== camX || this.staticCacheBounds.camY !== camY ||
-      this.staticCacheBounds.zoom !== zoom;
+    const scb = this.staticCacheBounds
+    const boundsChanged = scb.ex < 0 ||
+      scb.sx !== sx || scb.sy !== sy ||
+      scb.ex !== ex || scb.ey !== ey ||
+      scb.camX !== camX || scb.camY !== camY ||
+      scb.zoom !== zoom;
 
     if (boundsChanged || this.staticCacheDirty) {
       if (!this.staticCache || this.staticCache.width !== width || this.staticCache.height !== height) {
@@ -190,7 +191,8 @@ export class TerrainDecorationSystem {
         }
       }
 
-      this.staticCacheBounds = { sx, sy, ex, ey, camX, camY, zoom };
+      const scb = this.staticCacheBounds
+      scb.sx = sx; scb.sy = sy; scb.ex = ex; scb.ey = ey; scb.camX = camX; scb.camY = camY; scb.zoom = zoom;
       this.staticCacheDirty = false;
     }
 
