@@ -5,6 +5,7 @@ import { EntityManager, EntityId, PositionComponent } from '../ecs/Entity'
 import { EventLog } from './EventLog'
 
 export type GuildType = 'warriors' | 'hunters' | 'builders' | 'healers' | 'merchants'
+const GUILD_TYPES_ALL: GuildType[] = ['warriors', 'hunters', 'builders', 'healers', 'merchants']
 
 export interface Guild {
   id: number
@@ -178,7 +179,7 @@ export class CreatureGuildSystem {
   }
 
   private pickGuildType(): GuildType {
-    const types: GuildType[] = ['warriors', 'hunters', 'builders', 'healers', 'merchants']
+    const types = GUILD_TYPES_ALL
     return types[Math.floor(Math.random() * types.length)]
   }
 

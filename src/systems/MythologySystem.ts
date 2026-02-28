@@ -8,6 +8,7 @@
 
 /** 神话类型 */
 type MythType = 'creation' | 'hero' | 'disaster' | 'divine' | 'prophecy' | 'origin'
+const MYTH_TYPES: MythType[] = ['creation', 'hero', 'disaster', 'divine', 'prophecy', 'origin']
 
 /** 单条神话 */
 interface Myth {
@@ -129,7 +130,7 @@ export class MythologySystem {
       if (civMyths.length >= MAX_MYTHS_PER_CIV) continue
 
       // 新文明优先生成创世和起源神话
-      const types: MythType[] = ['creation', 'hero', 'disaster', 'divine', 'prophecy', 'origin']
+      const types = MYTH_TYPES
       let hasCreation = false, hasOrigin = false
       for (const m of civMyths) {
         if (m.type === 'creation') hasCreation = true

@@ -56,6 +56,9 @@ export class DiplomaticSummitSystem {
   private nextSummitTick: number = SUMMIT_INTERVAL
   private displayAlpha: number = 0
   private _usedIdxSet: Set<number> = new Set()
+  private _aliveCivsBuf: CivLike[] = []
+  private _participantsBuf: CivLike[] = []
+  private _resolveBuf: CivLike[] = []
 
   update(_dt: number, civManager: CivManagerLike, tick: number): void {
     if (this.activeSummit) {
@@ -139,7 +142,7 @@ export class DiplomaticSummitSystem {
   // ── Private ──────────────────────────────────────────────
 
   private getAliveCivs(civManager: CivManagerLike): CivLike[] {
-    const result: CivLike[] = []
+    const result = this._aliveCivsBuf; result.length = 0
     for (const civ of civManager.civilizations.values()) {
       if (civ.population > 0) result.push(civ)
     }
@@ -153,7 +156,7 @@ export class DiplomaticSummitSystem {
     const count = Math.min(civs.length, 2 + Math.floor(Math.random() * 3))
     // Random sampling without shuffle
     const usedIdx = this._usedIdxSet; usedIdx.clear()
-    const participants: CivLike[] = []
+    const participants = this._participantsBuf; participants.length = 0
     while (participants.length < count) {
       const idx = Math.floor(Math.random() * civs.length)
       if (!usedIdx.has(idx)) { usedIdx.add(idx); participants.push(civs[idx]) }
@@ -209,7 +212,7 @@ export class DiplomaticSummitSystem {
     civManager: CivManagerLike,
     tick: number,
   ): void {
-    const participants: CivLike[] = []
+    const participants = this._resolveBuf; participants.length = 0
     for (const id of summit.participants) {
       const civ = civManager.civilizations.get(id)
       if (civ && civ.population > 0) participants.push(civ)
@@ -269,8 +272,12 @@ export class DiplomaticSummitSystem {
         b.relations.set(a.id, Math.min(100, (b.relations.get(a.id) ?? 0) + SUCCESS_BONUS))
       }
     }
-    const names = participants.map(c => c.name)
-    return `${TOPIC_LABELS[topic]} agreed by ${names.join(', ')}`
+    let names = ''
+    for (let i = 0; i < participants.length; i++) {
+      if (i > 0) names += ', '
+      names += participants[i].name
+    }
+    return `${TOPIC_LABELS[topic]} agreed by ${names}`
   }
 
   private applyFailure(participants: CivLike[], topic: SummitTopic): string {
@@ -282,8 +289,12 @@ export class DiplomaticSummitSystem {
         b.relations.set(a.id, Math.max(-100, (b.relations.get(a.id) ?? 0) + FAILURE_PENALTY))
       }
     }
-    const names = participants.map(c => c.name)
-    return `${TOPIC_LABELS[topic]} talks failed between ${names.join(', ')}`
+    let names = ''
+    for (let i = 0; i < participants.length; i++) {
+      if (i > 0) names += ', '
+      names += participants[i].name
+    }
+    return `${TOPIC_LABELS[topic]} talks failed between ${names}`
   }
 
   private pushHistory(summit: Summit): void {

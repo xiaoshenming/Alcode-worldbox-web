@@ -6,6 +6,7 @@ import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
 
 export type EchoSource = 'battle' | 'disaster' | 'celebration' | 'construction' | 'horn_call' | 'thunder'
+const ECHO_SOURCES: EchoSource[] = ['battle', 'disaster', 'celebration', 'construction', 'horn_call', 'thunder']
 
 export interface Echo {
   id: number
@@ -68,7 +69,7 @@ export class WorldEchoSystem {
       const tile = world.getTile(x, y)
       if (tile === null || tile === TileType.DEEP_WATER || tile === TileType.LAVA) continue
 
-      const sources: EchoSource[] = ['battle', 'disaster', 'celebration', 'construction', 'horn_call', 'thunder']
+      const sources = ECHO_SOURCES
       const source = sources[Math.floor(Math.random() * sources.length)]
       const config = ECHO_CONFIG[source]
 

@@ -40,6 +40,7 @@ export class DiplomaticCouncilSystem {
   private resolvedCount = 0
   private _civIdsSet: Set<number> = new Set()
   private _civArrayBuf: number[] = []
+  private _usedIdxSet: Set<number> = new Set()
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -72,7 +73,7 @@ export class DiplomaticCouncilSystem {
     // Pick 2-5 random civs for the council — 随机采样替代shuffle+slice
     const count = 2 + Math.floor(Math.random() * Math.min(4, civArray.length - 1))
     const members: number[] = []
-    const usedIdx = new Set<number>()
+    const usedIdx = this._usedIdxSet; usedIdx.clear()
     while (members.length < count) {
       const idx = Math.floor(Math.random() * civArray.length)
       if (!usedIdx.has(idx)) { usedIdx.add(idx); members.push(civArray[idx]) }

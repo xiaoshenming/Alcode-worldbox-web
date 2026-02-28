@@ -26,6 +26,7 @@ export class CreatureScribeSystem {
   private records: HistoricalRecord[] = []
   private nextId = 1
   private lastCheck = 0
+  private _scribesBuf: EntityId[] = []
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -34,7 +35,7 @@ export class CreatureScribeSystem {
     // Scribes create records
     if (this.records.length < MAX_RECORDS && Math.random() < RECORD_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
-      const scribes: EntityId[] = []
+      const scribes = this._scribesBuf; scribes.length = 0
       for (const eid of entities) {
         const c = em.getComponent<CreatureComponent>(eid, 'creature')
         if (c && c.age > 10) scribes.push(eid)

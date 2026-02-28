@@ -30,6 +30,7 @@ const GUILD_NAMES = [
 
 export class DiplomaticTradeGuildSystem {
   private _civsBuf: Civilization[] = []
+  private _usedIdxSet: Set<number> = new Set()
   private guilds: TradeGuild[] = []
   private nextId = 1
   private lastCheck = 0
@@ -49,7 +50,7 @@ export class DiplomaticTradeGuildSystem {
       const memberCount = 2 + Math.floor(Math.random() * Math.min(3, civs.length - 1))
       // 随机选择 memberCount 个文明（零分配，Fisher-Yates partial shuffle 思路）
       const memberCivs: number[] = []
-      const used = new Set<number>()
+      const used = this._usedIdxSet; used.clear()
       while (memberCivs.length < memberCount) {
         const idx = Math.floor(Math.random() * civs.length)
         if (!used.has(idx)) { used.add(idx); memberCivs.push(civs[idx].id) }

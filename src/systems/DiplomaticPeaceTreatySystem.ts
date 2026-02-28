@@ -30,6 +30,7 @@ const TERMS: TreatyTerm[] = ['ceasefire', 'border_recognition', 'trade_access', 
 
 export class DiplomaticPeaceTreatySystem {
   private _civsBuf: Civilization[] = []
+  private _usedIdxSet: Set<number> = new Set()
   private treaties: PeaceTreaty[] = []
   private nextId = 1
   private lastCheck = 0
@@ -52,7 +53,7 @@ export class DiplomaticPeaceTreatySystem {
       // Select 2-4 random terms — 随机采样，不创建临时 shuffle 数组
       const numTerms = 2 + Math.floor(Math.random() * 3)
       const selectedTerms: TreatyTerm[] = []
-      const usedIdx = new Set<number>()
+      const usedIdx = this._usedIdxSet; usedIdx.clear()
       while (selectedTerms.length < numTerms) {
         const idx = Math.floor(Math.random() * TERMS.length)
         if (!usedIdx.has(idx)) { usedIdx.add(idx); selectedTerms.push(TERMS[idx]) }

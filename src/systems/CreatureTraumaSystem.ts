@@ -25,6 +25,8 @@ const HEAL_BASE = 0.15
 const PROXIMITY_TRIGGER = 5
 const SEVERITY_THRESHOLD = 10
 
+const TRAUMA_SOURCES: TraumaSource[] = ['combat', 'disaster', 'loss', 'starvation', 'exile', 'betrayal']
+
 const EFFECT_BY_SOURCE: Record<TraumaSource, TraumaEffect[]> = {
   combat: ['aggression', 'hypervigilance', 'avoidance'],
   disaster: ['avoidance', 'hypervigilance', 'numbness'],
@@ -118,8 +120,7 @@ export class CreatureTraumaSystem {
   }
 
   private pickSource(_creature: CreatureComponent): TraumaSource {
-    const sources: TraumaSource[] = ['combat', 'disaster', 'loss', 'starvation', 'exile', 'betrayal']
-    return sources[Math.floor(Math.random() * sources.length)]
+    return TRAUMA_SOURCES[Math.floor(Math.random() * TRAUMA_SOURCES.length)]
   }
 
   private _traumasBuf: Trauma[] = []

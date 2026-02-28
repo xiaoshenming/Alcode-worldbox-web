@@ -5,6 +5,7 @@ import { CivManager } from '../civilization/CivManager'
 import { Civilization } from '../civilization/Civilization'
 
 export type CeremonyType = 'coronation' | 'peace_treaty' | 'trade_pact' | 'victory' | 'mourning' | 'festival'
+const CEREMONY_TYPES: CeremonyType[] = ['coronation', 'peace_treaty', 'trade_pact', 'victory', 'mourning', 'festival']
 export type CeremonyStatus = 'preparing' | 'active' | 'completed' | 'disrupted'
 
 export interface Ceremony {
@@ -154,7 +155,7 @@ export class DiplomaticCeremonySystem {
   }
 
   private pickType(): CeremonyType {
-    const types: CeremonyType[] = ['coronation', 'peace_treaty', 'trade_pact', 'victory', 'mourning', 'festival']
+    const types = CEREMONY_TYPES
     return types[Math.floor(Math.random() * types.length)]
   }
 

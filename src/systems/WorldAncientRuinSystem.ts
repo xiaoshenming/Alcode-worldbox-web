@@ -5,6 +5,7 @@ import { EntityManager, EntityId, PositionComponent, NeedsComponent } from '../e
 import { EventLog } from './EventLog'
 
 export type RuinType = 'temple' | 'library' | 'vault' | 'tomb' | 'fortress'
+const RUIN_TYPES: RuinType[] = ['temple', 'library', 'vault', 'tomb', 'fortress']
 export type RuinReward = 'treasure' | 'knowledge' | 'artifact' | 'curse' | 'nothing'
 
 export interface AncientRuin {
@@ -95,7 +96,7 @@ export class WorldAncientRuinSystem {
   }
 
   private spawnRuin(world: WorldLike, tick: number): void {
-    const types: RuinType[] = ['temple', 'library', 'vault', 'tomb', 'fortress']
+    const types = RUIN_TYPES
     const type = types[Math.floor(Math.random() * types.length)]
     const names = RUIN_NAMES[type]
     const name = names[Math.floor(Math.random() * names.length)]

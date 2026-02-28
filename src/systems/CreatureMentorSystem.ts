@@ -38,6 +38,8 @@ export class CreatureMentorSystem {
   private apprenticeIds = new Set<number>()
   private nextId = 1
   private lastCheck = 0
+  private _mentorsBuf: number[] = []
+  private _apprenticesBuf: number[] = []
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -51,8 +53,8 @@ export class CreatureMentorSystem {
     if (this.bonds.length >= MAX_BONDS) return
     const entities = em.getEntitiesWithComponents('position', 'creature')
 
-    const mentors: number[] = []
-    const apprentices: number[] = []
+    const mentors = this._mentorsBuf; mentors.length = 0
+    const apprentices = this._apprenticesBuf; apprentices.length = 0
 
     for (const id of entities) {
       if (this.mentorIds.has(id) || this.apprenticeIds.has(id)) continue

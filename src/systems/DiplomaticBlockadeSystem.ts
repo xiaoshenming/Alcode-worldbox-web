@@ -7,6 +7,7 @@ import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 
 export type BlockadeType = 'naval' | 'land' | 'trade' | 'total'
+const BLOCKADE_TYPES: BlockadeType[] = ['naval', 'land', 'trade', 'total']
 
 export interface Blockade {
   id: number
@@ -69,7 +70,7 @@ export class DiplomaticBlockadeSystem {
       } while (target.id === civ.id)
       if (this.blockades.some(b => b.blockaderId === civ.id && b.targetId === target.id)) continue
 
-      const types: BlockadeType[] = ['naval', 'land', 'trade', 'total']
+      const types = BLOCKADE_TYPES
       const type = types[Math.floor(Math.random() * types.length)]
       const [minDur, maxDur] = TYPE_DURATION[type]
 
