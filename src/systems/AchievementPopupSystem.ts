@@ -24,6 +24,9 @@ interface AchievementState {
   unlocked: boolean
   unlockTick: number
   displayProgress: number
+  progressPctStr: string  // cached for panel list — rebuilt when progress changes
+  _prevPctQ: number       // quantized pct for tracker cache (step=5)
+  trackerPctStr: string   // cached for tracker — rebuilt when displayProgress crosses 5% threshold
 }
 
 interface PopupCard {
@@ -82,7 +85,8 @@ export class AchievementPopupSystem {
   registerAchievement(def: AchievementDef): void {
     if (this.achievements.has(def.id)) return
     this.achievements.set(def.id, {
-      def, progress: 0, unlocked: false, unlockTick: 0, displayProgress: 0
+      def, progress: 0, unlocked: false, unlockTick: 0, displayProgress: 0,
+      progressPctStr: '0', _prevPctQ: 0, trackerPctStr: '0%'
     })
   }
 
@@ -94,6 +98,9 @@ export class AchievementPopupSystem {
     state.unlockTick = tick
     state.progress = state.def.maxProgress
     state.displayProgress = state.def.maxProgress
+    state.progressPctStr = '100'
+    state._prevPctQ = 100
+    state.trackerPctStr = '100%'
     this.popupQueue.push(achievementId)
   }
 
@@ -102,6 +109,7 @@ export class AchievementPopupSystem {
     const state = this.achievements.get(achievementId)
     if (!state || state.unlocked) return
     state.progress = Math.min(progress, state.def.maxProgress)
+    state.progressPctStr = String(Math.floor((state.progress / state.def.maxProgress) * 100))
   }
 
   /** 获取成就当前进度 */
@@ -157,6 +165,9 @@ export class AchievementPopupSystem {
       if (s.displayProgress < s.progress) {
         s.displayProgress += (s.progress - s.displayProgress) * 0.15 + 0.1
         if (s.displayProgress > s.progress) s.displayProgress = s.progress
+        // Update tracker string at 5% quantization
+        const pctQ = Math.floor((s.displayProgress / s.def.maxProgress) * 20) * 5
+        if (pctQ !== s._prevPctQ) { s._prevPctQ = pctQ; s.trackerPctStr = `${pctQ}%` }
       }
     }
     // 粒子更新
@@ -283,7 +294,7 @@ export class AchievementPopupSystem {
       ctx.fillText(s.def.name, baseX + 6, y + 10)
       // 百分比
       ctx.fillStyle = color; ctx.textAlign = 'right'
-      ctx.fillText(`${Math.floor(pct * 100)}%`, baseX + TRACKER_W - 6, y + 10)
+      ctx.fillText(s.trackerPctStr, baseX + TRACKER_W - 6, y + 10)
       ctx.textAlign = 'left'
       // 进度条背景
       const barX = baseX + 6, barY = y + 20, barW = TRACKER_W - 12
@@ -375,9 +386,8 @@ export class AchievementPopupSystem {
         ctx.fillStyle = '#666'
         ctx.fillText(`Tick ${s.unlockTick} 解锁`, px + 48, iy + 36)
       } else if (s.progress > 0) {
-        const pct = Math.floor((s.progress / s.def.maxProgress) * 100)
         ctx.fillStyle = '#555'
-        ctx.fillText(`进度: ${pct}%`, px + 48, iy + 36)
+        ctx.fillText(`进度: ${s.progressPctStr}%`, px + 48, iy + 36)
       }
       ctx.globalAlpha = 1
       // 稀有度指示条
