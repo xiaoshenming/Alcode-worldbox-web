@@ -37,6 +37,10 @@ export class ChartPanelSystem {
   private _prevCurrentVal = -1;
   private _currentValStr = '0';
   private _prevCurrentKey: keyof ChartDataPoint = 'population';
+  /** Cached X-axis tick labels — rebuilt when tMin or tRange changes */
+  private _xLabels: string[] = ['', '', '', '', ''];
+  private _prevXTMin = -1;
+  private _prevXTRange = -1;
 
   addDataPoint(tick: number, data: Omit<ChartDataPoint, 'tick'>): void {
     let slot: ChartDataPoint
@@ -189,13 +193,20 @@ export class ChartPanelSystem {
       const tMin = data[0].tick;
       const tMax = data[data.length - 1].tick;
       const tRange = tMax - tMin || 1;
+      // Rebuild X label cache only when range changes
+      if (tMin !== this._prevXTMin || tRange !== this._prevXTRange) {
+        this._prevXTMin = tMin;
+        this._prevXTRange = tRange;
+        for (let i = 0; i <= 4; i++) {
+          this._xLabels[i] = Math.round(tMin + (tRange * i) / 4).toString();
+        }
+      }
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       for (let i = 0; i <= 4; i++) {
-        const t = tMin + (tRange * i) / 4;
         const tx = cx + (i / 4) * cw;
         ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        ctx.fillText(Math.round(t).toString(), tx, cy + ch + 4);
+        ctx.fillText(this._xLabels[i], tx, cy + ch + 4);
         ctx.strokeStyle = 'rgba(255,255,255,0.04)';
         ctx.beginPath();
         ctx.moveTo(tx, cy);

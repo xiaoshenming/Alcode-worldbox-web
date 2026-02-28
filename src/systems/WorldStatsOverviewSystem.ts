@@ -35,6 +35,9 @@ export class WorldStatsOverviewSystem {
   private _speciesEntriesBuf: [string, number][] = []
   /** Cached count strings for species distribution bar — rebuilt in update() */
   private _speciesCountStrs: Map<string, string> = new Map()
+  /** Cached population max label string — rebuilt when maxVal changes */
+  private _prevMaxVal = -1
+  private _maxValStr = ''
   private visible = false
   // Pre-allocated chart point to avoid [x,y] tuple allocation per point
   private _cpx = 0
@@ -194,7 +197,8 @@ export class WorldStatsOverviewSystem {
       ctx.fillStyle = 'rgba(255,255,255,0.3)'
       ctx.font = '8px monospace'
       ctx.textAlign = 'right'
-      ctx.fillText(String(Math.round(maxVal)), cX + cW, cY + 8)
+      if (maxVal !== this._prevMaxVal) { this._prevMaxVal = maxVal; this._maxValStr = String(Math.round(maxVal)) }
+      ctx.fillText(this._maxValStr, cX + cW, cY + 8)
     } else {
       ctx.fillStyle = 'rgba(255,255,255,0.2)'
       ctx.font = '10px monospace'
