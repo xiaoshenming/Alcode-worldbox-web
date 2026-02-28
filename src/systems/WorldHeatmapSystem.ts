@@ -290,18 +290,16 @@ export class WorldHeatmapSystem {
     ctx.textAlign = 'left';
     ctx.fillText(label, x + 8, y + 18);
 
-    // 渐变图例条
+    // 渐变图例条 — 用预计算颜色表绘制100段矩形，消除每帧createLinearGradient分配
     const barX = x + 8;
     const barY = y + 28;
     const barW = boxW - 16;
     const barH = 10;
-    const gradient = ctx.createLinearGradient(barX, barY, barX + barW, barY);
-    gradient.addColorStop(0, 'rgb(0,0,255)');
-    gradient.addColorStop(0.33, 'rgb(0,200,0)');
-    gradient.addColorStop(0.66, 'rgb(255,255,0)');
-    gradient.addColorStop(1, 'rgb(255,0,0)');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(barX, barY, barW, barH);
+    const segW = barW / 100;
+    for (let si = 0; si < 100; si++) {
+      ctx.fillStyle = HEATMAP_COLOR_TABLE[si];
+      ctx.fillRect(barX + si * segW, barY, segW + 0.5, barH);
+    }
 
     // 图例刻度
     ctx.fillStyle = '#ccc';

@@ -417,18 +417,17 @@ export class WeatherParticleSystem {
   }
 
   private renderFog(ctx: CanvasRenderingContext2D): void {
+    ctx.save();
+    ctx.fillStyle = 'rgb(220,220,220)';
     for (let i = 0; i < this.fogPool.length; i++) {
       const p = this.fogPool[i];
       if (!p.active) continue;
-      const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-      const fogIdx = Math.min(1000, Math.round(p.alpha * 1000))
-      gradient.addColorStop(0, FOG_ALPHA_PALETTE[fogIdx]);
-      gradient.addColorStop(1, 'rgba(220,220,220,0)');
-      ctx.fillStyle = gradient;
+      ctx.globalAlpha = p.alpha * 0.5; // soften; fog alpha is 0.05-0.15, halving creates soft vignette effect
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       ctx.fill();
     }
+    ctx.restore();
   }
 
   // --- 工具 ---

@@ -137,12 +137,8 @@ export class AchievementSystem {
       ctx.roundRect(px + 2, py + 2, pillW, pillH, 18)
       ctx.fill()
 
-      // Gradient background
-      const grad = ctx.createLinearGradient(px, py, px + pillW, py)
-      grad.addColorStop(0, '#2a1a4a')
-      grad.addColorStop(0.5, '#3a2a6a')
-      grad.addColorStop(1, '#2a1a4a')
-      ctx.fillStyle = grad
+      // Gradient background — use fixed solid color to avoid per-notification createLinearGradient
+      ctx.fillStyle = '#3a2a6a'
       ctx.beginPath()
       ctx.roundRect(px, py, pillW, pillH, 18)
       ctx.fill()
