@@ -44,6 +44,9 @@ export class EvolutionVisualSystem {
   /** Pre-computed min tick for timeline — updated in pushEvent, avoids O(N) scan each render */
   private _minT = Infinity
   private _minTStr = ''
+  /** Pre-computed max-end tick string for timeline — rebuilt when maxT or zoom changes */
+  private _prevMaxTEnd = -1
+  private _maxTEndStr = ''
 
   addNode(node: EvolutionNode): void {
     const stored = { ...node }
@@ -311,7 +314,9 @@ export class EvolutionVisualSystem {
     }
     ctx.fillStyle = DIM; ctx.font = '8px monospace'; ctx.textBaseline = 'top'
     ctx.textAlign = 'left'; ctx.fillText(this._minTStr, ox + 4, oy + h - 12)
-    ctx.textAlign = 'right'; ctx.fillText(`t:${Math.round(minT + range)}`, ox + w - 4, oy + h - 12)
+    const maxTEnd = Math.round(minT + range)
+    if (maxTEnd !== this._prevMaxTEnd) { this._prevMaxTEnd = maxTEnd; this._maxTEndStr = `t:${maxTEnd}` }
+    ctx.textAlign = 'right'; ctx.fillText(this._maxTEndStr, ox + w - 4, oy + h - 12)
     ctx.textAlign = 'left'
     ctx.restore()
   }
