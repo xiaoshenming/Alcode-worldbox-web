@@ -3276,10 +3276,16 @@ export class Game {
 
         // === EVERY 60 TICKS: History replay snapshot ===
         if (tick % 60 === 10) {
-        const civSnap: { id: number; name: string; pop: number; color: string }[] = []
+        const civSnap = this._civSnapBuf; civSnap.length = 0
+        let civSnapIdx = 0
         for (const [id, c] of this.civManager.civilizations) {
-          civSnap.push({ id, name: c.name, pop: c.population, color: c.color })
+          // Reuse or lazily allocate slot in _civSnapBuf
+          let slot = civSnap[civSnapIdx]
+          if (!slot) { slot = { id: 0, name: '', pop: 0, color: '' }; civSnap.push(slot) }
+          slot.id = id; slot.name = c.name; slot.pop = c.population; slot.color = c.color
+          civSnapIdx++
         }
+        civSnap.length = civSnapIdx  // trim to actual count
         this.historyReplay.recordSnapshot(
           tick,
           this.em.getEntitiesWithComponent('creature').length,
