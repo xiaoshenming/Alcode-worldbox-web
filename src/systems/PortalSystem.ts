@@ -1,5 +1,6 @@
 import { EntityManager, PositionComponent } from '../ecs/Entity';
 import { TILE_SIZE } from '../utils/Constants';
+const _EMPTY_DASH: number[] = []
 
 export interface Portal {
   id: number;
@@ -367,7 +368,7 @@ export class PortalSystem {
       const midY = (ay + by) / 2 + Math.cos(time * 2) * 5 * zoom;
       ctx.quadraticCurveTo(midX, midY, bx, by);
       ctx.stroke();
-      ctx.setLineDash([]);
+      ctx.setLineDash(_EMPTY_DASH);
       ctx.restore();
     }
   }

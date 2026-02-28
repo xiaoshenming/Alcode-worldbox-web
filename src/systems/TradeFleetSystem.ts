@@ -73,6 +73,8 @@ export class TradeFleetSystem {
   private _indFont = '';
   /** 用于交替货物图标 */
   private iconFlip = 0;
+  private readonly _dashBuf: number[] = [0, 0];
+  private readonly _emptyDash: number[] = [];
 
   /**
    * 注册一条贸易路线，自动生成来回两艘货船
@@ -250,14 +252,15 @@ export class TradeFleetSystem {
     const y2 = (route.toY * TILE_SIZE - camY) * zoom;
 
     ctx.beginPath();
-    ctx.setLineDash([6 * zoom, 4 * zoom]);
+    this._dashBuf[0] = 6 * zoom; this._dashBuf[1] = 4 * zoom;
+    ctx.setLineDash(this._dashBuf);
     ctx.lineDashOffset = -this.dashOffset * zoom;
     ctx.strokeStyle = 'rgba(180, 210, 255, 0.4)';
     ctx.lineWidth = Math.max(1, 1.5 * zoom);
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
     ctx.stroke();
-    ctx.setLineDash([]);
+    ctx.setLineDash(this._emptyDash);
 
     // 港口标记（小圆点）
     ctx.fillStyle = route.colorA;

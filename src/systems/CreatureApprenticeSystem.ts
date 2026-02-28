@@ -4,6 +4,7 @@
 import { EntityManager, EntityId, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
 import { CivMemberComponent } from '../civilization/Civilization'
 import { EventLog } from './EventLog'
+const _EMPTY_DASH: number[] = []
 
 export interface Apprenticeship {
   id: number
@@ -223,7 +224,7 @@ export class CreatureApprenticeSystem {
       ctx.stroke()
 
       // Progress indicator on apprentice
-      ctx.setLineDash([])
+      ctx.setLineDash(_EMPTY_DASH)
       ctx.globalAlpha = 0.7
       ctx.fillStyle = color
       const barW = 12 * zoom

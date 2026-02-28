@@ -4,6 +4,7 @@
  */
 
 /** 单帧战斗快照 */
+const _EMPTY_DASH: number[] = []
 export interface BattleFrame {
   tick: number
   units: Array<{id: number; x: number; y: number; hp: number; maxHp: number; side: number; alive: boolean}>
@@ -178,7 +179,7 @@ export class BattleReplaySystem {
       ctx.beginPath();
       ctx.arc((cx - camX) * zoom, (cy - camY) * zoom, (maxDist + 5) * zoom, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.setLineDash([]);
+      ctx.setLineDash(_EMPTY_DASH);
     }
     // 攻击连线
     if (frame.attacks.length > 0) {

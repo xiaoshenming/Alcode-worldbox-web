@@ -31,6 +31,15 @@ interface ActiveBubble {
 const MAX_BUBBLES = 10;
 const BUBBLE_DURATION = 120;
 
+// Pre-allocated line style objects to avoid per-draw allocation in getLineStyle()
+interface LineStyle { color: string; dash: number[]; width: number; alpha: number }
+const _STYLE_ALLY:    LineStyle = { color: '#2ecc71', dash: [],      width: 2.5, alpha: 0.9 }
+const _STYLE_FRIEND:  LineStyle = { color: '#a8e6a3', dash: [8, 4],  width: 1.5, alpha: 0.7 }
+const _STYLE_NEUTRAL: LineStyle = { color: '#888',    dash: [2, 4],  width: 1,   alpha: 0.4 }
+const _STYLE_HOSTILE: LineStyle = { color: '#e67e22', dash: [6, 4],  width: 1.5, alpha: 0.7 }
+const _STYLE_WAR:     LineStyle = { color: '#e74c3c', dash: [],      width: 3,   alpha: 0.9 }
+const _EMPTY_DASH: number[] = []
+
 // Pre-computed relation colors: 201 steps for val -100..100
 // Fixed alpha 0.7
 const RELATION_COLORS: string[] = (() => {
@@ -228,7 +237,7 @@ export class DiplomacyVisualSystem {
         ctx.moveTo(ax, ay);
         ctx.lineTo(bx, by);
         ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.setLineDash(_EMPTY_DASH);
         ctx.globalAlpha = 1;
 
         // 同盟心形
@@ -249,12 +258,12 @@ export class DiplomacyVisualSystem {
     }
   }
 
-  private getLineStyle(val: number): { color: string; dash: number[]; width: number; alpha: number } {
-    if (val >= 80)  return { color: '#2ecc71', dash: [],       width: 2.5, alpha: 0.9 };
-    if (val >= 30)  return { color: '#a8e6a3', dash: [8, 4],   width: 1.5, alpha: 0.7 };
-    if (val >= -30) return { color: '#888',    dash: [2, 4],   width: 1,   alpha: 0.4 };
-    if (val >= -80) return { color: '#e67e22', dash: [6, 4],   width: 1.5, alpha: 0.7 };
-    return { color: '#e74c3c', dash: [], width: 3, alpha: 0.85 + Math.random() * 0.15 };
+  private getLineStyle(val: number): LineStyle {
+    if (val >= 80)  return _STYLE_ALLY;
+    if (val >= 30)  return _STYLE_FRIEND;
+    if (val >= -30) return _STYLE_NEUTRAL;
+    if (val >= -80) return _STYLE_HOSTILE;
+    return _STYLE_WAR;
   }
 
   private drawHeart(ctx: CanvasRenderingContext2D, x: number, y: number, size: number): void {

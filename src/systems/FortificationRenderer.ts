@@ -1,4 +1,5 @@
 import { TILE_SIZE } from '../utils/Constants'
+const _EMPTY_DASH: number[] = []
 
 export type FortificationLevel = 'none' | 'wooden' | 'stone' | 'castle'
 
@@ -106,7 +107,7 @@ export class FortificationRenderer {
     ctx.setLineDash(style.dash)
     ctx.globalAlpha = 0.9
     ctx.strokeRect(x, y, size, size)
-    ctx.setLineDash([])
+    ctx.setLineDash(_EMPTY_DASH)
 
     // 城堡等级：绘制城垛锯齿
     if (fort.level === 'castle') {

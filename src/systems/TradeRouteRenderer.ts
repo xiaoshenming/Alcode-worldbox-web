@@ -1,4 +1,5 @@
 import { TILE_SIZE } from '../utils/Constants'
+const _EMPTY_DASH: number[] = []
 
 export interface TradeRoute {
   fromX: number
@@ -81,7 +82,7 @@ export class TradeRouteRenderer {
       ctx.moveTo(x1, y1)
       ctx.quadraticCurveTo(cpx, cpy, x2, y2)
       ctx.stroke()
-      ctx.setLineDash([])
+      ctx.setLineDash(_EMPTY_DASH)
 
       // 沿曲线绘制移动小点
       ctx.globalAlpha = 1

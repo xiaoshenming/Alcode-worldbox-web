@@ -4,6 +4,7 @@
  */
 
 /** 编辑操作记录 */
+const _EMPTY_DASH: number[] = []
 export type EditAction = {
   type: 'terrain' | 'spawn' | 'disaster'
   tiles: Array<{ x: number; y: number; oldValue: number; newValue: number }>
@@ -232,7 +233,7 @@ export class EditorEnhancedSystem {
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
       ctx.lineWidth = 1;
       ctx.stroke();
-      ctx.setLineDash([]);
+      ctx.setLineDash(_EMPTY_DASH);
     }
 
     // 画笔大小数字

@@ -57,6 +57,8 @@ export class ZoneManagementSystem {
   private panelScroll = 0;
   /** 虚线动画偏移量（像素） */
   private dashOffset = 0;
+  private readonly _zoneDashBuf: number[] = [6, 4];
+  private readonly _emptyDash: number[] = [];
 
   /**
    * 添加一个矩形区域
@@ -206,13 +208,13 @@ export class ZoneManagementSystem {
       // 虚线边框
       ctx.strokeStyle = colors.stroke;
       ctx.lineWidth = 2;
-      ctx.setLineDash([6, 4]);
+      ctx.setLineDash(this._zoneDashBuf);
       ctx.lineDashOffset = -this.dashOffset;
       ctx.strokeRect(sx + 1, sy + 1, sw - 2, sh - 2);
 
       // 区域名称标签
       if (sw > 40 && sh > 20) {
-        ctx.setLineDash([]);
+        ctx.setLineDash(this._emptyDash);
         if (zone._lastZoom !== zoom) {
           zone._lastZoom = zoom;
           zone._labelFont = `${Math.min(14, Math.max(10, sw / 8))}px monospace`;
@@ -224,7 +226,7 @@ export class ZoneManagementSystem {
         ctx.fillText(zone.name, sx + sw / 2, sy + sh / 2, sw - 8);
       }
     }
-    ctx.setLineDash([]);
+    ctx.setLineDash(this._emptyDash);
     ctx.restore();
   }
 
