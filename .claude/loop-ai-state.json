@@ -1,11 +1,11 @@
 {
-  "notes": "迭代68完成。深度GC优化第十七轮 — 继续消除render路径字符串分配，并推送了迭代67的积累提交。主要成果：1) WorldDashboardSystem人口Y轴刻度标签缓存（_popYLabels[5]，maxPop变化时重建）和文明实力powerStr缓存（updatePowerData时批量计算）；2) AchievementPopupSystem三重优化：progressPctStr（updateProgress时更新）、trackerPctStr（量化到5%精度）、_panelHeaderStr（register/unlock时更新）；3) EvolutionVisualSystem多项预计算：traitStr（已有）+nodeInfoStr（population/appearTick拼接，updatePopulation时更新）+_smCache.totalStr（render累积后更新）；4) WorldNarratorSystem._unreadStr缓存（addNarrative/toggle时更新）；5) CreatureSkillSystem.CreatureSkillData.xpStr（addXP后更新）；6) CreatureProfessionSystem.ProfessionData.expStr（gainExperience中floor变化时更新）；7) EditorEnhancedSystem._brushSizeStr（setBrushSize时更新）；8) EraTransitionSystem._maxTotalStr（render中maxTotal变化时更新）。总计7个perf commit，5434测试全通过，TypeScript clean。网络恢复后成功推送所有迭代67+68的提交。",
+  "notes": "迭代69完成。深度GC优化第十八轮 — 继续消除render路径字符串分配，共生成6个perf commit。主要成果：1) CreatureReputationSystem添加displayStr字段（score/tier变化时重建）和_headerStr（size变化时重建）；2) DiplomaticSanctionSystem.Sanction.displayStr在创建时预计算（sanction字段不变，永不需更新）；3) CreatureBountySystem.Bounty.displayStr在创建时预计算；4) PlagueMutationSystem.PlagueStrain.statsStr在recordInfection/recordDeath时更新；5) EraTransitionSystem.renderPopulationChart：cumulative:number[][]改为_cumBuf:Float64Array预分配平坦缓冲区（MAX_SAMPLES×10 stride），消除每render最多200×8=1600个嵌套数组分配；6) 多系统panel标题_headerStr（CreatureGuild、DiplomaticEspionage、WorldSeasonalDisaster、WorldEventTimeline）用脏标记在count变化时重建；7) WorldEventTimelineSystem.WorldEvent加tickStr预计算；EventNotificationSystem.GameEvent加tickStr预计算；8) WorldNarratorSystem.NarrativeEntry.tickStr在addNarrative时预计算；AchievementPopupSystem.AchievementState加unlockTickStr在unlock时计算；9) WorldEventSystem.ActiveEvent.headerLabel在创建时预计算；10) BattleReplaySystem.SPEED_LABELS模块级常量数组；CreatureProfessionSystem._bonusLineStrs预计算完整行字符串。5434测试全通过，TypeScript clean，构建通过。",
   "priorities": [
-    "1. 继续扫描render路径中的模板字符串（ctx.fillText中的``表达式和String()调用）",
-    "2. 重点扫描CreatureReputationSystem、DiplomaticSanctionSystem等排行榜/列表的每帧字符串拼接",
-    "3. 扫描还有无render路径中的new对象（比如fillStyle使用rgba()字符串 — 已有预计算，确认覆盖情况）",
-    "4. 考虑EraTransitionSystem人口图表中cumulative: number[][]的每帧分配 — 可用平坦缓冲区替代",
-    "5. 扫描是否有render路径的临时数组（filter/slice/map）未经处理"
+    "1. 继续扫描render路径中剩余的模板字符串（MythologySystem、CreatureMemorySystem、ProphecySystem的面板计数标题，以及CreatureMemorySystem每个记忆的坐标字符串(m.x,m.y)）",
+    "2. 扫描更多热路径中的对象分配 — 关注update/render中的解构赋值{x,y}等",
+    "3. 检查WorldAncientRuinSystem的Ruins (unexplored/total)标题缓存",
+    "4. 检查ZoneManagementSystem的zone.name和[label]字符串是否已在数据创建时预计算",
+    "5. 扫描是否还有render路径中 filter()/map()/slice() 未处理的临时数组"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -77,7 +77,11 @@
     "【迭代68新增】量化到5%精度的tracker进度字符串：displayProgress每5%一档缓存，大幅减少连续动画中的字符串分配（每个5%步骤才触发一次String重建）",
     "【迭代68新增】_smCache条目加totalStr字段：render内累积后一次性更新String(total)，消除每species每帧一次模板字符串",
     "【迭代68新增】expStr量化缓存：经验字符串在Math.floor(experience)变化时才重建（每整数步骤一次），gainExperience每tick+1时平均每次更新都触发，比displayProgress动画更频繁但面板不常打开",
-    "【迭代68新增】Map入口中同时存totalStr避免临时分配：_smCache重置时totalStr=0初始化，累积后批量更新——总比每帧进入loop时创建临时对象好"
+    "【迭代68新增】Map入口中同时存totalStr避免临时分配：_smCache重置时totalStr=0初始化，累积后批量更新——总比每帧进入loop时创建临时对象好",
+    "【迭代69新增】创建时不变的字段最适合预计算：Sanction.displayStr/Bounty.displayStr/ActiveEvent.headerLabel在创建时计算，后续无需更新",
+    "【迭代69新增】float64Array平坦缓冲区替代number[][]嵌套数组：cumulative[i][c]改为_cumBuf[i*STRIDE+c]，消除每render的大量嵌套数组分配（MAX_SAMPLES=200，每render最多1600个row数组+1个外层数组）",
+    "【迭代69新增】SPEEDS.map()模块级预计算：固定枚举值的label数组在模块初始化时计算，消除render循环中的字符串拼接",
+    "【迭代69新增】_bonusLineStrs完整行缓存：在同一循环内把pctStr和completeLine都计算好，draw loop只查表不拼接"
   ],
-  "last_updated": "2026-03-01T04:05:00+08:00"
+  "last_updated": "2026-03-01T04:35:00+08:00"
 }
