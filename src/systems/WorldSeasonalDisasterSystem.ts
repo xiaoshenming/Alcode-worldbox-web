@@ -19,6 +19,8 @@ export interface SeasonalDisaster {
   maxDuration: number
   damagePerTick: number
   startTick: number
+  label: string           // Pre-computed "${type} (${severity})" for render
+  panelLabel: string      // Pre-computed "${type} sev${severity}" for panel render
 }
 
 const CHECK_INTERVAL = 1500
@@ -123,6 +125,8 @@ export class WorldSeasonalDisasterSystem {
       maxDuration: BASE_DURATION + severity * 500,
       damagePerTick: DISASTER_DAMAGE[type] * severity,
       startTick: tick,
+      label: `${type} (${severity})`,
+      panelLabel: `${type} sev${severity}`,
     }
     this.disasters.push(disaster)
     EventLog.log('disaster', `A ${type} (severity ${severity}) strikes during ${this.currentSeason}!`, 0)
@@ -176,7 +180,7 @@ export class WorldSeasonalDisasterSystem {
       ctx.fillStyle = '#fff'
       ctx.font = this._nameFont
       ctx.textAlign = 'center'
-      ctx.fillText(`${d.type} (${d.severity})`, sx, sy - sr - 4)
+      ctx.fillText(d.label, sx, sy - sr - 4)
     }
   }
 
@@ -192,7 +196,7 @@ export class WorldSeasonalDisasterSystem {
     this.disasters.forEach((d, i) => {
       const pct = Math.round(100 * d.duration / d.maxDuration)
       ctx.fillStyle = DISASTER_COLORS[d.type]
-      ctx.fillText(`${d.type} sev${d.severity} ${pct}%`, x + 8, y + 32 + i * 18)
+      ctx.fillText(`${d.panelLabel} ${pct}%`, x + 8, y + 32 + i * 18)
     })
   }
 }

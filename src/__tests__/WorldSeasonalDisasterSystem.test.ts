@@ -5,7 +5,7 @@ import type { SeasonalDisaster, SeasonDisasterType, SeasonType } from '../system
 function makeSys(): WorldSeasonalDisasterSystem { return new WorldSeasonalDisasterSystem() }
 let nextId = 1
 function makeDisaster(type: SeasonDisasterType = 'flood', season: SeasonType = 'spring'): SeasonalDisaster {
-  return { id: nextId++, type, season, x: 20, y: 30, radius: 10, severity: 3, duration: 500, maxDuration: 500, damagePerTick: 2, startTick: 0 }
+  return { id: nextId++, type, season, x: 20, y: 30, radius: 10, severity: 3, duration: 500, maxDuration: 500, damagePerTick: 2, startTick: 0, label: `${type} (3)`, panelLabel: `${type} sev3` }
 }
 
 describe('WorldSeasonalDisasterSystem.getDisasters', () => {
