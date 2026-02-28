@@ -21,6 +21,7 @@ export interface Guild {
   bonus: number           // percentage bonus to members
   nameLabel: string       // Pre-computed "${name} Lv${level}" for render
   memberCountStr: string  // Pre-computed "${members.length}/${MAX_MEMBERS}" for render
+  panelLabel: string      // Pre-computed "${name} Lv${level} [${members.length}]" for renderPanel
 }
 
 const CHECK_INTERVAL = 800
@@ -82,7 +83,10 @@ export class CreatureGuildSystem {
           changed = true
         }
       }
-      if (changed) guild.memberCountStr = `${guild.members.length}/${MAX_MEMBERS}`
+      if (changed) {
+        guild.memberCountStr = `${guild.members.length}/${MAX_MEMBERS}`
+        guild.panelLabel = `${guild.name} Lv${guild.level} [${guild.members.length}]`
+      }
     }
 
     // Form new guilds
@@ -105,6 +109,7 @@ export class CreatureGuildSystem {
           guild.level++
           guild.bonus = guild.level * BONUS_PER_LEVEL
           guild.nameLabel = `${guild.name} Lv${guild.level}`
+          guild.panelLabel = `${guild.name} Lv${guild.level} [${guild.members.length}]`
           EventLog.log('culture', `Guild "${guild.name}" reached level ${guild.level}!`, 0)
         }
       }
@@ -160,6 +165,7 @@ export class CreatureGuildSystem {
         bonus: BONUS_PER_LEVEL,
         nameLabel: `${name} Lv1`,
         memberCountStr: `${members.length}/${MAX_MEMBERS}`,
+        panelLabel: `${name} Lv1 [${members.length}]`,
       }
       this.guilds.push(guild)
       EventLog.log('culture', `Guild "${name}" (${guildType}) founded with ${members.length} members`, 0)
@@ -185,6 +191,7 @@ export class CreatureGuildSystem {
       }
       if (guild.members.length !== initialCount) {
         guild.memberCountStr = `${guild.members.length}/${MAX_MEMBERS}`
+        guild.panelLabel = `${guild.name} Lv${guild.level} [${guild.members.length}]`
       }
     }
   }
@@ -234,7 +241,7 @@ export class CreatureGuildSystem {
     for (let i = 0; i < active.length; i++) {
       const g = active[i]
       ctx.fillStyle = GUILD_COLORS[g.type]
-      ctx.fillText(`${g.name} Lv${g.level} [${g.members.length}]`, x + 8, y + 32 + i * 18)
+      ctx.fillText(g.panelLabel, x + 8, y + 32 + i * 18)
     }
   }
 }

@@ -5,7 +5,7 @@ import type { Guild, GuildType } from '../systems/CreatureGuildSystem'
 let nextId = 1
 function makeSys(): CreatureGuildSystem { return new CreatureGuildSystem() }
 function makeGuild(civId: number, type: GuildType = 'warriors', members: number[] = []): Guild {
-  return { id: nextId++, type, name: 'Test Guild', civId, members, level: 1, experience: 0, hallX: 10, hallY: 10, founded: 0, bonus: 5, nameLabel: 'Test Guild Lv1', memberCountStr: `${members.length}/12` }
+  return { id: nextId++, type, name: 'Test Guild', civId, members, level: 1, experience: 0, hallX: 10, hallY: 10, founded: 0, bonus: 5, nameLabel: 'Test Guild Lv1', memberCountStr: `${members.length}/12`, panelLabel: `Test Guild Lv1 [${members.length}]` }
 }
 
 describe('CreatureGuildSystem.getGuilds', () => {
