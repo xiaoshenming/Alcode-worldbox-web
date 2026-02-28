@@ -28,7 +28,7 @@ export interface WorldStats {
 export class AchievementSystem {
   private achievements: Achievement[] = []
   private _unlockedBuf: Achievement[] = []
-  private notifications: { text: string; icon: string; alpha: number; y: number }[] = []
+  private notifications: { text: string; icon: string; alpha: number; y: number; textWidth: number }[] = []
   private stats: WorldStats = {
     totalPopulation: 0, totalCivs: 0, totalBuildings: 0,
     totalDeaths: 0, totalBirths: 0, totalWars: 0,
@@ -94,7 +94,8 @@ export class AchievementSystem {
       text: `${a.icon} ${a.name}`,
       icon: a.icon,
       alpha: 3.0, // stays visible for ~3 seconds then fades
-      y: 0
+      y: 0,
+      textWidth: 0,
     })
   }
 
@@ -123,7 +124,8 @@ export class AchievementSystem {
 
       // Background pill
       ctx.font = 'bold 14px "Segoe UI", system-ui, sans-serif'
-      const textWidth = ctx.measureText(n.text).width
+      if (n.textWidth === 0) n.textWidth = ctx.measureText(n.text).width
+      const textWidth = n.textWidth
       const pillW = textWidth + 40
       const pillH = 36
       const px = baseX - pillW / 2

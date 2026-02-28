@@ -118,6 +118,8 @@ export class CultureSystem {
   private languages: LanguageFamily[] = [...BASE_LANGUAGES]
   // Cache vowels/consonants per language id to avoid filter() on each name generation
   private _phonemeCache: Map<number, { vowels: string[]; consonants: string[] }> = new Map()
+  /** Reusable Set for getLanguageCompatibility phoneme lookup — avoids new Set() per call */
+  private _phonemeSetBuf: Set<string> = new Set()
 
   constructor() {}
 
@@ -244,7 +246,8 @@ export class CultureSystem {
     if (a.language.id === b.language.id) return 1.0
 
     // Partial compatibility: count shared phonemes
-    const setA = new Set(a.language.phonemes)
+    const setA = this._phonemeSetBuf; setA.clear()
+    for (const p of a.language.phonemes) setA.add(p)
     let shared = 0
     for (const p of b.language.phonemes) {
       if (setA.has(p)) shared++
