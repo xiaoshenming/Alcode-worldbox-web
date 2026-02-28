@@ -17,6 +17,8 @@ interface ProfessionData {
   rank: ProfessionRank
   experience: number
   assignedTick: number
+  expStr: string   // cached display string — rebuilt when Math.floor(experience) changes
+  _prevExpFloor: number
 }
 
 const RANK_THRESHOLDS: Record<ProfessionRank, number> = { apprentice: 0, journeyman: 100, master: 300 }
@@ -131,7 +133,7 @@ export class CreatureProfessionSystem {
       const needs = this.assessCivNeeds(civId)
       for (const id of entities) {
         const best = this.pickBestProfession(em, id, needs)
-        this.professions.set(id, { type: best, rank: 'apprentice', experience: 0, assignedTick: tick })
+        this.professions.set(id, { type: best, rank: 'apprentice', experience: 0, assignedTick: tick, expStr: `经验: 0 / 100`, _prevExpFloor: 0 })
       }
     }
   }
@@ -193,6 +195,13 @@ export class CreatureProfessionSystem {
       } else if (prof.rank === 'journeyman' && prof.experience >= RANK_THRESHOLDS.master) {
         prof.rank = 'master'
       }
+      const expFloor = Math.floor(prof.experience)
+      if (expFloor !== prof._prevExpFloor) {
+        prof._prevExpFloor = expFloor
+        const nextRank: ProfessionRank | null = prof.rank === 'apprentice' ? 'journeyman' : prof.rank === 'journeyman' ? 'master' : null
+        const nextThreshold = nextRank ? RANK_THRESHOLDS[nextRank] : RANK_THRESHOLDS.master
+        prof.expStr = `经验: ${expFloor} / ${nextRank ? nextThreshold : 'MAX'}`
+      }
     }
   }
 
@@ -237,7 +246,7 @@ export class CreatureProfessionSystem {
     const nextThreshold = nextRank ? RANK_THRESHOLDS[nextRank] : RANK_THRESHOLDS.master
     const progress = nextRank ? clamp(prof.experience / nextThreshold, 0, 1) : 1
     ctx.fillStyle = '#aac'; ctx.font = '12px monospace'
-    ctx.fillText(`\u7ECF\u9A8C: ${Math.floor(prof.experience)} / ${nextRank ? nextThreshold : 'MAX'}`, px + 16, drawY)
+    ctx.fillText(prof.expStr, px + 16, drawY)
     drawY += 16
     const barX = px + 16, barW = PANEL_W - 32, barH = 10
     ctx.fillStyle = 'rgba(40,45,55,0.6)'; ctx.fillRect(barX, drawY, barW, barH)
