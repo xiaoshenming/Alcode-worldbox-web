@@ -341,7 +341,7 @@ export class EraTransitionSystem {
     const civNameSet = this._civNameSet;
     civNameSet.clear();
     for (const s of this.popSamples) {
-      s.populations.forEach((_, name) => civNameSet.add(name));
+      for (const name of s.populations.keys()) civNameSet.add(name)
     }
     const civList = this._civList
     civList.length = 0

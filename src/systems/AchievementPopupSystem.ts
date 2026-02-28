@@ -75,6 +75,8 @@ export class AchievementPopupSystem {
   private panelScroll = 0
   private selectedCategory: AchievementCategory = 'explore'
   private panelRect = { x: 0, y: 0, w: 0, h: 0 }
+  private _candidatesBuf: AchievementState[] = []
+  private _filteredBuf: AchievementState[] = []
 
   /** 注册一个成就定义 */
   registerAchievement(def: AchievementDef): void {
@@ -257,19 +259,19 @@ export class AchievementPopupSystem {
 
   private renderTracker(ctx: CanvasRenderingContext2D, sw: number, sh: number): void {
     // 找最接近完成的 3 个未解锁成就
-    const candidates: AchievementState[] = []
+    const candidates = this._candidatesBuf; candidates.length = 0
     for (const s of this.achievements.values()) {
       if (!s.unlocked && s.progress > 0) candidates.push(s)
     }
     candidates.sort((a, b) => (b.progress / b.def.maxProgress) - (a.progress / a.def.maxProgress))
-    const top3 = candidates.slice(0, 3)
-    if (top3.length === 0) return
+    const top3Len = Math.min(3, candidates.length)
+    if (top3Len === 0) return
     const baseX = sw - TRACKER_W - 12
-    let baseY = sh - 12 - top3.length * (TRACKER_ITEM_H + 4)
+    let baseY = sh - 12 - top3Len * (TRACKER_ITEM_H + 4)
     ctx.save()
     ctx.font = '10px sans-serif'; ctx.textBaseline = 'middle'
-    for (let i = 0; i < top3.length; i++) {
-      const s = top3[i]
+    for (let i = 0; i < top3Len; i++) {
+      const s = candidates[i]
       const y = baseY + i * (TRACKER_ITEM_H + 4)
       const pct = s.displayProgress / s.def.maxProgress
       const color = RARITY_COLORS[s.def.rarity]
@@ -343,7 +345,7 @@ export class AchievementPopupSystem {
     const listY = tabY + 30, listH = ph - 80
     ctx.save()
     ctx.beginPath(); ctx.rect(px, listY, pw, listH); ctx.clip()
-    const filtered: AchievementState[] = []
+    const filtered = this._filteredBuf; filtered.length = 0
     for (const s of this.achievements.values()) { if (s.def.category === this.selectedCategory) filtered.push(s) }
     filtered.sort((a, b) => (a.unlocked === b.unlocked ? 0 : a.unlocked ? -1 : 1))
     const itemH = 52

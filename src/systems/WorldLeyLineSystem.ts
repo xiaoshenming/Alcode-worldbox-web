@@ -44,6 +44,8 @@ export class WorldLeyLineSystem {
   private nexuses: PowerNexus[] = []
   private initialized = false
   private worldAge = 0
+  private _ex = 0
+  private _ey = 0
 
   /** Initialize ley lines with random bezier curves across the map */
   private initialize(): void {
@@ -111,26 +113,25 @@ export class WorldLeyLineSystem {
     const steps = Math.floor(BEZIER_SAMPLES * 0.5) // coarser for intersection detection
     for (let i = 0; i <= steps; i++) {
       const t = i / steps
-      result.push(this.evalCubicBezier(pts, t))
+      this.evalCubicBezier(pts, t)
+      result.push({ x: this._ex, y: this._ey })
     }
     return result
   }
 
-  /** Evaluate cubic bezier at parameter t */
-  private evalCubicBezier(pts: Array<{ x: number; y: number }>, t: number): { x: number; y: number } {
+  /** Evaluate cubic bezier at parameter t, write result into _ex/_ey */
+  private evalCubicBezier(pts: Array<{ x: number; y: number }>, t: number): void {
     const u = 1 - t, u2 = u * u, u3 = u2 * u, t2 = t * t, t3 = t2 * t
-    return {
-      x: u3 * pts[0].x + 3 * u2 * t * pts[1].x + 3 * u * t2 * pts[2].x + t3 * pts[3].x,
-      y: u3 * pts[0].y + 3 * u2 * t * pts[1].y + 3 * u * t2 * pts[2].y + t3 * pts[3].y,
-    }
+    this._ex = u3 * pts[0].x + 3 * u2 * t * pts[1].x + 3 * u * t2 * pts[2].x + t3 * pts[3].x
+    this._ey = u3 * pts[0].y + 3 * u2 * t * pts[1].y + 3 * u * t2 * pts[2].y + t3 * pts[3].y
   }
 
   /** Distance from a point to the nearest sample on a ley line */
   private distToLine(px: number, py: number, line: LeyLine): number {
     let minDist = Infinity
     for (let i = 0; i <= BEZIER_SAMPLES; i++) {
-      const pt = this.evalCubicBezier(line.points, i / BEZIER_SAMPLES)
-      const dx = px - pt.x, dy = py - pt.y
+      this.evalCubicBezier(line.points, i / BEZIER_SAMPLES)
+      const dx = px - this._ex, dy = py - this._ey
       const d = dx * dx + dy * dy
       if (d < minDist) minDist = d
     }
@@ -255,18 +256,13 @@ export class WorldLeyLineSystem {
     pts: Array<{ x: number; y: number }>,
     camX: number, camY: number, tileZoom: number,
   ): void {
-    const toScreen = (p: { x: number; y: number }) => ({
-      x: (p.x - camX) * tileZoom,
-      y: (p.y - camY) * tileZoom,
-    })
-    const s0 = toScreen(pts[0])
-    const s1 = toScreen(pts[1])
-    const s2 = toScreen(pts[2])
-    const s3 = toScreen(pts[3])
-
     ctx.beginPath()
-    ctx.moveTo(s0.x, s0.y)
-    ctx.bezierCurveTo(s1.x, s1.y, s2.x, s2.y, s3.x, s3.y)
+    ctx.moveTo((pts[0].x - camX) * tileZoom, (pts[0].y - camY) * tileZoom)
+    ctx.bezierCurveTo(
+      (pts[1].x - camX) * tileZoom, (pts[1].y - camY) * tileZoom,
+      (pts[2].x - camX) * tileZoom, (pts[2].y - camY) * tileZoom,
+      (pts[3].x - camX) * tileZoom, (pts[3].y - camY) * tileZoom,
+    )
     ctx.stroke()
   }
 
