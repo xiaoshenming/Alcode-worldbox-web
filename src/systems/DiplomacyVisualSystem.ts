@@ -78,10 +78,14 @@ export class DiplomacyVisualSystem {
   private panelY = 0;
   private _lastZoom = -1;
   private _labelFont = '';
+  /** Cached color+'33' strings per civ id — rebuilt in updateCivData */
+  private _civColorAlpha = new Map<number, string>();
 
   /** 更新文明数据快照 */
   updateCivData(civs: CivRelationData[]): void {
     this.civs = civs;
+    this._civColorAlpha.clear();
+    for (const c of civs) this._civColorAlpha.set(c.id, c.color + '33');
   }
 
   /** 添加外交事件气泡 */
@@ -344,7 +348,7 @@ export class DiplomacyVisualSystem {
     ctx.save();
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = civ.color + '33';
+    ctx.fillStyle = this._civColorAlpha.get(civ.id) ?? civ.color + '33';
     ctx.fill();
     ctx.strokeStyle = civ.color;
     ctx.lineWidth = 2;

@@ -38,6 +38,8 @@ const AXES: TraitAxis[] = ['bravery', 'kindness', 'diligence', 'curiosity', 'loy
 
 const PANEL_W = 380, PANEL_H = 360, HEADER_H = 36, ROW_H = 48
 const DRIFT_INTERVAL = 300
+/** Pre-computed header string — avoids template literal allocation on each render */
+const _HEADER_STR = '\u{1F9E0} 生物性格'
 
 function clamp(v: number, lo: number, hi: number): number { return v < lo ? lo : v > hi ? hi : v }
 
@@ -193,7 +195,7 @@ export class CreaturePersonalitySystem {
     ctx.fillStyle = '#b0d0ff'
     ctx.font = 'bold 14px monospace'
     ctx.textAlign = 'left'
-    ctx.fillText(`\u{1F9E0} 生物性格`, px + 12, py + 24)
+    ctx.fillText(_HEADER_STR, px + 12, py + 24)
 
     if (!p) {
       ctx.fillStyle = '#888'; ctx.font = '13px monospace'; ctx.textAlign = 'center'

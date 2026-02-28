@@ -59,6 +59,15 @@ const BRANCH_TAB_LABELS: Record<SkillBranch, string> = {
   magic: `${BRANCH_ICONS.magic} ${BRANCH_LABELS.magic}`,
   leader: `${BRANCH_ICONS.leader} ${BRANCH_LABELS.leader}`,
 }
+/** Pre-computed tab bg colors (color + '44') and node bg colors (color + '33') */
+const BRANCH_TAB_BG: Record<SkillBranch, string> = {
+  combat: BRANCH_COLORS.combat + '44', gather: BRANCH_COLORS.gather + '44',
+  build: BRANCH_COLORS.build + '44', magic: BRANCH_COLORS.magic + '44', leader: BRANCH_COLORS.leader + '44',
+}
+const BRANCH_NODE_BG: Record<SkillBranch, string> = {
+  combat: BRANCH_COLORS.combat + '33', gather: BRANCH_COLORS.gather + '33',
+  build: BRANCH_COLORS.build + '33', magic: BRANCH_COLORS.magic + '33', leader: BRANCH_COLORS.leader + '33',
+}
 
 /** 技能定义表 */
 const SKILL_DEFS: SkillDef[] = [
@@ -241,7 +250,7 @@ export class CreatureSkillSystem {
     for (let i = 0; i < BRANCHES.length; i++) {
       const b = BRANCHES[i]
       const tx = px + i * tabW
-      ctx.fillStyle = b === this.activeBranch ? BRANCH_COLORS[b] + '44' : 'rgba(30,30,50,0.5)'
+      ctx.fillStyle = b === this.activeBranch ? BRANCH_TAB_BG[b] : 'rgba(30,30,50,0.5)'
       ctx.fillRect(tx, py + HEADER_H, tabW, TAB_H)
       ctx.fillStyle = b === this.activeBranch ? BRANCH_COLORS[b] : '#888'
       ctx.font = '12px monospace'; ctx.textAlign = 'center'
@@ -277,7 +286,7 @@ export class CreatureSkillSystem {
       }
 
       // 节点背景
-      ctx.fillStyle = unlocked ? BRANCH_COLORS[this.activeBranch] + '33' : canUnlock ? 'rgba(60,60,80,0.5)' : 'rgba(30,30,40,0.4)'
+      ctx.fillStyle = unlocked ? BRANCH_NODE_BG[this.activeBranch] : canUnlock ? 'rgba(60,60,80,0.5)' : 'rgba(30,30,40,0.4)'
       ctx.strokeStyle = unlocked ? BRANCH_COLORS[this.activeBranch] : canUnlock ? '#888' : '#444'
       ctx.lineWidth = unlocked ? 2 : 1
       ctx.beginPath(); ctx.roundRect(nx, ny, nodeW, nodeH, 6); ctx.fill(); ctx.stroke()

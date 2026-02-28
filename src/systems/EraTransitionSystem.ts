@@ -40,6 +40,8 @@ const ERA_NAMES_CN: Record<EraName, string> = {
 };
 
 const CIV_COLORS = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#42d4f4', '#f032e6'];
+/** Pre-computed CIV_COLORS + 'CC' alpha variants — avoids per-render string concat */
+const CIV_COLORS_CC = CIV_COLORS.map(c => c + 'CC');
 const TRANSITION_DURATION = 180;
 const FADE_IN = 60;
 const HOLD = 60;
@@ -404,7 +406,7 @@ export class EraTransitionSystem {
         ctx.lineTo(x, y);
       }
       ctx.closePath();
-      ctx.fillStyle = CIV_COLORS[c % CIV_COLORS.length] + 'CC';
+      ctx.fillStyle = CIV_COLORS_CC[c % CIV_COLORS_CC.length];
       ctx.fill();
     }
 
