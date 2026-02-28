@@ -42,15 +42,26 @@ export class WeatherControlSystem {
   private py = 0
   // Cached render strings — avoids toFixed/template literal allocation every frame
   private _intensityStr = '0.50'
-  private _statusStr = ''
+  private _statusStr = ''    // "Dur: X/Y" or "Dur: Infinite" + "[LOCKED]"
+  private _weatherTypeStr = '\u2600 Clear  Int:0.50'  // "${icon} ${label}  Int:${intensityStr}"
   private _durStr = ''
 
   constructor() { /* no deps needed */ }
+
+  private _rebuildWeatherTypeStr(): void {
+    this._weatherTypeStr = `${WEATHER_ICONS[this.weatherType]} ${WEATHER_LABELS[this.weatherType]}  Int:${this._intensityStr}`
+  }
+
+  private _rebuildStatusStr(): void {
+    const durText = this.duration === 0 ? 'Infinite' : this._durStr
+    this._statusStr = `Dur: ${durText}${this.locked ? ' [LOCKED]' : ''}`
+  }
 
   setWeather(type: string): void {
     if (WEATHER_TYPES.includes(type as ControlWeatherType)) {
       this.weatherType = type as ControlWeatherType
       this.remaining = this.duration
+      this._rebuildWeatherTypeStr()
     }
   }
 
@@ -59,6 +70,7 @@ export class WeatherControlSystem {
   setIntensity(value: number): void {
     this.intensity = Math.max(0, Math.min(1, value))
     this._intensityStr = this.intensity.toFixed(2)
+    this._rebuildWeatherTypeStr()
   }
 
   getIntensity(): number { return this.intensity }
@@ -67,10 +79,11 @@ export class WeatherControlSystem {
     this.duration = Math.max(0, ticks)
     this.remaining = this.duration
     this._durStr = `${this.remaining}/${this.duration}`
+    this._rebuildStatusStr()
   }
 
   isLocked(): boolean { return this.locked }
-  toggleLock(): void { this.locked = !this.locked }
+  toggleLock(): void { this.locked = !this.locked; this._rebuildStatusStr() }
   togglePanel(): void { this.panelOpen = !this.panelOpen }
   isPanelOpen(): boolean { return this.panelOpen }
 
@@ -79,9 +92,12 @@ export class WeatherControlSystem {
     if (this.remaining > 0) {
       this.remaining--
       this._durStr = `${this.remaining}/${this.duration}`
+      this._rebuildStatusStr()
       if (this.remaining <= 0) {
         this.weatherType = 'clear'
         this.intensity = 0
+        this._intensityStr = '0.00'
+        this._rebuildWeatherTypeStr()
       }
     }
   }
@@ -119,17 +135,13 @@ export class WeatherControlSystem {
     let cy = this.py + 40
 
     // Current status
-    const icon = WEATHER_ICONS[this.weatherType]
-    const label = WEATHER_LABELS[this.weatherType]
     ctx.fillStyle = ACCENT
     ctx.font = '12px monospace'
     ctx.textAlign = 'left'
-    ctx.fillText(`${icon} ${label}  Int:${this._intensityStr}`, this.px + 12, cy)
+    ctx.fillText(this._weatherTypeStr, this.px + 12, cy)
     cy += 16
-    const durText = this.duration === 0 ? 'Infinite' : this._durStr
-    const lockText = this.locked ? ' [LOCKED]' : ''
     ctx.fillStyle = '#aabbcc'
-    ctx.fillText(`Dur: ${durText}${lockText}`, this.px + 12, cy)
+    ctx.fillText(this._statusStr, this.px + 12, cy)
     cy += 22
 
     // Weather type buttons (2 rows)
