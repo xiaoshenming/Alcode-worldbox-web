@@ -62,6 +62,10 @@ export const RARITY_COLORS: Record<string, string> = {
   rare: '#ffaa00',
   epic: '#ff44ff',
 }
+// Pre-computed uppercase labels for render — avoids rarity.toUpperCase() every frame
+export const RARITY_UPPER: Record<string, string> = {
+  common: 'COMMON', rare: 'RARE', epic: 'EPIC',
+}
 
 // --- Helper: pick random civ ---
 export function randomCiv(civManager: CivManager): Civilization | null {

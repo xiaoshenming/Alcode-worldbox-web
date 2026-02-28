@@ -13,6 +13,7 @@ import {
   EventBanner,
   RARITY_WEIGHTS,
   RARITY_COLORS,
+  RARITY_UPPER,
   EVENT_DEFINITIONS,
 } from './WorldEventDefinitions'
 
@@ -306,7 +307,7 @@ export class WorldEventSystem {
     ctx.textAlign = 'right'
     ctx.fillStyle = rarityColor
     ctx.globalAlpha = alpha * 0.7
-    ctx.fillText(this.banner.rarity.toUpperCase(), bx + bw - 12, y + bannerHeight / 2)
+    ctx.fillText(RARITY_UPPER[this.banner.rarity] ?? this.banner.rarity.toUpperCase(), bx + bw - 12, y + bannerHeight / 2)
 
     ctx.restore()
   }
