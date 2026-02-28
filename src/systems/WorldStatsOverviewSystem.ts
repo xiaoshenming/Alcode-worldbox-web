@@ -35,11 +35,12 @@ export class WorldStatsOverviewSystem {
   private _cpx = 0
   private _cpy = 0
   // Pre-allocated stats row to avoid 4-element object array creation per render
-  private _statsRow: Array<{ l: string; v: number; c: string }> = [
-    { l: 'Pop', v: 0, c: '#4fc3f7' },
-    { l: 'Civs', v: 0, c: '#aed581' },
-    { l: 'Bldg', v: 0, c: '#ffb74d' },
-    { l: 'Res', v: 0, c: '#ce93d8' },
+  // vs = cached string representation, only rebuilt when v changes
+  private _statsRow: Array<{ l: string; v: number; vs: string; c: string }> = [
+    { l: 'Pop', v: -1, vs: '0', c: '#4fc3f7' },
+    { l: 'Civs', v: -1, vs: '0', c: '#aed581' },
+    { l: 'Bldg', v: -1, vs: '0', c: '#ffb74d' },
+    { l: 'Res', v: -1, vs: '0', c: '#ce93d8' },
   ]
 
   constructor() { /* no-op */ }
@@ -126,17 +127,18 @@ export class WorldStatsOverviewSystem {
     const sy = y + 28
     ctx.font = '10px monospace'
     const stats = this._statsRow
-    stats[0].v = this.totalPop
-    stats[1].v = this.civCount
-    stats[2].v = this.buildingCount
-    stats[3].v = Math.round(this.resourceTotal)
+    const v0 = this.totalPop, v1 = this.civCount, v2 = this.buildingCount, v3 = Math.round(this.resourceTotal)
+    if (stats[0].v !== v0) { stats[0].v = v0; stats[0].vs = String(v0) }
+    if (stats[1].v !== v1) { stats[1].v = v1; stats[1].vs = String(v1) }
+    if (stats[2].v !== v2) { stats[2].v = v2; stats[2].vs = String(v2) }
+    if (stats[3].v !== v3) { stats[3].v = v3; stats[3].vs = String(v3) }
     const colW = (PANEL_W - 20) / stats.length
     for (let i = 0; i < stats.length; i++) {
       const lx = x + 10 + i * colW
       ctx.fillStyle = stats[i].c
       ctx.fillText(stats[i].l, lx, sy)
       ctx.fillStyle = '#fff'
-      ctx.fillText(String(stats[i].v), lx, sy + 13)
+      ctx.fillText(stats[i].vs, lx, sy + 13)
     }
 
     // War / Peace
