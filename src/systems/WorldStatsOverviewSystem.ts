@@ -28,6 +28,9 @@ export class WorldStatsOverviewSystem {
   private resourceTotal = 0
   private warCount = 0
   private peaceCount = 0
+  // Cached war/peace display strings — rebuilt only when counts change
+  private _warStr = 'War: 0'
+  private _peaceStr = 'Peace: 0'
   private speciesCounts: Map<string, number> = new Map()
   private _speciesEntriesBuf: [string, number][] = []
   private visible = false
@@ -84,8 +87,9 @@ export class WorldStatsOverviewSystem {
         else if (rel > 50) peaces++
       }
     }
-    this.warCount = wars >> 1
-    this.peaceCount = peaces >> 1
+    const wc = wars >> 1, pc = peaces >> 1
+    if (this.warCount !== wc) { this.warCount = wc; this._warStr = `War: ${wc}` }
+    if (this.peaceCount !== pc) { this.peaceCount = pc; this._peaceStr = `Peace: ${pc}` }
     this.buildingCount = buildings
     this.resourceTotal = resources
     // Rebuild sorted species entries cache
@@ -144,9 +148,9 @@ export class WorldStatsOverviewSystem {
     // War / Peace
     const wy = sy + 30
     ctx.fillStyle = '#ef5350'
-    ctx.fillText(`War: ${this.warCount}`, x + 10, wy)
+    ctx.fillText(this._warStr, x + 10, wy)
     ctx.fillStyle = '#66bb6a'
-    ctx.fillText(`Peace: ${this.peaceCount}`, x + 100, wy)
+    ctx.fillText(this._peaceStr, x + 100, wy)
 
     // Population history curve
     const cX = x + 10, cY = wy + 18, cW = PANEL_W - 20, cH = 80
