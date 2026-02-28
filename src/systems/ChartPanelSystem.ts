@@ -30,6 +30,13 @@ export class ChartPanelSystem {
   private timeRange = 5000;
   isVisible = false;
   private _ptsBuf: { px: number; py: number }[] = [];
+  /** Cached Y-axis labels — rebuilt when yStep changes */
+  private _yLabels: string[] = ['', '', '', '', '', ''];
+  private _prevYStep = -1;
+  /** Cached current value string */
+  private _prevCurrentVal = -1;
+  private _currentValStr = '0';
+  private _prevCurrentKey: keyof ChartDataPoint = 'population';
 
   addDataPoint(tick: number, data: Omit<ChartDataPoint, 'tick'>): void {
     let slot: ChartDataPoint
@@ -139,7 +146,13 @@ export class ChartPanelSystem {
     ctx.fillText(cfg.label, x + 12, y + 10);
     ctx.fillStyle = '#fff';
     ctx.font = '12px monospace';
-    ctx.fillText(`${currentVal.toFixed(key === 'avgTechLevel' ? 1 : 0)}`, x + 12 + ctx.measureText(cfg.label).width + 10, y + 11);
+    // Cache currentVal string — avoid toFixed per frame
+    if (currentVal !== this._prevCurrentVal || key !== this._prevCurrentKey) {
+      this._prevCurrentVal = currentVal;
+      this._prevCurrentKey = key;
+      this._currentValStr = currentVal.toFixed(key === 'avgTechLevel' ? 1 : 0);
+    }
+    ctx.fillText(this._currentValStr, x + 12 + ctx.measureText(cfg.label).width + 10, y + 11);
 
     // Nav arrows
     ctx.fillStyle = 'rgba(255,255,255,0.45)';
@@ -152,6 +165,14 @@ export class ChartPanelSystem {
     ctx.textBaseline = 'middle';
     ctx.font = '9px monospace';
     const gridCount = 5;
+    // Rebuild Y label cache only when yStep changes
+    if (yStep !== this._prevYStep) {
+      this._prevYStep = yStep;
+      for (let i = 0; i <= gridCount; i++) {
+        const v = yStep * i;
+        this._yLabels[i] = v.toFixed(v >= 1000 ? 0 : v >= 1 ? 0 : 1);
+      }
+    }
     for (let i = 0; i <= gridCount; i++) {
       const gy = cy + ch - (i / gridCount) * ch;
       ctx.strokeStyle = 'rgba(255,255,255,0.06)';
@@ -159,9 +180,8 @@ export class ChartPanelSystem {
       ctx.moveTo(cx, gy);
       ctx.lineTo(cx + cw, gy);
       ctx.stroke();
-      const label = (yStep * i).toFixed(yStep * i >= 1000 ? 0 : yStep * i >= 1 ? 0 : 1);
       ctx.fillStyle = 'rgba(255,255,255,0.4)';
-      ctx.fillText(label, cx - 5, gy);
+      ctx.fillText(this._yLabels[i], cx - 5, gy);
     }
 
     // X-axis ticks
