@@ -17,8 +17,8 @@ const SEPARATION_WEIGHT = 0.15
 const FLOCK_SCAN_INTERVAL = 15
 
 export class FlockingSystem {
-  private flocks: Map<string, FlockData> = new Map()  // key = civId:species
-  private flockAssignment: Map<EntityId, string> = new Map()
+  private flocks: Map<number, FlockData> = new Map()  // key = numeric flockId
+  private flockAssignment: Map<EntityId, number> = new Map()
   /** Reusable containers to avoid GC pressure in rebuildFlocks */
   private _groups: Map<number, Map<string, EntityId[]>> = new Map()
   private _assigned: Set<EntityId> = new Set()
@@ -26,6 +26,10 @@ export class FlockingSystem {
   /** Pool of member arrays to reuse across flock rebuilds */
   private _memberPool: EntityId[][] = []
   private _memberPoolNext = 0
+  /** Pool of FlockData objects to avoid per-flock allocation */
+  private _flockDataPool: FlockData[] = []
+  private _flockDataPoolNext = 0
+  private _nextFlockId = 0
 
   update(tick: number, em: EntityManager): void {
     // Rebuild flocks periodically
@@ -87,9 +91,15 @@ export class FlockingSystem {
   }
 
   private rebuildFlocks(em: EntityManager): void {
+    // Return FlockData objects to pool
+    for (const fd of this.flocks.values()) {
+      this._flockDataPool.push(fd)
+    }
     this.flocks.clear()
     this.flockAssignment.clear()
-    this._memberPoolNext = 0  // reset pool pointer
+    this._memberPoolNext = 0
+    this._flockDataPoolNext = 0
+    this._nextFlockId = 0
 
     const entities = em.getEntitiesWithComponents('position', 'creature', 'velocity')
 
@@ -157,7 +167,15 @@ export class FlockingSystem {
           cx += p.x; cy += p.y
           vx += v.vx; vy += v.vy
         }
-        const flockKey = `${civId}:${species}:${Math.floor(pos.x)}:${Math.floor(pos.y)}`
+        // Get or reuse a FlockData object from pool
+        let fd: FlockData
+        if (this._flockDataPoolNext < this._flockDataPool.length) {
+          fd = this._flockDataPool[this._flockDataPoolNext++]
+        } else {
+          fd = { centroidX: 0, centroidY: 0, avgVx: 0, avgVy: 0, count: 0, members: [] }
+          this._flockDataPool.push(fd)
+          this._flockDataPoolNext++
+        }
 
         // Get or reuse a member array from pool
         let flockMembers: EntityId[]
@@ -171,14 +189,15 @@ export class FlockingSystem {
         }
         for (let i = 0; i < n; i++) flockMembers[i] = nearbyBuf[i]
 
-        this.flocks.set(flockKey, {
-          centroidX: cx / n, centroidY: cy / n,
-          avgVx: vx / n, avgVy: vy / n,
-          count: n, members: flockMembers,
-        })
+        fd.centroidX = cx / n; fd.centroidY = cy / n
+        fd.avgVx = vx / n; fd.avgVy = vy / n
+        fd.count = n; fd.members = flockMembers
+
+        const flockId = this._nextFlockId++
+        this.flocks.set(flockId, fd)
 
         for (let i = 0; i < n; i++) {
-          this.flockAssignment.set(flockMembers[i], flockKey)
+          this.flockAssignment.set(flockMembers[i], flockId)
         }
       }
       }
@@ -221,7 +240,8 @@ export class FlockingSystem {
     return this.flocks.size
   }
 
-  getFlockOf(entityId: EntityId): string | null {
-    return this.flockAssignment.get(entityId) ?? null
+  getFlockOf(entityId: EntityId): number | null {
+    const id = this.flockAssignment.get(entityId)
+    return id !== undefined ? id : null
   }
 }
