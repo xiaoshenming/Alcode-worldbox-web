@@ -40,7 +40,7 @@ export class EvolutionVisualSystem {
   private pr = { x: 0, y: 0, w: 0, h: 0 }
   private tlZoom = 1
   // Cached stat card map — cleared and reused each render call to avoid per-frame new Map()
-  private _smCache = new Map<string, { total: number; nodes: EvolutionNode[]; totalStr: string; totalDisplayStr: string; evoStr: string }>()
+  private _smCache = new Map<string, { total: number; nodes: EvolutionNode[]; totalStr: string; totalDisplayStr: string; evoStr: string; speciesUpper: string }>()
   /** Pre-computed min tick for timeline — updated in pushEvent, avoids O(N) scan each render */
   private _minT = Infinity
   private _minTStr = ''
@@ -198,7 +198,7 @@ export class EvolutionVisualSystem {
     for (const entry of sm.values()) { entry.total = 0; entry.nodes.length = 0; entry.evoStr = '' }
     for (const nd of this.nodes.values()) {
       let e = sm.get(nd.species)
-      if (!e) { e = { total: 0, nodes: [], totalStr: '0', totalDisplayStr: 'Total: 0', evoStr: '' }; sm.set(nd.species, e) }
+      if (!e) { e = { total: 0, nodes: [], totalStr: '0', totalDisplayStr: 'Total: 0', evoStr: '', speciesUpper: nd.species.toUpperCase() }; sm.set(nd.species, e) }
       e.total += nd.population; e.nodes.push(nd)
     }
     // Pre-compute totalStr after accumulation
@@ -217,7 +217,7 @@ export class EvolutionVisualSystem {
       ctx.strokeStyle = c; ctx.lineWidth = 1
       ctx.beginPath(); ctx.roundRect(ox, cy, w, cardH, 4); ctx.stroke()
       ctx.fillStyle = c; ctx.font = 'bold 10px monospace'; ctx.textBaseline = 'top'
-      ctx.fillText(sp.toUpperCase(), ox + 6, cy + 4)
+      ctx.fillText(data.speciesUpper, ox + 6, cy + 4)
       ctx.fillStyle = TXT; ctx.font = '9px monospace'
       ctx.fillText(data.totalDisplayStr, ox + 6, cy + 18)
       ctx.fillStyle = DIM

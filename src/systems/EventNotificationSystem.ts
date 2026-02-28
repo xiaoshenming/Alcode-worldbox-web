@@ -37,6 +37,10 @@ const ICONS: Record<EventCategory, string> = {
   war: '\u2694', disaster: '\u26a0', build: '\u2692',
   discovery: '\u2605', diplomacy: '\u2696', death: '\u2620',
 };
+/** Pre-computed priority uppercase strings — avoids toUpperCase() per marquee creation */
+const PRIORITY_UPPER: Record<EventPriority, string> = {
+  critical: 'CRITICAL', high: 'HIGH', medium: 'MEDIUM', low: 'LOW',
+};
 
 const MAX_IND = 6;
 const MAX_QUEUE = 20;
@@ -208,7 +212,7 @@ export class EventNotificationSystem {
         this.marqueeQueue.splice(0, this.mqHead);
         this.mqHead = 0;
       }
-      this.activeMarquee = { event: evt, x: screenWidth, textWidth: 0, text: `${ICONS[evt.category]} [${evt.priority.toUpperCase()}] ${evt.message}` };
+      this.activeMarquee = { event: evt, x: screenWidth, textWidth: 0, text: `${ICONS[evt.category]} [${PRIORITY_UPPER[evt.priority]}] ${evt.message}` };
     }
   }
 
