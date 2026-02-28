@@ -82,5 +82,5 @@ export class CreatureForagingSystem {
 
   getForageLog(): ForageEvent[] { return this.forageLog }
   getRecentForaging(count: number): ForageEvent[] { return this.forageLog.slice(-count) }
-  getTotalForaged(): number { return this.forageLog.reduce((sum, e) => sum + e.amount, 0) }
+  getTotalForaged(): number { let s = 0; for (const e of this.forageLog) s += e.amount; return s }
 }

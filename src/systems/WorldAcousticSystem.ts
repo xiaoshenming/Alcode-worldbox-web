@@ -135,7 +135,8 @@ export class WorldAcousticSystem {
   }
   getLoudestArea(): { x: number; y: number; volume: number } | null {
     if (this.sounds.length === 0) return null
-    const loudest = this.sounds.reduce((a, b) => a.volume > b.volume ? a : b)
+    let loudest = this.sounds[0]
+    for (let i = 1; i < this.sounds.length; i++) { if (this.sounds[i].volume > loudest.volume) loudest = this.sounds[i] }
     return { x: loudest.x, y: loudest.y, volume: loudest.volume }
   }
 }

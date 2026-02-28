@@ -83,6 +83,6 @@ export class CreatureNightWatchSystem {
     return this.watches.slice(-count)
   }
   getTotalThreats(): number {
-    return this.watches.reduce((s, w) => s + w.threatsSpotted, 0)
+    let s = 0; for (const w of this.watches) s += w.threatsSpotted; return s
   }
 }

@@ -78,6 +78,7 @@ export class WorldChronicleSystem {
   private _chroniclesBuf: Chronicle[] = []
   private _entityChroniclesBuf: Chronicle[] = []
   private _civChroniclesBuf: Chronicle[] = []
+  private _civIdsBuf: number[] = []
   private warNames: Map<string, string> = new Map()
   private nextId: number = 0
   private lastSummaryTick: number = 0
@@ -91,7 +92,8 @@ export class WorldChronicleSystem {
       this.lastSummaryTick = tick
     }
     if (tick % 7200 === 0 && worldState.civilizations.length > 0) {
-      const strongest = worldState.civilizations.reduce((a, b) => a.population > b.population ? a : b)
+      let strongest = worldState.civilizations[0]
+      for (const c of worldState.civilizations) { if (c.population > strongest.population) strongest = c }
       if (strongest.cities >= 3) {
         this.recordCivMilestone(tick, strongest.id, strongest.name,
           `controls ${strongest.cities} cities with ${strongest.population} citizens`)
@@ -249,13 +251,16 @@ export class WorldChronicleSystem {
     const parts = [`Year ${year} (${state.era})`,
       `Pop: ${state.totalPopulation}, Cities: ${state.totalCities}, Wars: ${state.activeWars}`]
     if (state.civilizations.length > 0) {
-      const s = state.civilizations.reduce((a, b) => a.population > b.population ? a : b)
+      let s = state.civilizations[0]
+      for (const c of state.civilizations) { if (c.population > s.population) s = c }
       parts.push(`Dominant: ${s.name} (pop ${s.population}, ${s.cities} cities)`)
     }
+    const civIds = this._civIdsBuf; civIds.length = 0
+    for (const c of state.civilizations) civIds.push(c.id)
     this.addChronicle({
       tick, year, category: 'civilization', title: `Year ${year} summary`,
       narrative: parts.join('. ') + '.', importance: 1,
-      involvedCivs: state.civilizations.map(c => c.id), involvedEntities: [],
+      involvedCivs: civIds, involvedEntities: [],
     })
   }
 }

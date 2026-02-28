@@ -86,7 +86,7 @@ export class SiegeWarfareSystem {
       if (siege.resolved) continue;
       if (siege.startTick === 0) siege.startTick = tick;
 
-      const weaponPower = siege.siegeWeapons.reduce((sum, w) => sum + WEAPON_POWER[w], 0);
+      let weaponPower = 0; for (const w of siege.siegeWeapons) weaponPower += WEAPON_POWER[w]
       const hasTower = siege.siegeWeapons.includes('siege_tower');
       const wallEffect = hasTower ? BASE_WALL_DEFENSE * 0.3 : BASE_WALL_DEFENSE;
       const attackStrength = (siege.attackerCount * 0.05) + weaponPower;

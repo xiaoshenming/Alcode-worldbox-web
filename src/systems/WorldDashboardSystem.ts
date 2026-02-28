@@ -187,7 +187,7 @@ export class WorldDashboardSystem {
   private drawReligionPie(ctx: CanvasRenderingContext2D, contentY: number, contentH: number): void {
     const entries: [string, number][] = []
     for (const e of this.religionData.entries()) entries.push(e)
-    const total = entries.reduce((s, e) => s + e[1], 0);
+    let total = 0; for (const e of entries) total += e[1]
     if (total === 0) {
       this.drawEmptyHint(ctx, contentY, contentH, '暂无宗教数据');
       return;
@@ -363,7 +363,7 @@ export class WorldDashboardSystem {
     const barCount = this.powerData.length;
     const barH = Math.min(28, (areaH - (barCount - 1) * 4) / barCount);
     const gap = 4;
-    const maxPower = this.powerData.reduce((m, c) => Math.max(m, c.power), 1);
+    let maxPower = 1; for (const c of this.powerData) { if (c.power > maxPower) maxPower = c.power }
 
     ctx.save();
     ctx.font = '12px monospace';

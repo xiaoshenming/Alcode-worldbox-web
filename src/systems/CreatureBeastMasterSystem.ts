@@ -97,6 +97,6 @@ export class CreatureBeastMasterSystem {
   }
   getAverageLoyalty(): number {
     if (this.records.length === 0) return 0
-    return this.records.reduce((s, r) => s + r.loyalty, 0) / this.records.length
+    let s = 0; for (const r of this.records) s += r.loyalty; return s / this.records.length
   }
 }

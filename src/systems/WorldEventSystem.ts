@@ -102,7 +102,7 @@ export class WorldEventSystem {
     if (available.length === 0) return
 
     // Weighted random selection by rarity
-    const totalWeight = available.reduce((sum, def) => sum + RARITY_WEIGHTS[def.rarity], 0)
+    let totalWeight = 0; for (const def of available) totalWeight += RARITY_WEIGHTS[def.rarity]
     let roll = Math.random() * totalWeight
     let selected: WorldEventDef | null = null
 
