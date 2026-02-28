@@ -30,6 +30,41 @@ const DISASTER_NAMES: Record<WeatherDisasterType, string> = {
   heatwave: 'Heat Wave'
 }
 
+// Pre-computed overlay gradient color stops (101 steps, alpha 0.00..1.00)
+// Blizzard: rgba(200,220,255, alpha*0.15) and rgba(220,235,255, alpha*0.40)
+const _BLIZZARD_STOP1: string[] = (() => {
+  const c: string[] = []
+  for (let i = 0; i <= 100; i++) c.push(`rgba(200,220,255,${(i / 100 * 0.15).toFixed(3)})`)
+  return c
+})()
+const _BLIZZARD_STOP2: string[] = (() => {
+  const c: string[] = []
+  for (let i = 0; i <= 100; i++) c.push(`rgba(220,235,255,${(i / 100 * 0.40).toFixed(3)})`)
+  return c
+})()
+// Flood: rgba(40,80,140, alpha*0.08) and rgba(30,60,120, alpha*0.20)
+const _FLOOD_STOP1: string[] = (() => {
+  const c: string[] = []
+  for (let i = 0; i <= 100; i++) c.push(`rgba(40,80,140,${(i / 100 * 0.08).toFixed(3)})`)
+  return c
+})()
+const _FLOOD_STOP2: string[] = (() => {
+  const c: string[] = []
+  for (let i = 0; i <= 100; i++) c.push(`rgba(30,60,120,${(i / 100 * 0.20).toFixed(3)})`)
+  return c
+})()
+// Heatwave: rgba(255,100,50, alpha*0.06) and rgba(255,60,20, alpha*0.15)
+const _HEATWAVE_STOP1: string[] = (() => {
+  const c: string[] = []
+  for (let i = 0; i <= 100; i++) c.push(`rgba(255,100,50,${(i / 100 * 0.06).toFixed(3)})`)
+  return c
+})()
+const _HEATWAVE_STOP2: string[] = (() => {
+  const c: string[] = []
+  for (let i = 0; i <= 100; i++) c.push(`rgba(255,60,20,${(i / 100 * 0.15).toFixed(3)})`)
+  return c
+})()
+
 export class WeatherDisasterSystem {
   private activeDisasters: ActiveWeatherDisaster[] = []
   private lastCheckTick: number = 0
@@ -646,8 +681,8 @@ export class WeatherDisasterSystem {
       width / 2, height / 2, Math.min(width, height) * 0.7
     )
     gradient.addColorStop(0, 'rgba(200, 220, 255, 0)')
-    gradient.addColorStop(0.7, `rgba(200, 220, 255, ${alpha * 0.15})`)
-    gradient.addColorStop(1, `rgba(220, 235, 255, ${alpha * 0.4})`)
+    gradient.addColorStop(0.7, _BLIZZARD_STOP1[Math.min(100, Math.round(alpha * 100))])
+    gradient.addColorStop(1, _BLIZZARD_STOP2[Math.min(100, Math.round(alpha * 100))])
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, width, height)
 
@@ -703,8 +738,8 @@ export class WeatherDisasterSystem {
     // Blue gradient from bottom
     const gradient = ctx.createLinearGradient(0, height * 0.6, 0, height)
     gradient.addColorStop(0, 'rgba(40, 80, 140, 0)')
-    gradient.addColorStop(0.5, `rgba(40, 80, 140, ${alpha * 0.08})`)
-    gradient.addColorStop(1, `rgba(30, 60, 120, ${alpha * 0.2})`)
+    gradient.addColorStop(0.5, _FLOOD_STOP1[Math.min(100, Math.round(alpha * 100))])
+    gradient.addColorStop(1, _FLOOD_STOP2[Math.min(100, Math.round(alpha * 100))])
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, width, height)
   }
@@ -718,8 +753,8 @@ export class WeatherDisasterSystem {
       width / 2, height / 2, Math.min(width, height) * 0.7
     )
     gradient.addColorStop(0, 'rgba(255, 100, 50, 0)')
-    gradient.addColorStop(0.8, `rgba(255, 100, 50, ${alpha * 0.06})`)
-    gradient.addColorStop(1, `rgba(255, 60, 20, ${alpha * 0.15})`)
+    gradient.addColorStop(0.8, _HEATWAVE_STOP1[Math.min(100, Math.round(alpha * 100))])
+    gradient.addColorStop(1, _HEATWAVE_STOP2[Math.min(100, Math.round(alpha * 100))])
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, width, height)
 

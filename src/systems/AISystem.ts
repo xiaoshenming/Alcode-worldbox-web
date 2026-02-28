@@ -12,6 +12,13 @@ import { CivManager } from '../civilization/CivManager'
 import { GeneticsSystem } from './GeneticsSystem'
 import { SpatialHashSystem } from './SpatialHashSystem'
 
+// Pre-allocated species max-age table — avoids creating a new object+7 arrays on every birth event
+const _SPECIES_MAX_AGE: Record<string, readonly [number, number]> = {
+  human: [600, 900], elf: [1200, 2000], dwarf: [800, 1200], orc: [400, 700],
+  sheep: [300, 500], wolf: [400, 600], dragon: [2000, 4000],
+} as const
+const _DEFAULT_AGE_RANGE: readonly [number, number] = [500, 800] as const
+
 export class AISystem {
   private em: EntityManager
   private world: World
@@ -355,11 +362,7 @@ export class AISystem {
           babyCreature.speed = baseSpeed
           babyCreature.damage = baseDamage
           // Re-roll a fresh base maxAge from species range (factory randomized it then scaled)
-          const MAX_AGE: Record<string, [number, number]> = {
-            human: [600, 900], elf: [1200, 2000], dwarf: [800, 1200], orc: [400, 700],
-            sheep: [300, 500], wolf: [400, 600], dragon: [2000, 4000],
-          }
-          const ageRange = MAX_AGE[baby.species] || [500, 800]
+          const ageRange = _SPECIES_MAX_AGE[baby.species] ?? _DEFAULT_AGE_RANGE
           babyCreature.maxAge = ageRange[0] + Math.random() * (ageRange[1] - ageRange[0])
         }
         GeneticsSystem.applyTraits(babyId, this.em)

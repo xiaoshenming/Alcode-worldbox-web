@@ -33,6 +33,7 @@ export class WorldDashboardSystem {
   private panelW = 0;
   private panelH = 0;
   private _racesSet: Set<string> = new Set();
+  private _orderedBuf: PopulationSample[] = new Array(MAX_POP_SAMPLES);
 
   toggle(): void {
     this.visible = !this.visible;
@@ -394,13 +395,20 @@ export class WorldDashboardSystem {
 
   // ── 工具方法 ──
   private getOrderedSamples(): PopulationSample[] {
+    const buf = this._orderedBuf
     if (this.popCount < MAX_POP_SAMPLES) {
-      return this.popSamples.slice(0, this.popCount);
+      const n = this.popCount
+      for (let i = 0; i < n; i++) buf[i] = this.popSamples[i]
+      buf.length = n
+      return buf
     }
     // 环形缓冲区：writeIndex 指向最旧的位置
-    const tail = this.popSamples.slice(this.popWriteIndex);
-    const head = this.popSamples.slice(0, this.popWriteIndex);
-    return tail.concat(head);
+    const wi = this.popWriteIndex
+    let k = 0
+    for (let i = wi; i < MAX_POP_SAMPLES; i++) buf[k++] = this.popSamples[i]
+    for (let i = 0; i < wi; i++) buf[k++] = this.popSamples[i]
+    buf.length = MAX_POP_SAMPLES
+    return buf
   }
 
   private drawEmptyHint(ctx: CanvasRenderingContext2D, contentY: number, contentH: number, text: string): void {
