@@ -145,15 +145,15 @@ export class WeatherSystem {
       for (let i = 0; i < count; i++) {
         const x = Math.random() * WORLD_WIDTH
         const y = Math.random() * WORLD_HEIGHT
-        this.particles.addParticle({
-          x, y: y - 10,
-          vx: this.windX * 2,
-          vy: 3 + Math.random() * 2,
-          life: 15 + Math.random() * 10,
-          maxLife: 25,
-          color: '#6688cc',
-          size: 0.5
-        })
+        this.particles.addParticle(
+          x, y - 10,
+          this.windX * 2,
+          3 + Math.random() * 2,
+          15 + Math.random() * 10,
+          25,
+          '#6688cc',
+          0.5
+        )
       }
     }
 
@@ -177,15 +177,15 @@ export class WeatherSystem {
       for (let i = 0; i < count; i++) {
         const x = Math.random() * WORLD_WIDTH
         const y = Math.random() * WORLD_HEIGHT
-        this.particles.addParticle({
-          x, y: y - 8,
-          vx: this.windX + (Math.random() - 0.5) * 0.5,
-          vy: 0.5 + Math.random() * 0.8,
-          life: 40 + Math.random() * 30,
-          maxLife: 70,
-          color: '#eeeeff',
-          size: 0.8 + Math.random() * 0.5
-        })
+        this.particles.addParticle(
+          x, y - 8,
+          this.windX + (Math.random() - 0.5) * 0.5,
+          0.5 + Math.random() * 0.8,
+          40 + Math.random() * 30,
+          70,
+          '#eeeeff',
+          0.8 + Math.random() * 0.5
+        )
       }
     }
 
@@ -290,16 +290,7 @@ export class WeatherSystem {
       for (let i = 0; i < 8; i++) {
         const angle = (this.weatherTimer * 0.2) + (i * Math.PI * 2 / 8)
         const radius = 1 + Math.random() * 2
-        this.particles.addParticle({
-          x: this.tornadoX + Math.cos(angle) * radius,
-          y: this.tornadoY + Math.sin(angle) * radius,
-          vx: Math.cos(angle + Math.PI / 2) * 1.5,
-          vy: Math.sin(angle + Math.PI / 2) * 1.5 - 0.5,
-          life: 20 + Math.random() * 15,
-          maxLife: 35,
-          color: '#888888',
-          size: 0.8 + Math.random() * 0.6
-        })
+        this.particles.addParticle(this.tornadoX + Math.cos(angle) * radius, this.tornadoY + Math.sin(angle) * radius, Math.cos(angle + Math.PI / 2) * 1.5, Math.sin(angle + Math.PI / 2) * 1.5 - 0.5, 20 + Math.random() * 15, 35, '#888888', 0.8 + Math.random() * 0.6)
       }
     }
   }
@@ -341,16 +332,16 @@ export class WeatherSystem {
         const x = Math.random() * WORLD_WIDTH
         const y = Math.random() * WORLD_HEIGHT
         const color = Math.random() < 0.5 ? '#ff6633' : '#cc3300'
-        this.particles.addParticle({
+        this.particles.addParticle(
           x,
           y,
-          vx: (Math.random() - 0.5) * 0.3,
-          vy: -0.3 - Math.random() * 0.4,
-          life: 25 + Math.random() * 20,
-          maxLife: 45,
+          (Math.random() - 0.5) * 0.3,
+          -0.3 - Math.random() * 0.4,
+          25 + Math.random() * 20,
+          45,
           color,
-          size: 0.6 + Math.random() * 0.4
-        })
+          0.6 + Math.random() * 0.4
+        )
       }
     }
   }

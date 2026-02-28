@@ -43,13 +43,13 @@ export class AmbientParticleSystem {
         const pos = sampleTile(world, viewportX, viewportY, viewportW, viewportH,
           [TileType.FOREST, TileType.GRASS])
         if (pos) {
-          particles.addParticle({
-            x: pos.x + Math.random(), y: pos.y + Math.random(),
-            vx: rand(-0.01, 0.01),
-            vy: -0.05 + rand(-0.005, 0.005), // counteract gravity
-            life: randInt(120, 200), maxLife: 200,
-            color: '#aaff44', size: 1.5
-          })
+          particles.addParticle(
+            pos.x + Math.random(), pos.y + Math.random(),
+            rand(-0.01, 0.01),
+            -0.05 + rand(-0.005, 0.005),
+            randInt(120, 200), 200,
+            '#aaff44', 1.5
+          )
         }
       }
     }
@@ -61,14 +61,13 @@ export class AmbientParticleSystem {
         const pos = sampleTile(world, viewportX, viewportY, viewportW, viewportH,
           [TileType.FOREST])
         if (pos) {
-          particles.addParticle({
-            x: pos.x + Math.random(), y: pos.y + Math.random(),
-            vx: rand(0.01, 0.03),
-            vy: -0.05 + rand(0.005, 0.015), // gravity will add downward drift
-            life: randInt(150, 250), maxLife: 250,
-            color: LEAF_COLORS[Math.floor(Math.random() * LEAF_COLORS.length)],
-            size: 1.5
-          })
+          particles.addParticle(
+            pos.x + Math.random(), pos.y + Math.random(),
+            rand(0.01, 0.03),
+            -0.05 + rand(0.005, 0.015),
+            randInt(150, 250), 250,
+            LEAF_COLORS[Math.floor(Math.random() * LEAF_COLORS.length)], 1.5
+          )
         }
       }
     }
@@ -81,13 +80,13 @@ export class AmbientParticleSystem {
         const y = rand(viewportY, viewportY + Math.min(viewportH * 0.3, 10)) // spawn near top
         // sin wobble baked into vx; gravity counteracted so net fall is slow
         const wobble = Math.sin(tick * 0.1 + i) * 0.01
-        particles.addParticle({
+        particles.addParticle(
           x, y,
-          vx: wobble,
-          vy: -0.05 + rand(0.008, 0.02), // net downward after gravity
-          life: randInt(200, 350), maxLife: 350,
-          color: '#ffffff', size: rand(1, 2)
-        })
+          wobble,
+          -0.05 + rand(0.008, 0.02),
+          randInt(200, 350), 350,
+          '#ffffff', rand(1, 2)
+        )
       }
     }
 
@@ -98,14 +97,13 @@ export class AmbientParticleSystem {
         const pos = sampleTile(world, viewportX, viewportY, viewportW, viewportH,
           [TileType.LAVA])
         if (pos) {
-          particles.addParticle({
-            x: pos.x + Math.random(), y: pos.y + Math.random(),
-            vx: rand(-0.01, 0.01),
-            vy: -0.05 + rand(-0.02, -0.05), // strong upward against gravity
-            life: randInt(60, 120), maxLife: 120,
-            color: Math.random() > 0.5 ? '#ff4400' : '#ffaa00',
-            size: rand(1, 2)
-          })
+          particles.addParticle(
+            pos.x + Math.random(), pos.y + Math.random(),
+            rand(-0.01, 0.01),
+            -0.05 + rand(-0.02, -0.05),
+            randInt(60, 120), 120,
+            Math.random() > 0.5 ? '#ff4400' : '#ffaa00', rand(1, 2)
+          )
         }
       }
     }
@@ -116,13 +114,13 @@ export class AmbientParticleSystem {
       const pos = sampleTile(world, viewportX, viewportY, viewportW, viewportH,
         [TileType.SAND])
       if (pos) {
-        particles.addParticle({
-          x: pos.x + Math.random(), y: pos.y + Math.random(),
-          vx: rand(0.02, 0.04),
-          vy: -0.05 + rand(-0.005, 0.0), // slight upward, mostly horizontal
-          life: randInt(80, 150), maxLife: 150,
-          color: '#d4b896', size: 1
-        })
+        particles.addParticle(
+          pos.x + Math.random(), pos.y + Math.random(),
+          rand(0.02, 0.04),
+          -0.05 + rand(-0.005, 0.0),
+          randInt(80, 150), 150,
+          '#d4b896', 1
+        )
       }
     }
   }

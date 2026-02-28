@@ -252,13 +252,7 @@ export class WeatherDisasterSystem {
     for (let i = 0; i < 20; i++) {
       const px = area.x + (Math.random() - 0.5) * area.radius * 2
       const py = area.y + (Math.random() - 0.5) * area.radius * 2
-      particles.addParticle({
-        x: px, y: py,
-        vx: (Math.random() - 0.5) * 2,
-        vy: 0.5 + Math.random() * 0.5,
-        life: 40 + Math.random() * 30, maxLife: 70,
-        color: '#ffffff', size: 1 + Math.random()
-      })
+      particles.addParticle(px, py, (Math.random() - 0.5) * 2, 0.5 + Math.random() * 0.5, 40 + Math.random() * 30, 70, '#ffffff', 1 + Math.random())
     }
 
     this.activeDisasters.push(disaster)
@@ -339,13 +333,7 @@ export class WeatherDisasterSystem {
     for (let i = 0; i < 15; i++) {
       const px = area.x + (Math.random() - 0.5) * area.radius * 2
       const py = area.y + (Math.random() - 0.5) * area.radius * 2
-      particles.addParticle({
-        x: px, y: py,
-        vx: (Math.random() - 0.5) * 0.8,
-        vy: (Math.random() - 0.5) * 0.8,
-        life: 30 + Math.random() * 20, maxLife: 50,
-        color: '#8B7355', size: 1 + Math.random() * 0.5
-      })
+      particles.addParticle(px, py, (Math.random() - 0.5) * 0.8, (Math.random() - 0.5) * 0.8, 30 + Math.random() * 20, 50, '#8B7355', 1 + Math.random() * 0.5)
     }
 
     this.activeDisasters.push(disaster)
@@ -440,14 +428,7 @@ export class WeatherDisasterSystem {
       for (let i = 0; i < count; i++) {
         const px = area.x + (Math.random() - 0.5) * area.radius * 2
         const py = area.y + (Math.random() - 0.5) * area.radius * 2
-        particles.addParticle({
-          x: px, y: py - 5,
-          vx: (Math.random() - 0.5) * 1.5 + Math.sin(tick * 0.02) * 0.5,
-          vy: 0.3 + Math.random() * 0.5,
-          life: 30 + Math.random() * 25, maxLife: 55,
-          color: Math.random() < 0.7 ? '#ffffff' : '#ddeeff',
-          size: 0.6 + Math.random() * 0.8
-        })
+        particles.addParticle(px, py - 5, (Math.random() - 0.5) * 1.5 + Math.sin(tick * 0.02) * 0.5, 0.3 + Math.random() * 0.5, 30 + Math.random() * 25, 55, Math.random() < 0.7 ? '#ffffff' : '#ddeeff', 0.6 + Math.random() * 0.8)
       }
     }
 
@@ -516,14 +497,7 @@ export class WeatherDisasterSystem {
       for (let i = 0; i < count; i++) {
         const px = area.x + (Math.random() - 0.5) * area.radius * 2
         const py = area.y + (Math.random() - 0.5) * area.radius * 2
-        particles.addParticle({
-          x: px, y: py,
-          vx: (Math.random() - 0.5) * 0.2,
-          vy: -0.2 - Math.random() * 0.3,
-          life: 20 + Math.random() * 15, maxLife: 35,
-          color: Math.random() < 0.5 ? '#cc9944' : '#aa7733',
-          size: 0.5 + Math.random() * 0.4
-        })
+        particles.addParticle(px, py, (Math.random() - 0.5) * 0.2, -0.2 - Math.random() * 0.3, 20 + Math.random() * 15, 35, Math.random() < 0.5 ? '#cc9944' : '#aa7733', 0.5 + Math.random() * 0.4)
       }
     }
 
@@ -590,14 +564,7 @@ export class WeatherDisasterSystem {
       for (let i = 0; i < count; i++) {
         const px = area.x + (Math.random() - 0.5) * area.radius * 2
         const py = area.y + (Math.random() - 0.5) * area.radius * 2
-        particles.addParticle({
-          x: px, y: py,
-          vx: (Math.random() - 0.5) * 0.6,
-          vy: (Math.random() - 0.5) * 0.6,
-          life: 25 + Math.random() * 15, maxLife: 40,
-          color: Math.random() < 0.6 ? '#6688aa' : '#8B7355',
-          size: 0.6 + Math.random() * 0.5
-        })
+        particles.addParticle(px, py, (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.6, 25 + Math.random() * 15, 40, Math.random() < 0.6 ? '#6688aa' : '#8B7355', 0.6 + Math.random() * 0.5)
       }
     }
   }
@@ -644,14 +611,7 @@ export class WeatherDisasterSystem {
       for (let i = 0; i < count; i++) {
         const px = area.x + (Math.random() - 0.5) * area.radius * 2
         const py = area.y + (Math.random() - 0.5) * area.radius * 2
-        particles.addParticle({
-          x: px, y: py,
-          vx: (Math.random() - 0.5) * 0.2,
-          vy: -0.3 - Math.random() * 0.3,
-          life: 20 + Math.random() * 15, maxLife: 35,
-          color: Math.random() < 0.5 ? '#ff6633' : '#ff4411',
-          size: 0.5 + Math.random() * 0.4
-        })
+        particles.addParticle(px, py, (Math.random() - 0.5) * 0.2, -0.3 - Math.random() * 0.3, 20 + Math.random() * 15, 35, Math.random() < 0.5 ? '#ff6633' : '#ff4411', 0.5 + Math.random() * 0.4)
       }
     }
   }

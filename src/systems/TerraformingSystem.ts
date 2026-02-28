@@ -75,15 +75,15 @@ export class TerraformingSystem {
         const color = cfg.colors[Math.floor(Math.random() * cfg.colors.length)]
         const angle = Math.random() * Math.PI * 2
         const speed = Math.random() * cfg.particleSpread + 0.3
-        particles.addParticle({
-          x: wx, y: wy,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed - (e.effectType === 'burn' ? 0.8 : 0),
-          life: 15 + Math.random() * 15,
-          maxLife: 30,
+        particles.addParticle(
+          wx, wy,
+          Math.cos(angle) * speed,
+          Math.sin(angle) * speed - (e.effectType === 'burn' ? 0.8 : 0),
+          15 + Math.random() * 15,
+          30,
           color,
-          size: 1 + Math.random(),
-        })
+          1 + Math.random(),
+        )
       }
 
       // Effect complete — apply terrain change

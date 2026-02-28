@@ -349,14 +349,7 @@ export class MigrationSystem {
         for (const memberId of band.members) {
           const pos = em.getComponent<PositionComponent>(memberId, 'position')
           if (pos) {
-            particles.addParticle({
-              x: pos.x, y: pos.y,
-              vx: (Math.random() - 0.5) * 0.3,
-              vy: -0.2,
-              life: 15, maxLife: 15,
-              color: '#ffcc44',
-              size: 1
-            })
+            particles.addParticle(pos.x, pos.y, (Math.random() - 0.5) * 0.3, -0.2, 15, 15, '#ffcc44', 1)
           }
         }
       }

@@ -43,9 +43,9 @@ export class ParticleSystem {
     }
   }
 
-  // Direct particle add — replaces external .particles.push() usage
-  addParticle(p: { x: number; y: number; vx: number; vy: number; life: number; maxLife: number; color: string; size: number }): void {
-    this.allocate(p.x, p.y, p.vx, p.vy, p.life, p.maxLife, p.color, p.size)
+  // Direct particle add — zero-alloc variant (was object param, now flat args)
+  addParticle(x: number, y: number, vx: number, vy: number, life: number, maxLife: number, color: string, size: number): void {
+    this.allocate(x, y, vx, vy, life, maxLife, color, size)
   }
 
   spawn(x: number, y: number, count: number, color: string, spread: number = 2): void {
