@@ -18,6 +18,10 @@ const TRADE_INTERVAL = 120
 
 /** Pre-computed guild level thresholds — avoids per-civ literal array in updateGuild */
 const _GUILD_LEVEL_THRESHOLDS = [0, 50, 150, 400, 800] as const
+/** Pre-computed local price thresholds — avoids per-civ object literal in updateLocalPrices */
+const _LOCAL_PRICE_THRESHOLDS: Record<string, number> = { food: 30, wood: 25, stone: 15, gold: 10 }
+/** Pre-computed surplus thresholds — avoids per-civ object literal in findSurplus */
+const _SURPLUS_THRESHOLDS: Record<string, number> = { food: 40, wood: 35, stone: 20, gold: 15 }
 
 const SPECIALTY_MAP: Record<CultureTrait, string> = {
   warrior: 'weapons',
@@ -86,7 +90,7 @@ export class TradeEconomySystem {
   private updateLocalPrices(civ: Civilization): void {
     const local: MarketPrices = { food: 1, wood: 1, stone: 1, gold: 1 }
     const keys = RESOURCE_KEYS
-    const thresholds: Record<ResourceKey, number> = { food: 30, wood: 25, stone: 15, gold: 10 }
+    const thresholds = _LOCAL_PRICE_THRESHOLDS
 
     for (const k of keys) {
       const supply = civ.resources[k]
@@ -221,7 +225,7 @@ export class TradeEconomySystem {
 
   private findSurplus(civ: Civilization): ResourceKey | null {
     const keys = RESOURCE_KEYS
-    const thresholds: Record<ResourceKey, number> = { food: 40, wood: 35, stone: 20, gold: 15 }
+    const thresholds = _SURPLUS_THRESHOLDS
     let best: ResourceKey | null = null
     let bestRatio = 0
     for (const k of keys) {
