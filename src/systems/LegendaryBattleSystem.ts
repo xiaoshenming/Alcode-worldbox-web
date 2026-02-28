@@ -278,9 +278,11 @@ export class LegendaryBattleSystem {
 
   private finalizeBattle(battle: BattleInfo, civManager: CivManager): void {
     if (battle.casualties < 3) return
-    const civIds = [...battle.participants.keys()]
-    const civ1 = civManager.civilizations.get(civIds[0])
-    const civ2 = civIds.length > 1 ? civManager.civilizations.get(civIds[1]) : null
+    const iter = battle.participants.keys()
+    const id0 = iter.next().value as number | undefined
+    const id1 = iter.next().value as number | undefined
+    const civ1 = id0 !== undefined ? civManager.civilizations.get(id0) : undefined
+    const civ2 = id1 !== undefined ? civManager.civilizations.get(id1) : null
     const name1 = civ1?.name ?? 'Unknown'
     const name2 = civ2?.name ?? 'Unknown'
     const loc = `${Math.round(battle.centerX)},${Math.round(battle.centerY)}`

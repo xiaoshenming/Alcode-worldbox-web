@@ -73,6 +73,7 @@ function createEmptyBreakdown(): FameBreakdown {
  */
 export class CreatureFameSystem {
   private fameRecords: Map<EntityId, FameRecord> = new Map()
+  private _fameEntriesBuf: [EntityId, FameRecord][] = []
 
   /**
    * Main update loop. Decays fame over time and refreshes titles/ranks.
@@ -159,9 +160,11 @@ export class CreatureFameSystem {
    * @returns Array of [entityId, FameRecord] pairs
    */
   getTopFamous(count: number): [EntityId, FameRecord][] {
-    const entries = [...this.fameRecords.entries()]
+    const entries = this._fameEntriesBuf; entries.length = 0
+    for (const e of this.fameRecords.entries()) entries.push(e)
     entries.sort((a, b) => b[1].totalFame - a[1].totalFame)
-    return entries.slice(0, count)
+    if (entries.length > count) entries.length = count
+    return entries
   }
 
   private refreshTitle(record: FameRecord): void {

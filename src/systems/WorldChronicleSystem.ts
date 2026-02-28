@@ -201,11 +201,7 @@ export class WorldChronicleSystem {
       else if (c.category === 'disaster') disasters++
       if (c.importance === 3) legendary++
     }
-    return [
-      `=== World Chronicle - Year ${year} ===`,
-      `Total records: ${this.chronicles.length}`,
-      `Wars: ${wars} | Heroes: ${heroes} | Disasters: ${disasters} | Legendary: ${legendary}`,
-    ].join('\n')
+    return `=== World Chronicle - Year ${year} ===\nTotal records: ${this.chronicles.length}\nWars: ${wars} | Heroes: ${heroes} | Disasters: ${disasters} | Legendary: ${legendary}`
   }
 
   getRecentChronicles(count: number = 10): Chronicle[] {
