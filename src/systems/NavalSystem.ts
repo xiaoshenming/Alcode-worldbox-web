@@ -39,6 +39,12 @@ export class NavalSystem {
   private portShipCount: Map<EntityId, number> = new Map()
   // Reusable spatial hash to avoid GC pressure (numeric key = cx * 10000 + cy)
   private _combatGrid: Map<number, EntityId[]> = new Map()
+  // Cell pool for combat grid — reuse EntityId[] arrays across clear() cycles
+  private _combatCellPool: EntityId[][] = []
+  // Flat buffers for findAlliedPort candidates (avoids {x,y}[] allocation every 60 ticks)
+  private _portCandXBuf: number[] = []
+  private _portCandYBuf: number[] = []
+  private _portResultBuf = { x: 0, y: 0 }
 
   update(em: EntityManager, world: World, civManager: CivManager, particles: ParticleSystem, tick: number): void {
     // Spawn ships from ports
@@ -239,13 +245,15 @@ export class NavalSystem {
 
     // Spatial hash for fast neighbor lookup (cell size 8)
     const grid = this._combatGrid
+    // Return all cells to pool before clearing
+    for (const arr of grid.values()) { arr.length = 0; this._combatCellPool.push(arr) }
     grid.clear()
     for (const id of ships) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (!pos) continue
       const key = Math.floor(pos.x / 8) * 10000 + Math.floor(pos.y / 8)
       let cell = grid.get(key)
-      if (!cell) { cell = []; grid.set(key, cell) }
+      if (!cell) { cell = this._combatCellPool.length > 0 ? this._combatCellPool.pop()! : []; grid.set(key, cell) }
       cell.push(id)
     }
 
@@ -371,7 +379,8 @@ export class NavalSystem {
     if (!civ) return null
 
     const ports = em.getEntitiesWithComponent('building')
-    const candidates: { x: number; y: number }[] = []
+    const candX = this._portCandXBuf; candX.length = 0
+    const candY = this._portCandYBuf; candY.length = 0
 
     for (const portId of ports) {
       const b = em.getComponent<BuildingComponent>(portId, 'building')
@@ -382,11 +391,12 @@ export class NavalSystem {
       if (relation < 20) continue // Only trade with friendly civs
 
       const pos = em.getComponent<PositionComponent>(portId, 'position')
-      if (pos) candidates.push({ x: pos.x, y: pos.y })
+      if (pos) { candX.push(pos.x); candY.push(pos.y) }
     }
 
-    if (candidates.length === 0) return null
-    return candidates[Math.floor(Math.random() * candidates.length)]
+    if (candX.length === 0) return null
+    const ri = Math.floor(Math.random() * candX.length)
+    const rb = this._portResultBuf; rb.x = candX[ri]; rb.y = candY[ri]; return rb
   }
 
   // ── Explorer Ships ────────────────────────────────────────────────────
