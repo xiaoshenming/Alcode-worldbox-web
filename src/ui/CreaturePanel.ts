@@ -2,6 +2,11 @@ import { EntityManager, EntityId, PositionComponent, CreatureComponent, NeedsCom
 import { CivMemberComponent } from '../civilization/Civilization'
 import { CivManager } from '../civilization/CivManager'
 
+/** Pre-computed AI state icons — avoids per-update object literal creation */
+const _STATE_ICONS: Record<string, string> = {
+  idle: '😴', wandering: '🚶', hungry: '🍖', fleeing: '😨', attacking: '⚔️'
+}
+
 export class CreaturePanel {
   private panel: HTMLElement
   private em: EntityManager
@@ -64,7 +69,7 @@ export class CreaturePanel {
     this.addBarRow('Health', needs.health, 100, '#4a4')
     this.addBarRow('Hunger', needs.hunger, 100, '#a44')
     if (ai) {
-      const stateIcons: Record<string, string> = { idle: '😴', wandering: '🚶', hungry: '🍖', fleeing: '😨', attacking: '⚔️' }
+      const stateIcons = _STATE_ICONS
       this.addRow('State', `${stateIcons[ai.state] || ''} ${ai.state}`)
     }
     this.addRow('Civ', civName)
