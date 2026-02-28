@@ -40,6 +40,8 @@ interface Memory {
   targetId: number
   /** 简短描述 */
   desc: string
+  /** Pre-computed truncated description — at most 30 chars + '...' */
+  truncDesc: string
 }
 
 /** 单个生物的记忆容器 */
@@ -65,6 +67,9 @@ const ICON_MAP: Record<string, string> = {
   ally: '\u{1F91D}', enemy: '\u{1F608}', mate: '\u{2764}\u{FE0F}',
   parent: '\u{1F468}', child: '\u{1F476}', rival: '\u{1F94A}',
 }
+const _HSL_GREEN = 'hsl(120,70%,55%)'
+const _HSL_YELLOW = 'hsl(60,70%,55%)'
+const _HSL_RED = 'hsl(0,70%,55%)'
 
 function clamp(v: number, lo: number, hi: number): number {
   return v < lo ? lo : v > hi ? hi : v
@@ -83,8 +88,9 @@ export class CreatureMemorySystem {
   private dragOX = 0
   private dragOY = 0
   /** Pre-computed panel header — rebuilt when selected entity or memory count changes */
-  private _prevMemKey = ''
-  private _memHeaderStr = '🧠 生物记忆 (0/24)'
+  private _prevMemEid = -2
+  private _prevMemCount = -1
+  private _memHeaderStr = '\u{1F9E0} 生物记忆 (0/24)'
 
   constructor() {
     this.panelX = 60
@@ -95,17 +101,17 @@ export class CreatureMemorySystem {
 
   /** 添加地点记忆 */
   addLocationMemory(entityId: number, tag: LocationTag, x: number, y: number, tick: number, desc: string): void {
-    this.addMemory(entityId, { id: nextMemId++, type: MemoryType.Location, tag, x, y, coordStr: `(${x},${y})`, tick, strength: 1, targetId: -1, desc })
+    this.addMemory(entityId, { id: nextMemId++, type: MemoryType.Location, tag, x, y, coordStr: `(${x},${y})`, tick, strength: 1, targetId: -1, desc, truncDesc: desc.length > 30 ? desc.slice(0, 30) + '...' : desc })
   }
 
   /** 添加事件记忆 */
   addEventMemory(entityId: number, tag: EventTag, x: number, y: number, tick: number, desc: string): void {
-    this.addMemory(entityId, { id: nextMemId++, type: MemoryType.Event, tag, x, y, coordStr: `(${x},${y})`, tick, strength: 1, targetId: -1, desc })
+    this.addMemory(entityId, { id: nextMemId++, type: MemoryType.Event, tag, x, y, coordStr: `(${x},${y})`, tick, strength: 1, targetId: -1, desc, truncDesc: desc.length > 30 ? desc.slice(0, 30) + '...' : desc })
   }
 
   /** 添加生物记忆 */
   addCreatureMemory(entityId: number, tag: CreatureTag, targetId: number, x: number, y: number, tick: number, desc: string): void {
-    this.addMemory(entityId, { id: nextMemId++, type: MemoryType.Creature, tag, x, y, coordStr: `(${x},${y})`, tick, strength: 1, targetId, desc })
+    this.addMemory(entityId, { id: nextMemId++, type: MemoryType.Creature, tag, x, y, coordStr: `(${x},${y})`, tick, strength: 1, targetId, desc, truncDesc: desc.length > 30 ? desc.slice(0, 30) + '...' : desc })
   }
 
   /** 查询某生物是否记得某地点标签 */
@@ -235,8 +241,10 @@ export class CreatureMemorySystem {
     ctx.fillStyle = '#e0e0ff'
     ctx.font = 'bold 14px monospace'
     ctx.textAlign = 'left'
-    const memKey = `${this.selectedEntity}:${memories.length}`
-    if (memKey !== this._prevMemKey) { this._prevMemKey = memKey; this._memHeaderStr = `\u{1F9E0} 生物记忆 (${memories.length}/${MAX_MEMORIES})` }
+    if (this.selectedEntity !== this._prevMemEid || memories.length !== this._prevMemCount) {
+      this._prevMemEid = this.selectedEntity; this._prevMemCount = memories.length
+      this._memHeaderStr = `\u{1F9E0} 生物记忆 (${memories.length}/${MAX_MEMORIES})`
+    }
     ctx.fillText(this._memHeaderStr, px + 12, py + 24)
 
     if (this.selectedEntity < 0 || memories.length === 0) {
@@ -273,15 +281,14 @@ export class CreatureMemorySystem {
       // 描述
       ctx.fillStyle = '#ccc'
       ctx.font = '12px monospace'
-      ctx.fillText(m.desc.length > 30 ? m.desc.slice(0, 30) + '...' : m.desc, px + 34, ry + 15)
+      ctx.fillText(m.truncDesc, px + 34, ry + 15)
 
       // 强度条
       const barX = px + PANEL_W - 80, barW = 60, barH = 6
       ctx.fillStyle = 'rgba(50,50,70,0.6)'
       ctx.fillRect(barX, ry + 10, barW, barH)
-      const hue = m.strength > 0.5 ? 120 : m.strength > 0.25 ? 60 : 0
       ctx.globalAlpha = 0.5 + m.strength * 0.5
-      ctx.fillStyle = hue === 120 ? 'hsl(120,70%,55%)' : hue === 60 ? 'hsl(60,70%,55%)' : 'hsl(0,70%,55%)'
+      ctx.fillStyle = m.strength > 0.5 ? _HSL_GREEN : m.strength > 0.25 ? _HSL_YELLOW : _HSL_RED
       ctx.fillRect(barX, ry + 10, barW * m.strength, barH)
       ctx.globalAlpha = 1
 
