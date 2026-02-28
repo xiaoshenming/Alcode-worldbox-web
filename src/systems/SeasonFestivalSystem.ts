@@ -39,6 +39,13 @@ const FESTIVAL_COLORS: Record<FestivalType, string> = {
   spring_bloom: '#88ff88',
   winter_feast: '#88ccff',
 }
+/** Pre-computed "~ FestivalLabel" header strings — avoids per-render concatenation */
+const FESTIVAL_HEADER_LABELS: Record<FestivalType, string> = {
+  harvest: `~ ${FESTIVAL_LABELS.harvest}`,
+  solstice: `~ ${FESTIVAL_LABELS.solstice}`,
+  spring_bloom: `~ ${FESTIVAL_LABELS.spring_bloom}`,
+  winter_feast: `~ ${FESTIVAL_LABELS.winter_feast}`,
+}
 
 const CHECK_INTERVAL = 2000
 const FESTIVAL_DURATION = 500
@@ -137,7 +144,6 @@ export class SeasonFestivalSystem {
 
     for (let i = 0; i < active.length; i++) {
       const f = active[i]
-      const label = FESTIVAL_LABELS[f.type]
       const color = FESTIVAL_COLORS[f.type]
       const bx = ctx.canvas.width - 230, by = 100 + i * 30
 
@@ -147,7 +153,7 @@ export class SeasonFestivalSystem {
       ctx.strokeRect(bx, by, 220, 24)
       ctx.fillStyle = color
       ctx.font = '11px monospace'
-      ctx.fillText(`~ ${label}`, bx + 6, by + 16)
+      ctx.fillText(FESTIVAL_HEADER_LABELS[f.type], bx + 6, by + 16)
     }
     ctx.restore()
   }

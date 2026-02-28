@@ -10,6 +10,8 @@ interface FavoriteSlot { powerId: string; label: string; color: string }
 const STORAGE_KEY = 'worldbox_power_favorites';
 const MAX_SLOTS = 8;
 const SLOT_SIZE = 52;
+/** Pre-computed slot index label strings (1-8) — avoids String(index+1) per render */
+const SLOT_INDEX_LABELS = ['1','2','3','4','5','6','7','8'];
 const SLOT_GAP = 6;
 const BAR_PADDING = 8;
 const BAR_HEIGHT = SLOT_SIZE + BAR_PADDING * 2;
@@ -173,7 +175,7 @@ export class PowerFavoriteSystem {
     ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText(`${index + 1}`, x + 3, y + 2);
+    ctx.fillText(SLOT_INDEX_LABELS[index] ?? String(index + 1), x + 3, y + 2);
 
     if (slot) {
       const cx = x + SLOT_SIZE / 2;
