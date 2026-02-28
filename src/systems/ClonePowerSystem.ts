@@ -55,6 +55,8 @@ export class ClonePowerSystem {
   private totalClones = 0;
   private lineage = new Map<number, { sourceId: number; generation: number }>();
   private nextCloneId = 1;
+  // Pre-allocated events buffer — reused each update() call
+  private _eventsBuf: DegradationEvent[] = [];
 
   private mutate(value: number, generation: number): number {
     const variance = 0.05 + Math.random() * 0.10; // 5-15%
@@ -137,21 +139,26 @@ export class ClonePowerSystem {
   }
 
   update(_tick: number, entities: CloneEntity[]): DegradationEvent[] {
-    const events: DegradationEvent[] = [];
+    const events = this._eventsBuf; let evIdx = 0;
     for (const e of entities) {
       if (!e.isClone) continue;
       const gen = this.getGeneration(e.id);
       const chance = 0.002 * gen + (e.age > 100 ? 0.005 : 0);
       if (Math.random() > chance) continue;
 
+      let slot = events[evIdx];
+      if (!slot) { slot = { id: 0, type: 'health_loss', amount: 0 }; events.push(slot); }
+      slot.id = e.id;
       if (gen >= ClonePowerSystem.MAX_CLONE_GENERATION) {
-        events.push({ id: e.id, type: 'instability', amount: e.maxHealth * 0.1 });
+        slot.type = 'instability'; slot.amount = e.maxHealth * 0.1;
       } else if (Math.random() < 0.5) {
-        events.push({ id: e.id, type: 'health_loss', amount: Math.ceil(e.maxHealth * 0.05) });
+        slot.type = 'health_loss'; slot.amount = Math.ceil(e.maxHealth * 0.05);
       } else {
-        events.push({ id: e.id, type: 'stat_decay', amount: 1 });
+        slot.type = 'stat_decay'; slot.amount = 1;
       }
+      evIdx++;
     }
+    events.length = evIdx;
     return events;
   }
 
