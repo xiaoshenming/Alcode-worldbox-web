@@ -41,6 +41,9 @@ export class EvolutionVisualSystem {
   private tlZoom = 1
   // Cached stat card map — cleared and reused each render call to avoid per-frame new Map()
   private _smCache = new Map<string, { total: number; nodes: EvolutionNode[]; totalStr: string; totalDisplayStr: string; evoStr: string }>()
+  /** Pre-computed min tick for timeline — updated in pushEvent, avoids O(N) scan each render */
+  private _minT = Infinity
+  private _minTStr = ''
 
   addNode(node: EvolutionNode): void {
     const stored = { ...node }
@@ -67,6 +70,7 @@ export class EvolutionVisualSystem {
 
   pushEvent(event: EvolutionEvent): void {
     this.events.push(event)
+    if (event.tick < this._minT) { this._minT = event.tick; this._minTStr = `t:${event.tick}` }
     if (this.notifs.length >= MAX_NOTIF) this.notifs.shift()
     this.notifs.push({ event, startTick: -1, alpha: 1, speciesMutStr: `${event.species}: ${event.mutation}` })
   }
@@ -288,8 +292,9 @@ export class EvolutionVisualSystem {
     ctx.save()
     ctx.fillStyle = 'rgba(20,20,40,0.8)'
     ctx.beginPath(); ctx.roundRect(ox, oy, w, h, 4); ctx.fill()
-    let minT = Infinity, maxT = -Infinity
-    for (const e of this.events) { if (e.tick < minT) minT = e.tick; if (e.tick > maxT) maxT = e.tick }
+    const minT = this._minT
+    let maxT = -Infinity
+    for (const e of this.events) { if (e.tick > maxT) maxT = e.tick }
     const range = Math.max(1, (maxT - minT) * this.tlZoom)
     const ay = oy + h / 2, uw = w - 16
     ctx.strokeStyle = DIM; ctx.lineWidth = 1
@@ -305,7 +310,7 @@ export class EvolutionVisualSystem {
       ctx.closePath(); ctx.fill()
     }
     ctx.fillStyle = DIM; ctx.font = '8px monospace'; ctx.textBaseline = 'top'
-    ctx.textAlign = 'left'; ctx.fillText(`t:${minT}`, ox + 4, oy + h - 12)
+    ctx.textAlign = 'left'; ctx.fillText(this._minTStr, ox + 4, oy + h - 12)
     ctx.textAlign = 'right'; ctx.fillText(`t:${Math.round(minT + range)}`, ox + w - 4, oy + h - 12)
     ctx.textAlign = 'left'
     ctx.restore()

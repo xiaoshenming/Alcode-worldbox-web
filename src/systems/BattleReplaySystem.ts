@@ -28,6 +28,8 @@ export interface BattleRecord {
   winnerStr: string
   /** Pre-computed "Duration: N ticks" string — set in stopRecording */
   durationStr: string
+  /** Pre-computed "MVP: Unit #N (M dmg dealt)" string — set in stopRecording */
+  mvpStr: string
 }
 
 const MAX_FRAMES = 300;
@@ -71,7 +73,7 @@ export class BattleReplaySystem {
     this.recording = {
       id: battleId, startTick: 0, endTick: 0, frames: [],
       sides: sides.map(s => ({ ...s, startCount: 0, endCount: 0, kills: 0, deployStr: '' })),
-      winner: -1, winnerStr: '', durationStr: ''
+      winner: -1, winnerStr: '', durationStr: '', mvpStr: ''
     };
   }
 
@@ -126,6 +128,8 @@ export class BattleReplaySystem {
     const winSide = rec.sides.find(s => s.civId === rec.winner)
     rec.winnerStr = winSide ? `Winner: ${winSide.name}` : ''
     rec.durationStr = `Duration: ${rec.endTick - rec.startTick} ticks`
+    const mvp = this.findMVP(rec)
+    rec.mvpStr = mvp ? `MVP: Unit #${mvp.id} (${mvp.dmg} dmg dealt)` : ''
     if (this.records.length >= MAX_RECORDS) this.records.shift();
     this.records.push(rec);
     this.recording = null;
@@ -364,8 +368,7 @@ export class BattleReplaySystem {
     // 持续时间 + MVP
     ctx.fillStyle = '#aaa';
     ctx.fillText(rec.durationStr, x + 16, row);
-    const mvp = this.findMVP(rec);
-    if (mvp) ctx.fillText(`MVP: Unit #${mvp.id} (${mvp.dmg} dmg dealt)`, x + 16, row + 18);
+    if (rec.mvpStr) ctx.fillText(rec.mvpStr, x + 16, row + 18);
     // 关闭提示
     ctx.fillStyle = '#666';
     ctx.textAlign = 'center';
