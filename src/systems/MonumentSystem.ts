@@ -27,19 +27,19 @@ interface Monument {
   /** 增益半径 */
   radius: number
   /** 增益效果 */
-  buffs: { type: BuffType; value: number }[]
+  buffs: { type: BuffType; value: number; label: string }[]
   /** 建造 tick */
   createdTick: number
   /** 是否已完工 */
   completed: boolean
 }
 
-const MONUMENT_INFO: Record<MonumentType, { icon: string; label: string; buildTicks: number; radius: number; buffs: { type: BuffType; value: number }[] }> = {
-  obelisk:    { icon: '\u{1F5FC}', label: '方尖碑', buildTicks: 800, radius: 10, buffs: [{ type: 'culture', value: 0.15 }] },
-  statue:     { icon: '\u{1F5FF}', label: '巨像', buildTicks: 1200, radius: 8, buffs: [{ type: 'morale', value: 0.2 }] },
-  temple:     { icon: '\u{26E9}\u{FE0F}', label: '神殿', buildTicks: 1500, radius: 12, buffs: [{ type: 'morale', value: 0.1 }, { type: 'culture', value: 0.1 }] },
-  arch:       { icon: '\u{1F3DB}\u{FE0F}', label: '凯旋门', buildTicks: 600, radius: 6, buffs: [{ type: 'defense', value: 0.15 }] },
-  lighthouse: { icon: '\u{1F6E4}\u{FE0F}', label: '灯塔', buildTicks: 500, radius: 15, buffs: [{ type: 'vision', value: 0.25 }] },
+const MONUMENT_INFO: Record<MonumentType, { icon: string; label: string; buildTicks: number; radius: number; buffs: { type: BuffType; value: number; label: string }[] }> = {
+  obelisk:    { icon: '\u{1F5FC}', label: '方尖碑', buildTicks: 800, radius: 10, buffs: [{ type: 'culture', value: 0.15, label: 'culture+15%' }] },
+  statue:     { icon: '\u{1F5FF}', label: '巨像', buildTicks: 1200, radius: 8, buffs: [{ type: 'morale', value: 0.2, label: 'morale+20%' }] },
+  temple:     { icon: '\u{26E9}\u{FE0F}', label: '神殿', buildTicks: 1500, radius: 12, buffs: [{ type: 'morale', value: 0.1, label: 'morale+10%' }, { type: 'culture', value: 0.1, label: 'culture+10%' }] },
+  arch:       { icon: '\u{1F3DB}\u{FE0F}', label: '凯旋门', buildTicks: 600, radius: 6, buffs: [{ type: 'defense', value: 0.15, label: 'defense+15%' }] },
+  lighthouse: { icon: '\u{1F6E4}\u{FE0F}', label: '灯塔', buildTicks: 500, radius: 15, buffs: [{ type: 'vision', value: 0.25, label: 'vision+25%' }] },
 }
 
 const PANEL_W = 420, PANEL_H = 380, HEADER_H = 36, ROW_H = 68
@@ -202,7 +202,7 @@ export class MonumentSystem {
         ctx.font = '10px monospace'
         for (const b of m.buffs) {
           ctx.fillStyle = '#8c8'
-          ctx.fillText(`${b.type}+${(b.value * 100).toFixed(0)}%`, bx, drawY + 48)
+          ctx.fillText(b.label, bx, drawY + 48)
           bx += 80
         }
 
