@@ -33,6 +33,8 @@ export class WorldStatsOverviewSystem {
   private _peaceStr = 'Peace: 0'
   private speciesCounts: Map<string, number> = new Map()
   private _speciesEntriesBuf: [string, number][] = []
+  /** Cached count strings for species distribution bar — rebuilt in update() */
+  private _speciesCountStrs: Map<string, string> = new Map()
   private visible = false
   // Pre-allocated chart point to avoid [x,y] tuple allocation per point
   private _cpx = 0
@@ -92,9 +94,13 @@ export class WorldStatsOverviewSystem {
     if (this.peaceCount !== pc) { this.peaceCount = pc; this._peaceStr = `Peace: ${pc}` }
     this.buildingCount = buildings
     this.resourceTotal = resources
-    // Rebuild sorted species entries cache
+    // Rebuild sorted species entries cache + count strings
     this._speciesEntriesBuf.length = 0
-    for (const e of this.speciesCounts.entries()) this._speciesEntriesBuf.push(e)
+    this._speciesCountStrs.clear()
+    for (const e of this.speciesCounts.entries()) {
+      this._speciesEntriesBuf.push(e)
+      this._speciesCountStrs.set(e[0], String(e[1]))
+    }
     this._speciesEntriesBuf.sort((a, b) => b[1] - a[1])
   }
 
@@ -216,7 +222,8 @@ export class WorldStatsOverviewSystem {
         if (segW > 30) {
           ctx.fillStyle = '#000'
           ctx.font = '8px monospace'
-          ctx.fillText(`${species} ${count}`, bx + 3, barY + 3)
+          const countStr = this._speciesCountStrs.get(species) ?? String(count)
+          ctx.fillText(`${species} ${countStr}`, bx + 3, barY + 3)
         }
         bx += segW
       }

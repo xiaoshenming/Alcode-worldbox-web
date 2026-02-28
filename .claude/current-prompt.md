@@ -1,11 +1,11 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代63完成。深度GC优化第十三轮 — 继续消除方法内对象字面量和render路径字符串分配。主要成果：1) DiplomaticSummitSystem._SUMMIT_DIFFICULTY模块级常量（evaluateSuccess每次调用）；2) FortificationRenderer corners平坦化（4个{cx,cy}对象→_CORNER_DX/_CORNER_DY平坦偏移量，每帧每fort）+baseDef模块级常量；3) CreatureProfessionSystem._needsBuf/_aptitudeBuf预分配成员对象（每120tick每文明/实体）；4) DiplomacyVisualSystem._REL_STR查找表（-100~100整数字符串，矩阵面板每格String(val)）；5) WeatherControlSystem._intensityStr缓存（两处toFixed(2)，每帧面板渲染）；6) PollutionSystem._avgPollutionStr缓存（每10tick更新，每帧render）；7) AchievementProgressSystem._rateStr缓存（完成率，每帧header渲染）；8) PlagueMutationSystem.infectStr/lethalStr预计算（在PlagueStrain对象上，创建/变异时计算，每帧render循环）；9) MonumentSystem.buff.label预计算（在MONUMENT_INFO和buff对象上，消除每帧toFixed）。总计9个commit，5434测试全通过，TypeScript clean。网络问题导致push失败，需要下轮重试。
+🧠 AI 上轮笔记：迭代64完成。深度GC优化第十四轮 — 继续消除render路径toFixed分配。主要成果：1) ProphecySystem.probabilityStr预计算（在Prophecy对象上，创建时计算）；2) CustomSpeciesSystem.baseSpeedStr预计算（在SpeciesConfig上，createSpecies/load时计算）；3) CreaturePersonalitySystem.traitStrs/sociabilityStr/stabilityStr缓存（在Personality上，assign/inherit/drift时更新）+_biasesBuf预分配（5个对象，每帧render复用）；4) WorldLawSystem.valueStr缓存（在LawParam上，setLaw/drag/reset时更新）；5) CreatureTamingSystem.progressStr缓存（在TameRecord上，update时更新）；6) CreatureMutationSystem.magnitudeStr预计算（在Mutation对象上，创建时计算）；7) SandboxSettingsSystem.valueStrs缓存（Record<string,string>，set/reset时更新）；8) AchievementProgressSystem.progressStr缓存（在Achievement上，updateProgress时更新）；9) CreaturePersonalitySystem.valStr缓存（在_biasesBuf对象上，render时用_setB辅助函数更新）；10) MonumentSystem.buildProgressStr缓存（在Monument上，update时更新）；11) WorldHeatmapSystem.maxValStrs缓存（Map<string,string>，setData/clearData时更新）。总计11个commit（6批），5434测试全通过，TypeScript clean。剩余render路径toFixed：WorldDashboardSystem ratio（per-frame计算）、ChartPanelSystem currentVal（per-frame计算）。
 🎯 AI 自定优先级：[
   "1. 推送本轮所有提交（网络恢复后：http_proxy=http://127.0.0.1:7897 https_proxy=http://127.0.0.1:7897 git push origin main）",
-  "2. 继续扫描render路径中的toFixed/模板字符串：WorldDashboardSystem ratio、ProphecySystem probability、CustomSpeciesSystem baseSpeed、AchievementProgressSystem progress per-achievement",
-  "3. 检查 CityLayoutSystem 的A*寻路节点对象池化机会（每120tick，但创建大量{x,y,g,h,f,parent}节点）",
-  "4. 检查 BattleReplaySystem.recordFrame() — 战斗期间每帧的units.map/attacks.map对象分配",
+  "2. 继续扫描render路径中的toFixed/模板字符串：WorldDashboardSystem ratio（per-frame计算，较难缓存）、ChartPanelSystem currentVal（per-frame计算）",
+  "3. 扫描方法内的Record<>对象字面量：ResourceScarcitySystem、NavalSystem counts、CreatureTradeSkillSystem skills等",
+  "4. 扫描push({...})对象字面量：EntityInspectorSystem、MapGenSystem、RiverSystem、StatisticsTracker等",
   "5. 扫描更多 render 方法中的 ctx.fillText 模板字符串（特别是在循环中的）"
 ]
 💡 AI 积累经验：[
@@ -76,10 +76,16 @@
   "【迭代63新增】整数范围查找表模式：-100~100的关系值用_REL_STR[v+100]查找，比String(v)快且零分配",
   "【迭代63新增】接口字段预计算适用于PlagueStrain.infectStr/lethalStr：在createStrain和mutate时计算，render循环直接用",
   "【迭代63新增】corners平坦化模式：4个{cx,cy}对象→_CORNER_DX/_CORNER_DY两个as const数组，render循环中用cx=x+_CORNER_DX[i]*size计算，零对象分配",
-  "【迭代63新增】预分配成员Record对象模式：assessCivNeeds/pickBestProfession的w/a对象改为_needsBuf/_aptitudeBuf成员，每次调用前手动reset各字段，避免new对象"
+  "【迭代63新增】预分配成员Record对象模式：assessCivNeeds/pickBestProfession的w/a对象改为_needsBuf/_aptitudeBuf成员，每次调用前手动reset各字段，避免new对象",
+  "【迭代64新增】接口字段预计算适用于Prophecy.probabilityStr/SpeciesConfig.baseSpeedStr/Mutation.magnitudeStr：在对象创建时计算，render直接用",
+  "【迭代64新增】Personality字符串缓存模式：traitStrs/sociabilityStr/stabilityStr在assign/inherit/drift时更新，render直接用，消除每帧5+2次toFixed",
+  "【迭代64新增】_biasesBuf预分配+valStr缓存：5个{label,val,valStr}对象预分配，render时用_setB辅助函数更新val+valStr，消除每帧5个对象+5次toFixed",
+  "【迭代64新增】LawParam/TameRecord/Achievement/Monument字符串缓存模式：valueStr/progressStr/buildProgressStr在值变化时更新，render直接用",
+  "【迭代64新增】SandboxSettingsSystem.valueStrs缓存模式：Record<string,string>成员，set/reset时更新，render循环直接用，消除每帧N次toFixed(decimals)",
+  "【迭代64新增】WorldHeatmapSystem.maxValStrs缓存模式：Map<string,string>成员，setData/clearData时更新，render直接用，消除每帧条件toFixed"
 ]
 
-迭代轮次: 64/100
+迭代轮次: 65/100
 
 
 🔄 自我进化（每轮必做）：
@@ -88,6 +94,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-03-01T01:56:28+08:00"
+  "last_updated": "2026-03-01T02:26:59+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。
