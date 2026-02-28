@@ -8,6 +8,7 @@
 
 /** 症状类型 */
 type Symptom = 'fever' | 'cough' | 'rash' | 'weakness' | 'madness' | 'blindness'
+const ALL_SYMPTOMS: Symptom[] = ['fever', 'cough', 'rash', 'weakness', 'madness', 'blindness']
 
 /** 瘟疫毒株 */
 interface PlagueStrain {
@@ -174,7 +175,7 @@ export class PlagueMutationSystem {
   }
 
   private randomSymptom(): Symptom {
-    const all: Symptom[] = ['fever', 'cough', 'rash', 'weakness', 'madness', 'blindness']
+    const all = ALL_SYMPTOMS
     return all[Math.floor(Math.random() * all.length)]
   }
 

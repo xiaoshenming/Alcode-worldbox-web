@@ -9,6 +9,7 @@ import { BuildingType, BuildingComponent, Civilization, CultureTrait } from '../
 import { EventLog } from './EventLog'
 
 type ResourceKey = 'food' | 'wood' | 'stone' | 'gold'
+const RESOURCE_KEYS: ResourceKey[] = ['food', 'wood', 'stone', 'gold']
 
 const BASE_PRICES: Record<ResourceKey, number> = { food: 1.0, wood: 1.5, stone: 2.0, gold: 3.0 }
 const MIN_PRICE_MULT = 0.5
@@ -81,7 +82,7 @@ export class TradeEconomySystem {
 
   private updateLocalPrices(civ: Civilization): void {
     const local: MarketPrices = { food: 1, wood: 1, stone: 1, gold: 1 }
-    const keys: ResourceKey[] = ['food', 'wood', 'stone', 'gold']
+    const keys = RESOURCE_KEYS
     const thresholds: Record<ResourceKey, number> = { food: 30, wood: 25, stone: 15, gold: 10 }
 
     for (const k of keys) {
@@ -216,7 +217,7 @@ export class TradeEconomySystem {
   }
 
   private findSurplus(civ: Civilization): ResourceKey | null {
-    const keys: ResourceKey[] = ['food', 'wood', 'stone', 'gold']
+    const keys = RESOURCE_KEYS
     const thresholds: Record<ResourceKey, number> = { food: 40, wood: 35, stone: 20, gold: 15 }
     let best: ResourceKey | null = null
     let bestRatio = 0

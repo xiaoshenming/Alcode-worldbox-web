@@ -5,6 +5,7 @@ import { EntityManager, EntityId, PositionComponent } from '../ecs/Entity'
 import { EventLog } from './EventLog'
 
 export type SpyMission = 'intel' | 'sabotage' | 'steal_tech' | 'assassinate'
+const SPY_MISSIONS: SpyMission[] = ['intel', 'sabotage', 'steal_tech', 'assassinate']
 
 export interface Spy {
   id: number
@@ -154,7 +155,7 @@ export class DiplomaticEspionageSystem {
 
     const pos = em.getComponent<PositionComponent>(spyEntity, 'position')
     if (!pos) return
-    const missions: SpyMission[] = ['intel', 'sabotage', 'steal_tech', 'assassinate']
+    const missions = SPY_MISSIONS
     const mission = missions[Math.floor(Math.random() * missions.length)]
 
     const spy: Spy = {

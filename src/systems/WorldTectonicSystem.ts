@@ -6,6 +6,7 @@ import { TileType } from '../utils/Constants'
 
 export type PlateType = 'continental' | 'oceanic'
 export type BoundaryType = 'convergent' | 'divergent' | 'transform'
+const BOUNDARY_TYPES: BoundaryType[] = ['convergent', 'divergent', 'transform']
 
 export interface TectonicPlate {
   id: number
@@ -82,7 +83,7 @@ export class WorldTectonicSystem {
         const dy = a.centerY - b.centerY
         const threshold = a.radius + b.radius
         if (dx * dx + dy * dy < threshold * threshold) {
-          const boundaries: BoundaryType[] = ['convergent', 'divergent', 'transform']
+          const boundaries = BOUNDARY_TYPES
           this.faults.push({
             x1: a.centerX, y1: a.centerY,
             x2: b.centerX, y2: b.centerY,

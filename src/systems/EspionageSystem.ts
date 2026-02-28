@@ -22,6 +22,7 @@ export interface Spy {
 }
 
 export type SpyMission = 'steal_tech' | 'sabotage' | 'incite_revolt' | 'assassinate'
+const SPY_MISSIONS_ALL: SpyMission[] = ['steal_tech', 'sabotage', 'incite_revolt', 'assassinate']
 
 export type CasusBelli = 'border_conflict' | 'spy_caught' | 'tribute_refused' | 'religious_diff'
 
@@ -127,7 +128,7 @@ export class EspionageSystem {
   }
 
   private assignMission(spy: Spy): void {
-    const missions: SpyMission[] = ['steal_tech', 'sabotage', 'incite_revolt', 'assassinate']
+    const missions = SPY_MISSIONS_ALL
     spy.mission = missions[Math.floor(Math.random() * missions.length)]
     spy.missionTimer = 0
   }

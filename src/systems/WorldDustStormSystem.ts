@@ -4,6 +4,7 @@
 import { EntityManager, PositionComponent, NeedsComponent } from '../ecs/Entity'
 
 export type DustStormIntensity = 'mild' | 'moderate' | 'severe' | 'catastrophic'
+const DUST_STORM_INTENSITIES: DustStormIntensity[] = ['mild', 'moderate', 'severe', 'catastrophic']
 
 export interface DustStorm {
   id: number
@@ -51,7 +52,7 @@ export class WorldDustStormSystem {
 
     const width = world.width || 200
     const height = world.height || 200
-    const intensities: DustStormIntensity[] = ['mild', 'moderate', 'severe', 'catastrophic']
+    const intensities = DUST_STORM_INTENSITIES
     const roll = Math.random()
     const intensity = roll < 0.4 ? intensities[0] : roll < 0.7 ? intensities[1] : roll < 0.9 ? intensities[2] : intensities[3]
 

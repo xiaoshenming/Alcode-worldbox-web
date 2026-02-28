@@ -7,6 +7,7 @@ import { EntityManager } from '../ecs/Entity'
 import { EventLog } from './EventLog'
 
 type ResourceKey = 'food' | 'wood' | 'stone' | 'gold'
+const RESOURCE_KEYS: ResourceKey[] = ['food', 'wood', 'stone', 'gold']
 
 export type NegotiationStatus = 'pending' | 'accepted' | 'rejected' | 'expired'
 
@@ -363,7 +364,7 @@ export class TradeNegotiationSystem {
   }
 
   private findSurplus(civ: Civilization): ResourceKey {
-    const keys: ResourceKey[] = ['food', 'wood', 'stone', 'gold']
+    const keys = RESOURCE_KEYS
     let best: ResourceKey = 'food'
     let bestVal = 0
     for (const k of keys) {
@@ -376,7 +377,7 @@ export class TradeNegotiationSystem {
   }
 
   private findNeed(civ: Civilization): ResourceKey {
-    const keys: ResourceKey[] = ['food', 'wood', 'stone', 'gold']
+    const keys = RESOURCE_KEYS
     let worst: ResourceKey = 'food'
     let worstVal = Infinity
     for (const k of keys) {

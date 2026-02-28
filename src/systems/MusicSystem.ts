@@ -1,5 +1,6 @@
 // Dynamic music & ambient sound system via Web Audio API (procedural, no audio files)
 type Mood = 'peaceful' | 'war' | 'disaster' | 'night' | 'epic'
+const VALID_MOODS: Mood[] = ['peaceful', 'war', 'disaster', 'night', 'epic']
 
 const NOTE = {
   C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
@@ -323,8 +324,7 @@ export class MusicSystem {
   }
 
   setMood(mood: string): void {
-    const valid: Mood[] = ['peaceful', 'war', 'disaster', 'night', 'epic']
-    if (valid.includes(mood as Mood)) {
+    if (VALID_MOODS.includes(mood as Mood)) {
       this.targetMood = mood as Mood
       if (this.ctx) this.crossfadeToNewMood()
     }
