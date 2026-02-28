@@ -41,6 +41,9 @@ export class FormationSystem {
   private _lastZoom = -1
   private _iconFont = ''
   private _formationsBuf: Formation[] = []
+  // Reusable flat buffers for render() positions (avoids {x,y}[] alloc per formation per frame)
+  private _renderPosXBuf: number[] = []
+  private _renderPosYBuf: number[] = []
 
   createFormation(civId: number, type: FormationType, members: number[]): number {
     if (members.length === 0) return -1
@@ -155,15 +158,14 @@ export class FormationSystem {
 
       ctx.save()
 
-      // Render formation outline
-      const positions: { x: number; y: number }[] = []
+      // Render formation outline using flat buffers (zero object alloc per member)
+      const posX = this._renderPosXBuf; posX.length = 0
+      const posY = this._renderPosYBuf; posY.length = 0
       for (let i = 0; i < f.members.length; i++) {
         const target = this.calcMemberTarget(f, i)
         if (target) {
-          positions.push({
-            x: (target.x * TILE_SIZE - cameraX) * zoom,
-            y: (target.y * TILE_SIZE - cameraY) * zoom,
-          })
+          posX.push((target.x * TILE_SIZE - cameraX) * zoom)
+          posY.push((target.y * TILE_SIZE - cameraY) * zoom)
         }
       }
 
@@ -171,15 +173,15 @@ export class FormationSystem {
       ctx.strokeStyle = f.morale > 50 ? '#4fc3f7' : '#ff8a65'
       ctx.lineWidth = 1.5
 
-      if (positions.length > 1 && f.type !== 'scatter') {
+      if (posX.length > 1 && f.type !== 'scatter') {
         ctx.beginPath()
         if (f.type === 'circle') {
           const radius = Math.max(UNIT_SPACING, f.members.length * UNIT_SPACING / (2 * Math.PI)) * TILE_SIZE * zoom
           ctx.arc(sx, sy, radius, 0, Math.PI * 2)
         } else {
-          ctx.moveTo(positions[0].x, positions[0].y)
-          for (let i = 1; i < positions.length; i++) {
-            ctx.lineTo(positions[i].x, positions[i].y)
+          ctx.moveTo(posX[0], posY[0])
+          for (let i = 1; i < posX.length; i++) {
+            ctx.lineTo(posX[i], posY[i])
           }
           ctx.closePath()
         }
