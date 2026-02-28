@@ -23,6 +23,7 @@ export class AISystem {
   /** Batch index for staggered updates — only process 1/3 of entities per tick */
   private batchIndex: number = 0
   private _newbornsBuf: { species: EntityType; x: number; y: number; motherId: EntityId; fatherId: EntityId }[] = []
+  private _walkableTargetBuf = { x: 0, y: 0 }
 
   constructor(em: EntityManager, world: World, particles: ParticleSystem, factory: CreatureFactory, spatialHash: SpatialHashSystem) {
     this.em = em
@@ -447,11 +448,13 @@ export class AISystem {
       const ty = Math.floor(pos.y + (Math.random() - 0.5) * range)
       const tile = this.world.getTile(tx, ty)
       if (tile !== null && isWalkable(tile, canFly)) {
-        return { x: tx, y: ty }
+        this._walkableTargetBuf.x = tx; this._walkableTargetBuf.y = ty
+        return this._walkableTargetBuf
       }
     }
     // Fallback: stay near current position
-    return { x: pos.x, y: pos.y }
+    this._walkableTargetBuf.x = pos.x; this._walkableTargetBuf.y = pos.y
+    return this._walkableTargetBuf
   }
 
   private heroHeal(id: EntityId, pos: PositionComponent, hero: HeroComponent): void {
