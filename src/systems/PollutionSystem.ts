@@ -51,6 +51,8 @@ export class PollutionSystem {
   private tickCounter = 0
   private w: number
   private h: number
+  // Cached render string — avoids toFixed(1) per frame when overlay is visible
+  private _avgPollutionStr = '0.0'
 
   constructor() {
     this.w = WORLD_WIDTH
@@ -137,6 +139,8 @@ export class PollutionSystem {
         this.grid[idx] = clamp01(cur - spread * 4 - decay)
       }
     }
+    // Rebuild cached avg string after each update cycle
+    this._avgPollutionStr = (this.getAveragePollution() * 100).toFixed(1)
   }
 
   /* ── 输入 ── */
@@ -175,7 +179,7 @@ export class PollutionSystem {
     ctx.fillRect(10, 10, 180, 28)
     ctx.fillStyle = '#ff8844'
     ctx.font = 'bold 13px monospace'
-    ctx.fillText(`\u{2623} 污染热力图 (avg: ${(this.getAveragePollution() * 100).toFixed(1)}%)`, 18, 29)
+    ctx.fillText(`\u{2623} 污染热力图 (avg: ${this._avgPollutionStr}%)`, 18, 29)
     ctx.restore()
   }
 }
