@@ -314,7 +314,7 @@ export class EcosystemSystem {
   private flee(selfPos: PositionComponent, ai: AIComponent, threatPos: PositionComponent): void {
     const dx = selfPos.x - threatPos.x;
     const dy = selfPos.y - threatPos.y;
-    const len = Math.hypot(dx, dy) || 1;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
     ai.state = 'fleeing';
     ai.targetX = Math.max(0, Math.min(WORLD_WIDTH - 1, selfPos.x + (dx / len) * 10));
     ai.targetY = Math.max(0, Math.min(WORLD_HEIGHT - 1, selfPos.y + (dy / len) * 10));

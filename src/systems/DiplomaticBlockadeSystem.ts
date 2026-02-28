@@ -89,18 +89,14 @@ export class DiplomaticBlockadeSystem {
   }
 
   private expireBlockades(tick: number): void {
-    const expired: number[] = []
-    for (let i = 0; i < this.blockades.length; i++) {
+    for (let i = this.blockades.length - 1; i >= 0; i--) {
       const b = this.blockades[i]
       // Blockades weaken over time
       b.strength -= 0.5
       if (tick - b.startedAt > b.duration || b.strength <= 0) {
-        expired.push(i)
+        this.blockades.splice(i, 1)
         this.totalBroken++
       }
-    }
-    for (let i = expired.length - 1; i >= 0; i--) {
-      this.blockades.splice(expired[i], 1)
     }
   }
 

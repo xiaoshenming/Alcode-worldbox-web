@@ -80,15 +80,14 @@ export class CreatureRivalrySystem {
   }
 
   private updateRivalries(em: EntityManager, tick: number): void {
-    const toRemove: number[] = []
-    for (let i = 0; i < this.rivalries.length; i++) {
+    for (let i = this.rivalries.length - 1; i >= 0; i--) {
       const rivalry = this.rivalries[i]
-      if (rivalry.stage === 'resolved') { toRemove.push(i); continue }
+      if (rivalry.stage === 'resolved') { this.rivalries.splice(i, 1); continue }
 
       // Check both entities alive
       const cA = em.getComponent<CreatureComponent>(rivalry.entityA, 'creature')
       const cB = em.getComponent<CreatureComponent>(rivalry.entityB, 'creature')
-      if (!cA || !cB) { toRemove.push(i); continue }
+      if (!cA || !cB) { this.rivalries.splice(i, 1); continue }
 
       // Chance to resolve
       if (Math.random() < RESOLUTION_CHANCE) {
@@ -110,9 +109,6 @@ export class CreatureRivalrySystem {
         if (cA.mood != null) cA.mood = Math.max(0, cA.mood - 2)
         if (cB.mood != null) cB.mood = Math.max(0, cB.mood - 2)
       }
-    }
-    for (let i = toRemove.length - 1; i >= 0; i--) {
-      this.rivalries.splice(toRemove[i], 1)
     }
   }
 
