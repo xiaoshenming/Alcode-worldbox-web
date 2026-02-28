@@ -24,6 +24,7 @@ interface Marquee {
   event: GameEvent;
   x: number;
   textWidth: number;
+  text: string;  // Pre-computed display string to avoid per-frame template literal
 }
 
 const COLORS: Record<EventCategory, string> = {
@@ -205,7 +206,7 @@ export class EventNotificationSystem {
         this.marqueeQueue.splice(0, this.mqHead);
         this.mqHead = 0;
       }
-      this.activeMarquee = { event: evt, x: screenWidth, textWidth: 0 };
+      this.activeMarquee = { event: evt, x: screenWidth, textWidth: 0, text: `${ICONS[evt.category]} [${evt.priority.toUpperCase()}] ${evt.message}` };
     }
   }
 
@@ -250,7 +251,7 @@ export class EventNotificationSystem {
     if (!this.activeMarquee) return;
     const mq = this.activeMarquee;
     const color = COLORS[mq.event.category];
-    const text = `${ICONS[mq.event.category]} [${mq.event.priority.toUpperCase()}] ${mq.event.message}`;
+    const text = mq.text;  // Use pre-computed text — no per-frame template literal
     ctx.save();
     ctx.font = 'bold 13px monospace';
     const measured = ctx.measureText(text).width;

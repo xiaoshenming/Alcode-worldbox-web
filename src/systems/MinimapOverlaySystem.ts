@@ -50,6 +50,7 @@ const RESOURCE_COLORS: Record<string, string> = {
 
 export class MinimapOverlaySystem {
   private mode: OverlayMode = 'terrain';
+  private _modeUpper = 'TERRAIN';  // cached toUpperCase() result
 
   getMode(): OverlayMode {
     return this.mode;
@@ -57,11 +58,13 @@ export class MinimapOverlaySystem {
 
   setMode(mode: OverlayMode): void {
     this.mode = mode;
+    this._modeUpper = mode.toUpperCase();
   }
 
   nextMode(): OverlayMode {
     const idx = MODES.indexOf(this.mode);
     this.mode = MODES[(idx + 1) % MODES.length];
+    this._modeUpper = this.mode.toUpperCase();
     return this.mode;
   }
 
@@ -214,7 +217,7 @@ export class MinimapOverlaySystem {
     ctx.fillStyle = '#FFFFFF';
     ctx.font = '10px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(this.mode.toUpperCase(), width / 2, 11);
+    ctx.fillText(this._modeUpper, width / 2, 11);
     ctx.textAlign = 'start';
   }
 }
