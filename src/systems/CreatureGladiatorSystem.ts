@@ -29,6 +29,7 @@ export class CreatureGladiatorSystem {
   private gladiators: Gladiator[] = []
   private nextId = 1
   private lastCheck = 0
+  private _byArena: Map<number, Gladiator[]> = new Map()
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -57,11 +58,12 @@ export class CreatureGladiatorSystem {
     }
 
     // Simulate arena bouts between gladiators in the same arena
-    const byArena = new Map<number, Gladiator[]>()
+    const byArena = this._byArena
+    byArena.clear()
     for (const g of this.gladiators) {
-      const list = byArena.get(g.arenaId) ?? []
+      let list = byArena.get(g.arenaId)
+      if (!list) { list = []; byArena.set(g.arenaId, list) }
       list.push(g)
-      byArena.set(g.arenaId, list)
     }
 
     for (const fighters of byArena.values()) {
