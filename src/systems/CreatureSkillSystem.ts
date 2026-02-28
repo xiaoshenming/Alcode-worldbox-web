@@ -103,7 +103,8 @@ export class CreatureSkillSystem {
   private _lastBranch: SkillBranch = '' as SkillBranch
   private _branchSkillCache: SkillDef[] = []
   /** Pre-computed panel header — rebuilt when entity or level changes */
-  private _prevSkillKey = ''
+  private _prevSkillEid = -2
+  private _prevSkillLvl = -1
   private _skillHeaderStr = '⭐ 技能树 (Lv.0)'
 
   /* ── 公共 API ── */
@@ -216,8 +217,7 @@ export class CreatureSkillSystem {
     ctx.font = 'bold 14px monospace'
     ctx.textAlign = 'left'
     const lvl = d ? d.level : 0
-    const skillKey = `${this.selectedEntity}:${lvl}`
-    if (skillKey !== this._prevSkillKey) { this._prevSkillKey = skillKey; this._skillHeaderStr = `\u{2B50} 技能树 (Lv.${lvl})` }
+    if (this.selectedEntity !== this._prevSkillEid || lvl !== this._prevSkillLvl) { this._prevSkillEid = this.selectedEntity; this._prevSkillLvl = lvl; this._skillHeaderStr = `\u{2B50} 技能树 (Lv.${lvl})` }
     ctx.fillText(this._skillHeaderStr, px + 12, py + 24)
 
     if (!d) {

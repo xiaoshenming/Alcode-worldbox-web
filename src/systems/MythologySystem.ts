@@ -92,7 +92,8 @@ export class MythologySystem {
   private dragOY = 0
   private tickCounter = 0
   /** Pre-computed panel header — rebuilt when selected civ or myth count changes */
-  private _prevMythKey = ''
+  private _prevMythCivId = -2
+  private _prevMythCount = -1
   private _headerStr = '📖 文明神话 (0 篇)'
 
   /* ── 公共 API ── */
@@ -217,8 +218,7 @@ export class MythologySystem {
     ctx.fillStyle = '#e8d0ff'
     ctx.font = 'bold 14px monospace'
     ctx.textAlign = 'left'
-    const mythKey = `${this.selectedCivId}:${myths.length}`
-    if (mythKey !== this._prevMythKey) { this._prevMythKey = mythKey; this._headerStr = `\u{1F4D6} 文明神话 (${myths.length} 篇)` }
+    if (this.selectedCivId !== this._prevMythCivId || myths.length !== this._prevMythCount) { this._prevMythCivId = this.selectedCivId; this._prevMythCount = myths.length; this._headerStr = `\u{1F4D6} 文明神话 (${myths.length} 篇)` }
     ctx.fillText(this._headerStr, px + 12, py + 24)
 
     if (myths.length === 0) {

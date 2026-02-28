@@ -72,7 +72,8 @@ export class WorldAncientRuinSystem {
   private _nameFont = ''
   private _unexploredBuf: AncientRuin[] = []
   /** Pre-computed panel header — rebuilt when unexplored or total count changes */
-  private _prevRuinKey = ''
+  private _prevUnexploredCount = -1
+  private _prevRuinCount = -1
   private _ruinHeaderStr = 'Ruins (0/0)'
   getRuins(): AncientRuin[] { return this.ruins }
   getUnexplored(): AncientRuin[] {
@@ -230,8 +231,7 @@ export class WorldAncientRuinSystem {
     ctx.fillRect(x, y, 220, 20 + rows * 18)
     ctx.fillStyle = '#fc4'
     ctx.font = '12px monospace'
-    const ruinKey = `${unexplored.length}:${this.ruins.length}`
-    if (ruinKey !== this._prevRuinKey) { this._prevRuinKey = ruinKey; this._ruinHeaderStr = `Ruins (${unexplored.length}/${this.ruins.length})` }
+    if (unexplored.length !== this._prevUnexploredCount || this.ruins.length !== this._prevRuinCount) { this._prevUnexploredCount = unexplored.length; this._prevRuinCount = this.ruins.length; this._ruinHeaderStr = `Ruins (${unexplored.length}/${this.ruins.length})` }
     ctx.fillText(this._ruinHeaderStr, x + 8, y + 14)
 
     for (let i = 0; i < Math.min(5, this.ruins.length); i++) {
