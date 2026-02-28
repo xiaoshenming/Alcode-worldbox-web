@@ -79,6 +79,8 @@ const ADAPTATION_THRESHOLD = 1000 // ticks of exposure needed to unlock a trait
 const SELECTION_TRAIT_NAMES: readonly string[] = ['Battle Hardened', 'Efficient Metabolism', 'Disease Resistant']
 const INHERITANCE_RATIO = 0.6     // 60% of species must have trait for auto-inherit
 const SELECTION_DEATH_THRESHOLD = 20 // deaths before natural selection kicks in
+/** Pre-computed causes array — avoids per-call literal array in checkNaturalSelection */
+const _DEATH_CAUSES: ReadonlyArray<'combat' | 'hunger' | 'disease'> = ['combat', 'hunger', 'disease'] as const
 
 // Natural selection trait templates (created dynamically per species)
 function makeSelectionTrait(cause: 'combat' | 'hunger' | 'disease'): EvolutionTrait {
@@ -416,7 +418,7 @@ export class EvolutionSystem {
 
   private checkNaturalSelection(specData: SpeciesEvolution, tick: number): void {
     const { deathCauses } = specData
-    const causes: Array<'combat' | 'hunger' | 'disease'> = ['combat', 'hunger', 'disease']
+    const causes = _DEATH_CAUSES
 
     for (const cause of causes) {
       if (deathCauses[cause] >= SELECTION_DEATH_THRESHOLD) {

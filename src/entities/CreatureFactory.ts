@@ -33,6 +33,9 @@ const MAX_AGE: Record<string, [number, number]> = {
   dragon: [2000, 4000],
 }
 
+/** Pre-computed Set for O(1) hostile species lookup — avoids per-call literal array in create() */
+const HOSTILE_SPECIES_SET = new Set(['wolf', 'orc', 'dragon'])
+
 export class CreatureFactory {
   private em: EntityManager
 
@@ -63,7 +66,7 @@ export class CreatureFactory {
     })
 
     // Creature
-    const isHostile = ['wolf', 'orc', 'dragon'].includes(type)
+    const isHostile = HOSTILE_SPECIES_SET.has(type)
     const ageRange = MAX_AGE[type] || [500, 800]
     const maxAge = ageRange[0] + Math.random() * (ageRange[1] - ageRange[0])
     this.em.addComponent(id, {
