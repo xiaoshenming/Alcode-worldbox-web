@@ -220,15 +220,15 @@ export class WorldLeyLineSystem {
       const baseR = Math.max(3, 8 * zoom)
       const pulseR = baseR * (1 + 0.2 * nexus.energy * pulse)
 
-      // Outer glow ring
+      // Outer glow ring — two layered arcs replacing createRadialGradient to avoid per-nexus allocation
       ctx.globalAlpha = 0.12 + 0.08 * nexus.energy
-      const grad = ctx.createRadialGradient(sx, sy, pulseR * 0.2, sx, sy, pulseR * 2.5)
-      grad.addColorStop(0, 'rgba(255,255,255,0.6)')
-      grad.addColorStop(0.4, 'rgba(180,140,255,0.3)')
-      grad.addColorStop(1, 'rgba(100,60,200,0)')
-      ctx.fillStyle = grad
+      ctx.fillStyle = 'rgba(100,60,200,0.25)'
       ctx.beginPath()
       ctx.arc(sx, sy, pulseR * 2.5, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.fillStyle = 'rgba(180,140,255,0.3)'
+      ctx.beginPath()
+      ctx.arc(sx, sy, pulseR * 1.2, 0, Math.PI * 2)
       ctx.fill()
 
       // Bright core
