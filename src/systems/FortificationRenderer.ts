@@ -2,6 +2,11 @@ import { TILE_SIZE } from '../utils/Constants'
 const _EMPTY_DASH: number[] = []
 // Pre-computed integer-to-string lookup — avoids String(n) per-fort per-frame
 const _INT_STR: readonly string[] = ['0','1','2','3','4','5','6','7','8','9','10']
+/** Pre-computed tower corner offsets (dx/dy as fraction of size) — avoids 4 {cx,cy} objects per fort per frame */
+const _CORNER_DX = [0, 1, 0, 1] as const
+const _CORNER_DY = [0, 0, 1, 1] as const
+/** Pre-computed base defense values — avoids Record object literal per getDefenseLevel call */
+const _BASE_DEF: Record<Exclude<FortificationLevel, 'none'>, number> = { wooden: 1, stone: 2, castle: 3 }
 
 export type FortificationLevel = 'none' | 'wooden' | 'stone' | 'castle'
 
@@ -170,29 +175,22 @@ export class FortificationRenderer {
     const towerSize = Math.max(4, Math.min(6, TILE_SIZE * 0.8))
     const halfTower = towerSize / 2
 
-    // 四角位置
-    const corners = [
-      { cx: x, cy: y },                     // 左上
-      { cx: x + size, cy: y },              // 右上
-      { cx: x, cy: y + size },              // 左下
-      { cx: x + size, cy: y + size }        // 右下
-    ]
-
-    // 根据 towerCount 决定绘制几个角（1-4）
+    // 根据 towerCount 决定绘制几个角（1-4）— 用平坦偏移量替代 {cx,cy} 对象数组
     const count = Math.min(fort.towerCount, 4)
     for (let i = 0; i < count; i++) {
-      const c = corners[i]
+      const cx = x + _CORNER_DX[i] * size
+      const cy = y + _CORNER_DY[i] * size
 
       // 方块底座
       ctx.fillStyle = style.towerColor
       ctx.globalAlpha = 0.95
-      ctx.fillRect(c.cx - halfTower, c.cy - halfTower, towerSize, towerSize)
+      ctx.fillRect(cx - halfTower, cy - halfTower, towerSize, towerSize)
 
       // 顶部三角形（屋顶）
       ctx.beginPath()
-      ctx.moveTo(c.cx - halfTower - 1, c.cy - halfTower)
-      ctx.lineTo(c.cx, c.cy - halfTower - towerSize * 0.6)
-      ctx.lineTo(c.cx + halfTower + 1, c.cy - halfTower)
+      ctx.moveTo(cx - halfTower - 1, cy - halfTower)
+      ctx.lineTo(cx, cy - halfTower - towerSize * 0.6)
+      ctx.lineTo(cx + halfTower + 1, cy - halfTower)
       ctx.closePath()
       ctx.fillStyle = fort.color || style.towerColor
       ctx.globalAlpha = 0.85
@@ -203,7 +201,7 @@ export class FortificationRenderer {
         const flash = Math.sin(this.animTime * 0.2 + i) * 0.5 + 0.5
         ctx.globalAlpha = flash
         ctx.fillStyle = '#ff3333'
-        ctx.fillRect(c.cx - 1, c.cy - 1, 2, 2)
+        ctx.fillRect(cx - 1, cy - 1, 2, 2)
       }
     }
 
@@ -322,12 +320,7 @@ export class FortificationRenderer {
 
   // 根据等级和血量计算防御力数值
   private getDefenseLevel(fort: CityFortification): number {
-    const baseDef: Record<Exclude<FortificationLevel, 'none'>, number> = {
-      wooden: 1,
-      stone: 2,
-      castle: 3
-    }
-    const base = fort.level === 'none' ? 0 : baseDef[fort.level]
+    const base = fort.level === 'none' ? 0 : _BASE_DEF[fort.level]
     const towerBonus = Math.min(fort.towerCount, 4)
     const moatBonus = fort.hasMoat ? 1 : 0
     const healthMult = fort.health / Math.max(1, fort.maxHealth)

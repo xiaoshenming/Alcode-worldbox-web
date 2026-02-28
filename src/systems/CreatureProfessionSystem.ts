@@ -79,6 +79,9 @@ export class CreatureProfessionSystem {
   private selectedEntity = -1
   // Pre-allocated map for assignProfessions grouping (every 120 ticks)
   private _byCivBuf: Map<number, EntityId[]> = new Map()
+  // Pre-allocated needs/aptitude buffers — avoids 2 Record object literals per entity per 120 ticks
+  private _needsBuf: Record<ProfessionType, number> = { farmer: 0, miner: 0, builder: 0, soldier: 0, merchant: 0, scholar: 0, priest: 0, blacksmith: 0 }
+  private _aptitudeBuf: Record<ProfessionType, number> = { farmer: 0, miner: 0, builder: 0, soldier: 0, merchant: 0, scholar: 0, priest: 0, blacksmith: 0 }
 
   setCivManager(cm: CivManager): void { this.civManager = cm }
   setSelectedEntity(id: number): void { this.selectedEntity = id }
@@ -129,9 +132,8 @@ export class CreatureProfessionSystem {
   }
 
   private assessCivNeeds(civId: number): Record<ProfessionType, number> {
-    const w: Record<ProfessionType, number> = {
-      farmer: 3, miner: 1, builder: 1, soldier: 2, merchant: 1, scholar: 1, priest: 1, blacksmith: 1,
-    }
+    const w = this._needsBuf
+    w.farmer = 3; w.miner = 1; w.builder = 1; w.soldier = 2; w.merchant = 1; w.scholar = 1; w.priest = 1; w.blacksmith = 1
     if (!this.civManager) return w
     const civ = this.civManager.civilizations.get(civId)
     if (!civ) return w
@@ -150,9 +152,8 @@ export class CreatureProfessionSystem {
   private pickBestProfession(em: EntityManager, entityId: EntityId, needs: Record<ProfessionType, number>): ProfessionType {
     const genetics = em.getComponent<GeneticsComponent>(entityId, 'genetics')
     const creature = em.getComponent<CreatureComponent>(entityId, 'creature')
-    const a: Record<ProfessionType, number> = {
-      farmer: 1, miner: 1, builder: 1, soldier: 1, merchant: 1, scholar: 1, priest: 1, blacksmith: 1,
-    }
+    const a = this._aptitudeBuf
+    a.farmer = 1; a.miner = 1; a.builder = 1; a.soldier = 1; a.merchant = 1; a.scholar = 1; a.priest = 1; a.blacksmith = 1
     if (genetics) {
       const t = genetics.traits
       a.farmer += t.vitality * 0.5 + t.strength * 0.3
