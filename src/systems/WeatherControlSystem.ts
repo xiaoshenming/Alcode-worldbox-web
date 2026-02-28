@@ -66,6 +66,7 @@ export class WeatherControlSystem {
   setDuration(ticks: number): void {
     this.duration = Math.max(0, ticks)
     this.remaining = this.duration
+    this._durStr = `${this.remaining}/${this.duration}`
   }
 
   isLocked(): boolean { return this.locked }
@@ -77,6 +78,7 @@ export class WeatherControlSystem {
     if (this.locked || this.duration === 0) return
     if (this.remaining > 0) {
       this.remaining--
+      this._durStr = `${this.remaining}/${this.duration}`
       if (this.remaining <= 0) {
         this.weatherType = 'clear'
         this.intensity = 0
@@ -124,7 +126,7 @@ export class WeatherControlSystem {
     ctx.textAlign = 'left'
     ctx.fillText(`${icon} ${label}  Int:${this._intensityStr}`, this.px + 12, cy)
     cy += 16
-    const durText = this.duration === 0 ? 'Infinite' : `${this.remaining}/${this.duration}`
+    const durText = this.duration === 0 ? 'Infinite' : this._durStr
     const lockText = this.locked ? ' [LOCKED]' : ''
     ctx.fillStyle = '#aabbcc'
     ctx.fillText(`Dur: ${durText}${lockText}`, this.px + 12, cy)
