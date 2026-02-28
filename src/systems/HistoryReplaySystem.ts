@@ -116,7 +116,7 @@ export class HistoryReplaySystem {
 
     // Population graph overlay
     if (this.snapshots.length > 1) {
-      const maxPop = Math.max(1, ...this.snapshots.map(s => s.population))
+      let maxPop = 1; for (const s of this.snapshots) { if (s.population > maxPop) maxPop = s.population }
       ctx.strokeStyle = '#4488ff'
       ctx.lineWidth = 1.5
       ctx.beginPath()
@@ -129,7 +129,7 @@ export class HistoryReplaySystem {
       ctx.stroke()
 
       // Civ count line
-      const maxCiv = Math.max(1, ...this.snapshots.map(s => s.civCount))
+      let maxCiv = 1; for (const s of this.snapshots) { if (s.civCount > maxCiv) maxCiv = s.civCount }
       ctx.strokeStyle = '#44cc44'
       ctx.lineWidth = 1
       ctx.beginPath()

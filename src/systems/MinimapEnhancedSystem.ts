@@ -226,34 +226,39 @@ export class MinimapEnhancedSystem {
     if (this.warMarkers.length === 0) return;
     const flash = 0.5 + 0.5 * Math.sin(this.tick * 0.1);
 
+    ctx.save();
     for (let i = 0; i < this.warMarkers.length; i++) {
       const m = this.warMarkers[i];
       const mx = x + m.x * w, my = y + m.y * h;
       const r = 2 + m.intensity * 4;
-      // 闪烁红点
+      // 闪烁红点 — 用globalAlpha替代rgba模板字符串
+      ctx.globalAlpha = flash * m.intensity;
+      ctx.fillStyle = '#ff1e00';
       ctx.beginPath();
       ctx.arc(mx, my, r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,30,0,${flash * m.intensity})`;
       ctx.fill();
       // 围城橙色圆圈
       if (m.intensity > 0.6) {
+        ctx.globalAlpha = flash * 0.8;
+        ctx.strokeStyle = '#ffa000';
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.arc(mx, my, r + 3, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(255,160,0,${flash * 0.8})`;
-        ctx.lineWidth = 1.5;
         ctx.stroke();
       }
       // 军队移动箭头
       if (m.intensity > 0.3 && m.intensity <= 0.6) {
+        ctx.globalAlpha = flash * 0.7;
+        ctx.fillStyle = '#ffc832';
         ctx.beginPath();
         ctx.moveTo(mx, my - r - 2);
         ctx.lineTo(mx + 3, my - r + 2);
         ctx.lineTo(mx - 3, my - r + 2);
         ctx.closePath();
-        ctx.fillStyle = `rgba(255,200,50,${flash * 0.7})`;
         ctx.fill();
       }
     }
+    ctx.restore();
   }
 
   /** 渲染当前视口矩形 */

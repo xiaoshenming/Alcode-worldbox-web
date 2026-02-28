@@ -273,8 +273,10 @@ export class CreatureMemorySystem {
       ctx.fillStyle = 'rgba(50,50,70,0.6)'
       ctx.fillRect(barX, ry + 10, barW, barH)
       const hue = m.strength > 0.5 ? 120 : m.strength > 0.25 ? 60 : 0
-      ctx.fillStyle = `hsla(${hue},70%,55%,${0.5 + m.strength * 0.5})`
+      ctx.globalAlpha = 0.5 + m.strength * 0.5
+      ctx.fillStyle = hue === 120 ? 'hsl(120,70%,55%)' : hue === 60 ? 'hsl(60,70%,55%)' : 'hsl(0,70%,55%)'
       ctx.fillRect(barX, ry + 10, barW * m.strength, barH)
+      ctx.globalAlpha = 1
 
       // 坐标
       ctx.fillStyle = '#777'

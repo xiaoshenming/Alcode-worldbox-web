@@ -669,8 +669,11 @@ export class WeatherDisasterSystem {
     ctx: CanvasRenderingContext2D, width: number, height: number, tick: number, alpha: number
   ): void {
     // Yellow-brown sepia tint
-    ctx.fillStyle = `rgba(180, 140, 60, ${alpha * 0.1})`
+    ctx.save()
+    ctx.globalAlpha = alpha * 0.1
+    ctx.fillStyle = '#b48c3c'
     ctx.fillRect(0, 0, width, height)
+    ctx.restore()
 
     // Heat wave distortion (sin wave horizontal lines)
     ctx.save()

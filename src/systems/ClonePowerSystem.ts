@@ -157,13 +157,15 @@ export class ClonePowerSystem {
       const hue = 180 + c.generation * 15;
 
       ctx.globalAlpha = alpha;
-      ctx.fillStyle = `hsla(${hue}, 80%, 70%, ${alpha})`;
+      // hue = 180 + gen*15，用固定hsl+globalAlpha替代hsla模板字符串
+      ctx.fillStyle = `hsl(${hue}, 80%, 70%)`;
       ctx.beginPath();
       ctx.arc(sx, sy, size, 0, Math.PI * 2);
       ctx.fill();
 
       if (c.generation >= 3) {
-        ctx.strokeStyle = `hsla(${hue + 40}, 90%, 50%, ${alpha * 0.6})`;
+        ctx.globalAlpha = alpha * 0.6;
+        ctx.strokeStyle = `hsl(${hue + 40}, 90%, 50%)`;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.arc(sx, sy, size * 1.4, 0, Math.PI * 2);
