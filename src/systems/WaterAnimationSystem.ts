@@ -27,6 +27,8 @@ export class WaterAnimationSystem {
   // Foam particles along coastlines
   private foamParticles: FoamParticle[] = []
   private readonly MAX_FOAM = 512
+  // Object pool for foam particles — recycle instead of GC
+  private _foamPool: FoamParticle[] = []
 
   // Wave offset cache (regenerated every N ticks)
   private waveCache: WaveCache | null = null
@@ -99,7 +101,7 @@ export class WaterAnimationSystem {
         if (i !== last) {
           this.foamParticles[i] = this.foamParticles[last]
         }
-        this.foamParticles.pop()
+        this._foamPool.push(this.foamParticles.pop()!)
       }
     }
 
@@ -427,15 +429,15 @@ export class WaterAnimationSystem {
       if (cy > 0 && world.tiles[cy - 1][cx] !== TileType.DEEP_WATER && world.tiles[cy - 1][cx] !== TileType.SHALLOW_WATER) driftY += 0.15
       if (cy < h - 1 && world.tiles[cy + 1][cx] !== TileType.DEEP_WATER && world.tiles[cy + 1][cx] !== TileType.SHALLOW_WATER) driftY -= 0.15
 
-      this.foamParticles.push({
-        x: px,
-        y: py,
-        age: 0,
-        maxAge: 30 + (Math.random() * 30) | 0,
-        size: 0.5 + Math.random() * 1.0,
-        dx: driftX + (Math.random() - 0.5) * 0.1,
-        dy: driftY + (Math.random() - 0.5) * 0.1
-      })
+      // Acquire from pool or allocate new slot
+      let fp = this._foamPool.pop()
+      if (!fp) fp = { x: 0, y: 0, age: 0, maxAge: 0, size: 0, dx: 0, dy: 0 }
+      fp.x = px; fp.y = py; fp.age = 0
+      fp.maxAge = 30 + (Math.random() * 30) | 0
+      fp.size = 0.5 + Math.random() * 1.0
+      fp.dx = driftX + (Math.random() - 0.5) * 0.1
+      fp.dy = driftY + (Math.random() - 0.5) * 0.1
+      this.foamParticles.push(fp)
     }
   }
 }
