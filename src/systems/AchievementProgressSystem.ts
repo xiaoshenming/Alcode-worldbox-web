@@ -11,6 +11,8 @@ export interface Achievement {
   target: number;
   completed: boolean;
   completedAt: number; // tick
+  /** Pre-computed render string — avoids toFixed per frame */
+  progressStr: string;
 }
 
 type AchievementStatus = 'completed' | 'in_progress' | 'pending';
@@ -61,7 +63,7 @@ function makeAchievements(): Achievement[] {
     ['all_races', '众生平等', '同时拥有4个种族', 'special', 4],
   ];
   return defs.map(([id, name, description, category, target]) => ({
-    id, name, description, category, current: 0, target, completed: false, completedAt: 0,
+    id, name, description, category, current: 0, target, completed: false, completedAt: 0, progressStr: '0',
   }));
 }
 
@@ -83,6 +85,7 @@ export class AchievementProgressSystem {
     const a = this.achievements.find(v => v.id === id);
     if (!a || a.completed) return;
     a.current = Math.min(value, a.target);
+    a.progressStr = a.target > 0 ? (a.current / a.target * 100).toFixed(0) : '0';
     if (a.current >= a.target) {
       a.completed = true;
       a.completedAt = Date.now();
@@ -263,7 +266,7 @@ export class AchievementProgressSystem {
       ctx.font = '10px monospace';
       ctx.textAlign = 'right';
       ctx.textBaseline = 'top';
-      ctx.fillText(`${a.current}/${a.target} (${(progress * 100).toFixed(0)}%)`, x + w - 14, ry + 34);
+      ctx.fillText(`${a.current}/${a.target} (${a.progressStr}%)`, x + w - 14, ry + 34);
     }
 
     ctx.restore(); // clip

@@ -54,11 +54,11 @@ export class CreaturePersonalitySystem {
   private selectedEntity = -1
   private tickCounter = 0
   private _biasesBuf = [
-    { label: '战斗', val: 0 },
-    { label: '逃跑', val: 0 },
-    { label: '助人', val: 0 },
-    { label: '探索', val: 0 },
-    { label: '劳作', val: 0 },
+    { label: '战斗', val: 0, valStr: '' },
+    { label: '逃跑', val: 0, valStr: '' },
+    { label: '助人', val: 0, valStr: '' },
+    { label: '探索', val: 0, valStr: '' },
+    { label: '劳作', val: 0, valStr: '' },
   ]
 
   /* ── 公共 API ── */
@@ -258,16 +258,17 @@ export class CreaturePersonalitySystem {
     ctx.fillStyle = '#8ab'; ctx.font = '11px monospace'
     ctx.fillText('行为倾向:', px + 16, drawY + 2)
     const biases = this._biasesBuf
-    biases[0].val = this.getDecisionBias(p.entityId, 'fight')
-    biases[1].val = this.getDecisionBias(p.entityId, 'flee')
-    biases[2].val = this.getDecisionBias(p.entityId, 'help')
-    biases[3].val = this.getDecisionBias(p.entityId, 'explore')
-    biases[4].val = this.getDecisionBias(p.entityId, 'work')
+    const _setB = (b: typeof biases[0], v: number) => { b.val = v; b.valStr = v.toFixed(2) }
+    _setB(biases[0], this.getDecisionBias(p.entityId, 'fight'))
+    _setB(biases[1], this.getDecisionBias(p.entityId, 'flee'))
+    _setB(biases[2], this.getDecisionBias(p.entityId, 'help'))
+    _setB(biases[3], this.getDecisionBias(p.entityId, 'explore'))
+    _setB(biases[4], this.getDecisionBias(p.entityId, 'work'))
     let bx = px + 16
     ctx.font = '10px monospace'
     for (const b of biases) {
       ctx.fillStyle = b.val > 0.2 ? '#8c8' : b.val < -0.2 ? '#c88' : '#888'
-      ctx.fillText(`${b.label}:${b.val > 0 ? '+' : ''}${b.val.toFixed(2)}`, bx, drawY + 20)
+      ctx.fillText(`${b.label}:${b.val > 0 ? '+' : ''}${b.valStr}`, bx, drawY + 20)
       bx += 70
     }
 
