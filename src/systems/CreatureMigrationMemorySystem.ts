@@ -38,6 +38,7 @@ export class CreatureMigrationMemorySystem {
   private nextMemId = 1
   private nextRouteId = 1
   private lastCheck = 0
+  private _raceMemoriesMap: Map<string, HabitatMemory[]> = new Map()
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -152,7 +153,8 @@ export class CreatureMigrationMemorySystem {
     if (this.routes.length >= MAX_ROUTES) return
 
     // Group memories by race to form routes
-    const raceMemories = new Map<string, HabitatMemory[]>()
+    const raceMemories = this._raceMemoriesMap
+    raceMemories.clear()
     for (const mem of this.memories) {
       const creature = em.getComponent<CreatureComponent>(mem.creatureId, 'creature')
       if (!creature) continue
