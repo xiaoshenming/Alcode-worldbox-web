@@ -1,11 +1,11 @@
 {
-  "notes": "迭代39完成。深度GC优化扫描 — 批量消除80+个系统getter的filter()临时数组。主要成果：1) 消除25+个Creature系统getter：Grudge/Dance/Rivalry/Intuition/Superstition/Art/Tattoo/Divination/Dream/Legacy/Handicraft/Invention/Lullaby/OmenBelief/Phobia/Somniloquy/Totem/Telepathy/Trauma/Ancestor/MigrationMemory/Bounty/Taming/Calligraphy/Alliance/Fashion/Ritual/Pilgrimage；2) 消除35+个World/Diplomatic系统getter：Fossil/Geyser/Glacier/Maelstrom/Miasma/MigrationRoute/Oasis/Purification/TidePool/Underground/Whirlpool/AncientRuin/Sinkhole/Relic/MythicBeast/MeteorShower/GeothermalVent/Embargo/Hostage/Marriage/PeaceTreaty/Pledge/Propaganda/Ratification/Referendum/Tariff/TradeSanction/HostageExchange/CulturalExchange/Blockade/Espionage/TradeAgreement/Diplomacy/Exile/Guild/Memorial；3) 消除20+个系统update路径filter：WorldChronicle.getChronicles()合并双filter为单次循环、LoyaltySystem.triggerRebellion/triggerCivilWar改预分配buf、BiomeEvolutionSystem.erosion()改手动计数、CultureSystem trait adoption改两阶段采样、HeroLegendSystem.getLeaderboard()改buf+sort、TechSystem templeCount改手动计数、WorldEventSystem.tryTriggerRandomEvent改buf、CreatureConstellationSystem改两阶段采样；4) 修复DiplomacySystem/EspionageSystem测试（共享buf模式）。总计：约100+处优化，测试5434个全通过，TypeScript clean，构建成功。",
+  "notes": "迭代41完成。深度GC优化第三轮 — 专注reduce闭包、spread/sort/slice临时数组、Map.values()快照、对象字面量分配。主要成果：1) 消除spread+sort+slice：BattleReplay._dmgMap预分配、Rumor/Somniloquy预分配_buf替代[...].sort().slice()、Summit随机采样替代shuffle、ClonePower手动过滤traits、WonderSystem预分配_availBuf；2) 消除渲染路径GC：EraVisual.rgba改globalAlpha、EvolutionVisual.slice+map+join改手动拼接+for循环替代reduce；3) 批量消除reduce闭包：WorldDashboard/Chronicle/Acoustic/Siege/Foraging/NightWatch/BeastMaster/WorldEvent共8个系统改手动for循环；4) 消除Map.values()快照：EcosystemSystem直接返回内部Map、PortalSystem/SiegeSystem/WorldMemorial/LegendaryBattle/NavalCombat/CustomSpecies/VisionSystem/CollectionSystem预分配buf；5) 消除其他临时分配：WorldChronicle.warKey改模板字符串、TradeSkill.getAverage改SKILL_LIST循环、FameSystem预分配_fameEntriesBuf、LegendaryBattle用迭代器替代keys()快照、AISystem.findWalkableTarget预分配_walkableTargetBuf（高频热路径）、DisasterWarning.getShakeOffset预分配_shakeOffset；6) 去除多余spread：RivalrySystem直接使用em.getEntitiesWithComponents()结果。总计10批commit，约60+处优化，5434个测试全通过，TypeScript clean。",
   "priorities": [
     "1. Game.ts(4045行)：主循环密集系统调用，是最大未解决问题，但风险极高",
-    "2. Renderer.ts(989行)：继续排查热路径GC，特别是renderMinimap和tile渲染循环",
-    "3. 扫描 new Object()/对象字面量 在每帧render路径中的使用——特别是WeatherDisasterSystem渲染",
-    "4. 扫描剩余filter()在update路径中的使用：ArtifactSystem/ChartPanelSystem/ClonePowerSystem/CreatureSkillSystem等",
-    "5. 扫描剩余Array.from()在热路径中的使用"
+    "2. 扫描其他render路径的{ x, y }对象字面量分配：MigrationSystem/TradeEconomySystem/EraSystem/QuestSystem等都有返回对象的方法",
+    "3. 查找更多sort()调用但没有预分配buf的系统",
+    "4. 检查PlagueMutation/EvolutionSystem中的new Map/Set(data)拷贝是否有高频调用",
+    "5. 扫描游戏main loop中Renderer.ts剩余GC：特别是entity渲染循环中的对象创建"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -103,5 +103,5 @@
     "【迭代39新增】WorldEventSystem.tryTriggerRandomEvent：EVENT_DEFINITIONS.filter()改预分配_availEventsBuf",
     "【迭代39新增】CreatureConstellationSystem：NAMES.filter()改两阶段计数+迭代采样，零分配"
   ],
-  "last_updated": "2026-02-28T07:52:00+08:00"
+  "last_updated": "2026-02-28T09:30:00+08:00"
 }
