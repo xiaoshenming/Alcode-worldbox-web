@@ -44,6 +44,9 @@ export interface Legend {
   civId: number
 }
 
+// Module-level constant to avoid new Set() on every randomWalkableTarget call
+const WALKABLE_TILES = new Set([TileType.SAND, TileType.GRASS, TileType.FOREST, TileType.MOUNTAIN, TileType.SNOW])
+
 export class QuestSystem {
   private quests: Quest[] = []
   private legends: Map<number, Legend> = new Map()
@@ -51,6 +54,10 @@ export class QuestSystem {
   private lastGenerateTick: number = 0
   private _activeQuestsBuf: Quest[] = []
   private _legendsBuf: Legend[] = []
+  private _candidatesBuf: QuestType[] = []
+  // Pre-allocated return object for findQuestTarget (avoid new {x,y} per call)
+  private _targetBuf = { x: 0, y: 0 }
+  private _nearestBuf = { x: 0, y: 0, dist: Infinity }
 
   getActiveQuests(): Quest[] {
     this._activeQuestsBuf.length = 0
@@ -179,7 +186,7 @@ export class QuestSystem {
   }
 
   private pickQuestType(em: EntityManager, world: World, civManager: CivManager, civId: number): QuestType | null {
-    const candidates: QuestType[] = []
+    const candidates = this._candidatesBuf; candidates.length = 0
 
     // Check if dragons exist
     const creatures = em.getEntitiesWithComponent('creature')
@@ -226,7 +233,7 @@ export class QuestSystem {
     switch (questType) {
       case 'slay_dragon': {
         const creatures = em.getEntitiesWithComponent('creature')
-        let nearest: { x: number; y: number; dist: number } | null = null
+        const nb = this._nearestBuf; nb.dist = Infinity
         for (const id of creatures) {
           const c = em.getComponent<CreatureComponent>(id, 'creature')
           if (!c) continue
@@ -236,9 +243,10 @@ export class QuestSystem {
           const dx = pos.x - heroPos.x
           const dy = pos.y - heroPos.y
           const dist = dx * dx + dy * dy
-          if (!nearest || dist < nearest.dist) nearest = { x: pos.x, y: pos.y, dist }
+          if (dist < nb.dist) { nb.dist = dist; nb.x = pos.x; nb.y = pos.y }
         }
-        return nearest ? { x: nearest.x, y: nearest.y } : null
+        if (nb.dist === Infinity) return null
+        const tb = this._targetBuf; tb.x = nb.x; tb.y = nb.y; return tb
       }
 
       case 'defend_village': {
@@ -247,7 +255,8 @@ export class QuestSystem {
         if (!civ || civ.buildings.length === 0) return null
         const bId = civ.buildings[Math.floor(Math.random() * civ.buildings.length)]
         const bPos = em.getComponent<PositionComponent>(bId, 'position')
-        return bPos ? { x: bPos.x, y: bPos.y } : null
+        if (!bPos) return null
+        const tb = this._targetBuf; tb.x = bPos.x; tb.y = bPos.y; return tb
       }
 
       case 'find_artifact': {
@@ -256,7 +265,7 @@ export class QuestSystem {
           const art = em.getComponent<ArtifactComponent>(id, 'artifact')
           if (art && !art.claimed) {
             const pos = em.getComponent<PositionComponent>(id, 'position')
-            if (pos) return { x: pos.x, y: pos.y }
+            if (pos) { const tb = this._targetBuf; tb.x = pos.x; tb.y = pos.y; return tb }
           }
         }
         return null
@@ -266,7 +275,7 @@ export class QuestSystem {
         const civ = civManager.civilizations.get(civId)
         if (!civ || civ.tradeRoutes.length === 0) return null
         const route = civ.tradeRoutes[Math.floor(Math.random() * civ.tradeRoutes.length)]
-        return { x: route.toPort.x, y: route.toPort.y }
+        const tb = this._targetBuf; tb.x = route.toPort.x; tb.y = route.toPort.y; return tb
       }
 
       case 'holy_pilgrimage': {
@@ -277,7 +286,7 @@ export class QuestSystem {
           const b = em.getComponent<BuildingComponent>(bId, 'building')
           if (b && b.buildingType === 'temple') {
             const pos = em.getComponent<PositionComponent>(bId, 'position')
-            if (pos) return { x: pos.x, y: pos.y }
+            if (pos) { const tb = this._targetBuf; tb.x = pos.x; tb.y = pos.y; return tb }
           }
         }
         // Fallback: random distant location
@@ -291,12 +300,11 @@ export class QuestSystem {
   }
 
   private randomWalkableTarget(world: World): { x: number; y: number } | null {
-    const walkable = new Set([TileType.SAND, TileType.GRASS, TileType.FOREST, TileType.MOUNTAIN, TileType.SNOW])
     for (let attempt = 0; attempt < 30; attempt++) {
       const x = Math.floor(Math.random() * WORLD_WIDTH)
       const y = Math.floor(Math.random() * WORLD_HEIGHT)
       const tile = world.getTile(x, y)
-      if (tile !== null && walkable.has(tile)) return { x, y }
+      if (tile !== null && WALKABLE_TILES.has(tile)) { const tb = this._targetBuf; tb.x = x; tb.y = y; return tb }
     }
     return null
   }
