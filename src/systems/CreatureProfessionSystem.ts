@@ -47,6 +47,8 @@ const PROFESSION_LABELS: Record<ProfessionType, string> = {
   merchant: '商人', scholar: '学者', priest: '祭司', blacksmith: '铁匠',
 }
 const RANK_LABELS: Record<ProfessionRank, string> = { apprentice: '学徒', journeyman: '熟练工', master: '大师' }
+/** Pre-computed "- RankLabel" strings — avoids template per render */
+const RANK_PREFIX_LABELS: Record<ProfessionRank, string> = { apprentice: '- 学徒', journeyman: '- 熟练工', master: '- 大师' }
 const PROFESSION_COLORS: Record<ProfessionType, string> = {
   farmer: '#7cb342', miner: '#8d6e63', builder: '#ffa726', soldier: '#ef5350',
   merchant: '#ffca28', scholar: '#42a5f5', priest: '#ab47bc', blacksmith: '#78909c',
@@ -244,7 +246,7 @@ export class CreatureProfessionSystem {
     ctx.fillStyle = color; ctx.font = 'bold 16px monospace'
     ctx.fillText(PROFESSION_LABELS[prof.type], px + 16, drawY)
     ctx.fillStyle = '#ccc'; ctx.font = '13px monospace'
-    ctx.fillText(`- ${RANK_LABELS[prof.rank]}`, px + 80, drawY)
+    ctx.fillText(RANK_PREFIX_LABELS[prof.rank], px + 80, drawY)
     drawY += 28
 
     const nextRank: ProfessionRank | null = prof.rank === 'apprentice' ? 'journeyman' : prof.rank === 'journeyman' ? 'master' : null

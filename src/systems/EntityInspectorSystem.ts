@@ -18,6 +18,8 @@ export class EntityInspectorSystem {
   private entityId: number | null = null
   private tree: PropNode[] = []
   private scrollOffset = 0
+  /** Pre-computed "Entity #N" header — rebuilt when entityId changes */
+  private _entityHeaderStr = 'Entity #-'
 
   togglePanel(): void { this.panelOpen = !this.panelOpen }
   isPanelOpen(): boolean { return this.panelOpen }
@@ -25,6 +27,7 @@ export class EntityInspectorSystem {
   /** Set the entity to inspect. Pass components as key-value record. */
   inspect(entityId: number, components: Record<string, Record<string, unknown>>): void {
     this.entityId = entityId
+    this._entityHeaderStr = `Entity #${entityId}`
     this.tree = this.buildTree(components)
     this.scrollOffset = 0
     this.panelOpen = true
@@ -104,7 +107,7 @@ export class EntityInspectorSystem {
     ctx.font = 'bold 11px monospace'
     ctx.textAlign = 'left'
     ctx.textBaseline = 'middle'
-    ctx.fillText(`Entity #${this.entityId}`, px + PANEL_PAD, py + HEADER_H / 2)
+    ctx.fillText(this._entityHeaderStr, px + PANEL_PAD, py + HEADER_H / 2)
 
     // Close btn
     ctx.fillStyle = 'rgba(255,255,255,0.4)'

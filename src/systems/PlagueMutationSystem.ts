@@ -37,6 +37,10 @@ interface PlagueStrain {
   lethalStr: string
   /** Pre-computed stats string — rebuilt when infected/deaths changes */
   statsStr: string
+  /** Pre-computed "变异自 #N" string — computed at creation (parentId never changes) */
+  parentStr: string
+  /** Pre-computed "[icon] name" display string — rebuilt when extinct changes */
+  nameStr: string
 }
 
 const SYMPTOM_INFO: Record<Symptom, { icon: string; label: string; lethalityMod: number }> = {
@@ -117,10 +121,11 @@ export class PlagueMutationSystem {
       symptoms: syms,
       infected: 0, deaths: 0,
       createdTick: tick, extinct: false,
-      infectStr: '', lethalStr: '', statsStr: '感染:0 死亡:0',
+      infectStr: '', lethalStr: '', statsStr: '感染:0 死亡:0', parentStr: '', nameStr: '',
     }
     strain.infectStr = `传染${Math.round(strain.infectRate * 100)}%`
     strain.lethalStr = `致死${(strain.lethality * 100).toFixed(1)}%`
+    strain.nameStr = `\u{1F9A0} ${strain.name}`
     this.strains.push(strain)
     this._rebuildHeaderCache()
     return strain
@@ -150,6 +155,7 @@ export class PlagueMutationSystem {
     const s = this.strains.find(s => s.id === strainId)
     if (s && !s.extinct) {
       s.extinct = true
+      s.nameStr = `\u{1F480} ${s.name}`
       this._rebuildHeaderCache()
     }
   }
@@ -193,10 +199,11 @@ export class PlagueMutationSystem {
       symptoms: newSymptoms,
       infected: 0, deaths: 0,
       createdTick: tick, extinct: false,
-      infectStr: '', lethalStr: '', statsStr: '感染:0 死亡:0',
+      infectStr: '', lethalStr: '', statsStr: '感染:0 死亡:0', parentStr: `变异自 #${parent.id}`, nameStr: '',
     }
     child.infectStr = `传染${Math.round(child.infectRate * 100)}%`
     child.lethalStr = `致死${(child.lethality * 100).toFixed(1)}%`
+    child.nameStr = `\u{1F9A0} ${child.name}`
     this.strains.push(child)
     this._rebuildHeaderCache()
   }
@@ -260,12 +267,11 @@ export class PlagueMutationSystem {
 
         ctx.fillStyle = s.extinct ? '#666' : '#ffb0b0'
         ctx.font = 'bold 12px monospace'
-        const prefix = s.extinct ? '\u{1F480}' : '\u{1F9A0}'
-        ctx.fillText(`${prefix} ${s.name}`, px + 10, drawY + 18)
+        ctx.fillText(s.nameStr, px + 10, drawY + 18)
 
         if (s.parentId > 0) {
           ctx.fillStyle = '#888'; ctx.font = '10px monospace'
-          ctx.fillText(`变异自 #${s.parentId}`, px + 200, drawY + 18)
+          ctx.fillText(s.parentStr, px + 200, drawY + 18)
         }
 
         // 症状图标
