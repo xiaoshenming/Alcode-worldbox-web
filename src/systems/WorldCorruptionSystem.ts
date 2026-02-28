@@ -13,6 +13,9 @@ type WeatherType = 'clear' | 'rain' | 'snow' | 'storm' | 'fog' | 'tornado' | 'dr
 type SeasonType = 'spring' | 'summer' | 'autumn' | 'winter'
 
 const SPREAD_INTERVAL = 30
+// Pre-allocated neighbor offsets — avoids creating 40000 sub-arrays per spread tick
+const NB_DX = [-1, 1, 0, 0] as const
+const NB_DY = [0, 0, -1, 1] as const
 const DAMAGE_INTERVAL = 60
 const BASE_SPREAD_RATE = 0.008
 const DECAY_RATE = 0.001
@@ -168,9 +171,8 @@ export class WorldCorruptionSystem {
         const tile = world.tiles[y]?.[x] ?? 0
         if (tile <= 1) continue // water blocks spread
         // Spread to 4-connected neighbors
-        const nb = [[-1, 0], [1, 0], [0, -1], [0, 1]]
         for (let n = 0; n < 4; n++) {
-          const nx = x + nb[n][0], ny = y + nb[n][1]
+          const nx = x + NB_DX[n], ny = y + NB_DY[n]
           if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue
           if ((world.tiles[ny]?.[nx] ?? 0) <= 1) continue
           const nIdx = ny * w + nx

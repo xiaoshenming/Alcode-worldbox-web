@@ -27,6 +27,13 @@ const EXPLORE_INTERVAL = 40
 const FISH_INTERVAL = 10
 const BLOCKADE_INTERVAL = 80
 
+// Pre-allocated water adjacency offsets (avoids creating 12 arrays per spawnShip call)
+const WATER_OFFSETS: readonly [number, number][] = [
+  [0, -1], [0, 1], [-1, 0], [1, 0],
+  [-1, -1], [1, -1], [-1, 1], [1, 1],
+  [0, -2], [0, 2], [-2, 0], [2, 0],
+] as const
+
 export class NavalSystem {
   // Track how many ships each port has spawned: portEntityId -> count
   private portShipCount: Map<EntityId, number> = new Map()
@@ -125,19 +132,16 @@ export class NavalSystem {
     }
   }
 
+  private _adjWaterPos = { x: 0, y: 0 }
   private findAdjacentWater(world: World, x: number, y: number): { x: number; y: number } | null {
-    const offsets = [
-      [0, -1], [0, 1], [-1, 0], [1, 0],
-      [-1, -1], [1, -1], [-1, 1], [1, 1],
-      [0, -2], [0, 2], [-2, 0], [2, 0],
-    ]
-    for (const [dx, dy] of offsets) {
+    for (const [dx, dy] of WATER_OFFSETS) {
       const nx = Math.floor(x) + dx
       const ny = Math.floor(y) + dy
       if (nx < 0 || nx >= WORLD_WIDTH || ny < 0 || ny >= WORLD_HEIGHT) continue
       const tile = world.getTile(nx, ny)
       if (tile === TileType.DEEP_WATER || tile === TileType.SHALLOW_WATER) {
-        return { x: nx, y: ny }
+        this._adjWaterPos.x = nx; this._adjWaterPos.y = ny
+        return this._adjWaterPos
       }
     }
     return null

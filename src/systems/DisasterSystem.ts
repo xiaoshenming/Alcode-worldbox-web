@@ -7,6 +7,9 @@ import { ParticleSystem } from './ParticleSystem'
 import { EventLog } from './EventLog'
 import { EntityManager, PositionComponent } from '../ecs/Entity'
 
+// Pre-allocated offsets for hasAdjacentTile — avoids creating 4 sub-arrays per call
+const CARDINAL_OFFSETS: readonly [number, number][] = [[0, 1], [0, -1], [1, 0], [-1, 0]] as const
+
 interface ActiveDisaster {
   type: 'volcano' | 'flood' | 'wildfire'
   x: number
@@ -239,8 +242,7 @@ export class DisasterSystem {
   }
 
   private hasAdjacentTile(x: number, y: number, tileType: TileType): boolean {
-    const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]]
-    for (const [dx, dy] of dirs) {
+    for (const [dx, dy] of CARDINAL_OFFSETS) {
       const nx = x + dx, ny = y + dy
       if (nx >= 0 && nx < WORLD_WIDTH && ny >= 0 && ny < WORLD_HEIGHT) {
         if (this.world.getTile(nx, ny) === tileType) return true

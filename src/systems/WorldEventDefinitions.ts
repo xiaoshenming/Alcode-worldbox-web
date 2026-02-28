@@ -9,6 +9,9 @@ import { Civilization, BuildingType, BuildingComponent } from '../civilization/C
 import { ParticleSystem } from './ParticleSystem'
 import { TimelineSystem } from './TimelineSystem'
 import { EventLog } from './EventLog'
+
+// Pre-allocated 4-directional offsets — avoids 40000 temp sub-arrays in full-world flood event
+const CARDINAL_OFFSETS: readonly [number, number][] = [[0, 1], [0, -1], [1, 0], [-1, 0]] as const
 // --- Types ---
 
 export interface EventContext {
@@ -185,8 +188,7 @@ export const EVENT_DEFINITIONS: WorldEventDef[] = [
           if (tile !== TileType.SAND && tile !== TileType.GRASS) continue
           // Check if adjacent to water
           let nearWater = false
-          const dirs = [[0,1],[0,-1],[1,0],[-1,0]]
-          for (const [dx, dy] of dirs) {
+          for (const [dx, dy] of CARDINAL_OFFSETS) {
             const t = ctx.world.getTile(x + dx, y + dy)
             if (t === TileType.SHALLOW_WATER || t === TileType.DEEP_WATER) {
               nearWater = true

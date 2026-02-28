@@ -11,6 +11,9 @@ import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 
 export type WeatherDisasterType = 'blizzard' | 'drought' | 'flood' | 'heatwave'
 
+// Pre-allocated 4-directional offsets to avoid creating arrays in hasAdjacentTileType hot loops
+const CARDINAL_OFFSETS: readonly [number, number][] = [[-1, 0], [1, 0], [0, -1], [0, 1]] as const
+
 export interface ActiveWeatherDisaster {
   type: WeatherDisasterType
   startTick: number
@@ -741,8 +744,7 @@ export class WeatherDisasterSystem {
   // --- Utility ---
 
   private hasAdjacentTileType(world: World, x: number, y: number, tileType: TileType): boolean {
-    const offsets = [[-1, 0], [1, 0], [0, -1], [0, 1]]
-    for (const [ox, oy] of offsets) {
+    for (const [ox, oy] of CARDINAL_OFFSETS) {
       if (world.getTile(x + ox, y + oy) === tileType) return true
     }
     return false

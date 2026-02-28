@@ -7,6 +7,9 @@ import { TileType } from '../utils/Constants'
 
 export type FogDensity = 'light' | 'moderate' | 'thick' | 'impenetrable'
 
+// Pre-allocated 4-directional offsets — avoids array creation in checkWaterNeighbor
+const CARDINAL_OFFSETS: readonly [number, number][] = [[-1, 0], [1, 0], [0, -1], [0, 1]] as const
+
 export interface FogBank {
   id: number
   x: number
@@ -93,8 +96,7 @@ export class WorldFogBankSystem {
   }
 
   private checkWaterNeighbor(world: World, x: number, y: number, w: number, h: number): boolean {
-    const offsets = [[-1, 0], [1, 0], [0, -1], [0, 1]]
-    for (const [ox, oy] of offsets) {
+    for (const [ox, oy] of CARDINAL_OFFSETS) {
       const nx = x + ox
       const ny = y + oy
       if (nx >= 0 && nx < w && ny >= 0 && ny < h) {

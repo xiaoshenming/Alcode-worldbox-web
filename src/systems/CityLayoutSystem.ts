@@ -49,6 +49,8 @@ const FENCE_COLOR = '#8B6914'
 /** 不可通行地形 ID（深水=0, 浅水=1, 山地=6, 岩浆=7） */
 const IMPASSABLE = new Set([0, 1, 6, 7])
 const UPDATE_INTERVAL = 120
+// Pre-allocated 4-directional offsets — avoids per-call array allocation in BFS/expansion
+const CARDINAL_DIRS: readonly [number, number][] = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const
 
 export class CityLayoutSystem {
   private layouts = new Map<number, CityLayout>()
@@ -194,10 +196,9 @@ export class CityLayoutSystem {
     const cx = city.centerX, cy = city.centerY
     const isPrimary = layout.level === 'capital' || layout.level === 'city'
     // 四方向主干道延伸到最远建筑
-    const dirs: [number, number][] = [[1, 0], [-1, 0], [0, 1], [0, -1]]
     const primaryEnds: Array<{x: number; y: number}> = []
 
-    for (const [ddx, ddy] of dirs) {
+    for (const [ddx, ddy] of CARDINAL_DIRS) {
       let farthest = 0
       for (const b of city.buildings) {
         const proj = (b.x - cx) * ddx + (b.y - cy) * ddy
@@ -276,8 +277,7 @@ export class CityLayoutSystem {
       }
 
       closed.add(cur.x * 10000 + cur.y)
-      const neighbors: [number, number][] = [[1,0],[-1,0],[0,1],[0,-1]]
-      for (const [dx, dy] of neighbors) {
+      for (const [dx, dy] of CARDINAL_DIRS) {
         const nx = cur.x + dx, ny = cur.y + dy
         if (closed.has(nx * 10000 + ny)) continue
         if (IMPASSABLE.has(getTerrain(nx, ny))) continue
