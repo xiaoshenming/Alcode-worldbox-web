@@ -1795,6 +1795,8 @@ export class Game {
   private _cultureCivBuf: { id: number; neighbors: number[]; tradePartners: number[]; population: number }[] = []
   private _miningCivRace = new Map<number, string>()
   private _miningCivBuf: { id: number; cities: { x: number; y: number }[]; techLevel: number; race: string }[] = []
+  // Shared city coord pool for mining civ buf (avoids per-building {x,y} allocation every 10 ticks)
+  private _miningCityPool: { x: number; y: number }[] = []
   private _siegeSoldiersBuf: number[] = []
   private _speciesCountsMap = new Map<string, number>()  // reused in getSpeciesCounts callback
   private _civSnapBuf: { id: number; name: string; pop: number; color: string }[] = []
@@ -3129,9 +3131,15 @@ export class Game {
             entry.id = c.id; entry.techLevel = c.techLevel
             entry.race = this._miningCivRace.get(c.id) ?? 'human'
             entry.cities.length = 0
+            let cityPoolIdx = 0
             for (const bid of c.buildings) {
               const pos = this.em.getComponent<PositionComponent>(bid, 'position')
-              if (pos) entry.cities.push({ x: Math.floor(pos.x), y: Math.floor(pos.y) })
+              if (!pos) continue
+              let cslot = this._miningCityPool[cityPoolIdx]
+              if (!cslot) { cslot = { x: 0, y: 0 }; this._miningCityPool.push(cslot) }
+              cslot.x = Math.floor(pos.x); cslot.y = Math.floor(pos.y)
+              entry.cities.push(cslot)
+              cityPoolIdx++
             }
             mi++
           }
