@@ -61,6 +61,8 @@ export class CreatureGuildSystem {
 
   private _activeGuildsBuf: Guild[] = []
   private _unguildedBuf: EntityId[] = []
+  private _prevActiveCount = -1
+  private _headerStr = 'Guilds (0)'
   getGuilds(): Guild[] { return this.guilds }
   getActiveGuilds(): Guild[] {
     this._activeGuildsBuf.length = 0
@@ -236,7 +238,9 @@ export class CreatureGuildSystem {
     ctx.fillRect(x, y, 200, 20 + active.length * 18)
     ctx.fillStyle = '#fc4'
     ctx.font = '12px monospace'
-    ctx.fillText(`Guilds (${active.length})`, x + 8, y + 14)
+    const al = active.length
+    if (al !== this._prevActiveCount) { this._prevActiveCount = al; this._headerStr = `Guilds (${al})` }
+    ctx.fillText(this._headerStr, x + 8, y + 14)
 
     for (let i = 0; i < active.length; i++) {
       const g = active[i]

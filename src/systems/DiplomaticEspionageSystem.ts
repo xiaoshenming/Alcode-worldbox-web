@@ -72,6 +72,8 @@ export class DiplomaticEspionageSystem {
   private _alertFont = ''
 
   private _activeSpiesBuf: Spy[] = []
+  private _prevActiveCount = -1
+  private _headerStr = 'Espionage (0 active)'
   getSpies(): Spy[] { return this.spies }
   getActiveSpies(): Spy[] {
     this._activeSpiesBuf.length = 0
@@ -237,7 +239,9 @@ export class DiplomaticEspionageSystem {
     ctx.fillRect(x, y, 220, 20 + rows * 18)
     ctx.fillStyle = '#4cf'
     ctx.font = '12px monospace'
-    ctx.fillText(`Espionage (${active.length} active)`, x + 8, y + 14)
+    const al = active.length
+    if (al !== this._prevActiveCount) { this._prevActiveCount = al; this._headerStr = `Espionage (${al} active)` }
+    ctx.fillText(this._headerStr, x + 8, y + 14)
 
     for (let i = 0; i < Math.min(5, active.length); i++) {
       const s = active[i]

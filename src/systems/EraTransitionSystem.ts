@@ -67,6 +67,8 @@ export class EraTransitionSystem {
   private chartVisible = false;
   private _prevMaxTotal = -1;
   private _maxTotalStr = '1';
+  /** Pre-allocated flat cumulative buffer: _cumBuf[i * MAX_CUM_STRIDE + c] = cumulative[i][c] */
+  private _cumBuf = new Float64Array(MAX_SAMPLES * 10); // stride=10: civCount≤8 + index 0..8
 
   private techs: TechEntry[] = [];
   private techVisible = false;
@@ -367,31 +369,32 @@ export class EraTransitionSystem {
     const dx = n > 1 ? cw / (n - 1) : 0;
 
     // 从底部向上逐层绘制面积
-    // 先算每个采样点的累积值
-    const cumulative: number[][] = [];
+    // 先算每个采样点的累积值，写入平坦缓冲区 _cumBuf[i*10+c]，消除每帧 number[][] 分配
+    const cum = this._cumBuf;
+    const civCount = civList.length;
     for (let i = 0; i < n; i++) {
-      const row: number[] = [0];
+      const base = i * 10;
+      cum[base] = 0;
       let acc = 0;
-      for (let c = 0; c < civList.length; c++) {
+      for (let c = 0; c < civCount; c++) {
         acc += this.popSamples[i].populations.get(civList[c]) ?? 0;
-        row.push(acc);
+        cum[base + c + 1] = acc;
       }
-      cumulative.push(row);
     }
 
-    for (let c = civList.length - 1; c >= 0; c--) {
+    for (let c = civCount - 1; c >= 0; c--) {
       ctx.beginPath();
       // 上边界（当前层顶部）
       for (let i = 0; i < n; i++) {
         const x = cx + i * dx;
-        const y = cy + ch - (cumulative[i][c + 1] / maxTotal) * ch;
+        const y = cy + ch - (cum[i * 10 + c + 1] / maxTotal) * ch;
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }
       // 下边界（前一层顶部，反向）
       for (let i = n - 1; i >= 0; i--) {
         const x = cx + i * dx;
-        const y = cy + ch - (cumulative[i][c] / maxTotal) * ch;
+        const y = cy + ch - (cum[i * 10 + c] / maxTotal) * ch;
         ctx.lineTo(x, y);
       }
       ctx.closePath();

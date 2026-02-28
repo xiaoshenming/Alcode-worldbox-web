@@ -77,6 +77,8 @@ export class WorldSeasonalDisasterSystem {
   private currentSeason: SeasonType = 'spring'
   private _lastZoom = -1
   private _nameFont = ''
+  private _prevDisasterCount = -1
+  private _headerStr = 'Seasonal Disasters (0)'
 
   getDisasters(): SeasonalDisaster[] { return this.disasters }
   getActiveCount(): number { return this.disasters.length }
@@ -200,7 +202,9 @@ export class WorldSeasonalDisasterSystem {
     ctx.fillRect(x, y, 220, 20 + this.disasters.length * 18)
     ctx.fillStyle = '#f84'
     ctx.font = '12px monospace'
-    ctx.fillText(`Seasonal Disasters (${this.disasters.length})`, x + 8, y + 14)
+    const dl = this.disasters.length
+    if (dl !== this._prevDisasterCount) { this._prevDisasterCount = dl; this._headerStr = `Seasonal Disasters (${dl})` }
+    ctx.fillText(this._headerStr, x + 8, y + 14)
 
     for (let i = 0; i < this.disasters.length; i++) {
       const d = this.disasters[i]

@@ -62,6 +62,8 @@ export class WorldEventTimelineSystem {
   private visible = false;
   private scrollOffset = 0;
   private hoveredIndex = -1;
+  private _prevEventCount = -1;
+  private _headerStr = 'World Timeline (0)';
 
   /** 创建世界事件时间轴系统 */
   constructor() {
@@ -228,7 +230,9 @@ export class WorldEventTimelineSystem {
     ctx.fillStyle = TEXT_PRIMARY;
     ctx.font = 'bold 14px monospace';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`World Timeline (${this.events.length})`, p.x + 10, p.y + HEADER_HEIGHT / 2);
+    const el = this.events.length;
+    if (el !== this._prevEventCount) { this._prevEventCount = el; this._headerStr = `World Timeline (${el})` }
+    ctx.fillText(this._headerStr, p.x + 10, p.y + HEADER_HEIGHT / 2);
     ctx.fillStyle = TEXT_SECONDARY;
     ctx.font = '11px monospace';
     ctx.textAlign = 'right';
