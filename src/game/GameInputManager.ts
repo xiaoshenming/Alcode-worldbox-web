@@ -32,6 +32,11 @@ import { PlagueMutationSystem } from '../systems/PlagueMutationSystem'
 import { MonumentSystem } from '../systems/MonumentSystem'
 import { CreaturePersonalitySystem } from '../systems/CreaturePersonalitySystem'
 
+/** Pre-computed tile names — avoids per-right-click literal array creation */
+const _TILE_NAMES = ['Deep Water', 'Shallow Water', 'Sand', 'Grass', 'Forest', 'Mountain', 'Snow', 'Lava'] as const
+/** Pre-computed hero ability pool — avoids per-hero-creation literal array creation */
+const _HERO_ABILITIES = ['warrior', 'ranger', 'healer', 'berserker'] as const
+
 /** Subset of Game fields needed by GameInputManager */
 export interface GameInputContext {
   speed: number
@@ -150,7 +155,7 @@ export class GameInputManager {
   }
 
   private setupContextMenu(): void {
-    const tileNames = ['Deep Water', 'Shallow Water', 'Sand', 'Grass', 'Forest', 'Mountain', 'Snow', 'Lava']
+    const tileNames = _TILE_NAMES
 
     this.ctx.input.setOnRightClick((wx, wy, screenX, screenY) => {
       const sections: MenuSection[] = []
@@ -175,7 +180,7 @@ export class GameInputManager {
         if (!hero) {
           sections[sections.length - 1].items.push({
             icon: '\u2B50', label: 'Make Hero', action: () => {
-              const abilities: ('warrior'|'ranger'|'healer'|'berserker')[] = ['warrior','ranger','healer','berserker']
+              const abilities = _HERO_ABILITIES
               const ability = abilities[Math.floor(Math.random() * abilities.length)]
               this.ctx.em.addComponent(creatureId, {
                 type: 'hero', level: 1, xp: 0, xpToNext: 30, kills: 0,

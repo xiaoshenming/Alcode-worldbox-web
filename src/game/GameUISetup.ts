@@ -3,6 +3,9 @@ import { EntityManager, PositionComponent, HeroComponent, VelocityComponent, Gen
 import { EventLog } from '../systems/EventLog'
 import type { WorldStats } from '../systems/AchievementSystem'
 import type { World } from './World'
+
+/** Pre-computed firework colors — avoids per-event literal array creation */
+const _FIREWORK_COLORS = ['#ffd700', '#ff4488', '#44ddff', '#44ff88'] as const
 import type { Camera } from './Camera'
 import type { Renderer } from './Renderer'
 import type { ParticleSystem } from '../systems/ParticleSystem'
@@ -221,8 +224,7 @@ export class GameUIHelper {
               if (targetIdx-- === 0) {
                 const comma = key.indexOf(',')
                 const tx = +key.substring(0, comma), ty = +key.substring(comma + 1)
-                const colors = ['#ffd700', '#ff4488', '#44ddff', '#44ff88']
-                const color = colors[Math.floor(Math.random() * colors.length)]
+                const color = _FIREWORK_COLORS[Math.floor(Math.random() * _FIREWORK_COLORS.length)]
                 this.g.particles.spawnFirework(tx, ty, color)
                 break
               }
