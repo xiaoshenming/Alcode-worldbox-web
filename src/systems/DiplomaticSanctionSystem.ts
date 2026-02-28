@@ -31,6 +31,10 @@ const SEVERITY_IMPACT: Record<SanctionSeverity, number> = {
   severe: 0.5,
   total: 0.8,
 }
+/** Pre-computed severity colors — avoids per-render object literal creation */
+const _SEVERITY_COLORS: Record<SanctionSeverity, string> = {
+  light: '#8a8', moderate: '#aa8', severe: '#a86', total: '#f66',
+}
 
 const REASONS = [
   'military aggression',
@@ -190,9 +194,7 @@ export class DiplomaticSanctionSystem {
     ctx.fillText('SANCTIONS', x + 8, y + 16)
 
     ctx.font = '9px monospace'
-    const severityColors: Record<SanctionSeverity, string> = {
-      light: '#8a8', moderate: '#aa8', severe: '#a86', total: '#f66',
-    }
+    const severityColors = _SEVERITY_COLORS
     for (let i = 0; i < active.length; i++) {
       const s = active[i]
       ctx.fillStyle = severityColors[s.severity]
