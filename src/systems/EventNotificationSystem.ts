@@ -14,6 +14,8 @@ export interface GameEvent {
   tick: number;
   /** Pre-computed "T{tick}" display string */
   tickStr: string;
+  /** Pre-computed "{icon} {message}" label string for edge indicators */
+  iconMsg: string;
 }
 
 interface EdgeIndicator {
@@ -74,7 +76,7 @@ export class EventNotificationSystem {
     category: EventCategory, priority: EventPriority,
     message: string, worldX: number, worldY: number, tick: number
   ): void {
-    const evt: GameEvent = { id: this.nextId++, category, priority, message, worldX, worldY, tick, tickStr: `T${tick}` };
+    const evt: GameEvent = { id: this.nextId++, category, priority, message, worldX, worldY, tick, tickStr: `T${tick}`, iconMsg: `${ICONS[category]} ${message}` };
     this.addHistory(evt);
     if (priority === 'critical') this.flashAlpha = 0.6;
     if (priority !== 'low') this.enqueueMarquee(evt);
@@ -238,7 +240,7 @@ export class EventNotificationSystem {
       ctx.stroke();
       ctx.restore();
       // 文字标签
-      const label = `${ICONS[ind.event.category]} ${ind.event.message}`;
+      const label = ind.event.iconMsg;
       ctx.font = '11px monospace';
       ctx.globalAlpha = 0.9;
       const tw = ctx.measureText(label).width;
