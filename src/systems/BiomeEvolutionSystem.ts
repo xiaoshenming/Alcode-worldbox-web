@@ -29,6 +29,7 @@ export class BiomeEvolutionSystem {
   // Reusable maps to avoid GC per evolution tick (numeric key = cx * 10000 + cy)
   private _popDensity: Map<number, number> = new Map()
   private _buildingMap: Map<number, BuildingType> = new Map()
+  private _neighborsBuf: TileType[] = []
 
   constructor() {
     this.sampleCount = Math.floor(WORLD_WIDTH * WORLD_HEIGHT * SAMPLE_RATIO)
@@ -177,7 +178,7 @@ export class BiomeEvolutionSystem {
   // --- Helpers ---
 
   private getNeighborTypes(world: World, x: number, y: number): TileType[] {
-    const result: TileType[] = []
+    const result = this._neighborsBuf; result.length = 0
     for (const [dx, dy] of DIRS) {
       const t = world.getTile(x + dx, y + dy)
       if (t !== null) result.push(t)
