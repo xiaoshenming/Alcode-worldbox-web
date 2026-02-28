@@ -50,6 +50,7 @@ const MAX_HISTORY = 20
 let nextFestivalId = 1
 
 export class SeasonFestivalSystem {
+  private _civsBuf: CivLike[] = []
   private festivals: Festival[] = []
   private history: Festival[] = []
   private nextCheckTick = CHECK_INTERVAL
@@ -94,7 +95,7 @@ export class SeasonFestivalSystem {
     const festType = FESTIVAL_TYPES[season]
     if (!festType) return
 
-    const civs: CivLike[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
     for (const civ of civs) {
       if (civ.population < 5) continue

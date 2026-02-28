@@ -44,6 +44,7 @@ const REASONS = [
 let nextSanctionId = 1
 
 export class DiplomaticSanctionSystem {
+  private _civsBuf: CivLike[] = []
   private sanctions: Sanction[] = []
   private nextCheckTick = CHECK_INTERVAL
   private nextEffectTick = EFFECT_INTERVAL
@@ -101,7 +102,7 @@ export class DiplomaticSanctionSystem {
     for (const s of this.sanctions) { if (s.active) activeCount++ }
     if (activeCount >= MAX_SANCTIONS) return
 
-    const civs: CivLike[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 

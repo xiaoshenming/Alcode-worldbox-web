@@ -33,6 +33,7 @@ const REASONS = ['raiding villages', 'destroying crops', 'killing civilians', 'e
 let nextBountyId = 1
 
 export class CreatureBountySystem {
+  private _civsBuf: CivLike[] = []
   private bounties: Bounty[] = []
   private nextCheckTick = BOUNTY_CHECK_INTERVAL
   private showPanel = false
@@ -78,7 +79,7 @@ export class CreatureBountySystem {
   }
 
   private tryPostBounty(em: EntityManager, civManager: CivManagerLike, tick: number): void {
-    const civs: CivLike[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
