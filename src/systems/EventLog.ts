@@ -32,10 +32,24 @@ const EVENT_COLORS: Record<EventType, string> = {
   culture: '#e090d0'
 }
 
+const MAX_EVENTS = 200
+
 class EventLogSingleton {
-  events: WorldEvent[] = []
-  private maxEvents: number = 200
+  // Ring buffer replaces shifting array — O(1) insert, O(1) oldest-eviction
+  private _buf: WorldEvent[] = new Array(MAX_EVENTS)
+  private _head = 0  // write pointer
+  private _count = 0
   private listeners: Array<(e: WorldEvent) => void> = []
+
+  get events(): WorldEvent[] {
+    // Reconstruct ordered snapshot for backwards-compat (rare external access)
+    const result: WorldEvent[] = []
+    const n = this._count
+    for (let i = 0; i < n; i++) {
+      result.push(this._buf[(this._head - n + i + MAX_EVENTS) % MAX_EVENTS])
+    }
+    return result
+  }
 
   log(type: EventType, message: string, tick: number): void {
     const event: WorldEvent = {
@@ -44,10 +58,9 @@ class EventLogSingleton {
       tick,
       color: EVENT_COLORS[type]
     }
-    this.events.push(event)
-    if (this.events.length > this.maxEvents) {
-      this.events.shift()
-    }
+    this._buf[this._head] = event
+    this._head = (this._head + 1) % MAX_EVENTS
+    if (this._count < MAX_EVENTS) this._count++
     for (const fn of this.listeners) {
       fn(event)
     }
@@ -58,11 +71,18 @@ class EventLogSingleton {
   }
 
   getRecent(count: number = 10): WorldEvent[] {
-    return this.events.slice(-count)
+    const n = Math.min(count, this._count)
+    const result: WorldEvent[] = []
+    // Return oldest-first (ascending) so result[last] is the newest
+    for (let i = n - 1; i >= 0; i--) {
+      result.push(this._buf[(this._head - 1 - i + MAX_EVENTS) % MAX_EVENTS])
+    }
+    return result
   }
 
   clear(): void {
-    this.events = []
+    this._head = 0
+    this._count = 0
   }
 }
 
