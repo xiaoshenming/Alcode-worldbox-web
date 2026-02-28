@@ -198,9 +198,10 @@ export class CreatureReputationSystem {
     ctx.font = '12px monospace'
     ctx.fillText(`Reputation (${this.reputations.size})`, x + 8, y + 14)
 
-    top.forEach((r, i) => {
+    for (let i = 0; i < top.length; i++) {
+      const r = top[i]
       ctx.fillStyle = TIER_COLORS[r.tier]
       ctx.fillText(`#${r.entityId} ${r.tier} (${r.score})`, x + 8, y + 32 + i * 18)
-    })
+    }
   }
 }

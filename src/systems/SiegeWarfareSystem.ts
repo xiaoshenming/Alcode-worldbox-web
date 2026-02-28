@@ -201,11 +201,11 @@ export class SiegeWarfareSystem {
       const iconSize = Math.max(8, 10 * zoom);
       ctx.font = this._iconFont;
       ctx.textAlign = 'center';
-      seen.forEach((w, i) => {
-        const ix = sx - (seen.length * iconSize) / 2 + i * iconSize + iconSize / 2;
+      for (let wi = 0; wi < seen.length; wi++) {
+        const ix = sx - (seen.length * iconSize) / 2 + wi * iconSize + iconSize / 2;
         const iy = sy + tileSize * 0.9;
-        ctx.fillText(WEAPON_ICONS[w], ix, iy);
-      });
+        ctx.fillText(WEAPON_ICONS[seen[wi]], ix, iy);
+      }
 
       // Siege ring
       ctx.beginPath();

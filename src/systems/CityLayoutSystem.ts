@@ -81,20 +81,20 @@ export class CityLayoutSystem {
   /** 周期性检查脏标记并重算 */
   update(tick: number): void {
     if (tick % UPDATE_INTERVAL !== 0) return
-    this.layouts.forEach((layout, id) => {
+    for (const layout of this.layouts.values()) {
       if (layout.dirty) layout.dirty = false
-    })
+    }
   }
 
   /** 渲染道路和城墙 */
   render(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {
     ctx.save()
-    this.layouts.forEach((layout, id) => {
+    for (const layout of this.layouts.values()) {
       this.renderRoads(ctx, layout, camX, camY, zoom)
       if (layout.level !== 'village') {
         this.renderWalls(ctx, layout, camX, camY, zoom)
       }
-    })
+    }
     ctx.restore()
   }
 
@@ -105,8 +105,8 @@ export class CityLayoutSystem {
   ): void {
     if (!showZones) return
     ctx.save()
-    this.layouts.forEach((layout) => {
-      layout.zones.forEach((zone, key) => {
+    for (const layout of this.layouts.values()) {
+      for (const [key, zone] of layout.zones) {
         const sx = Math.floor(key / 10000)
         const sy = key % 10000
         const px = (sx * TILE - camX) * zoom
@@ -114,8 +114,8 @@ export class CityLayoutSystem {
         const s = TILE * zoom
         ctx.fillStyle = ZONE_COLORS[zone]
         ctx.fillRect(px, py, s, s)
-      })
-    })
+      }
+    }
     ctx.restore()
   }
 
@@ -228,12 +228,12 @@ export class CityLayoutSystem {
     for (const b of city.buildings) {
       if (roadSet.has(b.x * 10000 + b.y)) continue
       let bestDist = Infinity, bestPt = {x: cx, y: cy}
-      roadSet.forEach((k) => {
+      for (const k of roadSet) {
         const rx = Math.floor(k / 10000)
         const ry = k % 10000
         const d = Math.abs(b.x - rx) + Math.abs(b.y - ry)
         if (d < bestDist) { bestDist = d; bestPt = {x: rx, y: ry} }
-      })
+      }
       const path = this.findPath(b.x, b.y, bestPt.x, bestPt.y, getTerrain)
       for (let i = 0; i < path.length - 1; i++) {
         layout.roads.push({

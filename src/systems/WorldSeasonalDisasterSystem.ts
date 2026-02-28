@@ -193,10 +193,11 @@ export class WorldSeasonalDisasterSystem {
     ctx.font = '12px monospace'
     ctx.fillText(`Seasonal Disasters (${this.disasters.length})`, x + 8, y + 14)
 
-    this.disasters.forEach((d, i) => {
+    for (let i = 0; i < this.disasters.length; i++) {
+      const d = this.disasters[i]
       const pct = Math.round(100 * d.duration / d.maxDuration)
       ctx.fillStyle = DISASTER_COLORS[d.type]
       ctx.fillText(`${d.panelLabel} ${pct}%`, x + 8, y + 32 + i * 18)
-    })
+    }
   }
 }

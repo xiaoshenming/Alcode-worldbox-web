@@ -234,9 +234,10 @@ export class DiplomaticEspionageSystem {
     ctx.font = '12px monospace'
     ctx.fillText(`Espionage (${active.length} active)`, x + 8, y + 14)
 
-    active.slice(0, 5).forEach((s, i) => {
+    for (let i = 0; i < Math.min(5, active.length); i++) {
+      const s = active[i]
       ctx.fillStyle = MISSION_COLORS[s.mission]
       ctx.fillText(`${s.mission} ${s.progress}% cov:${s.cover}`, x + 8, y + 32 + i * 18)
-    })
+    }
   }
 }

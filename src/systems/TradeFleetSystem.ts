@@ -159,7 +159,7 @@ export class TradeFleetSystem {
 
     // 沿路线生成波纹（轻量：每 8 tick 每条路线一个）
     if (_tick % 8 === 0) {
-      this.routes.forEach(route => {
+      for (const route of this.routes.values()) {
         const threshold = Math.abs(route.toX - route.fromX) + Math.abs(route.toY - route.fromY) + 2
         let count = 0
         for (let i = 0; i < this.ripples.length; i++) {
@@ -175,7 +175,7 @@ export class TradeFleetSystem {
             maxAge: RIPPLE_MAX_AGE,
           });
         }
-      });
+      }
     }
   }
 
@@ -188,9 +188,9 @@ export class TradeFleetSystem {
     }
 
     // 渲染路线虚线
-    this.routes.forEach(route => {
+    for (const route of this.routes.values()) {
       this.renderRoute(ctx, route, camX, camY, zoom);
-    });
+    }
 
     // 渲染波纹
     for (let i = 0; i < this.ripples.length; i++) {

@@ -153,11 +153,11 @@ export class MythologySystem {
     }
 
     // 信仰衰减
-    this.myths.forEach(civMyths => {
+    for (const civMyths of this.myths.values()) {
       for (const m of civMyths) {
         m.belief = Math.max(0.1, m.belief - 0.001)
       }
-    })
+    }
   }
 
   /* ── 输入 ── */
