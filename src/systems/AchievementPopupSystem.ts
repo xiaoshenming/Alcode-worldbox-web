@@ -120,7 +120,9 @@ export class AchievementPopupSystem {
 
   /** 已解锁数量 */
   getUnlockedCount(): number {
-    let c = 0; this.achievements.forEach(s => { if (s.unlocked) c++ }); return c
+    let c = 0
+    for (const s of this.achievements.values()) { if (s.unlocked) c++ }
+    return c
   }
 
   /** 成就总数 */
@@ -149,12 +151,12 @@ export class AchievementPopupSystem {
       this.spawnParticles(id)
     }
     // 进度条平滑动画
-    this.achievements.forEach(s => {
+    for (const s of this.achievements.values()) {
       if (s.displayProgress < s.progress) {
         s.displayProgress += (s.progress - s.displayProgress) * 0.15 + 0.1
         if (s.displayProgress > s.progress) s.displayProgress = s.progress
       }
-    })
+    }
     // 粒子更新
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const pt = this.particles[i]
@@ -256,9 +258,9 @@ export class AchievementPopupSystem {
   private renderTracker(ctx: CanvasRenderingContext2D, sw: number, sh: number): void {
     // 找最接近完成的 3 个未解锁成就
     const candidates: AchievementState[] = []
-    this.achievements.forEach(s => {
+    for (const s of this.achievements.values()) {
       if (!s.unlocked && s.progress > 0) candidates.push(s)
-    })
+    }
     candidates.sort((a, b) => (b.progress / b.def.maxProgress) - (a.progress / a.def.maxProgress))
     const top3 = candidates.slice(0, 3)
     if (top3.length === 0) return
@@ -342,7 +344,7 @@ export class AchievementPopupSystem {
     ctx.save()
     ctx.beginPath(); ctx.rect(px, listY, pw, listH); ctx.clip()
     const filtered: AchievementState[] = []
-    this.achievements.forEach(s => { if (s.def.category === this.selectedCategory) filtered.push(s) })
+    for (const s of this.achievements.values()) { if (s.def.category === this.selectedCategory) filtered.push(s) }
     filtered.sort((a, b) => (a.unlocked === b.unlocked ? 0 : a.unlocked ? -1 : 1))
     const itemH = 52
     for (let i = 0; i < filtered.length; i++) {

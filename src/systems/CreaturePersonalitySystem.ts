@@ -123,11 +123,11 @@ export class CreaturePersonalitySystem {
     if (this.tickCounter % DRIFT_INTERVAL !== 0) return
 
     // 性格微漂移（经历影响性格）
-    this.personalities.forEach(p => {
+    for (const p of this.personalities.values()) {
       for (const axis of AXES) {
         p.traits[axis] = clamp(p.traits[axis] + (Math.random() - 0.5) * 0.02 * (1 - p.stability), -1, 1)
       }
-    })
+    }
   }
 
   /* ── 输入 ── */

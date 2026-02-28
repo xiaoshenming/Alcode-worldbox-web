@@ -220,9 +220,10 @@ export class CreatureGuildSystem {
     ctx.font = '12px monospace'
     ctx.fillText(`Guilds (${active.length})`, x + 8, y + 14)
 
-    active.forEach((g, i) => {
+    for (let i = 0; i < active.length; i++) {
+      const g = active[i]
       ctx.fillStyle = GUILD_COLORS[g.type]
       ctx.fillText(`${g.name} Lv${g.level} [${g.members.length}]`, x + 8, y + 32 + i * 18)
-    })
+    }
   }
 }

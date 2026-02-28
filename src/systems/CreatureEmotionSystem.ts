@@ -130,7 +130,7 @@ export class CreatureEmotionSystem {
   update(tick: number): void {
     this.lastTick = tick;
 
-    this.emotions.forEach((list, entityId) => {
+    for (const [entityId, list] of this.emotions) {
       let i = list.length;
       while (i-- > 0) {
         const entry = list[i];
@@ -162,7 +162,7 @@ export class CreatureEmotionSystem {
       if (list.length === 0) {
         this.emotions.delete(entityId);
       }
-    });
+    }
   }
 
   /**

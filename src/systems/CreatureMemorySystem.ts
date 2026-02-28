@@ -147,7 +147,7 @@ export class CreatureMemorySystem {
   /* ── 更新 ── */
 
   update(tick: number): void {
-    this.banks.forEach((bank, entityId) => {
+    for (const [entityId, bank] of this.banks) {
       for (let i = bank.memories.length - 1; i >= 0; i--) {
         const m = bank.memories[i]
         m.strength -= DECAY_RATE
@@ -157,7 +157,7 @@ export class CreatureMemorySystem {
         }
       }
       if (bank.memories.length === 0) this.banks.delete(entityId)
-    })
+    }
   }
 
   /* ── 输入 ── */

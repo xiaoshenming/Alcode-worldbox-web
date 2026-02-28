@@ -226,10 +226,11 @@ export class WorldAncientRuinSystem {
     ctx.font = '12px monospace'
     ctx.fillText(`Ruins (${unexplored.length}/${this.ruins.length})`, x + 8, y + 14)
 
-    this.ruins.slice(0, 5).forEach((r, i) => {
+    for (let i = 0; i < Math.min(5, this.ruins.length); i++) {
+      const r = this.ruins[i]
       ctx.fillStyle = r.explored ? '#666' : RUIN_COLORS[r.type]
       const status = r.explored ? 'explored' : `danger:${r.dangerLevel}`
       ctx.fillText(`${r.name} ${status}`, x + 8, y + 32 + i * 18)
-    })
+    }
   }
 }
