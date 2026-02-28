@@ -45,6 +45,10 @@ const SUCCESS_BONUS = 15
 const FAILURE_PENALTY = -10
 
 const SUMMIT_INTERVAL = 3000
+/** Pre-computed summit success base probabilities — avoids per-summit object literal creation */
+const _SUMMIT_DIFFICULTY: Record<SummitTopic, number> = {
+  peace: 0.5, trade: 0.6, alliance: 0.4, territory: 0.3,
+}
 const SUMMIT_DURATION = 120
 const MAX_HISTORY = 30
 
@@ -250,13 +254,7 @@ export class DiplomaticSummitSystem {
     }
     const avgRel = pairs > 0 ? totalRel / pairs : 0
 
-    const difficultyMap: Record<SummitTopic, number> = {
-      peace: 0.5,
-      trade: 0.6,
-      alliance: 0.4,
-      territory: 0.3,
-    }
-    const base = difficultyMap[topic]
+    const base = _SUMMIT_DIFFICULTY[topic]
     const relationBonus = avgRel / 200
     const chance = Math.max(0.1, Math.min(0.9, base + relationBonus))
 
