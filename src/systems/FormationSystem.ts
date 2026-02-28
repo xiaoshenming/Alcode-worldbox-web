@@ -4,6 +4,11 @@ import { World } from '../game/World'
 
 export type FormationType = 'line' | 'wedge' | 'circle' | 'square' | 'scatter'
 
+/** Pre-computed formation type icons — avoids per-render object literal creation */
+const _FORMATION_ICONS: Record<FormationType, string> = {
+  line: '=', wedge: 'V', circle: 'O', square: '#', scatter: '~',
+}
+
 export interface Formation {
   id: number
   civId: number
@@ -195,13 +200,7 @@ export class FormationSystem {
       ctx.fillStyle = '#fff'
       ctx.font = this._iconFont
       ctx.textAlign = 'center'
-      const icons: Record<FormationType, string> = {
-        line: '=',
-        wedge: 'V',
-        circle: 'O',
-        square: '#',
-        scatter: '~',
-      }
+      const icons = _FORMATION_ICONS
       ctx.fillText(icons[f.type], sx, sy - 10 * zoom)
 
       // Morale bar
