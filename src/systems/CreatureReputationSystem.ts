@@ -37,6 +37,10 @@ const TIER_COLORS: Record<ReputationTier, string> = {
   respected: '#4cf',
   legendary: '#fc4',
 }
+// Pre-computed first-char uppercase for each tier — avoids per-entity string allocation in render
+const TIER_LABEL: Record<ReputationTier, string> = {
+  infamous: 'I', disliked: 'D', neutral: 'N', respected: 'R', legendary: 'L',
+}
 
 export class CreatureReputationSystem {
   private reputations = new Map<EntityId, CreatureReputation>()
@@ -179,7 +183,7 @@ export class CreatureReputationSystem {
       ctx.globalAlpha = 0.8
       ctx.font = this._tierFont
       ctx.textAlign = 'center'
-      ctx.fillText(rep.tier[0].toUpperCase(), sx, sy - 6 * zoom)
+      ctx.fillText(TIER_LABEL[rep.tier], sx, sy - 6 * zoom)
       ctx.globalAlpha = 1
     }
   }
