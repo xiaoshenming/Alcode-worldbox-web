@@ -1791,6 +1791,8 @@ export class Game {
   private _cloneEntitiesBuf: { id: number; isClone: boolean; health: number; maxHealth: number; age: number }[] = []
   private _achSpeciesSet = new Set<string>()
   private _achStats: AchContentWorldStats = { totalCreatures: 0, speciesSet: new Set<string>(), maxCityPop: 0, filledTilePercent: 0, hasIsland: false, totalKills: 0, extinctSpecies: _EMPTY_ARRAY as unknown as string[], scorchedTiles: 0, disastersLast60Ticks: 0, nukeUsed: false, civsMet: 0, activeTradeRoutes: 0, maxEra: 'stone', peaceTicks: 0, maxTerritoryPercent: 0, totalCombats: 0, shipCount: 0, citiesCaptured: 0, maxHeroLevel: 0, maxArmySize: 0, volcanoEruptions: 0, waterTilesCreatedAtOnce: 0, diseasedCivs: 0, evolutionEvents: 0, coexistSpecies: 0, coexistTicks: 0, totalTicks: 0, exploredPercent: 0, totalCivs: 0, totalWars: 0, clonedCreatures: 0, portalPairs: 0 }
+  // Pre-allocated chart data object to avoid per-60tick object literal allocation
+  private _chartDataBuf = { population: 0, civCount: 0, warCount: 0, avgTechLevel: 0, totalTerritory: 0 }
   private _civValuesBuf: any[] = []
   private _cultureCivBuf: { id: number; neighbors: number[]; tradePartners: number[]; population: number }[] = []
   private _miningCivRace = new Map<number, string>()
@@ -3236,13 +3238,13 @@ export class Game {
             for (const [, rel] of civ.relations) { if (rel < -30) warCount++ }
           }
           const civCount = this.civManager.civilizations.size
-          this.chartPanel.addDataPoint(tick, {
-            population: this.em.getEntitiesWithComponents('creature').length,
-            civCount,
-            warCount: Math.floor(warCount / 2),
-            avgTechLevel: civCount > 0 ? totalTech / civCount : 0,
-            totalTerritory,
-          })
+          const cd = this._chartDataBuf
+          cd.population = this.em.getEntitiesWithComponents('creature').length
+          cd.civCount = civCount
+          cd.warCount = Math.floor(warCount / 2)
+          cd.avgTechLevel = civCount > 0 ? totalTech / civCount : 0
+          cd.totalTerritory = totalTerritory
+          this.chartPanel.addDataPoint(tick, cd)
         }
         // === EVERY 10 TICKS (offset 5): Clone, siege, mood, combat-adjacent ===
         if (tick % 10 === 5) {
