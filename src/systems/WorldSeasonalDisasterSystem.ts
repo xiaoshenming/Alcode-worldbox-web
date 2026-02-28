@@ -21,6 +21,9 @@ export interface SeasonalDisaster {
   startTick: number
   label: string           // Pre-computed "${type} (${severity})" for render
   panelLabel: string      // Pre-computed "${type} sev${severity}" for panel render
+  /** Pre-computed percentage string — updated when pct changes by 1 */
+  pctStr: string
+  _lastPct: number
 }
 
 const CHECK_INTERVAL = 1500
@@ -85,10 +88,14 @@ export class WorldSeasonalDisasterSystem {
 
     // Decay active disasters
     for (let i = this.disasters.length - 1; i >= 0; i--) {
-      this.disasters[i].duration--
-      if (this.disasters[i].duration <= 0) {
-        EventLog.log('disaster', `${this.disasters[i].type} has subsided`, 0)
+      const d = this.disasters[i]
+      d.duration--
+      if (d.duration <= 0) {
+        EventLog.log('disaster', `${d.type} has subsided`, 0)
         this.disasters.splice(i, 1)
+      } else {
+        const pct = Math.round(100 * d.duration / d.maxDuration)
+        if (pct !== d._lastPct) { d._lastPct = pct; d.pctStr = String(pct) }
       }
     }
 
@@ -127,6 +134,8 @@ export class WorldSeasonalDisasterSystem {
       startTick: tick,
       label: `${type} (${severity})`,
       panelLabel: `${type} sev${severity}`,
+      pctStr: '100',
+      _lastPct: 100,
     }
     this.disasters.push(disaster)
     EventLog.log('disaster', `A ${type} (severity ${severity}) strikes during ${this.currentSeason}!`, 0)
@@ -195,9 +204,8 @@ export class WorldSeasonalDisasterSystem {
 
     for (let i = 0; i < this.disasters.length; i++) {
       const d = this.disasters[i]
-      const pct = Math.round(100 * d.duration / d.maxDuration)
       ctx.fillStyle = DISASTER_COLORS[d.type]
-      ctx.fillText(`${d.panelLabel} ${pct}%`, x + 8, y + 32 + i * 18)
+      ctx.fillText(`${d.panelLabel} ${d.pctStr}%`, x + 8, y + 32 + i * 18)
     }
   }
 }
