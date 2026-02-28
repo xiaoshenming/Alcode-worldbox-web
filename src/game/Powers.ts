@@ -224,12 +224,12 @@ export class Powers {
         // Create crater
         for (let dy = -4; dy <= 4; dy++) {
           for (let dx = -4; dx <= 4; dx++) {
-            const dist = Math.sqrt(dx * dx + dy * dy)
+            const distSq = dx * dx + dy * dy
             const tx = x + dx, ty = y + dy
             if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
-              if (dist < 2) this.world.setTile(tx, ty, TileType.LAVA)
-              else if (dist < 3) this.world.setTile(tx, ty, TileType.MOUNTAIN)
-              else if (dist < 4) this.world.setTile(tx, ty, TileType.SAND)
+              if (distSq < 4) this.world.setTile(tx, ty, TileType.LAVA)
+              else if (distSq < 9) this.world.setTile(tx, ty, TileType.MOUNTAIN)
+              else if (distSq < 16) this.world.setTile(tx, ty, TileType.SAND)
             }
           }
         }
@@ -255,12 +255,12 @@ export class Powers {
       case 'nuke':
         for (let dy = -10; dy <= 10; dy++) {
           for (let dx = -10; dx <= 10; dx++) {
-            const dist = Math.sqrt(dx * dx + dy * dy)
+            const distSq = dx * dx + dy * dy
             const tx = x + dx, ty = y + dy
             if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
-              if (dist < 3) this.world.setTile(tx, ty, TileType.LAVA)
-              else if (dist < 6) this.world.setTile(tx, ty, TileType.SAND)
-              else if (dist < 10 && Math.random() < 0.5) this.world.setTile(tx, ty, TileType.SAND)
+              if (distSq < 9) this.world.setTile(tx, ty, TileType.LAVA)
+              else if (distSq < 36) this.world.setTile(tx, ty, TileType.SAND)
+              else if (distSq < 100 && Math.random() < 0.5) this.world.setTile(tx, ty, TileType.SAND)
             }
           }
         }
@@ -272,10 +272,9 @@ export class Powers {
       case 'blackhole':
         for (let dy = -8; dy <= 8; dy++) {
           for (let dx = -8; dx <= 8; dx++) {
-            const dist = Math.sqrt(dx * dx + dy * dy)
             const tx = x + dx, ty = y + dy
             if (tx >= 0 && tx < WORLD_WIDTH && ty >= 0 && ty < WORLD_HEIGHT) {
-              if (dist < 8) this.world.setTile(tx, ty, TileType.DEEP_WATER)
+              if (dx * dx + dy * dy < 64) this.world.setTile(tx, ty, TileType.DEEP_WATER)
             }
           }
         }
@@ -314,7 +313,7 @@ export class Powers {
       if (!pos) continue
       const dx = pos.x - cx
       const dy = pos.y - cy
-      if (Math.sqrt(dx * dx + dy * dy) < radius) {
+      if (dx * dx + dy * dy < radius * radius) {
         if (Math.random() < chance) {
           this.em.removeEntity(id)
         }

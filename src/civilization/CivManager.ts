@@ -99,8 +99,7 @@ export class CivManager {
         const tile = this.world.getTile(x, y)
         if (tile === TileType.DEEP_WATER) continue
 
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist <= radius) {
+        if (dx * dx + dy * dy <= radius * radius) {
           this.territoryMap[y][x] = civId
           civ.territory.add(`${x},${y}`)
         }
