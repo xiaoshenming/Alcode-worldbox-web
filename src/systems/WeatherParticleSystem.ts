@@ -25,6 +25,12 @@ const TORNADO_COLORS: string[] = ((): string[] => {
   }
   return cols
 })()
+// Pre-computed fog alpha palette: 0..1 in 1000 steps => 'rgba(220,220,220,X.XXX)'
+const FOG_ALPHA_PALETTE: string[] = ((): string[] => {
+  const cols: string[] = []
+  for (let i = 0; i <= 1000; i++) cols.push(`rgba(220,220,220,${(i / 1000).toFixed(3)})`)
+  return cols
+})()
 function createPool(count: number): Particle[] {
   const pool: Particle[] = [];
   for (let i = 0; i < count; i++) {
@@ -408,7 +414,8 @@ export class WeatherParticleSystem {
       const p = this.fogPool[i];
       if (!p.active) continue;
       const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-      gradient.addColorStop(0, `rgba(220,220,220,${p.alpha})`);
+      const fogIdx = Math.min(1000, Math.round(p.alpha * 1000))
+      gradient.addColorStop(0, FOG_ALPHA_PALETTE[fogIdx]);
       gradient.addColorStop(1, 'rgba(220,220,220,0)');
       ctx.fillStyle = gradient;
       ctx.beginPath();

@@ -43,6 +43,20 @@ const STYLE_COLOR_TABLES: Record<BorderStyle, string[]> = {} as Record<BorderSty
 const MAX_PARTICLES = 40
 const REPULSION_STRENGTH = 0.6
 
+// Pre-computed particle glow colors per style: 51 steps for alpha 0.00..0.50
+// stop0 colors (alpha=alpha), stop1 always 'rgba(r,g,b,0)'
+const PARTICLE_GLOW_TABLE: Record<BorderStyle, { stop0: string[]; stop1: string }> = {} as Record<BorderStyle, { stop0: string[]; stop1: string }>
+;(['VOID', 'OCEAN', 'MIST', 'FIRE'] as BorderStyle[]).forEach(style => {
+  const c = STYLE_COLORS[style]
+  const bright = style === 'FIRE' ? 2.0 : style === 'MIST' ? 1.3 : 0.8
+  const r = Math.min(255, Math.round(c.r * bright + 80))
+  const g = Math.min(255, Math.round(c.g * bright + 60))
+  const b = Math.min(255, Math.round(c.b * bright + 80))
+  const stop0: string[] = []
+  for (let i = 0; i <= 50; i++) stop0.push(`rgba(${r},${g},${b},${(i / 100).toFixed(2)})`)
+  PARTICLE_GLOW_TABLE[style] = { stop0, stop1: `rgba(${r},${g},${b},0)` }
+})
+
 export class WorldBorderSystem {
   private style: BorderStyle = 'VOID'
   private animTime = 0
@@ -261,7 +275,6 @@ export class WorldBorderSystem {
   ): void {
     if (this.particles.length === 0) return
 
-    const color = STYLE_COLORS[this.style]
     const prev = ctx.globalCompositeOperation
     ctx.globalCompositeOperation = this.style === 'FIRE' ? 'lighter' : 'source-over'
 
@@ -277,15 +290,12 @@ export class WorldBorderSystem {
 
       const radius = (1 + Math.sin(this.animTime * 2 + p.phase) * 0.4) * zoom
 
-      // 粒子颜色根据风格调整亮度
-      const bright = this.style === 'FIRE' ? 2.0 : this.style === 'MIST' ? 1.3 : 0.8
-      const r = Math.min(255, Math.round(color.r * bright + 80))
-      const g = Math.min(255, Math.round(color.g * bright + 60))
-      const b = Math.min(255, Math.round(color.b * bright + 80))
-
+      // Use pre-computed particle glow colors for this style
+      const glowTbl = PARTICLE_GLOW_TABLE[this.style]
+      const alphaIdx = Math.min(50, Math.round(alpha * 100))
       const grad = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, radius)
-      grad.addColorStop(0, `rgba(${r},${g},${b},${alpha})`)
-      grad.addColorStop(1, `rgba(${r},${g},${b},0)`)
+      grad.addColorStop(0, glowTbl.stop0[alphaIdx])
+      grad.addColorStop(1, glowTbl.stop1)
 
       ctx.fillStyle = grad
       ctx.fillRect(screenX - radius, screenY - radius, radius * 2, radius * 2)
