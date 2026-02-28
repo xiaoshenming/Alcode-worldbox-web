@@ -22,14 +22,28 @@ import {
 
 export type { WildlifeType, WildlifeSpawnRule }
 
+/** Pre-computed Set versions of fleeFrom/prey/biome per species for O(1) lookups */
+interface RuleSets {
+  fleeFromSet: Set<string>
+  preySet: Set<string>
+  biomeSet: Set<number>
+}
+
 export class EcosystemSystem {
   private wildlifeCounts: Map<string, number> = new Map();
   private ecosystemHealth: number = 50;
   private ruleMap: Map<string, WildlifeSpawnRule> = new Map();
+  /** Pre-computed Set versions for O(1) species/biome lookups in hot paths */
+  private ruleSets: Map<string, RuleSets> = new Map();
 
   constructor() {
     for (const rule of WILDLIFE_RULES) {
       this.ruleMap.set(rule.species, rule);
+      this.ruleSets.set(rule.species, {
+        fleeFromSet: new Set(rule.fleeFrom),
+        preySet: new Set(rule.prey),
+        biomeSet: new Set(rule.biome),
+      });
     }
   }
 
@@ -110,7 +124,8 @@ export class EcosystemSystem {
 
       // Find eligible rules for this tile
       for (const rule of WILDLIFE_RULES) {
-        if (!rule.biome.includes(tile)) continue;
+        const rsets = this.ruleSets.get(rule.species)
+        if (!rsets || !rsets.biomeSet.has(tile)) continue;
         if (Math.random() > rule.spawnChance * seasonMultiplier * SPAWN_INTERVAL) continue;
 
         // Check local density
@@ -230,10 +245,11 @@ export class EcosystemSystem {
       if (!pos || !ai || !needs) continue;
       const rule = this.ruleMap.get(creature.species);
       if (!rule) continue;
+      const rsets = this.ruleSets.get(creature.species)!;
 
       // Check for threats first (flee behavior)
       if (rule.fleeFrom.length > 0) {
-        const threat = this.findNearestThreat(em, id, pos, rule.fleeFrom, allCreaturePos);
+        const threat = this.findNearestThreat(em, id, pos, rsets.fleeFromSet, allCreaturePos);
         if (threat) {
           this.flee(pos, ai, threat);
           continue;
@@ -242,7 +258,7 @@ export class EcosystemSystem {
 
       // Predator hunting behavior
       if (rule.predator && rule.prey.length > 0 && needs.hunger > 40) {
-        const preyTarget = this.findNearestPrey(em, id, pos, rule.prey, allCreaturePos);
+        const preyTarget = this.findNearestPrey(em, id, pos, rsets.preySet, allCreaturePos);
         if (preyTarget) {
           const preyPos = em.getComponent<PositionComponent>(preyTarget, 'position');
           if (preyPos) {
@@ -271,14 +287,14 @@ export class EcosystemSystem {
     }
   }
 
-  private findNearestThreat(em: EntityManager, selfId: EntityId, selfPos: PositionComponent, fleeFrom: string[], allEntities: EntityId[]): PositionComponent | null {
+  private findNearestThreat(em: EntityManager, selfId: EntityId, selfPos: PositionComponent, fleeFrom: Set<string>, allEntities: EntityId[]): PositionComponent | null {
     let nearest: PositionComponent | null = null;
     let nearestDistSq = FLEE_RANGE * FLEE_RANGE;
 
     for (const id of allEntities) {
       if (id === selfId) continue;
       const creature = em.getComponent<CreatureComponent>(id, 'creature');
-      if (!creature || !fleeFrom.includes(creature.species)) continue;
+      if (!creature || !fleeFrom.has(creature.species)) continue;
       const pos = em.getComponent<PositionComponent>(id, 'position');
       if (!pos) continue;
       const dx = pos.x - selfPos.x, dy = pos.y - selfPos.y
@@ -291,14 +307,14 @@ export class EcosystemSystem {
     return nearest;
   }
 
-  private findNearestPrey(em: EntityManager, selfId: EntityId, selfPos: PositionComponent, preySpecies: string[], allEntities: EntityId[]): EntityId | null {
+  private findNearestPrey(em: EntityManager, selfId: EntityId, selfPos: PositionComponent, preySpecies: Set<string>, allEntities: EntityId[]): EntityId | null {
     let nearest: EntityId | null = null;
     let nearestDistSq = HUNT_RANGE * HUNT_RANGE;
 
     for (const id of allEntities) {
       if (id === selfId) continue;
       const creature = em.getComponent<CreatureComponent>(id, 'creature');
-      if (!creature || !preySpecies.includes(creature.species)) continue;
+      if (!creature || !preySpecies.has(creature.species)) continue;
       const pos = em.getComponent<PositionComponent>(id, 'position');
       if (!pos) continue;
       const dx = pos.x - selfPos.x, dy = pos.y - selfPos.y
