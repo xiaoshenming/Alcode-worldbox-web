@@ -46,6 +46,8 @@ interface TechEntry {
   name: string;
   researched: boolean;
   progress: number;
+  /** Pre-computed percentage string */
+  progressStr: string;
 }
 
 export class EraTransitionSystem {
@@ -118,7 +120,7 @@ export class EraTransitionSystem {
 
   /** 设置科技数据 */
   setTechData(techs: Array<{ name: string; researched: boolean; progress: number }>): void {
-    this.techs = techs;
+    this.techs = techs.map(t => ({ ...t, progressStr: `${Math.round(t.progress * 100)}%` }));
   }
 
   toggleTechPreview(): void {
@@ -489,7 +491,7 @@ export class EraTransitionSystem {
       // 百分比
       ctx.font = '9px monospace';
       ctx.fillStyle = '#CCC';
-      ctx.fillText(`${Math.round(tech.progress * 100)}%`, x + cellW / 2, y + cellH - 4);
+      ctx.fillText(tech.progressStr, x + cellW / 2, y + cellH - 4);
     }
     ctx.restore();
   }
