@@ -11,6 +11,9 @@ const RACE_COLORS: Record<string, string> = {
   human: '#4488ff', elf: '#44cc44', dwarf: '#cc8844', orc: '#cc4444',
 };
 const MAX_POP_SAMPLES = 60;
+/** Pre-computed chart margins — avoids per-render object literal creation */
+const _MARGIN_POP = { left: 50, right: 20, top: 20, bottom: 30 } as const
+const _MARGIN_PWR = { left: 80, right: 20, top: 10, bottom: 10 } as const
 const PANEL_BG = 'rgba(10,15,25,0.85)';
 const PANEL_RADIUS = 12;
 const TAB_LABELS: { key: TabType; label: string }[] = [
@@ -258,7 +261,7 @@ export class WorldDashboardSystem {
       return;
     }
 
-    const margin = { left: 50, right: 20, top: 20, bottom: 30 };
+    const margin = _MARGIN_POP;
     const chartX = this.panelX + margin.left;
     const chartY = contentY + margin.top;
     const chartW = this.panelW - margin.left - margin.right;
@@ -356,7 +359,7 @@ export class WorldDashboardSystem {
       return;
     }
 
-    const margin = { left: 80, right: 20, top: 10, bottom: 10 };
+    const margin = _MARGIN_PWR;
     const areaX = this.panelX + margin.left;
     const areaY = contentY + margin.top;
     const areaW = this.panelW - margin.left - margin.right;
