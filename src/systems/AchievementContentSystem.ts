@@ -93,13 +93,14 @@ export class AchievementContentSystem {
   private achievements: Achievement[];
   private _unlockedBuf: Achievement[] = [];
   private _categoryBuf: Achievement[] = [];
+  private _newlyBuf: string[] = [];
 
   constructor() {
     this.achievements = DEFS.map(d => ({ ...d, unlocked: false, unlockTick: null }));
   }
 
   check(stats: WorldStats): string[] {
-    const newly: string[] = [];
+    const newly = this._newlyBuf; newly.length = 0;
     for (const a of this.achievements) {
       if (!a.unlocked && a.condition(stats)) {
         a.unlocked = true;
