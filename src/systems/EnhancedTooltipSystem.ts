@@ -143,15 +143,15 @@ export class EnhancedTooltipSystem {
   private findCreatureAt(wx: number, wy: number, em: EntityManager): number | null {
     const entities = em.getEntitiesWithComponents('position', 'creature')
     let closest: number | null = null
-    let closestDist = 1.5
+    let closestDistSq = 2.25  // 1.5 * 1.5
     for (const id of entities) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (!pos) continue
       const dx = pos.x - (wx + 0.5)
       const dy = pos.y - (wy + 0.5)
-      const dist = Math.sqrt(dx * dx + dy * dy)
-      if (dist < closestDist) {
-        closestDist = dist
+      const distSq = dx * dx + dy * dy
+      if (distSq < closestDistSq) {
+        closestDistSq = distSq
         closest = id
       }
     }
