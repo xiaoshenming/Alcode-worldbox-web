@@ -34,6 +34,7 @@ export class WorldDashboardSystem {
   private panelH = 0;
   private _racesSet: Set<string> = new Set();
   private _orderedBuf: PopulationSample[] = new Array(MAX_POP_SAMPLES);
+  private _religionEntriesBuf: [string, number][] = [];
 
   toggle(): void {
     this.visible = !this.visible;
@@ -186,7 +187,7 @@ export class WorldDashboardSystem {
 
   // ── 宗教饼图 ──
   private drawReligionPie(ctx: CanvasRenderingContext2D, contentY: number, contentH: number): void {
-    const entries: [string, number][] = []
+    const entries = this._religionEntriesBuf; entries.length = 0;
     for (const e of this.religionData.entries()) entries.push(e)
     let total = 0; for (const e of entries) total += e[1]
     if (total === 0) {
