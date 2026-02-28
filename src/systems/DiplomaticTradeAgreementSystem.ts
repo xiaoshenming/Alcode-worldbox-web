@@ -27,6 +27,8 @@ const TYPE_WEIGHTS: Record<AgreementType, number> = {
   resource_swap: 0.3, tariff_reduction: 0.2,
 }
 const TYPES = Object.keys(TYPE_WEIGHTS) as AgreementType[]
+/** Pre-computed civ pool — avoids per-call literal array in formAgreements */
+const _CIV_POOL = ['human', 'elf', 'dwarf', 'orc'] as const
 
 export class DiplomaticTradeAgreementSystem {
   private agreements: TradeAgreement[] = []
@@ -46,7 +48,7 @@ export class DiplomaticTradeAgreementSystem {
     if (this.agreements.length >= MAX_AGREEMENTS) return
     if (Math.random() > AGREE_CHANCE) return
 
-    const civs = ['human', 'elf', 'dwarf', 'orc']
+    const civs = _CIV_POOL
     const c1 = civs[Math.floor(Math.random() * civs.length)]
     let c2 = civs[Math.floor(Math.random() * civs.length)]
     while (c2 === c1) c2 = civs[Math.floor(Math.random() * civs.length)]

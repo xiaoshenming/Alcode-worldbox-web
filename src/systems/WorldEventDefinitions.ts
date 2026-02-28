@@ -12,6 +12,8 @@ import { EventLog } from './EventLog'
 
 // Pre-allocated 4-directional offsets — avoids 40000 temp sub-arrays in full-world flood event
 const CARDINAL_OFFSETS: readonly [number, number][] = [[0, 1], [0, -1], [1, 0], [-1, 0]] as const
+/** Pre-computed terrain options for earthquake tile shuffle — avoids per-tile literal array */
+const _QUAKE_TILE_OPTIONS = [TileType.GRASS, TileType.SAND, TileType.MOUNTAIN] as const
 // --- Types ---
 
 export interface EventContext {
@@ -350,8 +352,7 @@ export const EVENT_DEFINITIONS: WorldEventDef[] = [
           }
           // Some tiles get shuffled
           else if (Math.random() < 0.1 && tile !== TileType.DEEP_WATER) {
-            const options = [TileType.GRASS, TileType.SAND, TileType.MOUNTAIN]
-            ctx.world.setTile(x, y, options[Math.floor(Math.random() * options.length)])
+            ctx.world.setTile(x, y, _QUAKE_TILE_OPTIONS[Math.floor(Math.random() * _QUAKE_TILE_OPTIONS.length)])
             tilesChanged++
           }
 

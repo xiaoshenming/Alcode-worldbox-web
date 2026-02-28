@@ -28,6 +28,8 @@ const SUCCESSION_WEIGHTS: Record<SuccessionType, number> = {
 }
 
 const TYPES = Object.keys(SUCCESSION_WEIGHTS) as SuccessionType[]
+/** Pre-computed civ pool — avoids per-call literal array in generateCrises */
+const _CIV_POOL = ['human', 'elf', 'dwarf', 'orc'] as const
 
 export class DiplomaticSuccessionSystem {
   private events: SuccessionEvent[] = []
@@ -47,7 +49,7 @@ export class DiplomaticSuccessionSystem {
   private generateCrises(tick: number): void {
     if (Math.random() > CRISIS_CHANCE) return
 
-    const civs = ['human', 'elf', 'dwarf', 'orc']
+    const civs = _CIV_POOL
     const civ = civs[Math.floor(Math.random() * civs.length)]
     const type = this.pickType()
 
