@@ -112,6 +112,8 @@ export class WorldHeatmapSystem {
 
   /** 各模式数据的最大值，用于归一化 */
   private maxValues: Map<string, number> = new Map();
+  /** Pre-computed max value strings — avoids toFixed per frame */
+  private maxValStrs: Map<string, string> = new Map();
 
   /** 渲染用的临时像素步长，避免热路径分配 */
   private readonly renderStep = CELL_SIZE;
@@ -121,6 +123,7 @@ export class WorldHeatmapSystem {
       const mode = HEATMAP_MODES[i];
       this.grids.set(mode, new Float32Array(GRID_MAX * GRID_MAX));
       this.maxValues.set(mode, 0);
+      this.maxValStrs.set(mode, '0');
     }
   }
 
@@ -142,7 +145,10 @@ export class WorldHeatmapSystem {
     const idx = gridY * GRID_MAX + gridX;
     grid[idx] = value;
     const cur = this.maxValues.get(mode) ?? 0;
-    if (value > cur) this.maxValues.set(mode, value);
+    if (value > cur) {
+      this.maxValues.set(mode, value);
+      this.maxValStrs.set(mode, value >= 1000 ? `${(value / 1000).toFixed(1)}k` : `${value | 0}`)
+    }
   }
 
   /**
@@ -154,6 +160,7 @@ export class WorldHeatmapSystem {
     if (grid) {
       grid.fill(0);
       this.maxValues.set(mode, 0);
+      this.maxValStrs.set(mode, '0');
     }
   }
 
@@ -200,8 +207,9 @@ export class WorldHeatmapSystem {
     const maxVal = this.maxValues.get(mode) ?? 1;
     if (!grid || maxVal <= 0) return;
 
+    const maxValStr = this.maxValStrs.get(mode) ?? '0';
     this.renderOverlay(ctx, grid, maxVal, camX, camY, zoom, screenW, screenH);
-    this.renderHUD(ctx, mode, maxVal, screenW);
+    this.renderHUD(ctx, mode, maxVal, maxValStr, screenW);
   }
 
   /**
@@ -258,6 +266,7 @@ export class WorldHeatmapSystem {
     ctx: CanvasRenderingContext2D,
     mode: string,
     maxVal: number,
+    maxValStr: string,
     screenW: number,
   ): void {
     const label = MODE_LABELS[mode] ?? mode;
@@ -300,7 +309,7 @@ export class WorldHeatmapSystem {
     ctx.textAlign = 'left';
     ctx.fillText('0', barX, barY + barH + 12);
     ctx.textAlign = 'right';
-    ctx.fillText(maxVal >= 1000 ? `${(maxVal / 1000).toFixed(1)}k` : `${maxVal | 0}`, barX + barW, barY + barH + 12);
+    ctx.fillText(maxValStr, barX + barW, barY + barH + 12);
 
     ctx.restore();
   }
