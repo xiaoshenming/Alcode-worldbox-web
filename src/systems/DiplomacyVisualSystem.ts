@@ -26,6 +26,10 @@ interface ActiveBubble {
   startTick: number
   text: string
   color: string
+  /** Cached measureText width for text at current zoom font — measured on first render */
+  textWidth: number
+  /** Zoom at which textWidth was measured */
+  textWidthZoom: number
 }
 
 const MAX_BUBBLES = 10;
@@ -101,6 +105,8 @@ export class DiplomacyVisualSystem {
       startTick: -1,
       text: cfg.text,
       color: cfg.color,
+      textWidth: 0,
+      textWidthZoom: -1,
     });
   }
 
@@ -318,8 +324,8 @@ export class DiplomacyVisualSystem {
       ctx.save();
       ctx.globalAlpha = Math.max(0.1, alpha);
       ctx.font = this._labelFont;
-      const metrics = ctx.measureText(b.text);
-      const tw = metrics.width + 12 * zoom;
+      if (b.textWidthZoom !== zoom) { b.textWidthZoom = zoom; b.textWidth = ctx.measureText(b.text).width; }
+      const tw = b.textWidth + 12 * zoom;
       const th = 18 * zoom;
 
       this.drawRoundRect(ctx, sx - tw / 2, sy - th / 2, tw, th, 5 * zoom);

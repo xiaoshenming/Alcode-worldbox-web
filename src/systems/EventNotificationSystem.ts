@@ -22,6 +22,8 @@ interface EdgeIndicator {
   event: GameEvent;
   screenX: number; screenY: number;
   angle: number;
+  /** Cached measureText width for event.iconMsg at 11px monospace — set on first render */
+  labelWidth: number;
 }
 
 interface Marquee {
@@ -198,7 +200,7 @@ export class EventNotificationSystem {
         edgeX = Math.max(m, Math.min(sw - m, cx + t * Math.cos(angle)));
         edgeY = cy + (sh / 2 - m) * Math.sign(Math.sin(angle));
       }
-      this.indicators.push({ event: evt, screenX: edgeX, screenY: edgeY, angle });
+      this.indicators.push({ event: evt, screenX: edgeX, screenY: edgeY, angle, labelWidth: 0 });
     }
   }
 
@@ -243,7 +245,8 @@ export class EventNotificationSystem {
       const label = ind.event.iconMsg;
       ctx.font = '11px monospace';
       ctx.globalAlpha = 0.9;
-      const tw = ctx.measureText(label).width;
+      if (ind.labelWidth === 0) ind.labelWidth = ctx.measureText(label).width;
+      const tw = ind.labelWidth;
       const lx = ind.screenX + (Math.cos(ind.angle) > 0 ? -tw - 20 : 20);
       const ly = ind.screenY - 6;
       ctx.fillStyle = 'rgba(0,0,0,0.7)';
