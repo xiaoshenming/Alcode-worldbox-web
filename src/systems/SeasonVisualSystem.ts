@@ -40,6 +40,13 @@ const SEASON_LABELS: Record<Season, { icon: string; name: string }> = {
   [Season.Autumn]: { icon: '\uD83C\uDF42', name: '\u79CB' },
   [Season.Winter]: { icon: '\u2744', name: '\u51AC' },
 }
+// Pre-computed display strings — avoids per-frame template literal allocation in renderSeasonIndicator
+const SEASON_DISPLAY: Record<Season, string> = {
+  [Season.Spring]: `${SEASON_LABELS[Season.Spring].icon} ${SEASON_LABELS[Season.Spring].name}`,
+  [Season.Summer]: `${SEASON_LABELS[Season.Summer].icon} ${SEASON_LABELS[Season.Summer].name}`,
+  [Season.Autumn]: `${SEASON_LABELS[Season.Autumn].icon} ${SEASON_LABELS[Season.Autumn].name}`,
+  [Season.Winter]: `${SEASON_LABELS[Season.Winter].icon} ${SEASON_LABELS[Season.Winter].name}`,
+}
 
 const LEAF_COLORS = [
   { r: 210, g: 120, b: 40 },   // orange
@@ -191,7 +198,7 @@ export class SeasonVisualSystem {
     ctx.font = '14px sans-serif'
     ctx.textBaseline = 'middle'
     ctx.fillStyle = '#fff'
-    ctx.fillText(`${label.icon} ${label.name}`, x + 10, y + pillH / 2)
+    ctx.fillText(SEASON_DISPLAY[season], x + 10, y + pillH / 2)
 
     ctx.restore()
   }
