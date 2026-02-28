@@ -1,5 +1,7 @@
 import { TILE_SIZE } from '../utils/Constants'
 const _EMPTY_DASH: number[] = []
+// Pre-computed integer-to-string lookup — avoids String(n) per-fort per-frame
+const _INT_STR: readonly string[] = ['0','1','2','3','4','5','6','7','8','9','10']
 
 export type FortificationLevel = 'none' | 'wooden' | 'stone' | 'castle'
 
@@ -291,7 +293,7 @@ export class FortificationRenderer {
     ctx.font = '4px monospace'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText(String(defenseLevel), cx, indicatorY + shieldH * 0.4)
+    ctx.fillText(_INT_STR[defenseLevel] ?? String(defenseLevel), cx, indicatorY + shieldH * 0.4)
 
     // 血量条（盾牌下方）
     if (fort.health < fort.maxHealth) {
