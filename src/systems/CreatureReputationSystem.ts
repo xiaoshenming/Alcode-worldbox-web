@@ -22,6 +22,10 @@ const DECAY_INTERVAL = 3000
 const DECAY_AMOUNT = 1
 const MAX_TRACKED = 200
 
+/** Pre-computed action pool — avoids per-entity literal array in update loop */
+const _REPUTATION_ACTIONS = ['trade', 'build', 'heal'] as const
+type _ReputationAction = typeof _REPUTATION_ACTIONS[number]
+
 const TIER_THRESHOLDS: [number, ReputationTier][] = [
   [-60, 'infamous'],
   [-20, 'disliked'],
@@ -138,8 +142,7 @@ export class CreatureReputationSystem {
       for (const eid of entities) {
         if (this.reputations.size >= MAX_TRACKED) break
         if (Math.random() < 0.05 && !this.reputations.has(eid)) {
-          const actions = ['trade', 'build', 'heal'] as const
-          const action = actions[Math.floor(Math.random() * actions.length)]
+          const action = _REPUTATION_ACTIONS[Math.floor(Math.random() * _REPUTATION_ACTIONS.length)]
           if (action === 'trade') this.recordTrade(eid, tick)
           else if (action === 'build') this.recordBuild(eid, tick)
           else this.recordHeal(eid, tick)

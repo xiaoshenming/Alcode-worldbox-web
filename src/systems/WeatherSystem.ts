@@ -7,6 +7,13 @@ import { EventLog } from './EventLog'
 
 export type WeatherType = 'clear' | 'rain' | 'snow' | 'storm' | 'fog' | 'tornado' | 'drought' | 'heatwave'
 
+/** Season-to-weather-type pools — module-level to avoid per-call array creation in startRandomWeather */
+const _WEATHER_WINTER: readonly WeatherType[] = ['snow', 'snow', 'snow', 'fog', 'rain']
+const _WEATHER_SPRING: readonly WeatherType[] = ['rain', 'rain', 'rain', 'storm', 'fog', 'tornado']
+const _WEATHER_SUMMER: readonly WeatherType[] = ['clear', 'clear', 'rain', 'storm', 'fog', 'drought', 'drought', 'heatwave', 'heatwave']
+const _WEATHER_AUTUMN: readonly WeatherType[] = ['fog', 'fog', 'rain', 'rain', 'snow', 'tornado']
+const _WEATHER_DEFAULT: readonly WeatherType[] = ['rain', 'rain', 'snow', 'storm', 'fog']
+
 export class WeatherSystem {
   currentWeather: WeatherType = 'clear'
   intensity: number = 0 // 0-1
@@ -63,22 +70,22 @@ export class WeatherSystem {
   private startRandomWeather(): void {
     // Season-aware weather type selection
     const season = this.world.getSeason()
-    let types: WeatherType[]
+    let types: readonly WeatherType[]
     switch (season) {
       case 'winter':
-        types = ['snow', 'snow', 'snow', 'fog', 'rain']
+        types = _WEATHER_WINTER
         break
       case 'spring':
-        types = ['rain', 'rain', 'rain', 'storm', 'fog', 'tornado']
+        types = _WEATHER_SPRING
         break
       case 'summer':
-        types = ['clear', 'clear', 'rain', 'storm', 'fog', 'drought', 'drought', 'heatwave', 'heatwave']
+        types = _WEATHER_SUMMER
         break
       case 'autumn':
-        types = ['fog', 'fog', 'rain', 'rain', 'snow', 'tornado']
+        types = _WEATHER_AUTUMN
         break
       default:
-        types = ['rain', 'rain', 'snow', 'storm', 'fog']
+        types = _WEATHER_DEFAULT
     }
     const picked = types[Math.floor(Math.random() * types.length)]
     if (picked === 'clear') return // summer clear = no weather event
