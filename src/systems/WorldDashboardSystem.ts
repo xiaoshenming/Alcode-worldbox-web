@@ -1,6 +1,7 @@
 /** WorldDashboardSystem - 世界统计仪表盘，纯 Canvas 2D 绘制 */
 type TabType = 'religion' | 'population' | 'power';
-interface CivPowerEntry { name: string; power: number; color: string }
+interface CivPowerInput { name: string; power: number; color: string }
+interface CivPowerEntry { name: string; power: number; color: string; powerStr: string }
 interface PopulationSample { tick: number; populations: Record<string, number>; entries: [string, number][] }
 
 const RELIGION_COLORS: Record<string, string> = {
@@ -41,6 +42,9 @@ export class WorldDashboardSystem {
   /** Cached religion ratio strings — rebuilt when religionData updates */
   private _religionRatioStrs: Map<string, string> = new Map();
   private _religionLegendStrs: Map<string, string> = new Map();
+  /** Cached Y-axis labels for population chart — rebuilt when maxPop changes */
+  private _popYLabels: [string, string, string, string, string] = ['0','0','0','0','0'];
+  private _prevMaxPop = -1;
 
   toggle(): void {
     this.visible = !this.visible;
@@ -81,11 +85,12 @@ export class WorldDashboardSystem {
     }
   }
 
-  updatePowerData(civs: CivPowerEntry[]): void {
+  updatePowerData(civs: CivPowerInput[]): void {
     this.powerData = civs
       .slice()
       .sort((a, b) => b.power - a.power)
-      .slice(0, 8);
+      .slice(0, 8)
+      .map(c => ({ ...c, powerStr: String(Math.round(c.power)) }));
   }
 
   render(ctx: CanvasRenderingContext2D, screenWidth: number, screenHeight: number): void {
@@ -311,10 +316,15 @@ export class WorldDashboardSystem {
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     const ySteps = 4;
+    if (maxPop !== this._prevMaxPop) {
+      this._prevMaxPop = maxPop;
+      for (let i = 0; i <= ySteps; i++) {
+        this._popYLabels[i] = String(Math.round((maxPop / ySteps) * i));
+      }
+    }
     for (let i = 0; i <= ySteps; i++) {
-      const val = Math.round((maxPop / ySteps) * i);
       const py = chartY + chartH - (chartH / ySteps) * i;
-      ctx.fillText(String(val), chartX - 6, py);
+      ctx.fillText(this._popYLabels[i], chartX - 6, py);
       // 网格线
       if (i > 0) {
         ctx.strokeStyle = 'rgba(100,120,160,0.15)';
@@ -404,7 +414,7 @@ export class WorldDashboardSystem {
       // 数值
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'left';
-      ctx.fillText(String(Math.round(civ.power)), areaX + bw + 6, by + barH / 2);
+      ctx.fillText(civ.powerStr, areaX + bw + 6, by + barH / 2);
     }
 
     ctx.restore();
