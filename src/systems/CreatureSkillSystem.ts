@@ -20,6 +20,8 @@ interface SkillDef {
   /** 前置技能 ID */
   prereq: string | null
   desc: string
+  /** Pre-computed "Lv.N desc" display string — computed at module init */
+  levelDescStr?: string
 }
 
 /** 生物技能数据 */
@@ -49,6 +51,15 @@ const BRANCH_ICONS: Record<SkillBranch, string> = {
   combat: '\u{2694}\u{FE0F}', gather: '\u{1F33E}', build: '\u{1F3D7}\u{FE0F}', magic: '\u{2728}', leader: '\u{1F451}',
 }
 
+/** Pre-computed branch tab label strings — avoids per-frame template literal in render loop */
+const BRANCH_TAB_LABELS: Record<SkillBranch, string> = {
+  combat: `${BRANCH_ICONS.combat} ${BRANCH_LABELS.combat}`,
+  gather: `${BRANCH_ICONS.gather} ${BRANCH_LABELS.gather}`,
+  build: `${BRANCH_ICONS.build} ${BRANCH_LABELS.build}`,
+  magic: `${BRANCH_ICONS.magic} ${BRANCH_LABELS.magic}`,
+  leader: `${BRANCH_ICONS.leader} ${BRANCH_LABELS.leader}`,
+}
+
 /** 技能定义表 */
 const SKILL_DEFS: SkillDef[] = [
   // 战斗
@@ -75,7 +86,7 @@ const SKILL_DEFS: SkillDef[] = [
 ]
 
 const SKILL_MAP = new Map<string, SkillDef>()
-for (const s of SKILL_DEFS) SKILL_MAP.set(s.id, s)
+for (const s of SKILL_DEFS) { SKILL_MAP.set(s.id, s); s.levelDescStr = `Lv.${s.levelReq} ${s.desc}` }
 
 const PANEL_W = 460, PANEL_H = 420, HEADER_H = 36, TAB_H = 30
 
@@ -91,6 +102,9 @@ export class CreatureSkillSystem {
   private dragOY = 0
   private _lastBranch: SkillBranch = '' as SkillBranch
   private _branchSkillCache: SkillDef[] = []
+  /** Pre-computed panel header — rebuilt when entity or level changes */
+  private _prevSkillKey = ''
+  private _skillHeaderStr = '⭐ 技能树 (Lv.0)'
 
   /* ── 公共 API ── */
 
@@ -202,7 +216,9 @@ export class CreatureSkillSystem {
     ctx.font = 'bold 14px monospace'
     ctx.textAlign = 'left'
     const lvl = d ? d.level : 0
-    ctx.fillText(`\u{2B50} 技能树 (Lv.${lvl})`, px + 12, py + 24)
+    const skillKey = `${this.selectedEntity}:${lvl}`
+    if (skillKey !== this._prevSkillKey) { this._prevSkillKey = skillKey; this._skillHeaderStr = `\u{2B50} 技能树 (Lv.${lvl})` }
+    ctx.fillText(this._skillHeaderStr, px + 12, py + 24)
 
     if (!d) {
       ctx.fillStyle = '#888'; ctx.font = '13px monospace'; ctx.textAlign = 'center'
@@ -229,7 +245,7 @@ export class CreatureSkillSystem {
       ctx.fillRect(tx, py + HEADER_H, tabW, TAB_H)
       ctx.fillStyle = b === this.activeBranch ? BRANCH_COLORS[b] : '#888'
       ctx.font = '12px monospace'; ctx.textAlign = 'center'
-      ctx.fillText(`${BRANCH_ICONS[b]} ${BRANCH_LABELS[b]}`, tx + tabW / 2, py + HEADER_H + 20)
+      ctx.fillText(BRANCH_TAB_LABELS[b], tx + tabW / 2, py + HEADER_H + 20)
     }
 
     // 技能节点
@@ -273,7 +289,7 @@ export class CreatureSkillSystem {
       ctx.font = 'bold 11px monospace'
       ctx.fillText(sk.name, px + PANEL_W / 2, ny + 42)
       ctx.fillStyle = '#999'; ctx.font = '10px monospace'
-      ctx.fillText(`Lv.${sk.levelReq} ${sk.desc}`, px + PANEL_W / 2, ny + 58)
+      ctx.fillText(sk.levelDescStr ?? `Lv.${sk.levelReq} ${sk.desc}`, px + PANEL_W / 2, ny + 58)
     }
 
     ctx.textAlign = 'left'
