@@ -37,6 +37,8 @@ export class VolcanoSystem {
   private static LAVA_COOL_RATE = 0.15
   private static LAVA_SPREAD_INTERVAL = 30
   private static MAX_LAVA_PER_VOLCANO = 80
+  // Reusable buffer for updateLavaFlows (called every tick during eruption)
+  private _lavaToRemoveBuf: number[] = []
 
   getVolcanoes(): ReadonlyArray<Volcano> {
     return this.volcanoes
@@ -130,7 +132,8 @@ export class VolcanoSystem {
   }
 
   private updateLavaFlows(volcano: Volcano, world: World): void {
-    const toRemove: number[] = []
+    const toRemove = this._lavaToRemoveBuf
+    toRemove.length = 0
 
     for (let i = 0; i < volcano.lavaFlows.length; i++) {
       const lava = volcano.lavaFlows[i]
