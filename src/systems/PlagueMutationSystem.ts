@@ -32,6 +32,9 @@ interface PlagueStrain {
   createdTick: number
   /** 是否已灭绝 */
   extinct: boolean
+  /** Pre-computed render strings — avoids toFixed per frame */
+  infectStr: string
+  lethalStr: string
 }
 
 const SYMPTOM_INFO: Record<Symptom, { icon: string; label: string; lethalityMod: number }> = {
@@ -101,7 +104,10 @@ export class PlagueMutationSystem {
       symptoms: syms,
       infected: 0, deaths: 0,
       createdTick: tick, extinct: false,
+      infectStr: '', lethalStr: '',
     }
+    strain.infectStr = `传染${Math.round(strain.infectRate * 100)}%`
+    strain.lethalStr = `致死${(strain.lethality * 100).toFixed(1)}%`
     this.strains.push(strain)
     return strain
   }
@@ -170,7 +176,10 @@ export class PlagueMutationSystem {
       symptoms: newSymptoms,
       infected: 0, deaths: 0,
       createdTick: tick, extinct: false,
+      infectStr: '', lethalStr: '',
     }
+    child.infectStr = `传染${Math.round(child.infectRate * 100)}%`
+    child.lethalStr = `致死${(child.lethality * 100).toFixed(1)}%`
     this.strains.push(child)
   }
 
@@ -261,14 +270,14 @@ export class PlagueMutationSystem {
         ctx.fillStyle = INFECT_COLORS[Math.min(100, Math.round(s.infectRate * 100))]
         ctx.fillRect(px + 200, drawY + 48, 100 * s.infectRate, 5)
         ctx.fillStyle = '#777'; ctx.font = '9px monospace'
-        ctx.fillText(`传染${(s.infectRate * 100).toFixed(0)}%`, px + 305, drawY + 55)
+        ctx.fillText(s.infectStr, px + 305, drawY + 55)
 
         // 致死率条
         ctx.fillStyle = 'rgba(50,30,30,0.5)'
         ctx.fillRect(px + 200, drawY + 36, 100, 5)
         ctx.fillStyle = LETHAL_COLORS[Math.min(100, Math.round(s.lethality * 100))]
         ctx.fillRect(px + 200, drawY + 36, 100 * clamp(s.lethality * 3, 0, 1), 5)
-        ctx.fillText(`致死${(s.lethality * 100).toFixed(1)}%`, px + 305, drawY + 43)
+        ctx.fillText(s.lethalStr, px + 305, drawY + 43)
       }
       drawY += ROW_H
     }
