@@ -48,10 +48,14 @@ export class DiplomaticPeaceTreatySystem {
       let iB = Math.floor(Math.random() * civs.length)
       if (iB === iA) iB = (iB + 1) % civs.length
 
-      // Select 2-4 random terms
+      // Select 2-4 random terms — 随机采样，不创建临时 shuffle 数组
       const numTerms = 2 + Math.floor(Math.random() * 3)
-      const shuffled = [...TERMS].sort(() => Math.random() - 0.5)
-      const selectedTerms = shuffled.slice(0, numTerms)
+      const selectedTerms: TreatyTerm[] = []
+      const usedIdx = new Set<number>()
+      while (selectedTerms.length < numTerms) {
+        const idx = Math.floor(Math.random() * TERMS.length)
+        if (!usedIdx.has(idx)) { usedIdx.add(idx); selectedTerms.push(TERMS[idx]) }
+      }
 
       this.treaties.push({
         id: this.nextId++,

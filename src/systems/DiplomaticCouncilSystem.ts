@@ -38,6 +38,8 @@ export class DiplomaticCouncilSystem {
   private nextId = 1
   private lastCheck = 0
   private resolvedCount = 0
+  private _civIdsSet: Set<number> = new Set()
+  private _civArrayBuf: number[] = []
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -54,20 +56,27 @@ export class DiplomaticCouncilSystem {
     if (Math.random() > COUNCIL_CHANCE) return
 
     // Gather civ IDs from creatures with civMember component
-    const civIds = new Set<number>()
+    const civIds = this._civIdsSet
+    civIds.clear()
     const entities = em.getEntitiesWithComponents('creature', 'civMember')
     for (const eid of entities) {
       const member = em.getComponent<CivMemberComponent>(eid, 'civMember')
       if (member) civIds.add(member.civId)
     }
 
-    const civArray = [...civIds]
+    const civArray = this._civArrayBuf
+    civArray.length = 0
+    for (const id of civIds) civArray.push(id)
     if (civArray.length < 2) return
 
-    // Pick 2-5 random civs for the council
+    // Pick 2-5 random civs for the council — 随机采样替代shuffle+slice
     const count = 2 + Math.floor(Math.random() * Math.min(4, civArray.length - 1))
-    const shuffled = civArray.sort(() => Math.random() - 0.5)
-    const members = shuffled.slice(0, count)
+    const members: number[] = []
+    const usedIdx = new Set<number>()
+    while (members.length < count) {
+      const idx = Math.floor(Math.random() * civArray.length)
+      if (!usedIdx.has(idx)) { usedIdx.add(idx); members.push(civArray[idx]) }
+    }
 
     const topic = this.pickTopic()
     this.councils.push({

@@ -160,8 +160,13 @@ export class CultureSystem {
   createCulture(civId: number, raceName: string): Culture {
     const lang = this.pickLanguage(raceName)
     const traitCount = randInt(2, 3)
-    const shuffled = [...ALL_TRAITS].sort(() => Math.random() - 0.5)
-    const traits = shuffled.slice(0, traitCount)
+    // 随机采样，不创建临时 shuffle 数组
+    const traits: CultureTraitType[] = []
+    const usedTraitIdx = new Set<number>()
+    while (traits.length < traitCount) {
+      const idx = Math.floor(Math.random() * ALL_TRAITS.length)
+      if (!usedTraitIdx.has(idx)) { usedTraitIdx.add(idx); traits.push(ALL_TRAITS[idx]) }
+    }
 
     const baseName = this.generateNameFromLang(lang)
     const suffix = pick(CULTURE_NAME_SUFFIXES)
@@ -169,8 +174,11 @@ export class CultureSystem {
 
     const traditions: string[] = []
     const tradCount = randInt(1, 3)
-    const tradPool = [...TRADITION_POOL].sort(() => Math.random() - 0.5)
-    for (let i = 0; i < tradCount; i++) traditions.push(tradPool[i])
+    const usedTradIdx = new Set<number>()
+    while (traditions.length < tradCount && usedTradIdx.size < TRADITION_POOL.length) {
+      const idx = Math.floor(Math.random() * TRADITION_POOL.length)
+      if (!usedTradIdx.has(idx)) { usedTradIdx.add(idx); traditions.push(TRADITION_POOL[idx]) }
+    }
 
     const culture: Culture = {
       civId,
