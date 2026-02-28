@@ -209,14 +209,17 @@ export class PortalSystem {
         ctx.stroke();
       }
 
-      // Inner bright core
+      // Inner bright core — two circles replace createRadialGradient to avoid per-portal gradient allocation
+      const coreR = baseRadius * 0.4;
       ctx.globalAlpha = 0.9;
-      const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, baseRadius * 0.4);
-      grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(1, portal.color);
+      ctx.fillStyle = portal.color;
       ctx.beginPath();
-      ctx.arc(sx, sy, baseRadius * 0.4, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
+      ctx.arc(sx, sy, coreR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(sx, sy, coreR * 0.45, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.restore();
