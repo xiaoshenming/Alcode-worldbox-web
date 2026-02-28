@@ -32,6 +32,9 @@ export class DiseaseSystem {
   // Reusable maps to avoid GC pressure in hot paths (numeric key = cx * 10000 + cy)
   private _outbreakGrid: Map<number, EntityId[]> = new Map()
   private _spreadGrid: Map<number, EntityId[]> = new Map()
+  // Array pools for reusing cell arrays (avoids new [] on every grid.clear())
+  private _outbreakCellPool: EntityId[][] = []
+  private _spreadCellPool: EntityId[][] = []
 
   update(em: EntityManager, world: World, civManager: CivManager, particles: ParticleSystem): void {
     this.tickCounter++
@@ -74,13 +77,15 @@ export class DiseaseSystem {
 
     // Prefer overcrowded areas: build spatial density
     const grid = this._outbreakGrid
+    // Return used arrays to pool, then clear map
+    for (const arr of grid.values()) { arr.length = 0; this._outbreakCellPool.push(arr) }
     grid.clear()
     for (const id of creatures) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (!pos) continue
       const key = Math.floor(pos.x / 10) * 10000 + Math.floor(pos.y / 10)
       let cell = grid.get(key)
-      if (!cell) { cell = []; grid.set(key, cell) }
+      if (!cell) { cell = this._outbreakCellPool.length > 0 ? this._outbreakCellPool.pop()! : []; grid.set(key, cell) }
       cell.push(id)
     }
 
@@ -122,13 +127,15 @@ export class DiseaseSystem {
     // Build spatial hash for all creatures (cell size 5)
     const allCreatures = em.getEntitiesWithComponents('position', 'creature', 'needs')
     const grid = this._spreadGrid
+    // Return used arrays to pool, then clear map
+    for (const arr of grid.values()) { arr.length = 0; this._spreadCellPool.push(arr) }
     grid.clear()
     for (const id of allCreatures) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (!pos) continue
       const key = Math.floor(pos.x / 5) * 10000 + Math.floor(pos.y / 5)
       let cell = grid.get(key)
-      if (!cell) { cell = []; grid.set(key, cell) }
+      if (!cell) { cell = this._spreadCellPool.length > 0 ? this._spreadCellPool.pop()! : []; grid.set(key, cell) }
       cell.push(id)
     }
 
