@@ -39,13 +39,16 @@ export class TradeEconomySystem {
   private globalPrices: MarketPrices = { food: 1.0, wood: 1.0, stone: 1.0, gold: 1.0 }
   private localPrices: Map<number, MarketPrices> = new Map()
   private guilds: Map<number, MerchantGuild> = new Map()
+  private _civsBuf: Civilization[] = []
+  private _centerA = { x: 0, y: 0 }
+  private _centerB = { x: 0, y: 0 }
 
   update(civManager: CivManager, em: EntityManager, world: World, particles: ParticleSystem, tick: number): void {
     if (tick % TRADE_INTERVAL !== 0) return
 
     this.updateGlobalPrices(civManager)
 
-    const civs: Civilization[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
 
     // Evaluate trade between all civ pairs
@@ -124,9 +127,8 @@ export class TradeEconomySystem {
     if (relA < -20 || relB < -20) return
 
     // Distance check via territory center approximation
-    const centerA = this.civCenter(a)
-    const centerB = this.civCenter(b)
-    if (!centerA || !centerB) return
+    if (!this.civCenter(a, this._centerA) || !this.civCenter(b, this._centerB)) return
+    const centerA = this._centerA, centerB = this._centerB
     const dist = Math.sqrt((centerA.x - centerB.x) ** 2 + (centerA.y - centerB.y) ** 2)
     if (dist > 120) return // too far
 
@@ -228,8 +230,8 @@ export class TradeEconomySystem {
     return best
   }
 
-  private civCenter(civ: Civilization): { x: number; y: number } | null {
-    if (civ.territory.size === 0) return null
+  private civCenter(civ: Civilization, out: { x: number; y: number }): boolean {
+    if (civ.territory.size === 0) return false
     let sx = 0, sy = 0, n = 0
     // Sample up to 20 tiles for performance
     for (const key of civ.territory) {
@@ -237,7 +239,8 @@ export class TradeEconomySystem {
       sx += +key.substring(0, comma); sy += +key.substring(comma + 1); n++
       if (n >= 20) break
     }
-    return { x: sx / n, y: sy / n }
+    out.x = sx / n; out.y = sy / n
+    return true
   }
 
   private clampPrice(v: number): number {

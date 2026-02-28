@@ -55,6 +55,7 @@ let nextWaveId = 1
  */
 export class WorldMigrationWaveSystem {
   private activeWaves: MigrationWave[] = []
+  private _cellCounts: Map<number, EntityId[]> = new Map()  // reused across detectTriggers calls
 
   private static CHECK_INTERVAL = 180       // check triggers every 3 seconds
   private static MOVE_INTERVAL = 2          // move entities every 2 ticks
@@ -121,7 +122,8 @@ export class WorldMigrationWaveSystem {
 
     // Build spatial grid of creature density (cell = 16 tiles)
     const cellSize = 16
-    const cellCounts: Map<number, EntityId[]> = new Map()  // key = cx * 10000 + cy
+    const cellCounts = this._cellCounts  // reused map — clear arrays, reuse map itself
+    cellCounts.clear()
 
     for (const id of creatures) {
       const pos = em.getComponent<PositionComponent>(id, 'position')
