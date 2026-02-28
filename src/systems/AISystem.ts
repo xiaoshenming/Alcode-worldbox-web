@@ -31,6 +31,7 @@ export class AISystem {
   private batchIndex: number = 0
   private _newbornsBuf: { species: EntityType; x: number; y: number; motherId: EntityId; fatherId: EntityId }[] = []
   private _walkableTargetBuf = { x: 0, y: 0 }
+  private _threatBuf: { id: EntityId; dist: number } = { id: 0, dist: 0 }
 
   constructor(em: EntityManager, world: World, particles: ParticleSystem, factory: CreatureFactory, spatialHash: SpatialHashSystem) {
     this.em = em
@@ -497,8 +498,8 @@ export class AISystem {
     const hero = this.em.getComponent<HeroComponent>(id, 'hero')
     if (hero) detectRange *= 2
     const detectRange2 = detectRange * detectRange
-    let closest: { id: EntityId; dist: number } | null = null
     let closestDist2 = detectRange2
+    let foundId: EntityId = -1
 
     // Query global spatial hash with detectRange radius
     const nearby = this.spatialHash.query(pos.x, pos.y, detectRange)
@@ -527,10 +528,13 @@ export class AISystem {
 
           if (dist2 < closestDist2) {
             closestDist2 = dist2
-            closest = { id: otherId, dist: Math.sqrt(dist2) }
+            foundId = otherId
           }
     }
 
-    return closest
+    if (foundId === -1) return null
+    this._threatBuf.id = foundId
+    this._threatBuf.dist = Math.sqrt(closestDist2)
+    return this._threatBuf
   }
 }
