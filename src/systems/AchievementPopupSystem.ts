@@ -80,6 +80,8 @@ export class AchievementPopupSystem {
   private panelRect = { x: 0, y: 0, w: 0, h: 0 }
   private _candidatesBuf: AchievementState[] = []
   private _filteredBuf: AchievementState[] = []
+  private _unlockedCount = 0
+  private _panelHeaderStr = '成就总览  0/0'
 
   /** 注册一个成就定义 */
   registerAchievement(def: AchievementDef): void {
@@ -88,6 +90,7 @@ export class AchievementPopupSystem {
       def, progress: 0, unlocked: false, unlockTick: 0, displayProgress: 0,
       progressPctStr: '0', _prevPctQ: 0, trackerPctStr: '0%'
     })
+    this._panelHeaderStr = `成就总览  ${this._unlockedCount}/${this.achievements.size}`
   }
 
   /** 解锁指定成就并触发弹窗 */
@@ -101,6 +104,8 @@ export class AchievementPopupSystem {
     state.progressPctStr = '100'
     state._prevPctQ = 100
     state.trackerPctStr = '100%'
+    this._unlockedCount++
+    this._panelHeaderStr = `成就总览  ${this._unlockedCount}/${this.achievements.size}`
     this.popupQueue.push(achievementId)
   }
 
@@ -334,8 +339,7 @@ export class AchievementPopupSystem {
     ctx.shadowBlur = 0
     // 标题
     ctx.font = 'bold 16px sans-serif'; ctx.fillStyle = '#ffd700'; ctx.textBaseline = 'top'
-    const unlocked = this.getUnlockedCount(), total = this.getTotalCount()
-    ctx.fillText(`成就总览  ${unlocked}/${total}`, px + 14, py + 12)
+    ctx.fillText(this._panelHeaderStr, px + 14, py + 12)
     // 分类标签
     const cats = ACHIEVEMENT_CATEGORIES
     const tabW = (pw - 20) / cats.length

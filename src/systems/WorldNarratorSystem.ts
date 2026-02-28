@@ -100,6 +100,7 @@ export class WorldNarratorSystem {
   private dragOX = 0
   private dragOY = 0
   private unreadCount = 0
+  private _unreadStr = '0'
 
   /* ── 公共 API ── */
 
@@ -107,6 +108,7 @@ export class WorldNarratorSystem {
   addNarrative(type: NarrativeType, text: string, tick: number, importance = 3): void {
     this.entries.push({ id: nextNarrId++, type, text, tick, importance, read: false })
     this.unreadCount++
+    this._unreadStr = this.unreadCount > 9 ? '9+' : String(this.unreadCount)
     if (this.entries.length > MAX_ENTRIES) {
       this.entries.shift()
     }
@@ -142,7 +144,7 @@ export class WorldNarratorSystem {
       if (this.visible) {
         // 标记全部已读
         for (let i = 0; i < this.entries.length; i++) this.entries[i].read = true
-        this.unreadCount = 0
+        this.unreadCount = 0; this._unreadStr = '0'
       }
       return true
     }
@@ -301,7 +303,7 @@ export class WorldNarratorSystem {
     ctx.fillStyle = '#ff4444'
     ctx.beginPath(); ctx.arc(bx + bw - 4, by + 6, 9, 0, Math.PI * 2); ctx.fill()
     ctx.fillStyle = '#fff'; ctx.font = 'bold 10px monospace'
-    ctx.fillText(String(this.unreadCount > 9 ? '9+' : this.unreadCount), bx + bw - 4, by + 10)
+    ctx.fillText(this._unreadStr, bx + bw - 4, by + 10)
     ctx.textAlign = 'left'
   }
 }
