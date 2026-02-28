@@ -6,6 +6,8 @@
 export type AchievementRarity = 'common' | 'rare' | 'epic' | 'legendary'
 export type AchievementCategory = 'explore' | 'war' | 'build' | 'disaster' | 'special'
 
+const ACHIEVEMENT_CATEGORIES: AchievementCategory[] = ['explore', 'war', 'build', 'disaster', 'special']
+
 export interface AchievementDef {
   id: string
   name: string
@@ -179,7 +181,7 @@ export class AchievementPopupSystem {
     // 分类标签点击
     const tabY = r.y + 40
     if (y >= tabY && y <= tabY + 24) {
-      const cats: AchievementCategory[] = ['explore', 'war', 'build', 'disaster', 'special']
+      const cats = ACHIEVEMENT_CATEGORIES
       const tabW = (r.w - 20) / cats.length
       const idx = Math.floor((x - r.x - 10) / tabW)
       if (idx >= 0 && idx < cats.length) { this.selectedCategory = cats[idx]; this.panelScroll = 0 }
@@ -320,7 +322,7 @@ export class AchievementPopupSystem {
     const unlocked = this.getUnlockedCount(), total = this.getTotalCount()
     ctx.fillText(`成就总览  ${unlocked}/${total}`, px + 14, py + 12)
     // 分类标签
-    const cats: AchievementCategory[] = ['explore', 'war', 'build', 'disaster', 'special']
+    const cats = ACHIEVEMENT_CATEGORIES
     const tabW = (pw - 20) / cats.length
     const tabY = py + 40
     for (let i = 0; i < cats.length; i++) {

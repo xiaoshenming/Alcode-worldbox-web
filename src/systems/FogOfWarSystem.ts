@@ -290,7 +290,7 @@ export class FogOfWarSystem {
         EventLog.log('birth', `A lost tribe joined ${civ.name}! (+1 population)`, 0);
       }
     }
-    this._pendingRewards = [];
+    this._pendingRewards.length = 0;
   }
 
   private checkCivDiscovery(fogData: CivFogData, civManager: CivManager, civId: number, tick: number): void {

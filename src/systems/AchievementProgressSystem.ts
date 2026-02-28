@@ -16,6 +16,7 @@ export interface Achievement {
 type AchievementStatus = 'completed' | 'in_progress' | 'pending';
 
 const CATEGORIES: AchievementCategory[] = ['exploration', 'civilization', 'combat', 'nature', 'special'];
+const ALL_CATS: (AchievementCategory | null)[] = [null, ...CATEGORIES]
 const CAT_LABELS: Record<AchievementCategory, string> = {
   exploration: '探索', civilization: '文明', combat: '战斗', nature: '自然', special: '特殊',
 };
@@ -178,7 +179,7 @@ export class AchievementProgressSystem {
 
     // category tabs
     const tabY = y + HEADER_H + 4;
-    const allCats: (AchievementCategory | null)[] = [null, ...CATEGORIES];
+    const allCats = ALL_CATS;
     const tabW = w / allCats.length;
     for (let i = 0; i < allCats.length; i++) {
       const cat = allCats[i];
@@ -280,7 +281,7 @@ export class AchievementProgressSystem {
     // category tabs
     const tabY = p.y + HEADER_H + 4;
     if (y >= tabY && y <= tabY + TAB_H) {
-      const allCats: (AchievementCategory | null)[] = [null, ...CATEGORIES];
+      const allCats = ALL_CATS;
       const tabW = p.w / allCats.length;
       const idx = Math.floor((x - p.x) / tabW);
       if (idx >= 0 && idx < allCats.length) {

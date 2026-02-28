@@ -61,10 +61,14 @@ export class CreatureRitualSystem {
       const nearby = this.findNearbyCreatures(em, eid, 8)
       if (nearby.length < 2) continue
 
+      const participants: number[] = [eid]
+      const maxPart = Math.min(5, nearby.length)
+      for (let pi = 0; pi < maxPart; pi++) participants.push(nearby[pi])
+
       this.rituals.push({
         id: this.nextId++,
         leaderId: eid,
-        participants: [eid, ...nearby.slice(0, 5)],
+        participants,
         type,
         progress: 0,
         effect: TYPE_EFFECT_MAP[type],
