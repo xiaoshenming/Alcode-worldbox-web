@@ -5,6 +5,7 @@
 
 /** 单帧战斗快照 */
 const _EMPTY_DASH: number[] = []
+const _DASH_6_4: number[] = [6, 4]
 export interface BattleFrame {
   tick: number
   units: Array<{id: number; x: number; y: number; hp: number; maxHp: number; side: number; alive: boolean}>
@@ -173,7 +174,7 @@ export class BattleReplaySystem {
         const d = Math.sqrt((u.x - cx) ** 2 + (u.y - cy) ** 2);
         if (d > maxDist) maxDist = d;
       }
-      ctx.setLineDash([6, 4]);
+      ctx.setLineDash(_DASH_6_4);
       ctx.strokeStyle = 'rgba(255,200,0,0.4)';
       ctx.lineWidth = 2;
       ctx.beginPath();

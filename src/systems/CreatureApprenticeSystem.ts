@@ -5,6 +5,7 @@ import { EntityManager, EntityId, PositionComponent, CreatureComponent, NeedsCom
 import { CivMemberComponent } from '../civilization/Civilization'
 import { EventLog } from './EventLog'
 const _EMPTY_DASH: number[] = []
+const _DASH_3_3: number[] = [3, 3]
 
 export interface Apprenticeship {
   id: number
@@ -217,7 +218,7 @@ export class CreatureApprenticeSystem {
 
       const color = SKILL_COLORS[app.skill]
       ctx.strokeStyle = color
-      ctx.setLineDash([3, 3])
+      ctx.setLineDash(_DASH_3_3)
       ctx.beginPath()
       ctx.moveTo(mx, my)
       ctx.lineTo(ax, ay)

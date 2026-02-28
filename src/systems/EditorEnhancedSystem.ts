@@ -5,6 +5,7 @@
 
 /** 编辑操作记录 */
 const _EMPTY_DASH: number[] = []
+const _DASH_4_4: number[] = [4, 4]
 export type EditAction = {
   type: 'terrain' | 'spawn' | 'disaster'
   tiles: Array<{ x: number; y: number; oldValue: number; newValue: number }>
@@ -229,7 +230,7 @@ export class EditorEnhancedSystem {
     if (this.softEdge) {
       ctx.beginPath();
       ctx.arc(centerScreenX, centerScreenY, radius * 0.75, 0, Math.PI * 2);
-      ctx.setLineDash([4, 4]);
+      ctx.setLineDash(_DASH_4_4);
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
       ctx.lineWidth = 1;
       ctx.stroke();

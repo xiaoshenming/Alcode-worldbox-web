@@ -1,5 +1,6 @@
 import { TILE_SIZE } from '../utils/Constants'
 const _EMPTY_DASH: number[] = []
+const _DASH_6_4: number[] = [6, 4]
 
 export interface TradeRoute {
   fromX: number
@@ -75,7 +76,7 @@ export class TradeRouteRenderer {
 
       // 绘制虚线路线
       ctx.beginPath()
-      ctx.setLineDash([6, 4])
+      ctx.setLineDash(_DASH_6_4)
       ctx.strokeStyle = color
       ctx.lineWidth = lineWidth
       ctx.globalAlpha = 0.7

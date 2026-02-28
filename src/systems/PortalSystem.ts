@@ -52,6 +52,7 @@ export class PortalSystem {
   private animTick = 0;
   private _drawnSet: Set<number> = new Set();
   private _portalsBuf: Portal[] = [];
+  private readonly _portalDashBuf: number[] = [0, 0];
 
   createPortalPair(x1: number, y1: number, x2: number, y2: number): [number, number] | null {
     if (this.pairCount >= MAX_PORTAL_PAIRS) return null;
@@ -359,7 +360,8 @@ export class PortalSystem {
       ctx.globalAlpha = alpha + 0.1 * Math.sin(time * 3);
       ctx.strokeStyle = portal.color;
       ctx.lineWidth = Math.max(1, 1.5 * zoom);
-      ctx.setLineDash([4 * zoom, 4 * zoom]);
+      this._portalDashBuf[0] = 4 * zoom; this._portalDashBuf[1] = 4 * zoom;
+      ctx.setLineDash(this._portalDashBuf);
       ctx.lineDashOffset = -time * 20;
       ctx.beginPath();
       ctx.moveTo(ax, ay);

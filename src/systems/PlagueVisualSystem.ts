@@ -1,5 +1,8 @@
 import { TILE_SIZE } from '../utils/Constants'
 
+const _DASH_4_4: number[] = [4, 4]
+const _EMPTY_DASH: number[] = []
+
 export interface InfectedZone {
   x: number
   y: number
@@ -137,7 +140,7 @@ export class PlagueVisualSystem {
     // Draw quarantine borders
     ctx.strokeStyle = 'rgba(220,40,40,0.8)'
     ctx.lineWidth = 2
-    ctx.setLineDash([4, 4])
+    ctx.setLineDash(_DASH_4_4)
     for (const q of this.quarantines) {
       const sx = (q.x * TILE_SIZE - cameraX) * zoom
       const sy = (q.y * TILE_SIZE - cameraY) * zoom
