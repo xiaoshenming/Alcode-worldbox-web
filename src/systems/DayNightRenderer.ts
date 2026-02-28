@@ -166,13 +166,17 @@ export class DayNightRenderer {
       const flicker = 0.85 + 0.15 * Math.sin(this.flickerTime * 3 + phase);
       const radius = tileSize * camera.zoom * 2.5 * flicker;
 
-      const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, radius);
-      grad.addColorStop(0, rgbaCached(255, 200, 80, 0.35 * flicker));
-      grad.addColorStop(0.4, rgbaCached(255, 160, 40, 0.15 * flicker));
-      grad.addColorStop(1, 'rgba(255,120,20,0)');
-
-      ctx.fillStyle = grad;
-      ctx.fillRect(sx - radius, sy - radius, radius * 2, radius * 2);
+      // Two overlapping arcs replace createRadialGradient to avoid per-building gradient allocation
+      ctx.globalAlpha = 0.18 * flicker;
+      ctx.fillStyle = 'rgb(255,160,40)';
+      ctx.beginPath();
+      ctx.arc(sx, sy, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.35 * flicker;
+      ctx.fillStyle = 'rgb(255,200,80)';
+      ctx.beginPath();
+      ctx.arc(sx, sy, radius * 0.4, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     ctx.globalCompositeOperation = prev;
