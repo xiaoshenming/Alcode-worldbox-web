@@ -309,7 +309,7 @@ export class ZoneManagementSystem {
       // 名称 + 类型
       ctx.fillStyle = '#ddd';
       ctx.font = 'bold 12px monospace';
-      ctx.fillText(`${zone.name}`, px + 26, ry + 4);
+      ctx.fillText(zone.name, px + 26, ry + 4);
       ctx.fillStyle = 'rgba(180,180,180,0.7)';
       ctx.font = '10px monospace';
       ctx.fillText(zone.panelInfoStr, px + 26, ry + 20);

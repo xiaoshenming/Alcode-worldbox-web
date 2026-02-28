@@ -23,6 +23,8 @@ interface Myth {
   belief: number
   /** 是否基于真实事件 */
   historical: boolean
+  /** Pre-computed truncated text (max 40 chars) — computed at creation */
+  truncText: string
 }
 
 /** 神话模板 */
@@ -152,6 +154,7 @@ export class MythologySystem {
         id: nextMythId++, type, title, text, civId,
         createdTick: tick, belief: 0.5 + Math.random() * 0.5,
         historical: Math.random() < 0.3,
+        truncText: text.length > 40 ? text.slice(0, 40) + '...' : text,
       })
     }
 
@@ -243,7 +246,7 @@ export class MythologySystem {
 
         ctx.fillStyle = '#aaa'
         ctx.font = '11px monospace'
-        ctx.fillText(m.text.length > 40 ? m.text.slice(0, 40) + '...' : m.text, px + 38, drawY + 38)
+        ctx.fillText(m.truncText, px + 38, drawY + 38)
 
         // 信仰条
         ctx.fillStyle = 'rgba(50,40,60,0.5)'
