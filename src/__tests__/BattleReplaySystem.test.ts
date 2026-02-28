@@ -24,10 +24,10 @@ function makeRecord(id: number): BattleRecord {
     id, startTick: 0, endTick: 100,
     frames: [],
     sides: [
-      { civId: 1, name: 'A', color: '#f00', startCount: 10, endCount: 5, kills: 5 },
-      { civId: 2, name: 'B', color: '#0f0', startCount: 10, endCount: 8, kills: 2 },
+      { civId: 1, name: 'A', color: '#f00', startCount: 10, endCount: 5, kills: 5, deployStr: 'Deployed: 10  Survived: 5  Kills: 5' },
+      { civId: 2, name: 'B', color: '#0f0', startCount: 10, endCount: 8, kills: 2, deployStr: 'Deployed: 10  Survived: 8  Kills: 2' },
     ],
-    winner: 2,
+    winner: 2, winnerStr: 'Winner: B', durationStr: 'Duration: 100 ticks',
   }
 }
 

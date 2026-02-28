@@ -22,8 +22,12 @@ export interface BattleRecord {
   startTick: number
   endTick: number
   frames: BattleFrame[]
-  sides: Array<{civId: number; name: string; color: string; startCount: number; endCount: number; kills: number}>
+  sides: Array<{civId: number; name: string; color: string; startCount: number; endCount: number; kills: number; deployStr: string}>
   winner: number
+  /** Pre-computed "Winner: name" string — set in stopRecording */
+  winnerStr: string
+  /** Pre-computed "Duration: N ticks" string — set in stopRecording */
+  durationStr: string
 }
 
 const MAX_FRAMES = 300;
@@ -66,8 +70,8 @@ export class BattleReplaySystem {
     if (this.recording) return;
     this.recording = {
       id: battleId, startTick: 0, endTick: 0, frames: [],
-      sides: sides.map(s => ({ ...s, startCount: 0, endCount: 0, kills: 0 })),
-      winner: -1
+      sides: sides.map(s => ({ ...s, startCount: 0, endCount: 0, kills: 0, deployStr: '' })),
+      winner: -1, winnerStr: '', durationStr: ''
     };
   }
 
@@ -115,6 +119,13 @@ export class BattleReplaySystem {
         rec.sides[1].kills = rec.sides[0].startCount - rec.sides[0].endCount;
       }
     }
+    // Pre-compute display strings — all data is now finalized
+    for (const side of rec.sides) {
+      side.deployStr = `Deployed: ${side.startCount}  Survived: ${side.endCount}  Kills: ${side.kills}`
+    }
+    const winSide = rec.sides.find(s => s.civId === rec.winner)
+    rec.winnerStr = winSide ? `Winner: ${winSide.name}` : ''
+    rec.durationStr = `Duration: ${rec.endTick - rec.startTick} ticks`
     if (this.records.length >= MAX_RECORDS) this.records.shift();
     this.records.push(rec);
     this.recording = null;
@@ -337,7 +348,7 @@ export class BattleReplaySystem {
     if (winSide) {
       ctx.fillStyle = winSide.color;
       ctx.font = '13px monospace';
-      ctx.fillText(`Winner: ${winSide.name}`, x + STATS_W / 2, y + 50);
+      ctx.fillText(rec.winnerStr, x + STATS_W / 2, y + 50);
     }
     // 双方统计
     ctx.textAlign = 'left';
@@ -347,12 +358,12 @@ export class BattleReplaySystem {
       ctx.fillStyle = side.color;
       ctx.fillText(side.name, x + 16, row);
       ctx.fillStyle = '#ccc';
-      ctx.fillText(`Deployed: ${side.startCount}  Survived: ${side.endCount}  Kills: ${side.kills}`, x + 16, row + 16);
+      ctx.fillText(side.deployStr, x + 16, row + 16);
       row += 42;
     }
     // 持续时间 + MVP
     ctx.fillStyle = '#aaa';
-    ctx.fillText(`Duration: ${rec.endTick - rec.startTick} ticks`, x + 16, row);
+    ctx.fillText(rec.durationStr, x + 16, row);
     const mvp = this.findMVP(rec);
     if (mvp) ctx.fillText(`MVP: Unit #${mvp.id} (${mvp.dmg} dmg dealt)`, x + 16, row + 18);
     // 关闭提示
