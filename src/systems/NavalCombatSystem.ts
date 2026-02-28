@@ -38,6 +38,7 @@ export class NavalCombatSystem {
   private nextBattleId = 1
   private battleLog: string[] = []
   private _shipBuf: [EntityId, ShipComponent][] = []
+  private _battlesBuf: NavalBattle[] = []
 
   /** Register a ship entity */
   registerShip(entityId: EntityId, ship: ShipComponent): void {
@@ -229,7 +230,9 @@ export class NavalCombatSystem {
   }
 
   getActiveBattles(): NavalBattle[] {
-    return [...this.battles.values()]
+    const buf = this._battlesBuf; buf.length = 0
+    for (const b of this.battles.values()) buf.push(b)
+    return buf
   }
 
   getBattleLog(): string[] {

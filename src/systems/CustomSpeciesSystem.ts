@@ -45,6 +45,7 @@ export class CustomSpeciesSystem {
   private species = new Map<string, SpeciesConfig>();
   private panelOpen = false;
   private nextId = 1;
+  private _speciesBuf: SpeciesConfig[] = []
 
   // 编辑状态
   private editName = 'NewSpecies';
@@ -77,7 +78,9 @@ export class CustomSpeciesSystem {
   }
 
   getAllSpecies(): SpeciesConfig[] {
-    return [...this.species.values()];
+    const buf = this._speciesBuf; buf.length = 0
+    for (const s of this.species.values()) buf.push(s)
+    return buf
   }
 
   deleteSpecies(id: string): void {

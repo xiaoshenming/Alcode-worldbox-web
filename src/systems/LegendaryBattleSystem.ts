@@ -50,6 +50,7 @@ export class LegendaryBattleSystem {
   // Reusable cluster buffer and civCounts map for battle detection (every 10 ticks)
   private _clusterBuf: EntityId[] = []
   private _civCounts: Map<number, EntityId[]> = new Map()
+  private _battlesBuf: BattleInfo[] = []
 
   /**
    * Main update loop. Detects new battles, updates existing ones,
@@ -209,7 +210,9 @@ export class LegendaryBattleSystem {
 
   /** Returns all currently active battles. */
   getActiveBattles(): BattleInfo[] {
-    return [...this.battles.values()]
+    const buf = this._battlesBuf; buf.length = 0
+    for (const b of this.battles.values()) buf.push(b)
+    return buf
   }
 
   /** Returns the battle at the given position within radius, or null. */
