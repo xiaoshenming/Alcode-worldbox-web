@@ -38,6 +38,9 @@ export class WorldDashboardSystem {
   private _racesSet: Set<string> = new Set();
   private _orderedBuf: PopulationSample[] = new Array(MAX_POP_SAMPLES);
   private _religionEntriesBuf: [string, number][] = [];
+  /** Cached religion ratio strings — rebuilt when religionData updates */
+  private _religionRatioStrs: Map<string, string> = new Map();
+  private _religionLegendStrs: Map<string, string> = new Map();
 
   toggle(): void {
     this.visible = !this.visible;
@@ -53,6 +56,16 @@ export class WorldDashboardSystem {
 
   updateReligionData(data: Map<string, number>): void {
     this.religionData = data;
+    // Pre-compute ratio strings to avoid toFixed() during render
+    let total = 0; for (const v of data.values()) total += v;
+    this._religionRatioStrs.clear();
+    this._religionLegendStrs.clear();
+    if (total > 0) {
+      for (const [name, count] of data) {
+        this._religionRatioStrs.set(name, `${name} ${((count / total) * 100).toFixed(1)}%`);
+        this._religionLegendStrs.set(name, `${name}: ${count}`);
+      }
+    }
   }
 
   addPopulationSample(tick: number, populations: Record<string, number>): void {
@@ -229,7 +242,7 @@ export class WorldDashboardSystem {
         ctx.font = '11px monospace';
         ctx.textAlign = midAngle > Math.PI / 2 && midAngle < Math.PI * 1.5 ? 'right' : 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`${name} ${(ratio * 100).toFixed(1)}%`, lx, ly);
+        ctx.fillText(this._religionRatioStrs.get(name) ?? `${name} ${(ratio * 100).toFixed(1)}%`, lx, ly);
       }
 
       startAngle += sweep;
@@ -247,7 +260,7 @@ export class WorldDashboardSystem {
       ctx.fillStyle = color;
       ctx.fillRect(legendX, legendY - 5, 10, 10);
       ctx.fillStyle = '#bbccdd';
-      ctx.fillText(`${name}: ${count}`, legendX + 16, legendY);
+      ctx.fillText(this._religionLegendStrs.get(name) ?? `${name}: ${count}`, legendX + 16, legendY);
       legendY += 18;
     }
 
