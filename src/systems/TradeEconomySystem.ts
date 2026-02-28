@@ -16,6 +16,9 @@ const MIN_PRICE_MULT = 0.5
 const MAX_PRICE_MULT = 3.0
 const TRADE_INTERVAL = 120
 
+/** Pre-computed guild level thresholds — avoids per-civ literal array in updateGuild */
+const _GUILD_LEVEL_THRESHOLDS = [0, 50, 150, 400, 800] as const
+
 const SPECIALTY_MAP: Record<CultureTrait, string> = {
   warrior: 'weapons',
   merchant: 'luxury',
@@ -111,7 +114,7 @@ export class TradeEconomySystem {
     const guild = this.guilds.get(civ.id)
     if (!guild) return
     // Level up thresholds: 50, 150, 400, 800
-    const thresholds = [0, 50, 150, 400, 800]
+    const thresholds = _GUILD_LEVEL_THRESHOLDS
     for (let lvl = 4; lvl >= 1; lvl--) {
       if (guild.totalVolume >= thresholds[lvl] && guild.level < lvl + 1) {
         guild.level = lvl + 1

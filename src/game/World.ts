@@ -4,6 +4,13 @@ import { EventLog } from '../systems/EventLog'
 
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter'
 
+/** Pre-computed season order — avoids per-tick literal array creation in update() */
+const _SEASON_ORDER: readonly Season[] = ['spring', 'summer', 'autumn', 'winter'] as const
+/** Pre-computed season display names — avoids per-season-change Record creation in update() */
+const _SEASON_NAMES: Record<Season, string> = {
+  spring: 'Spring', summer: 'Summer', autumn: 'Autumn', winter: 'Winter'
+}
+
 export class World {
   tiles: TileType[][] = []
   tileVariants: number[][] = [] // For color variation
@@ -195,16 +202,12 @@ export class World {
     // Season tracking
     this.yearTick = this.tick % this.yearLength
     const seasonIndex = Math.floor(this.yearTick / this.seasonLength)
-    const seasons: Season[] = ['spring', 'summer', 'autumn', 'winter']
-    this.season = seasons[seasonIndex]
+    this.season = _SEASON_ORDER[seasonIndex]
     this.seasonProgress = (this.yearTick % this.seasonLength) / this.seasonLength
 
     // Mark world dirty when season changes so tiles re-render with new tint
     if (this.season !== this.lastSeason) {
-      const seasonNames: Record<Season, string> = {
-        spring: 'Spring', summer: 'Summer', autumn: 'Autumn', winter: 'Winter'
-      }
-      EventLog.log('weather', `Season changed to ${seasonNames[this.season]}`, this.tick)
+      EventLog.log('weather', `Season changed to ${_SEASON_NAMES[this.season]}`, this.tick)
       this.lastSeason = this.season
       this._fullDirty = true
       this._colorCache.clear()
