@@ -276,8 +276,10 @@ export class SiegeSystem {
   }
 
   /** Get soldiers of a civ near a point (returns entity IDs). */
+  private _soldiersNearBuf: EntityId[] = []
   private getSoldiersNear(em: EntityManager, civId: number, x: number, y: number): EntityId[] {
-    const result: EntityId[] = []
+    const result = this._soldiersNearBuf
+    result.length = 0
     for (const id of em.getEntitiesWithComponent('civMember')) {
       const m = em.getComponent<CivMemberComponent>(id, 'civMember')
       if (!m || m.civId !== civId || m.role !== 'soldier') continue
@@ -291,6 +293,15 @@ export class SiegeSystem {
 
   /** Count soldiers of a civ near a point. */
   private countSoldiersNear(em: EntityManager, civId: number, x: number, y: number): number {
-    return this.getSoldiersNear(em, civId, x, y).length
+    let count = 0
+    for (const id of em.getEntitiesWithComponent('civMember')) {
+      const m = em.getComponent<CivMemberComponent>(id, 'civMember')
+      if (!m || m.civId !== civId || m.role !== 'soldier') continue
+      const pos = em.getComponent<PositionComponent>(id, 'position')
+      if (!pos) continue
+      const dx = pos.x - x, dy = pos.y - y
+      if (dx * dx + dy * dy <= SIEGE_RANGE_SQ) count++
+    }
+    return count
   }
 }
