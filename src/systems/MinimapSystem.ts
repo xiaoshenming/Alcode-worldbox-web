@@ -36,6 +36,7 @@ const POPULATION_GRID_SIZE = 10 // cells per axis for density grid
 
 export class MinimapSystem {
   private mode: MinimapMode = 'terrain'
+  private _modeUpper = 'TERRAIN'
   private worldWidth: number
   private worldHeight: number
 
@@ -62,6 +63,7 @@ export class MinimapSystem {
       this.lastRedrawTick = -Infinity
     }
     this.mode = mode
+    this._modeUpper = mode.toUpperCase()
   }
 
   getMode(): MinimapMode {
@@ -126,7 +128,7 @@ export class MinimapSystem {
     ctx.fillStyle = '#ffffff'
     ctx.font = '10px monospace'
     ctx.textAlign = 'center'
-    ctx.fillText(this.mode.toUpperCase(), x + mapWidth / 2, y + 11)
+    ctx.fillText(this._modeUpper, x + mapWidth / 2, y + 11)
     ctx.textAlign = 'start'
 
     ctx.restore()

@@ -6,6 +6,7 @@ export interface TraitDisplay {
   value: number
   color: string
   label: string  // e.g. "Strong", "Weak"
+  abbr: string   // Pre-computed 3-char uppercase abbreviation for render
 }
 
 export interface FamilyNode {
@@ -62,6 +63,7 @@ export class GeneticDisplaySystem {
         value: value as number,
         color: TRAIT_COLORS[key] ?? '#888',
         label: traitLabel(key, value as number),
+        abbr: key.slice(0, 3).toUpperCase(),
       })
     }
     return result
@@ -121,7 +123,7 @@ export class GeneticDisplaySystem {
       // Label
       ctx.fillStyle = '#aaa'
       ctx.textAlign = 'left'
-      ctx.fillText(trait.name.slice(0, 3).toUpperCase(), x, cy + barH / 2)
+      ctx.fillText(trait.abbr, x, cy + barH / 2)
 
       // Bar background
       const barX = x + 30

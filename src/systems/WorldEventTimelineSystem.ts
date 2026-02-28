@@ -10,6 +10,7 @@
 interface WorldEvent {
   tick: number;
   type: string;
+  typeUpper: string;  // Pre-computed type.toUpperCase() for render
   description: string;
   worldX: number;
   worldY: number;
@@ -79,6 +80,7 @@ export class WorldEventTimelineSystem {
     const evt: WorldEvent = {
       tick,
       type,
+      typeUpper: type.toUpperCase(),
       description,
       worldX: worldX ?? 0,
       worldY: worldY ?? 0,
@@ -277,7 +279,7 @@ export class WorldEventTimelineSystem {
       // 类型标签
       ctx.fillStyle = color;
       ctx.font = 'bold 10px monospace';
-      ctx.fillText(evt.type.toUpperCase(), p.x + 90, rowY + 14);
+      ctx.fillText(evt.typeUpper, p.x + 90, rowY + 14);
 
       // 描述
       ctx.fillStyle = TEXT_PRIMARY;

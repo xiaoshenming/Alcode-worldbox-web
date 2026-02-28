@@ -47,6 +47,10 @@ const RARITY_GLOW: Record<AchievementRarity, string> = {
 const RARITY_PARTICLES: Record<AchievementRarity, number> = {
   common: 12, rare: 24, epic: 40, legendary: 80
 }
+// Pre-computed uppercase labels — avoids rarity.toUpperCase() in render hot path
+const RARITY_LABELS: Record<AchievementRarity, string> = {
+  common: 'COMMON', rare: 'RARE', epic: 'EPIC', legendary: 'LEGENDARY',
+}
 const CATEGORY_LABELS: Record<AchievementCategory, string> = {
   explore: '探索', war: '战争', build: '建设', disaster: '灾难', special: '特殊'
 }
@@ -242,7 +246,7 @@ export class AchievementPopupSystem {
     ctx.fillText(state.def.description, x + 50, y + 30)
     // 稀有度标签
     ctx.font = '10px sans-serif'; ctx.fillStyle = color
-    const rarityLabel = state.def.rarity.toUpperCase()
+    const rarityLabel = RARITY_LABELS[state.def.rarity]
     ctx.fillText(rarityLabel, x + 50, y + CARD_H - 18)
     ctx.restore()
   }
