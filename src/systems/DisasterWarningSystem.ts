@@ -71,6 +71,7 @@ export class DisasterWarningSystem {
   private warnings: DisasterWarning[] = []
   private cachedEffects: VisualEffect[] = []
   private effectsDirty: boolean = true
+  private _shakeOffset = { dx: 0, dy: 0 }
 
   /**
    * Process active warnings: decay intensity, remove expired, rebuild effects.
@@ -237,12 +238,12 @@ export class DisasterWarningSystem {
         if (w.intensity > maxIntensity) maxIntensity = w.intensity
       }
     }
-    if (maxIntensity < 0.01) return { dx: 0, dy: 0 }
+    if (maxIntensity < 0.01) { this._shakeOffset.dx = 0; this._shakeOffset.dy = 0; return this._shakeOffset }
 
     const amplitude = maxIntensity * 3
-    const dx = Math.sin(tick * 1.7) * amplitude * (0.5 + Math.random() * 0.5)
-    const dy = Math.cos(tick * 2.3) * amplitude * (0.5 + Math.random() * 0.5)
-    return { dx, dy }
+    this._shakeOffset.dx = Math.sin(tick * 1.7) * amplitude * (0.5 + Math.random() * 0.5)
+    this._shakeOffset.dy = Math.cos(tick * 2.3) * amplitude * (0.5 + Math.random() * 0.5)
+    return this._shakeOffset
   }
 
   private getDefaultRadius(type: WarningType): number {

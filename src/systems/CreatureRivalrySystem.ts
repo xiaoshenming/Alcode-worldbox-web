@@ -48,8 +48,7 @@ export class CreatureRivalrySystem {
 
   private detectRivalries(em: EntityManager, tick: number): void {
     if (this.rivalries.length >= MAX_RIVALRIES) return
-    const creatures = em.getEntitiesWithComponents('creature', 'position')
-    const arr = [...creatures]
+    const arr = em.getEntitiesWithComponents('creature', 'position')
     for (let i = 0; i < Math.min(arr.length, 50); i++) {
       const a = arr[Math.floor(Math.random() * arr.length)]
       if (Math.random() > RIVALRY_CHANCE) continue
