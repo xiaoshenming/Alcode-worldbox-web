@@ -221,10 +221,14 @@ export class EraVisualSystem {
     const px = x + 10
     const py = y + 10
 
-    ctx.fillStyle = `rgba(0,0,0,${style.uiBgAlpha})`
+    ctx.save()
+    ctx.globalAlpha = style.uiBgAlpha
+    ctx.fillStyle = '#000'
     ctx.beginPath()
     ctx.roundRect(px, py, pillW, pillH, 6)
     ctx.fill()
+    ctx.globalAlpha = 1
+    ctx.restore()
 
     // Border
     ctx.strokeStyle = style.uiBorderColor

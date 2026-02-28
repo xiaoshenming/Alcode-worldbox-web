@@ -181,8 +181,14 @@ export class EvolutionVisualSystem {
       ctx.fillText(`Total: ${data.total}`, ox + 6, cy + 18)
       const traits = Object.entries(data.nodes[0].avgTraits)
       ctx.fillStyle = DIM
-      ctx.fillText(traits.slice(0, 3).map(([k, v]) => `${k.slice(0, 3)}:${v.toFixed(0)}`).join(' '), ox + 6, cy + 32)
-      const evo = data.nodes.reduce((s, n) => s + n.mutations.length, 0)
+      // 手动拼接前3个trait，消除slice+map+join临时数组
+      let traitStr = ''
+      for (let ti = 0; ti < Math.min(3, traits.length); ti++) {
+        if (ti > 0) traitStr += ' '
+        traitStr += `${traits[ti][0].slice(0, 3)}:${traits[ti][1].toFixed(0)}`
+      }
+      ctx.fillText(traitStr, ox + 6, cy + 32)
+      let evo = 0; for (const n of data.nodes) evo += n.mutations.length
       ctx.fillText(`Evolutions: ${evo}`, ox + 6, cy + 44)
       cy += cardH + 6
     }
