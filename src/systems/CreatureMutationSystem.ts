@@ -10,6 +10,8 @@ export interface Mutation {
   type: MutationType
   magnitude: number    // 0.1 - 1.0
   tick: number
+  /** Pre-computed render string — avoids toFixed per frame */
+  magnitudeStr: string
 }
 
 interface WorldLike {
@@ -84,7 +86,7 @@ export class CreatureMutationSystem {
       if (this.hasMutation(eid, type)) continue
 
       const magnitude = 0.1 + Math.random() * 0.9
-      const mutation: Mutation = { type, magnitude, tick }
+      const mutation: Mutation = { type, magnitude, tick, magnitudeStr: (magnitude * 100).toFixed(0) }
 
       let muts = this.mutations.get(eid)
       if (!muts) {
@@ -153,7 +155,7 @@ export class CreatureMutationSystem {
       ctx.fillStyle = '#0a0a0a'
       ctx.fillRect(bx, by, 230, 16)
       ctx.fillStyle = color
-      ctx.fillText(`* ${label} (${(r.mutation.magnitude * 100).toFixed(0)}%)`, bx + 4, by + 12)
+      ctx.fillText(`* ${label} (${r.mutation.magnitudeStr}%)`, bx + 4, by + 12)
     }
     ctx.restore()
   }

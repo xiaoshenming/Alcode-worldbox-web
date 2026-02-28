@@ -42,6 +42,8 @@ const SLIDER_PAD = 12;
 export class SandboxSettingsSystem {
   private values: Record<string, number> = {};
   private bools: Record<string, boolean> = {};
+  /** Pre-computed render strings — avoids toFixed per frame */
+  private valueStrs: Record<string, string> = {};
   private panelOpen = false;
   private draggingKey: string | null = null;
 
@@ -63,12 +65,16 @@ export class SandboxSettingsSystem {
     } else if (key in PARAM_DEFS) {
       const d = PARAM_DEFS[key];
       this.values[key] = Math.round(Math.min(d.max, Math.max(d.min, value as number)) / d.step) * d.step;
+      this.valueStrs[key] = this.values[key].toFixed(d.decimals);
     }
     this.save();
   }
 
   resetToDefaults(): void {
-    for (const k of PARAM_KEYS) this.values[k] = PARAM_DEFS[k].default;
+    for (const k of PARAM_KEYS) {
+      this.values[k] = PARAM_DEFS[k].default;
+      this.valueStrs[k] = PARAM_DEFS[k].default.toFixed(PARAM_DEFS[k].decimals);
+    }
     for (const k of BOOL_KEYS) this.bools[k] = BOOL_DEFS[k].default;
     this.save();
   }
@@ -189,7 +195,7 @@ export class SandboxSettingsSystem {
       ctx.fillStyle = '#fff';
       ctx.font = '10px monospace';
       ctx.textAlign = 'right';
-      ctx.fillText(v.toFixed(d.decimals), x + w - SLIDER_PAD, ry);
+      ctx.fillText(this.valueStrs[k], x + w - SLIDER_PAD, ry);
       ctx.textAlign = 'left';
     }
 
