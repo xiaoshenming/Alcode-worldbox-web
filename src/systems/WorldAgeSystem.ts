@@ -78,6 +78,8 @@ export class WorldAgeSystem {
   private worldTick: number = 0
   private currentEpochIndex: number = 0
   private sampleCount: number
+  // Pre-allocated overlay object to avoid new object every frame in getColorOverlay()
+  private _overlayBuf: ColorOverlay = { r: 0, g: 0, b: 0, a: 0 }
 
   constructor() {
     this.sampleCount = Math.floor(WORLD_WIDTH * WORLD_HEIGHT * SAMPLE_RATIO)
@@ -130,21 +132,27 @@ export class WorldAgeSystem {
    */
   getColorOverlay(): ColorOverlay {
     const cfg = EPOCH_CONFIGS[this.currentEpochIndex]
-    if (this.currentEpochIndex === 0) return { ...cfg.overlay }
+    const buf = this._overlayBuf
+    if (this.currentEpochIndex === 0) {
+      buf.r = cfg.overlay.r; buf.g = cfg.overlay.g; buf.b = cfg.overlay.b; buf.a = cfg.overlay.a
+      return buf
+    }
 
     const ticksIntoEpoch = this.worldTick - cfg.startTick
     const transitionDuration = 200
-    if (ticksIntoEpoch >= transitionDuration) return { ...cfg.overlay }
+    if (ticksIntoEpoch >= transitionDuration) {
+      buf.r = cfg.overlay.r; buf.g = cfg.overlay.g; buf.b = cfg.overlay.b; buf.a = cfg.overlay.a
+      return buf
+    }
 
     // Blend from previous epoch
     const prev = EPOCH_CONFIGS[this.currentEpochIndex - 1]
     const t = ticksIntoEpoch / transitionDuration
-    return {
-      r: prev.overlay.r + (cfg.overlay.r - prev.overlay.r) * t,
-      g: prev.overlay.g + (cfg.overlay.g - prev.overlay.g) * t,
-      b: prev.overlay.b + (cfg.overlay.b - prev.overlay.b) * t,
-      a: prev.overlay.a + (cfg.overlay.a - prev.overlay.a) * t,
-    }
+    buf.r = prev.overlay.r + (cfg.overlay.r - prev.overlay.r) * t
+    buf.g = prev.overlay.g + (cfg.overlay.g - prev.overlay.g) * t
+    buf.b = prev.overlay.b + (cfg.overlay.b - prev.overlay.b) * t
+    buf.a = prev.overlay.a + (cfg.overlay.a - prev.overlay.a) * t
+    return buf
   }
 
   /** Returns a disaster frequency multiplier (>1 = more frequent). */

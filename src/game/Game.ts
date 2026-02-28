@@ -1796,6 +1796,7 @@ export class Game {
   private _miningCivRace = new Map<number, string>()
   private _miningCivBuf: { id: number; cities: { x: number; y: number }[]; techLevel: number; race: string }[] = []
   private _siegeSoldiersBuf: number[] = []
+  private _speciesCountsMap = new Map<string, number>()  // reused in getSpeciesCounts callback
   // Pre-computed sky darken color table for disaster warning overlay (101 steps, alpha = intensity*0.4*0-1)
   private _skyDarkenTable: string[] = (() => {
     const t: string[] = []
@@ -1984,7 +1985,8 @@ export class Game {
         return count * 16
       },
       getSpeciesCounts: () => {
-        const counts = new Map<string, number>()
+        const counts = this._speciesCountsMap
+        counts.clear()
         const creatures = this.em.getEntitiesWithComponents('creature')
         for (const id of creatures) {
           const c = this.em.getComponent<CreatureComponent>(id, 'creature')

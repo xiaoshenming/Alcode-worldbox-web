@@ -17,6 +17,10 @@ const enum ProphecyState {
 /** 预言类型 */
 type ProphecyType = 'disaster' | 'war' | 'prosperity' | 'hero' | 'doom' | 'plague' | 'miracle'
 
+// Pre-computed font strings to avoid per-prophecy string allocation in renderProphecyRow
+const _PROPHECY_ACTIVE_FONT = 'bold 13px monospace'
+const _PROPHECY_INACTIVE_FONT = '12px monospace'
+
 /** 单条预言 */
 interface Prophecy {
   id: number
@@ -234,7 +238,7 @@ export class ProphecySystem {
 
     // 文本
     ctx.fillStyle = isActive ? TYPE_COLORS[p.type] : '#666'
-    ctx.font = isActive ? 'bold 13px monospace' : '12px monospace'
+    ctx.font = isActive ? _PROPHECY_ACTIVE_FONT : _PROPHECY_INACTIVE_FONT
     ctx.fillText(`"${p.text}"`, px + 40, ry + 22)
 
     // 状态
