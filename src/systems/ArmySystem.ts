@@ -28,6 +28,8 @@ const MAX_SOLDIER_RATIO = 0.3
 export class ArmySystem {
   private armies: Map<number, Army> = new Map()
   private _buildingsToRemoveBuf: number[] = []
+  // Reusable buffer for cleanupAndCheckEnd (every tick)
+  private _civsToRemoveBuf: number[] = []
 
   getArmies(): Map<number, Army> {
     return this.armies
@@ -296,7 +298,8 @@ export class ArmySystem {
   }
 
   private cleanupAndCheckEnd(em: EntityManager, civManager: CivManager, particles: ParticleSystem, tick: number): void {
-    const toRemove: number[] = []
+    const toRemove = this._civsToRemoveBuf
+    toRemove.length = 0
 
     for (const [civId, army] of this.armies) {
       if (army.state === 'idle') continue
