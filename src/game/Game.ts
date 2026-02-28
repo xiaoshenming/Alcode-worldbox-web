@@ -3460,13 +3460,17 @@ export class Game {
         if (tick % 60 === 20) {
         {
           const civsBuf = this._chronicleCivsBuf
-          civsBuf.length = 0
+          let chronicleIdx = 0
           let totalPop = 0, totalCities = 0
           for (const c of this.civManager.civilizations.values()) {
-            civsBuf.push({ id: c.id, name: c.name, population: c.population, cities: c.buildings.length })
+            let cslot = civsBuf[chronicleIdx]
+            if (!cslot) { cslot = { id: 0, name: '', population: 0, cities: 0 }; civsBuf.push(cslot) }
+            cslot.id = c.id; cslot.name = c.name; cslot.population = c.population; cslot.cities = c.buildings.length
+            chronicleIdx++
             totalPop += c.population
             totalCities += c.buildings.length
           }
+          civsBuf.length = chronicleIdx
           const snap = this._chronicleSnapshot
           snap.totalPopulation = totalPop
           snap.totalCities = totalCities
@@ -3711,16 +3715,20 @@ export class Game {
 
     // Clone power visual effects - reuse buffer to avoid GC
     {
-      this._clonePositions.length = 0
+      let cloneIdx = 0
       for (const id of this.em.getEntitiesWithComponents('position', 'creature')) {
         const gen = this.clonePower.getGeneration(id)
         if (gen > 0) {
           const pos = this.em.getComponent<PositionComponent>(id, 'position')
           if (!pos) continue
-          this._clonePositions.push({ x: pos.x, y: pos.y, generation: gen })
+          let cslot = this._clonePositions[cloneIdx]
+          if (!cslot) { cslot = { x: 0, y: 0, generation: 0 }; this._clonePositions.push(cslot) }
+          cslot.x = pos.x; cslot.y = pos.y; cslot.generation = gen
+          cloneIdx++
         }
       }
-      if (this._clonePositions.length > 0) {
+      this._clonePositions.length = cloneIdx
+      if (cloneIdx > 0) {
         this.clonePower.render(ctx, this.camera.x, this.camera.y, this.camera.zoom, this._clonePositions)
       }
     }

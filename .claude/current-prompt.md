@@ -1,12 +1,12 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代39完成。深度GC优化扫描 — 批量消除80+个系统getter的filter()临时数组。主要成果：1) 消除25+个Creature系统getter：Grudge/Dance/Rivalry/Intuition/Superstition/Art/Tattoo/Divination/Dream/Legacy/Handicraft/Invention/Lullaby/OmenBelief/Phobia/Somniloquy/Totem/Telepathy/Trauma/Ancestor/MigrationMemory/Bounty/Taming/Calligraphy/Alliance/Fashion/Ritual/Pilgrimage；2) 消除35+个World/Diplomatic系统getter：Fossil/Geyser/Glacier/Maelstrom/Miasma/MigrationRoute/Oasis/Purification/TidePool/Underground/Whirlpool/AncientRuin/Sinkhole/Relic/MythicBeast/MeteorShower/GeothermalVent/Embargo/Hostage/Marriage/PeaceTreaty/Pledge/Propaganda/Ratification/Referendum/Tariff/TradeSanction/HostageExchange/CulturalExchange/Blockade/Espionage/TradeAgreement/Diplomacy/Exile/Guild/Memorial；3) 消除20+个系统update路径filter：WorldChronicle.getChronicles()合并双filter为单次循环、LoyaltySystem.triggerRebellion/triggerCivilWar改预分配buf、BiomeEvolutionSystem.erosion()改手动计数、CultureSystem trait adoption改两阶段采样、HeroLegendSystem.getLeaderboard()改buf+sort、TechSystem templeCount改手动计数、WorldEventSystem.tryTriggerRandomEvent改buf、CreatureConstellationSystem改两阶段采样；4) 修复DiplomacySystem/EspionageSystem测试（共享buf模式）。总计：约100+处优化，测试5434个全通过，TypeScript clean，构建成功。
+🧠 AI 上轮笔记：迭代45完成。深度GC优化第五轮 — 专注渲染路径对象字面量、环形缓冲区替代shift()、Game.ts多处预分配。主要成果：1) EventNotificationSystem：预分配_candidatesBuf消除每帧候选数组，marqueeQueue.shift()改头指针出队消除O(N)移位；2) RenderCullingSystem：预分配_visibleBuf+getStats直接返回内部对象；3) EventLog：改用环形缓冲区(_buf+_head+_count)，消除每次shift()的O(N)移位，getRecent升序返回；4) WorldStatsOverviewSystem.chartPt：消除每点[x,y]元组分配，改为写入_cpx/_cpy成员字段，每帧省最多600次数组创建；5) WorldDashboardSystem.drawReligionPie：预分配_religionEntriesBuf；6) Renderer.ts：添加fallback实体和粒子对象池(_fallbackObjPool/_particleObjPool)，消除每帧每实体/粒子的对象字面量分配；7) Game.ts多处预分配：_civDataBuf(每120tick)、_tradeRoutesBuf(每120tick)、_fortsBuf(每120tick)、_miningCityPool(每10tick)，civSnap改用_civSnapBuf+slot复用。总计9批commit，约30+处优化，5434个测试全通过，TypeScript clean。
 🎯 AI 自定优先级：[
-  "1. Game.ts(4045行)：主循环密集系统调用，是最大未解决问题，但风险极高",
-  "2. Renderer.ts(989行)：继续排查热路径GC，特别是renderMinimap和tile渲染循环",
-  "3. 扫描 new Object()/对象字面量 在每帧render路径中的使用——特别是WeatherDisasterSystem渲染",
-  "4. 扫描剩余filter()在update路径中的使用：ArtifactSystem/ChartPanelSystem/ClonePowerSystem/CreatureSkillSystem等",
-  "5. 扫描剩余Array.from()在热路径中的使用"
+  "1. Game.ts继续扫描：_politicalData.push({color,territory})和_clonePositions.push({x,y,generation})是否高频",
+  "2. 扫描Renderer.ts density[gy] = new Array(gridW).fill(0)每帧创建行数组 — 改为预分配二维缓冲区",
+  "3. 扫描HistoryReplaySystem.snapshots.shift()每60tick — 改为环形缓冲区",
+  "4. 扫描更多render路径中的[x,y]元组返回值 — 改为写入成员字段",
+  "5. 扫描Game.ts中tick%10/20/30等中频路径的剩余对象字面量分配"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
@@ -102,10 +102,16 @@
   "【迭代39新增】HeroLegendSystem.getLeaderboard()：Array.from+filter+sort+slice改预分配buf+sort+length截断",
   "【迭代39新增】TechSystem templeCount：civ.buildings.filter()改手动for计数",
   "【迭代39新增】WorldEventSystem.tryTriggerRandomEvent：EVENT_DEFINITIONS.filter()改预分配_availEventsBuf",
-  "【迭代39新增】CreatureConstellationSystem：NAMES.filter()改两阶段计数+迭代采样，零分配"
+  "【迭代39新增】CreatureConstellationSystem：NAMES.filter()改两阶段计数+迭代采样，零分配",
+  "【迭代45新增】EventLog环形缓冲区模式：_buf[MAX]+_head+_count，shift()→_head=(head+1)%MAX；getRecent升序遍历：从head-n到head-1逆向读取后反转",
+  "【迭代45新增】chartPt/类似方法：返回[x,y]元组改为写入成员字段_cpx/_cpy，渲染循环中每点省一次数组分配",
+  "【迭代45新增】Renderer.ts渲染对象池模式：_xxxObjPool+_xxxObjNext指针，每帧开始reset到0，按需grow；bucket数组本身已用pool，但内部对象也需要pool",
+  "【迭代45新增】Game.ts每N tick分配的数组+对象：用_xxxBuf+slot复用模式，slot.field=value替代push({...})，.length=count截断",
+  "【迭代45新增】marqueeQueue.shift()改头指针：_mqHead指针++替代shift()，超过MAX_QUEUE时用splice(0,mqHead)+mqHead=0紧凑化",
+  "【迭代45新增】getRecent顺序问题：改变迭代方向时必须同时更新单元测试的预期顺序"
 ]
 
-迭代轮次: 41/100
+迭代轮次: 46/100
 
 
 🔄 自我进化（每轮必做）：
@@ -114,6 +120,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-02-28T08:46:10+08:00"
+  "last_updated": "2026-02-28T12:34:13+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。
