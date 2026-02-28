@@ -18,6 +18,10 @@ interface Personality {
   stability: number
   /** 社交倾向 -1(独行) 到 1(群居) */
   sociability: number
+  /** Pre-computed render strings — avoids toFixed per frame */
+  traitStrs: Record<TraitAxis, string>
+  sociabilityStr: string
+  stabilityStr: string
 }
 
 const TRAIT_INFO: Record<TraitAxis, { icon: string; labelPos: string; labelNeg: string }> = {
@@ -35,6 +39,12 @@ const DRIFT_INTERVAL = 300
 
 function clamp(v: number, lo: number, hi: number): number { return v < lo ? lo : v > hi ? hi : v }
 
+function _buildStrs(p: Personality): void {
+  for (const axis of AXES) p.traitStrs[axis] = p.traits[axis].toFixed(2)
+  p.sociabilityStr = p.sociability.toFixed(2)
+  p.stabilityStr = (p.stability * 100).toFixed(0)
+}
+
 export class CreaturePersonalitySystem {
   private personalities = new Map<number, Personality>()
   private visible = false
@@ -43,6 +53,13 @@ export class CreaturePersonalitySystem {
   private scrollY = 0
   private selectedEntity = -1
   private tickCounter = 0
+  private _biasesBuf = [
+    { label: '战斗', val: 0 },
+    { label: '逃跑', val: 0 },
+    { label: '助人', val: 0 },
+    { label: '探索', val: 0 },
+    { label: '劳作', val: 0 },
+  ]
 
   /* ── 公共 API ── */
 
@@ -61,7 +78,10 @@ export class CreaturePersonalitySystem {
       },
       stability: 0.3 + Math.random() * 0.7,
       sociability: (Math.random() - 0.5) * 2,
+      traitStrs: { bravery: '', kindness: '', diligence: '', curiosity: '', loyalty: '' },
+      sociabilityStr: '', stabilityStr: '',
     }
+    _buildStrs(p)
     this.personalities.set(entityId, p)
     return p
   }
@@ -81,7 +101,10 @@ export class CreaturePersonalitySystem {
       entityId: childId, traits,
       stability: clamp(((a?.stability ?? 0.5) + (b?.stability ?? 0.5)) / 2 + (Math.random() - 0.5) * 0.2, 0, 1),
       sociability: clamp(((a?.sociability ?? 0) + (b?.sociability ?? 0)) / 2 + (Math.random() - 0.5) * 0.3, -1, 1),
+      traitStrs: { bravery: '', kindness: '', diligence: '', curiosity: '', loyalty: '' },
+      sociabilityStr: '', stabilityStr: '',
     }
+    _buildStrs(p)
     this.personalities.set(childId, p)
     return p
   }
@@ -127,6 +150,7 @@ export class CreaturePersonalitySystem {
       for (const axis of AXES) {
         p.traits[axis] = clamp(p.traits[axis] + (Math.random() - 0.5) * 0.02 * (1 - p.stability), -1, 1)
       }
+      _buildStrs(p)
     }
   }
 
@@ -178,7 +202,7 @@ export class CreaturePersonalitySystem {
     // 社交倾向和稳定性
     ctx.fillStyle = '#aac'; ctx.font = '12px monospace'
     const socLabel = p.sociability > 0.3 ? '群居' : p.sociability < -0.3 ? '独行' : '中性'
-    ctx.fillText(`社交: ${socLabel} (${p.sociability.toFixed(2)})  稳定性: ${(p.stability * 100).toFixed(0)}%`, px + 16, drawY)
+    ctx.fillText(`社交: ${socLabel} (${p.sociabilityStr})  稳定性: ${p.stabilityStr}%`, px + 16, drawY)
     drawY += 24
 
     // 各维度条
@@ -222,7 +246,7 @@ export class CreaturePersonalitySystem {
 
       // 数值
       ctx.fillStyle = '#999'; ctx.font = '10px monospace'
-      ctx.fillText(val.toFixed(2), px + 340, drawY + 4)
+      ctx.fillText(p.traitStrs[axis], px + 340, drawY + 4)
 
       drawY += ROW_H
     }
@@ -233,13 +257,12 @@ export class CreaturePersonalitySystem {
     ctx.fillRect(px + 8, drawY - 12, PANEL_W - 16, 50)
     ctx.fillStyle = '#8ab'; ctx.font = '11px monospace'
     ctx.fillText('行为倾向:', px + 16, drawY + 2)
-    const biases = [
-      { label: '战斗', val: this.getDecisionBias(p.entityId, 'fight') },
-      { label: '逃跑', val: this.getDecisionBias(p.entityId, 'flee') },
-      { label: '助人', val: this.getDecisionBias(p.entityId, 'help') },
-      { label: '探索', val: this.getDecisionBias(p.entityId, 'explore') },
-      { label: '劳作', val: this.getDecisionBias(p.entityId, 'work') },
-    ]
+    const biases = this._biasesBuf
+    biases[0].val = this.getDecisionBias(p.entityId, 'fight')
+    biases[1].val = this.getDecisionBias(p.entityId, 'flee')
+    biases[2].val = this.getDecisionBias(p.entityId, 'help')
+    biases[3].val = this.getDecisionBias(p.entityId, 'explore')
+    biases[4].val = this.getDecisionBias(p.entityId, 'work')
     let bx = px + 16
     ctx.font = '10px monospace'
     for (const b of biases) {

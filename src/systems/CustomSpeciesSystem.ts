@@ -15,6 +15,8 @@ export interface SpeciesConfig {
   diet: Diet;
   size: CreatureSize;
   aquatic: boolean;
+  /** Pre-computed render string — avoids toFixed per frame */
+  baseSpeedStr: string;
 }
 
 interface SliderDef {
@@ -66,9 +68,9 @@ export class CustomSpeciesSystem {
     this.load();
   }
 
-  createSpecies(config: Omit<SpeciesConfig, 'id'>): string {
+  createSpecies(config: Omit<SpeciesConfig, 'id' | 'baseSpeedStr'>): string {
     const id = `species_${this.nextId++}`;
-    this.species.set(id, { ...config, id });
+    this.species.set(id, { ...config, id, baseSpeedStr: config.baseSpeed.toFixed(1) });
     this.save();
     return id;
   }
@@ -105,7 +107,10 @@ export class CustomSpeciesSystem {
       const data = JSON.parse(raw) as { nextId: number; list: SpeciesConfig[] };
       this.nextId = data.nextId ?? 1;
       this.species.clear();
-      for (const s of data.list) this.species.set(s.id, s);
+      for (const s of data.list) {
+        if (!s.baseSpeedStr) s.baseSpeedStr = s.baseSpeed.toFixed(1)
+        this.species.set(s.id, s)
+      }
     } catch { /* noop */ }
   }
 
@@ -339,7 +344,7 @@ export class CustomSpeciesSystem {
       ctx.fillStyle = s.color;
       ctx.fillRect(px + PAD, iy + 4, 10, 10);
       ctx.fillStyle = '#ddd';
-      ctx.fillText(`${s.name}  HP:${s.baseHealth} SPD:${s.baseSpeed.toFixed(1)}`, px + PAD + 16, iy + 14);
+      ctx.fillText(`${s.name}  HP:${s.baseHealth} SPD:${s.baseSpeedStr}`, px + PAD + 16, iy + 14);
       // 删除按钮
       ctx.fillStyle = 'rgba(255,80,80,0.7)';
       ctx.fillText('X', px + PANEL_W - PAD - 10, iy + 14);

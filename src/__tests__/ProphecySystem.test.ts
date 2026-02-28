@@ -6,7 +6,7 @@ function makeSys(): ProphecySystem { return new ProphecySystem() }
 function makeProphecy(type: string, state: number = 0) {
   return {
     id: 1, type, text: 'A prophecy', state,
-    createdTick: 0, deadlineTick: 1000, probability: 0.7,
+    createdTick: 0, deadlineTick: 1000, probability: 0.7, probabilityStr: '70',
     civId: -1, notified: false
   }
 }

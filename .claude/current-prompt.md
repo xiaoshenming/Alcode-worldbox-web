@@ -1,15 +1,15 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代56完成。深度GC优化第十轮 — 继续扫描并消除方法内字面量数组创建。主要成果：1) EcosystemSystem预构建fleeFromSet/preySet/biomeSet消除每生物每3tick的Array.includes O(n)查找；2) PopulationSystem/CivManager字面量数组提取（HOSTILE_SPECIES Set + _BLESSINGS）；3) WeatherControlSystem.render/handleClick的DUR_OPTS/DUR_LABELS提取；4) CivManager.updateHappiness的_TAX_PENALTY/_TAX_INCOME（每tick每文明）；5) EvolutionSystem._DEATH_CAUSES（每10tick每物种）；6) CreatureFactory.HOSTILE_SPECIES_SET（每次生物创建）；7) WeatherSystem 5个季节天气池（_WEATHER_WINTER等）；8) CreatureReputationSystem._REPUTATION_ACTIONS（每600tick内循环）；9) DiplomaticSuccession/TradeAgreement._CIV_POOL；10) WorldEventDefinitions._QUAKE_TILE_OPTIONS（地震逻辑内循环）；11) World.update() seasons数组+seasonNames Record（最重要！每tick执行）；12) TradeEconomySystem._GUILD_LEVEL_THRESHOLDS（每120tick每文明）；13) Powers._CIVILIZED_SPECIES Set（每次放置生物）。总计8个commit，5434测试全通过，TypeScript clean。
+🧠 AI 上轮笔记：迭代63完成。深度GC优化第十三轮 — 继续消除方法内对象字面量和render路径字符串分配。主要成果：1) DiplomaticSummitSystem._SUMMIT_DIFFICULTY模块级常量（evaluateSuccess每次调用）；2) FortificationRenderer corners平坦化（4个{cx,cy}对象→_CORNER_DX/_CORNER_DY平坦偏移量，每帧每fort）+baseDef模块级常量；3) CreatureProfessionSystem._needsBuf/_aptitudeBuf预分配成员对象（每120tick每文明/实体）；4) DiplomacyVisualSystem._REL_STR查找表（-100~100整数字符串，矩阵面板每格String(val)）；5) WeatherControlSystem._intensityStr缓存（两处toFixed(2)，每帧面板渲染）；6) PollutionSystem._avgPollutionStr缓存（每10tick更新，每帧render）；7) AchievementProgressSystem._rateStr缓存（完成率，每帧header渲染）；8) PlagueMutationSystem.infectStr/lethalStr预计算（在PlagueStrain对象上，创建/变异时计算，每帧render循环）；9) MonumentSystem.buff.label预计算（在MONUMENT_INFO和buff对象上，消除每帧toFixed）。总计9个commit，5434测试全通过，TypeScript clean。网络问题导致push失败，需要下轮重试。
 🎯 AI 自定优先级：[
-  "1. 扫描 src/game/ 目录还有没有每帧/每tick调用的方法中的对象字面量分配",
-  "2. 检查 CityLayoutSystem 的A*寻路节点对象池化机会（每120tick，但创建大量{x,y,g,h,f,parent}节点）",
-  "3. 检查 BattleReplaySystem.recordFrame() — 战斗期间每帧的units.map/attacks.map对象分配",
-  "4. 考虑是否还有 .push({...}) 在循环中创建对象的高频热路径",
-  "5. 回顾更多World.ts和CivManager.ts方法中的高频GC源"
+  "1. 推送本轮所有提交（网络恢复后：http_proxy=http://127.0.0.1:7897 https_proxy=http://127.0.0.1:7897 git push origin main）",
+  "2. 继续扫描render路径中的toFixed/模板字符串：WorldDashboardSystem ratio、ProphecySystem probability、CustomSpeciesSystem baseSpeed、AchievementProgressSystem progress per-achievement",
+  "3. 检查 CityLayoutSystem 的A*寻路节点对象池化机会（每120tick，但创建大量{x,y,g,h,f,parent}节点）",
+  "4. 检查 BattleReplaySystem.recordFrame() — 战斗期间每帧的units.map/attacks.map对象分配",
+  "5. 扫描更多 render 方法中的 ctx.fillText 模板字符串（特别是在循环中的）"
 ]
 💡 AI 积累经验：[
-  "非空断言(!)是最常见的��溃点",
+  "非空断言(!)是最常见的崩溃点",
   "子代理并行修复大批量文件极高效：4组并行代理可在几分钟内修复160+文件",
   "manualChunks按文件名前缀分组是最安全的代码分割方案 — 不改源码，只改vite配置",
   "Iterable<T>替代T[]可消除spread分配，但需检查消费端是否用了.length/.includes等数组方法",
@@ -71,10 +71,15 @@
   "【迭代56新增】Python3脚本用indent>=4启发式规则可快速找出方法内的字面量数组，比grep更精确",
   "【迭代56新增】World.update()中的seasons数组是每tick GC最高价值目标之一 — 文件顶部类型定义下方加模块级常量是最佳位置",
   "【迭代56新增】EcosystemSystem热路径：findNearestThreat/findNearestPrey是per-wildlife-entity per-3-tick调用，Array.includes→Set.has是最高收益优化",
-  "【迭代56新增】seasonNames Record在每次季节变化时创建——即使低频也值得提取，可同时消除Record对象分配"
+  "【迭代56新增】seasonNames Record在每次季节变化时创建——即使低频也值得提取，可同时消除Record对象分配",
+  "【迭代63新增】render路径字符串缓存模式：对于低频变化的显示值（intensity、avgPollution、completionRate），在值变化时重建缓存字符串，render直接用缓存",
+  "【迭代63新增】整数范围查找表模式：-100~100的关系值用_REL_STR[v+100]查找，比String(v)快且零分配",
+  "【迭代63新增】接口字段预计算适用于PlagueStrain.infectStr/lethalStr：在createStrain和mutate时计算，render循环直接用",
+  "【迭代63新增】corners平坦化模式：4个{cx,cy}对象→_CORNER_DX/_CORNER_DY两个as const数组，render循环中用cx=x+_CORNER_DX[i]*size计算，零对象分配",
+  "【迭代63新增】预分配成员Record对象模式：assessCivNeeds/pickBestProfession的w/a对象改为_needsBuf/_aptitudeBuf成员，每次调用前手动reset各字段，避免new对象"
 ]
 
-迭代轮次: 59/100
+迭代轮次: 64/100
 
 
 🔄 自我进化（每轮必做）：
@@ -83,6 +88,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-02-28T23:28:25+08:00"
+  "last_updated": "2026-03-01T01:56:28+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。
