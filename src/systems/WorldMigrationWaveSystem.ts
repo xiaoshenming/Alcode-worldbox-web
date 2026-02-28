@@ -65,6 +65,8 @@ export class WorldMigrationWaveSystem {
   private static SNOWBALL_CHANCE = 0.25
   private static SCAN_RADIUS = 12
   private static MIN_CREATURES_FOR_WAVE = 4
+  // Reusable buffer for advanceWaves (every 2 ticks)
+  private _wavesToRemoveBuf: number[] = []
 
   /**
    * Main update loop. Checks for new migration triggers and advances
@@ -320,7 +322,8 @@ export class WorldMigrationWaveSystem {
    * and settle or remove completed waves.
    */
   private advanceWaves(em: EntityManager, world: World): void {
-    const toRemove: number[] = []
+    const toRemove = this._wavesToRemoveBuf
+    toRemove.length = 0
 
     for (let i = 0; i < this.activeWaves.length; i++) {
       const wave = this.activeWaves[i]

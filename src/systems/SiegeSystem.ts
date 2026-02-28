@@ -81,6 +81,8 @@ export class SiegeSystem {
   private sieges: Map<number, SiegeInfo> = new Map()
   private nextId = 1
   private _siegesBuf: SiegeInfo[] = []
+  // Reusable buffer for update() toRemove (every tick)
+  private _siegesToRemoveBuf: number[] = []
 
   /**
    * Start a new siege against a target city location.
@@ -135,7 +137,8 @@ export class SiegeSystem {
    * @param _world - World reference (reserved for terrain checks)
    */
   update(tick: number, em: EntityManager, civManager: CivManager, _world: World): void {
-    const toRemove: number[] = []
+    const toRemove = this._siegesToRemoveBuf
+    toRemove.length = 0
 
     for (const siege of this.sieges.values()) {
       if (siege.startTick === 0) siege.startTick = tick
