@@ -20,6 +20,7 @@ export class ArtifactSystem {
   private spawnedCount: number = 0
   private maxArtifacts: number = 6
   private lastSpawnTick: number = 0
+  private _existingTypesSet: Set<string> = new Set()
 
   update(em: EntityManager, world: World, particles: ParticleSystem, tick: number): void {
     // Spawn new artifacts periodically
@@ -39,7 +40,8 @@ export class ArtifactSystem {
     // Count unclaimed artifacts
     const artifactEntities = em.getEntitiesWithComponent('artifact')
     let unclaimedCount = 0
-    const existingTypes = new Set<string>()
+    const existingTypes = this._existingTypesSet
+    existingTypes.clear()
 
     for (const id of artifactEntities) {
       const art = em.getComponent<ArtifactComponent>(id, 'artifact')
@@ -50,11 +52,16 @@ export class ArtifactSystem {
 
     if (unclaimedCount >= this.maxArtifacts) return
 
-    // Pick a random artifact type that doesn't already exist in the world
-    const available = ARTIFACTS.filter(a => !existingTypes.has(a.type))
-    if (available.length === 0) return
-
-    const template = available[Math.floor(Math.random() * available.length)]
+    // Pick a random artifact type that doesn't already exist in the world — 两阶段采样，零分配
+    let availCount = 0
+    for (const a of ARTIFACTS) { if (!existingTypes.has(a.type)) availCount++ }
+    if (availCount === 0) return
+    let targetIdx = Math.floor(Math.random() * availCount)
+    let template: typeof ARTIFACTS[0] | undefined
+    for (const a of ARTIFACTS) {
+      if (!existingTypes.has(a.type)) { if (targetIdx-- === 0) { template = a; break } }
+    }
+    if (!template) return
 
     // Find a random walkable tile
     for (let attempt = 0; attempt < 50; attempt++) {
