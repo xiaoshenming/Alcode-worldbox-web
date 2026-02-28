@@ -84,7 +84,8 @@ export class World {
   }
 
   // Dirty region tracking for render optimization
-  private dirtyRegions: Set<string> = new Set()
+  // Key = cx * 1000 + cy (numeric encoding, no string allocation per setTile call)
+  private dirtyRegions: Set<number> = new Set()
   private _fullDirty: boolean = true
 
   markFullDirty(): void {
@@ -104,7 +105,7 @@ export class World {
     return this._fullDirty || this.dirtyRegions.size > 0
   }
 
-  getDirtyRegions(): Set<string> {
+  getDirtyRegions(): Set<number> {
     return this.dirtyRegions
   }
 
@@ -112,10 +113,10 @@ export class World {
     if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
       this.tiles[y][x] = type
       this.tileVariants[y][x] = Math.floor(Math.random() * 3)
-      // Mark 16x16 chunk as dirty
+      // Mark 16x16 chunk as dirty (numeric key: cx * 1000 + cy, no string allocation)
       const cx = Math.floor(x / 16)
       const cy = Math.floor(y / 16)
-      this.dirtyRegions.add(`${cx},${cy}`)
+      this.dirtyRegions.add(cx * 1000 + cy)
     }
   }
 
