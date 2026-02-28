@@ -301,7 +301,7 @@ export class EraTransitionSystem {
       // tick
       ctx.font = '10px monospace';
       ctx.fillStyle = '#AAA';
-      ctx.fillText(entry.tickStr ?? `T:${entry.tick}`, lineX + 14, ey + 32);
+      ctx.fillText(entry.tickStr!, lineX + 14, ey + 32);
 
       // 描述
       ctx.font = '12px sans-serif';
@@ -424,8 +424,8 @@ export class EraTransitionSystem {
     ctx.fillText(this._maxTotalStr, cx - 4, cy + 10);
     ctx.fillText('0', cx - 4, cy + ch);
     ctx.textAlign = 'center';
-    ctx.fillText(this.popSamples[0].tickStr ?? `T:${this.popSamples[0].tick}`, cx, cy + ch + 14);
-    ctx.fillText(this.popSamples[n - 1].tickStr ?? `T:${this.popSamples[n - 1].tick}`, cx + cw, cy + ch + 14);
+    ctx.fillText(this.popSamples[0].tickStr!, cx, cy + ch + 14);
+    ctx.fillText(this.popSamples[n - 1].tickStr!, cx + cw, cy + ch + 14);
 
     // 图例
     ctx.textAlign = 'left';

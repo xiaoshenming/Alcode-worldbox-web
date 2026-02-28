@@ -47,6 +47,9 @@ export class EvolutionVisualSystem {
   /** Pre-computed max-end tick string for timeline — rebuilt when maxT or zoom changes */
   private _prevMaxTEnd = -1
   private _maxTEndStr = ''
+  /** Cached tree layout — rebuilt only when nodes change via addNode/updatePopulation */
+  private _layoutDirty = true
+  private _layoutCache: LayoutNode[] = []
 
   addNode(node: EvolutionNode): void {
     const stored = { ...node }
@@ -61,6 +64,7 @@ export class EvolutionVisualSystem {
     stored.traitStr = ts
     stored.nodeInfoStr = `pop:${node.population} t:${node.appearTick}`
     this.nodes.set(node.id, stored)
+    this._layoutDirty = true
   }
 
   updatePopulation(nodeId: number, population: number): void {
@@ -68,6 +72,7 @@ export class EvolutionVisualSystem {
     if (n) {
       n.population = population
       n.nodeInfoStr = `pop:${population} t:${n.appearTick}`
+      this._layoutDirty = true
     }
   }
 
@@ -151,7 +156,8 @@ export class EvolutionVisualSystem {
   }
 
   private renderTree(ctx: CanvasRenderingContext2D, ox: number, oy: number): void {
-    const roots = this.buildLayout()
+    if (this._layoutDirty) { this._layoutCache = this.buildLayout(); this._layoutDirty = false }
+    const roots = this._layoutCache
     if (!roots.length) {
       ctx.fillStyle = DIM; ctx.font = '12px monospace'
       ctx.fillText('No evolution data yet', ox + 12, oy + 24)

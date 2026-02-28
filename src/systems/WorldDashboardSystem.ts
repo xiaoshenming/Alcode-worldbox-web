@@ -86,11 +86,16 @@ export class WorldDashboardSystem {
   }
 
   updatePowerData(civs: CivPowerInput[]): void {
-    this.powerData = civs
-      .slice()
-      .sort((a, b) => b.power - a.power)
-      .slice(0, 8)
-      .map(c => ({ ...c, powerStr: String(Math.round(c.power)) }));
+    // Sort in-place on a copy to avoid mutating caller's array, then fill powerData in-place
+    const sorted = civs.slice().sort((a, b) => b.power - a.power)
+    const n = Math.min(8, sorted.length)
+    this.powerData.length = n
+    for (let i = 0; i < n; i++) {
+      const c = sorted[i]
+      const e = this.powerData[i]
+      if (e) { e.name = c.name; e.power = c.power; e.color = c.color; e.powerStr = String(Math.round(c.power)) }
+      else this.powerData[i] = { name: c.name, power: c.power, color: c.color, powerStr: String(Math.round(c.power)) }
+    }
   }
 
   render(ctx: CanvasRenderingContext2D, screenWidth: number, screenHeight: number): void {
@@ -247,7 +252,7 @@ export class WorldDashboardSystem {
         ctx.font = '11px monospace';
         ctx.textAlign = midAngle > Math.PI / 2 && midAngle < Math.PI * 1.5 ? 'right' : 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(this._religionRatioStrs.get(name) ?? `${name} ${(ratio * 100).toFixed(1)}%`, lx, ly);
+        ctx.fillText(this._religionRatioStrs.get(name)!, lx, ly);
       }
 
       startAngle += sweep;
@@ -265,7 +270,7 @@ export class WorldDashboardSystem {
       ctx.fillStyle = color;
       ctx.fillRect(legendX, legendY - 5, 10, 10);
       ctx.fillStyle = '#bbccdd';
-      ctx.fillText(this._religionLegendStrs.get(name) ?? `${name}: ${count}`, legendX + 16, legendY);
+      ctx.fillText(this._religionLegendStrs.get(name)!, legendX + 16, legendY);
       legendY += 18;
     }
 
