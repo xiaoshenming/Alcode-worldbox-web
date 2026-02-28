@@ -42,6 +42,9 @@ export class Renderer {
   private _artifactBatch: number[] = []
   private _fallbackByColor: Map<string, { id: number; cx: number; cy: number; size: number }[]> = new Map()
   private _fallbackBucketPool: { id: number; cx: number; cy: number; size: number }[][] = []
+  // Object pool for fallback entity descriptors (avoids per-entity allocation in render loop)
+  private _fallbackObjPool: { id: number; cx: number; cy: number; size: number }[] = []
+  private _fallbackObjNext = 0
 
   // Font string cache — invalidated when zoom changes
   private _lastFontZoom = -1
@@ -94,6 +97,9 @@ export class Renderer {
   private _territoryColorCache: Map<string, string> = new Map()
   private _particleByColor: Map<string, { sx: number; sy: number; r: number; alpha: number }[]> = new Map()
   private _particleBucketPool: { sx: number; sy: number; r: number; alpha: number }[][] = []
+  // Object pool for particle descriptors
+  private _particleObjPool: { sx: number; sy: number; r: number; alpha: number }[] = []
+  private _particleObjNext = 0
 
   // Pre-allocated dash buffer for trade route animated lines (avoids new array every frame)
   private _dashBuf: number[] = [0, 0]
@@ -342,6 +348,7 @@ export class Renderer {
       this._fallbackBucketPool.push(bucket)
     }
     this._fallbackByColor.clear()
+    this._fallbackObjNext = 0  // reset object pool pointer
     const fallbackByColor = this._fallbackByColor
 
     for (const id of entities) {
@@ -371,7 +378,12 @@ export class Renderer {
           const size = render.size * camera.zoom
           let bucket = fallbackByColor.get(render.color)
           if (!bucket) { bucket = this._fallbackBucketPool.pop() || []; fallbackByColor.set(render.color, bucket) }
-          bucket.push({ id, cx, cy, size })
+          // Use object pool to avoid per-entity allocation
+          let fobj = this._fallbackObjPool[this._fallbackObjNext]
+          if (!fobj) { fobj = { id: 0, cx: 0, cy: 0, size: 0 }; this._fallbackObjPool.push(fobj) }
+          this._fallbackObjNext++
+          fobj.id = id; fobj.cx = cx; fobj.cy = cy; fobj.size = size
+          bucket.push(fobj)
         }
       }
     }
@@ -715,6 +727,7 @@ export class Renderer {
       this._particleBucketPool.push(bucket)
     }
     this._particleByColor.clear()
+    this._particleObjNext = 0  // reset particle object pool pointer
     const byColor = this._particleByColor
 
     for (const p of particles.particles) {
@@ -727,7 +740,12 @@ export class Renderer {
       const alpha = p.life / p.maxLife
       let bucket = byColor.get(p.color)
       if (!bucket) { bucket = this._particleBucketPool.pop() || []; byColor.set(p.color, bucket) }
-      bucket.push({ sx: screenX, sy: screenY, r: p.size * camera.zoom, alpha })
+      // Use object pool to avoid per-particle allocation
+      let pobj = this._particleObjPool[this._particleObjNext]
+      if (!pobj) { pobj = { sx: 0, sy: 0, r: 0, alpha: 0 }; this._particleObjPool.push(pobj) }
+      this._particleObjNext++
+      pobj.sx = screenX; pobj.sy = screenY; pobj.r = p.size * camera.zoom; pobj.alpha = alpha
+      bucket.push(pobj)
     }
 
     for (const [color, bucket] of byColor) {
