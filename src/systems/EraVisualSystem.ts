@@ -121,6 +121,9 @@ export class EraVisualSystem {
   private _overlayTintG = NaN
   private _overlayTintB = NaN
   private _overlayAlpha = NaN
+  /** Cached indicator pill width — rebuilt when era changes */
+  private _indicatorPillW = 0
+  private _prevIndicatorEra: EraName = '' as EraName
 
   constructor() {}
 
@@ -215,8 +218,11 @@ export class EraVisualSystem {
     // Background pill
     const text = `${style.icon} ${style.displayName}`
     ctx.font = 'bold 14px monospace'
-    const metrics = ctx.measureText(style.displayName)
-    const pillW = metrics.width + 40
+    if (this.currentEra !== this._prevIndicatorEra) {
+      this._prevIndicatorEra = this.currentEra
+      this._indicatorPillW = ctx.measureText(style.displayName).width + 40
+    }
+    const pillW = this._indicatorPillW
     const pillH = 28
     const px = x + 10
     const py = y + 10

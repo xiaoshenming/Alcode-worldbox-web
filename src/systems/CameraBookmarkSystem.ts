@@ -22,6 +22,8 @@ export class CameraBookmarkSystem {
   private toastMsg = ''
   private toastTimer = 0
   private panelOpen = false
+  /** Cached measureText width for toastMsg at 11px monospace — reset when toastMsg changes */
+  private _toastMsgWidth = 0
 
   constructor() { this.load() }
 
@@ -59,7 +61,8 @@ export class CameraBookmarkSystem {
       ctx.save()
       ctx.globalAlpha = alpha * 0.9
       ctx.font = '11px monospace'
-      const tw = ctx.measureText(this.toastMsg).width
+      if (this._toastMsgWidth === 0) this._toastMsgWidth = ctx.measureText(this.toastMsg).width
+      const tw = this._toastMsgWidth
       const tx = (screenW - tw) / 2 - 10
       const ty = screenH - 50
       ctx.fillStyle = 'rgba(16,18,26,0.9)'
@@ -124,6 +127,7 @@ export class CameraBookmarkSystem {
   private showToast(msg: string): void {
     this.toastMsg = msg
     this.toastTimer = TOAST_TICKS
+    this._toastMsgWidth = 0 // reset so render re-measures on next frame
   }
 
   private persist(): void {
