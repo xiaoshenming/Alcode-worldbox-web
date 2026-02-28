@@ -6,6 +6,15 @@ import type { World } from './World'
 
 /** Pre-computed firework colors — avoids per-event literal array creation */
 const _FIREWORK_COLORS = ['#ffd700', '#ff4488', '#44ddff', '#44ff88'] as const
+/** Pre-computed hero trail colors — avoids per-hero per-3-tick object literal creation */
+const _HERO_TRAIL_COLORS: Record<string, string> = {
+  warrior: '#ffd700', ranger: '#44ff44', healer: '#aaaaff', berserker: '#ff4444'
+}
+/** Pre-computed event type icons — avoids per-panel-update object literal creation */
+const _EVENT_TYPE_ICONS: Record<string, string> = {
+  era_change: '\u{1F451}', war: '\u2694\uFE0F', disaster: '\u{1F30B}',
+  achievement: '\u{1F3C6}', founding: '\u{1F3F0}', collapse: '\u{1F4A5}'
+}
 import type { Camera } from './Camera'
 import type { Renderer } from './Renderer'
 import type { ParticleSystem } from '../systems/ParticleSystem'
@@ -333,10 +342,7 @@ export class GameUIHelper {
     html += `<div style="color:#aaa;font-size:10px;margin-bottom:3px">HISTORICAL EVENTS</div>`
     html += `<div style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:3px">`
     const recent = history.slice(-20).reverse()
-    const typeIcons: Record<string, string> = {
-      era_change: '\u{1F451}', war: '\u2694\uFE0F', disaster: '\u{1F30B}',
-      achievement: '\u{1F3C6}', founding: '\u{1F3F0}', collapse: '\u{1F4A5}'
-    }
+    const typeIcons = _EVENT_TYPE_ICONS
     for (const ev of recent) {
       const icon = typeIcons[ev.type] || '\u{1F4DC}'
       const yr = this.g.timeline.getWorldAge(ev.tick)
@@ -359,9 +365,7 @@ export class GameUIHelper {
         if (Math.abs(vel.vx) > 0.01 || Math.abs(vel.vy) > 0.01) {
           const hero = this.g.em.getComponent<HeroComponent>(id, 'hero')
           if (!hero) continue
-          const trailColors: Record<string, string> = {
-            warrior: '#ffd700', ranger: '#44ff44', healer: '#aaaaff', berserker: '#ff4444'
-          }
+          const trailColors = _HERO_TRAIL_COLORS
           this.g.particles.spawnTrail(pos.x, pos.y, trailColors[hero.ability] || '#ffd700')
         }
       }
