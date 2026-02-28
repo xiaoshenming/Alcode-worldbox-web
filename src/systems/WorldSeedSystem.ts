@@ -5,6 +5,8 @@ export class WorldSeedSystem {
   private state: number
   // Pre-computed display text — updated only when seed changes
   private _displayText: string
+  /** Cached measureText width of _displayText at 11px monospace — reset when seed changes */
+  private _displayTextWidth = 0
 
   constructor(seed?: number) {
     this.seed = seed ?? (Math.random() * 0xFFFFFFFF) >>> 0
@@ -20,6 +22,7 @@ export class WorldSeedSystem {
     this.seed = seed >>> 0
     this.state = this.seed
     this._displayText = `Seed: ${this.seed.toString(16).toUpperCase().padStart(8, '0')}`
+    this._displayTextWidth = 0 // reset width cache
   }
 
   /** Hash a user-provided string into a 32-bit integer seed */
@@ -69,7 +72,8 @@ export class WorldSeedSystem {
     ctx.font = '11px monospace'
     ctx.globalAlpha = 0.5
     ctx.fillStyle = '#000'
-    const metrics = ctx.measureText(text)
+    if (this._displayTextWidth === 0) this._displayTextWidth = ctx.measureText(text).width
+    const metrics = { width: this._displayTextWidth }
     ctx.fillRect(x - 2, y - 11, metrics.width + 4, 14)
     ctx.globalAlpha = 0.8
     ctx.fillStyle = '#aaa'
