@@ -80,6 +80,7 @@ export class WorldAgeSystem {
   private sampleCount: number
   // Pre-allocated overlay object to avoid new object every frame in getColorOverlay()
   private _overlayBuf: ColorOverlay = { r: 0, g: 0, b: 0, a: 0 }
+  private _neighborsBuf: TileType[] = []
 
   constructor() {
     this.sampleCount = Math.floor(WORLD_WIDTH * WORLD_HEIGHT * SAMPLE_RATIO)
@@ -272,7 +273,7 @@ export class WorldAgeSystem {
   }
 
   private getNeighborTypes(world: World, x: number, y: number): TileType[] {
-    const result: TileType[] = []
+    const result = this._neighborsBuf; result.length = 0
     for (const [dx, dy] of DIRS) {
       const t = world.getTile(x + dx, y + dy)
       if (t !== null) result.push(t)
