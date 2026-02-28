@@ -11,6 +11,9 @@ export class CivManager {
   territoryMap: number[][] = [] // civId per tile, 0 = unclaimed
   private previousRelations: Map<number, number> = new Map() // civA * 10000 + civB -> previous relation
   private updateTick: number = 0
+  // Reusable flat buffers for expandTerritory (called per-civ per ~200 ticks)
+  private _borderXBuf: number[] = []
+  private _borderYBuf: number[] = []
 
   constructor(em: EntityManager, world: World) {
     this.em = em
@@ -271,7 +274,8 @@ export class CivManager {
 
   private attackTerritory(attacker: Civilization, defender: Civilization): void {
     // Find border tiles between the two civs and steal some
-    const contested: [number, number][] = []
+    const cX = this._borderXBuf; cX.length = 0
+    const cY = this._borderYBuf; cY.length = 0
 
     for (const key of defender.territory) {
       const comma = key.indexOf(',')
@@ -281,16 +285,17 @@ export class CivManager {
           (x < WORLD_WIDTH - 1 && this.territoryMap[y][x + 1] === attacker.id) ||
           (y > 0 && this.territoryMap[y - 1][x] === attacker.id) ||
           (y < WORLD_HEIGHT - 1 && this.territoryMap[y + 1][x] === attacker.id)) {
-        contested.push([x, y])
+        cX.push(x); cY.push(y)
       }
     }
 
-    if (contested.length === 0) return
+    if (cX.length === 0) return
 
     // Steal 1-2 tiles
-    const count = Math.min(2, contested.length)
+    const count = Math.min(2, cX.length)
     for (let i = 0; i < count; i++) {
-      const [x, y] = contested[Math.floor(Math.random() * contested.length)]
+      const ri = Math.floor(Math.random() * cX.length)
+      const x = cX[ri], y = cY[ri]
       const key = `${x},${y}`
       defender.territory.delete(key)
       attacker.territory.add(key)
@@ -466,24 +471,26 @@ export class CivManager {
 
   private expandTerritory(civ: Civilization): void {
     // Find border tiles and expand outward
-    const border: [number, number][] = []
+    const borderX = this._borderXBuf; borderX.length = 0
+    const borderY = this._borderYBuf; borderY.length = 0
 
     for (const key of civ.territory) {
       const comma = key.indexOf(',')
       const x = +key.substring(0, comma)
       const y = +key.substring(comma + 1)
-      if (x > 0 && this.territoryMap[y][x - 1] === 0) border.push([x - 1, y])
-      if (x < WORLD_WIDTH - 1 && this.territoryMap[y][x + 1] === 0) border.push([x + 1, y])
-      if (y > 0 && this.territoryMap[y - 1][x] === 0) border.push([x, y - 1])
-      if (y < WORLD_HEIGHT - 1 && this.territoryMap[y + 1][x] === 0) border.push([x, y + 1])
+      if (x > 0 && this.territoryMap[y][x - 1] === 0) { borderX.push(x - 1); borderY.push(y) }
+      if (x < WORLD_WIDTH - 1 && this.territoryMap[y][x + 1] === 0) { borderX.push(x + 1); borderY.push(y) }
+      if (y > 0 && this.territoryMap[y - 1][x] === 0) { borderX.push(x); borderY.push(y - 1) }
+      if (y < WORLD_HEIGHT - 1 && this.territoryMap[y + 1][x] === 0) { borderX.push(x); borderY.push(y + 1) }
     }
 
-    if (border.length === 0) return
+    if (borderX.length === 0) return
 
     // Claim a few random border tiles
-    const count = Math.min(3, border.length)
+    const count = Math.min(3, borderX.length)
     for (let i = 0; i < count; i++) {
-      const [x, y] = border[Math.floor(Math.random() * border.length)]
+      const ri = Math.floor(Math.random() * borderX.length)
+      const x = borderX[ri], y = borderY[ri]
       const tile = this.world.getTile(x, y)
       if (tile !== TileType.DEEP_WATER) {
         this.territoryMap[y][x] = civ.id
