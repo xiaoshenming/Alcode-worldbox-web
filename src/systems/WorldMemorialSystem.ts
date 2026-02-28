@@ -45,6 +45,7 @@ export class WorldMemorialSystem {
   private memorials: Memorial[] = []
   private nextId = 1
   private lastCheck = 0
+  private _mostSigBuf: Memorial[] = []
 
   update(dt: number, world: World, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -111,8 +112,10 @@ export class WorldMemorialSystem {
     return this._byTypeBuf
   }
   getMostSignificant(count: number): Memorial[] {
-    return [...this.memorials]
-      .sort((a, b) => b.significance - a.significance)
-      .slice(0, count)
+    const buf = this._mostSigBuf; buf.length = 0
+    for (const m of this.memorials) buf.push(m)
+    buf.sort((a, b) => b.significance - a.significance)
+    if (buf.length > count) buf.length = count
+    return buf
   }
 }

@@ -59,7 +59,7 @@ export class EcosystemSystem {
   }
 
   getWildlifeCounts(): Map<string, number> {
-    return new Map(this.wildlifeCounts);
+    return this.wildlifeCounts;
   }
 
   private refreshCounts(em: EntityManager): void {

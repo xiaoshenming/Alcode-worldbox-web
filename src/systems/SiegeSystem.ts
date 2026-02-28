@@ -80,6 +80,7 @@ const SIEGE_RANGE_SQ = 100 // 10^2
 export class SiegeSystem {
   private sieges: Map<number, SiegeInfo> = new Map()
   private nextId = 1
+  private _siegesBuf: SiegeInfo[] = []
 
   /**
    * Start a new siege against a target city location.
@@ -104,7 +105,9 @@ export class SiegeSystem {
 
   /** Returns all currently active sieges. */
   getSieges(): SiegeInfo[] {
-    return [...this.sieges.values()]
+    const buf = this._siegesBuf; buf.length = 0
+    for (const s of this.sieges.values()) buf.push(s)
+    return buf
   }
 
   /** Returns the siege near the given coordinates, or null if none exists. */

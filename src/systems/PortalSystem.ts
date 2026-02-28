@@ -50,6 +50,7 @@ export class PortalSystem {
   private flashes: TeleportFlash[] = [];
   private animTick = 0;
   private _drawnSet: Set<number> = new Set();
+  private _portalsBuf: Portal[] = [];
 
   createPortalPair(x1: number, y1: number, x2: number, y2: number): [number, number] | null {
     if (this.pairCount >= MAX_PORTAL_PAIRS) return null;
@@ -256,7 +257,9 @@ export class PortalSystem {
   }
 
   getPortals(): Portal[] {
-    return Array.from(this.portals.values());
+    const buf = this._portalsBuf; buf.length = 0
+    for (const p of this.portals.values()) buf.push(p)
+    return buf
   }
 
   getPortalCount(): number {
