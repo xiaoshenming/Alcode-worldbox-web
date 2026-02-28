@@ -1,11 +1,11 @@
 {
-  "notes": "迭代64完成。深度GC优化第十四轮 — 继续消除render路径toFixed分配。主要成果：1) ProphecySystem.probabilityStr预计算（在Prophecy对象上，创建时计算）；2) CustomSpeciesSystem.baseSpeedStr预计算（在SpeciesConfig上，createSpecies/load时计算）；3) CreaturePersonalitySystem.traitStrs/sociabilityStr/stabilityStr缓存（在Personality上，assign/inherit/drift时更新）+_biasesBuf预分配（5个对象，每帧render复用）；4) WorldLawSystem.valueStr缓存（在LawParam上，setLaw/drag/reset时更新）；5) CreatureTamingSystem.progressStr缓存（在TameRecord上，update时更新）；6) CreatureMutationSystem.magnitudeStr预计算（在Mutation对象上，创建时计算）；7) SandboxSettingsSystem.valueStrs缓存（Record<string,string>，set/reset时更新）；8) AchievementProgressSystem.progressStr缓存（在Achievement上，updateProgress时更新）；9) CreaturePersonalitySystem.valStr缓存（在_biasesBuf对象上，render时用_setB辅助函数更新）；10) MonumentSystem.buildProgressStr缓存（在Monument上，update时更新）；11) WorldHeatmapSystem.maxValStrs缓存（Map<string,string>，setData/clearData时更新）。总计11个commit（6批），5434测试全通过，TypeScript clean。剩余render路径toFixed：WorldDashboardSystem ratio（per-frame计算）、ChartPanelSystem currentVal（per-frame计算）。",
+  "notes": "迭代65完成。深度GC优化第十五轮 — 继续消除render路径字符串分配。主要成果：1) WorldStatsOverviewSystem.speciesCountStrs缓存（Map<string,string>，update()中重建，消除render循环String(count)分配）；2) CreatureProfessionSystem._bonusPctStrs预分配Record（8个键，render时一次性计算后复用，消除8次toFixed(0)）；3) PlagueMutationSystem._headerStr缓存（活跃数+总计字符串，createStrain/mutate/markExtinct时更新，消除render路径循环计数+模板字符串）；4) CreatureGuildSystem.memberCountStr+panelLabel字段（members变化时同步更新，消除render/renderPanel循环模板字符串）；5) MonumentSystem._headerStr缓存（done count + header string，build/update完工时更新，消除render路径循环计数+模板字符串）；6) ChartPanelSystem._yLabels缓存（6个Y轴刻度字符串，yStep变化时重建）+_currentValStr缓存（currentVal变化时重建，消除7次per-frame toFixed）。总计6批commit，5434测试全通过，TypeScript clean。",
   "priorities": [
     "1. 推送本轮所有提交（网络恢复后：http_proxy=http://127.0.0.1:7897 https_proxy=http://127.0.0.1:7897 git push origin main）",
-    "2. 继续扫描render路径中的toFixed/模板字符串：WorldDashboardSystem ratio（per-frame计算，较难缓存）、ChartPanelSystem currentVal（per-frame计算）",
-    "3. 扫描方法内的Record<>对象字面量：ResourceScarcitySystem、NavalSystem counts、CreatureTradeSkillSystem skills等",
-    "4. 扫描push({...})对象字面量：EntityInspectorSystem、MapGenSystem、RiverSystem、StatisticsTracker等",
-    "5. 扫描更多 render 方法中的 ctx.fillText 模板字符串（特别是在循环中的）"
+    "2. 继续扫描render方法中循环内的数字格式化：DiplomaticEspionageSystem.progress字段、CameraBookmarkSystem坐标显示（Math.round）、CreatureAncestorSystem.worshippers数字显示",
+    "3. 扫描WorldDashboardSystem饼图ratio字符串（循环中，可量化100档缓存）",
+    "4. 扫描WorldStatsOverviewSystem.maxVal显示（String(Math.round(maxVal))）和ChartPanelSystem X轴刻度（Math.round(t).toString()）",
+    "5. 扫描update方法中创建的new对象（特别是间隔执行路径中push({...})���"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -15,7 +15,7 @@
     "getAllEntities()返回Array.from()快照 — removeEntity-during-iteration是安全的",
     "queue.shift()在BFS中是O(n²)陷阱 — 用索引指针head++替代",
     "Camera.getVisibleBounds()等热路径方法应返回缓存对象而非每次new — 每帧调用4次累积显著GC压力",
-    "渲染路径中的闭包/对象字面量/getBoundingClientRect()都是隐性GC源 — 预分配+脏标记是标准修复模式",
+    "渲染路径中的闭包/对象字面���/getBoundingClientRect()都是隐性GC源 — 预分配+脏标记是标准修复模式",
     "数据驱动批量调度：703个系统调用按签名分类为6种类型(A-F)，用数组+for循环替代逐个调用，净减1147行",
     "预分配缓冲区模式：_xxxBuf数组只增长不收缩，_xxx.length=0重置视图，避免每次new对象",
     "IIFE闭包在tick路径中是隐性GC源 — 改为外部循环+持久化Set/变量",
@@ -81,7 +81,13 @@
     "【迭代64新增】_biasesBuf预分配+valStr缓存：5个{label,val,valStr}对象预分配，render时用_setB辅助函数更新val+valStr，消除每帧5个对象+5次toFixed",
     "【迭代64新增】LawParam/TameRecord/Achievement/Monument字符串缓存模式：valueStr/progressStr/buildProgressStr在值变化时更新，render直接用",
     "【迭代64新增】SandboxSettingsSystem.valueStrs缓存模式：Record<string,string>成员，set/reset时更新，render循环直接用，消除每帧N次toFixed(decimals)",
-    "【迭代64新增】WorldHeatmapSystem.maxValStrs缓存模式：Map<string,string>成员，setData/clearData时更新，render直接用，消除每帧条件toFixed"
+    "【迭代64新增】WorldHeatmapSystem.maxValStrs缓存模式：Map<string,string>成员，setData/clearData时更新，render直接用，消除每帧条件toFixed",
+    "【迭代65新增】系统级header字符串缓存模式：PlagueMutationSystem._headerStr/MonumentSystem._headerStr，在数据变化（push/extinct/build完工）时重建，render直接用，消除render路径循环计数+模板字符串",
+    "【迭代65新增】接口多字段联动更新模式：Guild.memberCountStr+panelLabel在同一处members变化时同步更新，确保所有render使用的缓存字符串一致性",
+    "【迭代65新增】预分配Record缓冲区+render前批量计算模式：CreatureProfessionSystem._bonusPctStrs在render时一次性计算8个键，避免渲染循环内逐一调用toFixed",
+    "【迭代65新增】数据源Map缓存伴生字符串模式：WorldStatsOverviewSystem._speciesCountStrs与speciesCounts同步更新，render时用Map.get()代替String()转换",
+    "【迭代65新增】ChartPanelSystem Y轴标签缓存：_yLabels[6]数组仅在_prevYStep变化时重建，配合_prevCurrentVal检测，完全消除render路径per-frame toFixed/toString调用",
+    "【迭代65新增】loop-ai-state.json中包含Unicode转义字符时，Edit工具无法匹配——必须用Python3 json.dump()方式覆写"
   ],
-  "last_updated": "2026-03-01T02:24:00+08:00"
+  "last_updated": "2026-03-01T03:15:00+08:00"
 }
