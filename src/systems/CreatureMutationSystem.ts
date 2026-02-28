@@ -12,6 +12,8 @@ export interface Mutation {
   tick: number
   /** Pre-computed render string — avoids toFixed per frame */
   magnitudeStr: string
+  /** Pre-computed "* Label (N%)" display string — computed at creation */
+  displayStr: string
 }
 
 interface WorldLike {
@@ -86,7 +88,8 @@ export class CreatureMutationSystem {
       if (this.hasMutation(eid, type)) continue
 
       const magnitude = 0.1 + Math.random() * 0.9
-      const mutation: Mutation = { type, magnitude, tick, magnitudeStr: (magnitude * 100).toFixed(0) }
+      const magnitudeStr = (magnitude * 100).toFixed(0)
+      const mutation: Mutation = { type, magnitude, tick, magnitudeStr, displayStr: `* ${MUTATION_LABELS[type]} (${magnitudeStr}%)` }
 
       let muts = this.mutations.get(eid)
       if (!muts) {
@@ -147,7 +150,6 @@ export class CreatureMutationSystem {
     ctx.font = '10px monospace'
     for (let i = 0; i < this.recentMutations.length; i++) {
       const r = this.recentMutations[i]
-      const label = MUTATION_LABELS[r.mutation.type]
       const color = MUTATION_COLORS[r.mutation.type]
       const bx = ctx.canvas.width - 240, by = 300 + i * 20
 
@@ -155,7 +157,7 @@ export class CreatureMutationSystem {
       ctx.fillStyle = '#0a0a0a'
       ctx.fillRect(bx, by, 230, 16)
       ctx.fillStyle = color
-      ctx.fillText(`* ${label} (${r.mutation.magnitudeStr}%)`, bx + 4, by + 12)
+      ctx.fillText(r.mutation.displayStr, bx + 4, by + 12)
     }
     ctx.restore()
   }

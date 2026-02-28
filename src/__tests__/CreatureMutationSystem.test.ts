@@ -4,7 +4,7 @@ import type { Mutation, MutationType } from '../systems/CreatureMutationSystem'
 
 function makeSys(): CreatureMutationSystem { return new CreatureMutationSystem() }
 function makeMutation(type: MutationType = 'strength'): Mutation {
-  return { type, magnitude: 0.5, tick: 0, magnitudeStr: '50' }
+  return { type, magnitude: 0.5, tick: 0, magnitudeStr: '50', displayStr: `* Enhanced Strength (50%)` }
 }
 
 describe('CreatureMutationSystem.getMutations', () => {
