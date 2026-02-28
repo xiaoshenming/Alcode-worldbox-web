@@ -246,8 +246,8 @@ export class EcosystemSystem {
         if (preyTarget) {
           const preyPos = em.getComponent<PositionComponent>(preyTarget, 'position');
           if (preyPos) {
-            const dist = Math.hypot(preyPos.x - pos.x, preyPos.y - pos.y);
-            if (dist < 1.5) {
+            const pdx = preyPos.x - pos.x, pdy = preyPos.y - pos.y
+            if (pdx * pdx + pdy * pdy < 2.25) {
               // Attack prey
               this.attackPrey(em, id, preyTarget, creature, tick);
             } else {
@@ -273,7 +273,7 @@ export class EcosystemSystem {
 
   private findNearestThreat(em: EntityManager, selfId: EntityId, selfPos: PositionComponent, fleeFrom: string[], allEntities: EntityId[]): PositionComponent | null {
     let nearest: PositionComponent | null = null;
-    let nearestDist = FLEE_RANGE;
+    let nearestDistSq = FLEE_RANGE * FLEE_RANGE;
 
     for (const id of allEntities) {
       if (id === selfId) continue;
@@ -281,9 +281,10 @@ export class EcosystemSystem {
       if (!creature || !fleeFrom.includes(creature.species)) continue;
       const pos = em.getComponent<PositionComponent>(id, 'position');
       if (!pos) continue;
-      const dist = Math.hypot(pos.x - selfPos.x, pos.y - selfPos.y);
-      if (dist < nearestDist) {
-        nearestDist = dist;
+      const dx = pos.x - selfPos.x, dy = pos.y - selfPos.y
+      const distSq = dx * dx + dy * dy;
+      if (distSq < nearestDistSq) {
+        nearestDistSq = distSq;
         nearest = pos;
       }
     }
@@ -292,7 +293,7 @@ export class EcosystemSystem {
 
   private findNearestPrey(em: EntityManager, selfId: EntityId, selfPos: PositionComponent, preySpecies: string[], allEntities: EntityId[]): EntityId | null {
     let nearest: EntityId | null = null;
-    let nearestDist = HUNT_RANGE;
+    let nearestDistSq = HUNT_RANGE * HUNT_RANGE;
 
     for (const id of allEntities) {
       if (id === selfId) continue;
@@ -300,9 +301,10 @@ export class EcosystemSystem {
       if (!creature || !preySpecies.includes(creature.species)) continue;
       const pos = em.getComponent<PositionComponent>(id, 'position');
       if (!pos) continue;
-      const dist = Math.hypot(pos.x - selfPos.x, pos.y - selfPos.y);
-      if (dist < nearestDist) {
-        nearestDist = dist;
+      const dx = pos.x - selfPos.x, dy = pos.y - selfPos.y
+      const distSq = dx * dx + dy * dy;
+      if (distSq < nearestDistSq) {
+        nearestDistSq = distSq;
         nearest = id;
       }
     }
