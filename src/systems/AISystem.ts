@@ -233,9 +233,8 @@ export class AISystem {
 
           const adx = preyPos.x - pos.x
           const ady = preyPos.y - pos.y
-          const adist = Math.sqrt(adx * adx + ady * ady)
 
-          if (adist > 20) {
+          if (adx * adx + ady * ady > 400) {
             // Lost interest, too far
             ai.state = 'idle'
             ai.targetEntity = null
@@ -534,7 +533,7 @@ export class AISystem {
 
     if (foundId === -1) return null
     this._threatBuf.id = foundId
-    this._threatBuf.dist = Math.sqrt(closestDist2)
+    this._threatBuf.dist = closestDist2  // stored as squared distance (dist field unused by callers)
     return this._threatBuf
   }
 }
