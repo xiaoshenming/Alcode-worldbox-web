@@ -38,6 +38,10 @@ export class WorldDashboardSystem {
   private panelH = 0;
   private _racesSet: Set<string> = new Set();
   private _orderedBuf: PopulationSample[] = new Array(MAX_POP_SAMPLES);
+  /** Dirty flag for ordered sample cache — set true when popWriteIndex changes */
+  private _orderedDirty = true;
+  private _prevPopWriteIndex = -1;
+  private _prevPopCount = 0;
   private _religionEntriesBuf: [string, number][] = [];
   /** Cached religion ratio strings — rebuilt when religionData updates */
   private _religionRatioStrs: Map<string, string> = new Map();
@@ -83,6 +87,7 @@ export class WorldDashboardSystem {
       this.popWriteIndex = (this.popWriteIndex + 1) % MAX_POP_SAMPLES;
       this.popCount = MAX_POP_SAMPLES;
     }
+    this._orderedDirty = true;
   }
 
   updatePowerData(civs: CivPowerInput[]): void {
@@ -427,6 +432,9 @@ export class WorldDashboardSystem {
 
   // ── 工具方法 ──
   private getOrderedSamples(): PopulationSample[] {
+    // Return cached ordered buffer if data hasn't changed
+    if (!this._orderedDirty) return this._orderedBuf
+    this._orderedDirty = false
     const buf = this._orderedBuf
     if (this.popCount < MAX_POP_SAMPLES) {
       const n = this.popCount
