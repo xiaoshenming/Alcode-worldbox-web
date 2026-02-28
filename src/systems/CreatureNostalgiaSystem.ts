@@ -57,11 +57,10 @@ export class CreatureNostalgiaSystem {
   }
 
   private updateNostalgia(em: EntityManager, tick: number): void {
-    const expired: number[] = []
-    for (let i = 0; i < this.states.length; i++) {
+    for (let i = this.states.length - 1; i >= 0; i--) {
       const state = this.states[i]
       const pos = em.getComponent<PositionComponent>(state.entityId, 'position')
-      if (!pos) { expired.push(i); continue }
+      if (!pos) { this.states.splice(i, 1); continue }
 
       const dx = pos.x - state.birthX
       const dy = pos.y - state.birthY
@@ -86,9 +85,6 @@ export class CreatureNostalgiaSystem {
       if (creature && creature.mood != null) {
         creature.mood = Math.max(0, Math.min(100, creature.mood + state.moodEffect * 0.02))
       }
-    }
-    for (let i = expired.length - 1; i >= 0; i--) {
-      this.states.splice(expired[i], 1)
     }
   }
 

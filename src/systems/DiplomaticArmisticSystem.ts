@@ -24,6 +24,7 @@ const SPAWN_CHANCE = 0.003
 const MAX_ARMISTICES = 10
 
 export class DiplomaticArmisticSystem {
+  private _civsBuf: Civilization[] = []
   private armistices: Armistice[] = []
   private nextId = 1
   private lastCheck = 0
@@ -33,7 +34,7 @@ export class DiplomaticArmisticSystem {
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs: Civilization[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 

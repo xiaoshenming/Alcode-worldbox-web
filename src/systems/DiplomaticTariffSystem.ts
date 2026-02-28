@@ -35,6 +35,7 @@ const RATE_MAP: Record<TariffLevel, number> = {
 const LEVELS: TariffLevel[] = ['low', 'moderate', 'high', 'prohibitive']
 
 export class DiplomaticTariffSystem {
+  private _civsBuf: Civilization[] = []
   private tariffs: Tariff[] = []
   private nextId = 1
   private lastCheck = 0
@@ -44,7 +45,7 @@ export class DiplomaticTariffSystem {
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs: Civilization[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 

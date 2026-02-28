@@ -25,6 +25,7 @@ const MAX_BLOCKADES = 30
 const STRENGTHS: BlockadeStrength[] = ['light', 'moderate', 'heavy', 'total']
 
 export class DiplomaticNavalBlockadeSystem {
+  private _civsBuf: Civilization[] = []
   private blockades: NavalBlockade[] = []
   private nextId = 1
   private lastCheck = 0
@@ -33,7 +34,7 @@ export class DiplomaticNavalBlockadeSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const civs: Civilization[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 

@@ -68,15 +68,17 @@ export const RARITY_UPPER: Record<string, string> = {
 }
 
 // --- Helper: pick random civ ---
+const _civsBuf: Civilization[] = []
+
 export function randomCiv(civManager: CivManager): Civilization | null {
-  const civs: Civilization[] = []
+  const civs = _civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
   if (civs.length === 0) return null
   return civs[Math.floor(Math.random() * civs.length)]
 }
 
 export function weakestCiv(civManager: CivManager): Civilization | null {
-  const civs: Civilization[] = []
+  const civs = _civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
   if (civs.length === 0) return null
   let weakest = civs[0]

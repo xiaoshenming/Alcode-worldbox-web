@@ -37,6 +37,7 @@ const INVENTION_NAMES: Record<InventionCategory, string[]> = {
 }
 
 export class CreatureInventionSystem {
+  private _civsBuf: Civilization[] = []
   private inventions: Invention[] = []
   private nextId = 1
   private lastCheck = 0
@@ -76,7 +77,7 @@ export class CreatureInventionSystem {
 
       if (isBreakthrough) this.breakthroughs++
 
-      const civs: Civilization[] = []
+      const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
       let civId: number | null = null
       if (civs.length > 0) {

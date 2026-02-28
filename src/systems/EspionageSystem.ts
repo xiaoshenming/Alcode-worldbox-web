@@ -51,6 +51,7 @@ let nextSpyId = 1
 // --- System ---
 
 export class EspionageSystem {
+  private _civsBuf: Civilization[] = []
   private spies: Spy[] = []
   private tributes: TributeRecord[] = []
   private warJustifications: WarJustification[] = []
@@ -58,7 +59,7 @@ export class EspionageSystem {
   private _civSpyBuf: Spy[] = []
 
   update(civManager: CivManager, em: EntityManager, world: World, particles: ParticleSystem, tick: number): void {
-    const civs: Civilization[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 

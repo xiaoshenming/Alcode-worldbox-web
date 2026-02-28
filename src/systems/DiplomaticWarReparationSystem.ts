@@ -24,6 +24,7 @@ const MAX_REPARATIONS = 20
 const PAYMENT_RATE = 0.5
 
 export class DiplomaticWarReparationSystem {
+  private _civsBuf: Civilization[] = []
   private reparations: WarReparation[] = []
   private nextId = 1
   private lastCheck = 0
@@ -44,7 +45,7 @@ export class DiplomaticWarReparationSystem {
     if (!civManager?.civilizations) return
     if (this.reparations.length >= MAX_REPARATIONS) return
 
-    const civs: Civilization[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 

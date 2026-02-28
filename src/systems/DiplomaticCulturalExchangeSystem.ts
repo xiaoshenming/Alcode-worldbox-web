@@ -34,6 +34,7 @@ const RELATION_BOOST: Record<ExchangeType, number> = {
 }
 
 export class DiplomaticCulturalExchangeSystem {
+  private _civsBuf: Civilization[] = []
   private exchanges: CulturalExchange[] = []
   private nextId = 1
   private lastCheck = 0
@@ -52,7 +53,7 @@ export class DiplomaticCulturalExchangeSystem {
     if (!civManager?.civilizations) return
     if (this.exchanges.length >= MAX_EXCHANGES) return
 
-    const civs: Civilization[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 

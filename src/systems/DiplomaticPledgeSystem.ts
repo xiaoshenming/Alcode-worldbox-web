@@ -28,6 +28,7 @@ const VIOLATION_PENALTY = 20
 const TYPES: PledgeType[] = ['non_aggression', 'resource_sharing', 'mutual_defense', 'border_respect', 'trade_priority']
 
 export class DiplomaticPledgeSystem {
+  private _civsBuf: Civilization[] = []
   private pledges: DiplomaticPledge[] = []
   private nextId = 1
   private lastCheck = 0
@@ -37,7 +38,7 @@ export class DiplomaticPledgeSystem {
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs: Civilization[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 

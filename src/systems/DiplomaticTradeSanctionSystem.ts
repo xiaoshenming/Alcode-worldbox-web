@@ -30,6 +30,7 @@ const COMPLIANCE_DECAY = 0.01
 const TARGETS: SanctionTarget[] = ['weapons', 'food', 'luxury', 'raw_materials', 'technology', 'labor']
 
 export class DiplomaticTradeSanctionSystem {
+  private _civsBuf: Civilization[] = []
   private sanctions: TradeSanction[] = []
   private nextId = 1
   private lastCheck = 0
@@ -39,7 +40,7 @@ export class DiplomaticTradeSanctionSystem {
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs: Civilization[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 

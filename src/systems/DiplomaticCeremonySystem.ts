@@ -46,6 +46,7 @@ const PRESTIGE_BY_TYPE: Record<CeremonyType, number> = {
 }
 
 export class DiplomaticCeremonySystem {
+  private _civsBuf: Civilization[] = []
   private ceremonies: Ceremony[] = []
   private history: CeremonyRecord[] = []
   private nextId = 1
@@ -63,7 +64,7 @@ export class DiplomaticCeremonySystem {
     if (this.ceremonies.length >= MAX_CEREMONIES) return
     if (Math.random() > INITIATE_CHANCE) return
 
-    const civs: Civilization[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 1) return
 

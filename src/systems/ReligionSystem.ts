@@ -25,6 +25,7 @@ const BLESSING_DURATION = 600
 const BLESSING_COOLDOWN = 1200
 
 export class ReligionSystem {
+  private _civsBuf: Civilization[] = []
   private blessingCooldowns: Map<number, number> = new Map() // civId -> tick when cooldown ends
 
   update(civManager: CivManager, em: EntityManager, world: World, particles: ParticleSystem, tick: number): void {
@@ -138,7 +139,7 @@ export class ReligionSystem {
   }
 
   private spreadReligion(civManager: CivManager, tick: number): void {
-    const civs: Civilization[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
 
     for (let i = 0; i < civs.length; i++) {
@@ -208,7 +209,7 @@ export class ReligionSystem {
   }
 
   private checkHolyWar(civManager: CivManager, tick: number): void {
-    const civs: Civilization[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
 
     for (let i = 0; i < civs.length; i++) {

@@ -29,6 +29,7 @@ const SIGN_THRESHOLD = 75
 const TERMS: TreatyTerm[] = ['ceasefire', 'border_recognition', 'trade_access', 'prisoner_exchange', 'reparations', 'non_aggression']
 
 export class DiplomaticPeaceTreatySystem {
+  private _civsBuf: Civilization[] = []
   private treaties: PeaceTreaty[] = []
   private nextId = 1
   private lastCheck = 0
@@ -38,7 +39,7 @@ export class DiplomaticPeaceTreatySystem {
     this.lastCheck = tick
 
     if (!civManager?.civilizations) return
-    const civs: Civilization[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 

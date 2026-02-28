@@ -29,6 +29,7 @@ const GUILD_NAMES = [
 ]
 
 export class DiplomaticTradeGuildSystem {
+  private _civsBuf: Civilization[] = []
   private guilds: TradeGuild[] = []
   private nextId = 1
   private lastCheck = 0
@@ -37,7 +38,7 @@ export class DiplomaticTradeGuildSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const civs: Civilization[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 

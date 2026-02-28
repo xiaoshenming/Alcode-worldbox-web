@@ -62,6 +62,7 @@ let nextDealId = 1
  * diplomatic relations, resource needs, and relative power.
  */
 export class TradeNegotiationSystem {
+  private _civsBuf: Civilization[] = []
   private negotiations: Negotiation[] = []
   private deals: TradeDeal[] = []
   private _activeDealsBuf: TradeDeal[] = []
@@ -70,7 +71,7 @@ export class TradeNegotiationSystem {
   update(dt: number, entityManager: EntityManager, civManager: CivManager, tick: number): void {
     if (tick % CHECK_INTERVAL !== 0) return
 
-    const civs: Civilization[] = []
+    const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
 
     this.updateNegotiations(civManager, tick)

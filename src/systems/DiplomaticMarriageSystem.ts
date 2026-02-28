@@ -28,6 +28,7 @@ const INFLUENCE_BASE: Record<MarriageType, number> = {
 }
 
 export class DiplomaticMarriageSystem {
+  private _civsBuf: Civilization[] = []
   private marriages: PoliticalMarriage[] = []
   private nextId = 1
   private lastCheck = 0
@@ -38,7 +39,7 @@ export class DiplomaticMarriageSystem {
 
     // Arrange new marriages
     if (this.marriages.length < MAX_MARRIAGES && civManager?.civilizations) {
-      const civs: Civilization[] = []
+      const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
       if (civs.length >= 2 && Math.random() < MARRIAGE_CHANCE) {
         const a = civs[Math.floor(Math.random() * civs.length)]
