@@ -30,6 +30,8 @@ interface Memory {
   /** 记忆关联的世界坐标 */
   x: number
   y: number
+  /** Pre-computed coordinate display string — computed at creation, never changes */
+  coordStr: string
   /** 记忆产生的 tick */
   tick: number
   /** 记忆强度 0-1，随时间衰减 */
@@ -80,6 +82,9 @@ export class CreatureMemorySystem {
   private dragging = false
   private dragOX = 0
   private dragOY = 0
+  /** Pre-computed panel header — rebuilt when selected entity or memory count changes */
+  private _prevMemKey = ''
+  private _memHeaderStr = '🧠 生物记忆 (0/24)'
 
   constructor() {
     this.panelX = 60
@@ -90,17 +95,17 @@ export class CreatureMemorySystem {
 
   /** 添加地点记忆 */
   addLocationMemory(entityId: number, tag: LocationTag, x: number, y: number, tick: number, desc: string): void {
-    this.addMemory(entityId, { id: nextMemId++, type: MemoryType.Location, tag, x, y, tick, strength: 1, targetId: -1, desc })
+    this.addMemory(entityId, { id: nextMemId++, type: MemoryType.Location, tag, x, y, coordStr: `(${x},${y})`, tick, strength: 1, targetId: -1, desc })
   }
 
   /** 添加事件记忆 */
   addEventMemory(entityId: number, tag: EventTag, x: number, y: number, tick: number, desc: string): void {
-    this.addMemory(entityId, { id: nextMemId++, type: MemoryType.Event, tag, x, y, tick, strength: 1, targetId: -1, desc })
+    this.addMemory(entityId, { id: nextMemId++, type: MemoryType.Event, tag, x, y, coordStr: `(${x},${y})`, tick, strength: 1, targetId: -1, desc })
   }
 
   /** 添加生物记忆 */
   addCreatureMemory(entityId: number, tag: CreatureTag, targetId: number, x: number, y: number, tick: number, desc: string): void {
-    this.addMemory(entityId, { id: nextMemId++, type: MemoryType.Creature, tag, x, y, tick, strength: 1, targetId, desc })
+    this.addMemory(entityId, { id: nextMemId++, type: MemoryType.Creature, tag, x, y, coordStr: `(${x},${y})`, tick, strength: 1, targetId, desc })
   }
 
   /** 查询某生物是否记得某地点标签 */
@@ -230,7 +235,9 @@ export class CreatureMemorySystem {
     ctx.fillStyle = '#e0e0ff'
     ctx.font = 'bold 14px monospace'
     ctx.textAlign = 'left'
-    ctx.fillText(`\u{1F9E0} 生物记忆 (${memories.length}/${MAX_MEMORIES})`, px + 12, py + 24)
+    const memKey = `${this.selectedEntity}:${memories.length}`
+    if (memKey !== this._prevMemKey) { this._prevMemKey = memKey; this._memHeaderStr = `\u{1F9E0} 生物记忆 (${memories.length}/${MAX_MEMORIES})` }
+    ctx.fillText(this._memHeaderStr, px + 12, py + 24)
 
     if (this.selectedEntity < 0 || memories.length === 0) {
       ctx.fillStyle = '#888'
@@ -281,7 +288,7 @@ export class CreatureMemorySystem {
       // 坐标
       ctx.fillStyle = '#777'
       ctx.font = '10px monospace'
-      ctx.fillText(`(${m.x},${m.y})`, px + 34, ry + 28)
+      ctx.fillText(m.coordStr, px + 34, ry + 28)
     }
 
     ctx.restore()

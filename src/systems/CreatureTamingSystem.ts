@@ -61,6 +61,9 @@ export class CreatureTamingSystem {
   private dragOX = 0
   private _renderBuf: TameRecord[] = []
   private dragOY = 0
+  /** Pre-computed panel header — rebuilt when item count changes */
+  private _prevItemCount = -1
+  private _headerStr = '🐾 驯化动物 (0)'
 
   /* ── 公共 API ── */
 
@@ -200,7 +203,9 @@ export class CreatureTamingSystem {
     ctx.fillStyle = '#ffe0a0'
     ctx.font = 'bold 14px monospace'
     ctx.textAlign = 'left'
-    ctx.fillText(`\u{1F43E} 驯化动物 (${items.length})`, px + 12, py + 24)
+    const il = items.length
+    if (il !== this._prevItemCount) { this._prevItemCount = il; this._headerStr = `\u{1F43E} 驯化动物 (${il})` }
+    ctx.fillText(this._headerStr, px + 12, py + 24)
 
     if (items.length === 0) {
       ctx.fillStyle = '#888'; ctx.font = '13px monospace'; ctx.textAlign = 'center'

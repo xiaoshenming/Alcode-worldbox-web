@@ -88,6 +88,9 @@ export class ProphecySystem {
   private dragging = false
   private dragOX = 0
   private dragOY = 0
+  /** Pre-computed panel header — rebuilt when prophecies.length changes */
+  private _prevProphecyCount = -1
+  private _headerStr = '🔮 世界预言 (0 活跃)'
   /** 外部回调：预言实现时触发 */
   onFulfilled: ((p: Prophecy) => void) | null = null
 
@@ -202,7 +205,9 @@ export class ProphecySystem {
     ctx.fillStyle = '#e8d0ff'
     ctx.font = 'bold 14px monospace'
     ctx.textAlign = 'left'
-    ctx.fillText(`\u{1F52E} 世界预言 (${this.prophecies.length} 活跃)`, px + 12, py + 24)
+    const pl = this.prophecies.length
+    if (pl !== this._prevProphecyCount) { this._prevProphecyCount = pl; this._headerStr = `\u{1F52E} 世界预言 (${pl} 活跃)` }
+    ctx.fillText(this._headerStr, px + 12, py + 24)
 
     ctx.save()
     ctx.beginPath(); ctx.rect(px, py + HEADER_H, PANEL_W, PANEL_H - HEADER_H); ctx.clip()

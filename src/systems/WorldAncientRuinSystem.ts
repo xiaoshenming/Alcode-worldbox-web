@@ -70,8 +70,10 @@ export class WorldAncientRuinSystem {
   private nextExploreTick = EXPLORE_CHECK
   private _lastZoom = -1
   private _nameFont = ''
-
   private _unexploredBuf: AncientRuin[] = []
+  /** Pre-computed panel header — rebuilt when unexplored or total count changes */
+  private _prevRuinKey = ''
+  private _ruinHeaderStr = 'Ruins (0/0)'
   getRuins(): AncientRuin[] { return this.ruins }
   getUnexplored(): AncientRuin[] {
     this._unexploredBuf.length = 0
@@ -228,7 +230,9 @@ export class WorldAncientRuinSystem {
     ctx.fillRect(x, y, 220, 20 + rows * 18)
     ctx.fillStyle = '#fc4'
     ctx.font = '12px monospace'
-    ctx.fillText(`Ruins (${unexplored.length}/${this.ruins.length})`, x + 8, y + 14)
+    const ruinKey = `${unexplored.length}:${this.ruins.length}`
+    if (ruinKey !== this._prevRuinKey) { this._prevRuinKey = ruinKey; this._ruinHeaderStr = `Ruins (${unexplored.length}/${this.ruins.length})` }
+    ctx.fillText(this._ruinHeaderStr, x + 8, y + 14)
 
     for (let i = 0; i < Math.min(5, this.ruins.length); i++) {
       const r = this.ruins[i]
