@@ -22,6 +22,8 @@ interface Personality {
   traitStrs: Record<TraitAxis, string>
   sociabilityStr: string
   stabilityStr: string
+  /** Pre-computed social+stability display string — rebuilt when sociability/stability changes */
+  socialStr: string
 }
 
 const TRAIT_INFO: Record<TraitAxis, { icon: string; labelPos: string; labelNeg: string }> = {
@@ -43,6 +45,8 @@ function _buildStrs(p: Personality): void {
   for (const axis of AXES) p.traitStrs[axis] = p.traits[axis].toFixed(2)
   p.sociabilityStr = p.sociability.toFixed(2)
   p.stabilityStr = (p.stability * 100).toFixed(0)
+  const socLabel = p.sociability > 0.3 ? '群居' : p.sociability < -0.3 ? '独行' : '中性'
+  p.socialStr = `社交: ${socLabel} (${p.sociabilityStr})  稳定性: ${p.stabilityStr}%`
 }
 
 export class CreaturePersonalitySystem {
@@ -54,11 +58,11 @@ export class CreaturePersonalitySystem {
   private selectedEntity = -1
   private tickCounter = 0
   private _biasesBuf = [
-    { label: '战斗', val: 0, valStr: '' },
-    { label: '逃跑', val: 0, valStr: '' },
-    { label: '助人', val: 0, valStr: '' },
-    { label: '探索', val: 0, valStr: '' },
-    { label: '劳作', val: 0, valStr: '' },
+    { label: '战斗', val: 0, valStr: '', lineStr: '' },
+    { label: '逃跑', val: 0, valStr: '', lineStr: '' },
+    { label: '助人', val: 0, valStr: '', lineStr: '' },
+    { label: '探索', val: 0, valStr: '', lineStr: '' },
+    { label: '劳作', val: 0, valStr: '', lineStr: '' },
   ]
 
   /* ── 公共 API ── */
@@ -79,7 +83,7 @@ export class CreaturePersonalitySystem {
       stability: 0.3 + Math.random() * 0.7,
       sociability: (Math.random() - 0.5) * 2,
       traitStrs: { bravery: '', kindness: '', diligence: '', curiosity: '', loyalty: '' },
-      sociabilityStr: '', stabilityStr: '',
+      sociabilityStr: '', stabilityStr: '', socialStr: '',
     }
     _buildStrs(p)
     this.personalities.set(entityId, p)
@@ -102,7 +106,7 @@ export class CreaturePersonalitySystem {
       stability: clamp(((a?.stability ?? 0.5) + (b?.stability ?? 0.5)) / 2 + (Math.random() - 0.5) * 0.2, 0, 1),
       sociability: clamp(((a?.sociability ?? 0) + (b?.sociability ?? 0)) / 2 + (Math.random() - 0.5) * 0.3, -1, 1),
       traitStrs: { bravery: '', kindness: '', diligence: '', curiosity: '', loyalty: '' },
-      sociabilityStr: '', stabilityStr: '',
+      sociabilityStr: '', stabilityStr: '', socialStr: '',
     }
     _buildStrs(p)
     this.personalities.set(childId, p)
@@ -201,8 +205,7 @@ export class CreaturePersonalitySystem {
 
     // 社交倾向和稳定性
     ctx.fillStyle = '#aac'; ctx.font = '12px monospace'
-    const socLabel = p.sociability > 0.3 ? '群居' : p.sociability < -0.3 ? '独行' : '中性'
-    ctx.fillText(`社交: ${socLabel} (${p.sociabilityStr})  稳定性: ${p.stabilityStr}%`, px + 16, drawY)
+    ctx.fillText(p.socialStr, px + 16, drawY)
     drawY += 24
 
     // 各维度条
@@ -258,7 +261,7 @@ export class CreaturePersonalitySystem {
     ctx.fillStyle = '#8ab'; ctx.font = '11px monospace'
     ctx.fillText('行为倾向:', px + 16, drawY + 2)
     const biases = this._biasesBuf
-    const _setB = (b: typeof biases[0], v: number) => { b.val = v; b.valStr = v.toFixed(2) }
+    const _setB = (b: typeof biases[0], v: number) => { b.val = v; b.valStr = v.toFixed(2); b.lineStr = `${b.label}:${v > 0 ? '+' : ''}${b.valStr}` }
     _setB(biases[0], this.getDecisionBias(p.entityId, 'fight'))
     _setB(biases[1], this.getDecisionBias(p.entityId, 'flee'))
     _setB(biases[2], this.getDecisionBias(p.entityId, 'help'))
@@ -268,7 +271,7 @@ export class CreaturePersonalitySystem {
     ctx.font = '10px monospace'
     for (const b of biases) {
       ctx.fillStyle = b.val > 0.2 ? '#8c8' : b.val < -0.2 ? '#c88' : '#888'
-      ctx.fillText(`${b.label}:${b.val > 0 ? '+' : ''}${b.valStr}`, bx, drawY + 20)
+      ctx.fillText(b.lineStr, bx, drawY + 20)
       bx += 70
     }
 

@@ -13,6 +13,8 @@ export interface Achievement {
   completedAt: number; // tick
   /** Pre-computed render string — avoids toFixed per frame */
   progressStr: string;
+  /** Pre-computed "current/target (pct%)" display string — rebuilt when current changes */
+  progressInfoStr: string;
 }
 
 type AchievementStatus = 'completed' | 'in_progress' | 'pending';
@@ -63,7 +65,7 @@ function makeAchievements(): Achievement[] {
     ['all_races', '众生平等', '同时拥有4个种族', 'special', 4],
   ];
   return defs.map(([id, name, description, category, target]) => ({
-    id, name, description, category, current: 0, target, completed: false, completedAt: 0, progressStr: '0',
+    id, name, description, category, current: 0, target, completed: false, completedAt: 0, progressStr: '0', progressInfoStr: `0/${target} (0%)`,
   }));
 }
 
@@ -76,6 +78,7 @@ export class AchievementProgressSystem {
   private _categoryBuf: Achievement[] = [];
   // Cached header string — avoids toFixed(0) per frame when panel is open
   private _rateStr = '0'
+  private _headerStr = '成就  0%'
 
   constructor() {
     this.achievements = makeAchievements();
@@ -86,11 +89,13 @@ export class AchievementProgressSystem {
     if (!a || a.completed) return;
     a.current = Math.min(value, a.target);
     a.progressStr = a.target > 0 ? (a.current / a.target * 100).toFixed(0) : '0';
+    a.progressInfoStr = `${a.current}/${a.target} (${a.progressStr}%)`;
     if (a.current >= a.target) {
       a.completed = true;
       a.completedAt = Date.now();
     }
     this._rateStr = Math.round(this.getCompletionRate() * 100).toString()
+    this._headerStr = `成就  ${this._rateStr}%`
   }
 
   isCompleted(id: string): boolean {
@@ -170,7 +175,7 @@ export class AchievementProgressSystem {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     const rate = this.getCompletionRate();
-    ctx.fillText(`成就  ${this._rateStr}%`, x + 14, y + HEADER_H / 2);
+    ctx.fillText(this._headerStr, x + 14, y + HEADER_H / 2);
     // close btn
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.font = '16px monospace';
@@ -266,7 +271,7 @@ export class AchievementProgressSystem {
       ctx.font = '10px monospace';
       ctx.textAlign = 'right';
       ctx.textBaseline = 'top';
-      ctx.fillText(`${a.current}/${a.target} (${a.progressStr}%)`, x + w - 14, ry + 34);
+      ctx.fillText(a.progressInfoStr, x + w - 14, ry + 34);
     }
 
     ctx.restore(); // clip
