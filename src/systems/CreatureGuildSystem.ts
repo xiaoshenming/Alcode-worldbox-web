@@ -20,6 +20,7 @@ export interface Guild {
   founded: number         // tick
   bonus: number           // percentage bonus to members
   nameLabel: string       // Pre-computed "${name} Lv${level}" for render
+  memberCountStr: string  // Pre-computed "${members.length}/${MAX_MEMBERS}" for render
 }
 
 const CHECK_INTERVAL = 800
@@ -73,10 +74,15 @@ export class CreatureGuildSystem {
   update(dt: number, em: EntityManager, tick: number): void {
     // Clean dead members
     for (const guild of this.guilds) {
+      let changed = false
       for (let i = guild.members.length - 1; i >= 0; i--) {
         const pos = em.getComponent<PositionComponent>(guild.members[i], 'position')
-        if (!pos) guild.members.splice(i, 1)
+        if (!pos) {
+          guild.members.splice(i, 1)
+          changed = true
+        }
       }
+      if (changed) guild.memberCountStr = `${guild.members.length}/${MAX_MEMBERS}`
     }
 
     // Form new guilds
@@ -153,6 +159,7 @@ export class CreatureGuildSystem {
         founded: tick,
         bonus: BONUS_PER_LEVEL,
         nameLabel: `${name} Lv1`,
+        memberCountStr: `${members.length}/${MAX_MEMBERS}`,
       }
       this.guilds.push(guild)
       EventLog.log('culture', `Guild "${name}" (${guildType}) founded with ${members.length} members`, 0)
@@ -163,6 +170,7 @@ export class CreatureGuildSystem {
   private recruitMembers(em: EntityManager): void {
     for (const guild of this.guilds) {
       if (guild.members.length >= MAX_MEMBERS) continue
+      const initialCount = guild.members.length
       const entities = em.getEntitiesWithComponents('position', 'creature')
       for (const eid of entities) {
         if (guild.members.length >= MAX_MEMBERS) break
@@ -174,6 +182,9 @@ export class CreatureGuildSystem {
         if (dx * dx + dy * dy < GUILD_RANGE * GUILD_RANGE) {
           guild.members.push(eid)
         }
+      }
+      if (guild.members.length !== initialCount) {
+        guild.memberCountStr = `${guild.members.length}/${MAX_MEMBERS}`
       }
     }
   }
@@ -206,7 +217,7 @@ export class CreatureGuildSystem {
       ctx.font = this._nameFont
       ctx.textAlign = 'center'
       ctx.fillText(guild.nameLabel, sx, sy - 6 * zoom)
-      ctx.fillText(`${guild.members.length}/${MAX_MEMBERS}`, sx, sy + 12 * zoom)
+      ctx.fillText(guild.memberCountStr, sx, sy + 12 * zoom)
     }
   }
 
