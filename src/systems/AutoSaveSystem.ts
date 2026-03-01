@@ -61,6 +61,10 @@ export class AutoSaveSystem {
   /** Whether the most recent save attempt succeeded. */
   private lastSaveOk: boolean = true
 
+  /** Cached measureText widths for the two fixed indicator strings (lazy-init on first render). */
+  private _savingTextWidth = 0
+  private _savedTextWidth = 0
+
   // ----------------------------------------------------------------
   // Public API
   // ----------------------------------------------------------------
@@ -133,7 +137,12 @@ export class AutoSaveSystem {
 
     // Background pill
     ctx.font = '13px monospace'
-    const metrics = ctx.measureText(text)
+    // Lazy-cache measureText widths — only two fixed strings ever appear
+    if (this._savingTextWidth === 0) {
+      this._savingTextWidth = ctx.measureText('Saving...').width
+      this._savedTextWidth  = ctx.measureText('Saved').width
+    }
+    const metrics = { width: this.indicatorState === IndicatorState.Saving ? this._savingTextWidth : this._savedTextWidth }
     const padX = 10
     const padY = 6
     const pillW = metrics.width + padX * 2

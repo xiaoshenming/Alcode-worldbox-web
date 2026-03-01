@@ -42,12 +42,17 @@ const PORTAL_COLORS = [
   '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
 ];
 
+const MAX_PARTICLES = 256;
+
 export class PortalSystem {
   private portals: Map<number, Portal> = new Map();
   private nextId = 1;
   private pairCount = 0;
   private entityCooldowns: Map<number, number> = new Map();
-  private particles: PortalParticle[] = [];
+  /** Fixed-size particle pool — life=0 means inactive slot */
+  private readonly particles: PortalParticle[] = Array.from({ length: MAX_PARTICLES }, () => ({
+    x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 1, color: '', size: 1,
+  }));
   private flashes: TeleportFlash[] = [];
   private animTick = 0;
   private _drawnSet: Set<number> = new Set();
@@ -147,14 +152,12 @@ export class PortalSystem {
     }
 
     // Update particles
-    for (let i = this.particles.length - 1; i >= 0; i--) {
+    for (let i = 0; i < this.particles.length; i++) {
       const p = this.particles[i];
+      if (p.life <= 0) continue;
       p.x += p.vx;
       p.y += p.vy;
       p.life--;
-      if (p.life <= 0) {
-        this.particles.splice(i, 1);
-      }
     }
 
     // Update flashes
@@ -225,21 +228,23 @@ export class PortalSystem {
       ctx.restore();
     }
 
-    // Draw particles
-    for (const p of this.particles) {
+    // Draw particles — batch by color to minimize state changes, avoid per-particle save/restore
+    let lastColor = '';
+    for (let i = 0; i < this.particles.length; i++) {
+      const p = this.particles[i];
+      if (p.life <= 0) continue;
       const px = (p.x - cameraX) * tileZoom + tileZoom * 0.5;
       const py = (p.y - cameraY) * tileZoom + tileZoom * 0.5;
       const alpha = p.life / p.maxLife;
-      ctx.save();
       ctx.globalAlpha = alpha * 0.8;
-      ctx.fillStyle = p.color;
+      if (p.color !== lastColor) { ctx.fillStyle = p.color; lastColor = p.color; }
       ctx.beginPath();
       ctx.arc(px, py, Math.max(1, p.size * zoom), 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
     }
+    ctx.globalAlpha = 1;
 
-    // Draw teleport flashes
+    // Draw teleport flashes — two layered circles replace createRadialGradient (low-frequency, rare event)
     for (const f of this.flashes) {
       const fx = (f.x - cameraX) * tileZoom + tileZoom * 0.5;
       const fy = (f.y - cameraY) * tileZoom + tileZoom * 0.5;
@@ -247,18 +252,20 @@ export class PortalSystem {
       const flashRadius = (10 + 20 * progress) * zoom;
       const alpha = (1 - progress) * 0.6;
 
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      const grad = ctx.createRadialGradient(fx, fy, 0, fx, fy, flashRadius);
-      grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.4, f.color);
-      grad.addColorStop(1, 'transparent');
+      // Outer colored ring
+      ctx.globalAlpha = alpha * 0.5;
+      ctx.fillStyle = f.color;
       ctx.beginPath();
       ctx.arc(fx, fy, flashRadius, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
       ctx.fill();
-      ctx.restore();
+      // Inner bright white core
+      ctx.globalAlpha = alpha * 0.9;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(fx, fy, flashRadius * 0.35, 0, Math.PI * 2);
+      ctx.fill();
     }
+    ctx.globalAlpha = 1;
   }
 
   getPortals(): Portal[] {
@@ -288,7 +295,7 @@ export class PortalSystem {
   clear(): void {
     this.portals.clear();
     this.entityCooldowns.clear();
-    this.particles = [];
+    for (let i = 0; i < this.particles.length; i++) this.particles[i].life = 0;
     this.flashes = [];
     this.pairCount = 0;
   }
@@ -301,32 +308,37 @@ export class PortalSystem {
     const startX = portal.x + Math.cos(angle) * dist;
     const startY = portal.y + Math.sin(angle) * dist;
     const life = 20 + Math.floor(Math.random() * 15);
-    // Velocity points inward toward portal center
     const speed = dist / life;
-    this.particles.push({
-      x: startX, y: startY,
-      vx: (portal.x - startX) * speed * 0.8,
-      vy: (portal.y - startY) * speed * 0.8,
-      life, maxLife: life,
-      color: portal.color,
-      size: 1 + Math.random() * 1.5,
-    });
+    // Find inactive slot in pool
+    for (let i = 0; i < this.particles.length; i++) {
+      const p = this.particles[i];
+      if (p.life > 0) continue;
+      p.x = startX; p.y = startY;
+      p.vx = (portal.x - startX) * speed * 0.8;
+      p.vy = (portal.y - startY) * speed * 0.8;
+      p.life = life; p.maxLife = life;
+      p.color = portal.color;
+      p.size = 1 + Math.random() * 1.5;
+      return;
+    }
   }
 
   private spawnBurstParticles(portal: Portal): void {
     const count = 8 + Math.floor(Math.random() * 5);
-    for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
+    let spawned = 0;
+    for (let i = 0; i < this.particles.length && spawned < count; i++) {
+      const p = this.particles[i];
+      if (p.life > 0) continue;
+      const ang = Math.random() * Math.PI * 2;
       const speed = 0.1 + Math.random() * 0.25;
       const life = 15 + Math.floor(Math.random() * 10);
-      this.particles.push({
-        x: portal.x, y: portal.y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        life, maxLife: life,
-        color: Math.random() > 0.3 ? portal.color : '#ffffff',
-        size: 1.5 + Math.random() * 2,
-      });
+      p.x = portal.x; p.y = portal.y;
+      p.vx = Math.cos(ang) * speed;
+      p.vy = Math.sin(ang) * speed;
+      p.life = life; p.maxLife = life;
+      p.color = Math.random() > 0.3 ? portal.color : '#ffffff';
+      p.size = 1.5 + Math.random() * 2;
+      spawned++;
     }
   }
 

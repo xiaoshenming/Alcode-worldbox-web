@@ -75,6 +75,10 @@ export class TutorialSystem {
     next: { x: 0, y: 0, w: 0, h: 0 },
     skip: { x: 0, y: 0, w: 0, h: 0 },
   };
+  /** Cached word-wrapped lines for current step description — rebuilt when step or maxW changes */
+  private _wrappedLines: string[] = [];
+  private _wrappedStepId = '';
+  private _wrappedMaxW = 0;
 
   constructor(steps?: TutorialStep[]) {
     this.steps = steps ?? DEFAULT_STEPS;
@@ -165,7 +169,15 @@ export class TutorialSystem {
     // Description
     ctx.fillStyle = '#E0E0E0';
     ctx.font = '13px sans-serif';
-    this.wrapText(ctx, step.description, boxX + 16, boxY + 50, boxW - 32, 18);
+    const descMaxW = boxW - 32;
+    if (step.id !== this._wrappedStepId || descMaxW !== this._wrappedMaxW) {
+      this._wrappedStepId = step.id;
+      this._wrappedMaxW = descMaxW;
+      this._wrappedLines = this.computeWrappedLines(ctx, step.description, descMaxW);
+    }
+    for (let li = 0; li < this._wrappedLines.length; li++) {
+      ctx.fillText(this._wrappedLines[li], boxX + 16, boxY + 50 + li * 18);
+    }
 
     // Action hint
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
@@ -228,19 +240,25 @@ export class TutorialSystem {
   }
 
   private wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxW: number, lineH: number): void {
+    const lines = this.computeWrappedLines(ctx, text, maxW);
+    for (let i = 0; i < lines.length; i++) ctx.fillText(lines[i], x, y + i * lineH);
+  }
+
+  /** Compute word-wrapped lines for text within maxW pixels. Used for caching. */
+  private computeWrappedLines(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
     const words = text.split(' ');
+    const lines: string[] = [];
     let line = '';
-    let cy = y;
     for (const word of words) {
       const test = line ? `${line} ${word}` : word;
       if (ctx.measureText(test).width > maxW && line) {
-        ctx.fillText(line, x, cy);
+        lines.push(line);
         line = word;
-        cy += lineH;
       } else {
         line = test;
       }
     }
-    if (line) ctx.fillText(line, x, cy);
+    if (line) lines.push(line);
+    return lines;
   }
 }
