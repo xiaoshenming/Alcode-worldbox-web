@@ -1,4 +1,5 @@
 /** WorldDashboardSystem - 世界统计仪表盘，纯 Canvas 2D 绘制 */
+import { roundRectArc } from '../utils/CanvasUtils'
 type TabType = 'religion' | 'population' | 'power';
 interface CivPowerEntry { name: string; power: number; color: string; powerStr: string }
 interface PopulationSample { tick: number; populations: Record<string, number>; entries: [string, number][] }
@@ -104,11 +105,11 @@ export class WorldDashboardSystem {
   private drawPanelBackground(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     ctx.fillStyle = PANEL_BG;
-    this.roundRect(ctx, this.panelX, this.panelY, this.panelW, this.panelH, PANEL_RADIUS);
+    roundRectArc(ctx, this.panelX, this.panelY, this.panelW, this.panelH, PANEL_RADIUS);
     ctx.fill();
     ctx.strokeStyle = 'rgba(100,120,160,0.5)';
     ctx.lineWidth = 1;
-    this.roundRect(ctx, this.panelX, this.panelY, this.panelW, this.panelH, PANEL_RADIUS);
+    roundRectArc(ctx, this.panelX, this.panelY, this.panelW, this.panelH, PANEL_RADIUS);
     ctx.stroke();
     ctx.restore();
   }
@@ -398,20 +399,5 @@ export class WorldDashboardSystem {
     ctx.restore();
   }
 
-  private roundRect(
-    ctx: CanvasRenderingContext2D,
-    x: number, y: number, w: number, h: number, r: number
-  ): void {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.arcTo(x + w, y, x + w, y + r, r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-    ctx.lineTo(x + r, y + h);
-    ctx.arcTo(x, y + h, x, y + h - r, r);
-    ctx.lineTo(x, y + r);
-    ctx.arcTo(x, y, x + r, y, r);
-    ctx.closePath();
-  }
+
 }

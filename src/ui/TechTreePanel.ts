@@ -1,5 +1,6 @@
 import { CivManager } from '../civilization/CivManager'
 import { TECHNOLOGIES, Technology, TECH_TREE } from '../civilization/Civilization'
+import { roundRectArc } from '../utils/CanvasUtils'
 
 const ERA_NAMES: Record<number, string> = {
   1: 'Stone Age',
@@ -207,14 +208,14 @@ export class TechTreePanel {
       // Rounded rect
       ctx.fillStyle = bgColor
       ctx.beginPath()
-      this.roundRect(ctx, pos.x, pos.y, NODE_W, NODE_H, 6)
+      roundRectArc(ctx, pos.x, pos.y, NODE_W, NODE_H, 6)
       ctx.fill()
 
       // Border
       ctx.strokeStyle = isDone ? '#27ae60' : isResearching ? '#f39c12' : '#444'
       ctx.lineWidth = isDone || isResearching ? 2 : 1
       ctx.beginPath()
-      this.roundRect(ctx, pos.x, pos.y, NODE_W, NODE_H, 6)
+      roundRectArc(ctx, pos.x, pos.y, NODE_W, NODE_H, 6)
       ctx.stroke()
 
       // Tech name text
@@ -231,12 +232,12 @@ export class TechTreePanel {
         // Background
         ctx.fillStyle = '#333'
         ctx.beginPath()
-        this.roundRect(ctx, pos.x, barY, barW, barH, 2)
+        roundRectArc(ctx, pos.x, barY, barW, barH, 2)
         ctx.fill()
         // Fill
         ctx.fillStyle = '#f1c40f'
         ctx.beginPath()
-        this.roundRect(ctx, pos.x, barY, barW * (progress / 100), barH, 2)
+        roundRectArc(ctx, pos.x, barY, barW * (progress / 100), barH, 2)
         ctx.fill()
         // Percentage text
         ctx.fillStyle = '#fff'
@@ -264,16 +265,5 @@ export class TechTreePanel {
     }
   }
 
-  private roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
-    ctx.moveTo(x + r, y)
-    ctx.lineTo(x + w - r, y)
-    ctx.arcTo(x + w, y, x + w, y + r, r)
-    ctx.lineTo(x + w, y + h - r)
-    ctx.arcTo(x + w, y + h, x + w - r, y + h, r)
-    ctx.lineTo(x + r, y + h)
-    ctx.arcTo(x, y + h, x, y + h - r, r)
-    ctx.lineTo(x, y + r)
-    ctx.arcTo(x, y, x + r, y, r)
-    ctx.closePath()
-  }
+
 }
