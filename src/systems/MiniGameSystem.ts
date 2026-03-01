@@ -33,6 +33,10 @@ interface ActiveEvent {
   triggeredAt: number;
   chosenOption: EventOption | null;
   resultShownAt: number;
+  /** Cached wrapped lines for description — computed on first render */
+  descLines: string[] | null;
+  /** Cached wrapped lines for result text — computed on first render after chosenOption is set */
+  resultLines: string[] | null;
 }
 
 /** 所有事件模板定义 */
@@ -191,12 +195,20 @@ export class MiniGameSystem {
       // 显示结果
       ctx.fillStyle = '#d0d0d0';
       ctx.font = '15px sans-serif';
-      this.wrapText(ctx, this.active.chosenOption.resultText, screenW / 2, py + 90, POPUP_W - 60, 22);
+      if (!this.active.resultLines) {
+        this.active.resultLines = this.computeWrappedLines(ctx, this.active.chosenOption.resultText, POPUP_W - 60);
+      }
+      const rLines = this.active.resultLines;
+      for (let li = 0; li < rLines.length; li++) ctx.fillText(rLines[li], screenW / 2, py + 90 + li * 22);
     } else {
       // 描述
       ctx.fillStyle = '#b0b0c0';
       ctx.font = '14px sans-serif';
-      this.wrapText(ctx, this.active.template.description, screenW / 2, py + 80, POPUP_W - 60, 20);
+      if (!this.active.descLines) {
+        this.active.descLines = this.computeWrappedLines(ctx, this.active.template.description, POPUP_W - 60);
+      }
+      const dLines = this.active.descLines;
+      for (let li = 0; li < dLines.length; li++) ctx.fillText(dLines[li], screenW / 2, py + 80 + li * 20);
 
       // 选项按钮
       const opts = this.active.template.options;
@@ -247,6 +259,8 @@ export class MiniGameSystem {
       triggeredAt: tick,
       chosenOption: null,
       resultShownAt: 0,
+      descLines: null,
+      resultLines: null,
     };
   }
 
@@ -273,19 +287,25 @@ export class MiniGameSystem {
     ctx: CanvasRenderingContext2D,
     text: string, cx: number, startY: number, maxW: number, lineH: number
   ): void {
+    const lines = this.computeWrappedLines(ctx, text, maxW);
+    for (let i = 0; i < lines.length; i++) ctx.fillText(lines[i], cx, startY + i * lineH);
+  }
+
+  /** Compute character-wrapped lines for text within maxW pixels */
+  private computeWrappedLines(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
     const chars = text.split('');
+    const lines: string[] = [];
     let line = '';
-    let y = startY;
     for (const ch of chars) {
       const test = line + ch;
       if (ctx.measureText(test).width > maxW && line.length > 0) {
-        ctx.fillText(line, cx, y);
+        lines.push(line);
         line = ch;
-        y += lineH;
       } else {
         line = test;
       }
     }
-    if (line) ctx.fillText(line, cx, y);
+    if (line) lines.push(line);
+    return lines;
   }
 }
