@@ -63,27 +63,6 @@ export class EntityInspectorSystem {
     toggle(this.tree)
   }
 
-  handleClick(mx: number, my: number, screenW: number, _screenH: number): boolean {
-    if (!this.panelOpen) return false
-    const px = screenW - PANEL_W - 20, py = 60
-    if (mx < px || mx > px + PANEL_W) return false
-
-    // Close button
-    if (mx > px + PANEL_W - 24 && my >= py && my <= py + HEADER_H) {
-      this.close()
-      return true
-    }
-
-    // Row click → toggle
-    const rowY = my - py - HEADER_H + this.scrollOffset
-    if (rowY >= 0) {
-      const idx = Math.floor(rowY / ROW_H)
-      this.toggleNode(idx)
-      return true
-    }
-    return true
-  }
-
   handleScroll(delta: number): void {
     if (!this.panelOpen) return
     this.scrollOffset = Math.max(0, this.scrollOffset + delta * 20)

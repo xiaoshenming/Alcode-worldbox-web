@@ -128,40 +128,6 @@ export class MiniGameSystem {
   }
 
   /**
-   * 处理点击事件，判断是否命中选项按钮
-   * @param x - 点击屏幕 x 坐标
-   * @param y - 点击屏幕 y 坐标
-   * @param screenW - 屏幕宽度
-   * @param screenH - 屏幕高度
-   * @returns 选中选项的 id，未命中返回 null
-   */
-  handleClick(x: number, y: number, screenW: number, screenH: number): string | null {
-    if (!this.active || this.active.chosenOption) return null;
-
-    const popupX = (screenW - POPUP_W) / 2;
-    const popupY = (screenH - POPUP_H) / 2;
-    const opts = this.active.template.options;
-    const totalBtnW = POPUP_W - 40;
-    const btnW = (totalBtnW - BTN_GAP * (opts.length - 1)) / opts.length;
-    const btnY = popupY + POPUP_H - BTN_MARGIN_BOTTOM - BTN_H;
-
-    for (let i = 0; i < opts.length; i++) {
-      const btnX = popupX + 20 + i * (btnW + BTN_GAP);
-      if (x >= btnX && x <= btnX + btnW && y >= btnY && y <= btnY + BTN_H) {
-        this.active.chosenOption = opts[i];
-        this.active.resultShownAt = performance.now();
-        this.history.push({
-          tick: this.active.triggeredAt,
-          eventType: this.active.template.type,
-          choice: opts[i].id,
-        });
-        return opts[i].id;
-      }
-    }
-    return null;
-  }
-
-  /**
    * 渲染事件弹窗
    * @param ctx - Canvas 2D 渲染上下文
    * @param screenW - 屏幕宽度

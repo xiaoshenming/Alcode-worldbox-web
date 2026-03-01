@@ -164,11 +164,6 @@ export class AutoSaveSystem {
     ctx.restore()
   }
 
-  /** Set the auto-save interval in ticks. */
-  setInterval(ticks: number): void {
-    this.interval = Math.max(60, ticks) // minimum ~1 second at 60 fps
-  }
-
   /** Get the auto-save interval in ticks. */
   getInterval(): number {
     return this.interval

@@ -125,13 +125,6 @@ export class EvolutionVisualSystem {
     ctx.restore()
   }
 
-  handleClick(x: number, y: number): boolean {
-    if (!this.visible) return false
-    const { x: px, y: py, w: pw, h: ph } = this.pr
-    if (x < px || x > px + pw || y < py || y > py + ph) { this.visible = false; return true }
-    return true
-  }
-
   // --- Tree layout & render ---
 
   private buildLayout(): LayoutNode[] {

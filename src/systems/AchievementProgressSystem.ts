@@ -288,33 +288,6 @@ export class AchievementProgressSystem {
     ctx.restore(); // main save
   }
 
-  handleClick(x: number, y: number, screenW: number, screenH: number): boolean {
-    if (!this.panelOpen) return false;
-    const p = this.panelRect(screenW, screenH);
-    if (x < p.x || x > p.x + p.w || y < p.y || y > p.y + p.h) {
-      this.panelOpen = false;
-      return true;
-    }
-    // close button
-    if (x > p.x + p.w - 30 && y < p.y + HEADER_H) {
-      this.panelOpen = false;
-      return true;
-    }
-    // category tabs
-    const tabY = p.y + HEADER_H + 4;
-    if (y >= tabY && y <= tabY + TAB_H) {
-      const allCats = ALL_CATS;
-      const tabW = p.w / allCats.length;
-      const idx = Math.floor((x - p.x) / tabW);
-      if (idx >= 0 && idx < allCats.length) {
-        this.filter = allCats[idx];
-        this.scrollOffset = 0;
-      }
-      return true;
-    }
-    return true; // consume click inside panel
-  }
-
   save(): void {
     const data = this.achievements.map(a => ({
       id: a.id, current: a.current, completed: a.completed, completedAt: a.completedAt,

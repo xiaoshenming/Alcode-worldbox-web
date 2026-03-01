@@ -150,27 +150,6 @@ export class AmbientSoundMixer {
     return this._muted;
   }
 
-  setLayerVolume(layer: SoundLayer, volume: number): void {
-    const ls = this._layers.get(layer);
-    if (ls) {
-      ls.targetVolume = clamp01(volume);
-    }
-  }
-
-  toggleLayerMute(layer: SoundLayer): void {
-    const ls = this._layers.get(layer);
-    if (ls) {
-      ls.muted = !ls.muted;
-    }
-  }
-
-  getLayerVolume(layer: SoundLayer): number {
-    const ls = this._layers.get(layer);
-    if (!ls) return 0;
-    if (this._muted || ls.muted) return 0;
-    return ls.volume * this._masterVolume;
-  }
-
   triggerEvent(event: SoundEvent, volume: number = 1): void {
     const lastTick = this._lastEventTick.get(event) ?? -Infinity;
     const cooldown = EVENT_COOLDOWN[event] ?? 60;

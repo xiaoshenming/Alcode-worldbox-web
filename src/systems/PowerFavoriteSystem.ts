@@ -79,23 +79,6 @@ export class PowerFavoriteSystem {
   }
 
   /**
-   * 处理鼠标点击，判断是否命中收藏栏槽位
-   * @param x 鼠标 x 坐标（屏幕像素）
-   * @param y 鼠标 y 坐标（屏幕像素）
-   * @param screenW 屏幕宽度
-   * @param screenH 屏幕高度
-   * @returns 命中槽位的 powerId，未命中返回 null
-   */
-  handleClick(x: number, y: number, screenW: number, screenH: number): string | null {
-    const idx = this.hitTest(x, y, screenW, screenH);
-    if (idx < 0) return null;
-    const slot = this.slots[idx];
-    if (!slot) return null;
-    this.selectedIndex = this.selectedIndex === idx ? -1 : idx;
-    return slot.powerId;
-  }
-
-  /**
    * 处理右键点击，移除命中的槽位
    * @param x 鼠标 x 坐标
    * @param y 鼠标 y 坐标

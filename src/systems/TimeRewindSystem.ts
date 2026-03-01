@@ -131,40 +131,4 @@ export class TimeRewindSystem {
     ctx.restore()
   }
 
-  /** Handle click on the timeline; returns snapshot if confirmed, null otherwise */
-  handleClick(x: number, y: number, screenW: number, screenH: number): WorldSnapshot | null {
-    if (!this.timelineVisible || this.snapshots.length === 0) return null
-
-    const barH = 28
-    const barX = 60
-    const barW = screenW - 120
-    const barY = screenH - barH - 40
-
-    // Check if click is within the timeline area
-    if (y < barY - 5 || y > barY + barH + 5 || x < barX - 5 || x > barX + barW + 5) return null
-
-    // Find closest snapshot
-    const count = this.snapshots.length
-    let closest = 0
-    let closestDist = Infinity
-    for (let i = 0; i < count; i++) {
-      const sx = count === 1 ? barX + barW / 2 : barX + (i / (count - 1)) * barW
-      const dist = Math.abs(x - sx)
-      if (dist < closestDist) {
-        closestDist = dist
-        closest = i
-      }
-    }
-
-    // Confirm on second click of same snapshot
-    if (this.confirmPending && closest === this.selectedIndex) {
-      this.confirmPending = false
-      return this.snapshots[closest]
-    }
-
-    // First click: select and show confirm
-    this.selectedIndex = closest
-    this.confirmPending = true
-    return null
-  }
 }

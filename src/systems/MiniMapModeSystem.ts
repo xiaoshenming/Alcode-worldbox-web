@@ -39,16 +39,6 @@ export class MiniMapModeSystem {
     this.modeIdx = MODES.indexOf(m)
   }
 
-  /** Check if click is on the mode button. */
-  handleClick(mx: number, my: number, minimapX: number, minimapY: number): boolean {
-    const bx = minimapX, by = minimapY - BTN_H - 4
-    if (mx >= bx && mx <= bx + BTN_W && my >= by && my <= by + BTN_H) {
-      this.cycleMode()
-      return true
-    }
-    return false
-  }
-
   /** Render mode button below minimap. */
   renderModeButton(ctx: CanvasRenderingContext2D, minimapX: number, minimapY: number): void {
     const bx = minimapX, by = minimapY - BTN_H - 4

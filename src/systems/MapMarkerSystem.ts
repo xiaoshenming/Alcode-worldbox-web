@@ -123,24 +123,6 @@ export class MapMarkerSystem {
     ctx.restore()
   }
 
-  /** Returns the marker ID at screen-space position, or null */
-  handleClick(worldX: number, worldY: number): number | null {
-    let bestId: number | null = null
-    let bestDistSq = HIT_RADIUS * HIT_RADIUS
-    for (let i = 0; i < MAX_MARKERS; i++) {
-      const m = this.pool[i]
-      if (!m) continue
-      const dx = m.x - worldX
-      const dy = m.y - worldY
-      const distSq = dx * dx + dy * dy
-      if (distSq < bestDistSq) {
-        bestDistSq = distSq
-        bestId = m.id
-      }
-    }
-    return bestId
-  }
-
   save(): void {
     const data = this.getMarkers()
     try {

@@ -207,26 +207,6 @@ export class DiplomacyVisualSystem {
     ctx.restore();
   }
 
-  /** 处理面板点击，返回是否消费了事件 */
-  handleClick(x: number, y: number): boolean {
-    if (!this.panelVisible) return false;
-    const n = this.civs.length;
-    const cellSize = 40;
-    const headerSize = 60;
-    const pw = headerSize + n * cellSize;
-    const ph = headerSize + n * cellSize;
-    if (x >= this.panelX && x <= this.panelX + pw &&
-        y >= this.panelY && y <= this.panelY + ph) {
-      const col = Math.floor((x - this.panelX - headerSize) / cellSize);
-      if (col >= 0 && col < n) {
-        this.hoveredCivId = this.civs[col].id;
-      }
-      return true;
-    }
-    this.hoveredCivId = null;
-    return false;
-  }
-
   // ---- 私有渲染方法 ----
 
   private renderRelationLines(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {

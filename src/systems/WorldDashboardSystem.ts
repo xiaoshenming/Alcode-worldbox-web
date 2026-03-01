@@ -99,39 +99,6 @@ export class WorldDashboardSystem {
     }
   }
 
-  handleClick(x: number, y: number): boolean {
-    if (!this.visible) return false;
-
-    // 点击在面板外
-    if (
-      x < this.panelX || x > this.panelX + this.panelW ||
-      y < this.panelY || y > this.panelY + this.panelH
-    ) {
-      return false;
-    }
-
-    // 关闭按钮
-    const closeX = this.panelX + this.panelW - 36;
-    const closeY = this.panelY + 4;
-    if (x >= closeX && x <= closeX + 30 && y >= closeY && y <= closeY + 30) {
-      this.visible = false;
-      return true;
-    }
-
-    // Tab 点击
-    const tabY = this.panelY + 40;
-    if (y >= tabY && y <= tabY + 30) {
-      const tabWidth = Math.floor(this.panelW / TAB_LABELS.length);
-      const tabIndex = Math.floor((x - this.panelX) / tabWidth);
-      if (tabIndex >= 0 && tabIndex < TAB_LABELS.length) {
-        this.activeTab = TAB_LABELS[tabIndex].key;
-        return true;
-      }
-    }
-
-    return true; // 面板内点击都消费
-  }
-
   // ── 绘制 ──
 
   private drawPanelBackground(ctx: CanvasRenderingContext2D): void {

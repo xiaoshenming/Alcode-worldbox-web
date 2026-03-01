@@ -130,7 +130,6 @@ export class BattleReplaySystem {
   }
 
   isReplaying(): boolean { return this.replaying; }
-  setReplaySpeed(speed: number): void { this.replaySpeed = speed; }
 
   seekTo(frameIndex: number): void {
     const rec = this.currentRecord();
@@ -373,44 +372,6 @@ export class BattleReplaySystem {
     let bestId = -1, bestDmg = 0;
     for (const [id, d] of dmg) { if (d > bestDmg) { bestId = id; bestDmg = d; } }
     return bestId >= 0 ? { id: bestId, dmg: bestDmg } : null;
-  }
-
-  // ── 点击处理 ──
-
-  handleClick(x: number, y: number, screenWidth: number, screenHeight: number): boolean {
-    if (!this.replaying) return false;
-    const rec = this.currentRecord();
-    if (!rec) return false;
-    // 统计面板关闭
-    if (this.showStats) {
-      const sx = (screenWidth - STATS_W) / 2, sy = (screenHeight - STATS_H) / 2;
-      if (x >= sx && x <= sx + STATS_W && y >= sy && y <= sy + STATS_H) {
-        this.showStats = false;
-        return true;
-      }
-    }
-    const barY = screenHeight - BAR_H - 10, barW = screenWidth - 40;
-    if (y < barY || y > barY + BAR_H) return false;
-    // 播放/暂停
-    if (x >= 18 && x <= 42) { this.replayPlaying = !this.replayPlaying; return true; }
-    // 步退
-    if (x >= 46 && x <= 68) { this.replayPlaying = false; this.stepBackward(); return true; }
-    // 步进
-    if (x >= 72 && x <= 94) { this.replayPlaying = false; this.stepForward(); return true; }
-    // 进度条
-    const progX = 110, progW = barW - 220;
-    if (x >= progX && x <= progX + progW) {
-      this.seekTo(Math.round(((x - progX) / progW) * (rec.frames.length - 1)));
-      return true;
-    }
-    // 关闭
-    if (x >= barW && x <= barW + 20) { this.stopReplay(); return true; }
-    // 速度切换
-    for (let i = 0; i < SPEEDS.length; i++) {
-      const sx = barW - 100 + i * 22;
-      if (x >= sx && x <= sx + 20 && y >= barY + 28) { this.replaySpeed = SPEEDS[i]; return true; }
-    }
-    return true;
   }
 
   // ── 查询 ──

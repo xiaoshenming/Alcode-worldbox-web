@@ -252,46 +252,6 @@ export class SandboxSettingsSystem {
 
   // ── Input ────────────────────────────────────────────────────
 
-  handleClick(mx: number, my: number, screenW: number, screenH: number): boolean {
-    if (!this.panelOpen) return false;
-    const { x, y, w, h } = this.panelRect(screenW, screenH);
-    if (mx < x || mx > x + w || my < y || my > y + h) { this.panelOpen = false; return true; }
-
-    // Close button
-    if (mx > x + w - 28 && my < y + 28) { this.panelOpen = false; return true; }
-
-    // Slider click → start drag
-    for (let i = 0; i < PARAM_KEYS.length; i++) {
-      const { sx, sy, sw, sh } = this.sliderRect(x, y, i);
-      if (mx >= sx - 6 && mx <= sx + sw + 6 && my >= sy - 4 && my <= sy + sh + 4) {
-        this.draggingKey = PARAM_KEYS[i];
-        this.applySlider(mx, sx, sw, PARAM_KEYS[i]);
-        return true;
-      }
-    }
-
-    // Bool toggle
-    const boolStart = PARAM_KEYS.length;
-    for (let i = 0; i < BOOL_KEYS.length; i++) {
-      const ry = y + HEADER_H + (boolStart + i) * ROW_H + ROW_H / 2;
-      const bx = x + w - SLIDER_PAD - 36;
-      if (mx >= bx && mx <= bx + 36 && my >= ry - 10 && my <= ry + 10) {
-        this.bools[BOOL_KEYS[i]] = !this.bools[BOOL_KEYS[i]];
-        this.save();
-        return true;
-      }
-    }
-
-    // Reset button
-    const btnY = y + h - FOOTER_H + 6;
-    if (mx >= x + w / 2 - 50 && mx <= x + w / 2 + 50 && my >= btnY && my <= btnY + 24) {
-      this.resetToDefaults();
-      return true;
-    }
-
-    return true; // consume click inside panel
-  }
-
   handleDrag(mx: number, my: number, screenW: number, screenH: number): boolean {
     if (!this.panelOpen || !this.draggingKey) return false;
     const { x, y } = this.panelRect(screenW, screenH);

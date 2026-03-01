@@ -107,14 +107,6 @@ export class TutorialSystem {
     }
   }
 
-  handleClick(cx: number, cy: number): boolean {
-    if (!this.active) return false;
-    const { next, skip } = this.btnRects;
-    if (this.hitTest(cx, cy, next)) { this.nextStep(); return true; }
-    if (this.hitTest(cx, cy, skip)) { this.skip(); return true; }
-    return false;
-  }
-
   render(ctx: CanvasRenderingContext2D, cw: number, ch: number): void {
     if (!this.active) return;
     const step = this.getCurrentStep();

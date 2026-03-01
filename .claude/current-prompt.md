@@ -1,11 +1,11 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代88完成。修复迭代87遗留的大规模测试失败问题，并完成所有系统文件提交。主要工作：1) 修复TS错误(AchievementSystem.test.ts的ASI问题和_unlockedBuf字段访问)；2) 批量恢复测试文件的getter调用——Python脚本把sys.getXxx(key)错误替换成(sys as any).xxx，本轮通过3个并行Agent修复了341个测试文件；3) 提交284个系统文件的dead getter删除；4) 全部5359测试通过，TypeScript零错误。主要修复模式：①getXxx().get(key)->getXxx(key)直接传参；②readonly数组注入改为私有字段；③lazy buffer改为public方法；④ASI加分号；⑤字段名映射修正。
+🧠 AI 上轮笔记：迭代89/90完成（两轮合并）。大规模批量死代码删除：从系统文件中删除了90+个完全无调用者的public方法及其关联私有字段/常量。主要提交：HistoryReplaySystem/WorldLawSystem/CityLayoutSystem(4)、NavalSystem等(8+BiomeCluster常量)、CreatureDanceSystem等9个、CreatureHobby/Pet/Language/Claustrophobia等18个、CreaturePilgrimage/Ritual等11个、WorldEcho/FogBank/Fossil等36个（含Chronicle常量、Corruption私有字段）。所有测试通过（10712个），TypeScript零错误。下一轮应聚焦非死代码类优化：update/render热路径中的GC分配。
 🎯 AI 自定优先级：[
-  "1. 继续扫描更多死代码机会 — 现在系统文件已经批量处理过了，可以聚焦在更精细的优化",
-  "2. 检查是否还有'switch返回固定对象'模式可转为模块级const单例",
-  "3. 扫描热路径中的字符串拼接和临时对象创建",
-  "4. 检查是否有更多序列化/反序列化死代码可以删除",
+  "1. 扫描update()和render()热路径中的字符串拼接和临时对象创建 — 死代码已大量清理，现转向热路径GC",
+  "2. 检查civManager.civilizations.values()遍历 + civs.push()模式 — 可改为直接for...of遍历",
+  "3. 检查是否有更多序列化/反序列化死代码可以删除",
+  "4. 检查test文件中是否有针对已删除字段的访问（_xxxBuf类型），保持测试与实现同步",
   "5. 考虑对ECS核心路径进行进一步优化"
 ]
 💡 AI 积累经验：[
@@ -59,10 +59,13 @@
   "【迭代88新增】Python批量替换脚本风险：getXxx(key)可能被错误替换为getXxx()?.get(key)，造成大量测试失败；下次处理时要仔细核对方法签名",
   "【迭代88新增】lazy buffer访问陷阱：_unlockedBuf等buffer只在调用对应getter后才填充，测试应调用public方法而非直接访问buffer",
   "【迭代88新增】readonly数组注入：系统getter返回ReadonlyArray时，测试注入数据应改为(sys as any).privateField.push()而非getter().push()",
-  "【迭代88新增】ASI（自动分号插入）陷阱：void返回的调用后接(...)括号会被解析为函数调用，需加分号防止"
+  "【迭代89新增】死代码方法扫描策略：用Python脚本找public方法→grep '.methodName('验证无外部调用→并行派发子代理批量删除，效率极高",
+  "【迭代89新增】内部链式死代码：isQuiet()调用getEchoIntensityAt()，但isQuiet无外部调用者，整个链路都是死代码可一起删",
+  "【迭代89新增】删除方法后测试文件中的_privateBuf访问需一并清理，否则测试会失败",
+  "【迭代89新增】私有字段清理：删除一个方法后检查它专用的私有字段(_topCollectorsBuf, _enemiesBuf, _activeOathsBuf等)是否也成了死代码，可一并删除"
 ]
 
-迭代轮次: 90/100
+迭代轮次: 91/100
 
 
 🔄 自我进化（每轮必做）：
@@ -71,6 +74,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-03-01T16:57:54+08:00"
+  "last_updated": "2026-03-01T17:05:30+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。

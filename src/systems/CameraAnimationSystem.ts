@@ -97,10 +97,6 @@ export class CameraAnimationSystem {
     this._following = false;
   }
 
-  setFollowSpeed(speed: number): void {
-    this._followSpeed = clamp01(speed);
-  }
-
   // ────────────────────────────────────────────────────────────────────────────
   // Shake
   // ────────────────────────────────────────────────────────────────────────────
@@ -122,16 +118,6 @@ export class CameraAnimationSystem {
   // ────────────────────────────────────────────────────────────────────────────
   // Transitions
   // ────────────────────────────────────────────────────────────────────────────
-
-  fadeToBlack(durationTicks: number): void {
-    this._transition = {
-      kind: TransitionKind.FadeToBlack,
-      elapsed: 0,
-      duration: Math.max(1, durationTicks),
-      startX: 0, startY: 0, startZoom: 1,
-      endX: 0, endY: 0, endZoom: 1,
-    };
-  }
 
   fadeFromBlack(durationTicks: number): void {
     this._fadeAlpha = 1;

@@ -204,24 +204,6 @@ export class AchievementPopupSystem {
     if (this.panelVisible) this.renderPanel(ctx, screenWidth, screenHeight)
   }
 
-  /** 处理点击事件，返回是否消费 */
-  handleClick(x: number, y: number): boolean {
-    if (!this.panelVisible) return false
-    const r = this.panelRect
-    if (x < r.x || x > r.x + r.w || y < r.y || y > r.y + r.h) {
-      this.panelVisible = false; return true
-    }
-    // 分类标签点击
-    const tabY = r.y + 40
-    if (y >= tabY && y <= tabY + 24) {
-      const cats = ACHIEVEMENT_CATEGORIES
-      const tabW = (r.w - 20) / cats.length
-      const idx = Math.floor((x - r.x - 10) / tabW)
-      if (idx >= 0 && idx < cats.length) { this.selectedCategory = cats[idx]; this.panelScroll = 0 }
-    }
-    return true
-  }
-
   private spawnParticles(achievementId: string): void {
     const state = this.achievements.get(achievementId)
     if (!state) return

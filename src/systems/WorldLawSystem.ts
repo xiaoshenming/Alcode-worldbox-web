@@ -108,56 +108,6 @@ export class WorldLawSystem {
   }
 
   /**
-   * 处理鼠标点击/拖拽
-   * @returns 是否消费了该事件
-   */
-  handleClick(x: number, y: number, screenW: number, screenH: number): boolean {
-    if (!this.visible) return false
-    const px = (screenW - PANEL_W) / 2
-    const py = (screenH - PANEL_H) / 2
-    // 面板外点击关闭
-    if (x < px || x > px + PANEL_W || y < py || y > py + PANEL_H) {
-      this.visible = false
-      return true
-    }
-    const lx = x - px
-    const ly = y - py
-    // 标签栏点击
-    if (lx < TAB_W && ly > HEADER_H) {
-      const tabIdx = Math.floor((ly - HEADER_H) / 40)
-      if (tabIdx >= 0 && tabIdx < this.categories.length) {
-        this.activeTab = tabIdx
-      }
-      return true
-    }
-    // 重置按钮（右下角）
-    const btnX = PANEL_W - BTN_W - 12
-    const btnY = PANEL_H - BTN_H - 8
-    if (lx >= btnX && lx <= btnX + BTN_W && ly >= btnY && ly <= btnY + BTN_H) {
-      this.resetDefaults()
-      return true
-    }
-    // 滑块区域
-    const cat = this.categories[this.activeTab]
-    if (!cat) return true
-    const contentX = TAB_W + 12
-    const contentW = PANEL_W - TAB_W - 24 - SCROLL_BAR_W
-    const sliderW = contentW - 80
-    const sliderStartX = contentX + 80
-    for (let i = 0; i < cat.params.length; i++) {
-      const sy = HEADER_H + 12 + i * (SLIDER_H + SLIDER_PAD)
-      if (ly >= sy && ly <= sy + SLIDER_H) {
-        const ratio = clamp((lx - sliderStartX) / sliderW, 0, 1)
-        const p = cat.params[i]
-        p.value = Math.round((p.min + ratio * (p.max - p.min)) * 100) / 100
-        p.valueStr = p.value.toFixed(2)
-        return true
-      }
-    }
-    return true
-  }
-
-  /**
    * 渲染世界法则面板
    */
   render(ctx: CanvasRenderingContext2D, screenW: number, screenH: number): void {

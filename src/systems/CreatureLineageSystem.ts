@@ -67,23 +67,6 @@ export class CreatureLineageSystem {
   }
 
   /**
-   * 处理鼠标点击，检测是否命中族谱节点
-   * @returns 被点击的生物 ID，未命中返回 null
-   */
-  handleClick(x: number, y: number, screenW: number, screenH: number): number | null {
-    if (!this.panelOpen) return null;
-    const p = this.panelRect(screenW, screenH);
-    for (const n of this.nodes) {
-      const nx = p.x + n.x, ny = p.y + n.y;
-      if (x >= nx && x <= nx + n.w && y >= ny && y <= ny + n.h) {
-        this.selectedId = n.id;
-        return n.id;
-      }
-    }
-    return null;
-  }
-
-  /**
    * 渲染族谱面板
    * @param ctx Canvas 2D 上下文
    * @param screenW 屏幕宽度

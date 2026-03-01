@@ -178,23 +178,6 @@ export class EraTransitionSystem {
     }
   }
 
-  /** 处理点击 */
-  handleClick(x: number, y: number): boolean {
-    if (this.historyVisible && x < 280) {
-      return true;
-    }
-    if (this.chartVisible) {
-      const cx = 100, cy = 80, cw = 500, ch = 300;
-      if (x >= cx && x <= cx + cw && y >= cy && y <= cy + ch) return true;
-    }
-    if (this.techVisible) {
-      const tx = 100, ty = 80, tw = 400, th = 320;
-      if (x >= tx && x <= tx + tw && y >= ty && y <= ty + th) return true;
-    }
-    void y;
-    return false;
-  }
-
   /** 处理滚动（历史面板） */
   handleScroll(x: number, _y: number, delta: number): boolean {
     if (this.historyVisible && x < 280) {
