@@ -265,25 +265,29 @@ export class BloodMoonSystem {
     const pulse = 1 + 0.05 * Math.sin(tick * 0.08)
     const finalRadius = moonRadius * pulse
 
-    // Outer glow
+    // Outer glow — 4 concentric circles instead of createRadialGradient (zero GC allocation)
     ctx.globalCompositeOperation = 'lighter'
-    const glowGrad = ctx.createRadialGradient(moonX, moonY, finalRadius * 0.3, moonX, moonY, finalRadius * 2.5)
-    glowGrad.addColorStop(0, _BLOOD_GLOW_COLORS0[intensityIdx])
-    glowGrad.addColorStop(0.5, _BLOOD_GLOW_COLORS1[intensityIdx])
-    glowGrad.addColorStop(1, 'rgba(100,0,0,0)')
-    ctx.fillStyle = glowGrad
-    ctx.fillRect(moonX - finalRadius * 3, moonY - finalRadius * 3, finalRadius * 6, finalRadius * 6)
+    const glow0 = _BLOOD_GLOW_COLORS0[intensityIdx]
+    const glow1 = _BLOOD_GLOW_COLORS1[intensityIdx]
+    ctx.globalAlpha = 1
+    ctx.fillStyle = glow0
+    ctx.beginPath(); ctx.arc(moonX, moonY, finalRadius * 0.9, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = glow1
+    ctx.beginPath(); ctx.arc(moonX, moonY, finalRadius * 1.5, 0, Math.PI * 2); ctx.fill()
+    ctx.globalAlpha = 0.5
+    ctx.beginPath(); ctx.arc(moonX, moonY, finalRadius * 2.0, 0, Math.PI * 2); ctx.fill()
+    ctx.globalAlpha = 0.25
+    ctx.beginPath(); ctx.arc(moonX, moonY, finalRadius * 2.5, 0, Math.PI * 2); ctx.fill()
 
-    // Moon body
+    // Moon body — 3 concentric circles instead of createRadialGradient
     ctx.globalCompositeOperation = 'source-over'
-    const moonGrad = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, finalRadius)
-    moonGrad.addColorStop(0, _BLOOD_MOON_COLORS0[intensityIdx])
-    moonGrad.addColorStop(0.7, _BLOOD_MOON_COLORS1[intensityIdx])
-    moonGrad.addColorStop(1, _BLOOD_MOON_COLORS2[intensityIdx])
-    ctx.beginPath()
-    ctx.arc(moonX, moonY, finalRadius, 0, Math.PI * 2)
-    ctx.fillStyle = moonGrad
-    ctx.fill()
+    ctx.globalAlpha = 1
+    ctx.fillStyle = _BLOOD_MOON_COLORS2[intensityIdx]
+    ctx.beginPath(); ctx.arc(moonX, moonY, finalRadius, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = _BLOOD_MOON_COLORS1[intensityIdx]
+    ctx.beginPath(); ctx.arc(moonX, moonY, finalRadius * 0.7, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = _BLOOD_MOON_COLORS0[intensityIdx]
+    ctx.beginPath(); ctx.arc(moonX, moonY, finalRadius * 0.35, 0, Math.PI * 2); ctx.fill()
 
     // --- Blood rain streaks ---
     ctx.globalCompositeOperation = 'source-over'
