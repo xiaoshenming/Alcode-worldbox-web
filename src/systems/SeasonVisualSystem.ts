@@ -49,16 +49,16 @@ const SEASON_DISPLAY: Record<Season, string> = {
 }
 
 const LEAF_COLORS = [
-  { r: 210, g: 120, b: 40 },   // orange
-  { r: 190, g: 60, b: 40 },    // red
-  { r: 220, g: 190, b: 50 },   // yellow
-  { r: 140, g: 90, b: 50 },    // brown
+  { r: 210, g: 120, b: 40,  color: 'rgb(210,120,40)'  },   // orange
+  { r: 190, g: 60,  b: 40,  color: 'rgb(190,60,40)'   },    // red
+  { r: 220, g: 190, b: 50,  color: 'rgb(220,190,50)'  },   // yellow
+  { r: 140, g: 90,  b: 50,  color: 'rgb(140,90,50)'   },    // brown
 ]
 
 const PETAL_COLORS = [
-  { r: 255, g: 180, b: 200 },  // pink
-  { r: 255, g: 245, b: 250 },  // white
-  { r: 200, g: 170, b: 230 },  // light purple
+  { r: 255, g: 180, b: 200, color: 'rgb(255,180,200)' },  // pink
+  { r: 255, g: 245, b: 250, color: 'rgb(255,245,250)' },  // white
+  { r: 200, g: 170, b: 230, color: 'rgb(200,170,230)' },  // light purple
 ]
 
 const MAX_LEAVES = 80
@@ -317,7 +317,7 @@ export class SeasonVisualSystem {
     p.life = 0
     p.maxLife = 300 + (Math.random() * 200) | 0
     p.r = c.r; p.g = c.g; p.b = c.b
-    p.color = `rgb(${c.r},${c.g},${c.b})`
+    p.color = c.color
     p.phase = Math.random() * 6.28
   }
 
@@ -348,7 +348,7 @@ export class SeasonVisualSystem {
     p.life = 0
     p.maxLife = 250 + (Math.random() * 150) | 0
     p.r = c.r; p.g = c.g; p.b = c.b
-    p.color = `rgb(${c.r},${c.g},${c.b})`
+    p.color = c.color
     p.phase = Math.random() * 6.28
   }
 
