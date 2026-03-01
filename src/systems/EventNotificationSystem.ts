@@ -115,30 +115,6 @@ export class EventNotificationSystem {
   toggleHistory(): void { this.histVisible = !this.histVisible; }
   isHistoryVisible(): boolean { return this.histVisible; }
 
-  /** 处理点击，返回需要导航到的世界坐标 */
-  handleClick(x: number, y: number): { navigateTo?: { x: number; y: number } } | null {
-    const hitR = (IND_SZ + 10) * (IND_SZ + 10);
-    for (let i = 0; i < this._indicatorCount; i++) {
-      const ind = this._indicatorPool[i];
-      const dx = x - ind.screenX, dy = y - ind.screenY;
-      if (dx * dx + dy * dy < hitR) {
-        return { navigateTo: { x: ind.event.worldX, y: ind.event.worldY } };
-      }
-    }
-    return null;
-  }
-
-  /** 获取最近 N 条事件 */
-  getRecentEvents(count: number): GameEvent[] {
-    const result: GameEvent[] = [];
-    const n = Math.min(count, this.histCount);
-    for (let i = 0; i < n; i++) {
-      const evt = this.histBuf[(this.histHead - 1 - i + HIST_CAP) % HIST_CAP];
-      if (evt) result.push(evt);
-    }
-    return result;
-  }
-
   /** 清空所有通知状态 */
   clear(): void {
     this._indicatorCount = 0;
