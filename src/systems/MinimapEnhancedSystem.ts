@@ -84,6 +84,12 @@ export class MinimapEnhancedSystem {
   private heatmaps: Map<MinimapMode, MinimapHeatData> = new Map();
   private warMarkers: WarMarker[] = [];
   private hoverState: HoverState | null = null;
+  /** Persistent HoverState object — reused in handleHover to avoid new{} each call */
+  private _hoverBuf: HoverState = { minimapX: 0, minimapY: 0, minimapWidth: 1, minimapHeight: 1 };
+  /** Cached tile coordinate label — rebuilt when tileX/tileY changes */
+  private _prevTileX = -1;
+  private _prevTileY = -1;
+  private _tileStr = 'Tile: 0,0';
   private tick = 0;
 
   setMode(mode: MinimapMode): void { this.mode = mode; }
@@ -109,7 +115,10 @@ export class MinimapEnhancedSystem {
   }
 
   handleHover(minimapX: number, minimapY: number, minimapWidth: number, minimapHeight: number): void {
-    this.hoverState = { minimapX, minimapY, minimapWidth, minimapHeight };
+    const h = this._hoverBuf;
+    h.minimapX = minimapX; h.minimapY = minimapY;
+    h.minimapWidth = minimapWidth; h.minimapHeight = minimapHeight;
+    this.hoverState = h;
   }
 
   clearHover(): void { this.hoverState = null; }
@@ -192,7 +201,13 @@ export class MinimapEnhancedSystem {
     ctx.fillStyle = '#fff';
     ctx.font = '10px monospace';
     ctx.textAlign = 'left';
-    ctx.fillText(`Tile: ${Math.floor(normX * heat.width)},${Math.floor(normY * heat.height)}`, px + 2, py + PREVIEW_SIZE + 12);
+    const tileX = Math.floor(normX * heat.width);
+    const tileY = Math.floor(normY * heat.height);
+    if (tileX !== this._prevTileX || tileY !== this._prevTileY) {
+      this._prevTileX = tileX; this._prevTileY = tileY;
+      this._tileStr = `Tile: ${tileX},${tileY}`;
+    }
+    ctx.fillText(this._tileStr, px + 2, py + PREVIEW_SIZE + 12);
     ctx.strokeStyle = MODE_BORDER_COLORS[this.mode];
     ctx.lineWidth = 1;
     ctx.strokeRect(px, py, PREVIEW_SIZE, PREVIEW_SIZE + 20);
