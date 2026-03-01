@@ -1,17 +1,17 @@
 {
-  "notes": "迭代105。项目状态：完美+CI防护+内存泄漏修复。本轮任务：(1)全量验证通过：tsc零错误、4975/4975测试全过、构建1.57MB零警告；(2)移除Game.ts中WorldStats未使用import；(3)提取4个系统的重复roundRect方法到src/utils/CanvasUtils.ts工具函数（SeasonVisualSystem/MiniGameSystem/TutorialSystem/PowerFavoriteSystem）——净减26行；(4)重大修复：发现并修复101个技能系统的skillMap内存泄漏——实体ID单调递增不复用，死亡实体的Map条目永远积累；解决方案是在每个系统update末尾插入tick%3600清理代码。所有提交本地完成，GitHub网络连接失败（SSL port 443连接超时），需下轮再推送。",
+  "notes": "迭代106。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过（+22个新测试）、构建约1.57MB；(2)移除3个测试文件中的未使用beforeEach import；(3)创建RandomUtils.ts工具文件，提取pickWeighted和pickRandom函数——13个系统的加权随机选择统一使用该工具（净减少~120行重复代码）；(4)扩展CanvasUtils.ts：新增lerpColorHex/lerpColorRgb（从TerraformingSystem/EraTransitionSystem/EraVisualSystem提取）、roundRectArc（从WorldDashboardSystem/TechTreePanel提取）；(5)为WorldUtils、CanvasUtils、RandomUtils新增单元测试（+22个测试用例）；(6)所有提交均推送成功（修复了上轮的gitconfig proxy问题）。",
   "priorities": [
-    "1. 【待推送】4个提交需要推送到GitHub（网络问题导致本轮失败）",
-    "2. 【已完成】WorldStats未使用import清理",
-    "3. 【已完成】roundRect提取到CanvasUtils.ts（4个文件→1个工具函数）",
-    "4. 【已完成-重大】101个技能系统skillMap内存泄漏修复：96个skillMap+5个其他Map字段",
-    "5. 【可选】lerpColor有3种不同实现（返回值格式不同，不能简单合并）"
+    "1. 【可选】pruneOld在11个文件中出现但实现各异，无法简单合并",
+    "2. 【可选】cleanup在25个文件中出现但实现各异，无法合并",
+    "3. 【可选】CreatureDreamSystem.DREAM_WEIGHTS用嵌套对象{weight:n}结构——可以重构为扁平Record以使用pickWeighted",
+    "4. 【可探索】WorldFossilSystem.pickRarity用两个并行数组——可以改为Record<FossilRarity,number>结构",
+    "5. 【持续监控】tsc+vitest+build三重验证保持全绿"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
     "子代理并行修复大批量文件极高效：4组并行代理可在几分钟内修复160+文件",
     "manualChunks按文件名前缀分组是最安全的代码分割方案 — 不改源码，只改vite配置",
-    "Iterable<T>替代T[]可消除spread分配，但需检查消费侧是否用了.length/.includes等数组方法",
+    "Iterable<T>替代T[]可消除spread分配，但��检查消费侧是否用了.length/.includes等数组方法",
     "getAllEntities()返回Array.from()快照 — removeEntity-during-iteration是安全的",
     "queue.shift()在BFS中是O(n²)陷阱 — 用索引指针head++替代",
     "Camera.getVisibleBounds()等热路径方法应返回缓存对象而非每次new — 每帧调用4次累积显著GC压力",
@@ -42,7 +42,9 @@
     "【迭代104新增】未使用import扫描：用Python re.finditer提取import符号→re.search(\\\\bsym\\\\b)精确词边界搜索（避免AutoSaveSystem包含SaveSystem的误报）→批量移除，注意空行清理",
     "【迭代105新增】skillMap内存泄漏规模评估：实体ID单调递增不复用 → 死亡实体的Map条目永久积累 → 按每entry≈50B计算，101系统*10000历史实体≈50MB潜在泄漏。解法：update末尾 if(tick%3600===0&&map.size>0) 扫描清理",
     "【迭代105新增】Python批量修改系统文件的import添加策略：(1)先找文件中最后一个import行用last_import[-1].end()；(2)若文件无import则检查JSDoc注释末尾*/再插入；(3)若文件完全没有注释/import则直接在头部插入。必须分三种情况处理！",
-    "【迭代105新增】roundRect/lerpColor等Canvas辅助函数：实现相似但返回格式不同的方法不能合并（lerpColor一返回hex一返回rgb）；严格规范化后实现完全相同的才可以提取到CanvasUtils.ts"
+    "【迭代105新增】roundRect/lerpColor等Canvas辅助函数：实现相似但返回格式不同的方法不能合并（lerpColor一返回hex一返回rgb）；严格规范化后实现完全相同的才可以提取到CanvasUtils.ts",
+    "【迭代106新增】加权随机选择模式提取：当多个系统有private pickXxx()用相同的r=Math.random()+cum累积模式时，可提取为pickWeighted<T>(types,weights,fallback)泛型工具函数——需要参数是Record<T,number>而非其他结构",
+    "【迭代106新增】没有import语句的系统文件添加import的策略：检查是否有'/**'开头的JSDoc → 找*/ → 在其后插入；若是//单行注释开头 → 在第一个空行后插入；Python re.finditer('^import', multiline)找不到则直接在文件顶部插入"
   ],
-  "last_updated": "2026-03-02T06:10:00+08:00"
+  "last_updated": "2026-03-02T06:50:00+08:00"
 }
