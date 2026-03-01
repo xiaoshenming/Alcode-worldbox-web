@@ -50,7 +50,6 @@ const PANEL_HEADER_BG = 'rgba(40, 40, 60, 0.95)';
 const PANEL_BORDER = 'rgba(100, 100, 140, 0.6)';
 const TEXT_PRIMARY = '#e0e0e0';
 const TEXT_SECONDARY = '#a0a0b0';
-const HOVER_BG = 'rgba(80, 80, 120, 0.4)';
 
 /**
  * 世界事件时间轴系统
@@ -66,7 +65,6 @@ export class WorldEventTimelineSystem {
   private events: WorldEvent[] = [];
   private visible = false;
   private scrollOffset = 0;
-  private hoveredIndex = -1;
   private _prevEventCount = -1;
   private _headerStr = 'World Timeline (0)';
   /** Cached panel rect — rebuilt when screen size changes */
@@ -145,76 +143,6 @@ export class WorldEventTimelineSystem {
   }
 
   /**
-   * 处理鼠标点击，如果点击了有坐标的事件则返回世界坐标
-   * @param x - 屏幕点击 X
-   * @param y - 屏幕点击 Y
-   * @param screenW - 屏幕宽度
-   * @param screenH - 屏幕高度
-   * @returns 事件的世界坐标，或 null
-   */
-  handleClick(x: number, y: number, screenW: number, screenH: number): { worldX: number; worldY: number } | null {
-    if (!this.visible) return null;
-
-    const panelRect = this.getPanelRect(screenW, screenH);
-    if (x < panelRect.x || x > panelRect.x + panelRect.w || y < panelRect.y || y > panelRect.y + panelRect.h) {
-      return null;
-    }
-
-    // 滚动条区域处理
-    const contentX = x - panelRect.x;
-    if (contentX > panelRect.w - SCROLLBAR_WIDTH - 4) {
-      const contentH = panelRect.h - HEADER_HEIGHT;
-      const totalH = this.events.length * ROW_HEIGHT;
-      if (totalH > contentH) {
-        const ratio = (y - panelRect.y - HEADER_HEIGHT) / contentH;
-        this.scrollOffset = Math.max(0, Math.floor(ratio * totalH - contentH / 2));
-      }
-      return null;
-    }
-
-    const relY = y - panelRect.y - HEADER_HEIGHT + this.scrollOffset;
-    const idx = Math.floor(relY / ROW_HEIGHT);
-
-    if (idx >= 0 && idx < this.events.length) {
-      const evt = this.events[idx];
-      if (evt.hasLocation) {
-        return { worldX: evt.worldX, worldY: evt.worldY };
-      }
-    }
-    return null;
-  }
-
-  /**
-   * 处理鼠标滚轮（外部调用）
-   * @param deltaY - 滚轮增量
-   */
-  handleWheel(deltaY: number): void {
-    if (!this.visible) return;
-    this.scrollOffset = Math.max(0, this.scrollOffset + Math.sign(deltaY) * ROW_HEIGHT);
-  }
-
-  /**
-   * 更新鼠标位置用于 hover 高亮
-   * @param x - 屏幕 X
-   * @param y - 屏幕 Y
-   * @param screenW - 屏幕宽度
-   * @param screenH - 屏幕高度
-   */
-  handleMouseMove(x: number, y: number, screenW: number, screenH: number): void {
-    if (!this.visible) {
-      this.hoveredIndex = -1;
-      return;
-    }
-    const panelRect = this.getPanelRect(screenW, screenH);
-    if (x < panelRect.x || x > panelRect.x + panelRect.w || y < panelRect.y || y > panelRect.y + panelRect.h) {
-      this.hoveredIndex = -1;
-      return;
-    }
-    const relY = y - panelRect.y - HEADER_HEIGHT + this.scrollOffset;
-    this.hoveredIndex = Math.floor(relY / ROW_HEIGHT);
-  }
-
-  /**
    * 渲染时间轴面板
    * @param ctx - Canvas 2D 渲染上下文
    * @param screenW - 屏幕宽度
@@ -264,12 +192,6 @@ export class WorldEventTimelineSystem {
     for (let i = startIdx; i < endIdx; i++) {
       const evt = this.events[i];
       const rowY = p.y + HEADER_HEIGHT + i * ROW_HEIGHT - this.scrollOffset;
-
-      // hover 高亮
-      if (i === this.hoveredIndex) {
-        ctx.fillStyle = HOVER_BG;
-        ctx.fillRect(p.x + 1, rowY, p.w - SCROLLBAR_WIDTH - 6, ROW_HEIGHT);
-      }
 
       // 时间轴线
       const lineX = p.x + 20;
