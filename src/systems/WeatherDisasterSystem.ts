@@ -603,7 +603,7 @@ export class WeatherDisasterSystem {
   private renderBlizzardOverlay(
     ctx: CanvasRenderingContext2D, width: number, height: number, tick: number, alpha: number
   ): void {
-    // White vignette frost on screen edges — use 4 solid edge rects instead of createRadialGradient
+    // White vignette frost on screen edges + frost crystal streaks — single save/restore
     const edgeSize = Math.min(width, height) * 0.4
     ctx.save()
     ctx.globalAlpha = alpha * 0.35
@@ -612,10 +612,7 @@ export class WeatherDisasterSystem {
     ctx.fillRect(0, height - edgeSize, width, edgeSize)
     ctx.fillRect(0, edgeSize, edgeSize, height - edgeSize * 2)
     ctx.fillRect(width - edgeSize, edgeSize, edgeSize, height - edgeSize * 2)
-    ctx.restore()
-
-    // Frost crystal streaks on corners
-    ctx.save()
+    // Frost crystal streaks
     ctx.globalAlpha = alpha * 0.3
     ctx.strokeStyle = '#ccddff'
     ctx.lineWidth = 1
@@ -634,15 +631,12 @@ export class WeatherDisasterSystem {
   private renderDroughtOverlay(
     ctx: CanvasRenderingContext2D, width: number, height: number, tick: number, alpha: number
   ): void {
-    // Yellow-brown sepia tint
+    // Yellow-brown sepia tint + heat wave lines — single save/restore
     ctx.save()
     ctx.globalAlpha = alpha * 0.1
     ctx.fillStyle = '#b48c3c'
     ctx.fillRect(0, 0, width, height)
-    ctx.restore()
-
-    // Heat wave distortion (sin wave horizontal lines)
-    ctx.save()
+    // Heat wave distortion lines
     ctx.globalAlpha = alpha * 0.06
     ctx.strokeStyle = '#ffcc66'
     ctx.lineWidth = 1
@@ -675,7 +669,7 @@ export class WeatherDisasterSystem {
   private renderHeatwaveOverlay(
     ctx: CanvasRenderingContext2D, width: number, height: number, tick: number, alpha: number
   ): void {
-    // Orange-red edge vignette — use 4 solid edge rects instead of createRadialGradient
+    // Orange-red edge vignette + wavy lines — single save/restore
     const edgeSize = Math.min(width, height) * 0.4
     ctx.save()
     ctx.globalAlpha = alpha * 0.25
@@ -684,10 +678,7 @@ export class WeatherDisasterSystem {
     ctx.fillRect(0, height - edgeSize, width, edgeSize)
     ctx.fillRect(0, edgeSize, edgeSize, height - edgeSize * 2)
     ctx.fillRect(width - edgeSize, edgeSize, edgeSize, height - edgeSize * 2)
-    ctx.restore()
-
     // Wavy heat distortion lines
-    ctx.save()
     ctx.globalAlpha = alpha * 0.05
     ctx.strokeStyle = '#ff8844'
     ctx.lineWidth = 1.5
