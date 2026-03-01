@@ -1,18 +1,34 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { GeneticDisplaySystem } from '../systems/GeneticDisplaySystem'
+import { GeneticsSystem } from '../systems/GeneticsSystem'
 import { EntityManager } from '../ecs/Entity'
-function makeSys() { return new GeneticDisplaySystem() }
-describe('GeneticDisplaySystem', () => {
-  let sys: GeneticDisplaySystem
+
+describe('GeneticDisplaySystem删除后 - GeneticsSystem基础功能', () => {
   let em: EntityManager
-  beforeEach(() => { sys = makeSys(); em = new EntityManager() })
-  it('可以实例化', () => { expect(sys).toBeDefined() })
-  it('getTraits 未知实体返回空数组', () => {
-    expect(sys.getTraits(999, em)).toHaveLength(0)
+  beforeEach(() => { em = new EntityManager() })
+  it('generateRandomTraits返回有效组件', () => {
+    const g = GeneticsSystem.generateRandomTraits()
+    expect(g.type).toBe('genetics')
+    expect(g.generation).toBe(0)
+    expect(g.parentA).toBeNull()
+    expect(g.parentB).toBeNull()
   })
-  it('getFamilyTree 未知实体返回null', () => {
-    expect(sys.getFamilyTree(999, em)).toBeNull()
+  it('generateRandomTraits traits字段包含strength等', () => {
+    const g = GeneticsSystem.generateRandomTraits()
+    expect(typeof g.traits.strength).toBe('number')
+    expect(typeof g.traits.vitality).toBe('number')
+    expect(typeof g.traits.agility).toBe('number')
   })
-  it('getTraits返回Array类型', () => { expect(Array.isArray(sys.getTraits(999, em))).toBe(true) })
-  it('getFamilyTree结果类型为null或object', () => { const r = sys.getFamilyTree(999, em); expect(r === null || typeof r === 'object').toBe(true) })
+  it('generateRandomTraits traits值在合理范围内', () => {
+    const g = GeneticsSystem.generateRandomTraits()
+    expect(g.traits.strength).toBeGreaterThanOrEqual(0.3)
+    expect(g.traits.strength).toBeLessThanOrEqual(2.5)
+  })
+  it('mutate不总是发生（5%概率）', () => {
+    const g = GeneticsSystem.generateRandomTraits()
+    let mutated = false
+    for (let i = 0; i < 100; i++) {
+      if (GeneticsSystem.mutate(g) !== null) { mutated = true; break }
+    }
+    expect(mutated).toBe(true)
+  })
 })

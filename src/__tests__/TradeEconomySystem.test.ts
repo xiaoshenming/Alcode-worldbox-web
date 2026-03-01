@@ -1,53 +1,40 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { TradeEconomySystem } from '../systems/TradeEconomySystem'
 
-// TradeEconomySystem 测试：
-// - getGlobalPrices()     → 返回全局价格的浅拷贝（初始为 {food:1,wood:1,stone:1,gold:1}）
-// - getLocalPrices(civId) → 返回特定文明的本地价格，无则返回 null
-// - getGuild(civId)       → 返回文明的商人工会，无则返回 null
-// update() 依赖 CivManager/EntityManager/World，不在此测试。
-// 通过 as any 注入私有字段进行测试。
-
 function makeTES(): TradeEconomySystem {
   return new TradeEconomySystem()
 }
 
-// ── getGlobalPrices ───────────────────────────────────────────────────────────
+// ── globalPrices 私有字段 ─────────────────────────────────────────────────────
 
-describe('TradeEconomySystem.getGlobalPrices', () => {
+describe('TradeEconomySystem globalPrices', () => {
   let tes: TradeEconomySystem
 
   beforeEach(() => {
     tes = makeTES()
   })
 
-  it('初始价格全部为 1.0', () => {
-    const prices = tes.getGlobalPrices()
+  it('初始globalPrices全部为 1.0', () => {
+    const prices = (tes as any).globalPrices
     expect(prices.food).toBe(1.0)
     expect(prices.wood).toBe(1.0)
     expect(prices.stone).toBe(1.0)
     expect(prices.gold).toBe(1.0)
   })
 
-  it('返回浅拷贝，修改不影响内部', () => {
-    const prices = tes.getGlobalPrices()
+  it('globalPrices是内部引用（可直接修改）', () => {
+    const prices = (tes as any).globalPrices
     prices.food = 999
-    expect(tes.getGlobalPrices().food).toBe(1.0)  // 内部不受影响
+    expect((tes as any).globalPrices.food).toBe(999)
   })
 
-  it('注入自定义价格后返回正确值', () => {
+  it('注入自定义价格后可读取', () => {
     ;(tes as any).globalPrices = { food: 0.8, wood: 1.5, stone: 2.0, gold: 2.5 }
-    const prices = tes.getGlobalPrices()
+    const prices = (tes as any).globalPrices
     expect(prices.food).toBe(0.8)
     expect(prices.wood).toBe(1.5)
     expect(prices.stone).toBe(2.0)
     expect(prices.gold).toBe(2.5)
-  })
-
-  it('每次调用返回新对象（浅拷贝）', () => {
-    const p1 = tes.getGlobalPrices()
-    const p2 = tes.getGlobalPrices()
-    expect(p1).not.toBe(p2)
   })
 })
 

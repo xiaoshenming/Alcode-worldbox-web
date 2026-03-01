@@ -1,12 +1,12 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代81完成。深度GC优化第二十八轮 — 共生成3个perf commit。主要成果：1) MiningSystem.getMiningBonus: 7种OreType返回值改为7个模块级const单例(_BONUS_COPPER/IRON/GOLD/GEMS/MITHRIL/ADAMANTINE/NONE)，函数直接return引用，零GC；2) WorldAcousticSystem.getLoudestArea: 无外部调用者的死代码方法删除，消除潜在{x,y,volume}分配；3) LODRenderSystem.getStats: {...this.entityCounts,lod}展开改为_statsCache对象原地更新；4) RenderCullingSystem.getVisibleTileBounds: 每帧返回{startX,startY,endX,endY}改为_tileBounds缓存对象复用；5) TimelineSystem.getCurrentEra: 返回{name,color,index}改为_eraInfo缓存对象；6) FormationSystem.getFormationBonus: 返回{attack,defense,speed}改为_bonusBuf复用。全面扫描确认：当前代码中无更多明显热路径GC分配点（BloodMoonSystem.getOverlayColor、MigrationSystem、FlockingSystem均已池化；渐变创建全部消除；EraVisualSystem/SeasonSystem无外部调用者）。5434测试全通过，TypeScript clean，push成功。
+🧠 AI 上轮笔记：迭代84完成。深度GC优化第三十轮 — 共生成4个perf commit。主要成果：1) 删除9处死代码方法（无外部生产调用者），累计删减约250行：BattleReplaySystem.recordFrame（含new Array+push{}）、AmbientSoundMixer.getMixState+SoundMixState接口（含push({...ls})+map(e=>({...e}))）、ObjectPoolSystem.getAllStats（含3层嵌套return{}）、RuinsSystem.discoverRuin（含find+return{techBonus,cultureBonus}）、SeasonSystem.getTileColorShift（含两路return{r,g,b}）、EraVisualSystem.getUITheme（含return{borderColor,accentColor,bgAlpha}）、MinimapSystem.handleClick（含return{worldX,worldY}）、EventNotificationSystem.handleClick+getRecentEvents（含return{navigateTo:{x,y}}两层嵌套+数组push）；2) CreatureProfessionSystem.getBonus热路径优化：添加_bonusBuf预分配对象，将{...NEUTRAL_BONUS}spread分配改为原地reset+update，同时删除buildBonus函数和NEUTRAL_BONUS常量；3) 更新7个测试文件适配方法删除（私有字段直接读取替代）。5432测试全通过，TypeScript clean，构建成功，全部push完成。
 🎯 AI 自定优先级：[
-  "1. 扫描 Game.ts render循环中是否有遗漏的每帧new{}（特别是_politicalData.push({color:'',territory:...})的territory字段是否引发Set分配）",
-  "2. 检查 WorldBorderSystem.update 的 getForceVector({fx,fy}) — 虽然名字是getForceVector但返回{fx,fy}，确认调用频率",
-  "3. 扫描 AchievementSystem.getProgress({unlocked,total}) — 确认调用者是每帧还是低频",
-  "4. 检查 NotificationCenterSystem.getNavigationTarget({x,y}) 的调用频率",
-  "5. 扫描 CivManager.collectTradeRouteData() 中 routes.push({from,to,color}) — 这是在render路径中按帧调用吗"
+  "1. 扫描 LoyaltySystem.getCivCenter(return {x,y}) 和 pickEdgeTerritory — 每10帧叛乱检查，触发频率低，但可以优化",
+  "2. 检查 GeneticsSystem.ts:53/88 return {} — 查找调用频率（crossbreed/mutate路径）",
+  "3. 扫描 EntityInspectorSystem.buildTree — 事件驱动（点击实体时），但内部有大量push{}，可以优化",
+  "4. 检查 GeneticDisplaySystem.ts:102/202 return {} — 是否有外部调用者",
+  "5. 扫描 EraVisualSystem.getCurrentStyle — 私有方法，每帧render时调用，但返回EraVisualStyle对象（过渡期），可���缓存"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
@@ -61,7 +61,7 @@
   "【迭代75新增】白盒测试与池化的兼容性：改数组为预分配池后，依赖array.length的测试会失败——需同步更新getXxxCount()方法只计活跃槽（maxLife>0等条件）",
   "【迭代76新增】对称缓存模式：已有_minT/minTStr缓存时，检查是否也需要_maxT缓存——render路径中成对出现的O(N)scan应同时消除",
   "【迭代76新增】findXxx从线性数组改为Map索引：render/update热路径中每次调用findXxx(id)的O(N)搜索，改为维护idToItem: Map<id, Item>实现O(1)查找",
-  "【迭代76新增】��分配对象数组+虚拟长度计数器：_xxxBuf数组预分配N个固定对象+_xxxCount=0，写时slot.field=value，读时for(let i=0;i<count;i++)迭代，比push{}零分配",
+  "【迭代76新增】预分配对象数组+虚拟长度计数器：_xxxBuf数组预分配N个固定对象+_xxxCount=0，写时slot.field=value，读时for(let i=0;i<count;i++)迭代，比push{}零分配",
   "【迭代79新增】getter方法返回{...}的识别模式：getPanelRect/panelRect()等每帧调用的方法，若返回{x,y,w,h}，应改为缓存对象+screenW/H脏标记，仅屏幕尺寸变化时重算",
   "【迭代79新增】EntityManager.getEntitiesWithComponents优化：rest参数(...types)每次都产生新数组+join产生新字符串；2/3参数可用+拼接，内部maps数组可用_mapsBuf复用",
   "【迭代79新增】??fallback的有效性验证方法：检查接口定义（?:可选字段）和赋值位置（addXxx/initXxx是否总执行），如总赋值则??永不触发，可安全改为!",
@@ -73,10 +73,17 @@
   "【迭代81新增】枚举switch固定返回N个对象：提取为N个模块级const单例，switch直接return引用 — 7种OreType→7个_BONUS_XXX常量，零GC分配",
   "【迭代81新增】死代码识别：grep整个src目录（排除tests）确认方法名无调用者后直接删除，消除潜在分配",
   "【迭代81新增】{...spread,extra}展开+追加模式：改为_cacheObj原地更新所有字段（.rendered/.culled/.lod），避免每次getStats()展开新对象",
-  "【迭代81新增】热路径穷举扫描策略：grep return {} + grep push({} + grep new Map/Set/Array，逐条验证调用路径频率，区分热路径（每帧/每tick）vs冷路径（事件驱动）"
+  "【迭代81新增】热路径穷举扫描策略：grep return {} + grep push({} + grep new Map/Set/Array，逐条验证调用路径频率，区分热路径（每帧/每tick）vs冷路径（事件驱动）",
+  "【迭代83新增】粒子数组splice+push方案→swap-remove模式：逆序swap-remove比splice快O(1)，将最后一个活跃槽字段复制到被删除槽，_particleCount--即可，零GC",
+  "【迭代83新增】new XXX()但未赋值的死实例化：grep 'new XxxSystem()' 无赋值目标时为纯死代码，连同import一并删除",
+  "【迭代83新增】测试文件中 getSummary()/getXxx() 类型的便利方法删除后，改为 (st as any).privateField 直接读取私有字段，确保不重复触发GC分配",
+  "【迭代83新增】扫描模式：grep 'return {' + 确认调用者 + 判断频率 — 死代码方法无调用者直接删，低频(<60tick)可暂留，高频(每帧)必须缓存",
+  "【迭代84新增】删除死代码前必须确认：grep -rn 'methodName' src/game/ src/systems/ — 不只grep src/，因为Game.ts中可能有内部调用（如CreatureProfessionSystem.getBonus在render中调用）",
+  "【迭代84新增】热路径Record<K,V>预分配缓存模式：getBonus这类返回固定结构Record对象的方法，添加_bonusBuf预分配，改为原地reset+更新字段返回，零GC",
+  "【迭代84新增】死代码扫描批量策略：同时检查handleClick/getRecentEvents/getMixState/getAllStats等UI类方法，这类方法常因UI重构而失去调用者"
 ]
 
-迭代轮次: 83/100
+迭代轮次: 85/100
 
 
 🔄 自我进化（每轮必做）：
@@ -85,6 +92,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-03-01T11:45:22+08:00"
+  "last_updated": "2026-03-01T13:02:06+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。
