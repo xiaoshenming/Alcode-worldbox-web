@@ -1,11 +1,11 @@
 {
-  "notes": "迭代91/100完成。大规模第二轮死代码删除：5轮批量扫描+并行子代理处理，共删除200+个死代码方法及关联私有字段/常量。主要批次：(1)handleClick系列22个(CameraAnimationSystem/AmbientSoundMixer/BattleReplaySystem/TimeRewindSystem等)；(2)handleMouseDown/Move/Up/Wheel系列+Creature系统(50+个)；(3)EntitySearchSystem/MapMarkerSystem/FormationSystem/FlockingSystem等第三批(50+个)；(4)MiningSystem/MonumentSystem/PortalSystem/SiegeSystem/SoundSystem等第四批(50+个)；(5)RenderCullingSystem/ReputationSystem/ResourceScarcitySystem等第五批(12+个)。修复了3个测试文件(DayNightRenderer/LODRenderSystem/RenderCullingSystem)中访问已删除私有字段的测试。所有测试通过(5349个)，TypeScript零错误。死代码扫描已趋于饱和，仅剩少量误报（模块级函数被错误识别为方法）。下一轮应转向热路径GC优化。",
+  "notes": "迭代96/100完成。扫描并删除76个完全未实例化的死代码系统：(1) Creature类23个（AnodizerSystem/ChaserSystem/CrimperSystem等金属工艺类）；(2) Diplomatic类28个（AldermanshipSystem/BailiffshipSystem等封建官职类）；(3) WorldSpring类25个（AluminumSpringSystem/GoldSpringSystem等元素泉类）。共删除152个文件（76系统文件+76测试文件），删除6896行代码。关键发现：(a)上轮Python扫描脚本只找直接.methodName()调用，漏掉了通过批次数组(_batchXXY)调用的系统，导致大量误报；(b)本轮改用'类名是否出现在Game.ts'的更准确标准，发现76个类名完全不在Game.ts中的系统；(c)死代码饱和度分析：所有检测手段（方法级死代码/整文件死代码/GC分配）已达饱和，进一步收益极低。下一轮考虑代码质量提升（过长函数分解）或直接做最终验证总结。",
   "priorities": [
-    "1. 死代码已高度清理，转向热路径GC优化：扫描update/render中剩余的.filter/.map/.slice等数组方法",
-    "2. 考虑检查是否有完全不被使用的系统（整个类只有update/render但���外部调用）",
-    "3. 检查LegendaryBattleSystem.update()中的 new Map<number,Set<EntityId>>() 对象分配（每次发现新战斗时）",
-    "4. 检查MigrationSystem.formBand()中的 members: new Set(members) 分配（每次组建迁徙队伍时）",
-    "5. 考虑对大型系统（Game.ts）的update路径进行profile分析"
+    "1. 死代码清理已非常彻底（3轮系统级扫描+5轮方法级扫描），继续挖掘的收益极低",
+    "2. 考虑检查是否有 Game.ts 中大块的重复初始化代码可以简化",
+    "3. 检查是否有测试覆盖空白（核心系统如 CombatSystem/PathfindingSystem 的测试质量）",
+    "4. 确认 manualChunks 配置是否可以改善循环chunk警告（sys-combat -> sys-core -> sys-combat）",
+    "5. 最终构建产物体积检查：sys-world 342KB gzip74KB，考虑是否可以进一步分割"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -33,10 +33,13 @@
     "【迭代89新增】删除方法后测试文件中的_privateBuf访问需一并清理，否则测试会失败",
     "【迭代89新增】私有字段清理：删除一个方法后检查它专用的私有字段(_topCollectorsBuf, _enemiesBuf等)是否也成了死代码，可一并删除",
     "【迭代91新增】Python死代码扫描脚本误报规律：模块级函数(rand/randInt/resetParticle)、浏览器原生API(requestAnimationFrame/setTimeout)、局部箭头函数(addIncident/make)会被误报为死代码方法",
-    "【迭代91新增】方法签名有外部调用的判断：.methodName(模式可能误匹配接口中的同名方法（如Camera.zoomTo != CameraAnimationSystem.zoomTo），需要精确确认是哪个类的实例在调用",
-    "【迭代91新增】删除系统方法后，对应测试文件中通过(sys as any).privateField访问的私有字段测试需一并清理",
-    "【迭代91新增】删除录制API(startRecording/stopRecording)后，相关测试中的makeSides辅助函数和BattleFrame类型导入也需清理",
-    "【迭代91新增】死代码清理已趋于饱和：经过5轮扫描，每轮发现的死代码数量从90+降至12+，说明大部分可识别的死代码已清除"
+    "【迭代91新增】方法签名有外部调用的判断：.methodName(模式可能误匹配接口中的同名方法，需要精确确认是哪个类的实例在调用",
+    "【迭代91新增】死代码清理已趋于饱和：经过5轮扫描，每轮发现的死代码数量从90+降至12+，说明大部分可识别的死代码已清除",
+    "【迭代96新增】整系统文件死代码的识别方法：检查'类名是否出现在Game.ts'而非'实例字段是否有.update()调用'，因为很多系统通过_batchXXY数组批量调度",
+    "【迭代96新增】Python脚本扫描批次数组的正确方法：提取_batchXX = [...] 中的成员，结合this.fieldName直接调用，两个来源都算作使用",
+    "【迭代96新增】游戏中存在大量'幽灵系统'：文件和测试都存在，但从未被实例化进Game.ts的调度——通过检查类名是否出现在Game.ts可精确识别",
+    "【迭代96新增】热路径GC扫描结论：经过前几轮优化，当前codebase的update/render路径中0个ungated GC分配，所有new Map/Set都在tick门控或条件分支后",
+    "【迭代96新增】批量删除策略：3组并行子代理，每组处理~25个文件，比串行快3倍，每组包含系统文件+测试文件的成对删除"
   ],
-  "last_updated": "2026-03-01T18:15:00+08:00"
+  "last_updated": "2026-03-01T18:55:00+08:00"
 }
