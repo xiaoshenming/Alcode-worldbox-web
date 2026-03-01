@@ -1,4 +1,5 @@
 // Era Visual System - changes global visual style based on the most advanced civilization's era
+import { lerpColorRgb } from '../utils/CanvasUtils'
 
 export type EraName = 'stone' | 'bronze' | 'iron' | 'medieval' | 'renaissance'
 
@@ -291,8 +292,8 @@ export class EraVisualSystem {
     buf.tintB = this.lerp(from.tintB, to.tintB, t)
     buf.saturation = this.lerp(from.saturation, to.saturation, t)
     buf.brightness = this.lerp(from.brightness, to.brightness, t)
-    buf.uiBorderColor = this.lerpColor(from.uiBorderColor, to.uiBorderColor, t)
-    buf.uiAccentColor = this.lerpColor(from.uiAccentColor, to.uiAccentColor, t)
+    buf.uiBorderColor = lerpColorRgb(from.uiBorderColor, to.uiBorderColor, t)
+    buf.uiAccentColor = lerpColorRgb(from.uiAccentColor, to.uiAccentColor, t)
     buf.uiBgAlpha = this.lerp(from.uiBgAlpha, to.uiBgAlpha, t)
     buf.icon = to.icon
     return buf
@@ -302,21 +303,4 @@ export class EraVisualSystem {
     return a + (b - a) * t
   }
 
-  private lerpColor(hexA: string, hexB: string, t: number): string {
-    const a = this.hexToRgb(hexA)
-    const b = this.hexToRgb(hexB)
-    const r = Math.round(this.lerp(a.r, b.r, t))
-    const g = Math.round(this.lerp(a.g, b.g, t))
-    const bl = Math.round(this.lerp(a.b, b.b, t))
-    return `rgb(${r},${g},${bl})`
-  }
-
-  private hexToRgb(hex: string): { r: number; g: number; b: number } {
-    const h = hex.replace('#', '')
-    return {
-      r: parseInt(h.substring(0, 2), 16),
-      g: parseInt(h.substring(2, 4), 16),
-      b: parseInt(h.substring(4, 6), 16),
-    }
-  }
 }
