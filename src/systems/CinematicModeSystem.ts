@@ -55,6 +55,8 @@ export class CinematicModeSystem {
   private cx = 0
   private cy = 0
   private cz = 1
+  /** Persistent camera result — reused by update() to avoid new{camX,camY,zoom} each frame */
+  private _camResult: CinematicCamera = { camX: 0, camY: 0, zoom: 1 }
 
   constructor() { /* 无参数 */ }
 
@@ -102,7 +104,7 @@ export class CinematicModeSystem {
     }
 
     if (this.points.length === 0) {
-      return { camX: this.cx, camY: this.cy, zoom: 1 }
+      const r = this._camResult; r.camX = this.cx; r.camY = this.cy; r.zoom = 1; return r
     }
 
     // 需要新巡游段
@@ -127,7 +129,7 @@ export class CinematicModeSystem {
     const proximity = Math.max(0, 1 - dist / 500)
     this.cz = ZOOM_MIN + (ZOOM_MAX - ZOOM_MIN) * proximity
 
-    return { camX: this.cx, camY: this.cy, zoom: this.cz }
+    const r = this._camResult; r.camX = this.cx; r.camY = this.cy; r.zoom = this.cz; return r
   }
 
   /**
