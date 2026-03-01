@@ -34,7 +34,6 @@ export class CreatureOathSystem {
   private oaths: Oath[] = []
   private nextId = 1
   private lastCheck = 0
-  private _activeOathsBuf: Oath[] = []
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -97,16 +96,5 @@ export class CreatureOathSystem {
     if (this.oaths.length > MAX_OATHS) {
       this.oaths.splice(0, this.oaths.length - MAX_OATHS)
     }
-  }
-
-  getActiveOaths(): Oath[] {
-    this._activeOathsBuf.length = 0
-    for (const o of this.oaths) { if (!o.fulfilled) this._activeOathsBuf.push(o) }
-    return this._activeOathsBuf
-  }
-  getFulfilledCount(): number {
-    let n = 0
-    for (const o of this.oaths) { if (o.fulfilled) n++ }
-    return n
   }
 }

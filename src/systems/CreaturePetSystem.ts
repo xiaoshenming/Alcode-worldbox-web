@@ -82,15 +82,7 @@ export class CreaturePetSystem {
     }
   }
 
-  getPet(id: EntityId): CreaturePet | undefined {
-    return this.pets.get(id)
-  }
-
   getPets(): Map<EntityId, CreaturePet> {
     return this.pets
-  }
-
-  getPetCount(): number {
-    return this.pets.size
   }
 }

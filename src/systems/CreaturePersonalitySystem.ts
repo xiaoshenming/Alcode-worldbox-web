@@ -92,29 +92,6 @@ export class CreaturePersonalitySystem {
     return p
   }
 
-  /** 基于父母遗传性格 */
-  inherit(childId: number, parentA: number, parentB: number): Personality {
-    const a = this.personalities.get(parentA)
-    const b = this.personalities.get(parentB)
-    const traits = {} as Record<TraitAxis, number>
-    for (const axis of AXES) {
-      const va = a?.traits[axis] ?? (Math.random() - 0.5) * 2
-      const vb = b?.traits[axis] ?? (Math.random() - 0.5) * 2
-      // 遗传 + 变异
-      traits[axis] = clamp((va + vb) / 2 + (Math.random() - 0.5) * 0.4, -1, 1)
-    }
-    const p: Personality = {
-      entityId: childId, traits,
-      stability: clamp(((a?.stability ?? 0.5) + (b?.stability ?? 0.5)) / 2 + (Math.random() - 0.5) * 0.2, 0, 1),
-      sociability: clamp(((a?.sociability ?? 0) + (b?.sociability ?? 0)) / 2 + (Math.random() - 0.5) * 0.3, -1, 1),
-      traitStrs: { bravery: '', kindness: '', diligence: '', curiosity: '', loyalty: '' },
-      sociabilityStr: '', stabilityStr: '', socialStr: '',
-    }
-    _buildStrs(p)
-    this.personalities.set(childId, p)
-    return p
-  }
-
   /** 获取性格 */
   get(entityId: number): Personality | undefined {
     return this.personalities.get(entityId)

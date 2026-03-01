@@ -81,7 +81,4 @@ export class CreatureNightWatchSystem {
   getRecent(count: number): NightWatch[] {
     return this.watches.slice(-count)
   }
-  getTotalThreats(): number {
-    let s = 0; for (const w of this.watches) s += w.threatsSpotted; return s
-  }
 }

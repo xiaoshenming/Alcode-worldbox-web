@@ -125,22 +125,7 @@ export class CreatureLanguageSystem {
     }
   }
 
-  getLanguage(civId: number): Language | undefined {
-    return this.languages.get(civId)
-  }
-
-  getSimilarity(civA: number, civB: number): number {
-    const s = this.similarities.find(
-      s => (s.civA === civA && s.civB === civB) || (s.civA === civB && s.civB === civA)
-    )
-    return s?.similarity ?? 0
-  }
-
   getLanguages(): Map<number, Language> {
     return this.languages
-  }
-
-  getLanguageCount(): number {
-    return this.languages.size
   }
 }

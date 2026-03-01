@@ -21,7 +21,6 @@ const NW = 120, NH = 48, GX = 24, GY = 64, PAD = 24;
 /**
  * 生物族谱系统
  * - registerBirth / registerDeath 维护族谱数据
- * - setSelected 设置当前查看的生物
  * - handleKey 处理键盘（L 键切换面板）
  * - handleClick 处理面板内点击，返回被点击的生物 ID
  * - render 绘制族谱面板
@@ -60,9 +59,6 @@ export class CreatureLineageSystem {
     const r = this.records.get(entityId);
     if (r) r.alive = false;
   }
-
-  /** 设置当前选中的生物（族谱将以此生物为中心展示） */
-  setSelected(entityId: number): void { this.selectedId = entityId; }
 
   /** 处理键盘事件，返回是否消费了该按键 */
   handleKey(key: string): boolean {

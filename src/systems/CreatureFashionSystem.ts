@@ -95,8 +95,4 @@ export class CreatureFashionSystem {
     for (const t of this.trends) { if (t.civId === civId) this._civTrendsBuf.push(t) }
     return this._civTrendsBuf
   }
-
-  getTrendCount(): number {
-    return this.trends.length
-  }
 }

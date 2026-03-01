@@ -109,26 +109,6 @@ export class CreatureMemorySystem {
     this.addMemory(entityId, { id: nextMemId++, type: MemoryType.Event, tag, x, y, coordStr: `(${x},${y})`, tick, strength: 1, targetId: -1, desc, truncDesc: desc.length > 30 ? desc.slice(0, 30) + '...' : desc })
   }
 
-  /** 添加生物记忆 */
-  addCreatureMemory(entityId: number, tag: CreatureTag, targetId: number, x: number, y: number, tick: number, desc: string): void {
-    this.addMemory(entityId, { id: nextMemId++, type: MemoryType.Creature, tag, x, y, coordStr: `(${x},${y})`, tick, strength: 1, targetId, desc, truncDesc: desc.length > 30 ? desc.slice(0, 30) + '...' : desc })
-  }
-
-  /** 查询某生物是否记得某地点标签 */
-  recallLocation(entityId: number, tag: LocationTag): Memory | null {
-    const bank = this.banks.get(entityId)
-    if (!bank) return null
-    let best: Memory | null = null
-    for (let i = 0; i < bank.memories.length; i++) {
-      const m = bank.memories[i]
-      if (m.type === MemoryType.Location && m.tag === tag && (best === null || m.strength > best.strength)) {
-        best = m
-      }
-    }
-    if (best) bank.lastAccessed = best.id
-    return best
-  }
-
   /** 查询某生物对另一生物的印象 */
   recallCreature(entityId: number, targetId: number): Memory | null {
     const bank = this.banks.get(entityId)

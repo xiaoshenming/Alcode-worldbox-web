@@ -105,15 +105,7 @@ export class CreatureHobbySystem {
     return 'fishing'
   }
 
-  getHobby(id: EntityId): CreatureHobby | undefined {
-    return this.hobbies.get(id)
-  }
-
   getHobbies(): Map<EntityId, CreatureHobby> {
     return this.hobbies
-  }
-
-  getHobbyCount(): number {
-    return this.hobbies.size
   }
 }

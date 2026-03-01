@@ -79,6 +79,4 @@ export class CreatureForagingSystem {
       this.forageLog.splice(0, this.forageLog.length - MAX_LOG)
     }
   }
-
-  getTotalForaged(): number { let s = 0; for (const e of this.forageLog) s += e.amount; return s }
 }
