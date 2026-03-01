@@ -67,5 +67,4 @@ export class CreatureFeltingMakersSystem {
     }
   }
 
-  getMakers(): FeltingMaker[] { return this.makers }
 }

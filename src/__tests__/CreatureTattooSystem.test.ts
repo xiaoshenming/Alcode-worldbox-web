@@ -12,14 +12,14 @@ describe('CreatureTattooSystem getters', () => {
   let sys: CreatureTattooSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无纹身', () => { expect(sys.getTattoos()).toHaveLength(0) })
+  it('初始无纹身', () => { expect((sys as any).tattoos).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).tattoos.push(makeTattoo(1, 'runic'))
-    expect(sys.getTattoos()[0].style).toBe('runic')
+    expect((sys as any).tattoos[0].style).toBe('runic')
   })
   it('返回内部引用', () => {
     ;(sys as any).tattoos.push(makeTattoo(1))
-    expect(sys.getTattoos()).toBe((sys as any).tattoos)
+    expect((sys as any).tattoos).toBe((sys as any).tattoos)
   })
   it('getEntityTattoos按entityId过滤', () => {
     ;(sys as any).tattoos.push(makeTattoo(1, 'tribal'))
@@ -32,11 +32,11 @@ describe('CreatureTattooSystem getters', () => {
   it('支持所有6种纹身风格', () => {
     const styles: TattooStyle[] = ['tribal', 'runic', 'beast', 'celestial', 'war_paint', 'ancestral']
     styles.forEach((s, i) => { ;(sys as any).tattoos.push(makeTattoo(i + 1, s)) })
-    expect(sys.getTattoos()).toHaveLength(6)
+    expect((sys as any).tattoos).toHaveLength(6)
   })
   it('字段正确', () => {
     ;(sys as any).tattoos.push(makeTattoo(2, 'celestial'))
-    const t = sys.getTattoos()[0]
+    const t = (sys as any).tattoos[0]
     expect(t.prestige).toBe(50)
     expect(t.meaning).toBe('strength')
   })

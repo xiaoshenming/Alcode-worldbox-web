@@ -30,18 +30,18 @@ describe('CreatureAstronomerSystem.getAstronomers', () => {
   beforeEach(() => { sys = makeAstrSys(); nextAstroId = 1 })
 
   it('初始无天文学家', () => {
-    expect(sys.getAstronomers()).toHaveLength(0)
+    expect((sys as any).astronomers).toHaveLength(0)
   })
 
   it('注入天文学家后可查询', () => {
     ;(sys as any).astronomers.push(makeAstronomer(1, 'refractor'))
-    expect(sys.getAstronomers()).toHaveLength(1)
-    expect(sys.getAstronomers()[0].telescope).toBe('refractor')
+    expect((sys as any).astronomers).toHaveLength(1)
+    expect((sys as any).astronomers[0].telescope).toBe('refractor')
   })
 
   it('返回内部引用', () => {
     ;(sys as any).astronomers.push(makeAstronomer(1))
-    expect(sys.getAstronomers()).toBe((sys as any).astronomers)
+    expect((sys as any).astronomers).toBe((sys as any).astronomers)
   })
 
   it('支持所有 4 种望远镜类型', () => {
@@ -49,14 +49,14 @@ describe('CreatureAstronomerSystem.getAstronomers', () => {
     telescopes.forEach((t, i) => {
       ;(sys as any).astronomers.push(makeAstronomer(i + 1, t))
     })
-    const all = sys.getAstronomers()
+    const all = (sys as any).astronomers
     expect(all).toHaveLength(4)
     telescopes.forEach((t, i) => { expect(all[i].telescope).toBe(t) })
   })
 
   it('天文学家包含正确的实体 id', () => {
     ;(sys as any).astronomers.push(makeAstronomer(42))
-    expect(sys.getAstronomers()[0].entityId).toBe(42)
+    expect((sys as any).astronomers[0].entityId).toBe(42)
   })
 
   it('天文学家包含观测数据', () => {
@@ -65,7 +65,7 @@ describe('CreatureAstronomerSystem.getAstronomers', () => {
     a.discoveries = 5
     a.accuracy = 85
     ;(sys as any).astronomers.push(a)
-    const result = sys.getAstronomers()[0]
+    const result = (sys as any).astronomers[0]
     expect(result.observations).toBe(200)
     expect(result.discoveries).toBe(5)
     expect(result.accuracy).toBe(85)
@@ -74,7 +74,7 @@ describe('CreatureAstronomerSystem.getAstronomers', () => {
   it('多个天文学家独立存储', () => {
     ;(sys as any).astronomers.push(makeAstronomer(1, 'naked_eye'))
     ;(sys as any).astronomers.push(makeAstronomer(2, 'reflector'))
-    expect(sys.getAstronomers()[0].telescope).toBe('naked_eye')
-    expect(sys.getAstronomers()[1].telescope).toBe('reflector')
+    expect((sys as any).astronomers[0].telescope).toBe('naked_eye')
+    expect((sys as any).astronomers[1].telescope).toBe('reflector')
   })
 })

@@ -47,5 +47,4 @@ export class CreatureHonerSystem {
     for (let _i = this.honers.length - 1; _i >= 0; _i--) { if (this.honers[_i].honingSkill <= 4) this.honers.splice(_i, 1) }
   }
 
-  getHoners(): Honer[] { return this.honers }
 }

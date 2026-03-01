@@ -70,6 +70,4 @@ export class CreatureCartographySystem {
     }
   }
 
-  getMaps(): readonly CartographicMap[] { return this.maps }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

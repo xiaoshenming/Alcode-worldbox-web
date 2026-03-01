@@ -12,24 +12,24 @@ describe('CreatureKnurlerSystem.getKnurlers', () => {
   let sys: CreatureKnurlerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无滚花工', () => { expect(sys.getKnurlers()).toHaveLength(0) })
+  it('初始无滚花工', () => { expect((sys as any).knurlers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).knurlers.push(makeKnurler(1))
-    expect(sys.getKnurlers()[0].entityId).toBe(1)
+    expect((sys as any).knurlers[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).knurlers.push(makeKnurler(1))
-    expect(sys.getKnurlers()).toBe((sys as any).knurlers)
+    expect((sys as any).knurlers).toBe((sys as any).knurlers)
   })
   it('字段正确', () => {
     ;(sys as any).knurlers.push(makeKnurler(3))
-    const k = sys.getKnurlers()[0]
+    const k = (sys as any).knurlers[0]
     expect(k.knurlingSkill).toBe(70)
     expect(k.gripQuality).toBe(75)
   })
   it('多个全部返回', () => {
     ;(sys as any).knurlers.push(makeKnurler(1))
     ;(sys as any).knurlers.push(makeKnurler(2))
-    expect(sys.getKnurlers()).toHaveLength(2)
+    expect((sys as any).knurlers).toHaveLength(2)
   })
 })

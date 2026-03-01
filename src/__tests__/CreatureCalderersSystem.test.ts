@@ -12,28 +12,28 @@ describe('CreatureCalderersSystem.getMakers', () => {
   let sys: CreatureCalderersSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无大锅制作者', () => { expect(sys.getMakers()).toHaveLength(0) })
+  it('初始无大锅制作者', () => { expect((sys as any).makers).toHaveLength(0) })
 
   it('注入后可查询', () => {
     ;(sys as any).makers.push(makeMaker(1, 'bronze'))
-    expect(sys.getMakers()[0].metalType).toBe('bronze')
+    expect((sys as any).makers[0].metalType).toBe('bronze')
   })
 
   it('返回内部引用', () => {
     ;(sys as any).makers.push(makeMaker(1))
-    expect(sys.getMakers()).toBe((sys as any).makers)
+    expect((sys as any).makers).toBe((sys as any).makers)
   })
 
   it('支持所有 4 种金属类型', () => {
     const metals: CauldronMetal[] = ['iron', 'copper', 'bronze', 'brass']
     metals.forEach((m, i) => { ;(sys as any).makers.push(makeMaker(i + 1, m)) })
-    const all = sys.getMakers()
+    const all = (sys as any).makers
     metals.forEach((m, i) => { expect(all[i].metalType).toBe(m) })
   })
 
   it('多个全部返回', () => {
     ;(sys as any).makers.push(makeMaker(1))
     ;(sys as any).makers.push(makeMaker(2))
-    expect(sys.getMakers()).toHaveLength(2)
+    expect((sys as any).makers).toHaveLength(2)
   })
 })

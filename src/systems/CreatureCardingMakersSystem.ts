@@ -47,5 +47,4 @@ export class CreatureCardingMakersSystem {
     for (let _i = this.makers.length - 1; _i >= 0; _i--) { if (this.makers[_i].combingSkill <= 4) this.makers.splice(_i, 1) }
   }
 
-  getMakers(): CardingMaker[] { return this.makers }
 }

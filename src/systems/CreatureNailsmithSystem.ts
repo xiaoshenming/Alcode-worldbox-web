@@ -47,5 +47,4 @@ export class CreatureNailsmithSystem {
     for (let _i = this.nailsmiths.length - 1; _i >= 0; _i--) { if (this.nailsmiths[_i].ironDrawing <= 4) this.nailsmiths.splice(_i, 1) }
   }
 
-  getNailsmiths(): Nailsmith[] { return this.nailsmiths }
 }

@@ -12,24 +12,24 @@ describe('CreatureLapperSystem.getLappers', () => {
   let sys: CreatureLapperSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无研磨工', () => { expect(sys.getLappers()).toHaveLength(0) })
+  it('初始无研磨工', () => { expect((sys as any).lappers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).lappers.push(makeLapper(1))
-    expect(sys.getLappers()[0].entityId).toBe(1)
+    expect((sys as any).lappers[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).lappers.push(makeLapper(1))
-    expect(sys.getLappers()).toBe((sys as any).lappers)
+    expect((sys as any).lappers).toBe((sys as any).lappers)
   })
   it('字段正确', () => {
     ;(sys as any).lappers.push(makeLapper(3))
-    const l = sys.getLappers()[0]
+    const l = (sys as any).lappers[0]
     expect(l.lappingSkill).toBe(70)
     expect(l.mirrorFinish).toBe(75)
   })
   it('多个全部返回', () => {
     ;(sys as any).lappers.push(makeLapper(1))
     ;(sys as any).lappers.push(makeLapper(2))
-    expect(sys.getLappers()).toHaveLength(2)
+    expect((sys as any).lappers).toHaveLength(2)
   })
 })

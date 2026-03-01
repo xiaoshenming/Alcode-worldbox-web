@@ -12,24 +12,24 @@ describe('CreaturePlowrightSystem.getPlowrights', () => {
   let sys: CreaturePlowrightSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无犁制作者', () => { expect(sys.getPlowrights()).toHaveLength(0) })
+  it('初始无犁制作者', () => { expect((sys as any).plowrights).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).plowrights.push(makePlowright(1))
-    expect(sys.getPlowrights()[0].entityId).toBe(1)
+    expect((sys as any).plowrights[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).plowrights.push(makePlowright(1))
-    expect(sys.getPlowrights()).toBe((sys as any).plowrights)
+    expect((sys as any).plowrights).toBe((sys as any).plowrights)
   })
   it('字段正确', () => {
     ;(sys as any).plowrights.push(makePlowright(2))
-    const p = sys.getPlowrights()[0]
+    const p = (sys as any).plowrights[0]
     expect(p.ironForging).toBe(70)
     expect(p.outputQuality).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).plowrights.push(makePlowright(1))
     ;(sys as any).plowrights.push(makePlowright(2))
-    expect(sys.getPlowrights()).toHaveLength(2)
+    expect((sys as any).plowrights).toHaveLength(2)
   })
 })

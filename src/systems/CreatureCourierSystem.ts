@@ -83,5 +83,4 @@ export class CreatureCourierSystem {
     }
   }
 
-  getDeliveries(): readonly Delivery[] { return this.deliveries }
 }

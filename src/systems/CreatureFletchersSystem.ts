@@ -67,5 +67,4 @@ export class CreatureFletchersSystem {
     }
   }
 
-  getFletchers(): Fletcher[] { return this.fletchers }
 }

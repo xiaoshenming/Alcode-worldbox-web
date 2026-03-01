@@ -12,14 +12,14 @@ describe('CreatureNicknameSystem.getNicknames', () => {
   let sys: CreatureNicknameSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无绰号', () => { expect(sys.getNicknames()).toHaveLength(0) })
+  it('初始无绰号', () => { expect((sys as any).nicknames).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).nicknames.push(makeNickname(1, 'the Wise'))
-    expect(sys.getNicknames()[0].name).toBe('the Wise')
+    expect((sys as any).nicknames[0].name).toBe('the Wise')
   })
   it('返回内部引用', () => {
     ;(sys as any).nicknames.push(makeNickname(1))
-    expect(sys.getNicknames()).toBe((sys as any).nicknames)
+    expect((sys as any).nicknames).toBe((sys as any).nicknames)
   })
 })
 

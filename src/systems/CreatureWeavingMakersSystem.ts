@@ -67,5 +67,4 @@ export class CreatureWeavingMakersSystem {
     }
   }
 
-  getMakers(): WeavingMaker[] { return this.makers }
 }

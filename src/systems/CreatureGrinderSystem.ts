@@ -47,5 +47,4 @@ export class CreatureGrinderSystem {
     for (let _i = this.grinders.length - 1; _i >= 0; _i--) { if (this.grinders[_i].grindingSkill <= 4) this.grinders.splice(_i, 1) }
   }
 
-  getGrinders(): Grinder[] { return this.grinders }
 }

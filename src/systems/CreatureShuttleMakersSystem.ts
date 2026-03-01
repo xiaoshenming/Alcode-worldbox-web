@@ -67,5 +67,4 @@ export class CreatureShuttleMakersSystem {
     }
   }
 
-  getMakers(): ShuttleMaker[] { return this.makers }
 }

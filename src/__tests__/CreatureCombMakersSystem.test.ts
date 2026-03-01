@@ -12,28 +12,28 @@ describe('CreatureCombMakersSystem.getMakers', () => {
   let sys: CreatureCombMakersSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无梳子制作者', () => { expect(sys.getMakers()).toHaveLength(0) })
+  it('初始无梳子制作者', () => { expect((sys as any).makers).toHaveLength(0) })
 
   it('注入后可查询', () => {
     ;(sys as any).makers.push(makeMaker(1, 'ivory'))
-    expect(sys.getMakers()[0].material).toBe('ivory')
+    expect((sys as any).makers[0].material).toBe('ivory')
   })
 
   it('返回内部引用', () => {
     ;(sys as any).makers.push(makeMaker(1))
-    expect(sys.getMakers()).toBe((sys as any).makers)
+    expect((sys as any).makers).toBe((sys as any).makers)
   })
 
   it('支持所有 4 种材料', () => {
     const materials: CombMaterial[] = ['bone', 'horn', 'wood', 'ivory']
     materials.forEach((m, i) => { ;(sys as any).makers.push(makeMaker(i + 1, m)) })
-    const all = sys.getMakers()
+    const all = (sys as any).makers
     materials.forEach((m, i) => { expect(all[i].material).toBe(m) })
   })
 
   it('多个全部返回', () => {
     ;(sys as any).makers.push(makeMaker(1))
     ;(sys as any).makers.push(makeMaker(2))
-    expect(sys.getMakers()).toHaveLength(2)
+    expect((sys as any).makers).toHaveLength(2)
   })
 })

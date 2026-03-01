@@ -47,5 +47,4 @@ export class CreatureBurnisherSystem {
     for (let _i = this.burnishers.length - 1; _i >= 0; _i--) { if (this.burnishers[_i].burnishingSkill <= 4) this.burnishers.splice(_i, 1) }
   }
 
-  getBurnishers(): Burnisher[] { return this.burnishers }
 }

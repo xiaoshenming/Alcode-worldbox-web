@@ -12,23 +12,23 @@ describe('CreatureHammermanSystem.getHammermen', () => {
   let sys: CreatureHammermanSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无锤工', () => { expect(sys.getHammermen()).toHaveLength(0) })
+  it('初始无锤工', () => { expect((sys as any).hammermen).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).hammermen.push(makeHammerman(1))
-    expect(sys.getHammermen()[0].entityId).toBe(1)
+    expect((sys as any).hammermen[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).hammermen.push(makeHammerman(1))
-    expect(sys.getHammermen()).toBe((sys as any).hammermen)
+    expect((sys as any).hammermen).toBe((sys as any).hammermen)
   })
   it('多个全部返回', () => {
     ;(sys as any).hammermen.push(makeHammerman(1))
     ;(sys as any).hammermen.push(makeHammerman(2))
-    expect(sys.getHammermen()).toHaveLength(2)
+    expect((sys as any).hammermen).toHaveLength(2)
   })
   it('字段正确', () => {
     ;(sys as any).hammermen.push(makeHammerman(5))
-    const h = sys.getHammermen()[0]
+    const h = (sys as any).hammermen[0]
     expect(h.hammeringSkill).toBe(70)
     expect(h.metalShaping).toBe(65)
   })

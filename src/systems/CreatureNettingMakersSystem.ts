@@ -67,5 +67,4 @@ export class CreatureNettingMakersSystem {
     }
   }
 
-  getMakers(): NettingMaker[] { return this.makers }
 }

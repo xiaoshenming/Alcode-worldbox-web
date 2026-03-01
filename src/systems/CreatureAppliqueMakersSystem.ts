@@ -67,5 +67,4 @@ export class CreatureAppliqueMakersSystem {
     }
   }
 
-  getMakers(): AppliqueMaker[] { return this.makers }
 }

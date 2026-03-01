@@ -74,6 +74,4 @@ export class CreaturePotterySystem {
     }
   }
 
-  getPottery(): readonly Pottery[] { return this.pottery }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

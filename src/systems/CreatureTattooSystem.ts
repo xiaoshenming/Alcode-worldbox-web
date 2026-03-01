@@ -95,7 +95,6 @@ export class CreatureTattooSystem {
     return n
   }
 
-  getTattoos(): Tattoo[] { return this.tattoos }
   getEntityTattoos(entityId: number): Tattoo[] {
     this._tattoosBuf.length = 0
     for (const t of this.tattoos) { if (t.entityId === entityId) this._tattoosBuf.push(t) }

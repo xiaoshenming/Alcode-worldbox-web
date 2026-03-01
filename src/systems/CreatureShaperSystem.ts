@@ -47,5 +47,4 @@ export class CreatureShaperSystem {
     for (let _i = this.shapers.length - 1; _i >= 0; _i--) { if (this.shapers[_i].shapingSkill <= 4) this.shapers.splice(_i, 1) }
   }
 
-  getShapers(): Shaper[] { return this.shapers }
 }

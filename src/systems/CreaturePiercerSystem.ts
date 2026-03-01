@@ -47,5 +47,4 @@ export class CreaturePiercerSystem {
     for (let _i = this.piercers.length - 1; _i >= 0; _i--) { if (this.piercers[_i].piercingSkill <= 4) this.piercers.splice(_i, 1) }
   }
 
-  getPiercers(): Piercer[] { return this.piercers }
 }

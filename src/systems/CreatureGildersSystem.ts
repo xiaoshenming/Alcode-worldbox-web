@@ -67,5 +67,4 @@ export class CreatureGildersSystem {
     }
   }
 
-  getMakers(): Gilder[] { return this.makers }
 }

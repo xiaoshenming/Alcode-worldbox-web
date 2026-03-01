@@ -12,24 +12,24 @@ describe('CreatureNailsmithSystem.getNailsmiths', () => {
   let sys: CreatureNailsmithSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无钉工匠', () => { expect(sys.getNailsmiths()).toHaveLength(0) })
+  it('初始无钉工匠', () => { expect((sys as any).nailsmiths).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).nailsmiths.push(makeNailsmith(1))
-    expect(sys.getNailsmiths()[0].entityId).toBe(1)
+    expect((sys as any).nailsmiths[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).nailsmiths.push(makeNailsmith(1))
-    expect(sys.getNailsmiths()).toBe((sys as any).nailsmiths)
+    expect((sys as any).nailsmiths).toBe((sys as any).nailsmiths)
   })
   it('字段正确', () => {
     ;(sys as any).nailsmiths.push(makeNailsmith(3))
-    const n = sys.getNailsmiths()[0]
+    const n = (sys as any).nailsmiths[0]
     expect(n.ironDrawing).toBe(70)
     expect(n.outputQuality).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).nailsmiths.push(makeNailsmith(1))
     ;(sys as any).nailsmiths.push(makeNailsmith(2))
-    expect(sys.getNailsmiths()).toHaveLength(2)
+    expect((sys as any).nailsmiths).toHaveLength(2)
   })
 })

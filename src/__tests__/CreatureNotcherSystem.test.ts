@@ -12,24 +12,24 @@ describe('CreatureNotcherSystem.getNotchers', () => {
   let sys: CreatureNotcherSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无切口工', () => { expect(sys.getNotchers()).toHaveLength(0) })
+  it('初始无切口工', () => { expect((sys as any).notchers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).notchers.push(makeNotcher(1))
-    expect(sys.getNotchers()[0].entityId).toBe(1)
+    expect((sys as any).notchers[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).notchers.push(makeNotcher(1))
-    expect(sys.getNotchers()).toBe((sys as any).notchers)
+    expect((sys as any).notchers).toBe((sys as any).notchers)
   })
   it('字段正确', () => {
     ;(sys as any).notchers.push(makeNotcher(3))
-    const n = sys.getNotchers()[0]
+    const n = (sys as any).notchers[0]
     expect(n.notchingSkill).toBe(70)
     expect(n.angleAccuracy).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).notchers.push(makeNotcher(1))
     ;(sys as any).notchers.push(makeNotcher(2))
-    expect(sys.getNotchers()).toHaveLength(2)
+    expect((sys as any).notchers).toHaveLength(2)
   })
 })

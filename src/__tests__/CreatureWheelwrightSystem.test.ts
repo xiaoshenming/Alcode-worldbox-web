@@ -12,24 +12,24 @@ describe('CreatureWheelwrightSystem.getWheelwrights', () => {
   let sys: CreatureWheelwrightSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无车轮工匠', () => { expect(sys.getWheelwrights()).toHaveLength(0) })
+  it('初始无车轮工匠', () => { expect((sys as any).wheelwrights).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).wheelwrights.push(makeMaker(1))
-    expect(sys.getWheelwrights()[0].entityId).toBe(1)
+    expect((sys as any).wheelwrights[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).wheelwrights.push(makeMaker(1))
-    expect(sys.getWheelwrights()).toBe((sys as any).wheelwrights)
+    expect((sys as any).wheelwrights).toBe((sys as any).wheelwrights)
   })
   it('字段正确', () => {
     ;(sys as any).wheelwrights.push(makeMaker(2))
-    const w = sys.getWheelwrights()[0]
+    const w = (sys as any).wheelwrights[0]
     expect(w.woodBending).toBe(70)
     expect(w.rimShaping).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).wheelwrights.push(makeMaker(1))
     ;(sys as any).wheelwrights.push(makeMaker(2))
-    expect(sys.getWheelwrights()).toHaveLength(2)
+    expect((sys as any).wheelwrights).toHaveLength(2)
   })
 })

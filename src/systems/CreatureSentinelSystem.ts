@@ -94,5 +94,4 @@ export class CreatureSentinelSystem {
     }
   }
 
-  getSentinels(): readonly Sentinel[] { return this.sentinels }
 }

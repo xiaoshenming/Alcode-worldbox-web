@@ -67,5 +67,4 @@ export class CreatureFeltersSystem {
     }
   }
 
-  getFelters(): Felter[] { return this.felters }
 }

@@ -67,5 +67,4 @@ export class CreatureCharcoalBurnersSystem {
     }
   }
 
-  getBurners(): CharcoalBurner[] { return this.burners }
 }

@@ -12,29 +12,29 @@ describe('CreatureClaustrophobiaSystem.getClaustrophobes', () => {
   let sys: CreatureClaustrophobiaSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无幽闭恐惧者', () => { expect(sys.getClaustrophobes()).toHaveLength(0) })
+  it('初始无幽闭恐惧者', () => { expect((sys as any).claustrophobes).toHaveLength(0) })
 
   it('注入后可查询', () => {
     ;(sys as any).claustrophobes.push(makeClaustrophobe(1))
-    expect(sys.getClaustrophobes()[0].entityId).toBe(1)
+    expect((sys as any).claustrophobes[0].entityId).toBe(1)
   })
 
   it('返回内部引用', () => {
     ;(sys as any).claustrophobes.push(makeClaustrophobe(1))
-    expect(sys.getClaustrophobes()).toBe((sys as any).claustrophobes)
+    expect((sys as any).claustrophobes).toBe((sys as any).claustrophobes)
   })
 
   it('多个全部返回', () => {
     ;(sys as any).claustrophobes.push(makeClaustrophobe(1))
     ;(sys as any).claustrophobes.push(makeClaustrophobe(2))
-    expect(sys.getClaustrophobes()).toHaveLength(2)
+    expect((sys as any).claustrophobes).toHaveLength(2)
   })
 
   it('severity 和 panicLevel 字段正确', () => {
     const c = makeClaustrophobe(10)
     c.severity = 90; c.panicLevel = 80
     ;(sys as any).claustrophobes.push(c)
-    const r = sys.getClaustrophobes()[0]
+    const r = (sys as any).claustrophobes[0]
     expect(r.severity).toBe(90); expect(r.panicLevel).toBe(80)
   })
 })

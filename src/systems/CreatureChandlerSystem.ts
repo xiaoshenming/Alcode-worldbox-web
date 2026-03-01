@@ -72,6 +72,4 @@ export class CreatureChandlerSystem {
     }
   }
 
-  getChandlers(): readonly Chandler[] { return this.chandlers }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

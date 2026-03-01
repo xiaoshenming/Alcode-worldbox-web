@@ -47,5 +47,4 @@ export class CreatureSpinnerSystem {
     for (let _i = this.spinners.length - 1; _i >= 0; _i--) { if (this.spinners[_i].spinningSkill <= 4) this.spinners.splice(_i, 1) }
   }
 
-  getSpinners(): Spinner[] { return this.spinners }
 }

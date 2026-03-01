@@ -67,5 +67,4 @@ export class CreatureAssayersSystem {
     }
   }
 
-  getAssayers(): Assayer[] { return this.assayers }
 }

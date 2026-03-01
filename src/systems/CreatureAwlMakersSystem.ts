@@ -67,5 +67,4 @@ export class CreatureAwlMakersSystem {
     }
   }
 
-  getMakers(): AwlMaker[] { return this.makers }
 }

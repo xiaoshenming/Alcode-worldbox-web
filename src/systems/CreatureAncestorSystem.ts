@@ -58,7 +58,6 @@ export class CreatureAncestorSystem {
   private _countFont = ''
 
   private _civAncestorsBuf: AncestorSpirit[] = []
-  getAncestors(): AncestorSpirit[] { return this.ancestors }
 
   getAncestorsForCiv(civId: number): AncestorSpirit[] {
     this._civAncestorsBuf.length = 0

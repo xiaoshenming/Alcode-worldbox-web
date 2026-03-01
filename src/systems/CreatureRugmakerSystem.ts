@@ -70,6 +70,4 @@ export class CreatureRugmakerSystem {
     }
   }
 
-  getRugmakers(): readonly Rugmaker[] { return this.rugmakers }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

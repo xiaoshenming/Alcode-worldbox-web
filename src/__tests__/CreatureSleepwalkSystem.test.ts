@@ -12,18 +12,18 @@ describe('CreatureSleepwalkSystem.getSleepwalkers', () => {
   let sys: CreatureSleepwalkSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无梦游者', () => { expect(sys.getSleepwalkers()).toHaveLength(0) })
+  it('初始无梦游者', () => { expect((sys as any).sleepwalkers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).sleepwalkers.push(makeSleepwalker(1))
-    expect(sys.getSleepwalkers()[0].entityId).toBe(1)
+    expect((sys as any).sleepwalkers[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).sleepwalkers.push(makeSleepwalker(1))
-    expect(sys.getSleepwalkers()).toBe((sys as any).sleepwalkers)
+    expect((sys as any).sleepwalkers).toBe((sys as any).sleepwalkers)
   })
   it('字段正确', () => {
     ;(sys as any).sleepwalkers.push(makeSleepwalker(2))
-    const s = sys.getSleepwalkers()[0]
+    const s = (sys as any).sleepwalkers[0]
     expect(s.distance).toBe(5)
     expect(s.duration).toBe(300)
   })

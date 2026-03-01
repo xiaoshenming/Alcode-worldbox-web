@@ -67,5 +67,4 @@ export class CreatureCobblersSystem {
     }
   }
 
-  getCobblers(): Cobbler[] { return this.cobblers }
 }

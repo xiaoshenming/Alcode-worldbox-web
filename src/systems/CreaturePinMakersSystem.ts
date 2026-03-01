@@ -67,5 +67,4 @@ export class CreaturePinMakersSystem {
     }
   }
 
-  getMakers(): PinMaker[] { return this.makers }
 }

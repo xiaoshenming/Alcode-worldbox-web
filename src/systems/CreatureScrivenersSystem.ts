@@ -67,5 +67,4 @@ export class CreatureScrivenersSystem {
     }
   }
 
-  getMakers(): Scrivener[] { return this.makers }
 }

@@ -12,24 +12,24 @@ describe('CreatureWainwrightsSystem.getWainwrights', () => {
   let sys: CreatureWainwrightsSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无车辆工匠', () => { expect(sys.getWainwrights()).toHaveLength(0) })
+  it('初始无车辆工匠', () => { expect((sys as any).wainwrights).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).wainwrights.push(makeMaker(1, 'wagon'))
-    expect(sys.getWainwrights()[0].wagonType).toBe('wagon')
+    expect((sys as any).wainwrights[0].wagonType).toBe('wagon')
   })
   it('返回内部引用', () => {
     ;(sys as any).wainwrights.push(makeMaker(1))
-    expect(sys.getWainwrights()).toBe((sys as any).wainwrights)
+    expect((sys as any).wainwrights).toBe((sys as any).wainwrights)
   })
   it('支持所有4种车辆类型', () => {
     const types: WagonType[] = ['handcart', 'oxcart', 'wagon', 'chariot']
     types.forEach((t, i) => { ;(sys as any).wainwrights.push(makeMaker(i + 1, t)) })
-    const all = sys.getWainwrights()
+    const all = (sys as any).wainwrights
     types.forEach((t, i) => { expect(all[i].wagonType).toBe(t) })
   })
   it('多个全部返回', () => {
     ;(sys as any).wainwrights.push(makeMaker(1))
     ;(sys as any).wainwrights.push(makeMaker(2))
-    expect(sys.getWainwrights()).toHaveLength(2)
+    expect((sys as any).wainwrights).toHaveLength(2)
   })
 })

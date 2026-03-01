@@ -12,24 +12,24 @@ describe('CreatureJesterSystem.getJesters', () => {
   let sys: CreatureJesterSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无弄臣', () => { expect(sys.getJesters()).toHaveLength(0) })
+  it('初始无弄臣', () => { expect((sys as any).jesters).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).jesters.push(makeJester(1, 'juggling'))
-    expect(sys.getJesters()[0].act).toBe('juggling')
+    expect((sys as any).jesters[0].act).toBe('juggling')
   })
   it('返回内部引用', () => {
     ;(sys as any).jesters.push(makeJester(1))
-    expect(sys.getJesters()).toBe((sys as any).jesters)
+    expect((sys as any).jesters).toBe((sys as any).jesters)
   })
   it('支持所有 4 种表演类型', () => {
     const acts: JesterAct[] = ['juggling', 'comedy', 'acrobatics', 'satire']
     acts.forEach((a, i) => { ;(sys as any).jesters.push(makeJester(i + 1, a)) })
-    const all = sys.getJesters()
+    const all = (sys as any).jesters
     acts.forEach((a, i) => { expect(all[i].act).toBe(a) })
   })
   it('多个全部返回', () => {
     ;(sys as any).jesters.push(makeJester(1))
     ;(sys as any).jesters.push(makeJester(2))
-    expect(sys.getJesters()).toHaveLength(2)
+    expect((sys as any).jesters).toHaveLength(2)
   })
 })

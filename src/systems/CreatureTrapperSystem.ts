@@ -85,5 +85,4 @@ export class CreatureTrapperSystem {
     }
   }
 
-  getTrappers(): readonly Trapper[] { return this.trappers }
 }

@@ -75,5 +75,4 @@ export class CreatureNomadSystem {
     }
   }
 
-  getTribes(): readonly NomadTribe[] { return this.tribes }
 }

@@ -73,7 +73,6 @@ export class CreatureSleepwalkSystem {
     return this.sleepwalkers.some(sw => sw.entityId === entityId)
   }
 
-  getSleepwalkers(): Sleepwalker[] { return this.sleepwalkers }
   getSleepwalker(entityId: number): Sleepwalker | undefined {
     return this.sleepwalkers.find(sw => sw.entityId === entityId)
   }

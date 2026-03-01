@@ -95,5 +95,4 @@ export class CreatureGladiatorSystem {
     }
   }
 
-  getGladiators(): readonly Gladiator[] { return this.gladiators }
 }

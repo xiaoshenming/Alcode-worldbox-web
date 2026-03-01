@@ -67,5 +67,4 @@ export class CreatureBobbinMakersSystem {
     }
   }
 
-  getMakers(): BobbinMaker[] { return this.makers }
 }

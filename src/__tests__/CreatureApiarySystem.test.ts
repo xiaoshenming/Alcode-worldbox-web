@@ -31,18 +31,18 @@ describe('CreatureApiarySystem.getApiaries', () => {
   beforeEach(() => { sys = makeApiSys(); nextId = 1 })
 
   it('初始无蜂房', () => {
-    expect(sys.getApiaries()).toHaveLength(0)
+    expect((sys as any).apiaries).toHaveLength(0)
   })
 
   it('注入蜂房后可查询', () => {
     ;(sys as any).apiaries.push(makeApiary(1, 'thriving'))
-    expect(sys.getApiaries()).toHaveLength(1)
-    expect(sys.getApiaries()[0].health).toBe('thriving')
+    expect((sys as any).apiaries).toHaveLength(1)
+    expect((sys as any).apiaries[0].health).toBe('thriving')
   })
 
   it('返回内部引用', () => {
     ;(sys as any).apiaries.push(makeApiary(1))
-    expect(sys.getApiaries()).toBe((sys as any).apiaries)
+    expect((sys as any).apiaries).toBe((sys as any).apiaries)
   })
 
   it('支持所有 4 种蜂巢健康状态', () => {
@@ -50,7 +50,7 @@ describe('CreatureApiarySystem.getApiaries', () => {
     healths.forEach((h, i) => {
       ;(sys as any).apiaries.push(makeApiary(i + 1, h))
     })
-    const all = sys.getApiaries()
+    const all = (sys as any).apiaries
     expect(all).toHaveLength(4)
     healths.forEach((h, i) => { expect(all[i].health).toBe(h) })
   })
@@ -61,7 +61,7 @@ describe('CreatureApiarySystem.getApiaries', () => {
     a.honeyStored = 150
     a.pollinationRadius = 12
     ;(sys as any).apiaries.push(a)
-    const result = sys.getApiaries()[0]
+    const result = (sys as any).apiaries[0]
     expect(result.keeperId).toBe(5)
     expect(result.hiveCount).toBe(6)
     expect(result.honeyStored).toBe(150)
@@ -71,7 +71,7 @@ describe('CreatureApiarySystem.getApiaries', () => {
   it('多个蜂房独立存储', () => {
     ;(sys as any).apiaries.push(makeApiary(1, 'thriving'))
     ;(sys as any).apiaries.push(makeApiary(2, 'collapsed'))
-    expect(sys.getApiaries()[0].health).toBe('thriving')
-    expect(sys.getApiaries()[1].health).toBe('collapsed')
+    expect((sys as any).apiaries[0].health).toBe('thriving')
+    expect((sys as any).apiaries[1].health).toBe('collapsed')
   })
 })

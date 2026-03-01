@@ -70,5 +70,4 @@ export class CreatureTattoistSystem {
     }
   }
 
-  getTattoos(): readonly Tattoo[] { return this.tattoos }
 }

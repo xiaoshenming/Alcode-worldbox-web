@@ -47,5 +47,4 @@ export class CreatureBurnOuterSystem {
     for (let _i = this.burnOuters.length - 1; _i >= 0; _i--) { if (this.burnOuters[_i].burnOutSkill <= 4) this.burnOuters.splice(_i, 1) }
   }
 
-  getBurnOuters(): BurnOuter[] { return this.burnOuters }
 }

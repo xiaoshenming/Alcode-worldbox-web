@@ -47,5 +47,4 @@ export class CreatureTurnerSystem {
     for (let _i = this.turners.length - 1; _i >= 0; _i--) { if (this.turners[_i].turningSkill <= 4) this.turners.splice(_i, 1) }
   }
 
-  getTurners(): Turner[] { return this.turners }
 }

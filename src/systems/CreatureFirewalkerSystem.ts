@@ -74,5 +74,4 @@ export class CreatureFirewalkerSystem {
     }
   }
 
-  getFirewalkers(): readonly FirewalkerData[] { return this.firewalkers }
 }

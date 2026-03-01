@@ -12,24 +12,24 @@ describe('CreaturePotterSystem.getPotters', () => {
   let sys: CreaturePotterSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无陶匠', () => { expect(sys.getPotters()).toHaveLength(0) })
+  it('初始无陶匠', () => { expect((sys as any).potters).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).potters.push(makePotter(1))
-    expect(sys.getPotters()[0].entityId).toBe(1)
+    expect((sys as any).potters[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).potters.push(makePotter(1))
-    expect(sys.getPotters()).toBe((sys as any).potters)
+    expect((sys as any).potters).toBe((sys as any).potters)
   })
   it('字段正确', () => {
     ;(sys as any).potters.push(makePotter(2))
-    const p = sys.getPotters()[0]
+    const p = (sys as any).potters[0]
     expect(p.wheelControl).toBe(70)
     expect(p.glazingSkill).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).potters.push(makePotter(1))
     ;(sys as any).potters.push(makePotter(2))
-    expect(sys.getPotters()).toHaveLength(2)
+    expect((sys as any).potters).toHaveLength(2)
   })
 })

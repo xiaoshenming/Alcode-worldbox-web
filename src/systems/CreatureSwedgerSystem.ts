@@ -47,5 +47,4 @@ export class CreatureSwedgerSystem {
     for (let _i = this.swedgers.length - 1; _i >= 0; _i--) { if (this.swedgers[_i].swedgingSkill <= 4) this.swedgers.splice(_i, 1) }
   }
 
-  getSwedgers(): Swedger[] { return this.swedgers }
 }

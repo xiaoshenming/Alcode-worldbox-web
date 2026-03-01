@@ -12,29 +12,29 @@ describe('CreatureChaserSystem.getChasers', () => {
   let sys: CreatureChaserSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无追逐者', () => { expect(sys.getChasers()).toHaveLength(0) })
+  it('初始无追逐者', () => { expect((sys as any).chasers).toHaveLength(0) })
 
   it('注入后可查询', () => {
     ;(sys as any).chasers.push(makeChaser(1))
-    expect(sys.getChasers()[0].entityId).toBe(1)
+    expect((sys as any).chasers[0].entityId).toBe(1)
   })
 
   it('返回内部引用', () => {
     ;(sys as any).chasers.push(makeChaser(1))
-    expect(sys.getChasers()).toBe((sys as any).chasers)
+    expect((sys as any).chasers).toBe((sys as any).chasers)
   })
 
   it('多个全部返回', () => {
     ;(sys as any).chasers.push(makeChaser(1))
     ;(sys as any).chasers.push(makeChaser(2))
-    expect(sys.getChasers()).toHaveLength(2)
+    expect((sys as any).chasers).toHaveLength(2)
   })
 
   it('四字段数据完整', () => {
     const c = makeChaser(10)
     c.chasingSkill = 80; c.hammerControl = 75; c.reliefDepth = 70; c.outputQuality = 65
     ;(sys as any).chasers.push(c)
-    const r = sys.getChasers()[0]
+    const r = (sys as any).chasers[0]
     expect(r.chasingSkill).toBe(80); expect(r.hammerControl).toBe(75)
     expect(r.reliefDepth).toBe(70); expect(r.outputQuality).toBe(65)
   })

@@ -88,7 +88,4 @@ export class CreatureNostalgiaSystem {
     }
   }
 
-  getStates(): NostalgiaState[] { return this.states }
-  getTotalHomesick(): number { return this.totalHomesick }
-  getTotalReturned(): number { return this.totalReturned }
 }

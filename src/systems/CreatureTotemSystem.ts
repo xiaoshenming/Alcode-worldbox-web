@@ -129,8 +129,6 @@ export class CreatureTotemSystem {
     return TOTEM_BONUS[type]
   }
 
-  getTotems(): Totem[] { return this.totems }
-  getTotemCount(): number { return this.totems.length }
 
   getTotemAt(x: number, y: number): Totem | undefined {
     return this.totems.find(t => t.x === x && t.y === y)

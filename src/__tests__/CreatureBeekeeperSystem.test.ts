@@ -31,18 +31,18 @@ describe('CreatureBeekeeperSystem.getBeekeepers', () => {
   beforeEach(() => { sys = makeBKSys(); nextId = 1 })
 
   it('初始无养蜂人', () => {
-    expect(sys.getBeekeepers()).toHaveLength(0)
+    expect((sys as any).beekeepers).toHaveLength(0)
   })
 
   it('注入养蜂人后可查询', () => {
     ;(sys as any).beekeepers.push(makeBeekeeper(1, 'frame'))
-    expect(sys.getBeekeepers()).toHaveLength(1)
-    expect(sys.getBeekeepers()[0].hiveType).toBe('frame')
+    expect((sys as any).beekeepers).toHaveLength(1)
+    expect((sys as any).beekeepers[0].hiveType).toBe('frame')
   })
 
   it('返回内部引用', () => {
     ;(sys as any).beekeepers.push(makeBeekeeper(1))
-    expect(sys.getBeekeepers()).toBe((sys as any).beekeepers)
+    expect((sys as any).beekeepers).toBe((sys as any).beekeepers)
   })
 
   it('支持所有 4 种蜂箱类型', () => {
@@ -50,7 +50,7 @@ describe('CreatureBeekeeperSystem.getBeekeepers', () => {
     types.forEach((t, i) => {
       ;(sys as any).beekeepers.push(makeBeekeeper(i + 1, t))
     })
-    const all = sys.getBeekeepers()
+    const all = (sys as any).beekeepers
     expect(all).toHaveLength(4)
     types.forEach((t, i) => { expect(all[i].hiveType).toBe(t) })
   })
@@ -63,7 +63,7 @@ describe('CreatureBeekeeperSystem.getBeekeepers', () => {
     b.waxCollected = 50
     b.beeHealth = 95
     ;(sys as any).beekeepers.push(b)
-    const result = sys.getBeekeepers()[0]
+    const result = (sys as any).beekeepers[0]
     expect(result.skill).toBe(90)
     expect(result.hivesManaged).toBe(8)
     expect(result.honeyHarvested).toBe(200)

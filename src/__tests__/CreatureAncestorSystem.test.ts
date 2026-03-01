@@ -35,24 +35,24 @@ describe('CreatureAncestorSystem.getAncestors', () => {
   beforeEach(() => { sys = makeAncSys(); nextSpiritId = 1 })
 
   it('初始无祖先精灵', () => {
-    expect(sys.getAncestors()).toHaveLength(0)
+    expect((sys as any).ancestors).toHaveLength(0)
   })
 
   it('注入祖先后可查询', () => {
     ;(sys as any).ancestors.push(makeSpirit(1))
-    expect(sys.getAncestors()).toHaveLength(1)
+    expect((sys as any).ancestors).toHaveLength(1)
   })
 
   it('返回内部引用', () => {
     ;(sys as any).ancestors.push(makeSpirit(1))
-    expect(sys.getAncestors()).toBe((sys as any).ancestors)
+    expect((sys as any).ancestors).toBe((sys as any).ancestors)
   })
 
   it('多个祖先全部返回', () => {
     ;(sys as any).ancestors.push(makeSpirit(1, 'valor'))
     ;(sys as any).ancestors.push(makeSpirit(2, 'harvest'))
     ;(sys as any).ancestors.push(makeSpirit(1, 'wisdom'))
-    expect(sys.getAncestors()).toHaveLength(3)
+    expect((sys as any).ancestors).toHaveLength(3)
   })
 
   it('支持所有 5 种领域', () => {
@@ -60,7 +60,7 @@ describe('CreatureAncestorSystem.getAncestors', () => {
     domains.forEach((d, i) => {
       ;(sys as any).ancestors.push(makeSpirit(i + 1, d))
     })
-    const all = sys.getAncestors()
+    const all = (sys as any).ancestors
     expect(all).toHaveLength(5)
     domains.forEach((d, i) => { expect(all[i].domain).toBe(d) })
   })

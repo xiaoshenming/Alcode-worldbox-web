@@ -47,5 +47,4 @@ export class CreatureEngraverSystem {
     for (let _i = this.engravers.length - 1; _i >= 0; _i--) { if (this.engravers[_i].engravingSkill <= 4) this.engravers.splice(_i, 1) }
   }
 
-  getEngravers(): Engraver[] { return this.engravers }
 }

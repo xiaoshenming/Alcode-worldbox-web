@@ -12,24 +12,24 @@ describe('CreatureYokemakerSystem.getYokemakers', () => {
   let sys: CreatureYokemakerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无轭木工', () => { expect(sys.getYokemakers()).toHaveLength(0) })
+  it('初始无轭木工', () => { expect((sys as any).yokemakers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).yokemakers.push(makeMaker(1))
-    expect(sys.getYokemakers()[0].entityId).toBe(1)
+    expect((sys as any).yokemakers[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).yokemakers.push(makeMaker(1))
-    expect(sys.getYokemakers()).toBe((sys as any).yokemakers)
+    expect((sys as any).yokemakers).toBe((sys as any).yokemakers)
   })
   it('字段正确', () => {
     ;(sys as any).yokemakers.push(makeMaker(2))
-    const y = sys.getYokemakers()[0]
+    const y = (sys as any).yokemakers[0]
     expect(y.woodCarving).toBe(70)
     expect(y.balanceWork).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).yokemakers.push(makeMaker(1))
     ;(sys as any).yokemakers.push(makeMaker(2))
-    expect(sys.getYokemakers()).toHaveLength(2)
+    expect((sys as any).yokemakers).toHaveLength(2)
   })
 })

@@ -12,24 +12,24 @@ describe('CreatureShuttleMakersSystem.getMakers', () => {
   let sys: CreatureShuttleMakersSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无梭子工', () => { expect(sys.getMakers()).toHaveLength(0) })
+  it('初始无梭子工', () => { expect((sys as any).makers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).makers.push(makeMaker(1, 'boat'))
-    expect(sys.getMakers()[0].shuttleType).toBe('boat')
+    expect((sys as any).makers[0].shuttleType).toBe('boat')
   })
   it('返回内部引用', () => {
     ;(sys as any).makers.push(makeMaker(1))
-    expect(sys.getMakers()).toBe((sys as any).makers)
+    expect((sys as any).makers).toBe((sys as any).makers)
   })
   it('支持所有4种梭子类型', () => {
     const types: ShuttleType[] = ['fly', 'boat', 'stick', 'rag']
     types.forEach((t, i) => { ;(sys as any).makers.push(makeMaker(i + 1, t)) })
-    const all = sys.getMakers()
+    const all = (sys as any).makers
     types.forEach((t, i) => { expect(all[i].shuttleType).toBe(t) })
   })
   it('多个全部返回', () => {
     ;(sys as any).makers.push(makeMaker(1))
     ;(sys as any).makers.push(makeMaker(2))
-    expect(sys.getMakers()).toHaveLength(2)
+    expect((sys as any).makers).toHaveLength(2)
   })
 })

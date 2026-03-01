@@ -67,5 +67,4 @@ export class CreatureCrochetMakersSystem {
     }
   }
 
-  getMakers(): CrochetMaker[] { return this.makers }
 }

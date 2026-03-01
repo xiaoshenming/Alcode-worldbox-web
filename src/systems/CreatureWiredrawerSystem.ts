@@ -47,5 +47,4 @@ export class CreatureWiredrawerSystem {
     for (let _i = this.wiredrawers.length - 1; _i >= 0; _i--) { if (this.wiredrawers[_i].metalDrawing <= 4) this.wiredrawers.splice(_i, 1) }
   }
 
-  getWiredrawers(): Wiredrawer[] { return this.wiredrawers }
 }

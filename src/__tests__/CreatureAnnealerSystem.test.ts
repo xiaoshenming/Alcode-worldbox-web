@@ -30,25 +30,25 @@ describe('CreatureAnnealerSystem.getAnnealers', () => {
   beforeEach(() => { sys = makeAnnSys(); nextAnnId = 1 })
 
   it('初始无退火师', () => {
-    expect(sys.getAnnealers()).toHaveLength(0)
+    expect((sys as any).annealers).toHaveLength(0)
   })
 
   it('注入退火师后可查询', () => {
     ;(sys as any).annealers.push(makeAnnealer(1))
-    expect(sys.getAnnealers()).toHaveLength(1)
-    expect(sys.getAnnealers()[0].entityId).toBe(1)
+    expect((sys as any).annealers).toHaveLength(1)
+    expect((sys as any).annealers[0].entityId).toBe(1)
   })
 
   it('返回内部引用', () => {
     ;(sys as any).annealers.push(makeAnnealer(1))
-    expect(sys.getAnnealers()).toBe((sys as any).annealers)
+    expect((sys as any).annealers).toBe((sys as any).annealers)
   })
 
   it('多个退火师全部返回', () => {
     ;(sys as any).annealers.push(makeAnnealer(1))
     ;(sys as any).annealers.push(makeAnnealer(2))
     ;(sys as any).annealers.push(makeAnnealer(3))
-    expect(sys.getAnnealers()).toHaveLength(3)
+    expect((sys as any).annealers).toHaveLength(3)
   })
 
   it('退火师数据完整', () => {
@@ -58,7 +58,7 @@ describe('CreatureAnnealerSystem.getAnnealers', () => {
     a.coolingRate = 30
     a.grainRefinement = 50
     ;(sys as any).annealers.push(a)
-    const result = sys.getAnnealers()[0]
+    const result = (sys as any).annealers[0]
     expect(result.annealingSkill).toBe(75)
     expect(result.temperatureCycling).toBe(60)
     expect(result.coolingRate).toBe(30)

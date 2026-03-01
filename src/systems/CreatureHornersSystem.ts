@@ -67,5 +67,4 @@ export class CreatureHornersSystem {
     }
   }
 
-  getHorners(): Horner[] { return this.horners }
 }

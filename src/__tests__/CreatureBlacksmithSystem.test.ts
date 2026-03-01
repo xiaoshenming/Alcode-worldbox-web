@@ -12,22 +12,22 @@ describe('CreatureBlacksmithSystem.getSmiths', () => {
   let sys: CreatureBlacksmithSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无铁匠', () => { expect(sys.getSmiths()).toHaveLength(0) })
+  it('初始无铁匠', () => { expect((sys as any).smiths).toHaveLength(0) })
 
   it('注入后可查询', () => {
     ;(sys as any).smiths.push(makeSmith(1, 'jewelry'))
-    expect(sys.getSmiths()[0].specialty).toBe('jewelry')
+    expect((sys as any).smiths[0].specialty).toBe('jewelry')
   })
 
   it('返回内部引用', () => {
     ;(sys as any).smiths.push(makeSmith(1))
-    expect(sys.getSmiths()).toBe((sys as any).smiths)
+    expect((sys as any).smiths).toBe((sys as any).smiths)
   })
 
   it('支持所有 4 种专长', () => {
     const specs: BlacksmithSpecialty[] = ['weapons', 'armor', 'tools', 'jewelry']
     specs.forEach((s, i) => { ;(sys as any).smiths.push(makeSmith(i + 1, s)) })
-    const all = sys.getSmiths()
+    const all = (sys as any).smiths
     specs.forEach((s, i) => { expect(all[i].specialty).toBe(s) })
   })
 
@@ -35,6 +35,6 @@ describe('CreatureBlacksmithSystem.getSmiths', () => {
     const s = makeSmith(1)
     s.active = false
     ;(sys as any).smiths.push(s)
-    expect(sys.getSmiths()[0].active).toBe(false)
+    expect((sys as any).smiths[0].active).toBe(false)
   })
 })

@@ -47,5 +47,4 @@ export class CreatureFurbisherSystem {
     for (let _i = this.furbishers.length - 1; _i >= 0; _i--) { if (this.furbishers[_i].furbishingSkill <= 4) this.furbishers.splice(_i, 1) }
   }
 
-  getFurbishers(): Furbisher[] { return this.furbishers }
 }

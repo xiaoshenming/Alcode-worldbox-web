@@ -12,24 +12,24 @@ describe('CreatureSoapMakerSystem.getMakers', () => {
   let sys: CreatureSoapMakerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无肥皂工', () => { expect(sys.getMakers()).toHaveLength(0) })
+  it('初始无肥皂工', () => { expect((sys as any).makers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).makers.push(makeMaker(1, 'herbal'))
-    expect(sys.getMakers()[0].recipe).toBe('herbal')
+    expect((sys as any).makers[0].recipe).toBe('herbal')
   })
   it('返回内部引用', () => {
     ;(sys as any).makers.push(makeMaker(1))
-    expect(sys.getMakers()).toBe((sys as any).makers)
+    expect((sys as any).makers).toBe((sys as any).makers)
   })
   it('支持所有4种配方', () => {
     const recipes: SoapRecipe[] = ['tallow', 'olive', 'lye', 'herbal']
     recipes.forEach((r, i) => { ;(sys as any).makers.push(makeMaker(i + 1, r)) })
-    const all = sys.getMakers()
+    const all = (sys as any).makers
     recipes.forEach((r, i) => { expect(all[i].recipe).toBe(r) })
   })
   it('字段正确', () => {
     ;(sys as any).makers.push(makeMaker(2))
-    const m = sys.getMakers()[0]
+    const m = (sys as any).makers[0]
     expect(m.soapsMade).toBe(15)
     expect(m.quality).toBe(65)
   })

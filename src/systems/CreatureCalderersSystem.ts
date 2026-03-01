@@ -67,5 +67,4 @@ export class CreatureCalderersSystem {
     }
   }
 
-  getMakers(): Calderer[] { return this.makers }
 }

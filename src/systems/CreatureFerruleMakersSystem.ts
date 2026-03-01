@@ -67,5 +67,4 @@ export class CreatureFerruleMakersSystem {
     }
   }
 
-  getMakers(): FerruleMaker[] { return this.makers }
 }

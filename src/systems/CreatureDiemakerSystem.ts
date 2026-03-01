@@ -47,5 +47,4 @@ export class CreatureDiemakerSystem {
     for (let _i = this.diemakers.length - 1; _i >= 0; _i--) { if (this.diemakers[_i].diemakingSkill <= 4) this.diemakers.splice(_i, 1) }
   }
 
-  getDiemakers(): Diemaker[] { return this.diemakers }
 }

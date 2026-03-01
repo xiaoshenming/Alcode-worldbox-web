@@ -47,5 +47,4 @@ export class CreatureTinplaterSystem {
     for (let _i = this.tinplaters.length - 1; _i >= 0; _i--) { if (this.tinplaters[_i].platingSkill <= 4) this.tinplaters.splice(_i, 1) }
   }
 
-  getTinplaters(): Tinplater[] { return this.tinplaters }
 }

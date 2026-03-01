@@ -73,6 +73,4 @@ export class CreatureAstrologySystem {
     if (Math.random() < 0.1) this.currentEvent = null
   }
 
-  getReadings(): readonly AstrologicalReading[] { return this.readings }
-  getCurrentEvent(): CelestialEvent | null { return this.currentEvent }
 }

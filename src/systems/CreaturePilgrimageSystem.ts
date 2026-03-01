@@ -127,7 +127,6 @@ export class CreaturePilgrimageSystem {
   }
 
   private _activePilgrimagesBuf: Pilgrimage[] = []
-  getPilgrimages(): Pilgrimage[] { return this.pilgrimages }
   getActivePilgrimages(): Pilgrimage[] {
     this._activePilgrimagesBuf.length = 0
     for (const p of this.pilgrimages) { if (!p.completed) this._activePilgrimagesBuf.push(p) }

@@ -47,5 +47,4 @@ export class CreatureSmelterSystem {
     for (let _i = this.smelters.length - 1; _i >= 0; _i--) { if (this.smelters[_i].smeltingSkill <= 4) this.smelters.splice(_i, 1) }
   }
 
-  getSmelters(): Smelter[] { return this.smelters }
 }

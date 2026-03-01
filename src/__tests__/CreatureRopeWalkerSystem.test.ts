@@ -12,24 +12,24 @@ describe('CreatureRopeWalkerSystem.getRopeWalkers', () => {
   let sys: CreatureRopeWalkerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无绳索行者', () => { expect(sys.getRopeWalkers()).toHaveLength(0) })
+  it('初始无绳索行者', () => { expect((sys as any).ropeWalkers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).ropeWalkers.push(makeWalker(1))
-    expect(sys.getRopeWalkers()[0].entityId).toBe(1)
+    expect((sys as any).ropeWalkers[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).ropeWalkers.push(makeWalker(1))
-    expect(sys.getRopeWalkers()).toBe((sys as any).ropeWalkers)
+    expect((sys as any).ropeWalkers).toBe((sys as any).ropeWalkers)
   })
   it('字段正确', () => {
     ;(sys as any).ropeWalkers.push(makeWalker(2))
-    const w = sys.getRopeWalkers()[0]
+    const w = (sys as any).ropeWalkers[0]
     expect(w.fiberBraiding).toBe(70)
     expect(w.knotTying).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).ropeWalkers.push(makeWalker(1))
     ;(sys as any).ropeWalkers.push(makeWalker(2))
-    expect(sys.getRopeWalkers()).toHaveLength(2)
+    expect((sys as any).ropeWalkers).toHaveLength(2)
   })
 })

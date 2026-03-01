@@ -83,5 +83,4 @@ export class CreatureSoapMakerSystem {
     }
   }
 
-  getMakers(): readonly SoapMaker[] { return this.makers }
 }

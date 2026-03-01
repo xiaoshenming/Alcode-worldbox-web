@@ -71,6 +71,4 @@ export class CreatureVintnerSystem {
     }
   }
 
-  getVintners(): readonly Vintner[] { return this.vintners }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

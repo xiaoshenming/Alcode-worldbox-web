@@ -47,5 +47,4 @@ export class CreatureAnodizerSystem {
     for (let _i = this.anodizers.length - 1; _i >= 0; _i--) { if (this.anodizers[_i].anodizingSkill <= 4) this.anodizers.splice(_i, 1) }
   }
 
-  getAnodizers(): Anodizer[] { return this.anodizers }
 }

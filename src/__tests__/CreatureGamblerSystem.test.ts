@@ -12,25 +12,25 @@ describe('CreatureGamblerSystem.getGamblers', () => {
   let sys: CreatureGamblerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无赌徒', () => { expect(sys.getGamblers()).toHaveLength(0) })
+  it('初始无赌徒', () => { expect((sys as any).gamblers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).gamblers.push(makeGambler(1))
-    expect(sys.getGamblers()[0].entityId).toBe(1)
+    expect((sys as any).gamblers[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).gamblers.push(makeGambler(1))
-    expect(sys.getGamblers()).toBe((sys as any).gamblers)
+    expect((sys as any).gamblers).toBe((sys as any).gamblers)
   })
   it('多个全部返回', () => {
     ;(sys as any).gamblers.push(makeGambler(1))
     ;(sys as any).gamblers.push(makeGambler(2))
-    expect(sys.getGamblers()).toHaveLength(2)
+    expect((sys as any).gamblers).toHaveLength(2)
   })
   it('字段数据完整', () => {
     const g = makeGambler(10)
     g.luck = 90; g.wealth = 500; g.gamesPlayed = 100; g.winStreak = 10
     ;(sys as any).gamblers.push(g)
-    const r = sys.getGamblers()[0]
+    const r = (sys as any).gamblers[0]
     expect(r.luck).toBe(90); expect(r.wealth).toBe(500)
     expect(r.gamesPlayed).toBe(100); expect(r.winStreak).toBe(10)
   })

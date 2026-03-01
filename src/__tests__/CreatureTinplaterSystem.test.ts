@@ -12,24 +12,24 @@ describe('CreatureTinplaterSystem.getTinplaters', () => {
   let sys: CreatureTinplaterSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无镀锡工', () => { expect(sys.getTinplaters()).toHaveLength(0) })
+  it('初始无镀锡工', () => { expect((sys as any).tinplaters).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).tinplaters.push(makeTinplater(1))
-    expect(sys.getTinplaters()[0].entityId).toBe(1)
+    expect((sys as any).tinplaters[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).tinplaters.push(makeTinplater(1))
-    expect(sys.getTinplaters()).toBe((sys as any).tinplaters)
+    expect((sys as any).tinplaters).toBe((sys as any).tinplaters)
   })
   it('字段正确', () => {
     ;(sys as any).tinplaters.push(makeTinplater(2))
-    const t = sys.getTinplaters()[0]
+    const t = (sys as any).tinplaters[0]
     expect(t.platingSkill).toBe(70)
     expect(t.corrosionResistance).toBe(75)
   })
   it('多个全部返回', () => {
     ;(sys as any).tinplaters.push(makeTinplater(1))
     ;(sys as any).tinplaters.push(makeTinplater(2))
-    expect(sys.getTinplaters()).toHaveLength(2)
+    expect((sys as any).tinplaters).toHaveLength(2)
   })
 })

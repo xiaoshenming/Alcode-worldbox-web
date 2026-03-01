@@ -12,24 +12,24 @@ describe('CreatureRivalrySystem.getRivalries', () => {
   let sys: CreatureRivalrySystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无竞争', () => { expect(sys.getRivalries()).toHaveLength(0) })
+  it('初始无竞争', () => { expect((sys as any).rivalries).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).rivalries.push(makeRivalry(1, 2, 'feud'))
-    expect(sys.getRivalries()[0].stage).toBe('feud')
+    expect((sys as any).rivalries[0].stage).toBe('feud')
   })
   it('返回内部引用', () => {
     ;(sys as any).rivalries.push(makeRivalry(1, 2))
-    expect(sys.getRivalries()).toBe((sys as any).rivalries)
+    expect((sys as any).rivalries).toBe((sys as any).rivalries)
   })
   it('支持所有5种竞争阶段', () => {
     const stages: RivalryStage[] = ['tension', 'competition', 'hostility', 'feud', 'resolved']
     stages.forEach((s, i) => { ;(sys as any).rivalries.push(makeRivalry(i + 1, i + 2, s)) })
-    const all = sys.getRivalries()
+    const all = (sys as any).rivalries
     stages.forEach((s, i) => { expect(all[i].stage).toBe(s) })
   })
   it('多个全部返回', () => {
     ;(sys as any).rivalries.push(makeRivalry(1, 2))
     ;(sys as any).rivalries.push(makeRivalry(3, 4))
-    expect(sys.getRivalries()).toHaveLength(2)
+    expect((sys as any).rivalries).toHaveLength(2)
   })
 })

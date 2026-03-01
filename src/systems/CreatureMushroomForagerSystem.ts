@@ -91,5 +91,4 @@ export class CreatureMushroomForagerSystem {
     }
   }
 
-  getForagers(): readonly MushroomForager[] { return this.foragers }
 }

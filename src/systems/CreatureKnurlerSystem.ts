@@ -47,5 +47,4 @@ export class CreatureKnurlerSystem {
     for (let _i = this.knurlers.length - 1; _i >= 0; _i--) { if (this.knurlers[_i].knurlingSkill <= 4) this.knurlers.splice(_i, 1) }
   }
 
-  getKnurlers(): Knurler[] { return this.knurlers }
 }

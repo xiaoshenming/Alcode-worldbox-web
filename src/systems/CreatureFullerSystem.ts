@@ -47,5 +47,4 @@ export class CreatureFullerSystem {
     for (let _i = this.fullers.length - 1; _i >= 0; _i--) { if (this.fullers[_i].fulleringSkill <= 4) this.fullers.splice(_i, 1) }
   }
 
-  getFullers(): Fuller[] { return this.fullers }
 }

@@ -47,5 +47,4 @@ export class CreatureToolsmithSystem {
     for (let _i = this.toolsmiths.length - 1; _i >= 0; _i--) { if (this.toolsmiths[_i].metalWorking <= 4) this.toolsmiths.splice(_i, 1) }
   }
 
-  getToolsmiths(): Toolsmith[] { return this.toolsmiths }
 }

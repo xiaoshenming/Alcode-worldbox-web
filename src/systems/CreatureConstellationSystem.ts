@@ -77,5 +77,4 @@ export class CreatureConstellationSystem {
     }
   }
 
-  getConstellations(): readonly Constellation[] { return this.constellations }
 }

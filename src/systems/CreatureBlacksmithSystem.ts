@@ -71,5 +71,4 @@ export class CreatureBlacksmithSystem {
     }
   }
 
-  getSmiths(): readonly BlacksmithData[] { return this.smiths }
 }

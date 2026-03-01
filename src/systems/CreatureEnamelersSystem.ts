@@ -67,5 +67,4 @@ export class CreatureEnamelersSystem {
     }
   }
 
-  getMakers(): Enameler[] { return this.makers }
 }

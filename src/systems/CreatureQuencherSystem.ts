@@ -47,5 +47,4 @@ export class CreatureQuencherSystem {
     for (let _i = this.quenchers.length - 1; _i >= 0; _i--) { if (this.quenchers[_i].quenchingSkill <= 4) this.quenchers.splice(_i, 1) }
   }
 
-  getQuenchers(): Quencher[] { return this.quenchers }
 }

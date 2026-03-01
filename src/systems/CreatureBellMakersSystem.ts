@@ -67,5 +67,4 @@ export class CreatureBellMakersSystem {
     }
   }
 
-  getMakers(): BellMaker[] { return this.makers }
 }

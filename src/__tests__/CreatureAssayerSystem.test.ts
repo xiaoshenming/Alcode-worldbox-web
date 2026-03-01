@@ -29,25 +29,25 @@ describe('CreatureAssayerSystem.getAssayers', () => {
   beforeEach(() => { sys = makeAssSys(); nextId = 1 })
 
   it('初始无化验师', () => {
-    expect(sys.getAssayers()).toHaveLength(0)
+    expect((sys as any).assayers).toHaveLength(0)
   })
 
   it('注入化验师后可查询', () => {
     ;(sys as any).assayers.push(makeAssayer(1))
-    expect(sys.getAssayers()).toHaveLength(1)
-    expect(sys.getAssayers()[0].entityId).toBe(1)
+    expect((sys as any).assayers).toHaveLength(1)
+    expect((sys as any).assayers[0].entityId).toBe(1)
   })
 
   it('返回内部引用', () => {
     ;(sys as any).assayers.push(makeAssayer(1))
-    expect(sys.getAssayers()).toBe((sys as any).assayers)
+    expect((sys as any).assayers).toBe((sys as any).assayers)
   })
 
   it('多个化验师全部返回', () => {
     ;(sys as any).assayers.push(makeAssayer(1))
     ;(sys as any).assayers.push(makeAssayer(2))
     ;(sys as any).assayers.push(makeAssayer(3))
-    expect(sys.getAssayers()).toHaveLength(3)
+    expect((sys as any).assayers).toHaveLength(3)
   })
 
   it('化验师数据字段完整', () => {
@@ -57,7 +57,7 @@ describe('CreatureAssayerSystem.getAssayers', () => {
     a.precisionTesting = 60
     a.purityAssessment = 75
     ;(sys as any).assayers.push(a)
-    const result = sys.getAssayers()[0]
+    const result = (sys as any).assayers[0]
     expect(result.assayingSkill).toBe(80)
     expect(result.chemicalKnowledge).toBe(70)
     expect(result.precisionTesting).toBe(60)

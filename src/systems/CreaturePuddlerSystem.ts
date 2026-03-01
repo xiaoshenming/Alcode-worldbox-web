@@ -47,5 +47,4 @@ export class CreaturePuddlerSystem {
     for (let _i = this.puddlers.length - 1; _i >= 0; _i--) { if (this.puddlers[_i].puddlingSkill <= 4) this.puddlers.splice(_i, 1) }
   }
 
-  getPuddlers(): Puddler[] { return this.puddlers }
 }

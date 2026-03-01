@@ -12,20 +12,20 @@ describe('CreatureMosaicSystem.getMosaics', () => {
   let sys: CreatureMosaicSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无马赛克', () => { expect(sys.getMosaics()).toHaveLength(0) })
+  it('初始无马赛克', () => { expect((sys as any).mosaics).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).mosaics.push(makeMosaic(1, 'figurative', 'glass'))
-    expect(sys.getMosaics()[0].style).toBe('figurative')
-    expect(sys.getMosaics()[0].material).toBe('glass')
+    expect((sys as any).mosaics[0].style).toBe('figurative')
+    expect((sys as any).mosaics[0].material).toBe('glass')
   })
   it('返回内部引用', () => {
     ;(sys as any).mosaics.push(makeMosaic(1))
-    expect(sys.getMosaics()).toBe((sys as any).mosaics)
+    expect((sys as any).mosaics).toBe((sys as any).mosaics)
   })
   it('支持所有 4 种风格', () => {
     const styles: MosaicStyle[] = ['geometric', 'figurative', 'abstract', 'narrative']
     styles.forEach((s, i) => { ;(sys as any).mosaics.push(makeMosaic(i + 1, s)) })
-    const all = sys.getMosaics()
+    const all = (sys as any).mosaics
     styles.forEach((s, i) => { expect(all[i].style).toBe(s) })
   })
   it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })

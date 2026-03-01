@@ -47,5 +47,4 @@ export class CreatureCoinerSystem {
     for (let _i = this.coiners.length - 1; _i >= 0; _i--) { if (this.coiners[_i].coiningSkill <= 4) this.coiners.splice(_i, 1) }
   }
 
-  getCoiners(): Coiner[] { return this.coiners }
 }

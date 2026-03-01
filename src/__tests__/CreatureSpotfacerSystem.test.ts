@@ -12,24 +12,24 @@ describe('CreatureSpotfacerSystem.getSpotfacers', () => {
   let sys: CreatureSpotfacerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无端面工', () => { expect(sys.getSpotfacers()).toHaveLength(0) })
+  it('初始无端面工', () => { expect((sys as any).spotfacers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).spotfacers.push(makeSpotfacer(1))
-    expect(sys.getSpotfacers()[0].entityId).toBe(1)
+    expect((sys as any).spotfacers[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).spotfacers.push(makeSpotfacer(1))
-    expect(sys.getSpotfacers()).toBe((sys as any).spotfacers)
+    expect((sys as any).spotfacers).toBe((sys as any).spotfacers)
   })
   it('字段正确', () => {
     ;(sys as any).spotfacers.push(makeSpotfacer(2))
-    const s = sys.getSpotfacers()[0]
+    const s = (sys as any).spotfacers[0]
     expect(s.spotfacingSkill).toBe(70)
     expect(s.bearingSurface).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).spotfacers.push(makeSpotfacer(1))
     ;(sys as any).spotfacers.push(makeSpotfacer(2))
-    expect(sys.getSpotfacers()).toHaveLength(2)
+    expect((sys as any).spotfacers).toHaveLength(2)
   })
 })

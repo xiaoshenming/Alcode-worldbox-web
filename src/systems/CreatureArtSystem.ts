@@ -118,12 +118,9 @@ export class CreatureArtSystem {
   }
 
   private _masterpiecesBuf: Artwork[] = []
-  getArtworks(): Artwork[] { return this.artworks }
   getMasterpieces(): Artwork[] {
     this._masterpiecesBuf.length = 0
     for (const a of this.artworks) { if (a.quality >= 80) this._masterpiecesBuf.push(a) }
     return this._masterpiecesBuf
   }
-  getArtistCount(): number { return this.artists.size }
-  getArtworkCount(): number { return this.artworks.length }
 }

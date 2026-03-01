@@ -89,5 +89,4 @@ export class CreatureGondolierSystem {
     }
   }
 
-  getGondoliers(): readonly Gondolier[] { return this.gondoliers }
 }

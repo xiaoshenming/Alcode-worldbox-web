@@ -71,5 +71,4 @@ export class CreatureMosaicSystem {
     }
   }
 
-  getMosaics(): readonly Mosaic[] { return this.mosaics }
 }

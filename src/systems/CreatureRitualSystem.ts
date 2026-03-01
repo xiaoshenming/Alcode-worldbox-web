@@ -128,7 +128,6 @@ export class CreatureRitualSystem {
 
   private _activeRitualsBuf: Ritual[] = []
   private _typeRitualsBuf: Ritual[] = []
-  getRituals(): Ritual[] { return this.rituals }
   getActiveRituals(): Ritual[] {
     this._activeRitualsBuf.length = 0
     for (const r of this.rituals) { if (r.progress < 100) this._activeRitualsBuf.push(r) }

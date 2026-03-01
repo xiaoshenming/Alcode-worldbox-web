@@ -85,6 +85,4 @@ export class CreatureMimicrySystem {
     }
   }
 
-  getAttempts(): readonly MimicryAttempt[] { return this.attempts }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

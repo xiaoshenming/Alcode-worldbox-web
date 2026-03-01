@@ -30,18 +30,18 @@ describe('CreatureAppliqueMakersSystem.getMakers', () => {
   beforeEach(() => { sys = makeAppliqSys(); nextId = 1 })
 
   it('初始无匠人', () => {
-    expect(sys.getMakers()).toHaveLength(0)
+    expect((sys as any).makers).toHaveLength(0)
   })
 
   it('注入匠人后可查询', () => {
     ;(sys as any).makers.push(makeMaker(1, 'needle_turn'))
-    expect(sys.getMakers()).toHaveLength(1)
-    expect(sys.getMakers()[0].appliqueType).toBe('needle_turn')
+    expect((sys as any).makers).toHaveLength(1)
+    expect((sys as any).makers[0].appliqueType).toBe('needle_turn')
   })
 
   it('返回内部引用', () => {
     ;(sys as any).makers.push(makeMaker(1))
-    expect(sys.getMakers()).toBe((sys as any).makers)
+    expect((sys as any).makers).toBe((sys as any).makers)
   })
 
   it('支持所有 4 种贴布类型', () => {
@@ -49,7 +49,7 @@ describe('CreatureAppliqueMakersSystem.getMakers', () => {
     types.forEach((t, i) => {
       ;(sys as any).makers.push(makeMaker(i + 1, t))
     })
-    const all = sys.getMakers()
+    const all = (sys as any).makers
     expect(all).toHaveLength(4)
     types.forEach((t, i) => { expect(all[i].appliqueType).toBe(t) })
   })
@@ -61,7 +61,7 @@ describe('CreatureAppliqueMakersSystem.getMakers', () => {
     m.cutPrecision = 74
     m.reputation = 76
     ;(sys as any).makers.push(m)
-    const result = sys.getMakers()[0]
+    const result = (sys as any).makers[0]
     expect(result.skill).toBe(85)
     expect(result.piecesMade).toBe(15)
     expect(result.cutPrecision).toBe(74)

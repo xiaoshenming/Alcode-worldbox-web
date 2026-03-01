@@ -67,5 +67,4 @@ export class CreatureGrommetMakersSystem {
     }
   }
 
-  getMakers(): GrommetMaker[] { return this.makers }
 }

@@ -89,5 +89,4 @@ export class CreatureWeaverSystem {
     }
   }
 
-  getWeavers(): readonly Weaver[] { return this.weavers }
 }

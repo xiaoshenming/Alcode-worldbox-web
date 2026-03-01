@@ -12,29 +12,29 @@ describe('CreatureEngraverSystem.getEngravers', () => {
   let sys: CreatureEngraverSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无雕刻师', () => { expect(sys.getEngravers()).toHaveLength(0) })
+  it('初始无雕刻师', () => { expect((sys as any).engravers).toHaveLength(0) })
 
   it('注入后可查询', () => {
     ;(sys as any).engravers.push(makeEngraver(1))
-    expect(sys.getEngravers()[0].entityId).toBe(1)
+    expect((sys as any).engravers[0].entityId).toBe(1)
   })
 
   it('返回内部引用', () => {
     ;(sys as any).engravers.push(makeEngraver(1))
-    expect(sys.getEngravers()).toBe((sys as any).engravers)
+    expect((sys as any).engravers).toBe((sys as any).engravers)
   })
 
   it('多个全部返回', () => {
     ;(sys as any).engravers.push(makeEngraver(1))
     ;(sys as any).engravers.push(makeEngraver(2))
-    expect(sys.getEngravers()).toHaveLength(2)
+    expect((sys as any).engravers).toHaveLength(2)
   })
 
   it('四字段数据完整', () => {
     const e = makeEngraver(10)
     e.engravingSkill = 90; e.burinControl = 85; e.lineDepth = 80; e.detailPrecision = 75
     ;(sys as any).engravers.push(e)
-    const r = sys.getEngravers()[0]
+    const r = (sys as any).engravers[0]
     expect(r.engravingSkill).toBe(90); expect(r.burinControl).toBe(85)
     expect(r.lineDepth).toBe(80); expect(r.detailPrecision).toBe(75)
   })

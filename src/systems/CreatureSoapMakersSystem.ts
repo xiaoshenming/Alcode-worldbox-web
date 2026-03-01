@@ -67,5 +67,4 @@ export class CreatureSoapMakersSystem {
     }
   }
 
-  getMakers(): SoapMaker[] { return this.makers }
 }

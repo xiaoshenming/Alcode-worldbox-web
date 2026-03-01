@@ -70,5 +70,4 @@ export class CreatureRangerSystem {
     }
   }
 
-  getRangers(): readonly Ranger[] { return this.rangers }
 }

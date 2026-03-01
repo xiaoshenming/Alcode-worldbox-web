@@ -67,5 +67,4 @@ export class CreatureBobbinLaceMakersSystem {
     }
   }
 
-  getMakers(): BobbinLaceMaker[] { return this.makers }
 }

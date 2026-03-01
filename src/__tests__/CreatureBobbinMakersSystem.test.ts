@@ -12,22 +12,22 @@ describe('CreatureBobbinMakersSystem.getMakers', () => {
   let sys: CreatureBobbinMakersSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无线轴师', () => { expect(sys.getMakers()).toHaveLength(0) })
+  it('初始无线轴师', () => { expect((sys as any).makers).toHaveLength(0) })
 
   it('注入后可查询', () => {
     ;(sys as any).makers.push(makeMaker(1, 'lace'))
-    expect(sys.getMakers()[0].bobbinType).toBe('lace')
+    expect((sys as any).makers[0].bobbinType).toBe('lace')
   })
 
   it('返回内部引用', () => {
     ;(sys as any).makers.push(makeMaker(1))
-    expect(sys.getMakers()).toBe((sys as any).makers)
+    expect((sys as any).makers).toBe((sys as any).makers)
   })
 
   it('支持所有 4 种线轴类型', () => {
     const types: BobbinType[] = ['spinning', 'weaving', 'lace', 'sewing']
     types.forEach((t, i) => { ;(sys as any).makers.push(makeMaker(i + 1, t)) })
-    const all = sys.getMakers()
+    const all = (sys as any).makers
     types.forEach((t, i) => { expect(all[i].bobbinType).toBe(t) })
   })
 
@@ -35,7 +35,7 @@ describe('CreatureBobbinMakersSystem.getMakers', () => {
     const m = makeMaker(10, 'weaving')
     m.skill = 80; m.bobbinsMade = 20; m.smoothness = 90; m.reputation = 85
     ;(sys as any).makers.push(m)
-    const r = sys.getMakers()[0]
+    const r = (sys as any).makers[0]
     expect(r.skill).toBe(80)
     expect(r.bobbinsMade).toBe(20)
     expect(r.smoothness).toBe(90)

@@ -67,5 +67,4 @@ export class CreatureSieveMakersSystem {
     }
   }
 
-  getMakers(): SieveMaker[] { return this.makers }
 }

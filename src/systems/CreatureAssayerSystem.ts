@@ -47,5 +47,4 @@ export class CreatureAssayerSystem {
     for (let _i = this.assayers.length - 1; _i >= 0; _i--) { if (this.assayers[_i].assayingSkill <= 4) this.assayers.splice(_i, 1) }
   }
 
-  getAssayers(): Assayer[] { return this.assayers }
 }

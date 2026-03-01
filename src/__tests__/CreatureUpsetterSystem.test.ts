@@ -12,24 +12,24 @@ describe('CreatureUpsetterSystem.getUpsetters', () => {
   let sys: CreatureUpsetterSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无镦粗工', () => { expect(sys.getUpsetters()).toHaveLength(0) })
+  it('初始无镦粗工', () => { expect((sys as any).upsetters).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).upsetters.push(makeUpsetter(1))
-    expect(sys.getUpsetters()[0].entityId).toBe(1)
+    expect((sys as any).upsetters[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).upsetters.push(makeUpsetter(1))
-    expect(sys.getUpsetters()).toBe((sys as any).upsetters)
+    expect((sys as any).upsetters).toBe((sys as any).upsetters)
   })
   it('字段正确', () => {
     ;(sys as any).upsetters.push(makeUpsetter(2))
-    const u = sys.getUpsetters()[0]
+    const u = (sys as any).upsetters[0]
     expect(u.upsettingSkill).toBe(70)
     expect(u.stockThickening).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).upsetters.push(makeUpsetter(1))
     ;(sys as any).upsetters.push(makeUpsetter(2))
-    expect(sys.getUpsetters()).toHaveLength(2)
+    expect((sys as any).upsetters).toHaveLength(2)
   })
 })

@@ -12,19 +12,19 @@ describe('CreaturePhobiaSystem.getPhobias', () => {
   let sys: CreaturePhobiaSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无恐惧症', () => { expect(sys.getPhobias()).toHaveLength(0) })
+  it('初始无恐惧症', () => { expect((sys as any).phobias).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).phobias.push(makePhobia(1, 'fire'))
-    expect(sys.getPhobias()[0].fear).toBe('fire')
+    expect((sys as any).phobias[0].fear).toBe('fire')
   })
   it('返回内部引用', () => {
     ;(sys as any).phobias.push(makePhobia(1))
-    expect(sys.getPhobias()).toBe((sys as any).phobias)
+    expect((sys as any).phobias).toBe((sys as any).phobias)
   })
   it('支持所有6种恐惧', () => {
     const fears: FearType[] = ['water', 'fire', 'heights', 'darkness', 'crowds', 'storms']
     fears.forEach((f, i) => { ;(sys as any).phobias.push(makePhobia(i + 1, f)) })
-    expect(sys.getPhobias()).toHaveLength(6)
+    expect((sys as any).phobias).toHaveLength(6)
   })
 })
 

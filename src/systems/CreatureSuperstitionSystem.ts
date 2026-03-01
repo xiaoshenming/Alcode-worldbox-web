@@ -129,7 +129,6 @@ export class CreatureSuperstitionSystem {
 
   private _positiveBuf: Superstition[] = []
   private _negativeBuf: Superstition[] = []
-  getSuperstitions(): Superstition[] { return this.superstitions }
   getPositiveSuperstitions(): Superstition[] {
     this._positiveBuf.length = 0
     for (const s of this.superstitions) { if (s.positive) this._positiveBuf.push(s) }

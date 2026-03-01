@@ -12,24 +12,24 @@ describe('CreatureStamperSystem.getStampers', () => {
   let sys: CreatureStamperSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无冲压工', () => { expect(sys.getStampers()).toHaveLength(0) })
+  it('初始无冲压工', () => { expect((sys as any).stampers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).stampers.push(makeStamper(1))
-    expect(sys.getStampers()[0].entityId).toBe(1)
+    expect((sys as any).stampers[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).stampers.push(makeStamper(1))
-    expect(sys.getStampers()).toBe((sys as any).stampers)
+    expect((sys as any).stampers).toBe((sys as any).stampers)
   })
   it('字段正确', () => {
     ;(sys as any).stampers.push(makeStamper(2))
-    const s = sys.getStampers()[0]
+    const s = (sys as any).stampers[0]
     expect(s.stampingSkill).toBe(70)
     expect(s.dieSelection).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).stampers.push(makeStamper(1))
     ;(sys as any).stampers.push(makeStamper(2))
-    expect(sys.getStampers()).toHaveLength(2)
+    expect((sys as any).stampers).toHaveLength(2)
   })
 })

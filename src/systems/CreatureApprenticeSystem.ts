@@ -49,7 +49,6 @@ export class CreatureApprenticeSystem {
   private _mastersBuf: Array<{ id: EntityId; age: number; civId: number; x: number; y: number }> = []
   private _youngBuf: Array<{ id: EntityId; age: number; civId: number; x: number; y: number }> = []
 
-  getApprenticeships(): Apprenticeship[] { return this.apprenticeships }
 
   getActiveCount(): number {
     let n = 0

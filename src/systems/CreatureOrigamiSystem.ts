@@ -71,5 +71,4 @@ export class CreatureOrigamiSystem {
     }
   }
 
-  getWorks(): readonly OrigamiWork[] { return this.works }
 }

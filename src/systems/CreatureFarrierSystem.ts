@@ -70,6 +70,4 @@ export class CreatureFarrierSystem {
     }
   }
 
-  getFarriers(): readonly Farrier[] { return this.farriers }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

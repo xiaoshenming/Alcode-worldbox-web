@@ -188,6 +188,4 @@ export class CreatureRivalryDuelSystem {
     return 'honor'
   }
 
-  getActiveDuels(): Duel[] { return this.activeDuels }
-  getDuelHistory(): DuelRecord[] { return this.history }
 }

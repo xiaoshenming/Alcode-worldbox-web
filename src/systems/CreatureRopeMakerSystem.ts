@@ -71,6 +71,4 @@ export class CreatureRopeMakerSystem {
     }
   }
 
-  getRopeMakers(): readonly RopeMaker[] { return this.ropeMakers }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

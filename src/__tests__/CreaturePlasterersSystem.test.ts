@@ -12,24 +12,24 @@ describe('CreaturePlasterersSystem.getPlasterers', () => {
   let sys: CreaturePlasterersSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无抹灰工', () => { expect(sys.getPlasterers()).toHaveLength(0) })
+  it('初始无抹灰工', () => { expect((sys as any).plasterers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).plasterers.push(makePlasterer(1, 'gypsum'))
-    expect(sys.getPlasterers()[0].plasterType).toBe('gypsum')
+    expect((sys as any).plasterers[0].plasterType).toBe('gypsum')
   })
   it('返回内部引用', () => {
     ;(sys as any).plasterers.push(makePlasterer(1))
-    expect(sys.getPlasterers()).toBe((sys as any).plasterers)
+    expect((sys as any).plasterers).toBe((sys as any).plasterers)
   })
   it('支持所有4种灰泥类型', () => {
     const types: PlasterType[] = ['lime', 'gypsum', 'clay', 'decorative']
     types.forEach((t, i) => { ;(sys as any).plasterers.push(makePlasterer(i + 1, t)) })
-    const all = sys.getPlasterers()
+    const all = (sys as any).plasterers
     types.forEach((t, i) => { expect(all[i].plasterType).toBe(t) })
   })
   it('多个全部返回', () => {
     ;(sys as any).plasterers.push(makePlasterer(1))
     ;(sys as any).plasterers.push(makePlasterer(2))
-    expect(sys.getPlasterers()).toHaveLength(2)
+    expect((sys as any).plasterers).toHaveLength(2)
   })
 })

@@ -47,5 +47,4 @@ export class CreatureNeedlerSystem {
     for (let _i = this.needlers.length - 1; _i >= 0; _i--) { if (this.needlers[_i].needlingSkill <= 4) this.needlers.splice(_i, 1) }
   }
 
-  getNeedlers(): Needler[] { return this.needlers }
 }

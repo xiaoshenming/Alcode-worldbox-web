@@ -74,5 +74,4 @@ export class CreatureDowserSystem {
     }
   }
 
-  getDowsers(): readonly DowserData[] { return this.dowsers }
 }

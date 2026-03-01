@@ -47,5 +47,4 @@ export class CreatureChaserSystem {
     for (let _i = this.chasers.length - 1; _i >= 0; _i--) { if (this.chasers[_i].chasingSkill <= 4) this.chasers.splice(_i, 1) }
   }
 
-  getChasers(): Chaser[] { return this.chasers }
 }

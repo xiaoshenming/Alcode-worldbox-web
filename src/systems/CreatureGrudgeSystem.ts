@@ -98,7 +98,6 @@ export class CreatureGrudgeSystem {
   private _grudgesBuf: Grudge[] = []
   private _enemiesBuf: number[] = []
 
-  getGrudges(): Grudge[] { return this.grudges }
   getGrudgesFor(entityId: number): Grudge[] {
     this._grudgesBuf.length = 0
     for (const g of this.grudges) { if (g.holderId === entityId) this._grudgesBuf.push(g) }

@@ -67,5 +67,4 @@ export class CreatureChroniclerSystem {
     }
   }
 
-  getChroniclers(): readonly ChroniclerData[] { return this.chroniclers }
 }

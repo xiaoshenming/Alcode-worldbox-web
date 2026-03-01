@@ -89,5 +89,4 @@ export class CreatureBeekeeperSystem {
     }
   }
 
-  getBeekeepers(): readonly Beekeeper[] { return this.beekeepers }
 }

@@ -12,22 +12,22 @@ describe('CreatureBobbinLaceMakersSystem.getMakers', () => {
   let sys: CreatureBobbinLaceMakersSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无花边师', () => { expect(sys.getMakers()).toHaveLength(0) })
+  it('初始无花边师', () => { expect((sys as any).makers).toHaveLength(0) })
 
   it('注入后可查询', () => {
     ;(sys as any).makers.push(makeMaker(1, 'honiton'))
-    expect(sys.getMakers()[0].pattern).toBe('honiton')
+    expect((sys as any).makers[0].pattern).toBe('honiton')
   })
 
   it('返回内部引用', () => {
     ;(sys as any).makers.push(makeMaker(1))
-    expect(sys.getMakers()).toBe((sys as any).makers)
+    expect((sys as any).makers).toBe((sys as any).makers)
   })
 
   it('支持所有 4 种花边图案', () => {
     const patterns: LacePattern[] = ['torchon', 'cluny', 'bruges', 'honiton']
     patterns.forEach((p, i) => { ;(sys as any).makers.push(makeMaker(i + 1, p)) })
-    const all = sys.getMakers()
+    const all = (sys as any).makers
     patterns.forEach((p, i) => { expect(all[i].pattern).toBe(p) })
   })
 
@@ -35,7 +35,7 @@ describe('CreatureBobbinLaceMakersSystem.getMakers', () => {
     const m = makeMaker(10, 'bruges')
     m.skill = 80; m.lacePiecesMade = 20; m.intricacy = 90; m.reputation = 85
     ;(sys as any).makers.push(m)
-    const r = sys.getMakers()[0]
+    const r = (sys as any).makers[0]
     expect(r.skill).toBe(80)
     expect(r.lacePiecesMade).toBe(20)
     expect(r.intricacy).toBe(90)

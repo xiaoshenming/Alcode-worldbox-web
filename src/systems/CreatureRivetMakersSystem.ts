@@ -67,5 +67,4 @@ export class CreatureRivetMakersSystem {
     }
   }
 
-  getMakers(): RivetMaker[] { return this.makers }
 }

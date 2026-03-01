@@ -67,5 +67,4 @@ export class CreatureBuckleMakersSystem {
     }
   }
 
-  getMakers(): BuckleMaker[] { return this.makers }
 }

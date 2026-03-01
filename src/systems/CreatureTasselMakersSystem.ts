@@ -67,5 +67,4 @@ export class CreatureTasselMakersSystem {
     }
   }
 
-  getMakers(): TasselMaker[] { return this.makers }
 }

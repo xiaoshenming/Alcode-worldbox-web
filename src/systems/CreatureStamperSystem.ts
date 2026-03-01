@@ -47,5 +47,4 @@ export class CreatureStamperSystem {
     for (let _i = this.stampers.length - 1; _i >= 0; _i--) { if (this.stampers[_i].stampingSkill <= 4) this.stampers.splice(_i, 1) }
   }
 
-  getStampers(): Stamper[] { return this.stampers }
 }

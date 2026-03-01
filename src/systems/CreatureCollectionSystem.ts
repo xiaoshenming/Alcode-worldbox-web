@@ -167,8 +167,6 @@ export class CreatureCollectionSystem {
     }
   }
 
-  getCollection(creatureId: number): Collection | undefined { return this.collections.get(creatureId) }
-  getCollectionCount(): number { return this.collections.size }
   getTopCollectors(n: number): Collection[] {
     const buf = this._topCollectorsBuf; buf.length = 0
     for (const c of this.collections.values()) buf.push(c)

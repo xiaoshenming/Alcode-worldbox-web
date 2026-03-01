@@ -77,6 +77,4 @@ export class CreatureSummoningSystem {
     }
   }
 
-  getSummons(): readonly Summon[] { return this.summons }
-  getMastery(eid: number): number { return this.masteryMap.get(eid) ?? 0 }
 }

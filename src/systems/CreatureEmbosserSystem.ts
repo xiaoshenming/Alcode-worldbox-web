@@ -47,5 +47,4 @@ export class CreatureEmbosserSystem {
     for (let _i = this.embossers.length - 1; _i >= 0; _i--) { if (this.embossers[_i].embossingSkill <= 4) this.embossers.splice(_i, 1) }
   }
 
-  getEmbossers(): Embosser[] { return this.embossers }
 }

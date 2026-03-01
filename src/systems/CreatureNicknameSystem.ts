@@ -103,7 +103,6 @@ export class CreatureNicknameSystem {
     return this.nicknames.some(n => n.entityId === entityId)
   }
 
-  getNicknames(): Nickname[] { return this.nicknames }
   getNickname(entityId: number): Nickname | undefined {
     return this.nicknames.find(n => n.entityId === entityId)
   }

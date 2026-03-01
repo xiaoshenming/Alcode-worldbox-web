@@ -87,5 +87,4 @@ export class CreatureAstronomerSystem {
     }
   }
 
-  getAstronomers(): readonly Astronomer[] { return this.astronomers }
 }

@@ -85,7 +85,6 @@ export class CreaturePhobiaSystem {
   }
 
   private _phobiasBuf: Phobia[] = []
-  getPhobias(): Phobia[] { return this.phobias }
   getPhobiasForEntity(entityId: number): Phobia[] {
     this._phobiasBuf.length = 0
     for (const p of this.phobias) { if (p.entityId === entityId) this._phobiasBuf.push(p) }

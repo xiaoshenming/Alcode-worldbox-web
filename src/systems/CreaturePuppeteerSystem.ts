@@ -65,5 +65,4 @@ export class CreaturePuppeteerSystem {
     }
   }
 
-  getPuppeteers(): readonly Puppeteer[] { return this.puppeteers }
 }

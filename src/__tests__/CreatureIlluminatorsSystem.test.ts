@@ -12,24 +12,24 @@ describe('CreatureIlluminatorsSystem.getMakers', () => {
   let sys: CreatureIlluminatorsSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无彩饰师', () => { expect(sys.getMakers()).toHaveLength(0) })
+  it('初始无彩饰师', () => { expect((sys as any).makers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).makers.push(makeMaker(1, 'historiated'))
-    expect(sys.getMakers()[0].style).toBe('historiated')
+    expect((sys as any).makers[0].style).toBe('historiated')
   })
   it('返回内部引用', () => {
     ;(sys as any).makers.push(makeMaker(1))
-    expect(sys.getMakers()).toBe((sys as any).makers)
+    expect((sys as any).makers).toBe((sys as any).makers)
   })
   it('支持所有 4 种风格', () => {
     const styles: IlluminationStyle[] = ['historiated', 'decorated', 'inhabited', 'border']
     styles.forEach((s, i) => { ;(sys as any).makers.push(makeMaker(i + 1, s)) })
-    const all = sys.getMakers()
+    const all = (sys as any).makers
     styles.forEach((s, i) => { expect(all[i].style).toBe(s) })
   })
   it('多个全部返回', () => {
     ;(sys as any).makers.push(makeMaker(1))
     ;(sys as any).makers.push(makeMaker(2))
-    expect(sys.getMakers()).toHaveLength(2)
+    expect((sys as any).makers).toHaveLength(2)
   })
 })

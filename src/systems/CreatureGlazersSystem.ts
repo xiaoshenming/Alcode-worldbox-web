@@ -67,5 +67,4 @@ export class CreatureGlazersSystem {
     }
   }
 
-  getGlazers(): Glazer[] { return this.glazers }
 }

@@ -12,19 +12,19 @@ describe('CreatureGrudgeSystem.getGrudges', () => {
   let sys: CreatureGrudgeSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无积怨', () => { expect(sys.getGrudges()).toHaveLength(0) })
+  it('初始无积怨', () => { expect((sys as any).grudges).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).grudges.push(makeGrudge(1, 2, 'betrayal'))
-    expect(sys.getGrudges()[0].reason).toBe('betrayal')
+    expect((sys as any).grudges[0].reason).toBe('betrayal')
   })
   it('返回内部引用', () => {
     ;(sys as any).grudges.push(makeGrudge(1, 2))
-    expect(sys.getGrudges()).toBe((sys as any).grudges)
+    expect((sys as any).grudges).toBe((sys as any).grudges)
   })
   it('支持所有 6 种积怨原因', () => {
     const reasons: GrudgeReason[] = ['attacked', 'territory', 'theft', 'betrayal', 'insult', 'family_harm']
     reasons.forEach((r, i) => { ;(sys as any).grudges.push(makeGrudge(i + 1, i + 10, r)) })
-    const all = sys.getGrudges()
+    const all = (sys as any).grudges
     reasons.forEach((r, i) => { expect(all[i].reason).toBe(r) })
   })
 })

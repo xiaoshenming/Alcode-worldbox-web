@@ -83,7 +83,6 @@ export class CreatureSomniloquySystem {
     }
   }
 
-  getTalks(): SleepTalk[] { return this.talks }
   getRecentTalks(count: number): SleepTalk[] {
     const buf = this._recentBuf
     buf.length = 0

@@ -78,5 +78,4 @@ export class CreatureRunnerSystem {
     }
   }
 
-  getRunners(): readonly Runner[] { return this.runners }
 }

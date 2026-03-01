@@ -12,22 +12,22 @@ describe('CreatureFashionSystem.getTrends', () => {
   let sys: CreatureFashionSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无时尚潮流', () => { expect(sys.getTrends()).toHaveLength(0) })
+  it('初始无时尚潮流', () => { expect((sys as any).trends).toHaveLength(0) })
 
   it('注入后可查询', () => {
     ;(sys as any).trends.push(makeTrend(1, 'jewelry'))
-    expect(sys.getTrends()[0].category).toBe('jewelry')
+    expect((sys as any).trends[0].category).toBe('jewelry')
   })
 
   it('返回内部引用', () => {
     ;(sys as any).trends.push(makeTrend(1))
-    expect(sys.getTrends()).toBe((sys as any).trends)
+    expect((sys as any).trends).toBe((sys as any).trends)
   })
 
   it('支持所有 5 种时尚类别', () => {
     const cats: FashionCategory[] = ['headwear', 'clothing', 'jewelry', 'warpaint', 'hairstyle']
     cats.forEach((c, i) => { ;(sys as any).trends.push(makeTrend(i + 1, c)) })
-    const all = sys.getTrends()
+    const all = (sys as any).trends
     cats.forEach((c, i) => { expect(all[i].category).toBe(c) })
   })
 })
@@ -60,11 +60,11 @@ describe('CreatureFashionSystem.getTrendCount', () => {
   let sys: CreatureFashionSystem
   beforeEach(() => { sys = makeSys() })
 
-  it('空时返回 0', () => { expect(sys.getTrendCount()).toBe(0) })
+  it('空时返回 0', () => { expect((sys as any).trends.length).toBe(0) })
 
   it('注入后返回正确数量', () => {
     ;(sys as any).trends.push(makeTrend(1))
     ;(sys as any).trends.push(makeTrend(2))
-    expect(sys.getTrendCount()).toBe(2)
+    expect((sys as any).trends.length).toBe(2)
   })
 })

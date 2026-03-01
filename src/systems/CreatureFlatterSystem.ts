@@ -47,5 +47,4 @@ export class CreatureFlatterSystem {
     for (let _i = this.flatters.length - 1; _i >= 0; _i--) { if (this.flatters[_i].flattingSkill <= 4) this.flatters.splice(_i, 1) }
   }
 
-  getFlatters(): Flatter[] { return this.flatters }
 }

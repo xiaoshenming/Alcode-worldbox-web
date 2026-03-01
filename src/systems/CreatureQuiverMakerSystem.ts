@@ -47,5 +47,4 @@ export class CreatureQuiverMakerSystem {
     for (let _i = this.makers.length - 1; _i >= 0; _i--) { if (this.makers[_i].leatherStitching <= 4) this.makers.splice(_i, 1) }
   }
 
-  getMakers(): QuiverMaker[] { return this.makers }
 }

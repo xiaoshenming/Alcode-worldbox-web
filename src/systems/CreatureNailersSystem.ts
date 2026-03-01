@@ -67,5 +67,4 @@ export class CreatureNailersSystem {
     }
   }
 
-  getNailers(): Nailer[] { return this.nailers }
 }

@@ -70,6 +70,4 @@ export class CreatureFalconerSystem {
     }
   }
 
-  getFalconers(): readonly Falconer[] { return this.falconers }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

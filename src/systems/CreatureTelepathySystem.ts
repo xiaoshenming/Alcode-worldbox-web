@@ -71,6 +71,4 @@ export class CreatureTelepathySystem {
     }
   }
 
-  getLinks(): readonly TelepathicLink[] { return this.links }
-  getPower(eid: number): number { return this.powerMap.get(eid) ?? 0 }
 }

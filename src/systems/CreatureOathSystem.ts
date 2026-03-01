@@ -99,7 +99,6 @@ export class CreatureOathSystem {
     }
   }
 
-  getOaths(): Oath[] { return this.oaths }
   getActiveOaths(): Oath[] {
     this._activeOathsBuf.length = 0
     for (const o of this.oaths) { if (!o.fulfilled) this._activeOathsBuf.push(o) }

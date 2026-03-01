@@ -67,5 +67,4 @@ export class CreaturePottersSystem {
     }
   }
 
-  getPotters(): Potter[] { return this.potters }
 }

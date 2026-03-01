@@ -47,5 +47,4 @@ export class CreatureRollerSystem {
     for (let _i = this.rollers.length - 1; _i >= 0; _i--) { if (this.rollers[_i].rollingSkill <= 4) this.rollers.splice(_i, 1) }
   }
 
-  getRollers(): Roller[] { return this.rollers }
 }

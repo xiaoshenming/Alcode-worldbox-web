@@ -67,5 +67,4 @@ export class CreatureSmockingMakersSystem {
     }
   }
 
-  getMakers(): SmockingMaker[] { return this.makers }
 }

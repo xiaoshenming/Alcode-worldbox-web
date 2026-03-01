@@ -47,5 +47,4 @@ export class CreatureNibblerSystem {
     for (let _i = this.nibblers.length - 1; _i >= 0; _i--) { if (this.nibblers[_i].nibblingSkill <= 4) this.nibblers.splice(_i, 1) }
   }
 
-  getNibblers(): Nibbler[] { return this.nibblers }
 }

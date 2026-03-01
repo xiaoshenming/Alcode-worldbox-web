@@ -67,6 +67,4 @@ export class CreatureShipwrightSystem {
     }
   }
 
-  getShipwrights(): readonly Shipwright[] { return this.shipwrights }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

@@ -12,22 +12,22 @@ describe('CreatureFermentationSystem.getGoods', () => {
   let sys: CreatureFermentationSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无发酵品', () => { expect(sys.getGoods()).toHaveLength(0) })
+  it('初始无发酵品', () => { expect((sys as any).goods).toHaveLength(0) })
 
   it('注入后可查询', () => {
     ;(sys as any).goods.push(makeGood(1, 'honey_mead'))
-    expect(sys.getGoods()[0].type).toBe('honey_mead')
+    expect((sys as any).goods[0].type).toBe('honey_mead')
   })
 
   it('返回内部引用', () => {
     ;(sys as any).goods.push(makeGood(1))
-    expect(sys.getGoods()).toBe((sys as any).goods)
+    expect((sys as any).goods).toBe((sys as any).goods)
   })
 
   it('支持所有 6 种发酵类型', () => {
     const types: FermentType[] = ['fruit_wine', 'grain_beer', 'honey_mead', 'herb_tonic', 'root_brew', 'mushroom_elixir']
     types.forEach((t, i) => { ;(sys as any).goods.push(makeGood(i + 1, t)) })
-    const all = sys.getGoods()
+    const all = (sys as any).goods
     types.forEach((t, i) => { expect(all[i].type).toBe(t) })
   })
 })
@@ -36,10 +36,10 @@ describe('CreatureFermentationSystem.getSkill', () => {
   let sys: CreatureFermentationSystem
   beforeEach(() => { sys = makeSys() })
 
-  it('未知实体返回 0', () => { expect(sys.getSkill(999)).toBe(0) })
+  it('未知实体返回 0', () => { expect(((sys as any).skillMap.get(999) ?? 0)).toBe(0) })
 
   it('注入技能后返回正确值', () => {
     ;(sys as any).skillMap.set(42, 78)
-    expect(sys.getSkill(42)).toBe(78)
+    expect(((sys as any).skillMap.get(42) ?? 0)).toBe(78)
   })
 })

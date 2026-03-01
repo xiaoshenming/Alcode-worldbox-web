@@ -47,5 +47,4 @@ export class CreatureAnvilsmithSystem {
     for (let _i = this.anvilsmiths.length - 1; _i >= 0; _i--) { if (this.anvilsmiths[_i].heavyForging <= 4) this.anvilsmiths.splice(_i, 1) }
   }
 
-  getAnvilsmiths(): Anvilsmith[] { return this.anvilsmiths }
 }

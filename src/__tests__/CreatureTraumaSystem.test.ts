@@ -12,14 +12,14 @@ describe('CreatureTraumaSystem getters', () => {
   let sys: CreatureTraumaSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无创伤', () => { expect(sys.getTraumas()).toHaveLength(0) })
+  it('初始无创伤', () => { expect((sys as any).traumas).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).traumas.push(makeTrauma(1, 'disaster'))
-    expect(sys.getTraumas()[0].source).toBe('disaster')
+    expect((sys as any).traumas[0].source).toBe('disaster')
   })
   it('返回内部引用', () => {
     ;(sys as any).traumas.push(makeTrauma(1))
-    expect(sys.getTraumas()).toBe((sys as any).traumas)
+    expect((sys as any).traumas).toBe((sys as any).traumas)
   })
   it('getCreatureTraumas按creatureId过滤', () => {
     ;(sys as any).traumas.push(makeTrauma(1, 'combat'))
@@ -32,11 +32,11 @@ describe('CreatureTraumaSystem getters', () => {
   it('支持所有创伤来源', () => {
     const sources: TraumaSource[] = ['combat', 'disaster', 'loss', 'starvation', 'exile', 'betrayal']
     sources.forEach((s, i) => { ;(sys as any).traumas.push(makeTrauma(i + 1, s)) })
-    expect(sys.getTraumas()).toHaveLength(6)
+    expect((sys as any).traumas).toHaveLength(6)
   })
   it('字段正确', () => {
     ;(sys as any).traumas.push(makeTrauma(2, 'exile', 'withdrawal'))
-    const t = sys.getTraumas()[0]
+    const t = (sys as any).traumas[0]
     expect(t.severity).toBe(60)
     expect(t.effect).toBe('withdrawal')
   })

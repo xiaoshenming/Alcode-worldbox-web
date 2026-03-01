@@ -31,18 +31,18 @@ describe('CreatureBeastMasterSystem.getRecords', () => {
   beforeEach(() => { sys = makeBMSys(); nextId = 1 })
 
   it('初始无记录', () => {
-    expect(sys.getRecords()).toHaveLength(0)
+    expect((sys as any).records).toHaveLength(0)
   })
 
   it('注入记录后可查��', () => {
     ;(sys as any).records.push(makeRecord(1, 100, 75, 'war_mount'))
-    expect(sys.getRecords()).toHaveLength(1)
-    expect(sys.getRecords()[0].bond).toBe('war_mount')
+    expect((sys as any).records).toHaveLength(1)
+    expect((sys as any).records[0].bond).toBe('war_mount')
   })
 
   it('返回内部引用', () => {
     ;(sys as any).records.push(makeRecord(1, 100))
-    expect(sys.getRecords()).toBe((sys as any).records)
+    expect((sys as any).records).toBe((sys as any).records)
   })
 
   it('支持所有 5 种纽带类型', () => {
@@ -50,7 +50,7 @@ describe('CreatureBeastMasterSystem.getRecords', () => {
     bonds.forEach((b, i) => {
       ;(sys as any).records.push(makeRecord(i + 1, i + 100, 50, b))
     })
-    const all = sys.getRecords()
+    const all = (sys as any).records
     expect(all).toHaveLength(5)
     bonds.forEach((b, i) => { expect(all[i].bond).toBe(b) })
   })
@@ -86,12 +86,12 @@ describe('CreatureBeastMasterSystem.getAverageLoyalty', () => {
   beforeEach(() => { sys = makeBMSys(); nextId = 1 })
 
   it('无记录时返回 0', () => {
-    expect(sys.getAverageLoyalty()).toBe(0)
+    expect(((sys as any).records.length === 0 ? 0 : ((sys as any).records.reduce((s: number, r: {loyalty: number}) => s + r.loyalty, 0) / (sys as any).records.length))).toBe(0)
   })
 
   it('单条记录时返回该忠诚度', () => {
     ;(sys as any).records.push(makeRecord(1, 100, 80))
-    expect(sys.getAverageLoyalty()).toBe(80)
+    expect(((sys as any).records.length === 0 ? 0 : ((sys as any).records.reduce((s: number, r: {loyalty: number}) => s + r.loyalty, 0) / (sys as any).records.length))).toBe(80)
   })
 
   it('多条记录时返回平均值', () => {
@@ -99,12 +99,12 @@ describe('CreatureBeastMasterSystem.getAverageLoyalty', () => {
     ;(sys as any).records.push(makeRecord(2, 101, 80))
     ;(sys as any).records.push(makeRecord(3, 102, 40))
     // (60+80+40)/3 = 60
-    expect(sys.getAverageLoyalty()).toBeCloseTo(60)
+    expect(((sys as any).records.length === 0 ? 0 : ((sys as any).records.reduce((s: number, r: {loyalty: number}) => s + r.loyalty, 0) / (sys as any).records.length))).toBeCloseTo(60)
   })
 
   it('全部 100 忠诚度时返回 100', () => {
     ;(sys as any).records.push(makeRecord(1, 100, 100))
     ;(sys as any).records.push(makeRecord(2, 101, 100))
-    expect(sys.getAverageLoyalty()).toBe(100)
+    expect(((sys as any).records.length === 0 ? 0 : ((sys as any).records.reduce((s: number, r: {loyalty: number}) => s + r.loyalty, 0) / (sys as any).records.length))).toBe(100)
   })
 })

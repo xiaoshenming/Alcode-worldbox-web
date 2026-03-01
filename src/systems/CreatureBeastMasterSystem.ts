@@ -89,7 +89,6 @@ export class CreatureBeastMasterSystem {
     }
   }
 
-  getRecords(): BeastMasterRecord[] { return this.records }
   getMasterBonds(masterId: number): BeastMasterRecord[] {
     this._bondsBuf.length = 0
     for (const r of this.records) { if (r.masterId === masterId) this._bondsBuf.push(r) }

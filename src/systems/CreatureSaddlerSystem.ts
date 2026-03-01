@@ -47,5 +47,4 @@ export class CreatureSaddlerSystem {
     for (let _i = this.saddlers.length - 1; _i >= 0; _i--) { if (this.saddlers[_i].leatherShaping <= 4) this.saddlers.splice(_i, 1) }
   }
 
-  getSaddlers(): Saddler[] { return this.saddlers }
 }

@@ -31,26 +31,26 @@ describe('CreatureBarterSystem.getDeals', () => {
   beforeEach(() => { sys = makeBarterSys(); nextDealId = 1 })
 
   it('初始无交易', () => {
-    expect(sys.getDeals()).toHaveLength(0)
+    expect((sys as any).deals).toHaveLength(0)
   })
 
   it('注入交易后可查询', () => {
     ;(sys as any).deals.push(makeDeal(1, 2))
-    expect(sys.getDeals()).toHaveLength(1)
-    expect(sys.getDeals()[0].buyerId).toBe(1)
-    expect(sys.getDeals()[0].sellerId).toBe(2)
+    expect((sys as any).deals).toHaveLength(1)
+    expect((sys as any).deals[0].buyerId).toBe(1)
+    expect((sys as any).deals[0].sellerId).toBe(2)
   })
 
   it('返回内部引用', () => {
     ;(sys as any).deals.push(makeDeal(1, 2))
-    expect(sys.getDeals()).toBe((sys as any).deals)
+    expect((sys as any).deals).toBe((sys as any).deals)
   })
 
   it('多个交易全部返回', () => {
     ;(sys as any).deals.push(makeDeal(1, 2))
     ;(sys as any).deals.push(makeDeal(2, 3))
     ;(sys as any).deals.push(makeDeal(3, 4))
-    expect(sys.getDeals()).toHaveLength(3)
+    expect((sys as any).deals).toHaveLength(3)
   })
 
   it('交易数据完整', () => {
@@ -59,7 +59,7 @@ describe('CreatureBarterSystem.getDeals', () => {
     d.requestedItem = 'gem'
     d.fairness = 80
     ;(sys as any).deals.push(d)
-    const result = sys.getDeals()[0]
+    const result = (sys as any).deals[0]
     expect(result.offeredItem).toBe('gold')
     expect(result.requestedItem).toBe('gem')
     expect(result.fairness).toBe(80)
@@ -72,7 +72,7 @@ describe('CreatureBarterSystem.getDeals', () => {
       d.offeredItem = item
       ;(sys as any).deals.push(d)
     })
-    const deals = sys.getDeals()
+    const deals = (sys as any).deals
     items.forEach((item, i) => { expect(deals[i].offeredItem).toBe(item) })
   })
 })

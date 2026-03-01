@@ -79,6 +79,4 @@ export class CreatureFermentationSystem {
     }
   }
 
-  getGoods(): readonly FermentedGood[] { return this.goods }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

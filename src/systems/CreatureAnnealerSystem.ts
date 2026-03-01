@@ -47,5 +47,4 @@ export class CreatureAnnealerSystem {
     for (let _i = this.annealers.length - 1; _i >= 0; _i--) { if (this.annealers[_i].annealingSkill <= 4) this.annealers.splice(_i, 1) }
   }
 
-  getAnnealers(): Annealer[] { return this.annealers }
 }

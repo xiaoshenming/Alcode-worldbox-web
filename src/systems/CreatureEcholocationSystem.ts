@@ -88,6 +88,4 @@ export class CreatureEcholocationSystem {
     }
   }
 
-  getPings(): readonly EchoPing[] { return this.pings }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

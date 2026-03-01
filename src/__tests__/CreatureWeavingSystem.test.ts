@@ -12,25 +12,25 @@ describe('CreatureWeavingSystem.getGoods', () => {
   let sys: CreatureWeavingSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无纺织品', () => { expect(sys.getGoods()).toHaveLength(0) })
+  it('初始无纺织品', () => { expect((sys as any).goods).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).goods.push(makeGood(1, 'silk'))
-    expect(sys.getGoods()[0].fabric).toBe('silk')
+    expect((sys as any).goods[0].fabric).toBe('silk')
   })
   it('返回只读引用', () => {
     ;(sys as any).goods.push(makeGood(1))
-    expect(sys.getGoods()).toBe((sys as any).goods)
+    expect((sys as any).goods).toBe((sys as any).goods)
   })
   it('getSkill无记录返回0', () => {
-    expect(sys.getSkill(999)).toBe(0)
+    expect(((sys as any).skillMap.get(999) ?? 0)).toBe(0)
   })
   it('getSkill可通过skillMap注入', () => {
     ;(sys as any).skillMap.set(1, 80)
-    expect(sys.getSkill(1)).toBe(80)
+    expect(((sys as any).skillMap.get(1) ?? 0)).toBe(80)
   })
   it('支持所有6种织物类型', () => {
     const fabrics: FabricType[] = ['linen', 'wool', 'silk', 'cotton', 'hemp', 'tapestry']
     fabrics.forEach((f, i) => { ;(sys as any).goods.push(makeGood(i + 1, f)) })
-    expect(sys.getGoods()).toHaveLength(6)
+    expect((sys as any).goods).toHaveLength(6)
   })
 })

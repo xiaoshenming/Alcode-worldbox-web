@@ -67,5 +67,4 @@ export class CreatureThatchersSystem {
     }
   }
 
-  getThatchers(): Thatcher[] { return this.thatchers }
 }

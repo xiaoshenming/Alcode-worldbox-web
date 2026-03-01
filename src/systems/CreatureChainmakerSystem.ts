@@ -47,5 +47,4 @@ export class CreatureChainmakerSystem {
     for (let _i = this.chainmakers.length - 1; _i >= 0; _i--) { if (this.chainmakers[_i].linkForging <= 4) this.chainmakers.splice(_i, 1) }
   }
 
-  getChainmakers(): Chainmaker[] { return this.chainmakers }
 }

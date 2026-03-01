@@ -67,5 +67,4 @@ export class CreatureReedCuttersSystem {
     }
   }
 
-  getCutters(): ReedCutter[] { return this.cutters }
 }

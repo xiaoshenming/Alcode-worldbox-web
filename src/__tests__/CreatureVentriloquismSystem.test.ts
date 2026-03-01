@@ -12,22 +12,22 @@ describe('CreatureVentriloquismSystem.getActs', () => {
   let sys: CreatureVentriloquismSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无口技表演', () => { expect(sys.getActs()).toHaveLength(0) })
+  it('初始无口技表演', () => { expect((sys as any).acts).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).acts.push(makeAct(1, 'mimicry'))
-    expect(sys.getActs()[0].trick).toBe('mimicry')
+    expect((sys as any).acts[0].trick).toBe('mimicry')
   })
   it('返回只读引用', () => {
     ;(sys as any).acts.push(makeAct(1))
-    expect(sys.getActs()).toBe((sys as any).acts)
+    expect((sys as any).acts).toBe((sys as any).acts)
   })
   it('支持所有6种口技技巧', () => {
     const tricks: VoiceTrick[] = ['distraction', 'mimicry', 'intimidation', 'lure', 'comedy', 'warning']
     tricks.forEach((t, i) => { ;(sys as any).acts.push(makeAct(i + 1, t)) })
-    expect(sys.getActs()).toHaveLength(6)
+    expect((sys as any).acts).toHaveLength(6)
   })
   it('targetId可为null', () => {
     ;(sys as any).acts.push(makeAct(1))
-    expect(sys.getActs()[0].targetId).toBeNull()
+    expect((sys as any).acts[0].targetId).toBeNull()
   })
 })

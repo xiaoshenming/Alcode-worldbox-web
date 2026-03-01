@@ -67,5 +67,4 @@ export class CreatureQuiltingMakersSystem {
     }
   }
 
-  getMakers(): QuiltingMaker[] { return this.makers }
 }

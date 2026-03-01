@@ -66,6 +66,4 @@ export class CreatureEnchantingSystem {
     }
   }
 
-  getEnchantments(): readonly Enchantment[] { return this.enchantments }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

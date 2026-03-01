@@ -67,5 +67,4 @@ export class CreatureMacrameMakersSystem {
     }
   }
 
-  getMakers(): MacrameMaker[] { return this.makers }
 }

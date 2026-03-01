@@ -67,5 +67,4 @@ export class CreatureHarnessMakersSystem {
     }
   }
 
-  getMakers(): HarnessMaker[] { return this.makers }
 }

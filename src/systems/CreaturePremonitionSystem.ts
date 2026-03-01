@@ -65,6 +65,4 @@ export class CreaturePremonitionSystem {
     }
   }
 
-  getVisions(): readonly Premonition[] { return this.visions }
-  getGift(eid: number): number { return this.giftMap.get(eid) ?? 0 }
 }

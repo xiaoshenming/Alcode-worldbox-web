@@ -144,8 +144,6 @@ export class CreatureMentorSystem {
     this.bonds.splice(index, 1)
   }
 
-  getBonds(): MentorBond[] { return this.bonds }
-  getBondCount(): number { return this.bonds.length }
 
   getEntityBond(entityId: number): MentorBond | null {
     return this.bonds.find(b => b.mentorId === entityId || b.apprenticeId === entityId) ?? null

@@ -67,5 +67,4 @@ export class CreatureCuriersSystem {
     }
   }
 
-  getCuriers(): Curier[] { return this.curiers }
 }

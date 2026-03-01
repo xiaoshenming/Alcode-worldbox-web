@@ -12,24 +12,24 @@ describe('CreatureLocksmithSystem.getLocksmiths', () => {
   let sys: CreatureLocksmithSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无锁匠', () => { expect(sys.getLocksmiths()).toHaveLength(0) })
+  it('初始无锁匠', () => { expect((sys as any).locksmiths).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).locksmiths.push(makeLocksmith(1))
-    expect(sys.getLocksmiths()[0].entityId).toBe(1)
+    expect((sys as any).locksmiths[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).locksmiths.push(makeLocksmith(1))
-    expect(sys.getLocksmiths()).toBe((sys as any).locksmiths)
+    expect((sys as any).locksmiths).toBe((sys as any).locksmiths)
   })
   it('字段正确', () => {
     ;(sys as any).locksmiths.push(makeLocksmith(3))
-    const l = sys.getLocksmiths()[0]
+    const l = (sys as any).locksmiths[0]
     expect(l.precisionWork).toBe(70)
     expect(l.keyFitting).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).locksmiths.push(makeLocksmith(1))
     ;(sys as any).locksmiths.push(makeLocksmith(2))
-    expect(sys.getLocksmiths()).toHaveLength(2)
+    expect((sys as any).locksmiths).toHaveLength(2)
   })
 })

@@ -67,5 +67,4 @@ export class CreatureBroomMakersSystem {
     }
   }
 
-  getMakers(): BroomMaker[] { return this.makers }
 }

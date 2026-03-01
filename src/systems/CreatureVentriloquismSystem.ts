@@ -84,6 +84,4 @@ export class CreatureVentriloquismSystem {
     }
   }
 
-  getActs(): readonly VentriloquismAct[] { return this.acts }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

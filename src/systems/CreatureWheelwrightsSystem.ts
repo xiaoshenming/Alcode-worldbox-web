@@ -67,5 +67,4 @@ export class CreatureWheelwrightsSystem {
     }
   }
 
-  getWheelwrights(): Wheelwright[] { return this.wheelwrights }
 }

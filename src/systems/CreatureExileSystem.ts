@@ -93,6 +93,4 @@ export class CreatureExileSystem {
     return this.exiles.some(e => e.entityId === entityId)
   }
 
-  getExiles(): Exile[] { return this.exiles }
-  getExileCount(): number { return this.exiles.length }
 }

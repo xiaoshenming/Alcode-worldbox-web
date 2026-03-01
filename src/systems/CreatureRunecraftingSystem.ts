@@ -60,6 +60,4 @@ export class CreatureRunecraftingSystem {
     }
   }
 
-  getRunes(): readonly Rune[] { return this.runes }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

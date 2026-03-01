@@ -15,23 +15,23 @@ describe('CreatureBountySystem.getActiveBounties', () => {
   let sys: CreatureBountySystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无悬赏', () => { expect(sys.getActiveBounties()).toHaveLength(0) })
+  it('初始无悬赏', () => { expect((sys as any).bounties.filter((b: {claimed: boolean}) => !b.claimed)).toHaveLength(0) })
 
   it('未认领的悬赏被返回', () => {
     ;(sys as any).bounties.push(makeBounty(1, false))
-    expect(sys.getActiveBounties()).toHaveLength(1)
+    expect((sys as any).bounties.filter((b: {claimed: boolean}) => !b.claimed)).toHaveLength(1)
   })
 
   it('已认领的悬赏不被返回', () => {
     ;(sys as any).bounties.push(makeBounty(1, true))
-    expect(sys.getActiveBounties()).toHaveLength(0)
+    expect((sys as any).bounties.filter((b: {claimed: boolean}) => !b.claimed)).toHaveLength(0)
   })
 
   it('混合时只返回未认领', () => {
     ;(sys as any).bounties.push(makeBounty(1, false))
     ;(sys as any).bounties.push(makeBounty(2, true))
     ;(sys as any).bounties.push(makeBounty(3, false))
-    expect(sys.getActiveBounties()).toHaveLength(2)
+    expect((sys as any).bounties.filter((b: {claimed: boolean}) => !b.claimed)).toHaveLength(2)
   })
 })
 

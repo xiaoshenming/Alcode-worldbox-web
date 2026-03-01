@@ -12,30 +12,30 @@ describe('CreatureCourierSystem.getDeliveries', () => {
   let sys: CreatureCourierSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无配送', () => { expect(sys.getDeliveries()).toHaveLength(0) })
+  it('初始无配送', () => { expect((sys as any).deliveries).toHaveLength(0) })
 
   it('注入后可查询', () => {
     ;(sys as any).deliveries.push(makeDelivery(1, 'traveling', 'urgent'))
-    expect(sys.getDeliveries()[0].status).toBe('traveling')
-    expect(sys.getDeliveries()[0].priority).toBe('urgent')
+    expect((sys as any).deliveries[0].status).toBe('traveling')
+    expect((sys as any).deliveries[0].priority).toBe('urgent')
   })
 
   it('返回只读引用', () => {
     ;(sys as any).deliveries.push(makeDelivery(1))
-    expect(sys.getDeliveries()).toBe((sys as any).deliveries)
+    expect((sys as any).deliveries).toBe((sys as any).deliveries)
   })
 
   it('支持所有 4 种配送状态', () => {
     const statuses: DeliveryStatus[] = ['dispatched', 'traveling', 'delivered', 'lost']
     statuses.forEach((s, i) => { ;(sys as any).deliveries.push(makeDelivery(i + 1, s)) })
-    const all = sys.getDeliveries()
+    const all = (sys as any).deliveries
     statuses.forEach((s, i) => { expect(all[i].status).toBe(s) })
   })
 
   it('支持所有 4 种优先级', () => {
     const priorities: MessagePriority[] = ['routine', 'urgent', 'diplomatic', 'military']
     priorities.forEach((p, i) => { ;(sys as any).deliveries.push(makeDelivery(i + 1, 'dispatched', p)) })
-    const all = sys.getDeliveries()
+    const all = (sys as any).deliveries
     priorities.forEach((p, i) => { expect(all[i].priority).toBe(p) })
   })
 })

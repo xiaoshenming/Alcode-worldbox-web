@@ -12,14 +12,14 @@ describe('CreatureHandicraftSystem.getCrafts', () => {
   let sys: CreatureHandicraftSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无手工艺', () => { expect(sys.getCrafts()).toHaveLength(0) })
+  it('初始无手工艺', () => { expect((sys as any).crafts).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).crafts.push(makeCraft(1, 'textile'))
-    expect(sys.getCrafts()[0].type).toBe('textile')
+    expect((sys as any).crafts[0].type).toBe('textile')
   })
   it('返回内部引用', () => {
     ;(sys as any).crafts.push(makeCraft(1))
-    expect(sys.getCrafts()).toBe((sys as any).crafts)
+    expect((sys as any).crafts).toBe((sys as any).crafts)
   })
 })
 

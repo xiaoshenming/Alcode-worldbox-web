@@ -47,5 +47,4 @@ export class CreatureCrimperSystem {
     for (let _i = this.crimpers.length - 1; _i >= 0; _i--) { if (this.crimpers[_i].crimpingSkill <= 4) this.crimpers.splice(_i, 1) }
   }
 
-  getCrimpers(): Crimper[] { return this.crimpers }
 }

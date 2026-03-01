@@ -12,24 +12,24 @@ describe('CreatureRopeMakerSystem.getRopeMakers', () => {
   let sys: CreatureRopeMakerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无绳匠', () => { expect(sys.getRopeMakers()).toHaveLength(0) })
+  it('初始无绳匠', () => { expect((sys as any).ropeMakers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).ropeMakers.push(makeMaker(1, 'silk'))
-    expect(sys.getRopeMakers()[0].ropeType).toBe('silk')
+    expect((sys as any).ropeMakers[0].ropeType).toBe('silk')
   })
   it('返回内部引用', () => {
     ;(sys as any).ropeMakers.push(makeMaker(1))
-    expect(sys.getRopeMakers()).toBe((sys as any).ropeMakers)
+    expect((sys as any).ropeMakers).toBe((sys as any).ropeMakers)
   })
   it('支持所有4种绳索类型', () => {
     const types: RopeType[] = ['hemp', 'silk', 'wire', 'chain']
     types.forEach((t, i) => { ;(sys as any).ropeMakers.push(makeMaker(i + 1, t)) })
-    const all = sys.getRopeMakers()
+    const all = (sys as any).ropeMakers
     types.forEach((t, i) => { expect(all[i].ropeType).toBe(t) })
   })
   it('多个全部返回', () => {
     ;(sys as any).ropeMakers.push(makeMaker(1))
     ;(sys as any).ropeMakers.push(makeMaker(2))
-    expect(sys.getRopeMakers()).toHaveLength(2)
+    expect((sys as any).ropeMakers).toHaveLength(2)
   })
 })

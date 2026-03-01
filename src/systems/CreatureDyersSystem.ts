@@ -67,5 +67,4 @@ export class CreatureDyersSystem {
     }
   }
 
-  getMakers(): Dyer[] { return this.makers }
 }

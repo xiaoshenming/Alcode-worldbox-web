@@ -84,5 +84,4 @@ export class CreatureApiarySystem {
     }
   }
 
-  getApiaries(): readonly Apiary[] { return this.apiaries }
 }

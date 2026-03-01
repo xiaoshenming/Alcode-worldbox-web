@@ -67,5 +67,4 @@ export class CreatureBraidMakersSystem {
     }
   }
 
-  getMakers(): BraidMaker[] { return this.makers }
 }

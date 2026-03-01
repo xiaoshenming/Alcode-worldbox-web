@@ -110,12 +110,9 @@ export class CreatureInventionSystem {
   }
 
   private _categoryBuf: Invention[] = []
-  getInventions(): Invention[] { return this.inventions }
   getInventionsByCategory(cat: InventionCategory): Invention[] {
     this._categoryBuf.length = 0
     for (const i of this.inventions) { if (i.category === cat) this._categoryBuf.push(i) }
     return this._categoryBuf
   }
-  getTotalInvented(): number { return this.totalInvented }
-  getBreakthroughs(): number { return this.breakthroughs }
 }

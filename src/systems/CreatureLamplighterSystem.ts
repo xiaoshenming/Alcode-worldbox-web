@@ -91,5 +91,4 @@ export class CreatureLamplighterSystem {
     }
   }
 
-  getLamplighters(): readonly Lamplighter[] { return this.lamplighters }
 }

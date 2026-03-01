@@ -67,5 +67,4 @@ export class CreatureGlassblowersSystem {
     }
   }
 
-  getMakers(): Glassblower[] { return this.makers }
 }

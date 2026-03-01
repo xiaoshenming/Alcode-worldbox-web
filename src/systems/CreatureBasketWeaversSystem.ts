@@ -67,5 +67,4 @@ export class CreatureBasketWeaversSystem {
     }
   }
 
-  getWeavers(): BasketWeaver[] { return this.weavers }
 }

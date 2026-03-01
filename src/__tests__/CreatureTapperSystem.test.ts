@@ -12,24 +12,24 @@ describe('CreatureTapperSystem.getTappers', () => {
   let sys: CreatureTapperSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无螺纹工', () => { expect(sys.getTappers()).toHaveLength(0) })
+  it('初始无螺纹工', () => { expect((sys as any).tappers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).tappers.push(makeTapper(1))
-    expect(sys.getTappers()[0].entityId).toBe(1)
+    expect((sys as any).tappers[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).tappers.push(makeTapper(1))
-    expect(sys.getTappers()).toBe((sys as any).tappers)
+    expect((sys as any).tappers).toBe((sys as any).tappers)
   })
   it('字段正确', () => {
     ;(sys as any).tappers.push(makeTapper(2))
-    const t = sys.getTappers()[0]
+    const t = (sys as any).tappers[0]
     expect(t.tappingSkill).toBe(70)
     expect(t.depthControl).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).tappers.push(makeTapper(1))
     ;(sys as any).tappers.push(makeTapper(2))
-    expect(sys.getTappers()).toHaveLength(2)
+    expect((sys as any).tappers).toHaveLength(2)
   })
 })

@@ -47,5 +47,4 @@ export class CreaturePlanisherSystem {
     for (let _i = this.planishers.length - 1; _i >= 0; _i--) { if (this.planishers[_i].planishingSkill <= 4) this.planishers.splice(_i, 1) }
   }
 
-  getPlanishers(): Planisher[] { return this.planishers }
 }

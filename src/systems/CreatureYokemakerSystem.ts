@@ -47,5 +47,4 @@ export class CreatureYokemakerSystem {
     for (let _i = this.yokemakers.length - 1; _i >= 0; _i--) { if (this.yokemakers[_i].woodCarving <= 4) this.yokemakers.splice(_i, 1) }
   }
 
-  getYokemakers(): Yokemaker[] { return this.yokemakers }
 }

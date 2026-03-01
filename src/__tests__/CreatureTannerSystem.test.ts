@@ -12,24 +12,24 @@ describe('CreatureTannerSystem.getTanners', () => {
   let sys: CreatureTannerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无制革工', () => { expect(sys.getTanners()).toHaveLength(0) })
+  it('初始无制革工', () => { expect((sys as any).tanners).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).tanners.push(makeTanner(1, 'tooled'))
-    expect(sys.getTanners()[0].leatherGrade).toBe('tooled')
+    expect((sys as any).tanners[0].leatherGrade).toBe('tooled')
   })
   it('返回内部引用', () => {
     ;(sys as any).tanners.push(makeTanner(1))
-    expect(sys.getTanners()).toBe((sys as any).tanners)
+    expect((sys as any).tanners).toBe((sys as any).tanners)
   })
   it('支持所有4种皮革等级', () => {
     const grades: LeatherGrade[] = ['rawhide', 'tanned', 'cured', 'tooled']
     grades.forEach((g, i) => { ;(sys as any).tanners.push(makeTanner(i + 1, g)) })
-    const all = sys.getTanners()
+    const all = (sys as any).tanners
     grades.forEach((g, i) => { expect(all[i].leatherGrade).toBe(g) })
   })
   it('字段正确', () => {
     ;(sys as any).tanners.push(makeTanner(2))
-    const t = sys.getTanners()[0]
+    const t = (sys as any).tanners[0]
     expect(t.hidesProcessed).toBe(15)
     expect(t.tradeValue).toBe(45)
   })

@@ -91,5 +91,4 @@ export class CreatureHerbalistSystem {
     }
   }
 
-  getHerbalists(): readonly Herbalist[] { return this.herbalists }
 }

@@ -67,5 +67,4 @@ export class CreatureEmbroideryMakersSystem {
     }
   }
 
-  getMakers(): EmbroideryMaker[] { return this.makers }
 }

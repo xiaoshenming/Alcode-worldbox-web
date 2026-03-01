@@ -67,5 +67,4 @@ export class CreatureVinegarMakersSystem {
     }
   }
 
-  getMakers(): VinegarMaker[] { return this.makers }
 }

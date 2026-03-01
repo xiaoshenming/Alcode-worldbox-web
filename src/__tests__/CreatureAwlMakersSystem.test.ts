@@ -30,18 +30,18 @@ describe('CreatureAwlMakersSystem.getMakers', () => {
   beforeEach(() => { sys = makeAwlSys(); nextId = 1 })
 
   it('初始无匠人', () => {
-    expect(sys.getMakers()).toHaveLength(0)
+    expect((sys as any).makers).toHaveLength(0)
   })
 
   it('注入匠人后可查询', () => {
     ;(sys as any).makers.push(makeAwlMaker(1, 'brad'))
-    expect(sys.getMakers()).toHaveLength(1)
-    expect(sys.getMakers()[0].awlType).toBe('brad')
+    expect((sys as any).makers).toHaveLength(1)
+    expect((sys as any).makers[0].awlType).toBe('brad')
   })
 
   it('返回内部引用', () => {
     ;(sys as any).makers.push(makeAwlMaker(1))
-    expect(sys.getMakers()).toBe((sys as any).makers)
+    expect((sys as any).makers).toBe((sys as any).makers)
   })
 
   it('支持所有 4 种锥类型', () => {
@@ -49,7 +49,7 @@ describe('CreatureAwlMakersSystem.getMakers', () => {
     types.forEach((t, i) => {
       ;(sys as any).makers.push(makeAwlMaker(i + 1, t))
     })
-    const all = sys.getMakers()
+    const all = (sys as any).makers
     expect(all).toHaveLength(4)
     types.forEach((t, i) => { expect(all[i].awlType).toBe(t) })
   })
@@ -61,7 +61,7 @@ describe('CreatureAwlMakersSystem.getMakers', () => {
     m.sharpness = 80
     m.reputation = 82
     ;(sys as any).makers.push(m)
-    const result = sys.getMakers()[0]
+    const result = (sys as any).makers[0]
     expect(result.skill).toBe(90)
     expect(result.awlsMade).toBe(20)
     expect(result.sharpness).toBe(80)

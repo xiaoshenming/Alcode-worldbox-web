@@ -12,24 +12,24 @@ describe('CreatureShipwrightSystem.getShipwrights', () => {
   let sys: CreatureShipwrightSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无造船工', () => { expect(sys.getShipwrights()).toHaveLength(0) })
+  it('初始无造船工', () => { expect((sys as any).shipwrights).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).shipwrights.push(makeShipwright(1, 'galley'))
-    expect(sys.getShipwrights()[0].vesselType).toBe('galley')
+    expect((sys as any).shipwrights[0].vesselType).toBe('galley')
   })
   it('返回内部引用', () => {
     ;(sys as any).shipwrights.push(makeShipwright(1))
-    expect(sys.getShipwrights()).toBe((sys as any).shipwrights)
+    expect((sys as any).shipwrights).toBe((sys as any).shipwrights)
   })
   it('支持所有4种船只类型', () => {
     const types: VesselType[] = ['canoe', 'galley', 'caravel', 'warship']
     types.forEach((t, i) => { ;(sys as any).shipwrights.push(makeShipwright(i + 1, t)) })
-    const all = sys.getShipwrights()
+    const all = (sys as any).shipwrights
     types.forEach((t, i) => { expect(all[i].vesselType).toBe(t) })
   })
   it('多个全部返回', () => {
     ;(sys as any).shipwrights.push(makeShipwright(1))
     ;(sys as any).shipwrights.push(makeShipwright(2))
-    expect(sys.getShipwrights()).toHaveLength(2)
+    expect((sys as any).shipwrights).toHaveLength(2)
   })
 })

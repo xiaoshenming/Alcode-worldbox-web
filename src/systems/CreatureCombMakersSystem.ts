@@ -67,5 +67,4 @@ export class CreatureCombMakersSystem {
     }
   }
 
-  getMakers(): CombMaker[] { return this.makers }
 }

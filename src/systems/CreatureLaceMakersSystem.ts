@@ -67,5 +67,4 @@ export class CreatureLaceMakersSystem {
     }
   }
 
-  getMakers(): LaceMaker[] { return this.makers }
 }

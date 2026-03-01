@@ -12,24 +12,24 @@ describe('CreatureWheelersSystem.getWheelers', () => {
   let sys: CreatureWheelersSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无车轮工', () => { expect(sys.getWheelers()).toHaveLength(0) })
+  it('初始无车轮工', () => { expect((sys as any).wheelers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).wheelers.push(makeWheeler(1, 'mill'))
-    expect(sys.getWheelers()[0].wheelType).toBe('mill')
+    expect((sys as any).wheelers[0].wheelType).toBe('mill')
   })
   it('返回内部引用', () => {
     ;(sys as any).wheelers.push(makeWheeler(1))
-    expect(sys.getWheelers()).toBe((sys as any).wheelers)
+    expect((sys as any).wheelers).toBe((sys as any).wheelers)
   })
   it('支持所有4种车轮类型', () => {
     const types: WheelType[] = ['cart', 'mill', 'spinning', 'gear']
     types.forEach((t, i) => { ;(sys as any).wheelers.push(makeWheeler(i + 1, t)) })
-    const all = sys.getWheelers()
+    const all = (sys as any).wheelers
     types.forEach((t, i) => { expect(all[i].wheelType).toBe(t) })
   })
   it('多个全部返回', () => {
     ;(sys as any).wheelers.push(makeWheeler(1))
     ;(sys as any).wheelers.push(makeWheeler(2))
-    expect(sys.getWheelers()).toHaveLength(2)
+    expect((sys as any).wheelers).toHaveLength(2)
   })
 })

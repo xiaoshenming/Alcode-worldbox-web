@@ -47,5 +47,4 @@ export class CreatureScriberSystem {
     for (let _i = this.scribers.length - 1; _i >= 0; _i--) { if (this.scribers[_i].scribingSkill <= 4) this.scribers.splice(_i, 1) }
   }
 
-  getScribers(): Scriber[] { return this.scribers }
 }

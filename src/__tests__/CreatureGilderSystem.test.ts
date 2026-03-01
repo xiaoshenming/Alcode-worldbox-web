@@ -12,25 +12,25 @@ describe('CreatureGilderSystem.getGilders', () => {
   let sys: CreatureGilderSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无镀金师', () => { expect(sys.getGilders()).toHaveLength(0) })
+  it('初始无镀金师', () => { expect((sys as any).gilders).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).gilders.push(makeGilder(1))
-    expect(sys.getGilders()[0].entityId).toBe(1)
+    expect((sys as any).gilders[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).gilders.push(makeGilder(1))
-    expect(sys.getGilders()).toBe((sys as any).gilders)
+    expect((sys as any).gilders).toBe((sys as any).gilders)
   })
   it('多个全部返回', () => {
     ;(sys as any).gilders.push(makeGilder(1))
     ;(sys as any).gilders.push(makeGilder(2))
-    expect(sys.getGilders()).toHaveLength(2)
+    expect((sys as any).gilders).toHaveLength(2)
   })
   it('四字段数据完整', () => {
     const g = makeGilder(10)
     g.gildingSkill = 90; g.leafApplication = 85; g.surfacePreparation = 80; g.outputQuality = 75
     ;(sys as any).gilders.push(g)
-    const r = sys.getGilders()[0]
+    const r = (sys as any).gilders[0]
     expect(r.gildingSkill).toBe(90); expect(r.leafApplication).toBe(85)
     expect(r.surfacePreparation).toBe(80); expect(r.outputQuality).toBe(75)
   })

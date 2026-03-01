@@ -47,5 +47,4 @@ export class CreatureSwagingSystem {
     for (let _i = this.workers.length - 1; _i >= 0; _i--) { if (this.workers[_i].swagingSkill <= 4) this.workers.splice(_i, 1) }
   }
 
-  getSwagingWorkers(): SwagingWorker[] { return this.workers }
 }

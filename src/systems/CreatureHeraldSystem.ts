@@ -80,5 +80,4 @@ export class CreatureHeraldSystem {
     }
   }
 
-  getHeralds(): readonly Herald[] { return this.heralds }
 }

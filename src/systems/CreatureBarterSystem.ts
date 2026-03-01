@@ -85,7 +85,6 @@ export class CreatureBarterSystem {
     }
   }
 
-  getDeals(): BarterDeal[] { return this.deals }
   getRecentDeals(count: number): BarterDeal[] {
     return this.deals.slice(-count)
   }

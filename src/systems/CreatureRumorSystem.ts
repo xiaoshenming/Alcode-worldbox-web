@@ -83,7 +83,6 @@ export class CreatureRumorSystem {
     }
   }
 
-  getRumors(): Rumor[] { return this.rumors }
   getMostSpread(count: number): Rumor[] {
     const buf = this._mostSpreadBuf
     buf.length = 0

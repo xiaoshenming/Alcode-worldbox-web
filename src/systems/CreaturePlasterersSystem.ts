@@ -67,5 +67,4 @@ export class CreaturePlasterersSystem {
     }
   }
 
-  getPlasterers(): Plasterer[] { return this.plasterers }
 }

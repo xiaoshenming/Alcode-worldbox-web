@@ -86,5 +86,4 @@ export class CreaturePerfumerSystem {
     }
   }
 
-  getPerfumers(): readonly Perfumer[] { return this.perfumers }
 }

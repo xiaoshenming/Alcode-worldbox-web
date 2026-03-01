@@ -77,5 +77,4 @@ export class CreatureCheeseAgerSystem {
     }
   }
 
-  getAgers(): readonly CheeseAgerData[] { return this.agers }
 }

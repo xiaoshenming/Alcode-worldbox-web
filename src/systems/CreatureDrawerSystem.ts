@@ -47,5 +47,4 @@ export class CreatureDrawerSystem {
     for (let _i = this.drawers.length - 1; _i >= 0; _i--) { if (this.drawers[_i].drawingSkill <= 4) this.drawers.splice(_i, 1) }
   }
 
-  getDrawers(): Drawer[] { return this.drawers }
 }

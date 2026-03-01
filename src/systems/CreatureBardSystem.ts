@@ -69,6 +69,4 @@ export class CreatureBardSystem {
     }
   }
 
-  getPerformances(): readonly Performance[] { return this.performances }
-  getBardSkill(eid: number): number { return this.bardSkill.get(eid) ?? 0 }
 }

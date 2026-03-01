@@ -67,5 +67,4 @@ export class CreatureBellFoundersSystem {
     }
   }
 
-  getFounders(): BellFounder[] { return this.founders }
 }

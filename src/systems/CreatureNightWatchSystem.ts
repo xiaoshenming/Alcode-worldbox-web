@@ -78,7 +78,6 @@ export class CreatureNightWatchSystem {
     }
   }
 
-  getWatches(): NightWatch[] { return this.watches }
   getRecent(count: number): NightWatch[] {
     return this.watches.slice(-count)
   }

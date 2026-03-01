@@ -67,6 +67,4 @@ export class CreatureShapeshiftingSystem {
     }
   }
 
-  getShifts(): readonly ShapeShift[] { return this.shifts }
-  getMastery(eid: number): number { return this.masteryMap.get(eid) ?? 0 }
 }

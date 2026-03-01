@@ -47,5 +47,4 @@ export class CreaturePotterSystem {
     for (let _i = this.potters.length - 1; _i >= 0; _i--) { if (this.potters[_i].wheelControl <= 4) this.potters.splice(_i, 1) }
   }
 
-  getPotters(): Potter[] { return this.potters }
 }

@@ -67,5 +67,4 @@ export class CreatureQuarrymenSystem {
     }
   }
 
-  getQuarrymen(): Quarryman[] { return this.quarrymen }
 }

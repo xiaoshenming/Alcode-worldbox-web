@@ -69,5 +69,4 @@ export class CreatureJesterSystem {
     }
   }
 
-  getJesters(): readonly Jester[] { return this.jesters }
 }

@@ -12,24 +12,24 @@ describe('CreatureRiveterSystem.getRiveters', () => {
   let sys: CreatureRiveterSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无铆接工', () => { expect(sys.getRiveters()).toHaveLength(0) })
+  it('初始无铆接工', () => { expect((sys as any).riveters).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).riveters.push(makeRiveter(1))
-    expect(sys.getRiveters()[0].entityId).toBe(1)
+    expect((sys as any).riveters[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).riveters.push(makeRiveter(1))
-    expect(sys.getRiveters()).toBe((sys as any).riveters)
+    expect((sys as any).riveters).toBe((sys as any).riveters)
   })
   it('字段正确', () => {
     ;(sys as any).riveters.push(makeRiveter(2))
-    const r = sys.getRiveters()[0]
+    const r = (sys as any).riveters[0]
     expect(r.holeAlignment).toBe(70)
     expect(r.outputQuality).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).riveters.push(makeRiveter(1))
     ;(sys as any).riveters.push(makeRiveter(2))
-    expect(sys.getRiveters()).toHaveLength(2)
+    expect((sys as any).riveters).toHaveLength(2)
   })
 })

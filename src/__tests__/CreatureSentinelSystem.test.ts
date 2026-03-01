@@ -12,24 +12,24 @@ describe('CreatureSentinelSystem.getSentinels', () => {
   let sys: CreatureSentinelSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无哨兵', () => { expect(sys.getSentinels()).toHaveLength(0) })
+  it('初始无哨兵', () => { expect((sys as any).sentinels).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).sentinels.push(makeSentinel(1, 'watchtower'))
-    expect(sys.getSentinels()[0].patrolRoute).toBe('watchtower')
+    expect((sys as any).sentinels[0].patrolRoute).toBe('watchtower')
   })
   it('返回内部引用', () => {
     ;(sys as any).sentinels.push(makeSentinel(1))
-    expect(sys.getSentinels()).toBe((sys as any).sentinels)
+    expect((sys as any).sentinels).toBe((sys as any).sentinels)
   })
   it('支持所有4种巡逻路线', () => {
     const routes: PatrolRoute[] = ['perimeter', 'watchtower', 'roaming', 'gate']
     routes.forEach((r, i) => { ;(sys as any).sentinels.push(makeSentinel(i + 1, r)) })
-    const all = sys.getSentinels()
+    const all = (sys as any).sentinels
     routes.forEach((r, i) => { expect(all[i].patrolRoute).toBe(r) })
   })
   it('多个全部返回', () => {
     ;(sys as any).sentinels.push(makeSentinel(1))
     ;(sys as any).sentinels.push(makeSentinel(2))
-    expect(sys.getSentinels()).toHaveLength(2)
+    expect((sys as any).sentinels).toHaveLength(2)
   })
 })

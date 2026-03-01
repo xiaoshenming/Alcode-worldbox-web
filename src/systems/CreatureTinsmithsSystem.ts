@@ -67,5 +67,4 @@ export class CreatureTinsmithsSystem {
     }
   }
 
-  getTinsmiths(): Tinsmith[] { return this.tinsmiths }
 }

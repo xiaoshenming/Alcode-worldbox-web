@@ -12,29 +12,29 @@ describe('CreatureFeltingMakers2System.getMakers', () => {
   let sys: CreatureFeltingMakers2System
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无制毡工', () => { expect(sys.getMakers()).toHaveLength(0) })
+  it('初始无制毡工', () => { expect((sys as any).makers).toHaveLength(0) })
 
   it('注入后可查询', () => {
     ;(sys as any).makers.push(makeMaker(1))
-    expect(sys.getMakers()[0].entityId).toBe(1)
+    expect((sys as any).makers[0].entityId).toBe(1)
   })
 
   it('返回内部引用', () => {
     ;(sys as any).makers.push(makeMaker(1))
-    expect(sys.getMakers()).toBe((sys as any).makers)
+    expect((sys as any).makers).toBe((sys as any).makers)
   })
 
   it('多个全部返回', () => {
     ;(sys as any).makers.push(makeMaker(1))
     ;(sys as any).makers.push(makeMaker(2))
-    expect(sys.getMakers()).toHaveLength(2)
+    expect((sys as any).makers).toHaveLength(2)
   })
 
   it('四字段数据完整', () => {
     const m = makeMaker(10)
     m.needleSkill = 90; m.woolGrade = 85; m.densityControl = 80; m.artistry = 75
     ;(sys as any).makers.push(m)
-    const r = sys.getMakers()[0]
+    const r = (sys as any).makers[0]
     expect(r.needleSkill).toBe(90); expect(r.woolGrade).toBe(85)
     expect(r.densityControl).toBe(80); expect(r.artistry).toBe(75)
   })

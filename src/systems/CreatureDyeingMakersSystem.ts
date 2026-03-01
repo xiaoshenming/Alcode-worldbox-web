@@ -67,5 +67,4 @@ export class CreatureDyeingMakersSystem {
     }
   }
 
-  getMakers(): DyeingMaker[] { return this.makers }
 }

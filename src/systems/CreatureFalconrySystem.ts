@@ -81,5 +81,4 @@ export class CreatureFalconrySystem {
     }
   }
 
-  getFalcons(): readonly TrainedFalcon[] { return this.falcons }
 }

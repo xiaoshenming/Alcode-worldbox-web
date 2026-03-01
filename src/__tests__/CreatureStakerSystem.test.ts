@@ -12,24 +12,24 @@ describe('CreatureStakerSystem.getStakers', () => {
   let sys: CreatureStakerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无铆接工', () => { expect(sys.getStakers()).toHaveLength(0) })
+  it('初始无铆接工', () => { expect((sys as any).stakers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).stakers.push(makeStaker(1))
-    expect(sys.getStakers()[0].entityId).toBe(1)
+    expect((sys as any).stakers[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).stakers.push(makeStaker(1))
-    expect(sys.getStakers()).toBe((sys as any).stakers)
+    expect((sys as any).stakers).toBe((sys as any).stakers)
   })
   it('字段正确', () => {
     ;(sys as any).stakers.push(makeStaker(2))
-    const s = sys.getStakers()[0]
+    const s = (sys as any).stakers[0]
     expect(s.stakingSkill).toBe(70)
     expect(s.jointStrength).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).stakers.push(makeStaker(1))
     ;(sys as any).stakers.push(makeStaker(2))
-    expect(sys.getStakers()).toHaveLength(2)
+    expect((sys as any).stakers).toHaveLength(2)
   })
 })

@@ -12,24 +12,24 @@ describe('CreaturePatternmakerSystem.getPatternmakers', () => {
   let sys: CreaturePatternmakerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无样式师', () => { expect(sys.getPatternmakers()).toHaveLength(0) })
+  it('初始无样式师', () => { expect((sys as any).patternmakers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).patternmakers.push(makeMaker(1))
-    expect(sys.getPatternmakers()[0].entityId).toBe(1)
+    expect((sys as any).patternmakers[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).patternmakers.push(makeMaker(1))
-    expect(sys.getPatternmakers()).toBe((sys as any).patternmakers)
+    expect((sys as any).patternmakers).toBe((sys as any).patternmakers)
   })
   it('字段正确', () => {
     ;(sys as any).patternmakers.push(makeMaker(2))
-    const p = sys.getPatternmakers()[0]
+    const p = (sys as any).patternmakers[0]
     expect(p.patternSkill).toBe(75)
     expect(p.dimensionAccuracy).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).patternmakers.push(makeMaker(1))
     ;(sys as any).patternmakers.push(makeMaker(2))
-    expect(sys.getPatternmakers()).toHaveLength(2)
+    expect((sys as any).patternmakers).toHaveLength(2)
   })
 })

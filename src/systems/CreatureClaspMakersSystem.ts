@@ -67,5 +67,4 @@ export class CreatureClaspMakersSystem {
     }
   }
 
-  getMakers(): ClaspMaker[] { return this.makers }
 }

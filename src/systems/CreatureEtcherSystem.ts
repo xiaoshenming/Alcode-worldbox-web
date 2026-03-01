@@ -47,5 +47,4 @@ export class CreatureEtcherSystem {
     for (let _i = this.etchers.length - 1; _i >= 0; _i--) { if (this.etchers[_i].etchingSkill <= 4) this.etchers.splice(_i, 1) }
   }
 
-  getEtchers(): Etcher[] { return this.etchers }
 }

@@ -71,5 +71,4 @@ export class CreatureScribeSystem {
     }
   }
 
-  getRecords(): readonly HistoricalRecord[] { return this.records }
 }

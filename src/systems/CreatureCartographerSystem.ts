@@ -71,6 +71,4 @@ export class CreatureCartographerSystem {
     }
   }
 
-  getCartographers(): readonly Cartographer[] { return this.cartographers }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

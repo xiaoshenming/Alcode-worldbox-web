@@ -47,5 +47,4 @@ export class CreatureDrifterSystem {
     for (let _i = this.drifters.length - 1; _i >= 0; _i--) { if (this.drifters[_i].driftingSkill <= 4) this.drifters.splice(_i, 1) }
   }
 
-  getDrifters(): Drifter[] { return this.drifters }
 }

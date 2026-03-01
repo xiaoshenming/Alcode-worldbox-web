@@ -73,6 +73,4 @@ export class CreatureWeavingSystem {
     }
   }
 
-  getGoods(): readonly WovenGood[] { return this.goods }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

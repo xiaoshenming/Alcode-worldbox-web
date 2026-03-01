@@ -71,5 +71,4 @@ export class CreatureOracleSystem {
     }
   }
 
-  getOracles(): readonly OracleData[] { return this.oracles }
 }

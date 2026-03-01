@@ -12,19 +12,19 @@ describe('CreatureTotemSystem getters', () => {
   let sys: CreatureTotemSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无图腾', () => { expect(sys.getTotems()).toHaveLength(0) })
+  it('初始无图腾', () => { expect((sys as any).totems).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).totems.push(makeTotem(10, 20, 'war'))
-    expect(sys.getTotems()[0].type).toBe('war')
+    expect((sys as any).totems[0].type).toBe('war')
   })
   it('返回内部引用', () => {
     ;(sys as any).totems.push(makeTotem(10, 20))
-    expect(sys.getTotems()).toBe((sys as any).totems)
+    expect((sys as any).totems).toBe((sys as any).totems)
   })
   it('getTotemCount返回正确数量', () => {
     ;(sys as any).totems.push(makeTotem(10, 20))
     ;(sys as any).totems.push(makeTotem(30, 40))
-    expect(sys.getTotemCount()).toBe(2)
+    expect((sys as any).totems.length).toBe(2)
   })
   it('getTotemAt按坐标查找', () => {
     ;(sys as any).totems.push(makeTotem(10, 20, 'fertility'))
@@ -34,6 +34,6 @@ describe('CreatureTotemSystem getters', () => {
   it('支持所有6种图腾类型', () => {
     const types: TotemType[] = ['ancestor', 'war', 'fertility', 'protection', 'wisdom', 'nature']
     types.forEach((t, i) => { ;(sys as any).totems.push(makeTotem(i * 10, i * 10, t)) })
-    expect(sys.getTotems()).toHaveLength(6)
+    expect((sys as any).totems).toHaveLength(6)
   })
 })

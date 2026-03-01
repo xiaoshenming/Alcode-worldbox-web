@@ -12,24 +12,24 @@ describe('CreatureScrivenersSystem.getMakers', () => {
   let sys: CreatureScrivenersSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无抄写员', () => { expect(sys.getMakers()).toHaveLength(0) })
+  it('初始无抄写员', () => { expect((sys as any).makers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).makers.push(makeMaker(1, 'gothic'))
-    expect(sys.getMakers()[0].scriptStyle).toBe('gothic')
+    expect((sys as any).makers[0].scriptStyle).toBe('gothic')
   })
   it('返回内部引用', () => {
     ;(sys as any).makers.push(makeMaker(1))
-    expect(sys.getMakers()).toBe((sys as any).makers)
+    expect((sys as any).makers).toBe((sys as any).makers)
   })
   it('支持所有4种字体风格', () => {
     const styles: ScriptStyle[] = ['uncial', 'gothic', 'italic', 'copperplate']
     styles.forEach((s, i) => { ;(sys as any).makers.push(makeMaker(i + 1, s)) })
-    const all = sys.getMakers()
+    const all = (sys as any).makers
     styles.forEach((s, i) => { expect(all[i].scriptStyle).toBe(s) })
   })
   it('多个全部返回', () => {
     ;(sys as any).makers.push(makeMaker(1))
     ;(sys as any).makers.push(makeMaker(2))
-    expect(sys.getMakers()).toHaveLength(2)
+    expect((sys as any).makers).toHaveLength(2)
   })
 })

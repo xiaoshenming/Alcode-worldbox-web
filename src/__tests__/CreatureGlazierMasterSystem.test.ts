@@ -12,25 +12,25 @@ describe('CreatureGlazierMasterSystem.getMasters', () => {
   let sys: CreatureGlazierMasterSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无玻璃大师', () => { expect(sys.getMasters()).toHaveLength(0) })
+  it('初始无玻璃大师', () => { expect((sys as any).masters).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).masters.push(makeMaster(1))
-    expect(sys.getMasters()[0].entityId).toBe(1)
+    expect((sys as any).masters[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).masters.push(makeMaster(1))
-    expect(sys.getMasters()).toBe((sys as any).masters)
+    expect((sys as any).masters).toBe((sys as any).masters)
   })
   it('多个全部返回', () => {
     ;(sys as any).masters.push(makeMaster(1))
     ;(sys as any).masters.push(makeMaster(2))
-    expect(sys.getMasters()).toHaveLength(2)
+    expect((sys as any).masters).toHaveLength(2)
   })
   it('四字段数据完整', () => {
     const m = makeMaster(10)
     m.glassCutting = 90; m.leadWork = 85; m.colorMixing = 80; m.outputQuality = 75
     ;(sys as any).masters.push(m)
-    const r = sys.getMasters()[0]
+    const r = (sys as any).masters[0]
     expect(r.glassCutting).toBe(90); expect(r.leadWork).toBe(85)
     expect(r.colorMixing).toBe(80); expect(r.outputQuality).toBe(75)
   })

@@ -104,7 +104,6 @@ export class CreatureClaustrophobiaSystem {
     return this.claustrophobes.some(c => c.entityId === entityId)
   }
 
-  getClaustrophobes(): Claustrophobe[] { return this.claustrophobes }
   isPanicking(entityId: number): boolean {
     const c = this.claustrophobes.find(cl => cl.entityId === entityId)
     return c ? c.panicLevel > PANIC_THRESHOLD : false

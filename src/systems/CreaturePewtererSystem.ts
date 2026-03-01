@@ -47,5 +47,4 @@ export class CreaturePewtererSystem {
     for (let _i = this.pewterers.length - 1; _i >= 0; _i--) { if (this.pewterers[_i].alloyCasting <= 4) this.pewterers.splice(_i, 1) }
   }
 
-  getPewterers(): Pewterer[] { return this.pewterers }
 }

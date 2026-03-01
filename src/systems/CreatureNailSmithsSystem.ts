@@ -67,5 +67,4 @@ export class CreatureNailSmithsSystem {
     }
   }
 
-  getMakers(): NailSmith[] { return this.makers }
 }

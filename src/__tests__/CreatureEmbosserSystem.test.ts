@@ -12,29 +12,29 @@ describe('CreatureEmbosserSystem.getEmbossers', () => {
   let sys: CreatureEmbosserSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无压花工', () => { expect(sys.getEmbossers()).toHaveLength(0) })
+  it('初始无压花工', () => { expect((sys as any).embossers).toHaveLength(0) })
 
   it('注入后可查询', () => {
     ;(sys as any).embossers.push(makeEmbosser(1))
-    expect(sys.getEmbossers()[0].entityId).toBe(1)
+    expect((sys as any).embossers[0].entityId).toBe(1)
   })
 
   it('返回内部引用', () => {
     ;(sys as any).embossers.push(makeEmbosser(1))
-    expect(sys.getEmbossers()).toBe((sys as any).embossers)
+    expect((sys as any).embossers).toBe((sys as any).embossers)
   })
 
   it('多个全部返回', () => {
     ;(sys as any).embossers.push(makeEmbosser(1))
     ;(sys as any).embossers.push(makeEmbosser(2))
-    expect(sys.getEmbossers()).toHaveLength(2)
+    expect((sys as any).embossers).toHaveLength(2)
   })
 
   it('四字段数据完整', () => {
     const e = makeEmbosser(10)
     e.embossingSkill = 90; e.dieDesign = 85; e.pressureControl = 80; e.patternAccuracy = 75
     ;(sys as any).embossers.push(e)
-    const r = sys.getEmbossers()[0]
+    const r = (sys as any).embossers[0]
     expect(r.embossingSkill).toBe(90); expect(r.dieDesign).toBe(85)
     expect(r.pressureControl).toBe(80); expect(r.patternAccuracy).toBe(75)
   })

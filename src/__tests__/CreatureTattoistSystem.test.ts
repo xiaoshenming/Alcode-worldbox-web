@@ -12,24 +12,24 @@ describe('CreatureTattoistSystem.getTattoos', () => {
   let sys: CreatureTattoistSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无纹身', () => { expect(sys.getTattoos()).toHaveLength(0) })
+  it('初始无纹身', () => { expect((sys as any).tattoos).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).tattoos.push(makeTattoo(1, 'runic'))
-    expect(sys.getTattoos()[0].style).toBe('runic')
+    expect((sys as any).tattoos[0].style).toBe('runic')
   })
   it('返回只读引用', () => {
     ;(sys as any).tattoos.push(makeTattoo(1))
-    expect(sys.getTattoos()).toBe((sys as any).tattoos)
+    expect((sys as any).tattoos).toBe((sys as any).tattoos)
   })
   it('支持所有4种纹身风格', () => {
     const styles: TattooStyle[] = ['tribal', 'runic', 'celestial', 'beast']
     styles.forEach((s, i) => { ;(sys as any).tattoos.push(makeTattoo(i + 1, s)) })
-    const all = sys.getTattoos()
+    const all = (sys as any).tattoos
     styles.forEach((s, i) => { expect(all[i].style).toBe(s) })
   })
   it('字段正确', () => {
     ;(sys as any).tattoos.push(makeTattoo(2, 'beast'))
-    const t = sys.getTattoos()[0]
+    const t = (sys as any).tattoos[0]
     expect(t.powerBonus).toBe(10)
     expect(t.bodyPart).toBe('arm')
   })

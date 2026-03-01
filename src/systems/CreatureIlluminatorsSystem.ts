@@ -67,5 +67,4 @@ export class CreatureIlluminatorsSystem {
     }
   }
 
-  getMakers(): Illuminator[] { return this.makers }
 }

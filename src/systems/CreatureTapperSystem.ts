@@ -47,5 +47,4 @@ export class CreatureTapperSystem {
     for (let _i = this.tappers.length - 1; _i >= 0; _i--) { if (this.tappers[_i].tappingSkill <= 4) this.tappers.splice(_i, 1) }
   }
 
-  getTappers(): Tapper[] { return this.tappers }
 }

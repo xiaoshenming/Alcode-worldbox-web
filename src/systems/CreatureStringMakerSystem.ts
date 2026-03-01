@@ -47,5 +47,4 @@ export class CreatureStringMakerSystem {
     for (let _i = this.stringMakers.length - 1; _i >= 0; _i--) { if (this.stringMakers[_i].fiberTwisting <= 4) this.stringMakers.splice(_i, 1) }
   }
 
-  getStringMakers(): StringMaker[] { return this.stringMakers }
 }

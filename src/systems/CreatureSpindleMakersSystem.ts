@@ -67,5 +67,4 @@ export class CreatureSpindleMakersSystem {
     }
   }
 
-  getMakers(): SpindleMaker[] { return this.makers }
 }

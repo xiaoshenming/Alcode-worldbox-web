@@ -76,5 +76,4 @@ export class CreatureMasonrySystem {
     }
   }
 
-  getProjects(): readonly MasonryProject[] { return this.projects }
 }

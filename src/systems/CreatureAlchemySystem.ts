@@ -68,6 +68,4 @@ export class CreatureAlchemySystem {
     }
   }
 
-  getPotions(): readonly Potion[] { return this.potions }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

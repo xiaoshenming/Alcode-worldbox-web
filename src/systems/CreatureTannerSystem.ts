@@ -71,6 +71,4 @@ export class CreatureTannerSystem {
     }
   }
 
-  getTanners(): readonly Tanner[] { return this.tanners }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

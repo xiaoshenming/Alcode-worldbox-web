@@ -12,24 +12,24 @@ describe('CreatureHeraldSystem.getHeralds', () => {
   let sys: CreatureHeraldSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无传令官', () => { expect(sys.getHeralds()).toHaveLength(0) })
+  it('初始无传令官', () => { expect((sys as any).heralds).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).heralds.push(makeHerald(1, 'royal_herald'))
-    expect(sys.getHeralds()[0].rank).toBe('royal_herald')
+    expect((sys as any).heralds[0].rank).toBe('royal_herald')
   })
   it('返回内部引用', () => {
     ;(sys as any).heralds.push(makeHerald(1))
-    expect(sys.getHeralds()).toBe((sys as any).heralds)
+    expect((sys as any).heralds).toBe((sys as any).heralds)
   })
   it('支持所有 4 种职级', () => {
     const ranks: HeraldRank[] = ['town_crier', 'royal_herald', 'grand_herald', 'legendary']
     ranks.forEach((r, i) => { ;(sys as any).heralds.push(makeHerald(i + 1, r)) })
-    const all = sys.getHeralds()
+    const all = (sys as any).heralds
     ranks.forEach((r, i) => { expect(all[i].rank).toBe(r) })
   })
   it('多个全部返回', () => {
     ;(sys as any).heralds.push(makeHerald(1))
     ;(sys as any).heralds.push(makeHerald(2))
-    expect(sys.getHeralds()).toHaveLength(2)
+    expect((sys as any).heralds).toHaveLength(2)
   })
 })

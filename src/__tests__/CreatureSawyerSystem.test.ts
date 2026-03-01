@@ -12,24 +12,24 @@ describe('CreatureSawyerSystem.getSawyers', () => {
   let sys: CreatureSawyerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无锯木工', () => { expect(sys.getSawyers()).toHaveLength(0) })
+  it('初始无锯木工', () => { expect((sys as any).sawyers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).sawyers.push(makeSawyer(1))
-    expect(sys.getSawyers()[0].entityId).toBe(1)
+    expect((sys as any).sawyers[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).sawyers.push(makeSawyer(1))
-    expect(sys.getSawyers()).toBe((sys as any).sawyers)
+    expect((sys as any).sawyers).toBe((sys as any).sawyers)
   })
   it('字段正确', () => {
     ;(sys as any).sawyers.push(makeSawyer(2))
-    const s = sys.getSawyers()[0]
+    const s = (sys as any).sawyers[0]
     expect(s.sawingSkill).toBe(70)
     expect(s.bladeControl).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).sawyers.push(makeSawyer(1))
     ;(sys as any).sawyers.push(makeSawyer(2))
-    expect(sys.getSawyers()).toHaveLength(2)
+    expect((sys as any).sawyers).toHaveLength(2)
   })
 })

@@ -67,5 +67,4 @@ export class CreatureWainwrightsSystem {
     }
   }
 
-  getWainwrights(): Wainwright[] { return this.wainwrights }
 }

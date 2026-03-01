@@ -47,5 +47,4 @@ export class CreatureBevellerSystem {
     for (let _i = this.bevellers.length - 1; _i >= 0; _i--) { if (this.bevellers[_i].bevellingSkill <= 4) this.bevellers.splice(_i, 1) }
   }
 
-  getBevellers(): Beveller[] { return this.bevellers }
 }

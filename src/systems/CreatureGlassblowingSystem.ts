@@ -68,6 +68,4 @@ export class CreatureGlassblowingSystem {
     }
   }
 
-  getWorks(): readonly GlassWork[] { return this.works }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

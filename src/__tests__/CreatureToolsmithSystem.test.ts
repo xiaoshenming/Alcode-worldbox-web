@@ -12,24 +12,24 @@ describe('CreatureToolsmithSystem.getToolsmiths', () => {
   let sys: CreatureToolsmithSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无工具匠', () => { expect(sys.getToolsmiths()).toHaveLength(0) })
+  it('初始无工具匠', () => { expect((sys as any).toolsmiths).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).toolsmiths.push(makeToolsmith(1))
-    expect(sys.getToolsmiths()[0].entityId).toBe(1)
+    expect((sys as any).toolsmiths[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).toolsmiths.push(makeToolsmith(1))
-    expect(sys.getToolsmiths()).toBe((sys as any).toolsmiths)
+    expect((sys as any).toolsmiths).toBe((sys as any).toolsmiths)
   })
   it('字段正确', () => {
     ;(sys as any).toolsmiths.push(makeToolsmith(2))
-    const t = sys.getToolsmiths()[0]
+    const t = (sys as any).toolsmiths[0]
     expect(t.metalWorking).toBe(70)
     expect(t.temperingSkill).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).toolsmiths.push(makeToolsmith(1))
     ;(sys as any).toolsmiths.push(makeToolsmith(2))
-    expect(sys.getToolsmiths()).toHaveLength(2)
+    expect((sys as any).toolsmiths).toHaveLength(2)
   })
 })

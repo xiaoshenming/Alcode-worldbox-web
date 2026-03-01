@@ -47,5 +47,4 @@ export class CreatureSpotfacerSystem {
     for (let _i = this.spotfacers.length - 1; _i >= 0; _i--) { if (this.spotfacers[_i].spotfacingSkill <= 4) this.spotfacers.splice(_i, 1) }
   }
 
-  getSpotfacers(): Spotfacer[] { return this.spotfacers }
 }

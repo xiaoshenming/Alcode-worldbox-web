@@ -70,6 +70,4 @@ export class CreatureBookbinderSystem {
     }
   }
 
-  getBookbinders(): readonly Bookbinder[] { return this.bookbinders }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

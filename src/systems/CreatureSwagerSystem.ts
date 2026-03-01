@@ -47,5 +47,4 @@ export class CreatureSwagerSystem {
     for (let _i = this.swagers.length - 1; _i >= 0; _i--) { if (this.swagers[_i].swagingSkill <= 4) this.swagers.splice(_i, 1) }
   }
 
-  getSwagers(): Swager[] { return this.swagers }
 }

@@ -47,5 +47,4 @@ export class CreatureHornworkerSystem {
     for (let _i = this.workers.length - 1; _i >= 0; _i--) { if (this.workers[_i].hornShaping <= 4) this.workers.splice(_i, 1) }
   }
 
-  getWorkers(): Hornworker[] { return this.workers }
 }

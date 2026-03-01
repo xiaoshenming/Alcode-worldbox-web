@@ -79,5 +79,4 @@ export class CreatureGamblerSystem {
     }
   }
 
-  getGamblers(): readonly Gambler[] { return this.gamblers }
 }

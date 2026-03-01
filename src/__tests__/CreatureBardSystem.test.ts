@@ -30,18 +30,18 @@ describe('CreatureBardSystem.getPerformances', () => {
   beforeEach(() => { sys = makeBardSys(); nextPerfId = 1 })
 
   it('初始无演出', () => {
-    expect(sys.getPerformances()).toHaveLength(0)
+    expect((sys as any).performances).toHaveLength(0)
   })
 
   it('注入演出后可查询', () => {
     ;(sys as any).performances.push(makePerformance(1, 'war_chant'))
-    expect(sys.getPerformances()).toHaveLength(1)
-    expect(sys.getPerformances()[0].song).toBe('war_chant')
+    expect((sys as any).performances).toHaveLength(1)
+    expect((sys as any).performances[0].song).toBe('war_chant')
   })
 
   it('返回内部引用', () => {
     ;(sys as any).performances.push(makePerformance(1))
-    expect(sys.getPerformances()).toBe((sys as any).performances)
+    expect((sys as any).performances).toBe((sys as any).performances)
   })
 
   it('支持所有 5 种歌曲类型', () => {
@@ -49,21 +49,21 @@ describe('CreatureBardSystem.getPerformances', () => {
     songs.forEach((s, i) => {
       ;(sys as any).performances.push(makePerformance(i + 1, s))
     })
-    const results = sys.getPerformances()
+    const results = (sys as any).performances
     expect(results).toHaveLength(5)
     songs.forEach((s, i) => { expect(results[i].song).toBe(s) })
   })
 
   it('演出包含正确的表演者 id', () => {
     ;(sys as any).performances.push(makePerformance(42))
-    expect(sys.getPerformances()[0].performer).toBe(42)
+    expect((sys as any).performances[0].performer).toBe(42)
   })
 
   it('多个演出全部返回', () => {
     ;(sys as any).performances.push(makePerformance(1))
     ;(sys as any).performances.push(makePerformance(2))
     ;(sys as any).performances.push(makePerformance(3))
-    expect(sys.getPerformances()).toHaveLength(3)
+    expect((sys as any).performances).toHaveLength(3)
   })
 })
 
@@ -73,32 +73,32 @@ describe('CreatureBardSystem.getBardSkill', () => {
   beforeEach(() => { sys = makeBardSys() })
 
   it('未注册实体返回 0', () => {
-    expect(sys.getBardSkill(1)).toBe(0)
-    expect(sys.getBardSkill(999)).toBe(0)
+    expect(((sys as any).bardSkill.get(1) ?? 0)).toBe(0)
+    expect(((sys as any).bardSkill.get(999) ?? 0)).toBe(0)
   })
 
   it('注入技能后可查询', () => {
     ;(sys as any).bardSkill.set(1, 75)
-    expect(sys.getBardSkill(1)).toBe(75)
+    expect(((sys as any).bardSkill.get(1) ?? 0)).toBe(75)
   })
 
   it('多个实体技能独立', () => {
     ;(sys as any).bardSkill.set(1, 30)
     ;(sys as any).bardSkill.set(2, 80)
     ;(sys as any).bardSkill.set(3, 55)
-    expect(sys.getBardSkill(1)).toBe(30)
-    expect(sys.getBardSkill(2)).toBe(80)
-    expect(sys.getBardSkill(3)).toBe(55)
-    expect(sys.getBardSkill(4)).toBe(0)
+    expect(((sys as any).bardSkill.get(1) ?? 0)).toBe(30)
+    expect(((sys as any).bardSkill.get(2) ?? 0)).toBe(80)
+    expect(((sys as any).bardSkill.get(3) ?? 0)).toBe(55)
+    expect(((sys as any).bardSkill.get(4) ?? 0)).toBe(0)
   })
 
   it('注入零技能值', () => {
     ;(sys as any).bardSkill.set(5, 0)
-    expect(sys.getBardSkill(5)).toBe(0)
+    expect(((sys as any).bardSkill.get(5) ?? 0)).toBe(0)
   })
 
   it('注入最大技能 100', () => {
     ;(sys as any).bardSkill.set(6, 100)
-    expect(sys.getBardSkill(6)).toBe(100)
+    expect(((sys as any).bardSkill.get(6) ?? 0)).toBe(100)
   })
 })

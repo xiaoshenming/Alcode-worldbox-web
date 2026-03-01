@@ -47,5 +47,4 @@ export class CreatureHarnessmakerSystem {
     for (let _i = this.harnessmakers.length - 1; _i >= 0; _i--) { if (this.harnessmakers[_i].leatherStitching <= 4) this.harnessmakers.splice(_i, 1) }
   }
 
-  getHarnessmakers(): Harnessmaker[] { return this.harnessmakers }
 }

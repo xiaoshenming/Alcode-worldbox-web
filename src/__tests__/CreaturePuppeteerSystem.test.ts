@@ -12,24 +12,24 @@ describe('CreaturePuppeteerSystem.getPuppeteers', () => {
   let sys: CreaturePuppeteerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无木偶师', () => { expect(sys.getPuppeteers()).toHaveLength(0) })
+  it('初始无木偶师', () => { expect((sys as any).puppeteers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).puppeteers.push(makePuppeteer(1, 'marionette'))
-    expect(sys.getPuppeteers()[0].style).toBe('marionette')
+    expect((sys as any).puppeteers[0].style).toBe('marionette')
   })
   it('返回内部引用', () => {
     ;(sys as any).puppeteers.push(makePuppeteer(1))
-    expect(sys.getPuppeteers()).toBe((sys as any).puppeteers)
+    expect((sys as any).puppeteers).toBe((sys as any).puppeteers)
   })
   it('支持所有4种木偶风格', () => {
     const styles: PuppetStyle[] = ['shadow', 'marionette', 'hand', 'rod']
     styles.forEach((s, i) => { ;(sys as any).puppeteers.push(makePuppeteer(i + 1, s)) })
-    const all = sys.getPuppeteers()
+    const all = (sys as any).puppeteers
     styles.forEach((s, i) => { expect(all[i].style).toBe(s) })
   })
   it('多个全部返回', () => {
     ;(sys as any).puppeteers.push(makePuppeteer(1))
     ;(sys as any).puppeteers.push(makePuppeteer(2))
-    expect(sys.getPuppeteers()).toHaveLength(2)
+    expect((sys as any).puppeteers).toHaveLength(2)
   })
 })

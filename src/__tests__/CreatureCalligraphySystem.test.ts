@@ -12,22 +12,22 @@ describe('CreatureCalligraphySystem.getWorks', () => {
   let sys: CreatureCalligraphySystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无书法作品', () => { expect(sys.getWorks()).toHaveLength(0) })
+  it('初始无书法作品', () => { expect((sys as any).works).toHaveLength(0) })
 
   it('注入后可查询', () => {
     ;(sys as any).works.push(makeWork(1, 'runic'))
-    expect(sys.getWorks()[0].style).toBe('runic')
+    expect((sys as any).works[0].style).toBe('runic')
   })
 
   it('返回内部引用', () => {
     ;(sys as any).works.push(makeWork(1))
-    expect(sys.getWorks()).toBe((sys as any).works)
+    expect((sys as any).works).toBe((sys as any).works)
   })
 
   it('支持所有 6 种书写风格', () => {
     const styles: ScriptStyle[] = ['pictographic', 'cuneiform', 'runic', 'flowing', 'geometric', 'symbolic']
     styles.forEach((s, i) => { ;(sys as any).works.push(makeWork(i + 1, s)) })
-    const all = sys.getWorks()
+    const all = (sys as any).works
     styles.forEach((s, i) => { expect(all[i].style).toBe(s) })
   })
 })

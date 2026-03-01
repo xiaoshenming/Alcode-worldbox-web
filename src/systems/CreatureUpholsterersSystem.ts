@@ -67,5 +67,4 @@ export class CreatureUpholsterersSystem {
     }
   }
 
-  getMakers(): Upholsterer[] { return this.makers }
 }

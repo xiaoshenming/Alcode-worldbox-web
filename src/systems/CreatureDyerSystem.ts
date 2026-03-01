@@ -68,6 +68,4 @@ export class CreatureDyerSystem {
     }
   }
 
-  getDyers(): readonly Dyer[] { return this.dyers }
-  getSkill(eid: number): number { return this.skillMap.get(eid) ?? 0 }
 }

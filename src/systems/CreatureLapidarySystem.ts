@@ -47,5 +47,4 @@ export class CreatureLapidarySystem {
     for (let _i = this.lapidaries.length - 1; _i >= 0; _i--) { if (this.lapidaries[_i].cuttingSkill <= 4) this.lapidaries.splice(_i, 1) }
   }
 
-  getLapidaries(): Lapidary[] { return this.lapidaries }
 }

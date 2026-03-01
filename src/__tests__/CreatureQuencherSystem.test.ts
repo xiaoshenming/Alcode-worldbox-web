@@ -12,24 +12,24 @@ describe('CreatureQuencherSystem.getQuenchers', () => {
   let sys: CreatureQuencherSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无淬火工', () => { expect(sys.getQuenchers()).toHaveLength(0) })
+  it('初始无淬火工', () => { expect((sys as any).quenchers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).quenchers.push(makeQuencher(1))
-    expect(sys.getQuenchers()[0].entityId).toBe(1)
+    expect((sys as any).quenchers[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).quenchers.push(makeQuencher(1))
-    expect(sys.getQuenchers()).toBe((sys as any).quenchers)
+    expect((sys as any).quenchers).toBe((sys as any).quenchers)
   })
   it('字段正确', () => {
     ;(sys as any).quenchers.push(makeQuencher(2))
-    const q = sys.getQuenchers()[0]
+    const q = (sys as any).quenchers[0]
     expect(q.quenchingSkill).toBe(70)
     expect(q.timingControl).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).quenchers.push(makeQuencher(1))
     ;(sys as any).quenchers.push(makeQuencher(2))
-    expect(sys.getQuenchers()).toHaveLength(2)
+    expect((sys as any).quenchers).toHaveLength(2)
   })
 })

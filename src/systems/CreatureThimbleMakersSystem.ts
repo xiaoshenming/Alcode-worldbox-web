@@ -67,5 +67,4 @@ export class CreatureThimbleMakersSystem {
     }
   }
 
-  getMakers(): ThimbleMaker[] { return this.makers }
 }

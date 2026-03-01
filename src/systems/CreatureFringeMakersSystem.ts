@@ -67,5 +67,4 @@ export class CreatureFringeMakersSystem {
     }
   }
 
-  getMakers(): FringeMaker[] { return this.makers }
 }

@@ -67,5 +67,4 @@ export class CreatureChandlersSystem {
     }
   }
 
-  getMakers(): Chandler[] { return this.makers }
 }

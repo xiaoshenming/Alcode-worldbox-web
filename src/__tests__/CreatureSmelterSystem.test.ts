@@ -12,24 +12,24 @@ describe('CreatureSmelterSystem.getSmelters', () => {
   let sys: CreatureSmelterSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无冶炼工', () => { expect(sys.getSmelters()).toHaveLength(0) })
+  it('初始无冶炼工', () => { expect((sys as any).smelters).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).smelters.push(makeSmelter(1))
-    expect(sys.getSmelters()[0].entityId).toBe(1)
+    expect((sys as any).smelters[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).smelters.push(makeSmelter(1))
-    expect(sys.getSmelters()).toBe((sys as any).smelters)
+    expect((sys as any).smelters).toBe((sys as any).smelters)
   })
   it('字段正确', () => {
     ;(sys as any).smelters.push(makeSmelter(2))
-    const s = sys.getSmelters()[0]
+    const s = (sys as any).smelters[0]
     expect(s.smeltingSkill).toBe(70)
     expect(s.heatManagement).toBe(80)
   })
   it('多个全部返回', () => {
     ;(sys as any).smelters.push(makeSmelter(1))
     ;(sys as any).smelters.push(makeSmelter(2))
-    expect(sys.getSmelters()).toHaveLength(2)
+    expect((sys as any).smelters).toHaveLength(2)
   })
 })

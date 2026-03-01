@@ -47,5 +47,4 @@ export class CreaturePlowrightSystem {
     for (let _i = this.plowrights.length - 1; _i >= 0; _i--) { if (this.plowrights[_i].ironForging <= 4) this.plowrights.splice(_i, 1) }
   }
 
-  getPlowrights(): Plowright[] { return this.plowrights }
 }
