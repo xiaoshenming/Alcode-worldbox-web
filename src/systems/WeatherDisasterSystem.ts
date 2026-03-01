@@ -31,39 +31,7 @@ const DISASTER_NAMES: Record<WeatherDisasterType, string> = {
 }
 
 // Pre-computed overlay gradient color stops (101 steps, alpha 0.00..1.00)
-// Blizzard: rgba(200,220,255, alpha*0.15) and rgba(220,235,255, alpha*0.40)
-const _BLIZZARD_STOP1: string[] = (() => {
-  const c: string[] = []
-  for (let i = 0; i <= 100; i++) c.push(`rgba(200,220,255,${(i / 100 * 0.15).toFixed(3)})`)
-  return c
-})()
-const _BLIZZARD_STOP2: string[] = (() => {
-  const c: string[] = []
-  for (let i = 0; i <= 100; i++) c.push(`rgba(220,235,255,${(i / 100 * 0.40).toFixed(3)})`)
-  return c
-})()
-// Flood: rgba(40,80,140, alpha*0.08) and rgba(30,60,120, alpha*0.20)
-const _FLOOD_STOP1: string[] = (() => {
-  const c: string[] = []
-  for (let i = 0; i <= 100; i++) c.push(`rgba(40,80,140,${(i / 100 * 0.08).toFixed(3)})`)
-  return c
-})()
-const _FLOOD_STOP2: string[] = (() => {
-  const c: string[] = []
-  for (let i = 0; i <= 100; i++) c.push(`rgba(30,60,120,${(i / 100 * 0.20).toFixed(3)})`)
-  return c
-})()
-// Heatwave: rgba(255,100,50, alpha*0.06) and rgba(255,60,20, alpha*0.15)
-const _HEATWAVE_STOP1: string[] = (() => {
-  const c: string[] = []
-  for (let i = 0; i <= 100; i++) c.push(`rgba(255,100,50,${(i / 100 * 0.06).toFixed(3)})`)
-  return c
-})()
-const _HEATWAVE_STOP2: string[] = (() => {
-  const c: string[] = []
-  for (let i = 0; i <= 100; i++) c.push(`rgba(255,60,20,${(i / 100 * 0.15).toFixed(3)})`)
-  return c
-})()
+// (removed — replaced with solid rect + globalAlpha approach, no allocation)
 
 export class WeatherDisasterSystem {
   private activeDisasters: ActiveWeatherDisaster[] = []
@@ -635,16 +603,16 @@ export class WeatherDisasterSystem {
   private renderBlizzardOverlay(
     ctx: CanvasRenderingContext2D, width: number, height: number, tick: number, alpha: number
   ): void {
-    // White vignette frost on screen edges
-    const gradient = ctx.createRadialGradient(
-      width / 2, height / 2, Math.min(width, height) * 0.25,
-      width / 2, height / 2, Math.min(width, height) * 0.7
-    )
-    gradient.addColorStop(0, 'rgba(200, 220, 255, 0)')
-    gradient.addColorStop(0.7, _BLIZZARD_STOP1[Math.min(100, Math.round(alpha * 100))])
-    gradient.addColorStop(1, _BLIZZARD_STOP2[Math.min(100, Math.round(alpha * 100))])
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, width, height)
+    // White vignette frost on screen edges — use 4 solid edge rects instead of createRadialGradient
+    const edgeSize = Math.min(width, height) * 0.4
+    ctx.save()
+    ctx.globalAlpha = alpha * 0.35
+    ctx.fillStyle = 'rgba(200,220,255,1)'
+    ctx.fillRect(0, 0, width, edgeSize)
+    ctx.fillRect(0, height - edgeSize, width, edgeSize)
+    ctx.fillRect(0, edgeSize, edgeSize, height - edgeSize * 2)
+    ctx.fillRect(width - edgeSize, edgeSize, edgeSize, height - edgeSize * 2)
+    ctx.restore()
 
     // Frost crystal streaks on corners
     ctx.save()
@@ -695,28 +663,28 @@ export class WeatherDisasterSystem {
   private renderFloodOverlay(
     ctx: CanvasRenderingContext2D, width: number, height: number, alpha: number
   ): void {
-    // Blue gradient from bottom
-    const gradient = ctx.createLinearGradient(0, height * 0.6, 0, height)
-    gradient.addColorStop(0, 'rgba(40, 80, 140, 0)')
-    gradient.addColorStop(0.5, _FLOOD_STOP1[Math.min(100, Math.round(alpha * 100))])
-    gradient.addColorStop(1, _FLOOD_STOP2[Math.min(100, Math.round(alpha * 100))])
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, width, height)
+    // Blue tint from bottom — use solid rect instead of createLinearGradient
+    const edgeSize = height * 0.4
+    ctx.save()
+    ctx.globalAlpha = alpha * 0.3
+    ctx.fillStyle = 'rgba(40,80,140,1)'
+    ctx.fillRect(0, height - edgeSize, width, edgeSize)
+    ctx.restore()
   }
 
   private renderHeatwaveOverlay(
     ctx: CanvasRenderingContext2D, width: number, height: number, tick: number, alpha: number
   ): void {
-    // Orange-red edge vignette
-    const gradient = ctx.createRadialGradient(
-      width / 2, height / 2, Math.min(width, height) * 0.3,
-      width / 2, height / 2, Math.min(width, height) * 0.7
-    )
-    gradient.addColorStop(0, 'rgba(255, 100, 50, 0)')
-    gradient.addColorStop(0.8, _HEATWAVE_STOP1[Math.min(100, Math.round(alpha * 100))])
-    gradient.addColorStop(1, _HEATWAVE_STOP2[Math.min(100, Math.round(alpha * 100))])
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, width, height)
+    // Orange-red edge vignette — use 4 solid edge rects instead of createRadialGradient
+    const edgeSize = Math.min(width, height) * 0.4
+    ctx.save()
+    ctx.globalAlpha = alpha * 0.25
+    ctx.fillStyle = 'rgba(255,80,30,1)'
+    ctx.fillRect(0, 0, width, edgeSize)
+    ctx.fillRect(0, height - edgeSize, width, edgeSize)
+    ctx.fillRect(0, edgeSize, edgeSize, height - edgeSize * 2)
+    ctx.fillRect(width - edgeSize, edgeSize, edgeSize, height - edgeSize * 2)
+    ctx.restore()
 
     // Wavy heat distortion lines
     ctx.save()

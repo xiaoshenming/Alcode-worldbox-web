@@ -233,9 +233,12 @@ export class CreatureLineageSystem {
     }
   }
 
+  /** Reusable bounding box object for treeBounds() — avoids per-render allocation */
+  private _treeBounds = { minX: 0, minY: 0, w: 0, h: 0 };
+
   /** 计算所有节点的包围盒 */
   private treeBounds() {
-    if (this.nodes.length === 0) return { minX: 0, minY: 0, w: 0, h: 0 };
+    if (this.nodes.length === 0) { this._treeBounds.minX = 0; this._treeBounds.minY = 0; this._treeBounds.w = 0; this._treeBounds.h = 0; return this._treeBounds; }
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     for (const n of this.nodes) {
       if (n.x < minX) minX = n.x;
@@ -243,6 +246,8 @@ export class CreatureLineageSystem {
       if (n.x + n.w > maxX) maxX = n.x + n.w;
       if (n.y + n.h > maxY) maxY = n.y + n.h;
     }
-    return { minX, minY, w: maxX - minX, h: maxY - minY };
+    this._treeBounds.minX = minX; this._treeBounds.minY = minY;
+    this._treeBounds.w = maxX - minX; this._treeBounds.h = maxY - minY;
+    return this._treeBounds;
   }
 }
