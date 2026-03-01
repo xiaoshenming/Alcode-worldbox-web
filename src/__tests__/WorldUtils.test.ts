@@ -16,13 +16,17 @@ describe('hasAdjacentTile', () => {
 
   it('当没有相邻tile匹配时返回false', () => {
     const world = makeWorld(5, 5)
+    // 手动设置中心及相邻为GRASS，确保没有DEEP_WATER
+    for (let x = 0; x < 5; x++) for (let y = 0; y < 5; y++) world.setTile(x, y, TileType.GRASS)
     expect(hasAdjacentTile(world, 2, 2, TileType.DEEP_WATER)).toBe(false)
   })
 
   it('不检查自身tile', () => {
     const world = makeWorld(5, 5)
+    // 先清空为GRASS，再设置中心
+    for (let x = 0; x < 5; x++) for (let y = 0; y < 5; y++) world.setTile(x, y, TileType.GRASS)
     world.setTile(2, 2, TileType.DEEP_WATER)
-    // 自身是WATER_DEEP但相邻没有WATER_DEEP
+    // 自身是DEEP_WATER但相邻都是GRASS
     expect(hasAdjacentTile(world, 2, 2, TileType.DEEP_WATER)).toBe(false)
   })
 
