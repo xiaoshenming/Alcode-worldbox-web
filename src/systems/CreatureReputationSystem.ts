@@ -62,11 +62,6 @@ export class CreatureReputationSystem {
     return this.reputations.get(eid)
   }
 
-  getTier(eid: EntityId): ReputationTier {
-    const rep = this.reputations.get(eid)
-    return rep ? rep.tier : 'neutral'
-  }
-
   getTopReputation(count: number): CreatureReputation[] {
     this._repBuf.length = 0
     for (const rep of this.reputations.values()) this._repBuf.push(rep)

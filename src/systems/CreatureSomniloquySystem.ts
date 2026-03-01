@@ -33,7 +33,6 @@ export class CreatureSomniloquySystem {
   private talks: SleepTalk[] = []
   private nextId = 1
   private lastCheck = 0
-  private _recentBuf: SleepTalk[] = []
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -83,18 +82,4 @@ export class CreatureSomniloquySystem {
     }
   }
 
-  getRecentTalks(count: number): SleepTalk[] {
-    const buf = this._recentBuf
-    buf.length = 0
-    for (const t of this.talks) buf.push(t)
-    buf.sort((a, b) => b.tick - a.tick)
-    if (buf.length > count) buf.length = count
-    return buf
-  }
-  private _propheciesBuf: SleepTalk[] = []
-  getProphecies(): SleepTalk[] {
-    this._propheciesBuf.length = 0
-    for (const t of this.talks) { if (t.talkType === 'prophecy') this._propheciesBuf.push(t) }
-    return this._propheciesBuf
-  }
 }

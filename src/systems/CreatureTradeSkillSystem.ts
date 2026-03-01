@@ -94,15 +94,8 @@ export class CreatureTradeSkillSystem {
     return count === 0 ? 0 : sum / count
   }
 
-  getTrader(id: EntityId): CreatureTradeSkill | undefined {
-    return this.traders.get(id)
-  }
-
   getTraders(): Map<EntityId, CreatureTradeSkill> {
     return this.traders
   }
 
-  getTraderCount(): number {
-    return this.traders.size
-  }
 }
