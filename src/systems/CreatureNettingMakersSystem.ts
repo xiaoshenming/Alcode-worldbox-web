@@ -2,6 +2,7 @@
 // Craftspeople who knot and weave nets for fishing, hunting, and cargo
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pruneDeadEntities } from '../utils/EntityUtils'
 
 export type NettingType = 'fishing' | 'hunting' | 'cargo' | 'decorative'
 
@@ -66,12 +67,7 @@ export class CreatureNettingMakersSystem {
       if (this.makers[i].tick < cutoff) this.makers.splice(i, 1)
     }
   
-    // Prune dead entities from skillMap (every 3600 ticks)
-    if (tick % 3600 === 0 && this.skillMap.size > 0) {
-      for (const id of this.skillMap.keys()) {
-        if (!em.hasComponent(id, 'creature')) this.skillMap.delete(id)
-      }
-    }
+    pruneDeadEntities(this.skillMap, em, 'creature', tick)
   }
 
 }

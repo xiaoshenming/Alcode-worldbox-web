@@ -2,6 +2,7 @@
 // Artisans who cut, shape, and fit glass panes into buildings and decorative works
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pruneDeadEntities } from '../utils/EntityUtils'
 
 export type GlassType = 'clear' | 'colored' | 'stained' | 'leaded'
 
@@ -66,12 +67,7 @@ export class CreatureGlazersSystem {
       if (this.glazers[i].tick < cutoff) this.glazers.splice(i, 1)
     }
   
-    // Prune dead entities from skillMap (every 3600 ticks)
-    if (tick % 3600 === 0 && this.skillMap.size > 0) {
-      for (const id of this.skillMap.keys()) {
-        if (!em.hasComponent(id, 'creature')) this.skillMap.delete(id)
-      }
-    }
+    pruneDeadEntities(this.skillMap, em, 'creature', tick)
   }
 
 }

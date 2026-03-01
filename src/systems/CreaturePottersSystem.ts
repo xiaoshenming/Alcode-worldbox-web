@@ -2,6 +2,7 @@
 // Artisans who shape clay into vessels, containers, and decorative ceramics
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pruneDeadEntities } from '../utils/EntityUtils'
 
 export type PotteryType = 'bowl' | 'jar' | 'vase' | 'urn'
 
@@ -66,12 +67,7 @@ export class CreaturePottersSystem {
       if (this.potters[i].tick < cutoff) this.potters.splice(i, 1)
     }
   
-    // Prune dead entities from skillMap (every 3600 ticks)
-    if (tick % 3600 === 0 && this.skillMap.size > 0) {
-      for (const id of this.skillMap.keys()) {
-        if (!em.hasComponent(id, 'creature')) this.skillMap.delete(id)
-      }
-    }
+    pruneDeadEntities(this.skillMap, em, 'creature', tick)
   }
 
 }

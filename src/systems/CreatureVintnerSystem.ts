@@ -3,6 +3,7 @@
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
 import { pickRandom } from '../utils/RandomUtils'
+import { pruneDeadEntities } from '../utils/EntityUtils'
 
 export type WineVariety = 'red' | 'white' | 'rosé' | 'sparkling'
 
@@ -71,12 +72,7 @@ export class CreatureVintnerSystem {
       }
     }
   
-    // Prune dead entities from skillMap (every 3600 ticks)
-    if (tick % 3600 === 0 && this.skillMap.size > 0) {
-      for (const id of this.skillMap.keys()) {
-        if (!em.hasComponent(id, 'creature')) this.skillMap.delete(id)
-      }
-    }
+    pruneDeadEntities(this.skillMap, em, 'creature', tick)
   }
 
 }

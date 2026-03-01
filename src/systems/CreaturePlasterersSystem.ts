@@ -2,6 +2,7 @@
 // Construction workers who smooth and decorate interior surfaces with plaster
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pruneDeadEntities } from '../utils/EntityUtils'
 
 export type PlasterType = 'lime' | 'gypsum' | 'clay' | 'decorative'
 
@@ -66,12 +67,7 @@ export class CreaturePlasterersSystem {
       if (this.plasterers[i].tick < cutoff) this.plasterers.splice(i, 1)
     }
   
-    // Prune dead entities from skillMap (every 3600 ticks)
-    if (tick % 3600 === 0 && this.skillMap.size > 0) {
-      for (const id of this.skillMap.keys()) {
-        if (!em.hasComponent(id, 'creature')) this.skillMap.delete(id)
-      }
-    }
+    pruneDeadEntities(this.skillMap, em, 'creature', tick)
   }
 
 }

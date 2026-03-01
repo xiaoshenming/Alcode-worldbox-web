@@ -2,6 +2,7 @@
 // Craftsmen who shape tin and pewter into utensils, containers, and decorations
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pruneDeadEntities } from '../utils/EntityUtils'
 
 export type TinProduct = 'plate' | 'cup' | 'lantern' | 'canister'
 
@@ -66,12 +67,7 @@ export class CreatureTinsmithsSystem {
       if (this.tinsmiths[i].tick < cutoff) this.tinsmiths.splice(i, 1)
     }
   
-    // Prune dead entities from skillMap (every 3600 ticks)
-    if (tick % 3600 === 0 && this.skillMap.size > 0) {
-      for (const id of this.skillMap.keys()) {
-        if (!em.hasComponent(id, 'creature')) this.skillMap.delete(id)
-      }
-    }
+    pruneDeadEntities(this.skillMap, em, 'creature', tick)
   }
 
 }

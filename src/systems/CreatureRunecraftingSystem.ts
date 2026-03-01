@@ -3,6 +3,7 @@
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
 import { pickRandom } from '../utils/RandomUtils'
+import { pruneDeadEntities } from '../utils/EntityUtils'
 
 export type RuneType = 'fire' | 'ice' | 'lightning' | 'earth' | 'wind' | 'shadow' | 'light'
 
@@ -60,12 +61,7 @@ export class CreatureRunecraftingSystem {
       if (this.runes[i].tick < cutoff) this.runes.splice(i, 1)
     }
   
-    // Prune dead entities from skillMap (every 3600 ticks)
-    if (tick % 3600 === 0 && this.skillMap.size > 0) {
-      for (const id of this.skillMap.keys()) {
-        if (!em.hasComponent(id, 'creature')) this.skillMap.delete(id)
-      }
-    }
+    pruneDeadEntities(this.skillMap, em, 'creature', tick)
   }
 
 }

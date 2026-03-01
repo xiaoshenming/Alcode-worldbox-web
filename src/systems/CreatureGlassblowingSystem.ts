@@ -3,6 +3,7 @@
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
 import { pickRandom } from '../utils/RandomUtils'
+import { pruneDeadEntities } from '../utils/EntityUtils'
 
 export type GlassItem = 'vase' | 'window' | 'lens' | 'bottle' | 'ornament' | 'mirror'
 export type GlassColor = 'clear' | 'amber' | 'cobalt' | 'emerald' | 'ruby' | 'opal'
@@ -68,12 +69,7 @@ export class CreatureGlassblowingSystem {
       if (this.works[i].tick < cutoff) this.works.splice(i, 1)
     }
   
-    // Prune dead entities from skillMap (every 3600 ticks)
-    if (tick % 3600 === 0 && this.skillMap.size > 0) {
-      for (const id of this.skillMap.keys()) {
-        if (!em.hasComponent(id, 'creature')) this.skillMap.delete(id)
-      }
-    }
+    pruneDeadEntities(this.skillMap, em, 'creature', tick)
   }
 
 }
