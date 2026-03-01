@@ -73,7 +73,6 @@ function createEmptyBreakdown(): FameBreakdown {
  */
 export class CreatureFameSystem {
   private fameRecords: Map<EntityId, FameRecord> = new Map()
-  private _fameEntriesBuf: [EntityId, FameRecord][] = []
 
   /**
    * Main update loop. Decays fame over time and refreshes titles/ranks.
@@ -134,37 +133,6 @@ export class CreatureFameSystem {
     record.fameBreakdown[source] += delta
     record.totalFame = Math.min(MAX_FAME, record.totalFame + delta)
     this.refreshTitle(record)
-  }
-
-  /**
-   * Get the full fame record for a creature.
-   * @param entityId - The creature entity ID
-   * @returns The fame record, or undefined if not tracked
-   */
-  getFame(entityId: EntityId): FameRecord | undefined {
-    return this.fameRecords.get(entityId)
-  }
-
-  /**
-   * Get the current title for a creature.
-   * @param entityId - The creature entity ID
-   * @returns The fame title string
-   */
-  getFameTitle(entityId: EntityId): FameTitle {
-    return this.fameRecords.get(entityId)?.title ?? 'unknown'
-  }
-
-  /**
-   * Get the top N most famous creatures, sorted by total fame descending.
-   * @param count - Number of results to return
-   * @returns Array of [entityId, FameRecord] pairs
-   */
-  getTopFamous(count: number): [EntityId, FameRecord][] {
-    const entries = this._fameEntriesBuf; entries.length = 0
-    for (const e of this.fameRecords.entries()) entries.push(e)
-    entries.sort((a, b) => b[1].totalFame - a[1].totalFame)
-    if (entries.length > count) entries.length = count
-    return entries
   }
 
   private refreshTitle(record: FameRecord): void {

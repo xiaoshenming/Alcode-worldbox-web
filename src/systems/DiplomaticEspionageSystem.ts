@@ -71,16 +71,14 @@ export class DiplomaticEspionageSystem {
   private _lastZoom = -1
   private _alertFont = ''
 
-  private _activeSpiesBuf: Spy[] = []
   private _prevActiveCount = -1
   private _headerStr = 'Espionage (0 active)'
-  getSpies(): Spy[] { return this.spies }
-  getActiveSpies(): Spy[] {
+  private _activeSpiesBuf: Spy[] = []
+  private getActiveSpies(): Spy[] {
     this._activeSpiesBuf.length = 0
     for (const s of this.spies) { if (!s.discovered) this._activeSpiesBuf.push(s) }
     return this._activeSpiesBuf
   }
-  getReports(): EspionageReport[] { return this.reports }
 
   update(dt: number, em: EntityManager, civs: CivLike[], tick: number): void {
     // Clean dead spies

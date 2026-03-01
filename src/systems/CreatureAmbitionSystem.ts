@@ -85,19 +85,4 @@ export class CreatureAmbitionSystem {
     }
   }
 
-  getAmbition(id: EntityId): CreatureAmbition | undefined {
-    return this.ambitions.get(id)
-  }
-
-  getAmbitions(): Map<EntityId, CreatureAmbition> {
-    return this.ambitions
-  }
-
-  getAmbitionCount(): number {
-    return this.ambitions.size
-  }
-
-  getFulfilledCount(): number {
-    return this.fulfilledCount
-  }
 }
