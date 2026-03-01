@@ -68,57 +68,10 @@ export class WorldCorruptionSystem {
     this._snapBuf = new Float32Array(WORLD_WIDTH * WORLD_HEIGHT)
   }
 
-  /** Register a new corruption source (battlefield, mass death, etc.) */
-  addCorruptionSource(x: number, y: number, strength: number): void {
-    if (this.sources.length >= MAX_SOURCES) return
-    this.sources.push({ x: Math.floor(x), y: Math.floor(y), strength: clamp01(strength), tick: 0 })
-  }
-
-  /** Register a purifier location (temple, holy site) */
-  addPurifier(x: number, y: number): void {
-    this.purifiers.push({ x: Math.floor(x), y: Math.floor(y) })
-  }
-
-  /** Remove a purifier (building destroyed) */
-  removePurifier(x: number, y: number): void {
-    const fx = Math.floor(x), fy = Math.floor(y)
-    const idx = this.purifiers.findIndex(p => p.x === fx && p.y === fy)
-    if (idx !== -1) {
-      this.purifiers[idx] = this.purifiers[this.purifiers.length - 1]
-      this.purifiers.pop()
-    }
-  }
-
-  /** Update weather/season modifiers from external systems */
-  setModifiers(weather: WeatherType, season: SeasonType): void {
-    this.weather = weather
-    this.season = season
-  }
-
   /** Get corruption level at a tile (0-1) */
   getCorruption(x: number, y: number): number {
     if (x < 0 || x >= WORLD_WIDTH || y < 0 || y >= WORLD_HEIGHT) return 0
     return this.corruptionMap[y * WORLD_WIDTH + x]
-  }
-
-  /** Directly purify a circular area (god power) */
-  purifyArea(cx: number, cy: number, radius: number): void {
-    const r2 = radius * radius
-    for (let dy = -radius; dy <= radius; dy++) {
-      for (let dx = -radius; dx <= radius; dx++) {
-        if (dx * dx + dy * dy > r2) continue
-        const tx = cx + dx, ty = cy + dy
-        if (tx < 0 || tx >= WORLD_WIDTH || ty < 0 || ty >= WORLD_HEIGHT) continue
-        this.corruptionMap[ty * WORLD_WIDTH + tx] = 0
-      }
-    }
-    for (let i = this.sources.length - 1; i >= 0; i--) {
-      const s = this.sources[i]
-      if ((s.x - cx) ** 2 + (s.y - cy) ** 2 <= r2) {
-        this.sources[i] = this.sources[this.sources.length - 1]
-        this.sources.pop()
-      }
-    }
   }
 
   /** Count of tiles with corruption above threshold */

@@ -114,38 +114,4 @@ export class WorldEchoSystem {
     }
   }
 
-
-  getEchoIntensityAt(x: number, y: number): number {
-    let maxIntensity = 0
-    for (const echo of this.echoes) {
-      const dx = echo.x - x
-      const dy = echo.y - y
-      const dist = Math.sqrt(dx * dx + dy * dy)
-      if (dist <= echo.radius) {
-        // Intensity falls off with distance from center
-        const falloff = 1 - (dist / echo.maxRadius)
-        const local = echo.intensity * falloff
-        if (local > maxIntensity) maxIntensity = local
-      }
-    }
-    return maxIntensity
-  }
-
-  getEchoSourceAt(x: number, y: number): EchoSource | null {
-    let best: Echo | null = null
-    let bestIntensity = 0
-    for (const echo of this.echoes) {
-      const dx = echo.x - x
-      const dy = echo.y - y
-      if (dx * dx + dy * dy <= echo.radius * echo.radius && echo.intensity > bestIntensity) {
-        best = echo
-        bestIntensity = echo.intensity
-      }
-    }
-    return best?.source ?? null
-  }
-
-  isQuiet(x: number, y: number, threshold: number = 10): boolean {
-    return this.getEchoIntensityAt(x, y) < threshold
-  }
 }

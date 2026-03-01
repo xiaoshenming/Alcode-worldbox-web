@@ -155,13 +155,6 @@ export class WorldDecorationSystem {
     ctx.restore()
   }
 
-  removeAt(x: number, y: number): void {
-    if (y >= 0 && y < this.worldHeight && x >= 0 && x < this.worldWidth) {
-      if (this.grid[y][x]) this.decorationCount--
-      this.grid[y][x] = null
-    }
-  }
-
   get count(): number {
     return this.decorationCount
   }

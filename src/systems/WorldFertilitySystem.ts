@@ -78,12 +78,6 @@ export class WorldFertilitySystem {
     this.fertility[y * this.worldWidth + x] = Math.max(MIN_FERTILITY, Math.min(MAX_FERTILITY, value))
   }
 
-  deplete(x: number, y: number, amount: number): void {
-    if (x < 0 || x >= this.worldWidth || y < 0 || y >= this.worldHeight) return
-    const idx = y * this.worldWidth + x
-    this.fertility[idx] = Math.max(MIN_FERTILITY, this.fertility[idx] - amount)
-  }
-
   getAverageFertility(): number {
     if (!this.initialized) return 0
     let sum = 0, count = 0

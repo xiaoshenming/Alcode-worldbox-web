@@ -276,14 +276,6 @@ export class WorldLeyLineSystem {
     return this.nexuses
   }
 
-  /** Check if a position is near a ley line */
-  isNearLeyLine(x: number, y: number): boolean {
-    for (const line of this.leyLines) {
-      if (this.distToLine(x, y, line) < BUFF_RADIUS) return true
-    }
-    return false
-  }
-
   /** Reset the system for a new world */
   clear(): void {
     this.leyLines = []

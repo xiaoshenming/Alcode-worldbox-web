@@ -113,15 +113,4 @@ export class WorldFogBankSystem {
     return this.fogs
   }
 
-  getVisibilityAt(x: number, y: number): number {
-    let minVis = 100
-    for (const fog of this.fogs) {
-      const dx = fog.x - x
-      const dy = fog.y - y
-      if (dx * dx + dy * dy <= fog.radius * fog.radius) {
-        minVis = Math.min(minVis, fog.visibility)
-      }
-    }
-    return minVis
-  }
 }

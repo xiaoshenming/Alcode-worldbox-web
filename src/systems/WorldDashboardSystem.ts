@@ -1,6 +1,5 @@
 /** WorldDashboardSystem - 世界统计仪表盘，纯 Canvas 2D 绘制 */
 type TabType = 'religion' | 'population' | 'power';
-interface CivPowerInput { name: string; power: number; color: string }
 interface CivPowerEntry { name: string; power: number; color: string; powerStr: string }
 interface PopulationSample { tick: number; populations: Record<string, number>; entries: [string, number][] }
 
@@ -58,24 +57,6 @@ export class WorldDashboardSystem {
     return this.visible;
   }
 
-  setActiveTab(tab: TabType): void {
-    this.activeTab = tab;
-  }
-
-  updateReligionData(data: Map<string, number>): void {
-    this.religionData = data;
-    // Pre-compute ratio strings to avoid toFixed() during render
-    let total = 0; for (const v of data.values()) total += v;
-    this._religionRatioStrs.clear();
-    this._religionLegendStrs.clear();
-    if (total > 0) {
-      for (const [name, count] of data) {
-        this._religionRatioStrs.set(name, `${name} ${((count / total) * 100).toFixed(1)}%`);
-        this._religionLegendStrs.set(name, `${name}: ${count}`);
-      }
-    }
-  }
-
   addPopulationSample(tick: number, populations: Record<string, number>): void {
     const pops = { ...populations }
     const entries = Object.entries(pops) as [string, number][]
@@ -88,19 +69,6 @@ export class WorldDashboardSystem {
       this.popCount = MAX_POP_SAMPLES;
     }
     this._orderedDirty = true;
-  }
-
-  updatePowerData(civs: CivPowerInput[]): void {
-    // Sort in-place on a copy to avoid mutating caller's array, then fill powerData in-place
-    const sorted = civs.slice().sort((a, b) => b.power - a.power)
-    const n = Math.min(8, sorted.length)
-    this.powerData.length = n
-    for (let i = 0; i < n; i++) {
-      const c = sorted[i]
-      const e = this.powerData[i]
-      if (e) { e.name = c.name; e.power = c.power; e.color = c.color; e.powerStr = String(Math.round(c.power)) }
-      else this.powerData[i] = { name: c.name, power: c.power, color: c.color, powerStr: String(Math.round(c.power)) }
-    }
   }
 
   render(ctx: CanvasRenderingContext2D, screenWidth: number, screenHeight: number): void {

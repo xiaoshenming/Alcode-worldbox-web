@@ -133,38 +133,6 @@ export class WorldHeatmapSystem {
   }
 
   /**
-   * 设置指定模式在网格坐标处的热力值
-   * @param mode - 模式名称（population / resource / war / territory）
-   * @param gridX - 网格 X 坐标（0 ~ GRID_MAX-1）
-   * @param gridY - 网格 Y 坐标（0 ~ GRID_MAX-1）
-   * @param value - 热力值（>=0）
-   */
-  setData(mode: string, gridX: number, gridY: number, value: number): void {
-    const grid = this.grids.get(mode);
-    if (!grid || gridX < 0 || gridX >= GRID_MAX || gridY < 0 || gridY >= GRID_MAX) return;
-    const idx = gridY * GRID_MAX + gridX;
-    grid[idx] = value;
-    const cur = this.maxValues.get(mode) ?? 0;
-    if (value > cur) {
-      this.maxValues.set(mode, value);
-      this.maxValStrs.set(mode, value >= 1000 ? `${(value / 1000).toFixed(1)}k` : `${value | 0}`)
-    }
-  }
-
-  /**
-   * 清除指定模式的全部数据
-   * @param mode - 模式名称
-   */
-  clearData(mode: string): void {
-    const grid = this.grids.get(mode);
-    if (grid) {
-      grid.fill(0);
-      this.maxValues.set(mode, 0);
-      this.maxValStrs.set(mode, '0');
-    }
-  }
-
-  /**
    * 处理键盘输入，M 键循环切换热力图模式
    * @param key - 按键名称
    * @returns 是否消费了该按键事件

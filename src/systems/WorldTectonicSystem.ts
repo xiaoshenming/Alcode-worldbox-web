@@ -144,19 +144,4 @@ export class WorldTectonicSystem {
     return total / this.plates.length
   }
 
-  isOnFaultLine(x: number, y: number, threshold: number = 5): boolean {
-    for (const f of this.faults) {
-      // Point-to-line-segment distance
-      const dx = f.x2 - f.x1
-      const dy = f.y2 - f.y1
-      const lenSq = dx * dx + dy * dy
-      if (lenSq === 0) continue
-      const t = Math.max(0, Math.min(1, ((x - f.x1) * dx + (y - f.y1) * dy) / lenSq))
-      const px = f.x1 + t * dx
-      const py = f.y1 + t * dy
-      const distSq = (x - px) * (x - px) + (y - py) * (y - py)
-      if (distSq <= threshold * threshold) return true
-    }
-    return false
-  }
 }

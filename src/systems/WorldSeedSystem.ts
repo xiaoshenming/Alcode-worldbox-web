@@ -42,16 +42,6 @@ export class WorldSeedSystem {
     return ((t ^ (t >>> 14)) >>> 0) / 0x100000000
   }
 
-  /** Deterministic random integer in [min, max] inclusive */
-  randomInt(min: number, max: number): number {
-    return min + Math.floor(this.random() * (max - min + 1))
-  }
-
-  /** Deterministic random float in [min, max) */
-  randomFloat(min: number, max: number): number {
-    return min + this.random() * (max - min)
-  }
-
   /** Reset PRNG state back to the current seed */
   reset(): void {
     this.state = this.seed

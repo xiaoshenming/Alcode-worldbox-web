@@ -86,28 +86,6 @@ export class WorldMigrationWaveSystem {
     }
   }
 
-  /**
-   * Manually trigger a migration wave from one region to another.
-   */
-  triggerWave(fromX: number, fromY: number, toX: number, toY: number, reason: MigrationReason): MigrationWave | null {
-    if (this.activeWaves.length >= WorldMigrationWaveSystem.MAX_WAVES) return null
-    if (fromX < 0 || fromX >= WORLD_WIDTH || fromY < 0 || fromY >= WORLD_HEIGHT) return null
-    if (toX < 0 || toX >= WORLD_WIDTH || toY < 0 || toY >= WORLD_HEIGHT) return null
-
-    const wave: MigrationWave = {
-      id: nextWaveId++,
-      fromX, fromY,
-      toX, toY,
-      reason,
-      progress: 0,
-      entityIds: new Set(),
-      scale: 0,
-      startTick: 0
-    }
-    this.activeWaves.push(wave)
-    return wave
-  }
-
   /** Returns all currently active migration waves (read-only snapshot). */
   getActiveWaves(): ReadonlyArray<Readonly<MigrationWave>> {
     return this.activeWaves

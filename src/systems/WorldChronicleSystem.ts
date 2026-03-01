@@ -28,33 +28,6 @@ const WAR_ADJ_MAJOR = ['Great', 'Bloody', 'Burning', 'Iron', 'Crimson']
 const WAR_ADJ_LEGENDARY = ['Eternal', 'Apocalyptic', 'Cataclysmic', 'Unholy', 'Divine']
 const WAR_NOUN = ['War', 'Conflict', 'Crusade', 'Campaign', 'Siege', 'Conquest', 'Uprising']
 
-// Hero title banks (sorted descending by threshold)
-const KILL_TITLES = [
-  { min: 200, titles: ['Godslayer', 'The Undying Blade', 'Bane of Nations'] },
-  { min: 100, titles: ['Hundred-Slayer', 'The Reaper', 'Dread Champion'] },
-  { min: 50, titles: ['Warbringer', 'Ironhand', 'The Fierce'] },
-  { min: 10, titles: ['Brave Fighter', 'Shieldbearer'] },
-]
-const BUILD_TITLES = [
-  { min: 20, titles: ['The Great Builder', 'Architect of Ages'] },
-  { min: 5, titles: ['Mason', 'Founder', 'Stonelayer'] },
-]
-const EXPLORE_TITLES = [
-  { min: 50, titles: ['World-Walker', 'The Far-Seer'] },
-  { min: 20, titles: ['Wanderer', 'Pathfinder', 'Trailblazer'] },
-]
-
-const DISASTER_ADJ: Record<string, string[]> = {
-  earthquake: ['devastating', 'catastrophic'],
-  fire: ['raging', 'infernal'],
-  flood: ['great', 'torrential'],
-  meteor: ['cataclysmic', 'apocalyptic'],
-  tornado: ['furious', 'monstrous'],
-  lightning: ['wrathful', 'thunderous'],
-  plague: ['deadly', 'merciless'],
-  volcano: ['erupting', 'fiery'],
-}
-
 const MAX_CHRONICLES = 500
 const SUMMARY_INTERVAL = 3600
 
@@ -66,17 +39,9 @@ function tickToYear(tick: number): number {
   return Math.floor(tick / 3600)
 }
 
-function matchTier(value: number, tiers: { min: number; titles: string[] }[]): string | null {
-  for (const t of tiers) {
-    if (value >= t.min) return pick(t.titles)
-  }
-  return null
-}
-
 export class WorldChronicleSystem {
   private chronicles: Chronicle[] = []
   private _chroniclesBuf: Chronicle[] = []
-  private _entityChroniclesBuf: Chronicle[] = []
   private _civChroniclesBuf: Chronicle[] = []
   private _civIdsBuf: number[] = []
   private warNames: Map<string, string> = new Map()
@@ -123,33 +88,6 @@ export class WorldChronicleSystem {
     EventLog.log('war', `[Chronicle] ${narrative}`, tick)
   }
 
-  recordHeroDeed(tick: number, heroName: string, deed: string, entityId: number, civId?: number): void {
-    const year = tickToYear(tick)
-    const importance: 1 | 2 | 3 = deed.includes('legendary') || deed.includes('100') ? 3
-      : deed.includes('hero') || deed.includes('slain') ? 2 : 1
-    const narrative = `${heroName} ${deed} in Year ${year}, earning renown across the land.`
-    this.addChronicle({
-      tick, year, category: 'hero', title: `${heroName}'s deed`, narrative, importance,
-      involvedCivs: civId != null ? [civId] : [], involvedEntities: [entityId],
-    })
-    EventLog.log('hero', `[Chronicle] ${narrative}`, tick)
-  }
-
-  recordDisaster(tick: number, type: string, location: string, casualties: number): void {
-    const year = tickToYear(tick)
-    const adj = pick(DISASTER_ADJ[type] ?? ['terrible', 'fearsome'])
-    const importance: 1 | 2 | 3 = casualties >= 50 ? 3 : casualties >= 10 ? 2 : 1
-    const casualtyText = casualties > 0
-      ? `${casualties} soul${casualties > 1 ? 's' : ''} perished`
-      : 'miraculously, none perished'
-    const narrative = `A ${adj} ${type} struck ${location} in Year ${year}. ${casualtyText}.`
-    this.addChronicle({
-      tick, year, category: 'disaster', title: `The ${adj} ${type} of Year ${year}`,
-      narrative, importance, involvedCivs: [], involvedEntities: [],
-    })
-    EventLog.log('disaster', `[Chronicle] ${narrative}`, tick)
-  }
-
   recordCivMilestone(tick: number, civId: number, civName: string, milestone: string): void {
     const year = tickToYear(tick)
     const importance: 1 | 2 | 3 = milestone.includes('10') || milestone.includes('peak') ? 3
@@ -168,18 +106,6 @@ export class WorldChronicleSystem {
     return `${adj} ${pick(WAR_NOUN)}`
   }
 
-  generateHeroTitle(kills: number, buildings: number, explored: number): string {
-    const scores = [
-      { stat: 'kill' as const, value: kills },
-      { stat: 'build' as const, value: buildings },
-      { stat: 'explore' as const, value: explored },
-    ].sort((a, b) => b.value - a.value)
-    const best = scores[0]
-    const tiers = best.stat === 'kill' ? KILL_TITLES : best.stat === 'build' ? BUILD_TITLES : EXPLORE_TITLES
-    const val = best.stat === 'kill' ? kills : best.stat === 'build' ? buildings : explored
-    return matchTier(val, tiers) ?? 'The Unremarkable'
-  }
-
   getChronicles(filter?: { category?: string; minImportance?: number }): Chronicle[] {
     if (!filter?.category && !filter?.minImportance) return this.chronicles
     this._chroniclesBuf.length = 0
@@ -191,27 +117,8 @@ export class WorldChronicleSystem {
     return this._chroniclesBuf
   }
 
-  getWorldSummary(tick: number): string {
-    const year = tickToYear(tick)
-    let wars = 0, heroes = 0, disasters = 0, legendary = 0
-    for (let i = 0; i < this.chronicles.length; i++) {
-      const c = this.chronicles[i]
-      if (c.category === 'war') wars++
-      else if (c.category === 'hero') heroes++
-      else if (c.category === 'disaster') disasters++
-      if (c.importance === 3) legendary++
-    }
-    return `=== World Chronicle - Year ${year} ===\nTotal records: ${this.chronicles.length}\nWars: ${wars} | Heroes: ${heroes} | Disasters: ${disasters} | Legendary: ${legendary}`
-  }
-
   getRecentChronicles(count: number = 10): Chronicle[] {
     return this.chronicles.slice(-count)
-  }
-
-  getChroniclesByEntity(entityId: number): Chronicle[] {
-    this._entityChroniclesBuf.length = 0
-    for (const c of this.chronicles) { if (c.involvedEntities.includes(entityId)) this._entityChroniclesBuf.push(c) }
-    return this._entityChroniclesBuf
   }
 
   getChroniclesByCiv(civId: number): Chronicle[] {

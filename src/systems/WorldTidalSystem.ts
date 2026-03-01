@@ -96,10 +96,6 @@ export class WorldTidalSystem {
     return this.state.level
   }
 
-  isFlooded(x: number, y: number): boolean {
-    return this.state.floodedTiles.has(y * this.worldWidth + x)
-  }
-
   getCoastalTileCount(): number {
     return this.coastalTiles.length
   }

@@ -91,14 +91,6 @@ export class WorldNaturalWonderSystem {
     return this.wonders
   }
 
-  getWonderAt(x: number, y: number): NaturalWonder | undefined {
-    for (const w of this.wonders) {
-      const dx = w.x - x, dy = w.y - y
-      if (dx * dx + dy * dy <= w.radius * w.radius) return w
-    }
-    return undefined
-  }
-
   getWonderCount(): number {
     return this.wonders.length
   }

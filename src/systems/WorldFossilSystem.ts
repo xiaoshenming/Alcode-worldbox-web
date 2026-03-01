@@ -103,10 +103,4 @@ export class WorldFossilSystem {
     }
   }
 
-  private _discoveredFossilsBuf: Fossil[] = []
-  getDiscoveredFossils(): Fossil[] {
-    this._discoveredFossilsBuf.length = 0
-    for (const f of this.fossils) { if (f.discovered) this._discoveredFossilsBuf.push(f) }
-    return this._discoveredFossilsBuf
-  }
 }

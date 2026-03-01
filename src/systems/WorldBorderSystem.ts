@@ -168,12 +168,6 @@ export class WorldBorderSystem {
     this.renderParticles(ctx, cameraX, cameraY, zoom)
   }
 
-  /** 设置边界视觉风格 */
-  setBorderStyle(style: BorderStyle): void {
-    this.style = style
-    this._particleCount = 0
-  }
-
   /** 获取当前边界风格 */
   getBorderStyle(): BorderStyle {
     return this.style

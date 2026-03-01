@@ -81,20 +81,6 @@ export class WorldCrystalFormationSystem {
     return this.formations
   }
 
-  getFormationAt(x: number, y: number, radius: number): CrystalFormation | undefined {
-    for (const f of this.formations) {
-      const dx = f.x - x, dy = f.y - y
-      if (dx * dx + dy * dy <= radius * radius) return f
-    }
-    return undefined
-  }
-
-  harvest(id: number): CrystalFormation | undefined {
-    const idx = this.formations.findIndex(f => f.id === id && f.harvestable)
-    if (idx === -1) return undefined
-    return this.formations.splice(idx, 1)[0]
-  }
-
   getFormationCount(): number {
     return this.formations.length
   }

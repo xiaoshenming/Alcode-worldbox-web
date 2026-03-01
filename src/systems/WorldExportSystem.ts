@@ -104,16 +104,6 @@ export class WorldExportSystem {
     }
   }
 
-  /** Export a screenshot of the canvas as PNG */
-  exportScreenshot(canvas: HTMLCanvasElement, filename?: string): void {
-    const name = filename ?? `worldbox-screenshot-${Date.now()}.png`
-    const url = canvas.toDataURL('image/png')
-    const a = document.createElement('a')
-    a.href = url
-    a.download = name
-    a.click()
-  }
-
   /** Render import progress overlay when active */
   render(ctx: CanvasRenderingContext2D, screenW: number, screenH: number): void {
     if (!this.importing) return
