@@ -64,5 +64,4 @@ export class WorldGoldSpringSystem {
     return false
   }
 
-  getZones(): readonly GoldSpringZone[] { return this.zones }
 }

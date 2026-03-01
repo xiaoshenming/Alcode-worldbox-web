@@ -77,5 +77,4 @@ export class WorldNorthernLightsSystem {
     }
   }
 
-  getAuroras(): readonly NorthernLights[] { return this.auroras }
 }

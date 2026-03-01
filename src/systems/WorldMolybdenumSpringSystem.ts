@@ -64,5 +64,4 @@ export class WorldMolybdenumSpringSystem {
     return false
   }
 
-  getZones(): readonly MolybdenumSpringZone[] { return this.zones }
 }

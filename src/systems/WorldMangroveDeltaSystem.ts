@@ -67,5 +67,4 @@ export class WorldMangroveDeltaSystem {
     }
   }
 
-  getDeltas(): MangroveDelta[] { return this.deltas }
 }

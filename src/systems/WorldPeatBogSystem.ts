@@ -66,5 +66,4 @@ export class WorldPeatBogSystem {
     }
   }
 
-  getBogs(): PeatBog[] { return this.bogs }
 }

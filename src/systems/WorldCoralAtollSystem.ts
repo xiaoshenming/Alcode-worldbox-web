@@ -66,5 +66,4 @@ export class WorldCoralAtollSystem {
     }
   }
 
-  getAtolls(): CoralAtoll[] { return this.atolls }
 }

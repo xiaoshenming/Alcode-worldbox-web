@@ -52,5 +52,4 @@ export class WorldThermalVentSystem {
     for (let _i = this.vents.length - 1; _i >= 0; _i--) { if (this.vents[_i].heatOutput <= 20) this.vents.splice(_i, 1) }
   }
 
-  getVents(): ThermalVent[] { return this.vents }
 }

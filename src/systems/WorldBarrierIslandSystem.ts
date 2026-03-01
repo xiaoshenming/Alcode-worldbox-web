@@ -64,5 +64,4 @@ export class WorldBarrierIslandSystem {
     }
   }
 
-  getIslands(): readonly BarrierIsland[] { return this.islands }
 }

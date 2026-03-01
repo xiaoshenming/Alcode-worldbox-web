@@ -147,7 +147,4 @@ export class WorldCometSystem {
     for (let _i = this.comets.length - 1; _i >= 0; _i--) { if (!((c) => tick - c.startTick < c.duration)(this.comets[_i])) this.comets.splice(_i, 1) }
   }
 
-  getComets(): Comet[] { return this.comets }
-  getActiveComets(): Comet[] { return this.comets }
-  getTotalComets(): number { return this.totalComets }
 }

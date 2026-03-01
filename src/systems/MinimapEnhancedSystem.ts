@@ -93,7 +93,6 @@ export class MinimapEnhancedSystem {
   private tick = 0;
 
   setMode(mode: MinimapMode): void { this.mode = mode; }
-  getMode(): MinimapMode { return this.mode; }
 
   /** 循环切换到下一个模式 */
   cycleMode(): void {

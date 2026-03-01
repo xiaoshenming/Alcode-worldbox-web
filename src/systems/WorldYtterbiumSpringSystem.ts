@@ -64,5 +64,4 @@ export class WorldYtterbiumSpringSystem {
     return false
   }
 
-  getZones(): readonly YtterbiumSpringZone[] { return this.zones }
 }

@@ -64,5 +64,4 @@ export class WorldPotassiumSpringSystem {
     return false
   }
 
-  getZones(): readonly PotassiumSpringZone[] { return this.zones }
 }

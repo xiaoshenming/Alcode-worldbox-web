@@ -66,5 +66,4 @@ export class WorldEstuarySystem {
     }
   }
 
-  getEstuaries(): Estuary[] { return this.estuaries }
 }

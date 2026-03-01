@@ -65,5 +65,4 @@ export class WorldFlatironSystem {
     }
   }
 
-  getFlatirons(): Flatiron[] { return this.flatirons }
 }

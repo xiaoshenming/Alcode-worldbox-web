@@ -66,5 +66,4 @@ export class WorldNaturalTunnelSystem {
     }
   }
 
-  getTunnels(): NaturalTunnel[] { return this.tunnels }
 }

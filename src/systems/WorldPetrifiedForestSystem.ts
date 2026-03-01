@@ -73,5 +73,4 @@ export class WorldPetrifiedForestSystem {
     }
   }
 
-  getForests(): readonly PetrifiedForest[] { return this.forests }
 }

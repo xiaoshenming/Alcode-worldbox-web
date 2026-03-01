@@ -71,5 +71,4 @@ export class WorldFrostHollowSystem {
     }
   }
 
-  getHollows(): readonly FrostHollow[] { return this.hollows }
 }

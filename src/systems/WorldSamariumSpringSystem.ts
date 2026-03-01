@@ -64,5 +64,4 @@ export class WorldSamariumSpringSystem {
     return false
   }
 
-  getZones(): readonly SamariumSpringZone[] { return this.zones }
 }

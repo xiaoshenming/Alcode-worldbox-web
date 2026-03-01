@@ -64,5 +64,4 @@ export class WorldNickelSpringSystem {
     return false
   }
 
-  getZones(): readonly NickelSpringZone[] { return this.zones }
 }

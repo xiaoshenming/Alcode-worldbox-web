@@ -66,5 +66,4 @@ export class WorldCenoteSystem {
     }
   }
 
-  getCenotes(): Cenote[] { return this.cenotes }
 }

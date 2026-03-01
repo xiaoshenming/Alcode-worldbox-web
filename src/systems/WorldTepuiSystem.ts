@@ -65,5 +65,4 @@ export class WorldTepuiSystem {
     }
   }
 
-  getTepuis(): Tepui[] { return this.tepuis }
 }

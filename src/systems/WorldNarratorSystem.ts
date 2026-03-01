@@ -132,8 +132,6 @@ export class WorldNarratorSystem {
     this.addNarrative(type, text, tick, importance)
   }
 
-  getUnreadCount(): number { return this.unreadCount }
-  getEntries(): readonly NarrativeEntry[] { return this.entries }
 
   /* ── 更新 ── */
 

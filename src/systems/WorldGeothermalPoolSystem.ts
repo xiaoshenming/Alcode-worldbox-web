@@ -55,5 +55,4 @@ export class WorldGeothermalPoolSystem {
     }
   }
 
-  getPools(): GeothermalPool[] { return this.pools }
 }

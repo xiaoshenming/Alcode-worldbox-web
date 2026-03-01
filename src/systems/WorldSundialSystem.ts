@@ -74,5 +74,4 @@ export class WorldSundialSystem {
     }
   }
 
-  getSundials(): readonly Sundial[] { return this.sundials }
 }

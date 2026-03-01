@@ -71,5 +71,4 @@ export class WorldUndergroundRiverSystem {
     }
   }
 
-  getRivers(): readonly UndergroundRiver[] { return this.rivers }
 }

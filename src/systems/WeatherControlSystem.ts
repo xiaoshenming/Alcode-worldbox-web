@@ -65,7 +65,6 @@ export class WeatherControlSystem {
     }
   }
 
-  getWeather(): string { return this.weatherType }
 
   setIntensity(value: number): void {
     this.intensity = Math.max(0, Math.min(1, value))

@@ -64,5 +64,4 @@ export class WorldCarbonSpringSystem {
     return false
   }
 
-  getZones(): readonly CarbonSpringZone[] { return this.zones }
 }

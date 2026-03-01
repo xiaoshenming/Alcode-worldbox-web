@@ -69,5 +69,4 @@ export class WorldSandstormSystem {
     }
   }
 
-  getStorms(): readonly Sandstorm[] { return this.storms }
 }

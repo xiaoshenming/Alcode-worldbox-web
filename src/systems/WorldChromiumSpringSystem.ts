@@ -64,5 +64,4 @@ export class WorldChromiumSpringSystem {
     return false
   }
 
-  getZones(): readonly ChromiumSpringZone[] { return this.zones }
 }

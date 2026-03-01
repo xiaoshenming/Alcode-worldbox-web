@@ -66,5 +66,4 @@ export class WorldStoneWindowSystem {
     }
   }
 
-  getWindows(): StoneWindow[] { return this.windows }
 }

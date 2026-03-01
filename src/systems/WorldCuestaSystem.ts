@@ -65,5 +65,4 @@ export class WorldCuestaSystem {
     }
   }
 
-  getCuestas(): Cuesta[] { return this.cuestas }
 }

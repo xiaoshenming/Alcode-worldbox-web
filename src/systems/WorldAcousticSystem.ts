@@ -127,7 +127,6 @@ export class WorldAcousticSystem {
   }
 
   private _activeSoundsBuf: SoundSource[] = []
-  getSounds(): SoundSource[] { return this.sounds }
   getActiveSounds(): SoundSource[] {
     this._activeSoundsBuf.length = 0
     for (const s of this.sounds) { if (s.volume > 0) this._activeSoundsBuf.push(s) }

@@ -23,7 +23,6 @@ export class EntitySearchSystem {
 
   /** Set search query and trigger search. */
   setQuery(q: string): void { this.query = q.toLowerCase() }
-  getQuery(): string { return this.query }
 
   /** Run search against entity manager. Call after setQuery. */
   search(entities: Array<{ id: number; label: string; x: number; y: number }>): void {
@@ -35,8 +34,6 @@ export class EntitySearchSystem {
     this.selectedIdx = this.results.length > 0 ? 0 : -1
   }
 
-  getResults(): ReadonlyArray<SearchResult> { return this.results }
-  getSelectedResult(): SearchResult | null { return this.selectedIdx >= 0 ? this.results[this.selectedIdx] : null }
 
   selectNext(): void {
     if (this.results.length === 0) return

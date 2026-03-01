@@ -64,5 +64,4 @@ export class WorldIronSpringSystem {
     return false
   }
 
-  getZones(): readonly IronSpringZone[] { return this.zones }
 }

@@ -64,5 +64,4 @@ export class WorldSilverSpringSystem {
     return false
   }
 
-  getZones(): readonly SilverSpringZone[] { return this.zones }
 }

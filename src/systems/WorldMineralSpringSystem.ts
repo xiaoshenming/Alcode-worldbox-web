@@ -55,5 +55,4 @@ export class WorldMineralSpringSystem {
     }
   }
 
-  getSprings(): MineralSpring[] { return this.springs }
 }

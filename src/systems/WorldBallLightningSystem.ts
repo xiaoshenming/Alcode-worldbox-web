@@ -106,5 +106,4 @@ export class WorldBallLightningSystem {
     }
   }
 
-  getBalls(): readonly BallLightning[] { return this.balls }
 }

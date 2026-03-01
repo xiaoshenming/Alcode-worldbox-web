@@ -66,5 +66,4 @@ export class WorldEscarpmentSystem {
     }
   }
 
-  getEscarpments(): Escarpment[] { return this.escarpments }
 }

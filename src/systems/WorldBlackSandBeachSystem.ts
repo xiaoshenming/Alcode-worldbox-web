@@ -71,5 +71,4 @@ export class WorldBlackSandBeachSystem {
     }
   }
 
-  getZones(): readonly BlackSandBeachZone[] { return this.zones }
 }

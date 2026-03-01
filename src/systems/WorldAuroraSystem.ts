@@ -76,5 +76,4 @@ export class WorldAuroraSystem {
     }
   }
 
-  getAuroras(): readonly AuroraEvent[] { return this.auroras }
 }

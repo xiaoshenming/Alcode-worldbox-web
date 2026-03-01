@@ -110,7 +110,5 @@ export class WorldEclipseSystem {
     }
   }
 
-  getEclipses(): Eclipse[] { return this.eclipses }
-  getActiveEclipse(): Eclipse | undefined { return this.eclipses[0] }
   isEclipseActive(): boolean { return this.eclipses.length > 0 }
 }

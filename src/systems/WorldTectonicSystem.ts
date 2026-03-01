@@ -136,9 +136,6 @@ export class WorldTectonicSystem {
     }
   }
 
-  getPlates(): TectonicPlate[] { return this.plates }
-  getFaults(): FaultLine[] { return this.faults }
-  getPlateCount(): number { return this.plates.length }
 
   getStressLevel(): number {
     if (this.plates.length === 0) return 0

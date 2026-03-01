@@ -64,5 +64,4 @@ export class WorldZirconiumSpringSystem {
     return false
   }
 
-  getZones(): readonly ZirconiumSpringZone[] { return this.zones }
 }

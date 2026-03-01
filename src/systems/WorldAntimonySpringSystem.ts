@@ -64,5 +64,4 @@ export class WorldAntimonySpringSystem {
     return false
   }
 
-  getZones(): readonly AntimonySpringZone[] { return this.zones }
 }

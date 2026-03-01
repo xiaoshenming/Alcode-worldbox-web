@@ -153,7 +153,6 @@ export class WorldRiftSystem {
     }
   }
 
-  getRifts(): DimensionalRift[] { return this.rifts }
   getActiveRifts(): DimensionalRift[] {
     this._activeBuf.length = 0
     for (const r of this.rifts) { if (r.stage !== 'collapsing') this._activeBuf.push(r) }

@@ -66,5 +66,4 @@ export class WorldKelpForestSystem {
     }
   }
 
-  getForests(): readonly KelpForest[] { return this.forests }
 }

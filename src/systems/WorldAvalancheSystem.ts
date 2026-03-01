@@ -70,5 +70,4 @@ export class WorldAvalancheSystem {
     }
   }
 
-  getAvalanches(): readonly Avalanche[] { return this.avalanches }
 }

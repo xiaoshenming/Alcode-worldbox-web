@@ -114,5 +114,4 @@ export class WorldIceSheetSystem {
     }
   }
 
-  getIceSheets(): IceSheet[] { return this.iceSheets }
 }

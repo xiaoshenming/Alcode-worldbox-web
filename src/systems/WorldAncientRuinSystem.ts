@@ -75,7 +75,6 @@ export class WorldAncientRuinSystem {
   private _prevUnexploredCount = -1
   private _prevRuinCount = -1
   private _ruinHeaderStr = 'Ruins (0/0)'
-  getRuins(): AncientRuin[] { return this.ruins }
   getUnexplored(): AncientRuin[] {
     this._unexploredBuf.length = 0
     for (const r of this.ruins) { if (!r.explored) this._unexploredBuf.push(r) }

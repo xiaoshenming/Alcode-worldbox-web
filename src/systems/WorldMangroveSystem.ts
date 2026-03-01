@@ -89,5 +89,4 @@ export class WorldMangroveSystem {
     }
   }
 
-  getForests(): readonly MangroveForest[] { return this.forests }
 }

@@ -66,5 +66,4 @@ export class WorldPedimentSystem {
     }
   }
 
-  getPediments(): Pediment[] { return this.pediments }
 }

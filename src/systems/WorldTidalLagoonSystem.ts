@@ -64,5 +64,4 @@ export class WorldTidalLagoonSystem {
     }
   }
 
-  getLagoons(): readonly TidalLagoon[] { return this.lagoons }
 }

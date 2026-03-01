@@ -66,5 +66,4 @@ export class WorldPeneplainSystem {
     }
   }
 
-  getPeneplains(): Peneplain[] { return this.peneplains }
 }

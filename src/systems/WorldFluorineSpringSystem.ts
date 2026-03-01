@@ -64,5 +64,4 @@ export class WorldFluorineSpringSystem {
     return false
   }
 
-  getZones(): readonly FluorineSpringZone[] { return this.zones }
 }

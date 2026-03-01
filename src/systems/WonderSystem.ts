@@ -82,15 +82,6 @@ export class WonderSystem {
   }
 
   // --- Wonder effect bonuses ---
-  getResearchBonus(civId: number): number { return this.hasWonder(civId, 'great_library') ? 1.5 : 1.0 }
-  getCombatBonus(civId: number): number { return this.hasWonder(civId, 'colosseum') ? 1.3 : 1.0 }
-  getHappinessBonus(civId: number): number { return this.hasWonder(civId, 'colosseum') ? 10 : 0 }
-  getTradeBonus(civId: number): number { return this.hasWonder(civId, 'grand_bazaar') ? 2.0 : 1.0 }
-  getResourceBonus(civId: number): number { return this.hasWonder(civId, 'grand_bazaar') ? 1.2 : 1.0 }
-  getFoodBonus(civId: number): number { return this.hasWonder(civId, 'world_tree') ? 1.5 : 1.0 }
-  getPopCapBonus(civId: number): number { return this.hasWonder(civId, 'world_tree') ? 1.3 : 1.0 }
-  getBuildingHPBonus(civId: number): number { return this.hasWonder(civId, 'sky_fortress') ? 2.0 : 1.0 }
-  getDefenseBonus(civId: number): number { return this.hasWonder(civId, 'sky_fortress') ? 1.5 : 1.0 }
 
   private tryStartConstruction(civManager: CivManager, tick: number): void {
     const available = this.getAvailableWonders()

@@ -64,5 +64,4 @@ export class WorldMagnesiumSpringSystem {
     return false
   }
 
-  getZones(): readonly MagnesiumSpringZone[] { return this.zones }
 }

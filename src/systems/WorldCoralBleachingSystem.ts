@@ -86,5 +86,4 @@ export class WorldCoralBleachingSystem {
     }
   }
 
-  getEvents(): readonly BleachingEvent[] { return this.events }
 }

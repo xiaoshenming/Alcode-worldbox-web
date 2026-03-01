@@ -362,6 +362,4 @@ export class EspionageSystem {
     for (const s of this.spies) { if (s.ownerCivId === civId && s.alive) this._civSpyBuf.push(s) }
     return this._civSpyBuf
   }
-  getTributes(): TributeRecord[] { return this.tributes }
-  getJustifications(): WarJustification[] { return this.warJustifications }
 }

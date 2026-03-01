@@ -55,5 +55,4 @@ export class WorldFumarolicFieldSystem {
     }
   }
 
-  getFields(): FumarolicField[] { return this.fields }
 }

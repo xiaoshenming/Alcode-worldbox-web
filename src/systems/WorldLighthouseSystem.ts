@@ -99,5 +99,4 @@ export class WorldLighthouseSystem {
     return false
   }
 
-  getLighthouses(): readonly Lighthouse[] { return this.lighthouses }
 }

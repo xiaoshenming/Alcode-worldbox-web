@@ -64,5 +64,4 @@ export class WorldPinnacleSystem {
     }
   }
 
-  getPinnacles(): Pinnacle[] { return this.pinnacles }
 }

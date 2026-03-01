@@ -53,5 +53,4 @@ export class WorldArtesianWellSystem {
     }
   }
 
-  getWells(): ArtesianWell[] { return this.wells }
 }

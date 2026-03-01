@@ -64,5 +64,4 @@ export class WorldGadoliniumSpringSystem {
     return false
   }
 
-  getZones(): readonly GadoliniumSpringZone[] { return this.zones }
 }

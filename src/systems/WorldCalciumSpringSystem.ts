@@ -64,5 +64,4 @@ export class WorldCalciumSpringSystem {
     return false
   }
 
-  getZones(): readonly CalciumSpringZone[] { return this.zones }
 }

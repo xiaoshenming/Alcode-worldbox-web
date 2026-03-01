@@ -55,5 +55,4 @@ export class WorldSinterSystem {
     for (let _i = this.formations.length - 1; _i >= 0; _i--) { if (!((f) => f.age < 94)(this.formations[_i])) this.formations.splice(_i, 1) }
   }
 
-  getFormations(): SinterFormation[] { return this.formations }
 }

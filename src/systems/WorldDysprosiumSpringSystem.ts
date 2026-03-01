@@ -64,5 +64,4 @@ export class WorldDysprosiumSpringSystem {
     return false
   }
 
-  getZones(): readonly DysprosiumSpringZone[] { return this.zones }
 }

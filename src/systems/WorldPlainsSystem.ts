@@ -66,5 +66,4 @@ export class WorldPlainsSystem {
     }
   }
 
-  getPlains(): Plains[] { return this.plains }
 }

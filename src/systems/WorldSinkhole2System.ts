@@ -67,5 +67,4 @@ export class WorldSinkhole2System {
     }
   }
 
-  getSinkholes(): Sinkhole2[] { return this.sinkholes }
 }

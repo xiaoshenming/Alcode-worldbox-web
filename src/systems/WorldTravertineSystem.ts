@@ -55,5 +55,4 @@ export class WorldTravertineSystem {
     for (let _i = this.formations.length - 1; _i >= 0; _i--) { if (!((f) => f.age < 98)(this.formations[_i])) this.formations.splice(_i, 1) }
   }
 
-  getFormations(): TravertineFormation[] { return this.formations }
 }

@@ -67,5 +67,4 @@ export class WorldObsidianFlowSystem {
     }
   }
 
-  getFlows(): ObsidianFlow[] { return this.flows }
 }

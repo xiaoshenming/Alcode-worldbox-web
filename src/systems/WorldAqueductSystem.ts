@@ -81,5 +81,4 @@ export class WorldAqueductSystem {
     }
   }
 
-  getAqueducts(): readonly Aqueduct[] { return this.aqueducts }
 }

@@ -64,5 +64,4 @@ export class WorldCeriumSpringSystem {
     return false
   }
 
-  getZones(): readonly CeriumSpringZone[] { return this.zones }
 }

@@ -80,5 +80,4 @@ export class WorldMagneticFieldSystem {
     }
   }
 
-  getAnomalies(): readonly MagneticAnomaly[] { return this.anomalies }
 }

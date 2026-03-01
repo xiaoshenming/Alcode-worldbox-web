@@ -64,5 +64,4 @@ export class WorldOxygenSpringSystem {
     return false
   }
 
-  getZones(): readonly OxygenSpringZone[] { return this.zones }
 }

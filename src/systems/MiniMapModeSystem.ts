@@ -26,7 +26,6 @@ export class MiniMapModeSystem {
   private _heatColorKey = -1
   private _heatPalette: string[] = []
 
-  getMode(): MinimapMode { return this.mode }
 
   /** Cycle to next mode. */
   cycleMode(): void {

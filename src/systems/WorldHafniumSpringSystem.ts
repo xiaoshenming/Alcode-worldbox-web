@@ -64,5 +64,4 @@ export class WorldHafniumSpringSystem {
     return false
   }
 
-  getZones(): readonly HafniumSpringZone[] { return this.zones }
 }

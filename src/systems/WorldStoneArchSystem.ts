@@ -65,5 +65,4 @@ export class WorldStoneArchSystem {
     }
   }
 
-  getArches(): StoneArch[] { return this.arches }
 }

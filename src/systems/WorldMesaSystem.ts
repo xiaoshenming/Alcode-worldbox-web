@@ -66,5 +66,4 @@ export class WorldMesaSystem {
     }
   }
 
-  getMesas(): Mesa[] { return this.mesas }
 }

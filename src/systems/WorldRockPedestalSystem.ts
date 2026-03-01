@@ -66,5 +66,4 @@ export class WorldRockPedestalSystem {
     }
   }
 
-  getPedestals(): RockPedestal[] { return this.pedestals }
 }

@@ -66,5 +66,4 @@ export class WorldBlowholeSystem {
     }
   }
 
-  getBlowholes(): Blowhole[] { return this.blowholes }
 }

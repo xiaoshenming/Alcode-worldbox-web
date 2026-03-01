@@ -66,5 +66,4 @@ export class WorldRiftValleySystem {
     }
   }
 
-  getRifts(): RiftValley[] { return this.rifts }
 }

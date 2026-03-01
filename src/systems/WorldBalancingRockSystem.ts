@@ -66,5 +66,4 @@ export class WorldBalancingRockSystem {
     }
   }
 
-  getRocks(): BalancingRock[] { return this.rocks }
 }

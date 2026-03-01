@@ -66,5 +66,4 @@ export class WorldArroyoSystem {
     }
   }
 
-  getArroyos(): Arroyo[] { return this.arroyos }
 }

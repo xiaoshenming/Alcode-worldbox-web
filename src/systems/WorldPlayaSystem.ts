@@ -66,5 +66,4 @@ export class WorldPlayaSystem {
     }
   }
 
-  getPlayas(): Playa[] { return this.playas }
 }

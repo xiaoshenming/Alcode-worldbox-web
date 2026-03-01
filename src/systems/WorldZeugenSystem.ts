@@ -66,5 +66,4 @@ export class WorldZeugenSystem {
     }
   }
 
-  getZeugens(): Zeugen[] { return this.zeugens }
 }

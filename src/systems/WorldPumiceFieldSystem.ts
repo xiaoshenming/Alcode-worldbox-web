@@ -68,5 +68,4 @@ export class WorldPumiceFieldSystem {
     }
   }
 
-  getFields(): readonly PumiceField[] { return this.fields }
 }

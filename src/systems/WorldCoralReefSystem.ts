@@ -77,7 +77,6 @@ export class WorldCoralReefSystem {
     }
   }
 
-  getReefs(): readonly CoralReef[] { return this.reefs }
   getReefAt(x: number, y: number): CoralReef | undefined {
     return this.reefs.find(r => Math.abs(r.x - x) <= 2 && Math.abs(r.y - y) <= 2)
   }

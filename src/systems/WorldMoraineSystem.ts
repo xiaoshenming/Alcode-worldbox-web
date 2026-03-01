@@ -66,5 +66,4 @@ export class WorldMoraineSystem {
     }
   }
 
-  getMoraines(): Moraine[] { return this.moraines }
 }

@@ -64,5 +64,4 @@ export class WorldBorateSpringSystem {
     return false
   }
 
-  getZones(): readonly BorateSpringZone[] { return this.zones }
 }

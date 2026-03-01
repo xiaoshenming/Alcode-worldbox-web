@@ -67,5 +67,4 @@ export class WorldSaltFlatSystem {
     }
   }
 
-  getFlats(): SaltFlat[] { return this.flats }
 }

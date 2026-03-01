@@ -66,5 +66,4 @@ export class WorldVolcanicAshPlainSystem {
     }
   }
 
-  getPlains(): readonly VolcanicAshPlain[] { return this.plains }
 }

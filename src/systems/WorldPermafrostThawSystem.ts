@@ -66,5 +66,4 @@ export class WorldPermafrostThawSystem {
     }
   }
 
-  getZones(): readonly PermafrostThawZone[] { return this.zones }
 }

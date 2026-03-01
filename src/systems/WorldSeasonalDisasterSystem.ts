@@ -82,7 +82,6 @@ export class WorldSeasonalDisasterSystem {
   private _prevDisasterCount = -1
   private _headerStr = 'Seasonal Disasters (0)'
 
-  getDisasters(): SeasonalDisaster[] { return this.disasters }
   getActiveCount(): number { return this.disasters.length }
 
   setSeason(season: SeasonType): void { this.currentSeason = season }

@@ -108,5 +108,4 @@ export class WorldDewFormationSystem {
     }
   }
 
-  getDewZones(): DewZone[] { return this.dewZones }
 }

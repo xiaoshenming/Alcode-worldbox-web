@@ -55,5 +55,4 @@ export class WorldThermalSpringSystem {
     }
   }
 
-  getSprings(): ThermalSpring[] { return this.springs }
 }

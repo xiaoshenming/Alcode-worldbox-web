@@ -59,7 +59,6 @@ export class WorldAnomalySystem {
   private _lastZoom = -1
   private _typeFont = ''
 
-  getAnomalies(): WorldAnomaly[] { return this.anomalies }
   getActiveCount(): number { return this.anomalies.length }
 
   update(dt: number, em: EntityManager, world: WorldLike): void {

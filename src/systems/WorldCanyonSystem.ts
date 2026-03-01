@@ -66,5 +66,4 @@ export class WorldCanyonSystem {
     }
   }
 
-  getCanyons(): Canyon[] { return this.canyons }
 }

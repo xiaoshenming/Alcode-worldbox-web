@@ -114,8 +114,6 @@ export class WorldEchoSystem {
     }
   }
 
-  getEchoes(): Echo[] { return this.echoes }
-  getEchoCount(): number { return this.echoes.length }
 
   getEchoIntensityAt(x: number, y: number): number {
     let maxIntensity = 0

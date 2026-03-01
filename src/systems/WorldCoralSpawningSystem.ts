@@ -92,5 +92,4 @@ export class WorldCoralSpawningSystem {
     }
   }
 
-  getSpawns(): readonly CoralSpawn[] { return this.spawns }
 }

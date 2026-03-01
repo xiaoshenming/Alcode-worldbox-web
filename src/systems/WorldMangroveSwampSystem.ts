@@ -67,5 +67,4 @@ export class WorldMangroveSwampSystem {
     }
   }
 
-  getSwamps(): readonly MangroveSwamp[] { return this.swamps }
 }

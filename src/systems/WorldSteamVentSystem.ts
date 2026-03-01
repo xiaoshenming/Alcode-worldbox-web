@@ -55,5 +55,4 @@ export class WorldSteamVentSystem {
     for (let _i = this.vents.length - 1; _i >= 0; _i--) { if (!((v) => v.age < 92)(this.vents[_i])) this.vents.splice(_i, 1) }
   }
 
-  getVents(): SteamVent[] { return this.vents }
 }

@@ -103,5 +103,4 @@ export class WorldMossGrowthSystem {
     return false
   }
 
-  getPatches(): readonly MossPatch[] { return this.patches }
 }

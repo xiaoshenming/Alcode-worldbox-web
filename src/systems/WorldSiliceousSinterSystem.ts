@@ -55,5 +55,4 @@ export class WorldSiliceousSinterSystem {
     for (let _i = this.deposits.length - 1; _i >= 0; _i--) { if (!((d) => d.age < 97)(this.deposits[_i])) this.deposits.splice(_i, 1) }
   }
 
-  getDeposits(): SiliceousSinter[] { return this.deposits }
 }

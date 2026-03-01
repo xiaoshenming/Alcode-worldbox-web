@@ -55,5 +55,4 @@ export class WorldHotPoolSystem {
     for (let _i = this.pools.length - 1; _i >= 0; _i--) { if (!((p) => p.age < 93)(this.pools[_i])) this.pools.splice(_i, 1) }
   }
 
-  getPools(): HotPool[] { return this.pools }
 }

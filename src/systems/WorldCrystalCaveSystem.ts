@@ -97,5 +97,4 @@ export class WorldCrystalCaveSystem {
     }
   }
 
-  getCaves(): readonly CrystalCave[] { return this.caves }
 }

@@ -76,5 +76,4 @@ export class WorldHotSpringSystem {
     }
   }
 
-  getSprings(): readonly HotSpring[] { return this.springs }
 }

@@ -64,5 +64,4 @@ export class WorldTinSpringSystem {
     return false
   }
 
-  getZones(): readonly TinSpringZone[] { return this.zones }
 }

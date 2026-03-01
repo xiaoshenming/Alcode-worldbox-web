@@ -66,5 +66,4 @@ export class WorldNunatakSystem {
     }
   }
 
-  getNunataks(): Nunatak[] { return this.nunataks }
 }

@@ -125,7 +125,6 @@ export class WorldTidalWaveSystem {
     }
   }
 
-  getWaves(): TidalWave[] { return this.waves }
   isWaveActive(): boolean { return this.waves.length > 0 }
   getStrongestWave(): TidalWave | undefined {
     if (this.waves.length === 0) return undefined

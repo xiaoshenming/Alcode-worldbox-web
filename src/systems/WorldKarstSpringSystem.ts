@@ -66,5 +66,4 @@ export class WorldKarstSpringSystem {
     }
   }
 
-  getSprings(): KarstSpring[] { return this.springs }
 }

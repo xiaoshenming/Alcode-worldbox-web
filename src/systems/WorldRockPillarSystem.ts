@@ -63,5 +63,4 @@ export class WorldRockPillarSystem {
     }
   }
 
-  getPillars(): RockPillar[] { return this.pillars }
 }

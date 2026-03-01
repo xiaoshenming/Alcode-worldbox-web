@@ -66,5 +66,4 @@ export class WorldKarstTowerSystem {
     }
   }
 
-  getTowers(): KarstTower[] { return this.towers }
 }

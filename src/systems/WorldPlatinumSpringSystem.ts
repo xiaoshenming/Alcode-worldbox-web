@@ -64,5 +64,4 @@ export class WorldPlatinumSpringSystem {
     return false
   }
 
-  getZones(): readonly PlatinumSpringZone[] { return this.zones }
 }

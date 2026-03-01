@@ -53,5 +53,4 @@ export class WorldPyroclasticFlowSystem {
     for (let _i = this.flows.length - 1; _i >= 0; _i--) { if (this.flows[_i].speed <= 1) this.flows.splice(_i, 1) }
   }
 
-  getFlows(): PyroclasticFlow[] { return this.flows }
 }

@@ -52,5 +52,4 @@ export class WorldSolfataraSystem {
     for (let _i = this.solfataras.length - 1; _i >= 0; _i--) { if (!((s) => s.sulfurOutput < 100)(this.solfataras[_i])) this.solfataras.splice(_i, 1) }
   }
 
-  getSolfataras(): Solfatara[] { return this.solfataras }
 }

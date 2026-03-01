@@ -65,5 +65,4 @@ export class WorldSandstoneArchSystem {
     }
   }
 
-  getZones(): readonly SandstoneArchZone[] { return this.zones }
 }

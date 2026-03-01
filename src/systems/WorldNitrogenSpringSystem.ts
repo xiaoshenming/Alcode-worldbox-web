@@ -64,5 +64,4 @@ export class WorldNitrogenSpringSystem {
     return false
   }
 
-  getZones(): readonly NitrogenSpringZone[] { return this.zones }
 }

@@ -66,5 +66,4 @@ export class WorldVentifactSystem {
     }
   }
 
-  getVentifacts(): Ventifact[] { return this.ventifacts }
 }

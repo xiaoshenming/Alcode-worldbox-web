@@ -63,5 +63,4 @@ export class WorldSaltMarshSystem {
     }
   }
 
-  getMarshes(): SaltMarsh[] { return this.marshes }
 }

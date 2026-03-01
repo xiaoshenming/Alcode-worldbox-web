@@ -67,5 +67,4 @@ export class WorldFjordSystem {
     }
   }
 
-  getFjords(): Fjord[] { return this.fjords }
 }

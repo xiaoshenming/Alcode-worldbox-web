@@ -112,5 +112,4 @@ export class WorldSandDuneSystem {
     }
   }
 
-  getDunes(): SandDune[] { return this.dunes }
 }

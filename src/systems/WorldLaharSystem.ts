@@ -53,5 +53,4 @@ export class WorldLaharSystem {
     for (let _i = this.lahars.length - 1; _i >= 0; _i--) { if (this.lahars[_i].velocity <= 1) this.lahars.splice(_i, 1) }
   }
 
-  getLahars(): Lahar[] { return this.lahars }
 }

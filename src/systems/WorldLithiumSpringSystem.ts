@@ -64,5 +64,4 @@ export class WorldLithiumSpringSystem {
     return false
   }
 
-  getZones(): readonly LithiumSpringZone[] { return this.zones }
 }

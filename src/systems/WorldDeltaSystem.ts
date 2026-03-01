@@ -66,5 +66,4 @@ export class WorldDeltaSystem {
     }
   }
 
-  getDeltas(): Delta[] { return this.deltas }
 }

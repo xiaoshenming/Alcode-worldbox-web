@@ -64,5 +64,4 @@ export class WorldUraniumSpringSystem {
     return false
   }
 
-  getZones(): readonly UraniumSpringZone[] { return this.zones }
 }

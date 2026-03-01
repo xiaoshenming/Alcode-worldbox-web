@@ -64,5 +64,4 @@ export class WorldVanadiumSpringSystem {
     return false
   }
 
-  getZones(): readonly VanadiumSpringZone[] { return this.zones }
 }

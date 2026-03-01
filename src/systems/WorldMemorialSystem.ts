@@ -105,7 +105,6 @@ export class WorldMemorialSystem {
   }
 
   private _byTypeBuf: Memorial[] = []
-  getMemorials(): Memorial[] { return this.memorials }
   getByType(type: MemorialType): Memorial[] {
     this._byTypeBuf.length = 0
     for (const m of this.memorials) { if (m.type === type) this._byTypeBuf.push(m) }

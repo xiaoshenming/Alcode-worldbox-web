@@ -69,5 +69,4 @@ export class WorldFloatingIslandSystem {
     }
   }
 
-  getIslands(): readonly FloatingIsland[] { return this.islands }
 }

@@ -66,5 +66,4 @@ export class WorldDreikanterSystem {
     }
   }
 
-  getDreikanters(): Dreikanter[] { return this.dreikanters }
 }

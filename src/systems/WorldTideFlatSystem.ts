@@ -104,5 +104,4 @@ export class WorldTideFlatSystem {
     }
   }
 
-  getTideFlats(): TideFlat[] { return this.tideFlats }
 }

@@ -100,7 +100,6 @@ export class ProphecySystem {
 
   /* ── 公共 API ── */
 
-  getActiveProphecies(): readonly Prophecy[] { return this.prophecies }
   getHistory(): readonly Prophecy[] { return this.history }
 
   /** 手动添加预言（上帝之力） */

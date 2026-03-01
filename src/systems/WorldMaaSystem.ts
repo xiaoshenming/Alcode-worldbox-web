@@ -52,5 +52,4 @@ export class WorldMaarSystem {
     for (let _i = this.maars.length - 1; _i >= 0; _i--) { if (!((m) => m.age < 100)(this.maars[_i])) this.maars.splice(_i, 1) }
   }
 
-  getMaars(): Maar[] { return this.maars }
 }

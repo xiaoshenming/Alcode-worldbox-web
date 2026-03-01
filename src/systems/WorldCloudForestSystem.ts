@@ -56,5 +56,4 @@ export class WorldCloudForestSystem {
     }
   }
 
-  getZones(): readonly CloudForestZone[] { return this.zones }
 }

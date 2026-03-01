@@ -64,5 +64,4 @@ export class WorldStrontiumSpringSystem {
     return false
   }
 
-  getZones(): readonly StrontiumSpringZone[] { return this.zones }
 }

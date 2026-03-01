@@ -67,5 +67,4 @@ export class WorldMirageSystem {
     }
   }
 
-  getMirages(): readonly Mirage[] { return this.mirages }
 }

@@ -67,5 +67,4 @@ export class WorldSeaStackSystem {
     }
   }
 
-  getStacks(): readonly SeaStack[] { return this.stacks }
 }

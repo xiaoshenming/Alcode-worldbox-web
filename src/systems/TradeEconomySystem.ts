@@ -255,6 +255,4 @@ export class TradeEconomySystem {
     return Math.max(MIN_PRICE_MULT, Math.min(MAX_PRICE_MULT, v))
   }
 
-  getLocalPrices(civId: number): MarketPrices | null { return this.localPrices.get(civId) ?? null }
-  getGuild(civId: number): MerchantGuild | null { return this.guilds.get(civId) ?? null }
 }

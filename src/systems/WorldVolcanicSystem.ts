@@ -119,7 +119,6 @@ export class WorldVolcanicSystem {
     }
   }
 
-  getVolcanoes(): Volcano[] { return this.volcanoes }
   getActiveVolcanoes(): Volcano[] {
     this._activeVolcBuf.length = 0
     for (const v of this.volcanoes) { if (v.state !== 'dormant' && v.state !== 'cooling') this._activeVolcBuf.push(v) }

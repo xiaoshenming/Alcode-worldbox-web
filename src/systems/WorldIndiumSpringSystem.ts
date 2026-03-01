@@ -64,5 +64,4 @@ export class WorldIndiumSpringSystem {
     return false
   }
 
-  getZones(): readonly IndiumSpringZone[] { return this.zones }
 }

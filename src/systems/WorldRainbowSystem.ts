@@ -77,6 +77,5 @@ export class WorldRainbowSystem {
     }
   }
 
-  getRainbows(): Rainbow[] { return this.rainbows }
   isRainbowVisible(): boolean { return this.rainbows.length > 0 }
 }

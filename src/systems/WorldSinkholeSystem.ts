@@ -109,7 +109,6 @@ export class WorldSinkholeSystem {
   }
 
   private _activeSinkholesBuf: Sinkhole[] = []
-  getSinkholes(): Sinkhole[] { return this.sinkholes }
   getActiveSinkholes(): Sinkhole[] {
     this._activeSinkholesBuf.length = 0
     for (const s of this.sinkholes) { if (s.stage === 'active') this._activeSinkholesBuf.push(s) }

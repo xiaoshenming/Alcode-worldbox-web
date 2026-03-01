@@ -80,5 +80,4 @@ export class WorldQuicksandSystem {
     }
   }
 
-  getPits(): readonly QuicksandPit[] { return this.pits }
 }

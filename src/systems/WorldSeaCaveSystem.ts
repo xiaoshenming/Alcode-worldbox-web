@@ -66,5 +66,4 @@ export class WorldSeaCaveSystem {
     }
   }
 
-  getCaves(): SeaCave[] { return this.caves }
 }

@@ -64,5 +64,4 @@ export class WorldOsmiumSpringSystem {
     return false
   }
 
-  getZones(): readonly OsmiumSpringZone[] { return this.zones }
 }

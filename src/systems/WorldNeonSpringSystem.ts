@@ -64,5 +64,4 @@ export class WorldNeonSpringSystem {
     return false
   }
 
-  getZones(): readonly NeonSpringZone[] { return this.zones }
 }

@@ -71,7 +71,6 @@ export class WorldGeyserSystem {
   }
 
   private _activeGeysersBuf: Geyser[] = []
-  getGeysers(): Geyser[] { return this.geysers }
   getActiveGeysers(): Geyser[] {
     this._activeGeysersBuf.length = 0
     for (const g of this.geysers) { if (g.active) this._activeGeysersBuf.push(g) }

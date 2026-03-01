@@ -64,5 +64,4 @@ export class WorldTantalumSpringSystem {
     return false
   }
 
-  getZones(): readonly TantalumSpringZone[] { return this.zones }
 }

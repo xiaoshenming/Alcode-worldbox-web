@@ -64,5 +64,4 @@ export class WorldFranciumSpringSystem {
     return false
   }
 
-  getZones(): readonly FranciumSpringZone[] { return this.zones }
 }

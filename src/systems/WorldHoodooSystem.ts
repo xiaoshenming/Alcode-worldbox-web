@@ -66,5 +66,4 @@ export class WorldHoodooSystem {
     }
   }
 
-  getHoodoos(): Hoodoo[] { return this.hoodoos }
 }

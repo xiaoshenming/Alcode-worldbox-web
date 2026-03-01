@@ -64,5 +64,4 @@ export class WorldAstatineSpringSystem {
     return false
   }
 
-  getZones(): readonly AstatineSpringZone[] { return this.zones }
 }

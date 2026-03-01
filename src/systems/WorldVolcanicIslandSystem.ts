@@ -73,5 +73,4 @@ export class WorldVolcanicIslandSystem {
     }
   }
 
-  getIslands(): readonly VolcanicIsland[] { return this.islands }
 }

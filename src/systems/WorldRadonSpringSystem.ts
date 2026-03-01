@@ -64,5 +64,4 @@ export class WorldRadonSpringSystem {
     return false
   }
 
-  getZones(): readonly RadonSpringZone[] { return this.zones }
 }

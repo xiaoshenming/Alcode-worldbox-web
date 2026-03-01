@@ -66,5 +66,4 @@ export class WorldGrottoSystem {
     }
   }
 
-  getGrottos(): Grotto[] { return this.grottos }
 }

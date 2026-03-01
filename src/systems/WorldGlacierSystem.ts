@@ -93,7 +93,6 @@ export class WorldGlacierSystem {
   }
 
   private _activeGlaciersBuf: Glacier[] = []
-  getGlaciers(): Glacier[] { return this.glaciers }
   getActiveGlaciers(): Glacier[] {
     this._activeGlaciersBuf.length = 0
     for (const g of this.glaciers) { if (g.active) this._activeGlaciersBuf.push(g) }

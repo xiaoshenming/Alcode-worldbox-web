@@ -65,5 +65,4 @@ export class WorldDrumlinSystem {
     }
   }
 
-  getDrumlins(): Drumlin[] { return this.drumlins }
 }

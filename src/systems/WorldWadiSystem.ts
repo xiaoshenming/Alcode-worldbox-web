@@ -66,5 +66,4 @@ export class WorldWadiSystem {
     }
   }
 
-  getWadis(): Wadi[] { return this.wadis }
 }

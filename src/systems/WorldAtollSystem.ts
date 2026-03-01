@@ -82,5 +82,4 @@ export class WorldAtollSystem {
     }
   }
 
-  getAtolls(): readonly Atoll[] { return this.atolls }
 }

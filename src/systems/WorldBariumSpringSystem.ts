@@ -64,5 +64,4 @@ export class WorldBariumSpringSystem {
     return false
   }
 
-  getZones(): readonly BariumSpringZone[] { return this.zones }
 }

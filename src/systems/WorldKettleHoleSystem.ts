@@ -65,5 +65,4 @@ export class WorldKettleHoleSystem {
     }
   }
 
-  getKettles(): KettleHole[] { return this.kettles }
 }

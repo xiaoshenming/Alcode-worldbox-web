@@ -78,5 +78,4 @@ export class WorldCoralReefGrowthSystem {
     }
   }
 
-  getReefs(): readonly CoralReef[] { return this.reefs }
 }

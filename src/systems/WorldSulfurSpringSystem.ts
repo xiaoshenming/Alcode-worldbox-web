@@ -53,5 +53,4 @@ export class WorldSulfurSpringSystem {
     }
   }
 
-  getSprings(): SulfurSpring[] { return this.springs }
 }

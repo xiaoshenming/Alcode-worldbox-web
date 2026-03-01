@@ -64,5 +64,4 @@ export class WorldTitaniumSpringSystem {
     return false
   }
 
-  getZones(): readonly TitaniumSpringZone[] { return this.zones }
 }

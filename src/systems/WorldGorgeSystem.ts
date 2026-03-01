@@ -66,5 +66,4 @@ export class WorldGorgeSystem {
     }
   }
 
-  getGorges(): Gorge[] { return this.gorges }
 }

@@ -66,5 +66,4 @@ export class WorldButtesSystem {
     }
   }
 
-  getButtes(): Butte[] { return this.buttes }
 }

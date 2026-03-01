@@ -66,5 +66,4 @@ export class WorldArchipelagoSystem {
     }
   }
 
-  getArchipelagos(): Archipelago[] { return this.archipelagos }
 }

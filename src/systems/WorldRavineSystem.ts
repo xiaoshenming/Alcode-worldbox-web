@@ -66,5 +66,4 @@ export class WorldRavineSystem {
     }
   }
 
-  getRavines(): Ravine[] { return this.ravines }
 }

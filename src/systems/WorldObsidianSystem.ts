@@ -69,5 +69,4 @@ export class WorldObsidianSystem {
     }
   }
 
-  getDeposits(): readonly ObsidianDeposit[] { return this.deposits }
 }

@@ -87,9 +87,9 @@ export class TutorialSystem {
   start(): void { this.currentIndex = 0; this.active = true; }
   skip(): void { this.active = false; this.currentIndex = -1; this.markCompleted(); }
   isActive(): boolean { return this.active; }
-  getCurrentStep(): TutorialStep | null { return this.active ? this.steps[this.currentIndex] ?? null : null; }
   shouldShow(): boolean { try { return localStorage.getItem(STORAGE_KEY) !== 'true'; } catch { return true; } }
   markCompleted(): void { try { localStorage.setItem(STORAGE_KEY, 'true'); } catch { /* noop */ } }
+  private getCurrentStep(): TutorialStep | null { return this.active ? this.steps[this.currentIndex] : null }
 
   nextStep(): void {
     if (!this.active) return;

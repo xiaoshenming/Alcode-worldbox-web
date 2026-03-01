@@ -66,5 +66,4 @@ export class WorldFairyChimneySystem {
     }
   }
 
-  getChimneys(): FairyChimney[] { return this.chimneys }
 }

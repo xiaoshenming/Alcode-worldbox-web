@@ -66,5 +66,4 @@ export class WorldAlluvialFanSystem {
     }
   }
 
-  getFans(): AlluvialFan[] { return this.fans }
 }

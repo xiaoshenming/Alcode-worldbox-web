@@ -64,5 +64,4 @@ export class WorldLutetiumSpringSystem {
     return false
   }
 
-  getZones(): readonly LutetiumSpringZone[] { return this.zones }
 }

@@ -155,7 +155,6 @@ export class AchievementPopupSystem {
   }
 
   /** 成就总数 */
-  getTotalCount(): number { return this.achievements.size }
 
   /** 每 tick 更新动画状态 */
   update(tick: number): void {

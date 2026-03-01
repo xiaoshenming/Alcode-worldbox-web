@@ -64,5 +64,4 @@ export class WorldScandiumSpringSystem {
     return false
   }
 
-  getZones(): readonly ScandiumSpringZone[] { return this.zones }
 }

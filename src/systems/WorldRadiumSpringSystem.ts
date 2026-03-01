@@ -64,5 +64,4 @@ export class WorldRadiumSpringSystem {
     return false
   }
 
-  getZones(): readonly RadiumSpringZone[] { return this.zones }
 }

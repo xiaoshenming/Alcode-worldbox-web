@@ -72,5 +72,4 @@ export class WorldGeothermalSystem {
     }
   }
 
-  getVents(): readonly GeothermalVent[] { return this.vents }
 }

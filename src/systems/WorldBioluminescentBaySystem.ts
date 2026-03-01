@@ -67,5 +67,4 @@ export class WorldBioluminescentBaySystem {
     }
   }
 
-  getBays(): readonly BioluminescentBay[] { return this.bays }
 }

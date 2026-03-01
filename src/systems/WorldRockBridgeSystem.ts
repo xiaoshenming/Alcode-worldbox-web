@@ -66,5 +66,4 @@ export class WorldRockBridgeSystem {
     }
   }
 
-  getBridges(): RockBridge[] { return this.bridges }
 }

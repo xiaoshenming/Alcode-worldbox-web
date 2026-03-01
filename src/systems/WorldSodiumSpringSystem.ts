@@ -64,5 +64,4 @@ export class WorldSodiumSpringSystem {
     return false
   }
 
-  getZones(): readonly SodiumSpringZone[] { return this.zones }
 }

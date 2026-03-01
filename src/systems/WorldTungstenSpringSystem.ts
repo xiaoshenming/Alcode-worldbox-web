@@ -64,5 +64,4 @@ export class WorldTungstenSpringSystem {
     return false
   }
 
-  getZones(): readonly TungstenSpringZone[] { return this.zones }
 }

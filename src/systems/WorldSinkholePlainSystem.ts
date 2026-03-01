@@ -64,5 +64,4 @@ export class WorldSinkholePlainSystem {
     }
   }
 
-  getPlains(): SinkholePlain[] { return this.plains }
 }

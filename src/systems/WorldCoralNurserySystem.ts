@@ -94,5 +94,4 @@ export class WorldCoralNurserySystem {
     }
   }
 
-  getNurseries(): readonly CoralNursery[] { return this.nurseries }
 }

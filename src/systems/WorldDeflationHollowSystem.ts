@@ -67,5 +67,4 @@ export class WorldDeflationHollowSystem {
     }
   }
 
-  getHollows(): DeflationHollow[] { return this.hollows }
 }

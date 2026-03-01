@@ -77,5 +77,4 @@ export class WorldStalactiteSystem {
     }
   }
 
-  getCaves(): readonly StalactiteCave[] { return this.caves }
 }

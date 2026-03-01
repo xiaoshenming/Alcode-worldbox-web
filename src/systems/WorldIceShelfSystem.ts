@@ -67,5 +67,4 @@ export class WorldIceShelfSystem {
     }
   }
 
-  getShelves(): readonly IceShelf[] { return this.shelves }
 }

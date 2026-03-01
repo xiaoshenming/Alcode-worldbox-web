@@ -85,7 +85,6 @@ export class WorldPermafrostSystem {
     }
   }
 
-  getZones(): PermafrostZone[] { return this.zones }
   isPermafrost(x: number, y: number): boolean {
     return this.zones.some(z => {
       const dx = x - z.x

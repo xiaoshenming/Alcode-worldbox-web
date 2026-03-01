@@ -67,5 +67,4 @@ export class WorldTidalMarshSystem {
     }
   }
 
-  getMarshes(): TidalMarsh[] { return this.marshes }
 }

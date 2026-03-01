@@ -55,5 +55,4 @@ export class WorldCalderaSystem {
     for (let _i = this.calderas.length - 1; _i >= 0; _i--) { if (!((c) => c.age < 100)(this.calderas[_i])) this.calderas.splice(_i, 1) }
   }
 
-  getCalderas(): Caldera[] { return this.calderas }
 }

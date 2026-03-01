@@ -55,5 +55,4 @@ export class WorldFumaroleFieldSystem {
     for (let _i = this.fields.length - 1; _i >= 0; _i--) { if (!((f) => f.age < 95)(this.fields[_i])) this.fields.splice(_i, 1) }
   }
 
-  getFields(): FumaroleField[] { return this.fields }
 }

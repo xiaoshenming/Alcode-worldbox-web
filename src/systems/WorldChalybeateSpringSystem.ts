@@ -53,5 +53,4 @@ export class WorldChalybeateSpringSystem {
     }
   }
 
-  getSprings(): ChalybeateSpring[] { return this.springs }
 }

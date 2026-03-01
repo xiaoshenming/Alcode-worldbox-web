@@ -64,5 +64,4 @@ export class WorldProtactiniumSpringSystem {
     return false
   }
 
-  getZones(): readonly ProtactiniumSpringZone[] { return this.zones }
 }

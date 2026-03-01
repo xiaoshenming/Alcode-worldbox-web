@@ -73,5 +73,4 @@ export class WorldWhirlwindSystem {
     }
   }
 
-  getWhirlwinds(): readonly Whirlwind[] { return this.whirlwinds }
 }

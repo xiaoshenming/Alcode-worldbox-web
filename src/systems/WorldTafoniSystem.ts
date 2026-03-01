@@ -66,5 +66,4 @@ export class WorldTafoniSystem {
     }
   }
 
-  getTafoni(): Tafoni[] { return this.tafoni }
 }

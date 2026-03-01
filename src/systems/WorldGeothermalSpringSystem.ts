@@ -64,5 +64,4 @@ export class WorldGeothermalSpringSystem {
     }
   }
 
-  getSprings(): GeothermalSpring[] { return this.springs }
 }

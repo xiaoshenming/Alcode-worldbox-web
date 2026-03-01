@@ -66,5 +66,4 @@ export class WorldInselbergSystem {
     }
   }
 
-  getInselbergs(): Inselberg[] { return this.inselbergs }
 }

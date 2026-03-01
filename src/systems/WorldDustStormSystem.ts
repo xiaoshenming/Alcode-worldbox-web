@@ -102,7 +102,6 @@ export class WorldDustStormSystem {
     }
   }
 
-  getStorms(): DustStorm[] { return this.storms }
   isInStorm(x: number, y: number): boolean {
     return this.storms.some(s => {
       const dx = x - s.x

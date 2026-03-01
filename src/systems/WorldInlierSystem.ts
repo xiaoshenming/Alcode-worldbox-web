@@ -65,5 +65,4 @@ export class WorldInlierSystem {
     }
   }
 
-  getInliers(): Inlier[] { return this.inliers }
 }

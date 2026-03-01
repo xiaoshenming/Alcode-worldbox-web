@@ -65,5 +65,4 @@ export class WorldHogbackSystem {
     }
   }
 
-  getHogbacks(): Hogback[] { return this.hogbacks }
 }

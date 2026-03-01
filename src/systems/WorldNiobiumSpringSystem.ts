@@ -64,5 +64,4 @@ export class WorldNiobiumSpringSystem {
     return false
   }
 
-  getZones(): readonly NiobiumSpringZone[] { return this.zones }
 }

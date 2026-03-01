@@ -183,8 +183,6 @@ export class WorldPetrificationSystem {
     }
   }
 
-  getZones(): PetrificationZone[] { return this.zones }
-  getPetrified(): PetrifiedCreature[] { return this.petrified }
   isPetrified(creatureId: number): boolean {
     return this.petrified.some(p => p.creatureId === creatureId)
   }

@@ -67,5 +67,4 @@ export class WorldCinderConeSystem {
     }
   }
 
-  getCones(): CinderCone[] { return this.cones }
 }

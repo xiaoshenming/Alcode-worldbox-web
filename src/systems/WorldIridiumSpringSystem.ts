@@ -64,5 +64,4 @@ export class WorldIridiumSpringSystem {
     return false
   }
 
-  getZones(): readonly IridiumSpringZone[] { return this.zones }
 }

@@ -64,5 +64,4 @@ export class WorldSeleniumSpringSystem {
     return false
   }
 
-  getZones(): readonly SeleniumSpringZone[] { return this.zones }
 }

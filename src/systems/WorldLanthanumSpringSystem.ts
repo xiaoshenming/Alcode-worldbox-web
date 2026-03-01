@@ -64,5 +64,4 @@ export class WorldLanthanumSpringSystem {
     return false
   }
 
-  getZones(): readonly LanthanumSpringZone[] { return this.zones }
 }

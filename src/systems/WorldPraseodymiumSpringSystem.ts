@@ -64,5 +64,4 @@ export class WorldPraseodymiumSpringSystem {
     return false
   }
 
-  getZones(): readonly PraseodymiumSpringZone[] { return this.zones }
 }

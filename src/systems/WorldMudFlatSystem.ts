@@ -64,5 +64,4 @@ export class WorldMudFlatSystem {
     }
   }
 
-  getFlats(): MudFlat[] { return this.flats }
 }

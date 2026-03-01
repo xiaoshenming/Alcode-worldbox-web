@@ -64,5 +64,4 @@ export class WorldBismuthSpringSystem {
     return false
   }
 
-  getZones(): readonly BismuthSpringZone[] { return this.zones }
 }

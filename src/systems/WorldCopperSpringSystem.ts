@@ -64,5 +64,4 @@ export class WorldCopperSpringSystem {
     return false
   }
 
-  getZones(): readonly CopperSpringZone[] { return this.zones }
 }

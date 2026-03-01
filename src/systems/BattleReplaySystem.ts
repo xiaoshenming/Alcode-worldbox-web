@@ -415,8 +415,6 @@ export class BattleReplaySystem {
 
   // ── 查询 ──
 
-  getRecordCount(): number { return this.records.length; }
-  getRecords(): BattleRecord[] { return this.records; }
 
   private currentRecord(): BattleRecord | null {
     if (this.replayIndex < 0 || this.replayIndex >= this.records.length) return null;

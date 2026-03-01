@@ -74,5 +74,4 @@ export class WorldGeoglyphSystem {
     }
   }
 
-  getGeoglyphs(): readonly Geoglyph[] { return this.geoglyphs }
 }

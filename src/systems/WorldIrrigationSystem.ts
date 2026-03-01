@@ -97,5 +97,4 @@ export class WorldIrrigationSystem {
     }
   }
 
-  getChannels(): readonly IrrigationChannel[] { return this.channels }
 }

@@ -76,5 +76,4 @@ export class WorldBioluminescenceSystem {
     }
   }
 
-  getZones(): readonly BioluminescentZone[] { return this.zones }
 }

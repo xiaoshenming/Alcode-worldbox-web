@@ -66,5 +66,4 @@ export class WorldSpireSystem {
     }
   }
 
-  getSpires(): Spire[] { return this.spires }
 }

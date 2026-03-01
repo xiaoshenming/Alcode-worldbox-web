@@ -64,5 +64,4 @@ export class WorldTerbiumSpringSystem {
     return false
   }
 
-  getZones(): readonly TerbiumSpringZone[] { return this.zones }
 }

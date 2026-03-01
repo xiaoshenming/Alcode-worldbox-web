@@ -105,5 +105,4 @@ export class WorldWaterspoutSystem {
     }
   }
 
-  getSpouts(): readonly Waterspout[] { return this.spouts }
 }

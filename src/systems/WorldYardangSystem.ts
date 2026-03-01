@@ -66,5 +66,4 @@ export class WorldYardangSystem {
     }
   }
 
-  getYardangs(): Yardang[] { return this.yardangs }
 }

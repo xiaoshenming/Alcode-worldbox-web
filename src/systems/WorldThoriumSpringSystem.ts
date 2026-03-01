@@ -64,5 +64,4 @@ export class WorldThoriumSpringSystem {
     return false
   }
 
-  getZones(): readonly ThoriumSpringZone[] { return this.zones }
 }

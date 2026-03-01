@@ -73,5 +73,4 @@ export class WorldLabyrinthSystem {
     }
   }
 
-  getLabyrinths(): readonly Labyrinth[] { return this.labyrinths }
 }

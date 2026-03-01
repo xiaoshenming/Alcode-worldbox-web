@@ -79,5 +79,4 @@ export class WorldTidewaterSystem {
     }
   }
 
-  getZones(): readonly TideZone[] { return this.zones }
 }

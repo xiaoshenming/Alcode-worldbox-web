@@ -79,5 +79,4 @@ export class WorldSinkholePrevSystem {
     }
   }
 
-  getRisks(): readonly SinkholeRisk[] { return this.risks }
 }

@@ -55,5 +55,4 @@ export class WorldSodaSpringSystem {
     }
   }
 
-  getSprings(): SodaSpring[] { return this.springs }
 }

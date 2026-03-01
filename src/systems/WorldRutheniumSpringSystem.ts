@@ -64,5 +64,4 @@ export class WorldRutheniumSpringSystem {
     return false
   }
 
-  getZones(): readonly RutheniumSpringZone[] { return this.zones }
 }

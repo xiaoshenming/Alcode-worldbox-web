@@ -89,7 +89,6 @@ export class WorldAuroraStormSystem {
   }
 
   private _activeStormsBuf: AuroraStorm[] = []
-  getStorms(): AuroraStorm[] { return this.storms }
   getActiveStorms(): AuroraStorm[] {
     this._activeStormsBuf.length = 0
     for (const s of this.storms) { if (s.active) this._activeStormsBuf.push(s) }

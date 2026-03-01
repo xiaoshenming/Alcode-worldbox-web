@@ -64,5 +64,4 @@ export class WorldXenonSpringSystem {
     return false
   }
 
-  getZones(): readonly XenonSpringZone[] { return this.zones }
 }

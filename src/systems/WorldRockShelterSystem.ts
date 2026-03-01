@@ -66,5 +66,4 @@ export class WorldRockShelterSystem {
     }
   }
 
-  getShelters(): RockShelter[] { return this.shelters }
 }

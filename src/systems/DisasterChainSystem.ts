@@ -92,10 +92,6 @@ export class DisasterChainSystem {
     this.targetTemperature = Math.max(-5, Math.min(5, this.targetTemperature))
   }
 
-  getGlobalTemperature(): number { return this.globalTemperature }
-  getActiveCrises(): EcoCrisis[] { return this.ecoCrises }
-  getPendingChainCount(): number { return this.pendingChains.length }
-  getRecoveryZoneCount(): number { return this.recoveryZones.length }
 
   getChainProbability(sourceType: string, targetType: string, magnitude: number): number {
     const rule = this.chainRules.find(r => r.sourceType === sourceType && r.targetType === targetType)

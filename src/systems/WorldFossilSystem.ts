@@ -104,13 +104,9 @@ export class WorldFossilSystem {
   }
 
   private _discoveredFossilsBuf: Fossil[] = []
-  getFossils(): Fossil[] { return this.fossils }
-  getFossilCount(): number { return this.fossils.length }
   getDiscoveredFossils(): Fossil[] {
     this._discoveredFossilsBuf.length = 0
     for (const f of this.fossils) { if (f.discovered) this._discoveredFossilsBuf.push(f) }
     return this._discoveredFossilsBuf
   }
-  getFossilAt(x: number, y: number): Fossil | undefined { return this.fossils.find(f => f.x === x && f.y === y) }
-  getTotalKnowledge(): number { return this.totalKnowledge }
 }

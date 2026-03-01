@@ -66,5 +66,4 @@ export class WorldBadlandsSystem {
     }
   }
 
-  getBadlands(): Badlands[] { return this.badlands }
 }

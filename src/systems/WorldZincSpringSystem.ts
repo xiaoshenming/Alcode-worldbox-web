@@ -64,5 +64,4 @@ export class WorldZincSpringSystem {
     return false
   }
 
-  getZones(): readonly ZincSpringZone[] { return this.zones }
 }

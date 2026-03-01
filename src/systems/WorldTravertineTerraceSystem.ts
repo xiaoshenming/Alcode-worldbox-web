@@ -67,5 +67,4 @@ export class WorldTravertineTerraceSystem {
     return false
   }
 
-  getZones(): readonly TravertineTerraceZone[] { return this.zones }
 }

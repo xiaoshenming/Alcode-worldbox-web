@@ -80,5 +80,4 @@ export class WorldFrostbiteSystem {
     }
   }
 
-  getZones(): readonly FrostbiteZone[] { return this.zones }
 }

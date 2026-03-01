@@ -66,5 +66,4 @@ export class WorldLavaTubeSystem {
     }
   }
 
-  getTubes(): LavaTube[] { return this.tubes }
 }

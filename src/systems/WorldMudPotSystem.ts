@@ -55,5 +55,4 @@ export class WorldMudPotSystem {
     for (let _i = this.pots.length - 1; _i >= 0; _i--) { if (!((p) => p.age < 90)(this.pots[_i])) this.pots.splice(_i, 1) }
   }
 
-  getPots(): MudPot[] { return this.pots }
 }

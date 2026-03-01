@@ -64,5 +64,4 @@ export class WorldBoronSpringSystem {
     return false
   }
 
-  getZones(): readonly BoronSpringZone[] { return this.zones }
 }

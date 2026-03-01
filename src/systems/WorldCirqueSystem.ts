@@ -66,5 +66,4 @@ export class WorldCirqueSystem {
     }
   }
 
-  getCirques(): Cirque[] { return this.cirques }
 }

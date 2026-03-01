@@ -65,5 +65,4 @@ export class WorldOutlierSystem {
     }
   }
 
-  getOutliers(): Outlier[] { return this.outliers }
 }

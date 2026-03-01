@@ -64,5 +64,4 @@ export class WorldActiniumSpringSystem {
     return false
   }
 
-  getZones(): readonly ActiniumSpringZone[] { return this.zones }
 }

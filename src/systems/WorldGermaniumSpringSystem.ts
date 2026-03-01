@@ -64,5 +64,4 @@ export class WorldGermaniumSpringSystem {
     return false
   }
 
-  getZones(): readonly GermaniumSpringZone[] { return this.zones }
 }

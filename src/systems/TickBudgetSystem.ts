@@ -124,7 +124,6 @@ export class TickBudgetSystem {
     return this.reportCache;
   }
 
-  getTotalTickTime(): number { return this.frameElapsed; }
 
   resetSkipCounts(): void {
     for (const rec of this.systems.values()) rec.skipCount = 0;

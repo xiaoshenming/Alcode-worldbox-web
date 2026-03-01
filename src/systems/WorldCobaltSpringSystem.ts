@@ -64,5 +64,4 @@ export class WorldCobaltSpringSystem {
     return false
   }
 
-  getZones(): readonly CobaltSpringZone[] { return this.zones }
 }

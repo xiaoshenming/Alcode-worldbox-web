@@ -82,7 +82,6 @@ export class WorldMythicBeastSystem {
   private _hostileFont = ''
 
   private _aliveBeastsBuf: MythicBeast[] = []
-  getBeasts(): MythicBeast[] { return this.beasts }
   getAliveBeasts(): MythicBeast[] {
     this._aliveBeastsBuf.length = 0
     for (const b of this.beasts) { if (b.health > 0) this._aliveBeastsBuf.push(b) }

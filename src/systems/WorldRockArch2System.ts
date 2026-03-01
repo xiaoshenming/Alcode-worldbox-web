@@ -65,5 +65,4 @@ export class WorldRockArch2System {
     }
   }
 
-  getArches(): RockArch2[] { return this.arches }
 }

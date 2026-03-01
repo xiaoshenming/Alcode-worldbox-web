@@ -64,5 +64,4 @@ export class WorldManganeseSpringSystem {
     return false
   }
 
-  getZones(): readonly ManganeseSpringZone[] { return this.zones }
 }

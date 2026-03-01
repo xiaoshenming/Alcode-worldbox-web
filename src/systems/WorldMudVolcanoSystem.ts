@@ -54,5 +54,4 @@ export class WorldMudVolcanoSystem {
     for (let _i = this.volcanos.length - 1; _i >= 0; _i--) { if (!((v) => v.dormancy < 100)(this.volcanos[_i])) this.volcanos.splice(_i, 1) }
   }
 
-  getVolcanos(): MudVolcano[] { return this.volcanos }
 }

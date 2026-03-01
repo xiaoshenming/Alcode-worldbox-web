@@ -64,7 +64,6 @@ export class WorldRelicSystem {
   private _relicBuf: Relic[] = []
 
   private _discoveredRelicsBuf: Relic[] = []
-  getRelics(): Relic[] { return this.relics }
 
   getDiscoveredRelics(): Relic[] {
     this._discoveredRelicsBuf.length = 0

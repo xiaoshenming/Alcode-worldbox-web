@@ -64,5 +64,4 @@ export class WorldCaesiumSpringSystem {
     return false
   }
 
-  getZones(): readonly CaesiumSpringZone[] { return this.zones }
 }

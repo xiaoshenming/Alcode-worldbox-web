@@ -67,5 +67,4 @@ export class WorldObsidianFieldSystem {
     }
   }
 
-  getFields(): readonly ObsidianField[] { return this.fields }
 }

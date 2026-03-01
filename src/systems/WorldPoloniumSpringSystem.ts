@@ -64,5 +64,4 @@ export class WorldPoloniumSpringSystem {
     return false
   }
 
-  getZones(): readonly PoloniumSpringZone[] { return this.zones }
 }

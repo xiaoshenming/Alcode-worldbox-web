@@ -73,5 +73,4 @@ export class WorldBasaltColumnSystem {
     }
   }
 
-  getFormations(): readonly BasaltColumn[] { return this.formations }
 }

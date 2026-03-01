@@ -61,5 +61,4 @@ export class WorldIceCaveSystem {
     }
   }
 
-  getZones(): readonly IceCaveZone[] { return this.zones }
 }

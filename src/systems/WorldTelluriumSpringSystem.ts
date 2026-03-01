@@ -64,5 +64,4 @@ export class WorldTelluriumSpringSystem {
     return false
   }
 
-  getZones(): readonly TelluriumSpringZone[] { return this.zones }
 }

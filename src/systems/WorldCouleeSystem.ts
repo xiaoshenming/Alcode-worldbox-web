@@ -66,5 +66,4 @@ export class WorldCouleeSystem {
     }
   }
 
-  getCoulees(): Coulee[] { return this.coulees }
 }

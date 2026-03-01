@@ -80,5 +80,4 @@ export class WorldTerracingSystem {
     }
   }
 
-  getTerraces(): readonly Terrace[] { return this.terraces }
 }

@@ -64,5 +64,4 @@ export class WorldHolmiumSpringSystem {
     return false
   }
 
-  getZones(): readonly HolmiumSpringZone[] { return this.zones }
 }

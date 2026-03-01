@@ -108,5 +108,4 @@ export class WorldDustDevilSystem {
     }
   }
 
-  getDevils(): readonly DustDevil[] { return this.devils }
 }

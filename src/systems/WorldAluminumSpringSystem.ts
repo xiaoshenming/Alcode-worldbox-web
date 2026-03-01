@@ -64,5 +64,4 @@ export class WorldAluminumSpringSystem {
     return false
   }
 
-  getZones(): readonly AluminumSpringZone[] { return this.zones }
 }
