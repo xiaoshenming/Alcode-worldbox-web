@@ -22,6 +22,9 @@ export class EntityInspectorSystem {
   private scrollOffset = 0
   /** Pre-computed "Entity #N" header — rebuilt when entityId changes */
   private _entityHeaderStr = 'Entity #-'
+  /** Cached flat row list — rebuilt when tree structure changes (inspect/toggle/close) */
+  private _flatBuf: Array<{ node: PropNode; depth: number }> = []
+  private _flatDirty = true
 
   togglePanel(): void { this.panelOpen = !this.panelOpen }
   isPanelOpen(): boolean { return this.panelOpen }
@@ -33,6 +36,7 @@ export class EntityInspectorSystem {
     this.tree = this.buildTree(components)
     this.scrollOffset = 0
     this.panelOpen = true
+    this._flatDirty = true
   }
 
   /** Close inspector. */
@@ -40,6 +44,7 @@ export class EntityInspectorSystem {
     this.panelOpen = false
     this.entityId = null
     this.tree = []
+    this._flatDirty = true
   }
 
   /** Toggle expand/collapse of a node at given flat index. */
@@ -47,7 +52,7 @@ export class EntityInspectorSystem {
     let count = 0
     const toggle = (nodes: PropNode[]): boolean => {
       for (const n of nodes) {
-        if (count === flatIdx) { n.expanded = !n.expanded; return true }
+        if (count === flatIdx) { n.expanded = !n.expanded; this._flatDirty = true; return true }
         count++
         if (n.expanded && n.children.length > 0) {
           if (toggle(n.children)) return true
@@ -87,7 +92,8 @@ export class EntityInspectorSystem {
   render(ctx: CanvasRenderingContext2D, screenW: number, screenH: number): void {
     if (!this.panelOpen || this.entityId === null) return
 
-    const flatRows = this.flatten(this.tree)
+    if (this._flatDirty) { this.rebuildFlatBuf(); this._flatDirty = false }
+    const flatRows = this._flatBuf
     const visibleRows = Math.min(flatRows.length, MAX_ROWS)
     const ph = HEADER_H + visibleRows * ROW_H + PANEL_PAD
     const px = screenW - PANEL_W - 20
@@ -184,14 +190,17 @@ export class EntityInspectorSystem {
     return nodes
   }
 
-  private flatten(nodes: PropNode[], depth = 0): Array<{ node: PropNode; depth: number }> {
-    const result: Array<{ node: PropNode; depth: number }> = []
+  private rebuildFlatBuf(): void {
+    this._flatBuf.length = 0
+    this.flattenInto(this.tree, 0)
+  }
+
+  private flattenInto(nodes: PropNode[], depth: number): void {
     for (const n of nodes) {
-      result.push({ node: n, depth })
+      this._flatBuf.push({ node: n, depth })
       if (n.expanded && n.children.length > 0) {
-        result.push(...this.flatten(n.children, depth + 1))
+        this.flattenInto(n.children, depth + 1)
       }
     }
-    return result
   }
 }
