@@ -3,6 +3,7 @@
 
 import { EntityManager } from '../ecs/Entity'
 import { pickRandom } from '../utils/RandomUtils'
+import { pruneDeadEntities } from '../utils/EntityUtils'
 
 export type ScriptStyle = 'pictographic' | 'cuneiform' | 'runic' | 'flowing' | 'geometric' | 'symbolic'
 
@@ -68,10 +69,7 @@ export class CreatureCalligraphySystem {
       if (!(w.preserved || w.tick > cutoff)) this.works.splice(_i, 1)
     }
 
-    // Clean skill map for dead creatures
-    for (const [eid] of this.skillMap) {
-      if (!em.hasComponent(eid, 'creature')) this.skillMap.delete(eid)
-    }
+    pruneDeadEntities(this.skillMap, em, 'creature', tick)
   }
 
   getWorks(): CalligraphyWork[] {

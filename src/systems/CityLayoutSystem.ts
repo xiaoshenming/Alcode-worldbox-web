@@ -53,6 +53,8 @@ export class CityLayoutSystem {
   private _roadSet = new Set<number>()
   private _closedSet = new Set<number>()
   private _roadEndsSet = new Set<number>()
+  /** Pre-allocated gate lookup set — avoids gates.some() closure in render hot-path */
+  private _gateKeySet = new Set<number>()
 
   removeCity(cityId: number): void {
     this.layouts.delete(cityId)
@@ -375,14 +377,15 @@ export class CityLayoutSystem {
   ): void {
     const isFence = layout.level === 'town'
     const isDouble = layout.level === 'capital'
-    // Build gate lookup without allocating a new Set per frame
-    const gates = layout.gates
+    // Build gate lookup set — reuse pre-allocated set to avoid per-frame allocation
+    const gateKeys = this._gateKeySet; gateKeys.clear()
+    for (const g of layout.gates) gateKeys.add(g.x * 10000 + g.y)
     const wallW = TILE * zoom
     const merlonSize = Math.max(2, zoom * 3)
 
     for (let i = 0; i < layout.walls.length; i++) {
       const w = layout.walls[i]
-      if (gates.some(g => g.x === w.x && g.y === w.y)) continue // 城门处留空
+      if (gateKeys.has(w.x * 10000 + w.y)) continue // 城门处留空
       const px = (w.x * TILE - camX) * zoom
       const py = (w.y * TILE - camY) * zoom
 
