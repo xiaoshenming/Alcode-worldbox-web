@@ -61,7 +61,8 @@ export class EntityManager {
     const compMap = this.components.get(type)
     if (!compMap) return []
     const result = [...compMap.keys()]
-    this.queryCache.set(type, { version: this.cacheVersion, result })
+    if (cached) { cached.version = this.cacheVersion; cached.result = result }
+    else this.queryCache.set(type, { version: this.cacheVersion, result })
     return result
   }
 
@@ -106,7 +107,8 @@ export class EntityManager {
       }
       if (hasAll) result.push(id)
     }
-    this.queryCache.set(cacheKey, { version: this.cacheVersion, result })
+    if (cached) { cached.version = this.cacheVersion; cached.result = result }
+    else this.queryCache.set(cacheKey, { version: this.cacheVersion, result })
     return result
   }
 

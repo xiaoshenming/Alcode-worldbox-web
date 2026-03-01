@@ -122,11 +122,14 @@ export class SandboxSettingsSystem {
     return this._panelRect;
   }
 
+  /** Reusable slider rect object — avoids per-row object allocation in render */
+  private _sliderRect = { sx: 0, sy: 0, sw: 0, sh: 12 };
+
   private sliderRect(px: number, py: number, rowIdx: number) {
-    const sx = px + 110;
-    const sy = py + HEADER_H + rowIdx * ROW_H + 10;
-    const sw = PANEL_W - 110 - SLIDER_PAD - 40;
-    return { sx, sy, sw, sh: 12 };
+    this._sliderRect.sx = px + 110;
+    this._sliderRect.sy = py + HEADER_H + rowIdx * ROW_H + 10;
+    this._sliderRect.sw = PANEL_W - 110 - SLIDER_PAD - 40;
+    return this._sliderRect;
   }
 
   // ── Render ───────────────────────────────────────────────────
