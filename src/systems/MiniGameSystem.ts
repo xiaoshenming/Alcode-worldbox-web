@@ -4,6 +4,8 @@
  * 周期性触发随机事件（陨石雨、瘟疫爆发、外交危机、资源短缺），
  * 以弹窗形式展示选项，记录玩家选择历史。
  */
+import { roundRect } from '../utils/CanvasUtils'
+
 
 /** 事件选项 */
 interface EventOption {
@@ -147,7 +149,7 @@ export class MiniGameSystem {
     ctx.fillStyle = '#1a1a2e';
     ctx.strokeStyle = '#e0a030';
     ctx.lineWidth = 2;
-    this.roundRect(ctx, px, py, POPUP_W, POPUP_H, 12);
+    roundRect(ctx, px, py, POPUP_W, POPUP_H, 12);
     ctx.fill();
     ctx.stroke();
 
@@ -187,7 +189,7 @@ export class MiniGameSystem {
         ctx.fillStyle = '#2a4a7f';
         ctx.strokeStyle = '#5090e0';
         ctx.lineWidth = 1;
-        this.roundRect(ctx, btnX, btnY, btnW, BTN_H, 6);
+        roundRect(ctx, btnX, btnY, btnW, BTN_H, 6);
         ctx.fill();
         ctx.stroke();
 
@@ -231,22 +233,6 @@ export class MiniGameSystem {
   }
 
   /** 绘制圆角矩形路径 */
-  private roundRect(
-    ctx: CanvasRenderingContext2D,
-    x: number, y: number, w: number, h: number, r: number
-  ): void {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
-  }
 
   /** 自动换行绘制文字 */
   private wrapText(

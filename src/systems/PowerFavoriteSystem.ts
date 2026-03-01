@@ -4,6 +4,8 @@
  * 屏幕底部最多 8 个槽位，数字键 1-8 快速选择，右键移除。
  * 收藏数据自动持久化到 localStorage。
  */
+import { roundRect } from '../utils/CanvasUtils'
+
 
 interface FavoriteSlot { powerId: string; label: string; color: string }
 
@@ -93,13 +95,13 @@ export class PowerFavoriteSystem {
     // 背景
     ctx.globalAlpha = 0.75;
     ctx.fillStyle = '#1a1a2e';
-    this.roundRect(ctx, barX, barY, barW, BAR_HEIGHT, 8);
+    roundRect(ctx, barX, barY, barW, BAR_HEIGHT, 8);
     ctx.fill();
     ctx.globalAlpha = 1;
     // 边框
     ctx.strokeStyle = '#3a3a5e';
     ctx.lineWidth = 1;
-    this.roundRect(ctx, barX, barY, barW, BAR_HEIGHT, 8);
+    roundRect(ctx, barX, barY, barW, BAR_HEIGHT, 8);
     ctx.stroke();
     // 槽位
     for (let i = 0; i < MAX_SLOTS; i++) {
@@ -128,13 +130,13 @@ export class PowerFavoriteSystem {
     const slot = this.slots[index];
 
     ctx.fillStyle = isSelected ? '#4a4a8e' : '#2a2a4e';
-    this.roundRect(ctx, x, y, SLOT_SIZE, SLOT_SIZE, 6);
+    roundRect(ctx, x, y, SLOT_SIZE, SLOT_SIZE, 6);
     ctx.fill();
 
     if (isSelected) {
       ctx.strokeStyle = '#8888ff';
       ctx.lineWidth = 2;
-      this.roundRect(ctx, x, y, SLOT_SIZE, SLOT_SIZE, 6);
+      roundRect(ctx, x, y, SLOT_SIZE, SLOT_SIZE, 6);
       ctx.stroke();
     }
 
@@ -174,20 +176,6 @@ export class PowerFavoriteSystem {
 
   private getBarWidth(): number {
     return BAR_PADDING * 2 + MAX_SLOTS * SLOT_SIZE + (MAX_SLOTS - 1) * SLOT_GAP;
-  }
-
-  private roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
   }
 
   private load(): void {

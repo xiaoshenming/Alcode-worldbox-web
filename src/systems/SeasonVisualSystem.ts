@@ -3,6 +3,7 @@
  */
 
 import { Season } from './SeasonSystem'
+import { roundRect } from '../utils/CanvasUtils'
 
 /** Base particle data, pre-allocated and reused via active flag */
 interface Particle {
@@ -186,12 +187,12 @@ export class SeasonVisualSystem {
     const pillW = 72
     const pillH = 28
     const radius = 6
-    this.roundRect(ctx, x, y, pillW, pillH, radius)
+    roundRect(ctx, x, y, pillW, pillH, radius)
     ctx.fill()
 
     // Progress bar
     ctx.fillStyle = 'rgba(255,255,255,0.15)'
-    this.roundRect(ctx, x + 2, y + pillH - 5, (pillW - 4) * seasonProgress, 3, 1.5)
+    roundRect(ctx, x + 2, y + pillH - 5, (pillW - 4) * seasonProgress, 3, 1.5)
     ctx.fill()
 
     // Icon + text
@@ -400,22 +401,5 @@ export class SeasonVisualSystem {
     ctx.beginPath()
     ctx.arc(p.x, p.y, p.size, 0, 6.2832)
     ctx.fill()
-  }
-
-  private roundRect(
-    ctx: CanvasRenderingContext2D,
-    x: number, y: number, w: number, h: number, r: number,
-  ): void {
-    ctx.beginPath()
-    ctx.moveTo(x + r, y)
-    ctx.lineTo(x + w - r, y)
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r)
-    ctx.lineTo(x + w, y + h - r)
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
-    ctx.lineTo(x + r, y + h)
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r)
-    ctx.lineTo(x, y + r)
-    ctx.quadraticCurveTo(x, y, x + r, y)
-    ctx.closePath()
   }
 }

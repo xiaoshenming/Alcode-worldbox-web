@@ -1,3 +1,5 @@
+import { roundRect } from '../utils/CanvasUtils'
+
 export interface TutorialStep {
   id: string;
   title: string;
@@ -76,6 +78,7 @@ export class TutorialSystem {
     skip: { x: 0, y: 0, w: 0, h: 0 },
   };
   /** Cached word-wrapped lines for current step description — rebuilt when step or maxW changes */
+
   private _wrappedLines: string[] = [];
   private _wrappedStepId = '';
   private _wrappedMaxW = 0;
@@ -122,12 +125,12 @@ export class TutorialSystem {
       ctx.globalCompositeOperation = 'destination-out';
       const pad = 6;
       const r = 8;
-      this.roundRect(ctx, hl.x - pad, hl.y - pad, hl.w + pad * 2, hl.h + pad * 2, r);
+      roundRect(ctx, hl.x - pad, hl.y - pad, hl.w + pad * 2, hl.h + pad * 2, r);
       ctx.fill();
       ctx.globalCompositeOperation = 'source-over';
       ctx.strokeStyle = 'rgba(255,215,0,0.8)';
       ctx.lineWidth = 2;
-      this.roundRect(ctx, hl.x - pad, hl.y - pad, hl.w + pad * 2, hl.h + pad * 2, r);
+      roundRect(ctx, hl.x - pad, hl.y - pad, hl.w + pad * 2, hl.h + pad * 2, r);
       ctx.stroke();
     }
 
@@ -140,7 +143,7 @@ export class TutorialSystem {
     ctx.fillStyle = 'rgba(20,20,30,0.92)';
     ctx.strokeStyle = 'rgba(255,215,0,0.6)';
     ctx.lineWidth = 2;
-    this.roundRect(ctx, boxX, boxY, boxW, boxH, 10);
+    roundRect(ctx, boxX, boxY, boxW, boxH, 10);
     ctx.fill();
     ctx.stroke();
 
@@ -203,25 +206,11 @@ export class TutorialSystem {
     return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
   }
 
-  private roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
-  }
-
   private drawButton(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, label: string, color: string, bg: string): void {
     ctx.fillStyle = bg;
     ctx.strokeStyle = color;
     ctx.lineWidth = 1.5;
-    this.roundRect(ctx, x, y, w, h, 5);
+    roundRect(ctx, x, y, w, h, 5);
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = color;
