@@ -125,6 +125,13 @@ export class EraVisualSystem {
   private _indicatorPillW = 0
   private _prevIndicatorEra: EraName = '' as EraName
 
+  /** Pre-allocated style buffer for era transition interpolation — avoids per-frame object literal */
+  private _styleBuf: EraVisualStyle = {
+    name: 'stone', displayName: '', overlayColor: '', overlayAlpha: 0,
+    tintR: 0, tintG: 0, tintB: 0, saturation: 1, brightness: 1,
+    uiBorderColor: '', uiAccentColor: '', uiBgAlpha: 0.75, icon: '',
+  }
+
   constructor() {}
 
   /** Set the current era (called by EraSystem). Starts transition if different. */
@@ -274,21 +281,21 @@ export class EraVisualSystem {
     if (this.transitionProgress <= 0) return from
 
     const t = this.transitionProgress
-    return {
-      name: to.name,
-      displayName: to.displayName,
-      overlayColor: to.overlayColor,
-      overlayAlpha: this.lerp(from.overlayAlpha, to.overlayAlpha, t),
-      tintR: this.lerp(from.tintR, to.tintR, t),
-      tintG: this.lerp(from.tintG, to.tintG, t),
-      tintB: this.lerp(from.tintB, to.tintB, t),
-      saturation: this.lerp(from.saturation, to.saturation, t),
-      brightness: this.lerp(from.brightness, to.brightness, t),
-      uiBorderColor: this.lerpColor(from.uiBorderColor, to.uiBorderColor, t),
-      uiAccentColor: this.lerpColor(from.uiAccentColor, to.uiAccentColor, t),
-      uiBgAlpha: this.lerp(from.uiBgAlpha, to.uiBgAlpha, t),
-      icon: to.icon,
-    }
+    const buf = this._styleBuf
+    buf.name = to.name
+    buf.displayName = to.displayName
+    buf.overlayColor = to.overlayColor
+    buf.overlayAlpha = this.lerp(from.overlayAlpha, to.overlayAlpha, t)
+    buf.tintR = this.lerp(from.tintR, to.tintR, t)
+    buf.tintG = this.lerp(from.tintG, to.tintG, t)
+    buf.tintB = this.lerp(from.tintB, to.tintB, t)
+    buf.saturation = this.lerp(from.saturation, to.saturation, t)
+    buf.brightness = this.lerp(from.brightness, to.brightness, t)
+    buf.uiBorderColor = this.lerpColor(from.uiBorderColor, to.uiBorderColor, t)
+    buf.uiAccentColor = this.lerpColor(from.uiAccentColor, to.uiAccentColor, t)
+    buf.uiBgAlpha = this.lerp(from.uiBgAlpha, to.uiBgAlpha, t)
+    buf.icon = to.icon
+    return buf
   }
 
   private lerp(a: number, b: number, t: number): number {
