@@ -5,12 +5,8 @@ describe('LODRenderSystem', () => {
   let sys: LODRenderSystem
   beforeEach(() => { sys = makeSys() })
   it('getLOD返回LOD级别', () => { expect(typeof sys.getLOD()).toBe('string') })
-  it('getStats返回对象', () => {
-    const stats = sys.getStats()
-    expect(stats).toHaveProperty('rendered')
-    expect(stats).toHaveProperty('culled')
-  })
-  it('getStats.rendered初始为0', () => { expect(sys.getStats().rendered).toBe(0) })
-  it('getStats.culled初始为0', () => { expect(sys.getStats().culled).toBe(0) })
-  it('getStats.lod初始与getLOD()一致', () => { expect(sys.getStats().lod).toBe(sys.getLOD()) })
+  it('初始entityCounts.rendered为0', () => { expect((sys as any).entityCounts.rendered).toBe(0) })
+  it('初始entityCounts.culled为0', () => { expect((sys as any).entityCounts.culled).toBe(0) })
+  it('初始currentLOD与getLOD()一致', () => { expect((sys as any).currentLOD).toBe(sys.getLOD()) })
+  it('setThresholds不崩溃', () => { expect(() => sys.setThresholds({ full: 2 })).not.toThrow() })
 })

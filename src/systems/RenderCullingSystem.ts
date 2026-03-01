@@ -122,10 +122,6 @@ export class RenderCullingSystem {
     return dist < threshold;
   }
 
-  getStats(): CullingStats {
-    return this.stats;
-  }
-
   isChunkVisible(chunkX: number, chunkY: number): boolean {
     return this.visibleChunks.has(chunkY * this.chunksX + chunkX);
   }

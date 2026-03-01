@@ -15,16 +15,6 @@ export interface PoolConfig<T> {
   shrinkThreshold?: number // seconds of idle before auto-shrink
 }
 
-export interface PoolStats {
-  totalCreated: number
-  activeCount: number
-  freeCount: number
-  peakUsage: number
-  acquireCount: number
-  hitCount: number
-  hitRate: number // hitCount / acquireCount, 0-1
-}
-
 // ---------------------------------------------------------------------------
 // ObjectPool<T> - generic acquire/release pool
 // ---------------------------------------------------------------------------
@@ -105,18 +95,6 @@ export class ObjectPool<T> {
     const target = Math.max(this.active.size * 2, Math.floor(this.lastPeakValue * 0.5))
     if (this.free.length > target) {
       this.free.length = target
-    }
-  }
-
-  getStats(): PoolStats {
-    return {
-      totalCreated: this.totalCreated,
-      activeCount: this.active.size,
-      freeCount: this.free.length,
-      peakUsage: this.peakUsage,
-      acquireCount: this.acquireCount,
-      hitCount: this.hitCount,
-      hitRate: this.acquireCount > 0 ? this.hitCount / this.acquireCount : 0,
     }
   }
 
