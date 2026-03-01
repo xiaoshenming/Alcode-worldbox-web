@@ -66,6 +66,14 @@ const CARD_W = 280, CARD_H = 72
 const ENTER_TICKS = 20, STAY_TICKS = 180, EXIT_TICKS = 20
 const PROGRESS_BAR_H = 6, TRACKER_W = 200, TRACKER_ITEM_H = 32
 
+/** Pre-allocated legendary particle color palette — avoids inline object array per particle */
+const LEGENDARY_COLORS = [
+  { r: 255, g: 215, b: 0 },
+  { r: 255, g: 100, b: 50 },
+  { r: 255, g: 255, b: 200 },
+] as const
+const COMMON_COLORS = [{ r: 255, g: 215, b: 0 }] as const
+
 function easeOutCubic(t: number): number {
   const t1 = t - 1
   return t1 * t1 * t1 + 1
@@ -220,12 +228,10 @@ export class AchievementPopupSystem {
     if (!state) return
     const count = RARITY_PARTICLES[state.def.rarity]
     const isLegendary = state.def.rarity === 'legendary'
+    const colors = isLegendary ? LEGENDARY_COLORS : COMMON_COLORS
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2
       const speed = 1.5 + Math.random() * 3
-      const colors = isLegendary
-        ? [{ r: 255, g: 215, b: 0 }, { r: 255, g: 100, b: 50 }, { r: 255, g: 255, b: 200 }]
-        : [{ r: 255, g: 215, b: 0 }]
       const c = colors[Math.floor(Math.random() * colors.length)]
       this.particles.push({
         x: isLegendary ? Math.random() * 800 : 0,
