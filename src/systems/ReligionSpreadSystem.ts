@@ -35,7 +35,10 @@ const PARTICLE_SPEED = 0.3
 
 export class ReligionSpreadSystem {
   private temples: Map<EntityId, TempleComponent> = new Map()
-  private particles: FaithParticle[] = []
+  /** Fixed-size particle pool — maxLife=0 means inactive slot */
+  private readonly particles: FaithParticle[] = Array.from({ length: MAX_PARTICLES }, () => ({
+    x: 0, y: 0, tx: 0, ty: 0, life: 0, maxLife: 0, color: '', size: 1,
+  }))
   private faithMap: Map<number, { religion: ReligionType; strength: number }> = new Map()
   private _lastZoom = -1
   private _symbolFont = ''
@@ -71,31 +74,33 @@ export class ReligionSpreadSystem {
           }
         }
 
-        // Spawn faith particles
-        if (this.particles.length < MAX_PARTICLES) {
+        // Spawn faith particles — find inactive slot in pool
+        for (let pi = 0; pi < this.particles.length; pi++) {
+          if (this.particles[pi].maxLife > 0) continue;
           const angle = Math.random() * Math.PI * 2
           const dist = Math.random() * temple.faithRadius
-          this.particles.push({
-            x: pos.x, y: pos.y,
-            tx: pos.x + Math.cos(angle) * dist,
-            ty: pos.y + Math.sin(angle) * dist,
-            life: 0, maxLife: 60 + Math.random() * 60,
-            color: RELIGION_COLORS[temple.religion],
-            size: 1.5 + temple.level * 0.5,
-          })
+          const p = this.particles[pi]
+          p.x = pos.x; p.y = pos.y
+          p.tx = pos.x + Math.cos(angle) * dist
+          p.ty = pos.y + Math.sin(angle) * dist
+          p.life = 0; p.maxLife = 60 + Math.random() * 60
+          p.color = RELIGION_COLORS[temple.religion]
+          p.size = 1.5 + temple.level * 0.5
+          break
         }
       }
     }
 
     // Update particles
-    for (let i = this.particles.length - 1; i >= 0; i--) {
+    for (let i = 0; i < this.particles.length; i++) {
       const p = this.particles[i]
+      if (p.maxLife <= 0) continue  // inactive slot
       p.life++
       const t = p.life / p.maxLife
       p.x += (p.tx - p.x) * PARTICLE_SPEED * 0.1
       p.y += (p.ty - p.y) * PARTICLE_SPEED * 0.1
       if (t >= 1) {
-        this.particles.splice(i, 1)
+        p.maxLife = 0  // mark slot as inactive
       }
     }
   }
@@ -120,7 +125,9 @@ export class ReligionSpreadSystem {
 
     // Render particles
     ctx.save()
-    for (const p of this.particles) {
+    for (let i = 0; i < this.particles.length; i++) {
+      const p = this.particles[i]
+      if (p.maxLife <= 0) continue  // inactive slot
       const sx = (p.x - camX) * zoom
       const sy = (p.y - camY) * zoom
       const alpha = 1 - p.life / p.maxLife
@@ -204,6 +211,10 @@ export class ReligionSpreadSystem {
   }
 
   getParticleCount(): number {
-    return this.particles.length
+    let count = 0
+    for (let i = 0; i < this.particles.length; i++) {
+      if (this.particles[i].maxLife > 0) count++
+    }
+    return count
   }
 }
