@@ -119,21 +119,6 @@ export class ClonePowerSystem {
     return this.totalClones;
   }
 
-  getCloneLineage(entityId: number): number[] {
-    const chain: number[] = [entityId];
-    let current = entityId;
-    const visited = new Set<number>();
-    while (this.lineage.has(current)) {
-      if (visited.has(current)) break
-      visited.add(current)
-      const entry = this.lineage.get(current)
-      if (!entry) break
-      chain.unshift(entry.sourceId);
-      current = entry.sourceId;
-    }
-    return chain;
-  }
-
   getGeneration(entityId: number): number {
     return this.lineage.get(entityId)?.generation ?? 0;
   }

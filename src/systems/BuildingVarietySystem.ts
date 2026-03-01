@@ -168,15 +168,6 @@ export class BuildingVarietySystem {
     ctx.restore()
   }
 
-  /** Get building count by era */
-  getCountByEra(): Map<Era, number> {
-    const counts = new Map<Era, number>()
-    for (const b of this.buildings.values()) {
-      counts.set(b.era, (counts.get(b.era) ?? 0) + 1)
-    }
-    return counts
-  }
-
   getBuildingCount(): number {
     return this.buildings.size
   }

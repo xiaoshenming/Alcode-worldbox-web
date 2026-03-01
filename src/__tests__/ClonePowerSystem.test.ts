@@ -136,31 +136,30 @@ describe('ClonePowerSystem.getGeneration', () => {
   })
 })
 
-describe('ClonePowerSystem.getCloneLineage', () => {
-  it('非克隆实体只包含自身', () => {
+describe('ClonePowerSystem lineage数据验证', () => {
+  it('非克隆实体lineage中不存在', () => {
     const cps = makeCPS()
-    expect(cps.getCloneLineage(1)).toEqual([1])
+    expect((cps as any).lineage.has(1)).toBe(false)
   })
 
-  it('一代克隆返回 [source, clone]', () => {
+  it('一代克隆lineage记录正确', () => {
     const cps = makeCPS()
     cps.clone(1, makeStats(), 0, 0)
     const cloneId = (cps as any).nextCloneId - 1
-    const chain = cps.getCloneLineage(cloneId)
-    expect(chain).toHaveLength(2)
-    expect(chain[0]).toBe(1)
-    expect(chain[chain.length - 1]).toBe(cloneId)
+    const entry = (cps as any).lineage.get(cloneId)
+    expect(entry).toBeDefined()
+    expect(entry.sourceId).toBe(1)
+    expect(entry.generation).toBe(1)
   })
 
-  it('深层血统链正确', () => {
+  it('深层blood链lineage数据正确', () => {
     const cps = makeCPS()
-    // 注入 entity1 -> entity2 -> entity3 的血统
     ;(cps as any).lineage.set(2, { sourceId: 1, generation: 1 })
     ;(cps as any).lineage.set(3, { sourceId: 2, generation: 2 })
-    const chain = cps.getCloneLineage(3)
-    expect(chain[0]).toBe(1)
-    expect(chain[1]).toBe(2)
-    expect(chain[2]).toBe(3)
+    const entry3 = (cps as any).lineage.get(3)
+    const entry2 = (cps as any).lineage.get(2)
+    expect(entry3.sourceId).toBe(2)
+    expect(entry2.sourceId).toBe(1)
   })
 })
 

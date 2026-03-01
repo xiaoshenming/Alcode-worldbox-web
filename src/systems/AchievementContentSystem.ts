@@ -46,10 +46,6 @@ export interface Achievement {
   unlockTick: number | null;
 }
 
-export interface AchievementSaveData {
-  unlocked: Record<string, number>;
-}
-
 const DEFS: Omit<Achievement, 'unlocked' | 'unlockTick'>[] = [
   // Creator
   { id: 'first_life', name: 'First Life', description: 'Spawn your first creature', category: 'creator', icon: '\u{1F331}', condition: s => s.totalCreatures >= 1 },
@@ -91,8 +87,6 @@ const DEFS: Omit<Achievement, 'unlocked' | 'unlockTick'>[] = [
 
 export class AchievementContentSystem {
   private achievements: Achievement[];
-  private _unlockedBuf: Achievement[] = [];
-  private _categoryBuf: Achievement[] = [];
   private _newlyBuf: string[] = [];
 
   constructor() {
@@ -109,57 +103,5 @@ export class AchievementContentSystem {
       }
     }
     return newly;
-  }
-
-  getAll(): Achievement[] {
-    return this.achievements;
-  }
-
-  getUnlocked(): Achievement[] {
-    this._unlockedBuf.length = 0
-    for (const a of this.achievements) { if (a.unlocked) this._unlockedBuf.push(a) }
-    return this._unlockedBuf
-  }
-
-  getByCategory(cat: AchievementCategory): Achievement[] {
-    this._categoryBuf.length = 0
-    for (const a of this.achievements) { if (a.category === cat) this._categoryBuf.push(a) }
-    return this._categoryBuf
-  }
-
-  getById(id: string): Achievement | undefined {
-    return this.achievements.find(a => a.id === id);
-  }
-
-  getProgress(id: string): { unlocked: boolean; unlockTick: number | null } {
-    const a = this.getById(id);
-    return a ? { unlocked: a.unlocked, unlockTick: a.unlockTick } : { unlocked: false, unlockTick: null };
-  }
-
-  save(): AchievementSaveData {
-    const unlocked: Record<string, number> = {};
-    for (const a of this.achievements) {
-      if (a.unlocked && a.unlockTick !== null) unlocked[a.id] = a.unlockTick;
-    }
-    return { unlocked };
-  }
-
-  load(data: AchievementSaveData): void {
-    for (const a of this.achievements) {
-      if (data.unlocked[a.id] !== undefined) {
-        a.unlocked = true;
-        a.unlockTick = data.unlocked[a.id];
-      } else {
-        a.unlocked = false;
-        a.unlockTick = null;
-      }
-    }
-  }
-
-  reset(): void {
-    for (const a of this.achievements) {
-      a.unlocked = false;
-      a.unlockTick = null;
-    }
   }
 }

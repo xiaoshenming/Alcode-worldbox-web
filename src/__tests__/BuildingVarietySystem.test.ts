@@ -6,7 +6,6 @@ describe('BuildingVarietySystem', () => {
   let sys: BuildingVarietySystem
   beforeEach(() => { sys = makeSys() })
   it('getBuildingCount初始为0', () => { expect(sys.getBuildingCount()).toBe(0) })
-  it('getCountByEra返回Map', () => { expect(sys.getCountByEra()).toBeInstanceOf(Map) })
   it('getBuildingTypes primitive 返回数组', () => {
     const types = sys.getBuildingTypes('primitive' as Era)
     expect(Array.isArray(types)).toBe(true)
