@@ -38,6 +38,8 @@ const SPREAD_BASE = 0.03
 export class WorldPetrificationSystem {
   private zones: PetrificationZone[] = []
   private petrified: PetrifiedCreature[] = []
+  /** O(1) lookup set for petrified creature IDs — avoids O(n) some() in nested loop */
+  private _petrifiedIds = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -119,7 +121,7 @@ export class WorldPetrificationSystem {
     for (const zone of this.zones) {
       for (const eid of entities) {
         // Already petrified
-        if (this.petrified.some(p => p.creatureId === eid)) continue
+        if (this._petrifiedIds.has(eid)) continue
 
         const pos = em.getComponent<PositionComponent>(eid, 'position')
         if (!pos) continue
@@ -141,6 +143,7 @@ export class WorldPetrificationSystem {
           tick,
           duration: 500 + Math.floor(Math.random() * 2000),
         })
+        this._petrifiedIds.add(eid)
         zone.petrifiedCount++
       }
     }
@@ -163,6 +166,7 @@ export class WorldPetrificationSystem {
         const zone = this.zones.find(z => z.id === p.zoneId)
         if (zone) zone.petrifiedCount = Math.max(0, zone.petrifiedCount - 1)
 
+        this._petrifiedIds.delete(p.creatureId)
         this.petrified.splice(i, 1)
       }
     }
