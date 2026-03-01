@@ -129,7 +129,7 @@ export class ObjectPoolSystem {
     if (this.arrayPool.length > 0) {
       this.arrayHitCount++
       this.arrayActiveCount++
-      return this.arrayPool.pop()! as T[]
+      return (this.arrayPool.pop() ?? []) as T[]
     }
     this.arrayActiveCount++
     return [] as T[]

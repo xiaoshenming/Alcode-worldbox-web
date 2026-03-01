@@ -43,7 +43,7 @@ export class SpatialHashSystem {
         bucket.push(ids[i])
       } else {
         // Reuse pooled bucket or allocate new one
-        const newBucket = this.bucketPool.length > 0 ? this.bucketPool.pop()! : []
+        const newBucket = this.bucketPool.length > 0 ? (this.bucketPool.pop() as number[]) : []
         newBucket.push(ids[i])
         this.cells.set(k, newBucket)
         this.activeBuckets.push(newBucket)

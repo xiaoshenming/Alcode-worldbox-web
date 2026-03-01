@@ -139,7 +139,7 @@ export class MinimapSystem {
   private ensureCache(w: number, h: number): void {
     if (this.cache && this.lastCacheWidth === w && this.lastCacheHeight === h) return
     this.cache = new OffscreenCanvas(w, h)
-    this.cacheCtx = this.cache.getContext('2d')!
+    this.cacheCtx = this.cache.getContext('2d')
     this.lastCacheWidth = w
     this.lastCacheHeight = h
   }

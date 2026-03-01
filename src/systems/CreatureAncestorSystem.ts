@@ -82,7 +82,7 @@ export class CreatureAncestorSystem {
 
   private processDeadHeroes(civManager: CivManagerLike, tick: number): void {
     while (this.deadHeroes.length > 0 && this.ancestors.length < MAX_TOTAL) {
-      const hero = this.deadHeroes.shift()!
+      const hero = this.deadHeroes.shift(); if (!hero) break
       let civAncestorCount = 0
       for (let _ai = 0; _ai < this.ancestors.length; _ai++) {
         if (this.ancestors[_ai].civId === hero.civId) civAncestorCount++

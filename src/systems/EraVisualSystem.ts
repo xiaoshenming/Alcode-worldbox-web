@@ -275,7 +275,7 @@ export class EraVisualSystem {
     const from = this.styles.get(this.currentEra)
     const to = this.styles.get(this.targetEra)
 
-    if (!from || !to) return (to ?? from ?? this.styles.get('stone'))!
+    if (!from || !to) return to ?? from ?? this.styles.get('stone') ?? this._styleBuf
 
     if (this.transitionProgress >= 1.0) return to
     if (this.transitionProgress <= 0) return from

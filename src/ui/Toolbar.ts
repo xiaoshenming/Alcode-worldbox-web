@@ -8,7 +8,9 @@ export class Toolbar {
   private activeCategory: PowerType = PowerType.TERRAIN
 
   constructor(containerId: string, powers: Powers) {
-    this.container = document.getElementById(containerId)!
+    const container = document.getElementById(containerId)
+    if (!container) throw new Error(`#${containerId} not found`)
+    this.container = container
     this.powers = powers
     this.render()
   }

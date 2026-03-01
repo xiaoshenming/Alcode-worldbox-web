@@ -101,7 +101,7 @@ export class WaterAnimationSystem {
         if (i !== last) {
           this.foamParticles[i] = this.foamParticles[last]
         }
-        this._foamPool.push(this.foamParticles.pop()!)
+        const p = this.foamParticles.pop(); if (p) this._foamPool.push(p)
       }
     }
 
@@ -152,10 +152,11 @@ export class WaterAnimationSystem {
       // Ensure cache canvas exists and is correct size
       if (!this.waterCache || this.waterCache.width !== width || this.waterCache.height !== height) {
         this.waterCache = new OffscreenCanvas(width, height)
-        this.waterCacheCtx = this.waterCache.getContext('2d')!
+        this.waterCacheCtx = this.waterCache.getContext('2d')
       }
 
-      const cctx = this.waterCacheCtx!
+      if (!this.waterCacheCtx) return
+      const cctx = this.waterCacheCtx
       cctx.clearRect(0, 0, width, height)
 
       for (let ty = y0; ty <= y1; ty++) {

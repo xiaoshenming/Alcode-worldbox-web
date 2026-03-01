@@ -30,7 +30,9 @@ export class TechTreePanel {
   private nodePositions: Map<string, { x: number; y: number }> = new Map()
 
   constructor(elementId: string, civManager: CivManager) {
-    this.element = document.getElementById(elementId)!
+    const element = document.getElementById(elementId)
+    if (!element) throw new Error(`#${elementId} not found`)
+    this.element = element
     this.civManager = civManager
 
     // Civ selector row

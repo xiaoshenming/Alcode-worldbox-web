@@ -83,7 +83,7 @@ export class LegendaryBattleSystem {
       const cell = grid.get(key)
       if (cell) cell.push(id)
       else {
-        const nc = this._detectCellPool.length > 0 ? this._detectCellPool.pop()! : []
+        const nc = this._detectCellPool.length > 0 ? (this._detectCellPool.pop() as EntityId[]) : []
         nc.push(id); grid.set(key, nc)
       }
     }

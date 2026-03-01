@@ -174,7 +174,7 @@ export class AchievementPopupSystem {
       }
     }
     if (!this.activePopup && this.popupQueue.length > 0) {
-      const id = this.popupQueue.shift()!
+      const id = this.popupQueue.shift(); if (id === undefined) return
       this.activePopup = { achievementId: id, startTick: tick, slideIn: 0, phase: 'enter' }
       this.spawnParticles(id)
     }

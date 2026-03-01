@@ -268,7 +268,7 @@ export class GameUIHelper {
     const pos = this.g.em.getComponent<PositionComponent>(id, 'position')
     if (!pos) return
 
-    const ctx = this.g.canvas.getContext('2d')!
+    const ctx = this.g.canvas.getContext('2d'); if (!ctx) return
     const tileSize = 8 * this.g.camera.zoom
     const offsetX = -this.g.camera.x * this.g.camera.zoom
     const offsetY = -this.g.camera.y * this.g.camera.zoom

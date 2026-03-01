@@ -14,7 +14,9 @@ export class ContextMenu {
   private visible: boolean = false
 
   constructor(elementId: string) {
-    this.el = document.getElementById(elementId)!
+    const el = document.getElementById(elementId)
+    if (!el) throw new Error(`#${elementId} not found`)
+    this.el = el
     document.addEventListener('mousedown', (e) => {
       if (this.visible && !this.el.contains(e.target as Node)) {
         this.hide()

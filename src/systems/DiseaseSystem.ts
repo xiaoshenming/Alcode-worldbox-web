@@ -85,7 +85,7 @@ export class DiseaseSystem {
       if (!pos) continue
       const key = Math.floor(pos.x / 10) * 10000 + Math.floor(pos.y / 10)
       let cell = grid.get(key)
-      if (!cell) { cell = this._outbreakCellPool.length > 0 ? this._outbreakCellPool.pop()! : []; grid.set(key, cell) }
+      if (!cell) { cell = this._outbreakCellPool.length > 0 ? (this._outbreakCellPool.pop() as EntityId[]) : []; grid.set(key, cell) }
       cell.push(id)
     }
 
@@ -135,7 +135,7 @@ export class DiseaseSystem {
       if (!pos) continue
       const key = Math.floor(pos.x / 5) * 10000 + Math.floor(pos.y / 5)
       let cell = grid.get(key)
-      if (!cell) { cell = this._spreadCellPool.length > 0 ? this._spreadCellPool.pop()! : []; grid.set(key, cell) }
+      if (!cell) { cell = this._spreadCellPool.length > 0 ? (this._spreadCellPool.pop() as EntityId[]) : []; grid.set(key, cell) }
       cell.push(id)
     }
 

@@ -23,7 +23,9 @@ export class StatsPanel {
   private lastRenderTick: number = -1
 
   constructor(elementId: string, em: EntityManager, civManager: CivManager) {
-    this.el = document.getElementById(elementId)!
+    const el = document.getElementById(elementId)
+    if (!el) throw new Error(`#${elementId} not found`)
+    this.el = el
     this.em = em
     this.civManager = civManager
 
@@ -129,7 +131,8 @@ export class StatsPanel {
     canvas.style.cssText = 'background:#111;border-radius:4px;width:100%'
     this.el.appendChild(canvas)
 
-    const ctx = canvas.getContext('2d')!
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
     if (this.history.length < 2) {
       ctx.fillStyle = '#888'
       ctx.font = '12px monospace'

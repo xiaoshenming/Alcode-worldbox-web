@@ -192,7 +192,8 @@ export class WorldDashboardSystem {
         ctx.font = '11px monospace';
         ctx.textAlign = midAngle > Math.PI / 2 && midAngle < Math.PI * 1.5 ? 'right' : 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(this._religionRatioStrs.get(name)!, lx, ly);
+        const ratioStr = this._religionRatioStrs.get(name);
+        if (ratioStr !== undefined) ctx.fillText(ratioStr, lx, ly);
       }
 
       startAngle += sweep;
@@ -210,7 +211,8 @@ export class WorldDashboardSystem {
       ctx.fillStyle = color;
       ctx.fillRect(legendX, legendY - 5, 10, 10);
       ctx.fillStyle = '#bbccdd';
-      ctx.fillText(this._religionLegendStrs.get(name)!, legendX + 16, legendY);
+      const legendStr = this._religionLegendStrs.get(name);
+      if (legendStr !== undefined) ctx.fillText(legendStr, legendX + 16, legendY);
       legendY += 18;
     }
 

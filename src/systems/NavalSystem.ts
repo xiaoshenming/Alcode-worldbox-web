@@ -252,7 +252,7 @@ export class NavalSystem {
       if (!pos) continue
       const key = Math.floor(pos.x / 8) * 10000 + Math.floor(pos.y / 8)
       let cell = grid.get(key)
-      if (!cell) { cell = this._combatCellPool.length > 0 ? this._combatCellPool.pop()! : []; grid.set(key, cell) }
+      if (!cell) { cell = this._combatCellPool.length > 0 ? (this._combatCellPool.pop() as EntityId[]) : []; grid.set(key, cell) }
       cell.push(id)
     }
 

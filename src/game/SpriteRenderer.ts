@@ -162,7 +162,7 @@ export class SpriteRenderer {
       const colors = shipColors[st] || ['#888', '#aaa', '#ccc', '#666']
       for (const dir of ['down', 'up', 'left', 'right'] as const) {
         const canvas = this.createSprite(8, 8)
-        const ctx = canvas.getContext('2d')!
+        const ctx = canvas.getContext('2d'); if (!ctx) return
         // Simple ship shape
         ctx.fillStyle = colors[0]
         if (dir === 'down' || dir === 'up') {

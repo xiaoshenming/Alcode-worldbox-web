@@ -22,7 +22,9 @@ export class InfoPanel {
   private prevDiplomacyTick = -1
 
   constructor(elementId: string, world: World, em: EntityManager, civManager: CivManager) {
-    this.element = document.getElementById(elementId)!
+    const element = document.getElementById(elementId)
+    if (!element) throw new Error(`#${elementId} not found`)
+    this.element = element
     this.world = world
     this.em = em
     this.civManager = civManager

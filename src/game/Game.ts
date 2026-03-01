@@ -3589,7 +3589,7 @@ export class Game {
 
     this.renderer.render(this.world, this.camera, this.em, this.civManager, this.particles, this.weather.fogAlpha, this.resources, this.caravanSystem, this.cropSystem)
 
-    const ctx = this.canvas.getContext('2d')!
+    const ctx = this.canvas.getContext('2d'); if (!ctx) return
     const bounds = this.camera.getVisibleBounds()
 
     // Water animation overlay (waves, reflections, foam)

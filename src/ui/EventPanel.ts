@@ -6,7 +6,9 @@ export class EventPanel {
   private maxVisible: number = 8
 
   constructor(elementId: string) {
-    this.el = document.getElementById(elementId)!
+    const el = document.getElementById(elementId)
+    if (!el) throw new Error(`#${elementId} not found`)
+    this.el = el
 
     EventLog.onEvent((e) => {
       this.events.push(e)

@@ -71,7 +71,7 @@ export class PopulationSystem {
       if (!m) continue
       let bucket = map.get(m.civId)
       if (!bucket) {
-        bucket = this._civMembersBuf.length > 0 ? this._civMembersBuf.pop()! : []
+        bucket = this._civMembersBuf.length > 0 ? (this._civMembersBuf.pop() as number[]) : []
         map.set(m.civId, bucket)
       }
       bucket.push(id)

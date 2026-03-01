@@ -12,9 +12,9 @@ import { CropSystem, CropStage } from '../systems/CropSystem'
 
 export class Renderer {
   private canvas: HTMLCanvasElement
-  private ctx: CanvasRenderingContext2D
+  private ctx: CanvasRenderingContext2D | null
   private minimapCanvas: HTMLCanvasElement
-  private minimapCtx: CanvasRenderingContext2D
+  private minimapCtx: CanvasRenderingContext2D | null
   private static readonly _EMPTY_DASH: number[] = []
   // Pre-allocated dash buffers for setLineDash calls (avoids new array every call)
   private static readonly _BRUSH_DASH: number[] = [4, 4]
@@ -25,7 +25,7 @@ export class Renderer {
 
   // Offscreen terrain cache
   private terrainCanvas: OffscreenCanvas
-  private terrainCtx: OffscreenCanvasRenderingContext2D
+  private terrainCtx: OffscreenCanvasRenderingContext2D | null
   private terrainDirty: boolean = true
   private lastCameraX: number = -1
   private lastCameraY: number = -1
@@ -108,12 +108,12 @@ export class Renderer {
 
   constructor(canvas: HTMLCanvasElement, minimapCanvas: HTMLCanvasElement) {
     this.canvas = canvas
-    this.ctx = canvas.getContext('2d')!
+    this.ctx = canvas.getContext('2d')
     this.minimapCanvas = minimapCanvas
-    this.minimapCtx = minimapCanvas.getContext('2d')!
+    this.minimapCtx = minimapCanvas.getContext('2d')
 
     this.terrainCanvas = new OffscreenCanvas(canvas.width || 1920, canvas.height || 1080)
-    this.terrainCtx = this.terrainCanvas.getContext('2d')!
+    this.terrainCtx = this.terrainCanvas.getContext('2d')
     this.sprites = new SpriteRenderer()
   }
 
@@ -121,13 +121,14 @@ export class Renderer {
     this.canvas.width = width
     this.canvas.height = height
     this.terrainCanvas = new OffscreenCanvas(width, height)
-    this.terrainCtx = this.terrainCanvas.getContext('2d')!
+    this.terrainCtx = this.terrainCanvas.getContext('2d')
     this.terrainDirty = true
     this.minimapTerrainDirty = true
   }
 
   render(world: World, camera: Camera, em?: EntityManager, civManager?: CivManager, particles?: ParticleSystem, fogAlpha?: number, resources?: ResourceSystem, caravanSystem?: CaravanSystem, cropSystem?: CropSystem): void {
     const ctx = this.ctx
+    if (!ctx) return
     const bounds = camera.getVisibleBounds()
 
     this.waterOffset += 0.02
@@ -222,6 +223,7 @@ export class Renderer {
     civManager?: CivManager
   ): void {
     const ctx = this.terrainCtx
+    if (!ctx) return
     ctx.fillStyle = '#0a0a1a'
     ctx.fillRect(0, 0, this.terrainCanvas.width, this.terrainCanvas.height)
 
@@ -310,6 +312,7 @@ export class Renderer {
     tileSize: number, offsetX: number, offsetY: number
   ): void {
     const ctx = this.ctx
+    if (!ctx) return
     const shimmerPhase = Math.floor(this.waterOffset * 5) % 3
     if (shimmerPhase !== 0) return
 
@@ -336,6 +339,7 @@ export class Renderer {
     tileSize: number, offsetX: number, offsetY: number
   ): void {
     const ctx = this.ctx
+    if (!ctx) return
     const entities = em.getEntitiesWithComponents('position', 'render')
 
     // --- Batch pass: group simple fallback entities by color to reduce fillStyle switches ---
@@ -637,6 +641,7 @@ export class Renderer {
     tileSize: number, offsetX: number, offsetY: number
   ): void {
     const ctx = this.ctx
+    if (!ctx) return
     if (camera.zoom !== this._lastFontZoom) {
       this._lastFontZoom = camera.zoom
       this._heroFont = `${Math.max(6, 8 * camera.zoom)}px monospace`
@@ -676,6 +681,7 @@ export class Renderer {
     tileSize: number, offsetX: number, offsetY: number
   ): void {
     const ctx = this.ctx
+    if (!ctx) return
     const fields = cropSystem.getCropFields()
     if (fields.length === 0) return
 
@@ -715,6 +721,7 @@ export class Renderer {
 
   private renderParticles(particles: ParticleSystem, camera: Camera): void {
     const ctx = this.ctx
+    if (!ctx) return
     const tileSize = TILE_SIZE * camera.zoom
     const offsetX = -camera.x * camera.zoom
     const offsetY = -camera.y * camera.zoom
@@ -767,6 +774,7 @@ export class Renderer {
     if (!this.showTerritory) return
 
     const ctx = this.ctx
+    if (!ctx) return
     const tileSize = TILE_SIZE * camera.zoom
     const offsetX = -camera.x * camera.zoom
     const offsetY = -camera.y * camera.zoom
@@ -862,6 +870,7 @@ export class Renderer {
     tileSize: number, offsetX: number, offsetY: number
   ): void {
     const ctx = this.ctx
+    if (!ctx) return
     const tileSizeCeil = tileSize + 0.5
 
     // Build set of warring civ pairs
@@ -912,6 +921,7 @@ export class Renderer {
 
   renderBrushOutline(camera: Camera, mouseX: number, mouseY: number, brushSize: number): void {
     const ctx = this.ctx
+    if (!ctx) return
     const world = camera.screenToWorld(mouseX, mouseY)
     const tileSize = TILE_SIZE * camera.zoom
     const offsetX = -camera.x * camera.zoom
@@ -932,6 +942,7 @@ export class Renderer {
 
   renderMinimap(world: World, camera: Camera, em?: EntityManager, civManager?: CivManager): void {
     const ctx = this.minimapCtx
+    if (!ctx) return
     const mw = this.minimapCanvas.width
     const mh = this.minimapCanvas.height
     const scale = mw / world.width
@@ -939,13 +950,14 @@ export class Renderer {
     // Initialize minimap terrain cache if needed
     if (!this.minimapTerrainCanvas || this.minimapTerrainCanvas.width !== mw) {
       this.minimapTerrainCanvas = new OffscreenCanvas(mw, mh)
-      this.minimapTerrainCtx = this.minimapTerrainCanvas.getContext('2d')!
+      this.minimapTerrainCtx = this.minimapTerrainCanvas.getContext('2d')
       this.minimapTerrainDirty = true
     }
 
     // Rebuild terrain cache only when dirty
     if (this.minimapTerrainDirty) {
-      const tctx = this.minimapTerrainCtx!
+      const tctx = this.minimapTerrainCtx
+      if (!tctx) return
       tctx.fillStyle = '#000'
       tctx.fillRect(0, 0, mw, mh)
       for (let y = 0; y < world.height; y += 2) {

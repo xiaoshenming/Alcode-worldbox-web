@@ -237,7 +237,8 @@ export class EcosystemSystem {
       if (!pos || !ai || !needs) continue;
       const rule = this.ruleMap.get(creature.species);
       if (!rule) continue;
-      const rsets = this.ruleSets.get(creature.species)!;
+      const rsets = this.ruleSets.get(creature.species)
+      if (!rsets) continue
 
       // Check for threats first (flee behavior)
       if (rule.fleeFrom.length > 0) {

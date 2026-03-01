@@ -14,7 +14,9 @@ export class CreaturePanel {
   private selectedId: EntityId | null = null
 
   constructor(panelId: string, em: EntityManager, civManager: CivManager) {
-    this.panel = document.getElementById(panelId)!
+    const panel = document.getElementById(panelId)
+    if (!panel) throw new Error(`#${panelId} not found`)
+    this.panel = panel
     this.em = em
     this.civManager = civManager
   }

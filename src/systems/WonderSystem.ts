@@ -109,7 +109,8 @@ export class WonderSystem {
       if (!civ) { this.constructions.splice(i, 1); continue }
       if (tick - con.startedAt < BUILD_DURATION) continue
 
-      const def = WONDER_DEFS.find(d => d.id === con.defId)!
+      const def = WONDER_DEFS.find(d => d.id === con.defId)
+      if (!def) continue
       this.deductResources(civ.resources, def.resourceCost)
       const center = this.findTerritoryCenter(civ.territory)
 

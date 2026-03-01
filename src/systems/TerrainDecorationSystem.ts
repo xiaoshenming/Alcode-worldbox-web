@@ -171,9 +171,10 @@ export class TerrainDecorationSystem {
     if (boundsChanged || this.staticCacheDirty) {
       if (!this.staticCache || this.staticCache.width !== width || this.staticCache.height !== height) {
         this.staticCache = new OffscreenCanvas(width, height);
-        this.staticCacheCtx = this.staticCache.getContext('2d')!;
+        this.staticCacheCtx = this.staticCache.getContext('2d');
       }
-      const sctx = this.staticCacheCtx!;
+      if (!this.staticCacheCtx) return;
+      const sctx = this.staticCacheCtx;
       sctx.clearRect(0, 0, width, height);
 
       for (let ty = sy; ty <= ey; ty++) {
@@ -204,9 +205,10 @@ export class TerrainDecorationSystem {
     if (needsGrassRedraw) {
       if (!this.grassCanvas || this.grassCanvas.width !== width || this.grassCanvas.height !== height) {
         this.grassCanvas = new OffscreenCanvas(width, height);
-        this.grassCtx = this.grassCanvas.getContext('2d')!;
+        this.grassCtx = this.grassCanvas.getContext('2d');
       }
-      const gctx = this.grassCtx!;
+      if (!this.grassCtx) return;
+      const gctx = this.grassCtx;
       gctx.clearRect(0, 0, width, height);
 
       for (let ty = sy; ty <= ey; ty++) {

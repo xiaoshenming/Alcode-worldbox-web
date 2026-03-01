@@ -42,7 +42,7 @@ export class HistoryReplaySystem {
 
     // Evict oldest snapshot and reclaim its civData objects into pool
     if (this.snapshots.length >= MAX_SNAPSHOTS) {
-      const evicted = this.snapshots.shift()!
+      const evicted = this.snapshots.shift(); if (!evicted) return
       for (const obj of evicted.civData) this._civDataPool.push(obj)
       this._civDataPoolNext = Math.max(0, this._civDataPoolNext - evicted.civData.length)
     }
