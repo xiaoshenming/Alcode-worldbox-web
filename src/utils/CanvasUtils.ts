@@ -25,3 +25,41 @@ export function roundRect(
   ctx.quadraticCurveTo(x, y, x + r, y)
   ctx.closePath()
 }
+
+/**
+ * Linearly interpolate between two hex colors (#rrggbb), returning a hex color.
+ * t=0 returns a, t=1 returns b.
+ *
+ * Extracted from TerraformingSystem.
+ */
+export function lerpColorHex(a: string, b: string, t: number): string {
+  const ar = parseInt(a.slice(1, 3), 16)
+  const ag = parseInt(a.slice(3, 5), 16)
+  const ab = parseInt(a.slice(5, 7), 16)
+  const br = parseInt(b.slice(1, 3), 16)
+  const bg = parseInt(b.slice(3, 5), 16)
+  const bb = parseInt(b.slice(5, 7), 16)
+  const r = Math.round(ar + (br - ar) * t)
+  const g = Math.round(ag + (bg - ag) * t)
+  const bl = Math.round(ab + (bb - ab) * t)
+  return '#' + ((1 << 24) | (r << 16) | (g << 8) | bl).toString(16).slice(1)
+}
+
+/**
+ * Linearly interpolate between two hex colors (#rrggbb), returning an rgb() string.
+ * t=0 returns a, t=1 returns b.
+ *
+ * Extracted from EraTransitionSystem.
+ */
+export function lerpColorRgb(a: string, b: string, t: number): string {
+  const ar = parseInt(a.slice(1, 3), 16)
+  const ag = parseInt(a.slice(3, 5), 16)
+  const ab = parseInt(a.slice(5, 7), 16)
+  const br = parseInt(b.slice(1, 3), 16)
+  const bg = parseInt(b.slice(3, 5), 16)
+  const bb = parseInt(b.slice(5, 7), 16)
+  const r = Math.round(ar + (br - ar) * t)
+  const g = Math.round(ag + (bg - ag) * t)
+  const bl = Math.round(ab + (bb - ab) * t)
+  return `rgb(${r},${g},${bl})`
+}

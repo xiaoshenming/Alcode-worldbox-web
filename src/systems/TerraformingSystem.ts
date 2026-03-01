@@ -1,6 +1,7 @@
 import { TileType, TILE_COLORS, TILE_SIZE } from '../utils/Constants'
 import { World } from '../game/World'
 import { ParticleSystem } from './ParticleSystem'
+import { lerpColorHex } from '../utils/CanvasUtils'
 
 export type TerraformEffectType = 'grow' | 'erode' | 'freeze' | 'burn' | 'flood'
 
@@ -133,7 +134,7 @@ export class TerraformingSystem {
         e._lastProgressQ = pq
         const fromColors = TILE_COLORS[e.fromTile]
         const toColors = TILE_COLORS[e.toTile]
-        e._cachedColor = this.lerpColor(fromColors[0], toColors[0], t)
+        e._cachedColor = lerpColorHex(fromColors[0], toColors[0], t)
       }
 
       ctx.globalAlpha = 0.7 + t * 0.3
@@ -161,16 +162,6 @@ export class TerraformingSystem {
   }
 
   // Simple hex color lerp
-  private lerpColor(a: string, b: string, t: number): string {
-    const ar = parseInt(a.slice(1, 3), 16)
-    const ag = parseInt(a.slice(3, 5), 16)
-    const ab = parseInt(a.slice(5, 7), 16)
-    const br = parseInt(b.slice(1, 3), 16)
-    const bg = parseInt(b.slice(3, 5), 16)
-    const bb = parseInt(b.slice(5, 7), 16)
-    const r = Math.round(ar + (br - ar) * t)
-    const g = Math.round(ag + (bg - ag) * t)
-    const bl = Math.round(ab + (bb - ab) * t)
-    return '#' + ((1 << 24) | (r << 16) | (g << 8) | bl).toString(16).slice(1)
-  }
+
+
 }

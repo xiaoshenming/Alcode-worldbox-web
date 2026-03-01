@@ -10,20 +10,20 @@ function makeWorld(width: number, height: number): World {
 describe('hasAdjacentTile', () => {
   it('当相邻tile匹配时返回true', () => {
     const world = makeWorld(5, 5)
-    world.setTile(1, 0, TileType.WATER_DEEP)
-    expect(hasAdjacentTile(world, 1, 1, TileType.WATER_DEEP)).toBe(true)
+    world.setTile(1, 0, TileType.DEEP_WATER)
+    expect(hasAdjacentTile(world, 1, 1, TileType.DEEP_WATER)).toBe(true)
   })
 
   it('当没有相邻tile匹配时返回false', () => {
     const world = makeWorld(5, 5)
-    expect(hasAdjacentTile(world, 2, 2, TileType.WATER_DEEP)).toBe(false)
+    expect(hasAdjacentTile(world, 2, 2, TileType.DEEP_WATER)).toBe(false)
   })
 
   it('不检查自身tile', () => {
     const world = makeWorld(5, 5)
-    world.setTile(2, 2, TileType.WATER_DEEP)
+    world.setTile(2, 2, TileType.DEEP_WATER)
     // 自身是WATER_DEEP但相邻没有WATER_DEEP
-    expect(hasAdjacentTile(world, 2, 2, TileType.WATER_DEEP)).toBe(false)
+    expect(hasAdjacentTile(world, 2, 2, TileType.DEEP_WATER)).toBe(false)
   })
 
   it('检查8个方向', () => {
