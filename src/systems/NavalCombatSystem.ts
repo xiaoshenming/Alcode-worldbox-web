@@ -193,14 +193,15 @@ export class NavalCombatSystem {
 
   /** Render naval battle effects */
   render(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {
+    if (this.battles.size === 0) return
+    // Single save/restore for entire loop — globalAlpha is the only preserved state
+    ctx.save()
+    ctx.globalAlpha = 0.6
     for (const battle of this.battles.values()) {
       const sx = (battle.centerX - camX) * zoom
       const sy = (battle.centerY - camY) * zoom
 
       // Draw battle indicator
-      ctx.save()
-      ctx.globalAlpha = 0.6
-
       if (battle.state === 'broadside') {
         // Cannon smoke puffs
         ctx.fillStyle = '#aaa'
@@ -222,9 +223,8 @@ export class NavalCombatSystem {
         ctx.lineTo(sx - 8, sy + 8)
         ctx.stroke()
       }
-
-      ctx.restore()
     }
+    ctx.restore()
   }
 
   getActiveBattles(): NavalBattle[] {

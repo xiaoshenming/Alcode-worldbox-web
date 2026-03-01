@@ -159,15 +159,21 @@ export class FormationSystem {
       this._lastZoom = zoom
       this._iconFont = `${Math.max(8, 10 * zoom)}px monospace`
     }
+    if (this.formations.size === 0) return
+    // Single save/restore for entire loop — all canvas state is set explicitly per formation
+    ctx.save()
+    ctx.textAlign = 'center'
+    ctx.font = this._iconFont
+    const icons = _FORMATION_ICONS
+    const posX = this._renderPosXBuf
+    const posY = this._renderPosYBuf
     for (const f of this.formations.values()) {
       const sx = (f.centerX * TILE_SIZE - cameraX) * zoom
       const sy = (f.centerY * TILE_SIZE - cameraY) * zoom
 
-      ctx.save()
-
       // Render formation outline using flat buffers (zero object alloc per member)
-      const posX = this._renderPosXBuf; posX.length = 0
-      const posY = this._renderPosYBuf; posY.length = 0
+      posX.length = 0
+      posY.length = 0
       for (let i = 0; i < f.members.length; i++) {
         const hasTarget = this.calcMemberTarget(f, i)
         if (hasTarget) {
@@ -198,9 +204,6 @@ export class FormationSystem {
       // Formation type icon (small label)
       ctx.globalAlpha = 0.8
       ctx.fillStyle = '#fff'
-      ctx.font = this._iconFont
-      ctx.textAlign = 'center'
-      const icons = _FORMATION_ICONS
       ctx.fillText(icons[f.type], sx, sy - 10 * zoom)
 
       // Morale bar
@@ -234,9 +237,8 @@ export class FormationSystem {
       ctx.moveTo(ax, ay)
       ctx.lineTo(ax - Math.cos(f.facing + 0.4) * headLen, ay - Math.sin(f.facing + 0.4) * headLen)
       ctx.stroke()
-
-      ctx.restore()
     }
+    ctx.restore()
   }
 
   getFormationBonus(id: number): { attack: number; defense: number; speed: number } {
