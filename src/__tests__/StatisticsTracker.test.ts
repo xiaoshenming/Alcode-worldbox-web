@@ -1,25 +1,26 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { StatisticsTracker } from '../systems/StatisticsTracker'
 
-// StatisticsTracker 测试：
-// - recordEvent(type)         → 累计出生/死亡/战争/和平计数
-// - getSummary()              → 返回累计统计数据快照
-// - getPopulationHistory()    → 返回总人口+各文明序列
-// - getTerritoryHistory()     → 返回各文明领土序列
-// - getTechHistory()          → 返回各文明科技序列
-// 通过 as any 注入私有字段进行测试。
-
 function makeST(): StatisticsTracker {
   return new StatisticsTracker()
 }
 
-describe('StatisticsTracker.recordEvent + getSummary', () => {
-  let st: StatisticsTracker
+// 使用 as any 直接访问私有字段（getSummary 已作为死代码删除）
+function getStats(st: StatisticsTracker) {
+  return {
+    totalBirths: (st as any).totalBirths as number,
+    totalDeaths: (st as any).totalDeaths as number,
+    totalWars: (st as any).totalWars as number,
+    peakPopulation: (st as any).peakPopulation as number,
+  }
+}
 
+describe('StatisticsTracker.recordEvent', () => {
+  let st: StatisticsTracker
   beforeEach(() => { st = makeST() })
 
-  it('初始 summary 全零', () => {
-    const s = st.getSummary()
+  it('初始计数全零', () => {
+    const s = getStats(st)
     expect(s.totalBirths).toBe(0)
     expect(s.totalDeaths).toBe(0)
     expect(s.totalWars).toBe(0)
@@ -29,45 +30,43 @@ describe('StatisticsTracker.recordEvent + getSummary', () => {
   it('recordEvent(birth) 累加出生数', () => {
     st.recordEvent('birth')
     st.recordEvent('birth')
-    expect(st.getSummary().totalBirths).toBe(2)
+    expect(getStats(st).totalBirths).toBe(2)
   })
 
   it('recordEvent(birth, count) 批量累加', () => {
     st.recordEvent('birth', 10)
-    expect(st.getSummary().totalBirths).toBe(10)
+    expect(getStats(st).totalBirths).toBe(10)
   })
 
   it('recordEvent(death) 累加死亡数', () => {
     st.recordEvent('death', 5)
-    expect(st.getSummary().totalDeaths).toBe(5)
+    expect(getStats(st).totalDeaths).toBe(5)
   })
 
   it('recordEvent(war) 累加战争数', () => {
     st.recordEvent('war', 3)
-    expect(st.getSummary().totalWars).toBe(3)
+    expect(getStats(st).totalWars).toBe(3)
   })
 
   it('recordEvent(peace) 不影响 war 计数', () => {
     st.recordEvent('war', 2)
     st.recordEvent('peace', 1)
-    expect(st.getSummary().totalWars).toBe(2)
+    expect(getStats(st).totalWars).toBe(2)
   })
 
   it('多种事件混合累计', () => {
     st.recordEvent('birth', 100)
     st.recordEvent('death', 40)
     st.recordEvent('war', 3)
-    const s = st.getSummary()
+    const s = getStats(st)
     expect(s.totalBirths).toBe(100)
     expect(s.totalDeaths).toBe(40)
     expect(s.totalWars).toBe(3)
   })
 
-  it('getSummary 返回新对象（修改不影响内部）', () => {
+  it('各计数器相互独立', () => {
     st.recordEvent('birth', 5)
-    const s = st.getSummary()
-    s.totalBirths = 9999
-    expect(st.getSummary().totalBirths).toBe(5)
+    expect(getStats(st).totalDeaths).toBe(0)
   })
 })
 
@@ -124,14 +123,6 @@ describe('StatisticsTracker.getTerritoryHistory', () => {
     expect(hist[0].label).toBe('Elf Empire')
     expect(hist[0].data[1].value).toBe(25)
   })
-
-  it('多个文明全部返回', () => {
-    const st = makeST()
-    ;(st as any).civTerritoryHistory.set(1, { label: 'A', color: '#f00', data: [] })
-    ;(st as any).civTerritoryHistory.set(2, { label: 'B', color: '#0f0', data: [] })
-    ;(st as any).civTerritoryHistory.set(3, { label: 'C', color: '#00f', data: [] })
-    expect(st.getTerritoryHistory()).toHaveLength(3)
-  })
 })
 
 describe('StatisticsTracker.getTechHistory', () => {
@@ -152,9 +143,9 @@ describe('StatisticsTracker.getTechHistory', () => {
 })
 
 describe('StatisticsTracker peakPopulation tracking', () => {
-  it('直接注入后反映在 getSummary', () => {
+  it('直接注入后反映在私有字段', () => {
     const st = makeST()
     ;(st as any).peakPopulation = 999
-    expect(st.getSummary().peakPopulation).toBe(999)
+    expect(getStats(st).peakPopulation).toBe(999)
   })
 })

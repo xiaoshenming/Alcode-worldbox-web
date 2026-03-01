@@ -100,20 +100,6 @@ export class StatisticsTracker {
     return [...this.civTechHistory.values()]
   }
 
-  getSummary(): {
-    totalBirths: number
-    totalDeaths: number
-    totalWars: number
-    peakPopulation: number
-  } {
-    return {
-      totalBirths: this.totalBirths,
-      totalDeaths: this.totalDeaths,
-      totalWars: this.totalWars,
-      peakPopulation: this.peakPopulation,
-    }
-  }
-
   private pushPoint(arr: DataPoint[], tick: number, value: number): void {
     arr.push({ tick, value })
     if (arr.length > MAX_SAMPLES) {
