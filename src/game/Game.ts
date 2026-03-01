@@ -4,14 +4,14 @@ import { Renderer } from './Renderer'
 import { Input } from './Input'
 import { Powers } from './Powers'
 import { GameUIHelper, GameUIContext } from './GameUISetup'
-import { EntityType, TILE_SIZE, TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
+import { TILE_SIZE, TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { Toolbar } from '../ui/Toolbar'
 import { InfoPanel } from '../ui/InfoPanel'
 import { CreaturePanel } from '../ui/CreaturePanel'
 import { EventPanel } from '../ui/EventPanel'
 import { StatsPanel } from '../ui/StatsPanel'
-import { ContextMenu, MenuSection } from '../ui/ContextMenu'
-import { EntityManager, PositionComponent, CreatureComponent, NeedsComponent, HeroComponent, VelocityComponent, GeneticsComponent } from '../ecs/Entity'
+import { ContextMenu } from '../ui/ContextMenu'
+import { EntityManager, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
 import { AISystem } from '../systems/AISystem'
 import { CombatSystem } from '../systems/CombatSystem'
 import { ParticleSystem } from '../systems/ParticleSystem'
@@ -29,7 +29,6 @@ import { DisasterSystem } from '../systems/DisasterSystem'
 import { TimelineSystem } from '../systems/TimelineSystem'
 import { TechSystem } from '../systems/TechSystem'
 import { MigrationSystem } from '../systems/MigrationSystem'
-import { EventLog } from '../systems/EventLog'
 import { ArtifactSystem } from '../systems/ArtifactSystem'
 import { DiseaseSystem } from '../systems/DiseaseSystem'
 import { WorldEventSystem } from '../systems/WorldEventSystem'
@@ -3572,7 +3571,6 @@ export class Game {
           for (let i = 0; i < this._batch46B.length; i++) this._batch46B[i].update(this.tickRate, this.em, tick)
         }
 
-
         // === EVERY TICK: Visual effects and particles (must run every tick) ===
         this.uiHelper.updateVisualEffects()
         this.particles.update()
@@ -3798,7 +3796,6 @@ export class Game {
 
     // Trade fleet - ships and routes on water
     this.tradeFleet.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)
-
 
     // Weather particle effects overlay
     this.weatherParticles.render(ctx, this.canvas.width, this.canvas.height)
@@ -4027,7 +4024,6 @@ export class Game {
     // Creature personality panel (v2.00)
     this.creaturePersonality.render(ctx)
 
-
     // World corruption overlay (v2.07)
     this.worldCorruption.renderOverlay(ctx, this.camera.x, this.camera.y, this.camera.zoom, TILE_SIZE)
 
@@ -4048,7 +4044,6 @@ export class Game {
 
     // Creature mutation notifications (v2.13)
     this.creatureMutation.render(ctx)
-
 
     // World relics (v2.15)
     this.worldRelic.render(ctx, this.camera.x, this.camera.y, this.camera.zoom)

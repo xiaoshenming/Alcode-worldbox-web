@@ -4,7 +4,6 @@
 import {
   Direction,
   PixelGrid,
-  SpriteDef,
   PALETTES,
   CREATURE_SPRITES,
   BUILDING_PALETTES,
