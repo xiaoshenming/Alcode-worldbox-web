@@ -74,7 +74,7 @@ export class CreatureHandicraftSystem {
     const cutoff = tick - 8000
     for (let _i = this.crafts.length - 1; _i >= 0; _i--) {
       const c = this.crafts[_i]
-      if (!((c.tick > cutoff))) this.crafts.splice(_i, 1)
+      if (!(c.tick > cutoff)) this.crafts.splice(_i, 1)
     }
   }
 

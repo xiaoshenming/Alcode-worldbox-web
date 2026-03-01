@@ -89,7 +89,7 @@ export class DiplomaticTariffSystem {
 
     for (let _i = this.tariffs.length - 1; _i >= 0; _i--) {
       const t = this.tariffs[_i]
-      if (!((t.rate > 0.01))) this.tariffs.splice(_i, 1)
+      if (!(t.rate > 0.01)) this.tariffs.splice(_i, 1)
     }
   }
 

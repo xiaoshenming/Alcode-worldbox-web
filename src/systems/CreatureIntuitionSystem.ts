@@ -123,7 +123,7 @@ export class CreatureIntuitionSystem {
     if (this.intuitions.length <= MAX_INTUITIONS) return
     for (let _i = this.intuitions.length - 1; _i >= 0; _i--) {
       const i = this.intuitions[_i]
-      if (!((!i.triggered))) this.intuitions.splice(_i, 1)
+      if (!!i.triggered) this.intuitions.splice(_i, 1)
     }
     if (this.intuitions.length > MAX_INTUITIONS) {
       this.intuitions.splice(0, this.intuitions.length - MAX_INTUITIONS)

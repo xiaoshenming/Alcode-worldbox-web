@@ -82,7 +82,7 @@ export class DiplomaticSanctionSystem {
     if (this.sanctions.length > MAX_SANCTIONS * 2) {
       for (let _i = this.sanctions.length - 1; _i >= 0; _i--) {
       const s = this.sanctions[_i]
-      if (!((s.active))) this.sanctions.splice(_i, 1)
+      if (!s.active) this.sanctions.splice(_i, 1)
     }
     }
 

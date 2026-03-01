@@ -51,7 +51,7 @@ export class WorldSolfataraSystem {
 
     for (let _i = this.solfataras.length - 1; _i >= 0; _i--) {
       const s = this.solfataras[_i]
-      if (!((s.sulfurOutput < 100))) this.solfataras.splice(_i, 1)
+      if (!(s.sulfurOutput < 100)) this.solfataras.splice(_i, 1)
     }
   }
 

@@ -71,7 +71,7 @@ export class WorldEclipseSystem {
   private expireEclipses(tick: number): void {
     for (let _i = this.eclipses.length - 1; _i >= 0; _i--) {
       const e = this.eclipses[_i]
-      if (!((tick - e.startTick < e.duration))) this.eclipses.splice(_i, 1)
+      if (!(tick - e.startTick < e.duration)) this.eclipses.splice(_i, 1)
     }
   }
 

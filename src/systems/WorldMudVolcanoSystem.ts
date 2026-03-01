@@ -53,7 +53,7 @@ export class WorldMudVolcanoSystem {
 
     for (let _i = this.volcanos.length - 1; _i >= 0; _i--) {
       const v = this.volcanos[_i]
-      if (!((v.dormancy < 100))) this.volcanos.splice(_i, 1)
+      if (!(v.dormancy < 100)) this.volcanos.splice(_i, 1)
     }
   }
 

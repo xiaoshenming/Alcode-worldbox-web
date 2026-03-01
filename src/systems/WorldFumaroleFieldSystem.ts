@@ -54,7 +54,7 @@ export class WorldFumaroleFieldSystem {
 
     for (let _i = this.fields.length - 1; _i >= 0; _i--) {
       const f = this.fields[_i]
-      if (!((f.age < 95))) this.fields.splice(_i, 1)
+      if (!(f.age < 95)) this.fields.splice(_i, 1)
     }
   }
 

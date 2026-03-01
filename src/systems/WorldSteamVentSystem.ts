@@ -54,7 +54,7 @@ export class WorldSteamVentSystem {
 
     for (let _i = this.vents.length - 1; _i >= 0; _i--) {
       const v = this.vents[_i]
-      if (!((v.age < 92))) this.vents.splice(_i, 1)
+      if (!(v.age < 92)) this.vents.splice(_i, 1)
     }
   }
 

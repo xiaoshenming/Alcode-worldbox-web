@@ -123,7 +123,7 @@ export class CreatureRitualSystem {
     if (this.rituals.length <= MAX_RITUALS) return
     for (let _i = this.rituals.length - 1; _i >= 0; _i--) {
       const r = this.rituals[_i]
-      if (!((r.progress < 100))) this.rituals.splice(_i, 1)
+      if (!(r.progress < 100)) this.rituals.splice(_i, 1)
     }
     if (this.rituals.length > MAX_RITUALS) {
       this.rituals.splice(0, this.rituals.length - MAX_RITUALS)

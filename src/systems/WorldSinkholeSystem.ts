@@ -84,7 +84,7 @@ export class WorldSinkholeSystem {
 
     for (let _i = this.sinkholes.length - 1; _i >= 0; _i--) {
       const s = this.sinkholes[_i]
-      if (!((s.stage !== 'filled'))) this.sinkholes.splice(_i, 1)
+      if (!(s.stage !== 'filled')) this.sinkholes.splice(_i, 1)
     }
   }
 

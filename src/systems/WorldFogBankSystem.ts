@@ -95,7 +95,7 @@ export class WorldFogBankSystem {
     // Remove dissipated fogs
     for (let _i = this.fogs.length - 1; _i >= 0; _i--) {
       const f = this.fogs[_i]
-      if (!((f.visibility < 95 && f.radius > 1))) this.fogs.splice(_i, 1)
+      if (!(f.visibility < 95 && f.radius > 1)) this.fogs.splice(_i, 1)
     }
   }
 

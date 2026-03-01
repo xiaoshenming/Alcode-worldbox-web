@@ -66,7 +66,7 @@ export class DiplomaticConciliationSystem {
 
     for (let _i = this.processes.length - 1; _i >= 0; _i--) {
       const p = this.processes[_i]
-      if (!((p.phase !== 'collapsed' && p.duration < 200))) this.processes.splice(_i, 1)
+      if (!(p.phase !== 'collapsed' && p.duration < 200)) this.processes.splice(_i, 1)
     }
   }
 

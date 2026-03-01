@@ -54,7 +54,7 @@ export class WorldMudPotSystem {
 
     for (let _i = this.pots.length - 1; _i >= 0; _i--) {
       const p = this.pots[_i]
-      if (!((p.age < 90))) this.pots.splice(_i, 1)
+      if (!(p.age < 90)) this.pots.splice(_i, 1)
     }
   }
 

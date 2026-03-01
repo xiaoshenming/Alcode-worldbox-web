@@ -54,7 +54,7 @@ export class WorldPhreaticExplosionSystem {
 
     for (let _i = this.explosions.length - 1; _i >= 0; _i--) {
       const e = this.explosions[_i]
-      if (!((e.age < 80))) this.explosions.splice(_i, 1)
+      if (!(e.age < 80)) this.explosions.splice(_i, 1)
     }
   }
 

@@ -89,7 +89,7 @@ export class SeasonFestivalSystem {
     }
     for (let _i = this.festivals.length - 1; _i >= 0; _i--) {
       const f = this.festivals[_i]
-      if (!((f.active))) this.festivals.splice(_i, 1)
+      if (!f.active) this.festivals.splice(_i, 1)
     }
 
     // Try to start new festivals

@@ -57,7 +57,7 @@ export class WorldAcousticSystem {
     // Remove expired sounds
     for (let _i = this.sounds.length - 1; _i >= 0; _i--) {
       const s = this.sounds[_i]
-      if (!((tick - s.startedAt < s.duration))) this.sounds.splice(_i, 1)
+      if (!(tick - s.startedAt < s.duration)) this.sounds.splice(_i, 1)
     }
     if (this.sounds.length >= MAX_SOUNDS) return
 

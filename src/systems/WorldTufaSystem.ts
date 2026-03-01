@@ -54,7 +54,7 @@ export class WorldTufaSystem {
 
     for (let _i = this.towers.length - 1; _i >= 0; _i--) {
       const t = this.towers[_i]
-      if (!((t.age < 97))) this.towers.splice(_i, 1)
+      if (!(t.age < 97)) this.towers.splice(_i, 1)
     }
   }
 

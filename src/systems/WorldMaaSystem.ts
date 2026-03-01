@@ -51,7 +51,7 @@ export class WorldMaarSystem {
 
     for (let _i = this.maars.length - 1; _i >= 0; _i--) {
       const m = this.maars[_i]
-      if (!((m.age < 100))) this.maars.splice(_i, 1)
+      if (!(m.age < 100)) this.maars.splice(_i, 1)
     }
   }
 

@@ -54,7 +54,7 @@ export class WorldTravertineSystem {
 
     for (let _i = this.formations.length - 1; _i >= 0; _i--) {
       const f = this.formations[_i]
-      if (!((f.age < 98))) this.formations.splice(_i, 1)
+      if (!(f.age < 98)) this.formations.splice(_i, 1)
     }
   }
 

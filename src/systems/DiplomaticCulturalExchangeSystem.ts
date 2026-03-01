@@ -91,7 +91,7 @@ export class DiplomaticCulturalExchangeSystem {
   private expireExchanges(tick: number): void {
     for (let _i = this.exchanges.length - 1; _i >= 0; _i--) {
       const e = this.exchanges[_i]
-      if (!((tick - e.startTick < e.duration))) this.exchanges.splice(_i, 1)
+      if (!(tick - e.startTick < e.duration)) this.exchanges.splice(_i, 1)
     }
   }
 

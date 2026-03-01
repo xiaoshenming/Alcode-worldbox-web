@@ -54,7 +54,7 @@ export class WorldSiliceousSinterSystem {
 
     for (let _i = this.deposits.length - 1; _i >= 0; _i--) {
       const d = this.deposits[_i]
-      if (!((d.age < 97))) this.deposits.splice(_i, 1)
+      if (!(d.age < 97)) this.deposits.splice(_i, 1)
     }
   }
 

@@ -95,7 +95,7 @@ export class WorldTidalWaveSystem {
   private expireWaves(tick: number): void {
     for (let _i = this.waves.length - 1; _i >= 0; _i--) {
       const w = this.waves[_i]
-      if (!((tick - w.startTick < w.duration))) this.waves.splice(_i, 1)
+      if (!(tick - w.startTick < w.duration)) this.waves.splice(_i, 1)
     }
   }
 

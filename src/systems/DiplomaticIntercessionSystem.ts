@@ -63,7 +63,7 @@ export class DiplomaticIntercessionSystem {
 
     for (let _i = this.actions.length - 1; _i >= 0; _i--) {
       const a = this.actions[_i]
-      if (!((a.result === 'active'))) this.actions.splice(_i, 1)
+      if (!(a.result === 'active')) this.actions.splice(_i, 1)
     }
   }
 

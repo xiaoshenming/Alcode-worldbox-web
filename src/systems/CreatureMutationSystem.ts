@@ -66,7 +66,7 @@ export class CreatureMutationSystem {
     // Fade recent mutation notifications
     for (let _i = this.recentMutations.length - 1; _i >= 0; _i--) {
       const r = this.recentMutations[_i]
-      if (!((tick < r.fadeTick))) this.recentMutations.splice(_i, 1)
+      if (!(tick < r.fadeTick)) this.recentMutations.splice(_i, 1)
     }
 
     if (tick < this.nextCheckTick) return

@@ -54,7 +54,7 @@ export class WorldSinterSystem {
 
     for (let _i = this.formations.length - 1; _i >= 0; _i--) {
       const f = this.formations[_i]
-      if (!((f.age < 94))) this.formations.splice(_i, 1)
+      if (!(f.age < 94)) this.formations.splice(_i, 1)
     }
   }
 

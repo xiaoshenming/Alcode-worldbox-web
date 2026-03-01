@@ -66,7 +66,7 @@ export class DiplomaticAdjudicationSystem {
 
     for (let _i = this.cases.length - 1; _i >= 0; _i--) {
       const c = this.cases[_i]
-      if (!((c.verdict === 'pending' || c.duration < 80))) this.cases.splice(_i, 1)
+      if (!(c.verdict === 'pending' || c.duration < 80)) this.cases.splice(_i, 1)
     }
   }
 

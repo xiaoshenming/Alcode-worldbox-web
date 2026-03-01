@@ -264,7 +264,7 @@ export class EspionageSystem {
               this.tributeRefused(weak, strong, civManager, tick)
               for (let _i = this.tributes.length - 1; _i >= 0; _i--) {
       const t = this.tributes[_i]
-      if (!((!(t.fromCivId === weak.id && t.toCivId === strong.id)))) this.tributes.splice(_i, 1)
+      if (!(!(t.fromCivId === weak.id && t.toCivId === strong.id))) this.tributes.splice(_i, 1)
     }
             }
             continue

@@ -65,7 +65,7 @@ export class CreatureCalligraphySystem {
     const cutoff = tick - 8000
     for (let _i = this.works.length - 1; _i >= 0; _i--) {
       const w = this.works[_i]
-      if (!((w.preserved || w.tick > cutoff))) this.works.splice(_i, 1)
+      if (!(w.preserved || w.tick > cutoff)) this.works.splice(_i, 1)
     }
 
     // Clean skill map for dead creatures

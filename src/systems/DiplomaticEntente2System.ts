@@ -62,7 +62,7 @@ export class DiplomaticEntente2System {
 
     for (let _i = this.ententes.length - 1; _i >= 0; _i--) {
       const e = this.ententes[_i]
-      if (!((e.level !== 'allied' || e.duration < 200))) this.ententes.splice(_i, 1)
+      if (!(e.level !== 'allied' || e.duration < 200)) this.ententes.splice(_i, 1)
     }
   }
 

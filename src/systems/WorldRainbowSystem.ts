@@ -57,7 +57,7 @@ export class WorldRainbowSystem {
   private expireRainbows(tick: number): void {
     for (let _i = this.rainbows.length - 1; _i >= 0; _i--) {
       const r = this.rainbows[_i]
-      if (!((tick - r.startTick < r.duration))) this.rainbows.splice(_i, 1)
+      if (!(tick - r.startTick < r.duration)) this.rainbows.splice(_i, 1)
     }
   }
 

@@ -54,7 +54,7 @@ export class WorldHotPoolSystem {
 
     for (let _i = this.pools.length - 1; _i >= 0; _i--) {
       const p = this.pools[_i]
-      if (!((p.age < 93))) this.pools.splice(_i, 1)
+      if (!(p.age < 93)) this.pools.splice(_i, 1)
     }
   }
 

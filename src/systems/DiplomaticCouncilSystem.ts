@@ -140,7 +140,7 @@ export class DiplomaticCouncilSystem {
     if (this.councils.length <= MAX_COUNCILS) return
     for (let _i = this.councils.length - 1; _i >= 0; _i--) {
       const c = this.councils[_i]
-      if (!((!c.resolved))) this.councils.splice(_i, 1)
+      if (!!c.resolved) this.councils.splice(_i, 1)
     }
     if (this.councils.length > MAX_COUNCILS) {
       this.councils.splice(0, this.councils.length - MAX_COUNCILS)

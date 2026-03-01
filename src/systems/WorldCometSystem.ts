@@ -139,7 +139,7 @@ export class WorldCometSystem {
   private removeExpired(tick: number): void {
     for (let _i = this.comets.length - 1; _i >= 0; _i--) {
       const c = this.comets[_i]
-      if (!((tick - c.startTick < c.duration))) this.comets.splice(_i, 1)
+      if (!(tick - c.startTick < c.duration)) this.comets.splice(_i, 1)
     }
   }
 
