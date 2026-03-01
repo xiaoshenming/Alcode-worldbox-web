@@ -36,6 +36,8 @@ export class RenderCullingSystem {
     culledEntities: 0,
     cullingRatio: 0,
   };
+  /** Reusable tile bounds object — avoids per-call allocation in getVisibleTileBounds */
+  private _tileBounds: TileBounds = { startX: 0, startY: 0, endX: 0, endY: 0 };
 
   constructor() {
     this.updateChunkGrid();
@@ -104,12 +106,11 @@ export class RenderCullingSystem {
   }
 
   getVisibleTileBounds(): TileBounds {
-    return {
-      startX: Math.max(0, Math.floor(this.vpX)),
-      startY: Math.max(0, Math.floor(this.vpY)),
-      endX: Math.min(this.worldW - 1, Math.ceil(this.vpX + this.vpW)),
-      endY: Math.min(this.worldH - 1, Math.ceil(this.vpY + this.vpH)),
-    };
+    this._tileBounds.startX = Math.max(0, Math.floor(this.vpX));
+    this._tileBounds.startY = Math.max(0, Math.floor(this.vpY));
+    this._tileBounds.endX = Math.min(this.worldW - 1, Math.ceil(this.vpX + this.vpW));
+    this._tileBounds.endY = Math.min(this.worldH - 1, Math.ceil(this.vpY + this.vpH));
+    return this._tileBounds;
   }
 
   shouldRenderDetail(x: number, y: number): boolean {
