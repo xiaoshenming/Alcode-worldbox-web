@@ -54,15 +54,6 @@ export class CityLayoutSystem {
   private _closedSet = new Set<number>()
   private _roadEndsSet = new Set<number>()
 
-  /** 更新/注册城市数据并标记需要重算布局 */
-  updateCity(city: CityData, getTerrain: (x: number, y: number) => number): void {
-    this.cities.set(city.id, city)
-    const layout = this.getOrCreate(city.id)
-    layout.level = this.calcLevel(city)
-    layout.dirty = true
-    this.rebuildLayout(city, getTerrain, layout)
-  }
-
   removeCity(cityId: number): void {
     this.layouts.delete(cityId)
     this.cities.delete(cityId)

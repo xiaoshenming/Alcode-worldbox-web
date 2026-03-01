@@ -118,31 +118,6 @@ export class CustomSpeciesSystem {
     } catch { /* noop */ }
   }
 
-  handleInput(key: string): void {
-    if (!this.panelOpen || !this.activeField) return;
-    if (this.activeField === 'name') {
-      if (key === 'Backspace') this.editName = this.editName.slice(0, -1);
-      else if (key === 'Enter' || key === 'Escape') this.activeField = null;
-      else if (key.length === 1 && this.editName.length < 16) this.editName += key;
-    } else if (this.activeField === 'color') {
-      if (key === 'Backspace') this.editColor = this.editColor.slice(0, -1);
-      else if (key === 'Enter' || key === 'Escape') this.activeField = null;
-      else if (key.length === 1 && this.editColor.length < 7) this.editColor += key;
-    }
-  }
-
-  handleDrag(x: number, y: number): boolean {
-    if (!this.panelOpen || !this.draggingSlider) return false;
-    const def = SLIDERS.find(s => s.key === this.draggingSlider);
-    if (!def) return false;
-    const sliderX = this.panelX + 70;
-    const sliderW = PANEL_W - 70 - PAD - 40;
-    const ratio = Math.max(0, Math.min(1, (x - sliderX) / sliderW));
-    const raw = def.min + ratio * (def.max - def.min);
-    this.editValues[def.key] = Math.round(raw / def.step) * def.step;
-    return true;
-  }
-
   render(ctx: CanvasRenderingContext2D, screenW: number, screenH: number): void {
     if (!this.panelOpen) return;
     const px = (screenW - PANEL_W) / 2;

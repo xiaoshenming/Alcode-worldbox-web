@@ -170,44 +170,6 @@ export class CreatureSkillSystem {
     return false
   }
 
-  handleMouseDown(mx: number, my: number): boolean {
-    if (!this.visible) return false
-    const px = this.panelX, py = this.panelY
-    // 标题栏拖拽
-    if (mx >= px && mx <= px + PANEL_W && my >= py && my <= py + HEADER_H) {
-      this.dragging = true
-      this.dragOX = mx - px
-      this.dragOY = my - py
-      return true
-    }
-    // 分支标签切换
-    if (my >= py + HEADER_H && my <= py + HEADER_H + TAB_H) {
-      const tabW = PANEL_W / BRANCHES.length
-      for (let i = 0; i < BRANCHES.length; i++) {
-        if (mx >= px + i * tabW && mx < px + (i + 1) * tabW) {
-          this.activeBranch = BRANCHES[i]
-          return true
-        }
-      }
-    }
-    // 技能点击解锁
-    if (mx >= px && mx <= px + PANEL_W && my >= py + HEADER_H + TAB_H && my <= py + PANEL_H) {
-      this.handleSkillClick(mx, my)
-      return true
-    }
-    return false
-  }
-
-  handleMouseMove(mx: number, my: number): boolean {
-    if (this.dragging) { this.panelX = mx - this.dragOX; this.panelY = my - this.dragOY; return true }
-    return false
-  }
-
-  handleMouseUp(): boolean {
-    if (this.dragging) { this.dragging = false; return true }
-    return false
-  }
-
   /* ── 渲染 ── */
 
   render(ctx: CanvasRenderingContext2D): void {

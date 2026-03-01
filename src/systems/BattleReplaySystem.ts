@@ -42,8 +42,6 @@ const STATS_H = 220;
 
 export class BattleReplaySystem {
   private records: BattleRecord[] = [];
-  private recording: BattleRecord | null = null;
-  private framePool: BattleFrame[] = [];
   private replaying = false;
   private replayIndex = -1;
   private replayFrame = 0;
@@ -59,55 +57,6 @@ export class BattleReplaySystem {
   private _prevFrameTotal = -1;
   private _speedStr = '1x';
   private _prevSpeed = -1;
-
-  constructor() {
-    for (let i = 0; i < MAX_FRAMES; i++) {
-      this.framePool.push({ tick: 0, units: [], attacks: [] });
-    }
-  }
-
-  // ── 录制 API ──
-
-  startRecording(battleId: number, sides: Array<{civId: number; name: string; color: string}>): void {
-    if (this.recording) return;
-    this.recording = {
-      id: battleId, startTick: 0, endTick: 0, frames: [],
-      sides: sides.map(s => ({ ...s, startCount: 0, endCount: 0, kills: 0, deployStr: '' })),
-      winner: -1, winnerStr: '', durationStr: '', mvpStr: ''
-    };
-  }
-
-  stopRecording(winnerId: number): void {
-    const rec = this.recording;
-    if (!rec) return;
-    rec.winner = winnerId;
-    const last = rec.frames[rec.frames.length - 1];
-    if (last) {
-      for (const side of rec.sides) {
-        let cnt = 0;
-        for (const u of last.units) { if (u.side === side.civId && u.alive) cnt++ }
-        side.endCount = cnt;
-      }
-      if (rec.sides.length >= 2) {
-        rec.sides[0].kills = rec.sides[1].startCount - rec.sides[1].endCount;
-        rec.sides[1].kills = rec.sides[0].startCount - rec.sides[0].endCount;
-      }
-    }
-    // Pre-compute display strings — all data is now finalized
-    for (const side of rec.sides) {
-      side.deployStr = `Deployed: ${side.startCount}  Survived: ${side.endCount}  Kills: ${side.kills}`
-    }
-    const winSide = rec.sides.find(s => s.civId === rec.winner)
-    rec.winnerStr = winSide ? `Winner: ${winSide.name}` : ''
-    rec.durationStr = `Duration: ${rec.endTick - rec.startTick} ticks`
-    const mvp = this.findMVP(rec)
-    rec.mvpStr = mvp ? `MVP: Unit #${mvp.id} (${mvp.dmg} dmg dealt)` : ''
-    if (this.records.length >= MAX_RECORDS) this.records.shift();
-    this.records.push(rec);
-    this.recording = null;
-  }
-
-  isRecording(): boolean { return this.recording !== null; }
 
   // ── 回放 API ──
 
@@ -130,18 +79,6 @@ export class BattleReplaySystem {
   }
 
   isReplaying(): boolean { return this.replaying; }
-
-  seekTo(frameIndex: number): void {
-    const rec = this.currentRecord();
-    if (rec) this.replayFrame = Math.max(0, Math.min(frameIndex, rec.frames.length - 1));
-  }
-
-  stepForward(): void {
-    const rec = this.currentRecord();
-    if (rec && this.replayFrame < rec.frames.length - 1) this.replayFrame++;
-  }
-
-  stepBackward(): void { if (this.replayFrame > 0) this.replayFrame--; }
 
   // ── 更新 ──
 

@@ -108,21 +108,6 @@ export class CreatureEmotionSystem {
   }
 
   /**
-   * 清除实体的所有情绪
-   *
-   * @param entityId - 实体 ID
-   */
-  clearEmotion(entityId: number): void {
-    const list = this.emotions.get(entityId);
-    if (list) {
-      // 触发淡出而非立即移除
-      for (let i = 0; i < list.length; i++) {
-        list[i].fadingOut = true;
-      }
-    }
-  }
-
-  /**
    * 每 tick 更新所有情绪的动画状态（透明度、过期检测）
    *
    * @param tick - 当前游戏 tick

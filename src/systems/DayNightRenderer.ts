@@ -1,9 +1,8 @@
 /**
  * DayNightRenderer — 昼夜光照渲染系统
- * 在主渲染循环中调用，叠加昼夜光照、火把光源和月光效果。
+ * 在主渲染循环中调用，叠加昼夜光照和月光效果。
  */
 
-const TORCH_BUILDING_TYPES = new Set(['TOWER', 'CASTLE', 'TEMPLE']);
 const CYCLE_REDRAW_THRESHOLD = 0.005;
 
 /**
@@ -34,7 +33,6 @@ export class DayNightRenderer {
   private cachedIsDay = true;
   private cachedWidth = 0;
   private cachedHeight = 0;
-  private flickerTime = 0;
 
   /** Reusable overlay object — avoids allocating a new {r,g,b,a} every frame */
   private readonly _overlay = { r: 0, g: 0, b: 0, a: 0 };
@@ -131,54 +129,4 @@ export class DayNightRenderer {
     }
   }
 
-  /** 火把光源渲染 — 只渲染视口内的建筑 */
-  renderTorchLights(
-    ctx: CanvasRenderingContext2D,
-    buildings: Array<{ x: number; y: number; type: string }>,
-    camera: { x: number; y: number; zoom: number },
-    tileSize: number
-  ): void {
-    this.flickerTime += 0.02;
-
-    const viewLeft = camera.x;
-    const viewTop = camera.y;
-    const viewRight = camera.x + ctx.canvas.width / camera.zoom;
-    const viewBottom = camera.y + ctx.canvas.height / camera.zoom;
-    const margin = 3; // 额外 tile 余量
-
-    const prev = ctx.globalCompositeOperation;
-    ctx.globalCompositeOperation = 'lighter';
-
-    for (const b of buildings) {
-      if (!TORCH_BUILDING_TYPES.has(b.type)) continue;
-
-      // 视口裁剪
-      if (
-        b.x < viewLeft - margin || b.x > viewRight + margin ||
-        b.y < viewTop - margin || b.y > viewBottom + margin
-      ) continue;
-
-      const sx = (b.x - camera.x) * tileSize * camera.zoom + tileSize * camera.zoom * 0.5;
-      const sy = (b.y - camera.y) * tileSize * camera.zoom + tileSize * camera.zoom * 0.5;
-
-      // 闪烁：每个建筑用不同相位
-      const phase = (b.x * 7 + b.y * 13) % 6.28;
-      const flicker = 0.85 + 0.15 * Math.sin(this.flickerTime * 3 + phase);
-      const radius = tileSize * camera.zoom * 2.5 * flicker;
-
-      // Two overlapping arcs replace createRadialGradient to avoid per-building gradient allocation
-      ctx.globalAlpha = 0.18 * flicker;
-      ctx.fillStyle = 'rgb(255,160,40)';
-      ctx.beginPath();
-      ctx.arc(sx, sy, radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 0.35 * flicker;
-      ctx.fillStyle = 'rgb(255,200,80)';
-      ctx.beginPath();
-      ctx.arc(sx, sy, radius * 0.4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.globalCompositeOperation = prev;
-  }
 }

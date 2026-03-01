@@ -134,16 +134,4 @@ export class CreatureIntuitionSystem {
     }
   }
 
-  private _activeIntuitionsBuf: Intuition[] = []
-  private _senseBuf: Intuition[] = []
-  getActiveIntuitions(): Intuition[] {
-    this._activeIntuitionsBuf.length = 0
-    for (const i of this.intuitions) { if (!i.triggered) this._activeIntuitionsBuf.push(i) }
-    return this._activeIntuitionsBuf
-  }
-  getIntuitionsBySense(sense: IntuitionSense): Intuition[] {
-    this._senseBuf.length = 0
-    for (const i of this.intuitions) { if (i.sense === sense) this._senseBuf.push(i) }
-    return this._senseBuf
-  }
 }

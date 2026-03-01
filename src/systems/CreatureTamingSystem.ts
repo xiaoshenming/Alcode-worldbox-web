@@ -69,22 +69,6 @@ export class CreatureTamingSystem {
 
   /* ── 公共 API ── */
 
-  /** 开始驯化 */
-  startTaming(ownerId: number, animalId: number, animalType: AnimalType, tick: number): void {
-    // 检查是否已在驯化
-    if (this.records.some(r => r.animalId === animalId)) return
-    const name = NAMES[Math.floor(Math.random() * NAMES.length)]
-    const info = ANIMAL_INFO[animalType]
-    this.records.push({
-      animalId, ownerId, animalType, state: TameState.Taming,
-      progress: 0, progressStr: '0',
-      startTick: tick,
-      name,
-      loyalty: 0.3,
-      nameLabel: `${name} (${info.label})`,
-    })
-  }
-
   private _tamedAnimalsBuf: TameRecord[] = []
   /** 获取某生物的驯化动物 */
   getTamedAnimals(ownerId: number): readonly TameRecord[] {
@@ -122,8 +106,6 @@ export class CreatureTamingSystem {
     }
   }
 
-  setSelectedOwner(id: number): void { this.selectedOwner = id }
-
   /* ── 更新 ── */
 
   update(tick: number): void {
@@ -158,32 +140,6 @@ export class CreatureTamingSystem {
     if (e.shiftKey && e.key.toUpperCase() === 'T') {
       this.visible = !this.visible
       this.scrollY = 0
-      return true
-    }
-    return false
-  }
-
-  handleMouseDown(mx: number, my: number): boolean {
-    if (!this.visible) return false
-    if (mx >= this.panelX && mx <= this.panelX + PANEL_W && my >= this.panelY && my <= this.panelY + HEADER_H) {
-      this.dragging = true; this.dragOX = mx - this.panelX; this.dragOY = my - this.panelY; return true
-    }
-    return mx >= this.panelX && mx <= this.panelX + PANEL_W && my >= this.panelY && my <= this.panelY + PANEL_H
-  }
-
-  handleMouseMove(mx: number, my: number): boolean {
-    if (this.dragging) { this.panelX = mx - this.dragOX; this.panelY = my - this.dragOY; return true }
-    return false
-  }
-
-  handleMouseUp(): boolean { if (this.dragging) { this.dragging = false; return true } return false }
-
-  handleWheel(mx: number, my: number, dy: number): boolean {
-    if (!this.visible) return false
-    if (mx >= this.panelX && mx <= this.panelX + PANEL_W && my >= this.panelY + HEADER_H && my <= this.panelY + PANEL_H) {
-      let count = 0
-      for (const r of this.records) { if (r.ownerId === this.selectedOwner) count++ }
-      this.scrollY = clamp(this.scrollY + dy * 0.5, 0, Math.max(0, count * ROW_H - (PANEL_H - HEADER_H)))
       return true
     }
     return false

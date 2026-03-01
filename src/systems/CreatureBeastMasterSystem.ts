@@ -94,8 +94,4 @@ export class CreatureBeastMasterSystem {
     for (const r of this.records) { if (r.masterId === masterId) this._bondsBuf.push(r) }
     return this._bondsBuf
   }
-  getAverageLoyalty(): number {
-    if (this.records.length === 0) return 0
-    let s = 0; for (const r of this.records) s += r.loyalty; return s / this.records.length
-  }
 }

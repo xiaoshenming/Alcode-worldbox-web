@@ -162,43 +162,6 @@ export class CreatureMemorySystem {
     return false
   }
 
-  handleMouseDown(mx: number, my: number): boolean {
-    if (!this.visible) return false
-    const px = this.panelX, py = this.panelY
-    if (mx >= px && mx <= px + PANEL_W && my >= py && my <= py + HEADER_H) {
-      this.dragging = true
-      this.dragOX = mx - px
-      this.dragOY = my - py
-      return true
-    }
-    if (mx >= px && mx <= px + PANEL_W && my >= py && my <= py + PANEL_H) return true
-    return false
-  }
-
-  handleMouseMove(mx: number, my: number): boolean {
-    if (this.dragging) {
-      this.panelX = mx - this.dragOX
-      this.panelY = my - this.dragOY
-      return true
-    }
-    return false
-  }
-
-  handleMouseUp(): boolean {
-    if (this.dragging) { this.dragging = false; return true }
-    return false
-  }
-
-  handleWheel(mx: number, my: number, dy: number): boolean {
-    if (!this.visible) return false
-    const px = this.panelX, py = this.panelY
-    if (mx >= px && mx <= px + PANEL_W && my >= py + HEADER_H && my <= py + PANEL_H) {
-      this.scrollY = clamp(this.scrollY + dy * 0.5, 0, Math.max(0, MAX_MEMORIES * ROW_H - (PANEL_H - HEADER_H)))
-      return true
-    }
-    return false
-  }
-
   /* ── 渲染 ── */
 
   render(ctx: CanvasRenderingContext2D): void {

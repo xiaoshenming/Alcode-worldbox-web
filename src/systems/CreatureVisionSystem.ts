@@ -90,7 +90,4 @@ export class CreatureVisionSystem {
     }
   }
 
-  getVision(entityId: number): VisionData | undefined {
-    return this.visionMap.get(entityId)
-  }
 }

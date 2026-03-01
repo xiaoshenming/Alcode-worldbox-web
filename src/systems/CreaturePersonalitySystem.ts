@@ -148,15 +148,6 @@ export class CreaturePersonalitySystem {
     return false
   }
 
-  handleWheel(mx: number, my: number, dy: number): boolean {
-    if (!this.visible) return false
-    if (mx >= this.panelX && mx <= this.panelX + PANEL_W && my >= this.panelY + HEADER_H && my <= this.panelY + PANEL_H) {
-      this.scrollY = clamp(this.scrollY + dy * 0.5, 0, Math.max(0, AXES.length * ROW_H - (PANEL_H - HEADER_H - 80)))
-      return true
-    }
-    return false
-  }
-
   /* ── 渲染 ── */
 
   render(ctx: CanvasRenderingContext2D): void {

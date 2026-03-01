@@ -119,47 +119,8 @@ export class CameraAnimationSystem {
   // Transitions
   // ────────────────────────────────────────────────────────────────────────────
 
-  fadeFromBlack(durationTicks: number): void {
-    this._fadeAlpha = 1;
-    this._transition = {
-      kind: TransitionKind.FadeFromBlack,
-      elapsed: 0,
-      duration: Math.max(1, durationTicks),
-      startX: 0, startY: 0, startZoom: 1,
-      endX: 0, endY: 0, endZoom: 1,
-    };
-  }
-
-  panTo(x: number, y: number, zoom: number, durationTicks: number): void {
-    this._transition = {
-      kind: TransitionKind.PanTo,
-      elapsed: 0,
-      duration: Math.max(1, durationTicks),
-      startX: 0, startY: 0, startZoom: 1, // filled in first update()
-      endX: x, endY: y, endZoom: zoom,
-    };
-  }
-
-  zoomTo(targetZoom: number, durationTicks: number): void {
-    this._transition = {
-      kind: TransitionKind.ZoomTo,
-      elapsed: 0,
-      duration: Math.max(1, durationTicks),
-      startX: 0, startY: 0, startZoom: 1,
-      endX: 0, endY: 0, endZoom: targetZoom,
-    };
-  }
-
   isTransitioning(): boolean {
     return this._transition.kind !== TransitionKind.None;
-  }
-
-  // ────────────────────────────────────────────────────────────────────────────
-  // Cinematic bars
-  // ────────────────────────────────────────────────────────────────────────────
-
-  setCinematicBars(enabled: boolean): void {
-    this._barsEnabled = enabled;
   }
 
   // ────────────────────────────────────────────────────────────────────────────

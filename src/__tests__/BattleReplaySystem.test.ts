@@ -1,22 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { BattleReplaySystem } from '../systems/BattleReplaySystem'
-import type { BattleRecord, BattleFrame } from '../systems/BattleReplaySystem'
+import type { BattleRecord } from '../systems/BattleReplaySystem'
 
 // BattleReplaySystem 测试：
-// - isRecording() / startRecording()   → 录制状态
 // - isReplaying()                      → 回放状态
 // - getRecordCount() / getRecords()    → 查询已保存录像
 // render() / handleClick() 依赖 CanvasRenderingContext2D，不在此测试。
 
 function makeBRS(): BattleReplaySystem {
   return new BattleReplaySystem()
-}
-
-function makeSides() {
-  return [
-    { civId: 1, name: 'Humans', color: '#0000ff' },
-    { civId: 2, name: 'Elves', color: '#00ff00' },
-  ]
 }
 
 function makeRecord(id: number): BattleRecord {
@@ -30,28 +22,6 @@ function makeRecord(id: number): BattleRecord {
     winner: 2, winnerStr: 'Winner: B', durationStr: 'Duration: 100 ticks', mvpStr: '',
   }
 }
-
-describe('BattleReplaySystem.isRecording / startRecording', () => {
-  let brs: BattleReplaySystem
-
-  beforeEach(() => { brs = makeBRS() })
-
-  it('初始不在录制中', () => {
-    expect(brs.isRecording()).toBe(false)
-  })
-
-  it('startRecording 后变为录制中', () => {
-    brs.startRecording(1, makeSides())
-    expect(brs.isRecording()).toBe(true)
-  })
-
-  it('已在录制中时再次 startRecording 无效', () => {
-    brs.startRecording(1, makeSides())
-    brs.startRecording(2, makeSides())  // 第二次调用被忽略
-    expect(brs.isRecording()).toBe(true)
-    expect((brs as any).recording.id).toBe(1)  // 仍是第一次的 id
-  })
-})
 
 describe('BattleReplaySystem.isReplaying', () => {
   it('初始不在回放中', () => {
