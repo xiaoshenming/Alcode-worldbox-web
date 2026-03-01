@@ -95,6 +95,7 @@ export class AISystem {
         this.particles.spawnDeath(pos.x, pos.y, render ? render.color : '#880000')
         EventLog.log('death', `${creature.name} (${creature.species}) starved to death`, this.world.tick)
         this.em.removeEntity(id)
+        this.breedCooldown.delete(id)
         continue
       }
 
