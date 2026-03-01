@@ -12,6 +12,8 @@ export interface HistoryEntry {
   icon: string;
   /** Pre-computed "T:${tick}" display string — set by addHistoryEntry */
   tickStr?: string;
+  /** Pre-computed truncated description (max 20 chars) — set by addHistoryEntry */
+  descShort?: string;
 }
 
 export interface CivPopSample {
@@ -95,6 +97,7 @@ export class EraTransitionSystem {
   /** 添加历史事件 */
   addHistoryEntry(entry: HistoryEntry): void {
     if (!entry.tickStr) entry.tickStr = `T:${entry.tick}`
+    if (!entry.descShort) entry.descShort = entry.description.length > 20 ? entry.description.slice(0, 20) + '...' : entry.description
     this.history.push(entry);
     if (this.history.length > MAX_HISTORY) {
       this.history.shift();
@@ -314,8 +317,7 @@ export class EraTransitionSystem {
       // 描述
       ctx.font = '12px sans-serif';
       ctx.fillStyle = '#DDD';
-      const desc = entry.description.length > 20 ? entry.description.slice(0, 20) + '...' : entry.description;
-      ctx.fillText(desc, lineX + 14, ey + 48);
+      ctx.fillText(entry.descShort!, lineX + 14, ey + 48);
     }
     ctx.restore();
   }

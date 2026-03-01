@@ -21,6 +21,12 @@ export class HistoryReplaySystem {
   // Object pool for civData entries — reused across snapshots
   private _civDataPool: { id: number; name: string; pop: number; color: string }[] = []
   private _civDataPoolNext = 0
+  /** Incrementally maintained max — avoids O(N) scan in render each frame */
+  private _maxPop = 1
+  private _maxCiv = 1
+  /** Cached info string for current replay snapshot — rebuilt when replayIndex changes */
+  private _prevInfoIdx = -2
+  private _infoStr = ''
 
   /** Record a snapshot of current world state */
   recordSnapshot(
@@ -59,6 +65,9 @@ export class HistoryReplaySystem {
       events: eventsSnap,
       civData: civDataCopy,
     })
+    // Incrementally maintain maxPop/maxCiv — avoids O(N) scan in render
+    if (population > this._maxPop) this._maxPop = population
+    if (civCount > this._maxCiv) this._maxCiv = civCount
   }
 
   /** Get snapshot at a specific index */
@@ -136,7 +145,7 @@ export class HistoryReplaySystem {
 
     // Population graph overlay
     if (this.snapshots.length > 1) {
-      let maxPop = 1; for (const s of this.snapshots) { if (s.population > maxPop) maxPop = s.population }
+      const maxPop = this._maxPop
       ctx.strokeStyle = '#4488ff'
       ctx.lineWidth = 1.5
       ctx.beginPath()
@@ -149,7 +158,7 @@ export class HistoryReplaySystem {
       ctx.stroke()
 
       // Civ count line
-      let maxCiv = 1; for (const s of this.snapshots) { if (s.civCount > maxCiv) maxCiv = s.civCount }
+      const maxCiv = this._maxCiv
       ctx.strokeStyle = '#44cc44'
       ctx.lineWidth = 1
       ctx.beginPath()
@@ -168,16 +177,17 @@ export class HistoryReplaySystem {
     ctx.fillStyle = '#fff'
     ctx.fillRect(headX - 2, barY - 3, 4, barH + 6)
 
-    // Current snapshot info
+    // Current snapshot info — cache string, rebuild only when index changes
     const snap = this.getCurrentReplaySnapshot()
     if (snap) {
+      if (this.replayIndex !== this._prevInfoIdx) {
+        this._prevInfoIdx = this.replayIndex
+        this._infoStr = `Tick ${snap.tick} | Pop: ${snap.population} | Civs: ${snap.civCount} | Wars: ${snap.wars}`
+      }
       ctx.fillStyle = '#ddd'
       ctx.font = '11px monospace'
       ctx.textAlign = 'left'
-      ctx.fillText(
-        `Tick ${snap.tick} | Pop: ${snap.population} | Civs: ${snap.civCount} | Wars: ${snap.wars}`,
-        barX, barY - 8
-      )
+      ctx.fillText(this._infoStr, barX, barY - 8)
     }
 
     // Controls hint

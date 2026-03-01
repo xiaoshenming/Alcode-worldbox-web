@@ -79,6 +79,8 @@ export class AchievementProgressSystem {
   // Cached header string — avoids toFixed(0) per frame when panel is open
   private _rateStr = '0'
   private _headerStr = '成就  0%'
+  /** Cached completion rate (0–1) — updated in updateProgress, avoids O(N) scan in render */
+  private _completionRate = 0
 
   constructor() {
     this.achievements = makeAchievements();
@@ -94,7 +96,9 @@ export class AchievementProgressSystem {
       a.completed = true;
       a.completedAt = Date.now();
     }
-    this._rateStr = Math.round(this.getCompletionRate() * 100).toString()
+    const rate = this.getCompletionRate()
+    this._completionRate = rate
+    this._rateStr = Math.round(rate * 100).toString()
     this._headerStr = `成就  ${this._rateStr}%`
   }
 
@@ -174,7 +178,6 @@ export class AchievementProgressSystem {
     ctx.font = 'bold 15px monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    const rate = this.getCompletionRate();
     ctx.fillText(this._headerStr, x + 14, y + HEADER_H / 2);
     // close btn
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
@@ -187,7 +190,7 @@ export class AchievementProgressSystem {
     ctx.fillStyle = 'rgba(255,255,255,0.1)';
     ctx.fillRect(barX, barY, barW, barH);
     ctx.fillStyle = '#ce93d8';
-    ctx.fillRect(barX, barY, barW * rate, barH);
+    ctx.fillRect(barX, barY, barW * this._completionRate, barH);
 
     // category tabs
     const tabY = y + HEADER_H + 4;
