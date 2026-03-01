@@ -15,9 +15,6 @@ export interface BattleInfo {
   phase: BattlePhase; lastUpdateTick: number
 }
 
-/** Visual effect data for a battle */
-export interface BattleVisualEffects { dustPositions: { x: number; y: number }[]; shakeIntensity: number }
-
 const BATTLE_DETECT_RADIUS = 12
 const BATTLE_EXPIRE_TICKS = 120
 const STORY_TEMPLATES = [
@@ -26,13 +23,6 @@ const STORY_TEMPLATES = [
   'The ({phase}) near ({loc}): ({civ1}) and ({civ2}) fought fiercely, ({casualties}) lost',
   '({civ1}) met ({civ2}) at ({loc}) in a bloody ({phase}), claiming ({casualties}) lives',
 ]
-// Pre-allocated dust offsets to avoid GC in hot path
-const DUST_OFFSETS: { dx: number; dy: number }[] = []
-for (let i = 0; i < 40; i++) {
-  const a = (i / 40) * Math.PI * 2, r = 3 + (i % 5) * 2
-  DUST_OFFSETS.push({ dx: Math.cos(a) * r, dy: Math.sin(a) * r })
-}
-
 /**
  * Detects and enhances large-scale epic combat events.
  * When 10+ creatures from 2+ civilizations fight in a small area,
@@ -240,27 +230,6 @@ export class LegendaryBattleSystem {
   /** Returns all generated war story strings. */
   getWarStories(): string[] {
     return this.warStories
-  }
-
-  /** Returns visual effect data for a given battle. */
-  getVisualEffects(battleId: number): BattleVisualEffects | null {
-    const battle = this.battles.get(battleId)
-    if (!battle) return null
-
-    const count = this.getParticipantCount(battle)
-    const dustCount = Math.min(DUST_OFFSETS.length, Math.floor(count * 0.6))
-    const dustPositions: { x: number; y: number }[] = []
-    for (let i = 0; i < dustCount; i++) {
-      const off = DUST_OFFSETS[i]
-      dustPositions.push({ x: battle.centerX + off.dx, y: battle.centerY + off.dy })
-    }
-
-    const shakeIntensity = battle.phase === 'LEGENDARY' ? 4
-      : battle.phase === 'EPIC_BATTLE' ? 2.5
-      : battle.phase === 'BATTLE' ? 1
-      : 0
-
-    return { dustPositions, shakeIntensity }
   }
 
   private mergeBattle(

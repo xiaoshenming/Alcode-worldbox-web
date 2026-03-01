@@ -36,26 +36,12 @@ describe('EvolutionSystem.getSpeciesTraits', () => {
     ]
     expect(effects).toHaveLength(8)
   })
-})
-
-describe('EvolutionSystem.getAdaptationProgress', () => {
-  let sys: EvolutionSystem
-  beforeEach(() => { sys = makeSys() })
-
-  it('未知物种返回空Map', () => {
-    const progress = sys.getAdaptationProgress('unknown')
-    expect(progress.size).toBe(0)
+  it('不存在的物种返回空特性列表', () => {
+    expect(sys.getSpeciesTraits('nonexistent')).toEqual([])
   })
-  it('注入物种数据后可查询适应进度', () => {
-    const speciesData = {
-      species: 'elf',
-      traits: new Map(),
-      deathCauses: { combat: 0, hunger: 0, disease: 0, age: 0, disaster: 0 },
-      generation: 1,
-      adaptationProgress: new Map([['forest', 500]])
-    }
-    ;(sys as any).speciesData.set('elf', speciesData)
-    const progress = sys.getAdaptationProgress('elf')
-    expect(progress.get('forest')).toBe(500)
+  it('makeTrait 创建合法 EvolutionTrait', () => {
+    const t = makeTrait('Forest Adapted')
+    expect(t.name).toBe('Forest Adapted')
+    expect(t.effect).toBe('health_boost')
   })
 })

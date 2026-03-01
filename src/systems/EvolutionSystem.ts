@@ -273,13 +273,6 @@ export class EvolutionSystem {
     return result
   }
 
-  /** Get raw adaptation progress for UI display. Values 0-1000. */
-  getAdaptationProgress(species: string): Map<string, number> {
-    const specData = this.speciesData.get(species)
-    if (!specData) return new Map()
-    return new Map(specData.adaptationProgress)
-  }
-
   /** Apply all unlocked species traits to a specific creature. */
   applyTraitsToCreature(entityId: EntityId, em: EntityManager): void {
     const creature = em.getComponent<CreatureComponent>(entityId, 'creature')
