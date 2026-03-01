@@ -52,6 +52,8 @@ interface HoverInfo {
  */
 export class ResourceFlowSystem {
   private routes: Route[] = [];
+  /** Index for O(1) route lookup in render/particle loops */
+  private routeMap: Map<number, Route> = new Map();
   private particles: Particle[] = [];
   private nextRouteId = 1;
   private hover: HoverInfo = {
@@ -87,7 +89,9 @@ export class ResourceFlowSystem {
     const particleCount = Math.min(
       Math.floor(BASE_PARTICLES_PER_ROUTE + amount * PARTICLES_PER_AMOUNT), 60,
     );
-    this.routes.push({ id, fromX, fromY, toX, toY, resourceType, amount, particleCount });
+    const route: Route = { id, fromX, fromY, toX, toY, resourceType, amount, particleCount };
+    this.routes.push(route);
+    this.routeMap.set(id, route);
     this.allocateParticles(id, particleCount);
     return id;
   }
@@ -100,6 +104,7 @@ export class ResourceFlowSystem {
     const idx = this.routes.findIndex(r => r.id === id);
     if (idx === -1) return;
     this.routes.splice(idx, 1);
+    this.routeMap.delete(id);
     for (let i = 0; i < this.particles.length; i++) {
       if (this.particles[i].routeId === id) this.particles[i].active = false;
     }
@@ -212,10 +217,7 @@ export class ResourceFlowSystem {
 
   /** 按 ID 查找路线 */
   private findRoute(id: number): Route | null {
-    for (let i = 0; i < this.routes.length; i++) {
-      if (this.routes[i].id === id) return this.routes[i];
-    }
-    return null;
+    return this.routeMap.get(id) ?? null;
   }
 
   /** 渲染悬停提示框 */
