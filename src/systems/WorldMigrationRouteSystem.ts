@@ -2,6 +2,7 @@
 // Animals and nomadic groups follow seasonal migration paths
 // Routes affect ecosystem balance and trade opportunities
 
+import { pickRandom } from '../utils/RandomUtils'
 export interface MigrationRoute {
   id: number
   waypoints: { x: number; y: number }[]
@@ -64,10 +65,10 @@ export class WorldMigrationRouteSystem {
       waypoints,
       type: isAnimal ? 'animal' : 'nomadic',
       species: isAnimal
-        ? ANIMAL_SPECIES[Math.floor(Math.random() * ANIMAL_SPECIES.length)]
-        : NOMAD_GROUPS[Math.floor(Math.random() * NOMAD_GROUPS.length)],
+        ? pickRandom(ANIMAL_SPECIES)
+        : pickRandom(NOMAD_GROUPS),
       active: true,
-      season: SEASONS[Math.floor(Math.random() * SEASONS.length)],
+      season: pickRandom(SEASONS),
       travelerCount: 5 + Math.floor(Math.random() * 20),
     })
   }

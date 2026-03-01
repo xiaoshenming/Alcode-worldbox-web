@@ -2,7 +2,7 @@
 // Agreements boost resource flow and improve relations, but can be broken
 
 import { EntityManager } from '../ecs/Entity'
-import { pickWeighted } from '../utils/RandomUtils'
+import { pickWeighted, pickRandom} from '../utils/RandomUtils'
 
 export type AgreementType = 'free_trade' | 'exclusive' | 'resource_swap' | 'tariff_reduction'
 export type AgreementStatus = 'active' | 'expired' | 'broken'
@@ -50,9 +50,9 @@ export class DiplomaticTradeAgreementSystem {
     if (Math.random() > AGREE_CHANCE) return
 
     const civs = _CIV_POOL
-    const c1 = civs[Math.floor(Math.random() * civs.length)]
-    let c2 = civs[Math.floor(Math.random() * civs.length)]
-    while (c2 === c1) c2 = civs[Math.floor(Math.random() * civs.length)]
+    const c1 = pickRandom(civs)
+    let c2 = pickRandom(civs)
+    while (c2 === c1) c2 = pickRandom(civs)
 
     const type = pickWeighted(TYPES, TYPE_WEIGHTS, 'free_trade')
     this.agreements.push({

@@ -2,6 +2,7 @@
 // Creatures learn to identify mushrooms, risking poisoning but gaining knowledge
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type MushroomType = 'edible' | 'medicinal' | 'poisonous' | 'rare'
 
@@ -36,7 +37,7 @@ export class CreatureMushroomForagerSystem {
     if (this.foragers.length < MAX_FORAGERS && Math.random() < ASSIGN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         const already = this.foragers.some(f => f.entityId === eid)
         if (!already) {
           this.foragers.push({
@@ -56,7 +57,7 @@ export class CreatureMushroomForagerSystem {
     for (const f of this.foragers) {
       if (Math.random() > 0.02) continue
 
-      const type = MUSHROOM_TYPES[Math.floor(Math.random() * MUSHROOM_TYPES.length)]
+      const type = pickRandom(MUSHROOM_TYPES)
       f.mushroomsFound++
       f.knowledge = Math.min(100, f.knowledge + KNOWLEDGE_PER_FIND)
 

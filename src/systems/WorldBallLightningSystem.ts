@@ -3,6 +3,7 @@
 
 import { EntityManager, PositionComponent } from '../ecs/Entity'
 import { World } from '../game/World'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type BallSize = 'small' | 'medium' | 'large' | 'massive'
 
@@ -58,7 +59,7 @@ export class WorldBallLightningSystem {
     if (this.balls.length < MAX_BALLS && Math.random() < SPAWN_CHANCE) {
       const x = Math.floor(Math.random() * w)
       const y = Math.floor(Math.random() * h)
-      const size = SIZES[Math.floor(Math.random() * SIZES.length)]
+      const size = pickRandom(SIZES)
 
       this.balls.push({
         id: this.nextId++,

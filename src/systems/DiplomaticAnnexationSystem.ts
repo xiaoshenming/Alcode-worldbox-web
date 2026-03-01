@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type AnnexationType = 'peaceful' | 'coerced' | 'negotiated' | 'referendum'
 
@@ -39,7 +40,7 @@ export class DiplomaticAnnexationSystem {
       const target = 1 + Math.floor(Math.random() * 8)
       if (annexer === target) return
 
-      const aType = TYPES[Math.floor(Math.random() * TYPES.length)]
+      const aType = pickRandom(TYPES)
 
       this.treaties.push({
         id: this.nextId++,

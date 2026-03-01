@@ -3,7 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
-import { pickWeighted } from '../utils/RandomUtils'
+import { pickWeighted, pickRandom} from '../utils/RandomUtils'
 
 export type MemorialType = 'battle' | 'disaster' | 'founding' | 'miracle' | 'tragedy' | 'victory'
 
@@ -62,7 +62,7 @@ export class WorldMemorialSystem {
 
     const type = pickWeighted(MEMORIAL_TYPES, MEMORIAL_WEIGHTS, 'battle')
     const names = MEMORIAL_NAMES[type]
-    const name = names[Math.floor(Math.random() * names.length)]
+    const name = pickRandom(names)
 
     const x = Math.floor(Math.random() * world.width)
     const y = Math.floor(Math.random() * world.height)

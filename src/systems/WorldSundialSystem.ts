@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type SundialSize = 'small' | 'medium' | 'large' | 'monumental'
 
@@ -43,7 +44,7 @@ export class WorldSundialSystem {
       const tile = world.getTile(x, y)
 
       if (tile != null && tile === 3) {
-        const size = SIZES[Math.floor(Math.random() * SIZES.length)]
+        const size = pickRandom(SIZES)
         this.sundials.push({
           id: this.nextId++,
           x, y,

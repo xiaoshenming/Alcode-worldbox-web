@@ -2,6 +2,7 @@
 // Puppeteers perform shows that boost settlement morale and cultural output
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type PuppetStyle = 'shadow' | 'marionette' | 'hand' | 'rod'
 
@@ -37,8 +38,8 @@ export class CreaturePuppeteerSystem {
     if (this.puppeteers.length < MAX_PUPPETEERS && Math.random() < RECRUIT_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
-        const style = STYLES[Math.floor(Math.random() * STYLES.length)]
+        const eid = pickRandom(entities)
+        const style = pickRandom(STYLES)
         this.puppeteers.push({
           id: this.nextId++,
           creatureId: eid,

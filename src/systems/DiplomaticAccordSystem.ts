@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type AccordDomain = 'trade' | 'border' | 'resource' | 'cultural'
 
@@ -39,7 +40,7 @@ export class DiplomaticAccordSystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const domain = DOMAINS[Math.floor(Math.random() * DOMAINS.length)]
+      const domain = pickRandom(DOMAINS)
 
       this.accords.push({
         id: this.nextId++,

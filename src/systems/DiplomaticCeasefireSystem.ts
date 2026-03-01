@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export interface Ceasefire {
   id: number
@@ -33,9 +34,9 @@ export class DiplomaticCeasefireSystem {
     if (this.ceasefires.length < MAX_CEASEFIRES && Math.random() < SPAWN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length >= 3) {
-        const fA = entities[Math.floor(Math.random() * entities.length)]
-        const fB = entities[Math.floor(Math.random() * entities.length)]
-        const med = entities[Math.floor(Math.random() * entities.length)]
+        const fA = pickRandom(entities)
+        const fB = pickRandom(entities)
+        const med = pickRandom(entities)
         if (fA !== fB && fA !== med && fB !== med) {
           if (!this.ceasefires.some(c =>
             (c.factionA === fA && c.factionB === fB) ||

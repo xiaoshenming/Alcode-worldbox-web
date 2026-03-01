@@ -4,6 +4,7 @@
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 import { Civilization } from '../civilization/Civilization'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type EmbargoSeverity = 'partial' | 'full' | 'blockade'
 export type EmbargoStatus = 'active' | 'weakening' | 'lifted'
@@ -57,7 +58,7 @@ export class DiplomaticEmbargoSystem {
       let iB = Math.floor(Math.random() * civs.length)
       if (iB === iA) iB = (iB + 1) % civs.length
 
-      const severity = SEVERITIES[Math.floor(Math.random() * SEVERITIES.length)]
+      const severity = pickRandom(SEVERITIES)
 
       const supporters: number[] = []
       for (let i = 0; i < civs.length; i++) {

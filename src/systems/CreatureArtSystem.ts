@@ -3,6 +3,7 @@
 // Art influences culture, mood, and civilization prestige
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ArtForm = 'painting' | 'sculpture' | 'music' | 'poetry' | 'dance' | 'weaving' | 'pottery' | 'storytelling'
 
@@ -62,7 +63,7 @@ export class CreatureArtSystem {
 
       // Discover artistic talent
       if (!artist && Math.random() < 0.015) {
-        const form = ART_FORMS[Math.floor(Math.random() * ART_FORMS.length)]
+        const form = pickRandom(ART_FORMS)
         artist = {
           entityId: eid,
           talent: 10 + Math.floor(Math.random() * 50),
@@ -80,7 +81,7 @@ export class CreatureArtSystem {
 
       // Create artwork when inspired
       if (artist.inspiration > 60 && Math.random() < CREATE_CHANCE && this.artworks.length < MAX_ARTWORKS) {
-        const form = Math.random() < 0.7 ? artist.preferredForm : ART_FORMS[Math.floor(Math.random() * ART_FORMS.length)]
+        const form = Math.random() < 0.7 ? artist.preferredForm : pickRandom(ART_FORMS)
         const titles = ART_TITLES[form]
         const quality = Math.floor(artist.talent * (0.5 + Math.random() * 0.5))
 
@@ -92,7 +93,7 @@ export class CreatureArtSystem {
           quality,
           fame: Math.floor(quality * 0.5),
           createdTick: tick,
-          title: titles[Math.floor(Math.random() * titles.length)],
+          title: pickRandom(titles),
         })
 
         artist.worksCreated++

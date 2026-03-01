@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ImperiumForm = 'military_imperium' | 'economic_imperium' | 'religious_imperium' | 'cultural_imperium'
 
@@ -39,7 +40,7 @@ export class DiplomaticImperiumSystem {
       const subject = 1 + Math.floor(Math.random() * 8)
       if (imperator === subject) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.relations.push({
         id: this.nextId++,

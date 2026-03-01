@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type SolidarityBasis = 'cultural' | 'ideological' | 'economic' | 'defensive'
 
@@ -39,7 +40,7 @@ export class DiplomaticSolidaritySystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const basis = BASES[Math.floor(Math.random() * BASES.length)]
+      const basis = pickRandom(BASES)
 
       this.pacts.push({
         id: this.nextId++,

@@ -2,6 +2,7 @@
 // Telepaths can sense danger, communicate silently, and influence others
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type TelepathicAbility = 'danger_sense' | 'mind_speak' | 'empathy' | 'suggestion' | 'mind_shield' | 'foresight'
 
@@ -48,10 +49,10 @@ export class CreatureTelepathySystem {
       if (creatures.length < 2) continue
       let target: number
       do {
-        target = creatures[Math.floor(Math.random() * creatures.length)]
+        target = pickRandom(creatures)
       } while (target === eid)
 
-      const ability = ABILITIES[Math.floor(Math.random() * ABILITIES.length)]
+      const ability = pickRandom(ABILITIES)
 
       this.links.push({
         id: this.nextId++,

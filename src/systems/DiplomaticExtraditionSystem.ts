@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ExtraditionCategory = 'criminal' | 'political' | 'military' | 'universal'
 
@@ -38,7 +39,7 @@ export class DiplomaticExtraditionSystem {
       const resp = 1 + Math.floor(Math.random() * 8)
       if (req === resp) return
 
-      const category = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)]
+      const category = pickRandom(CATEGORIES)
 
       this.agreements.push({
         id: this.nextId++,

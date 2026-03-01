@@ -4,6 +4,7 @@
 import { EntityManager, PositionComponent } from '../ecs/Entity'
 import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type CrystalType = 'quartz' | 'amethyst' | 'emerald' | 'ruby' | 'sapphire' | 'diamond'
 
@@ -54,7 +55,7 @@ export class WorldCrystalCaveSystem {
       const tile = world.getTile(x, y)
 
       if (tile === TileType.MOUNTAIN || tile === TileType.SNOW) {
-        const crystal = CRYSTALS[Math.floor(Math.random() * CRYSTALS.length)]
+        const crystal = pickRandom(CRYSTALS)
         this.caves.push({
           id: this.nextId++,
           x, y,

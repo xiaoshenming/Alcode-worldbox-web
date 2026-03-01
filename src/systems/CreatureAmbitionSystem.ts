@@ -3,6 +3,7 @@
 // Fulfilling ambitions grants permanent buffs and fame
 
 import { EntityManager, EntityId } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type AmbitionType = 'become_leader' | 'build_monument' | 'explore_unknown' | 'master_craft' | 'defeat_rival' | 'amass_wealth'
 
@@ -56,7 +57,7 @@ export class CreatureAmbitionSystem {
       if (this.ambitions.has(id)) continue
       if (this.ambitions.size >= MAX_AMBITIONS) break
       if (Math.random() > 0.06) continue
-      const ambition = AMBITION_LIST[Math.floor(Math.random() * AMBITION_LIST.length)]
+      const ambition = pickRandom(AMBITION_LIST)
       const rewards = AMBITION_REWARDS[ambition]
       this.ambitions.set(id, {
         entityId: id,
@@ -64,7 +65,7 @@ export class CreatureAmbitionSystem {
         progress: 0,
         startedAt: tick,
         fulfilled: false,
-        reward: rewards[Math.floor(Math.random() * rewards.length)],
+        reward: pickRandom(rewards),
       })
     }
   }

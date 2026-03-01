@@ -2,6 +2,7 @@
 // Pottery enables food preservation, water storage, and cultural expression
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type PotteryStyle = 'coiled' | 'wheel-thrown' | 'slab-built' | 'pinched' | 'molded' | 'glazed'
 export type PotteryUse = 'storage' | 'cooking' | 'ceremonial' | 'trade' | 'decorative' | 'funerary'
@@ -48,8 +49,8 @@ export class CreaturePotterySystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const style = STYLES[Math.floor(Math.random() * STYLES.length)]
-      const use = USES[Math.floor(Math.random() * USES.length)]
+      const style = pickRandom(STYLES)
+      const use = pickRandom(USES)
 
       this.pottery.push({
         id: this.nextId++,

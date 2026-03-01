@@ -2,6 +2,7 @@
 // Creatures create origami that boosts cultural value and morale
 
 import { EntityManager, EntityId } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type OrigamiShape = 'crane' | 'dragon' | 'flower' | 'boat' | 'star'
 
@@ -41,8 +42,8 @@ export class CreatureOrigamiSystem {
     if (this.works.length < MAX_WORKS && Math.random() < CREATE_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
-        const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)]
+        const eid = pickRandom(entities)
+        const shape = pickRandom(SHAPES)
         this.works.push({
           id: this.nextId++,
           creatorId: eid,

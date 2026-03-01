@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type SpringTemperature = 'warm' | 'hot' | 'scalding' | 'volcanic'
 
@@ -46,7 +47,7 @@ export class WorldHotSpringSystem {
       const tile = world.getTile(x, y)
 
       if (tile != null && (tile === 5 || tile === 4)) {
-        const temp = TEMPS[Math.floor(Math.random() * TEMPS.length)]
+        const temp = pickRandom(TEMPS)
         this.springs.push({
           id: this.nextId++,
           x, y,

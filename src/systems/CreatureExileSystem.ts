@@ -2,6 +2,7 @@
 // Criminal or treasonous creatures are banished, becoming wanderers
 
 import { EntityManager, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ExileReason = 'crime' | 'treason' | 'heresy' | 'cowardice' | 'debt' | 'curse'
 
@@ -48,7 +49,7 @@ export class CreatureExileSystem {
       // Only exile creatures that belong to a civilization (have a name)
       if (!creature.name) continue
 
-      const reason = REASONS[Math.floor(Math.random() * REASONS.length)]
+      const reason = pickRandom(REASONS)
       this.exiles.push({
         id: this.nextId++,
         entityId: eid,

@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type HerbalistForm = 'royal_herbalist' | 'abbey_herbalist' | 'guild_herbalist' | 'village_herbalist'
 
@@ -39,7 +40,7 @@ export class DiplomaticHerbalistSystem {
       const trade = 1 + Math.floor(Math.random() * 8)
       if (gathering === trade) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

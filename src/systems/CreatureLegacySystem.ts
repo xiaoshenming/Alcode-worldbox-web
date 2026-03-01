@@ -2,7 +2,7 @@
 // Great deeds are remembered, influencing descendants and civilization culture
 
 import { EntityManager } from '../ecs/Entity'
-import { pickWeighted } from '../utils/RandomUtils'
+import { pickWeighted, pickRandom} from '../utils/RandomUtils'
 
 export type LegacyType = 'heroic' | 'scholarly' | 'artistic' | 'villainous' | 'diplomatic' | 'tragic'
 
@@ -61,7 +61,7 @@ export class CreatureLegacySystem {
 
       const type = pickWeighted(LEGACY_TYPES, LEGACY_WEIGHTS, 'heroic')
       const descs = LEGACY_DESCRIPTIONS[type]
-      const description = descs[Math.floor(Math.random() * descs.length)]
+      const description = pickRandom(descs)
 
       this.legacies.push({
         id: this.nextId++,

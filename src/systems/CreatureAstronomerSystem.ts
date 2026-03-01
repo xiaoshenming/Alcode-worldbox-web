@@ -2,6 +2,7 @@
 // Astronomers track stars, predict events, and make discoveries over time
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type TelescopeType = 'naked_eye' | 'basic' | 'refractor' | 'reflector'
 
@@ -37,10 +38,10 @@ export class CreatureAstronomerSystem {
     if (this.astronomers.length < MAX_ASTRONOMERS && Math.random() < SPAWN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         const already = this.astronomers.some(a => a.entityId === eid)
         if (!already) {
-          const telescope = TELESCOPES[Math.floor(Math.random() * TELESCOPES.length)]
+          const telescope = pickRandom(TELESCOPES)
           this.astronomers.push({
             id: this.nextId++,
             entityId: eid,

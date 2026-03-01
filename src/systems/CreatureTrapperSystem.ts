@@ -2,6 +2,7 @@
 // Skilled trappers place bait, set snares, and improve their technique over time
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type BaitType = 'meat' | 'grain' | 'insect' | 'fish' | 'berry'
 
@@ -38,10 +39,10 @@ export class CreatureTrapperSystem {
     if (this.trappers.length < MAX_TRAPPERS && Math.random() < SPAWN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         const already = this.trappers.some(t => t.entityId === eid)
         if (!already) {
-          const bait = BAIT_TYPES[Math.floor(Math.random() * BAIT_TYPES.length)]
+          const bait = pickRandom(BAIT_TYPES)
           this.trappers.push({
             id: this.nextId++,
             entityId: eid,
@@ -75,7 +76,7 @@ export class CreatureTrapperSystem {
 
       // Occasionally switch bait type to improve results
       if (t.trapsCaught > 0 && t.trapsSet > 5 && Math.random() < 0.005) {
-        t.baitType = BAIT_TYPES[Math.floor(Math.random() * BAIT_TYPES.length)]
+        t.baitType = pickRandom(BAIT_TYPES)
       }
     }
 

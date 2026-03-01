@@ -2,6 +2,7 @@
 // Propaganda influences other civs' loyalty and can destabilize enemies
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type PropagandaMessage = 'glory' | 'fear' | 'prosperity' | 'liberation' | 'unity' | 'divine'
 
@@ -49,7 +50,7 @@ export class DiplomaticPropagandaSystem {
     // Check if this pair already has active propaganda
     if (this.hasPropaganda(sourceCivId, targetCivId)) return
 
-    const message = MESSAGES[Math.floor(Math.random() * MESSAGES.length)]
+    const message = pickRandom(MESSAGES)
 
     this.propaganda.push({
       id: this.nextId++,

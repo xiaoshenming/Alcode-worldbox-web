@@ -3,6 +3,7 @@
 // Dances provide temporary buffs to participants (morale, combat, fertility)
 
 import { EntityManager, PositionComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type DanceType = 'celebration' | 'war' | 'rain' | 'harvest' | 'funeral' | 'mating'
 
@@ -106,7 +107,7 @@ export class CreatureDanceSystem {
         })
         if (tooClose) continue
 
-        const type = ALL_DANCE_TYPES[Math.floor(Math.random() * ALL_DANCE_TYPES.length)]
+        const type = pickRandom(ALL_DANCE_TYPES)
         this.dances.push({
           id: this.nextDanceId++,
           x: pos.x,

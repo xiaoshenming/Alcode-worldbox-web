@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type VassalageForm = 'military_fealty' | 'economic_servitude' | 'political_allegiance' | 'territorial_concession'
 
@@ -39,7 +40,7 @@ export class DiplomaticVassalageSystem {
       const vassal = 1 + Math.floor(Math.random() * 8)
       if (lord === vassal) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.relations.push({
         id: this.nextId++,

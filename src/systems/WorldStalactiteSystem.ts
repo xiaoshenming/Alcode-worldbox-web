@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type CaveType = 'limestone' | 'crystal' | 'ice' | 'lava'
 
@@ -46,7 +47,7 @@ export class WorldStalactiteSystem {
 
       // Mountain (5) or snow/mountain terrain
       if (tile != null && (tile === 5 || tile === 6)) {
-        const ct = CAVE_TYPES[Math.floor(Math.random() * CAVE_TYPES.length)]
+        const ct = pickRandom(CAVE_TYPES)
         this.caves.push({
           id: this.nextId++,
           x, y,

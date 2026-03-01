@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type LenityForm = 'reduced_penalties' | 'gentle_enforcement' | 'compassionate_ruling' | 'mild_sanctions'
 
@@ -39,7 +40,7 @@ export class DiplomaticLenitySystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.policies.push({
         id: this.nextId++,

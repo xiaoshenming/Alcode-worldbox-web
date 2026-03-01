@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type Arbitration2Form = 'binding_arbitration' | 'advisory_arbitration' | 'mediated_arbitration' | 'tribunal_ruling'
 
@@ -39,7 +40,7 @@ export class DiplomaticArbitration2System {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.cases.push({
         id: this.nextId++,

@@ -2,6 +2,7 @@
 // Creatures learn weaving, collect fibers, and produce cloth for their settlements
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type FiberType = 'cotton' | 'silk' | 'wool' | 'linen'
 
@@ -38,10 +39,10 @@ export class CreatureWeaverSystem {
     if (this.weavers.length < MAX_WEAVERS && Math.random() < SPAWN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         const already = this.weavers.some(w => w.entityId === eid)
         if (!already) {
-          const spec = FIBER_TYPES[Math.floor(Math.random() * FIBER_TYPES.length)]
+          const spec = pickRandom(FIBER_TYPES)
           this.weavers.push({
             id: this.nextId++,
             entityId: eid,
@@ -79,7 +80,7 @@ export class CreatureWeaverSystem {
 
       // Occasionally switch specialization
       if (w.clothProduced > 5 && Math.random() < 0.003) {
-        w.specialization = FIBER_TYPES[Math.floor(Math.random() * FIBER_TYPES.length)]
+        w.specialization = pickRandom(FIBER_TYPES)
       }
     }
 

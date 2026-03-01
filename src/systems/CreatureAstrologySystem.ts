@@ -2,6 +2,7 @@
 // Star readings grant temporary buffs based on cosmic alignments
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type CelestialEvent = 'new_moon' | 'full_moon' | 'eclipse' | 'meteor_shower' | 'conjunction' | 'comet'
 
@@ -33,7 +34,7 @@ export class CreatureAstrologySystem {
 
     // Generate celestial events
     if (Math.random() < EVENT_CHANCE) {
-      this.currentEvent = EVENTS[Math.floor(Math.random() * EVENTS.length)]
+      this.currentEvent = pickRandom(EVENTS)
     }
 
     if (!this.currentEvent) return
@@ -47,7 +48,7 @@ export class CreatureAstrologySystem {
       const c = em.getComponent<CreatureComponent>(eid, 'creature')
       if (!c || c.age < 10) continue
 
-      const effect = EFFECTS[Math.floor(Math.random() * EFFECTS.length)]
+      const effect = pickRandom(EFFECTS)
       const isRare = this.currentEvent === 'eclipse' || this.currentEvent === 'comet'
       const magnitude = (10 + Math.random() * 40) * (isRare ? 1.8 : 1)
 

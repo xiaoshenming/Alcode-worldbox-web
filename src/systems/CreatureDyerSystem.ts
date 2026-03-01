@@ -2,6 +2,7 @@
 // Hands stained deep with color, the dyer transforms plain cloth into vibrant tapestries of indigo and crimson
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type DyeColor = 'indigo' | 'crimson' | 'saffron' | 'tyrian'
 
@@ -47,7 +48,7 @@ export class CreatureDyerSystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const dyeColor = DYE_COLORS[Math.floor(Math.random() * DYE_COLORS.length)]
+      const dyeColor = pickRandom(DYE_COLORS)
       const colorFastness = 20 + skill * 0.7 + Math.random() * 10
 
       this.dyers.push({

@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type GuardianshipForm = 'military_guardianship' | 'economic_guardianship' | 'cultural_guardianship' | 'territorial_guardianship'
 
@@ -39,7 +40,7 @@ export class DiplomaticGuardianshipSystem {
       const protected_ = 1 + Math.floor(Math.random() * 8)
       if (guardian === protected_) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

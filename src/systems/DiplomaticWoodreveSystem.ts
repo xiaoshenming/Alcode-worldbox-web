@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type WoodreveForm = 'royal_woodreve' | 'manor_woodreve' | 'shire_woodreve' | 'forest_woodreve'
 
@@ -39,7 +40,7 @@ export class DiplomaticWoodreveSystem {
       const revenue = 1 + Math.floor(Math.random() * 8)
       if (woodland === revenue) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

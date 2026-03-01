@@ -2,6 +2,7 @@
 // Fashion trends spread through civs, affecting morale and social status
 // Trends evolve over time and can be influenced by trade
 
+import { pickRandom } from '../utils/RandomUtils'
 
 
 export type FashionCategory = 'headwear' | 'clothing' | 'jewelry' | 'warpaint' | 'hairstyle'
@@ -57,13 +58,13 @@ export class CreatureFashionSystem {
       let civTrendCount = 0
       for (const t of this.trends) { if (t.civId === civId) civTrendCount++ }
       if (civTrendCount >= 4) continue
-      const category = FASHION_CATEGORIES[Math.floor(Math.random() * FASHION_CATEGORIES.length)]
+      const category = pickRandom(FASHION_CATEGORIES)
       const names = FASHION_NAMES[category]
       this.trends.push({
         id: nextTrendId++,
         civId,
         category,
-        name: names[Math.floor(Math.random() * names.length)],
+        name: pickRandom(names),
         popularity: 20 + Math.floor(Math.random() * 30),
         startedAt: tick,
         followers: 1 + Math.floor(Math.random() * 5),

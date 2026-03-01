@@ -2,6 +2,7 @@
 // Beekeepers maintain hives, harvest honey, and trade bee products
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type HiveType = 'log' | 'clay' | 'woven' | 'frame'
 
@@ -39,9 +40,9 @@ export class CreatureBeekeeperSystem {
     if (this.beekeepers.length < MAX_BEEKEEPERS && Math.random() < SPAWN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         if (!this.beekeepers.some(b => b.entityId === eid)) {
-          const hive = HIVE_TYPES[Math.floor(Math.random() * HIVE_TYPES.length)]
+          const hive = pickRandom(HIVE_TYPES)
           this.beekeepers.push({
             id: this.nextId++, entityId: eid,
             skill: 5 + Math.random() * 15,

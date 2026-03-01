@@ -3,6 +3,7 @@ import { BuildingComponent, BuildingType, CivMemberComponent } from '../civiliza
 import { CivManager } from '../civilization/CivManager'
 import { World } from '../game/World'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 /** Types of siege equipment available to attacking armies. */
 export enum SiegeEquipmentType {
@@ -257,7 +258,7 @@ export class SiegeSystem {
 
     const hits = Math.min(attackers.length, Math.ceil(defCount * 0.3))
     for (let i = 0; i < hits; i++) {
-      const needs = em.getComponent<NeedsComponent>(attackers[Math.floor(Math.random() * attackers.length)], 'needs')
+      const needs = em.getComponent<NeedsComponent>(pickRandom(attackers), 'needs')
       if (needs && needs.health > 0) {
         needs.health -= SORTIE_DAMAGE
         if (needs.health <= 0) siege.attackerMorale = Math.max(0, siege.attackerMorale - MORALE_KILL_LOSS)

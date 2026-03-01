@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type FederationForm = 'political_union' | 'economic_federation' | 'military_league' | 'cultural_federation'
 
@@ -39,7 +40,7 @@ export class DiplomaticFederationSystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.agreements.push({
         id: this.nextId++,

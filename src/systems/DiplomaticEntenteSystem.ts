@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type EntenteLevel = 'cordial' | 'cooperative' | 'strategic' | 'comprehensive'
 
@@ -39,7 +40,7 @@ export class DiplomaticEntenteSystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const level = LEVELS[Math.floor(Math.random() * LEVELS.length)]
+      const level = pickRandom(LEVELS)
 
       this.treaties.push({
         id: this.nextId++,

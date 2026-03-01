@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type TribunalCase = 'territorial' | 'war_crimes' | 'trade_violation' | 'treaty_breach'
 
@@ -35,13 +36,13 @@ export class DiplomaticTribunalSystem {
     if (this.proceedings.length < MAX_PROCEEDINGS && Math.random() < CASE_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length >= 2) {
-        const prosecutor = entities[Math.floor(Math.random() * entities.length)]
-        const defendant = entities[Math.floor(Math.random() * entities.length)]
+        const prosecutor = pickRandom(entities)
+        const defendant = pickRandom(entities)
         if (prosecutor !== defendant) {
           if (!this.proceedings.some(p =>
             p.prosecutorCivId === prosecutor && p.defendantCivId === defendant
           )) {
-            const caseType = CASE_TYPES[Math.floor(Math.random() * CASE_TYPES.length)]
+            const caseType = pickRandom(CASE_TYPES)
             this.proceedings.push({
               id: this.nextId++,
               prosecutorCivId: prosecutor,

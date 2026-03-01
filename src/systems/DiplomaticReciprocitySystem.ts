@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ReciprocityDomain = 'trade' | 'military' | 'cultural' | 'technological'
 
@@ -39,7 +40,7 @@ export class DiplomaticReciprocitySystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const domain = DOMAINS[Math.floor(Math.random() * DOMAINS.length)]
+      const domain = pickRandom(DOMAINS)
 
       this.agreements.push({
         id: this.nextId++,

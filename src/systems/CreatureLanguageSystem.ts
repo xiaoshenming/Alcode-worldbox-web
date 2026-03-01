@@ -2,6 +2,7 @@
 // Languages affect diplomacy and trade efficiency between civilizations
 // Shared language roots improve relations, divergent languages create barriers
 
+import { pickRandom } from '../utils/RandomUtils'
 export interface Language {
   id: number
   name: string
@@ -75,8 +76,8 @@ export class CreatureLanguageSystem {
       }
       if (this.languages.size >= MAX_LANGUAGES) continue
       const familyId = nextFamilyId++
-      const root = LANGUAGE_ROOTS[Math.floor(Math.random() * LANGUAGE_ROOTS.length)]
-      const suffix = LANGUAGE_SUFFIXES[Math.floor(Math.random() * LANGUAGE_SUFFIXES.length)]
+      const root = pickRandom(LANGUAGE_ROOTS)
+      const suffix = pickRandom(LANGUAGE_SUFFIXES)
       this.languages.set(civId, {
         id: nextLangId++,
         name: root.replace('Proto-', '') + suffix,

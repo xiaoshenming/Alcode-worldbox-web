@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type AppeasementType = 'territorial' | 'economic' | 'military' | 'symbolic'
 
@@ -39,7 +40,7 @@ export class DiplomaticAppeasementSystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const aType = TYPES[Math.floor(Math.random() * TYPES.length)]
+      const aType = pickRandom(TYPES)
 
       this.policies.push({
         id: this.nextId++,

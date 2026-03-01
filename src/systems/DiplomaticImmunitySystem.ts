@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ImmunityForm = 'diplomatic_protection' | 'envoy_immunity' | 'trade_delegate_shield' | 'cultural_exchange_cover'
 
@@ -39,7 +40,7 @@ export class DiplomaticImmunitySystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.agreements.push({
         id: this.nextId++,

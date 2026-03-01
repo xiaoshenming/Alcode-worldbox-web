@@ -4,6 +4,7 @@
 import { EntityManager, PositionComponent } from '../ecs/Entity'
 import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type DevilIntensity = 'minor' | 'moderate' | 'strong' | 'violent'
 
@@ -57,7 +58,7 @@ export class WorldDustDevilSystem {
       const tile = world.getTile(x, y)
 
       if (tile != null && ARID_TILES.has(tile)) {
-        const intensity = INTENSITIES[Math.floor(Math.random() * INTENSITIES.length)]
+        const intensity = pickRandom(INTENSITIES)
         this.devils.push({
           id: this.nextId++,
           x, y,

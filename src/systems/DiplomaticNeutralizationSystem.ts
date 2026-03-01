@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type NeutralityType = 'permanent' | 'armed' | 'guaranteed' | 'conditional'
 
@@ -44,7 +45,7 @@ export class DiplomaticNeutralizationSystem {
       }
       if (guarantors.length === 0) return
 
-      const nType = TYPES[Math.floor(Math.random() * TYPES.length)]
+      const nType = pickRandom(TYPES)
 
       this.treaties.push({
         id: this.nextId++,

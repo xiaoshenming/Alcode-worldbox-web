@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type IndemnityType = 'war_damages' | 'trade_losses' | 'border_violations' | 'civilian_harm'
 
@@ -39,7 +40,7 @@ export class DiplomaticIndemnitySystem {
       const receiver = 1 + Math.floor(Math.random() * 8)
       if (payer === receiver) return
 
-      const iType = TYPES[Math.floor(Math.random() * TYPES.length)]
+      const iType = pickRandom(TYPES)
 
       this.agreements.push({
         id: this.nextId++,

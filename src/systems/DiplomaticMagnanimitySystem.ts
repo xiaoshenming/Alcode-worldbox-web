@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type MagnanimityForm = 'generous_terms' | 'tribute_waiver' | 'territory_return' | 'honor_restoration'
 
@@ -39,7 +40,7 @@ export class DiplomaticMagnanimitySystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.gestures.push({
         id: this.nextId++,

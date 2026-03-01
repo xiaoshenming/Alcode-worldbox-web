@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type GeoglyphShape = 'spiral' | 'animal' | 'geometric' | 'humanoid' | 'celestial'
 
@@ -43,7 +44,7 @@ export class WorldGeoglyphSystem {
       const tile = world.getTile(x, y)
 
       if (tile != null && (tile === 2 || tile === 3)) {
-        const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)]
+        const shape = pickRandom(SHAPES)
         this.geoglyphs.push({
           id: this.nextId++,
           x, y,

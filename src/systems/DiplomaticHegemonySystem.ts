@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type HegemonyForm = 'military_dominance' | 'economic_control' | 'cultural_influence' | 'political_pressure'
 
@@ -39,7 +40,7 @@ export class DiplomaticHegemonySystem {
       const subordinate = 1 + Math.floor(Math.random() * 8)
       if (hegemon === subordinate) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.relations.push({
         id: this.nextId++,

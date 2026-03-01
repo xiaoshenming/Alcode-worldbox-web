@@ -2,6 +2,7 @@
 // Honey provides food, medicine, and trade goods; beeswax for candles and sealing
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type HiveProduct = 'honey' | 'beeswax' | 'royal_jelly' | 'propolis' | 'mead' | 'honeycomb'
 
@@ -45,7 +46,7 @@ export class CreatureBeekeepingSystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const product = PRODUCTS[Math.floor(Math.random() * PRODUCTS.length)]
+      const product = pickRandom(PRODUCTS)
       const hiveCount = 1 + Math.floor(skill / 25)
       const quality = skill * (0.5 + Math.random() * 0.5)
 

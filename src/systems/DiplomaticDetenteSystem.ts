@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type DetentePhase = 'initial' | 'negotiation' | 'implementation' | 'normalization'
 
@@ -39,7 +40,7 @@ export class DiplomaticDetenteSystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const phase = PHASES[Math.floor(Math.random() * PHASES.length)]
+      const phase = pickRandom(PHASES)
 
       this.treaties.push({
         id: this.nextId++,

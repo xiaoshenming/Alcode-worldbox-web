@@ -3,6 +3,7 @@
 
 import { EntityManager, PositionComponent, NeedsComponent } from '../ecs/Entity'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type SeasonType = 'spring' | 'summer' | 'autumn' | 'winter'
 export type SeasonDisasterType = 'flood' | 'heatwave' | 'wildfire' | 'blizzard' | 'tornado' | 'monsoon' | 'drought' | 'ice_storm'
@@ -119,7 +120,7 @@ export class WorldSeasonalDisasterSystem {
 
   private spawnDisaster(world: WorldLike, tick: number): void {
     const types = SEASON_DISASTERS[this.currentSeason]
-    const type = types[Math.floor(Math.random() * types.length)]
+    const type = pickRandom(types)
     const severity = 1 + Math.floor(Math.random() * 5)
     const x = Math.floor(Math.random() * world.width)
     const y = Math.floor(Math.random() * world.height)

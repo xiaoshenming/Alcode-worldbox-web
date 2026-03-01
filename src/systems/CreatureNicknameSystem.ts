@@ -2,6 +2,7 @@
 // Based on behavior and achievements, creatures gain titles and fame
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type NicknameTitle = 'the Brave' | 'the Wise' | 'the Cruel' | 'the Swift' | 'the Lucky' | 'the Cursed' | 'the Builder' | 'the Wanderer'
 
@@ -69,7 +70,7 @@ export class CreatureNicknameSystem {
       } else if (creature.isHostile) {
         title = 'the Cruel'
       } else {
-        title = TITLES[Math.floor(Math.random() * TITLES.length)]
+        title = pickRandom(TITLES)
       }
 
       this.nicknames.push({

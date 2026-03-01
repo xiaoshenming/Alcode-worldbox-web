@@ -9,6 +9,7 @@ import { Civilization, BuildingType, BuildingComponent } from '../civilization/C
 import { ParticleSystem } from './ParticleSystem'
 import { TimelineSystem } from './TimelineSystem'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 // Pre-allocated 4-directional offsets — avoids 40000 temp sub-arrays in full-world flood event
 const CARDINAL_OFFSETS: readonly [number, number][] = [[0, 1], [0, -1], [1, 0], [-1, 0]] as const
@@ -78,7 +79,7 @@ export function randomCiv(civManager: CivManager): Civilization | null {
   const civs = _civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
   if (civs.length === 0) return null
-  return civs[Math.floor(Math.random() * civs.length)]
+  return pickRandom(civs)
 }
 
 export function weakestCiv(civManager: CivManager): Civilization | null {
@@ -354,7 +355,7 @@ export const EVENT_DEFINITIONS: WorldEventDef[] = [
           }
           // Some tiles get shuffled
           else if (Math.random() < 0.1 && tile !== TileType.DEEP_WATER) {
-            ctx.world.setTile(x, y, _QUAKE_TILE_OPTIONS[Math.floor(Math.random() * _QUAKE_TILE_OPTIONS.length)])
+            ctx.world.setTile(x, y, pickRandom(_QUAKE_TILE_OPTIONS))
             tilesChanged++
           }
 

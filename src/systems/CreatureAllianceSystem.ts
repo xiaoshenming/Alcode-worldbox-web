@@ -3,6 +3,7 @@
 // Allied creatures help each other in combat and share resources
 
 import { EntityManager, EntityId, PositionComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export interface PersonalAlliance {
   id: number
@@ -60,7 +61,7 @@ export class CreatureAllianceSystem {
       const dx = posA.x - posB.x, dy = posA.y - posB.y
       if (dx * dx + dy * dy > ALLIANCE_RANGE * ALLIANCE_RANGE) continue
       if (Math.random() > 0.1) continue
-      const type = ALLIANCE_TYPES[Math.floor(Math.random() * ALLIANCE_TYPES.length)]
+      const type = pickRandom(ALLIANCE_TYPES)
       this.alliances.push({
         id: nextAllianceId++,
         memberA: idA,

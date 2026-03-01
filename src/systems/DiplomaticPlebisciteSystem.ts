@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type PlebisciteStatus = 'proposed' | 'active' | 'expired' | 'rejected'
 
@@ -54,7 +55,7 @@ export class DiplomaticPlebisciteSystem {
             voterTurnout: 30 + Math.random() * 50,
             approvalRate: 25 + Math.random() * 50,
             legitimacy: 20 + Math.random() * 40,
-            contestedBy: Math.random() < 0.3 ? nations[Math.floor(Math.random() * nations.length)] : 0,
+            contestedBy: Math.random() < 0.3 ? pickRandom(nations) : 0,
             tick,
           })
         }

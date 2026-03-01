@@ -5,6 +5,7 @@
 import { Civilization } from '../civilization/Civilization'
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type BlockadeType = 'naval' | 'land' | 'trade' | 'total'
 const BLOCKADE_TYPES: BlockadeType[] = ['naval', 'land', 'trade', 'total']
@@ -66,12 +67,12 @@ export class DiplomaticBlockadeSystem {
       if (civs.length < 2) continue
       let target: typeof civs[0]
       do {
-        target = civs[Math.floor(Math.random() * civs.length)]
+        target = pickRandom(civs)
       } while (target.id === civ.id)
       if (this.blockades.some(b => b.blockaderId === civ.id && b.targetId === target.id)) continue
 
       const types = BLOCKADE_TYPES
-      const type = types[Math.floor(Math.random() * types.length)]
+      const type = pickRandom(types)
       const [minDur, maxDur] = TYPE_DURATION[type]
 
       this.blockades.push({

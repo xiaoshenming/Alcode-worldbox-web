@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type PetrifiedAge = 'recent' | 'ancient' | 'primordial' | 'mythic'
 
@@ -43,7 +44,7 @@ export class WorldPetrifiedForestSystem {
 
       // Spawn on rocky or mountain terrain
       if (tile != null && (tile === 5 || tile === 3)) {
-        const age = AGES[Math.floor(Math.random() * AGES.length)]
+        const age = pickRandom(AGES)
         this.forests.push({
           id: this.nextId++,
           x, y,

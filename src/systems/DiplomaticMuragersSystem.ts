@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type MuragerForm = 'royal_murager' | 'borough_murager' | 'castle_murager' | 'city_murager'
 
@@ -39,7 +40,7 @@ export class DiplomaticMuragersSystem {
       const tax = 1 + Math.floor(Math.random() * 8)
       if (wall === tax) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

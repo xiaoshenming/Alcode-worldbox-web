@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type MirageType = 'oasis' | 'city' | 'lake' | 'mountain'
 
@@ -41,7 +42,7 @@ export class WorldMirageSystem {
       const tile = world.getTile(x, y)
 
       if (tile != null && tile === 2) {
-        const mt = TYPES[Math.floor(Math.random() * TYPES.length)]
+        const mt = pickRandom(TYPES)
         this.mirages.push({
           id: this.nextId++,
           x, y,

@@ -2,6 +2,7 @@
 // Some creatures become chroniclers, documenting wars, nature, culture, and trade
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ChroniclerSpecialty = 'war' | 'nature' | 'culture' | 'trade'
 
@@ -34,10 +35,10 @@ export class CreatureChroniclerSystem {
     if (this.chroniclers.length < MAX_CHRONICLERS && Math.random() < ASSIGN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         const already = this.chroniclers.some(c => c.entityId === eid)
         if (!already) {
-          const spec = SPECIALTIES[Math.floor(Math.random() * SPECIALTIES.length)]
+          const spec = pickRandom(SPECIALTIES)
           this.chroniclers.push({
             entityId: eid,
             recordCount: 0,

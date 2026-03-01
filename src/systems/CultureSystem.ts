@@ -2,6 +2,7 @@
 // Unique cultures per civilization, language families, procedural name generation, cultural spread
 
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 // --- Types & Interfaces ---
 
@@ -100,7 +101,7 @@ const CULTURE_NAME_SUFFIXES = ['an', 'ite', 'ese', 'ish', 'ic', 'ian', 'ean', 'o
 // --- Helpers ---
 
 function pick<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)] ?? arr[0]
+  return pickRandom(arr) ?? arr[0]
 }
 
 function randInt(min: number, max: number): number {

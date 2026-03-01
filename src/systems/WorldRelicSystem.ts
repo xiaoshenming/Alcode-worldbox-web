@@ -4,6 +4,7 @@
 import { EntityManager, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
 import { CivMemberComponent } from '../civilization/Civilization'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type RelicType = 'wisdom' | 'war' | 'nature' | 'arcane' | 'prosperity'
 
@@ -103,7 +104,7 @@ export class WorldRelicSystem {
       })
       if (tooClose) continue
 
-      const type = RELIC_TYPES[Math.floor(Math.random() * RELIC_TYPES.length)]
+      const type = pickRandom(RELIC_TYPES)
       const relic: Relic = {
         id: nextRelicId++,
         type,

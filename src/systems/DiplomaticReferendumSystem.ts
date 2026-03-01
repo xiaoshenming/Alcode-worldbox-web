@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ReferendumTopic = 'alliance' | 'territory' | 'trade_policy' | 'war_declaration'
 
@@ -38,7 +39,7 @@ export class DiplomaticReferendumSystem {
       const targetCivId = 1 + Math.floor(Math.random() * 8)
       if (civId === targetCivId) return
 
-      const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)]
+      const topic = pickRandom(TOPICS)
       const turnout = 30 + Math.random() * 60
       const forPct = 20 + Math.random() * 60
       const votesFor = Math.floor(turnout * forPct / 100)

@@ -1,6 +1,7 @@
 // World Chronicle System - generates narrative history from game events
 
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 export interface Chronicle {
   id: number
@@ -32,7 +33,7 @@ const MAX_CHRONICLES = 500
 const SUMMARY_INTERVAL = 3600
 
 function pick<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]
+  return pickRandom(arr)
 }
 
 function tickToYear(tick: number): number {

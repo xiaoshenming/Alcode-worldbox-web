@@ -4,6 +4,7 @@
 
 import { EntityManager, PositionComponent, CreatureComponent } from '../ecs/Entity'
 import { World } from '../game/World'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type TotemType = 'ancestor' | 'war' | 'fertility' | 'protection' | 'wisdom' | 'nature'
 
@@ -60,7 +61,7 @@ export class CreatureTotemSystem {
       if (this.totems.length >= MAX_TOTEMS) break
       if (Math.random() > SPAWN_CHANCE) continue
 
-      const eid = entities[Math.floor(Math.random() * entities.length)]
+      const eid = pickRandom(entities)
       const pos = em.getComponent<PositionComponent>(eid, 'position')
       const creature = em.getComponent<CreatureComponent>(eid, 'creature')
       if (!pos || !creature) continue
@@ -83,7 +84,7 @@ export class CreatureTotemSystem {
       }
       if (nearby < 3) continue
 
-      const type = TOTEM_TYPES[Math.floor(Math.random() * TOTEM_TYPES.length)]
+      const type = pickRandom(TOTEM_TYPES)
       this.totems.push({
         id: this.nextId++,
         x, y, type,

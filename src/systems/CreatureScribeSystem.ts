@@ -3,6 +3,7 @@
 
 import { EntityManager, EntityId, CreatureComponent } from '../ecs/Entity'
 import { CivMemberComponent } from '../civilization/Civilization'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type RecordType = 'battle' | 'discovery' | 'founding' | 'disaster' | 'treaty'
 
@@ -41,8 +42,8 @@ export class CreatureScribeSystem {
         if (c && c.age > 10) scribes.push(eid)
       }
       if (scribes.length > 0) {
-        const scribeId = scribes[Math.floor(Math.random() * scribes.length)]
-        const type = RECORD_TYPES[Math.floor(Math.random() * RECORD_TYPES.length)]
+        const scribeId = pickRandom(scribes)
+        const type = pickRandom(RECORD_TYPES)
         const cm = em.getComponent<CivMemberComponent>(scribeId, 'civMember')
         this.records.push({
           id: this.nextId++,

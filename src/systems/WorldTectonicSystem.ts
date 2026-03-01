@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type PlateType = 'continental' | 'oceanic'
 export type BoundaryType = 'convergent' | 'divergent' | 'transform'
@@ -87,7 +88,7 @@ export class WorldTectonicSystem {
           this.faults.push({
             x1: a.centerX, y1: a.centerY,
             x2: b.centerX, y2: b.centerY,
-            boundary: boundaries[Math.floor(Math.random() * boundaries.length)],
+            boundary: pickRandom(boundaries),
             activity: 20 + Math.floor(Math.random() * 40),
           })
         }

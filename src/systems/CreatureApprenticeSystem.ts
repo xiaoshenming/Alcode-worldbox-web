@@ -4,6 +4,7 @@
 import { EntityManager, EntityId, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
 import { CivMemberComponent } from '../civilization/Civilization'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 const _EMPTY_DASH: number[] = []
 const _DASH_3_3: number[] = [3, 3]
 
@@ -120,7 +121,7 @@ export class CreatureApprenticeSystem {
         const dx = master.x - apprentice.x, dy = master.y - apprentice.y
         if (dx * dx + dy * dy > MENTOR_RANGE * MENTOR_RANGE) continue
 
-        const skill = SKILLS[Math.floor(Math.random() * SKILLS.length)]
+        const skill = pickRandom(SKILLS)
         const app: Apprenticeship = {
           id: nextAppId++,
           masterId: master.id,

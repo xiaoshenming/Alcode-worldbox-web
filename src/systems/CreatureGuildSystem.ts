@@ -3,6 +3,7 @@
 
 import { EntityManager, EntityId, PositionComponent } from '../ecs/Entity'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type GuildType = 'warriors' | 'hunters' | 'builders' | 'healers' | 'merchants'
 const GUILD_TYPES_ALL: GuildType[] = ['warriors', 'hunters', 'builders', 'healers', 'merchants']
@@ -147,7 +148,7 @@ export class CreatureGuildSystem {
 
       const guildType = this.pickGuildType()
       const names = GUILD_NAMES[guildType]
-      const name = names[Math.floor(Math.random() * names.length)]
+      const name = pickRandom(names)
       const firstPos = em.getComponent<PositionComponent>(this._unguildedBuf[0], 'position')
       if (!firstPos) continue
       const members = this._unguildedBuf.slice(0, MAX_MEMBERS)
@@ -199,7 +200,7 @@ export class CreatureGuildSystem {
 
   private pickGuildType(): GuildType {
     const types = GUILD_TYPES_ALL
-    return types[Math.floor(Math.random() * types.length)]
+    return pickRandom(types)
   }
 
   render(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {

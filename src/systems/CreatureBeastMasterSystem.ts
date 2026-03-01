@@ -2,7 +2,7 @@
 // Beast masters form bonds with animals, using them in combat and labor
 
 import { EntityManager } from '../ecs/Entity'
-import { pickWeighted } from '../utils/RandomUtils'
+import { pickWeighted, pickRandom} from '../utils/RandomUtils'
 
 export type BeastBond = 'companion' | 'war_mount' | 'pack_animal' | 'scout' | 'guardian'
 
@@ -51,7 +51,7 @@ export class CreatureBeastMasterSystem {
       if (entities.length < 2) continue
       let beastId: number
       do {
-        beastId = entities[Math.floor(Math.random() * entities.length)]
+        beastId = pickRandom(entities)
       } while (beastId === eid)
       const bond = pickWeighted(BONDS, BOND_WEIGHTS, 'companion')
 

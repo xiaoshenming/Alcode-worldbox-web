@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type TreatyType = 'peace' | 'trade' | 'defense' | 'non_aggression'
 
@@ -38,7 +39,7 @@ export class DiplomaticRatificationSystem {
       const targetCivId = 1 + Math.floor(Math.random() * 8)
       if (civId === targetCivId) return
 
-      const treatyType = TREATY_TYPES[Math.floor(Math.random() * TREATY_TYPES.length)]
+      const treatyType = pickRandom(TREATY_TYPES)
       const totalLegislators = 10 + Math.floor(Math.random() * 40)
       const forPct = 25 + Math.random() * 55
       const legislatorsFor = Math.floor(totalLegislators * forPct / 100)

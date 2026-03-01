@@ -2,6 +2,7 @@
 // Collections give status, can be traded, stolen, or lost in disasters
 
 import { EntityManager, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type CollectibleType = 'gem' | 'shell' | 'bone' | 'feather' | 'coin' | 'artifact' | 'flower' | 'stone'
 
@@ -68,7 +69,7 @@ export class CreatureCollectionSystem {
       if (Math.random() > FIND_CHANCE) continue
       if (this.collections.size >= MAX_COLLECTIONS && !this.collections.has(eid)) continue
 
-      const type = ITEM_TYPES[Math.floor(Math.random() * ITEM_TYPES.length)]
+      const type = pickRandom(ITEM_TYPES)
       const col = this.getOrCreate(eid)
       const count = col.items.get(type) ?? 0
       col.items.set(type, count + 1)

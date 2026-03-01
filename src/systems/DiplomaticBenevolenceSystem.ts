@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type BenevolenceType = 'humanitarian' | 'educational' | 'medical' | 'infrastructural'
 
@@ -39,7 +40,7 @@ export class DiplomaticBenevolenceSystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const bType = TYPES[Math.floor(Math.random() * TYPES.length)]
+      const bType = pickRandom(TYPES)
 
       this.initiatives.push({
         id: this.nextId++,

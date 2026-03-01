@@ -3,6 +3,7 @@
 // Rivalries can escalate to duels or resolve through reconciliation
 
 import { EntityManager, EntityId, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type RivalryStage = 'tension' | 'competition' | 'hostility' | 'feud' | 'resolved'
 
@@ -50,7 +51,7 @@ export class CreatureRivalrySystem {
     if (this.rivalries.length >= MAX_RIVALRIES) return
     const arr = em.getEntitiesWithComponents('creature', 'position')
     for (let i = 0; i < Math.min(arr.length, 50); i++) {
-      const a = arr[Math.floor(Math.random() * arr.length)]
+      const a = pickRandom(arr)
       if (Math.random() > RIVALRY_CHANCE) continue
       const posA = em.getComponent<PositionComponent>(a, 'position')
       if (!posA) continue
@@ -72,7 +73,7 @@ export class CreatureRivalrySystem {
           intensity: 10 + Math.floor(Math.random() * 20),
           startedAt: tick,
           encounters: 0,
-          cause: CAUSES[Math.floor(Math.random() * CAUSES.length)],
+          cause: pickRandom(CAUSES),
         })
         break
       }

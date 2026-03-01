@@ -2,6 +2,7 @@
 // After being attacked or wronged, creatures remember and seek revenge
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type GrudgeReason = 'attacked' | 'territory' | 'theft' | 'betrayal' | 'insult' | 'family_harm'
 
@@ -63,7 +64,7 @@ export class CreatureGrudgeSystem {
       if (targetId === eid) continue
       if (this.hasGrudge(eid, targetId)) continue
 
-      const reason = REASONS[Math.floor(Math.random() * REASONS.length)]
+      const reason = pickRandom(REASONS)
       const baseIntensity = INTENSITY_MAP[reason]
 
       this.grudges.push({

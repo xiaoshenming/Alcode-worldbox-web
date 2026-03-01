@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type SovereigntyForm = 'territorial_sovereignty' | 'political_independence' | 'economic_autonomy' | 'cultural_self_determination'
 
@@ -39,7 +40,7 @@ export class DiplomaticSovereigntySystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.agreements.push({
         id: this.nextId++,

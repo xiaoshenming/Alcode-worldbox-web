@@ -5,6 +5,7 @@ import { CivMemberComponent } from '../civilization/Civilization'
 import { ParticleSystem } from './ParticleSystem'
 import { TechSystem } from './TechSystem'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 // Disease definitions
 const DISEASES: Record<string, {
@@ -102,16 +103,16 @@ export class DiseaseSystem {
     // 60% chance to pick from densest area, 40% random
     let patientZero: EntityId
     if (maxDensity >= 3 && Math.random() < 0.6) {
-      patientZero = densestCell[Math.floor(Math.random() * densestCell.length)]
+      patientZero = pickRandom(densestCell)
     } else {
-      patientZero = creatures[Math.floor(Math.random() * creatures.length)]
+      patientZero = pickRandom(creatures)
     }
 
     // Don't infect already infected or immune creatures
     const existing = em.getComponent<DiseaseComponent>(patientZero, 'disease')
     if (existing) return
 
-    const diseaseType = DISEASE_TYPES[Math.floor(Math.random() * DISEASE_TYPES.length)]
+    const diseaseType = pickRandom(DISEASE_TYPES)
     this.infectEntity(em, patientZero, diseaseType, world)
 
     const creature = em.getComponent<CreatureComponent>(patientZero, 'creature')

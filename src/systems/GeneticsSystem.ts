@@ -2,6 +2,7 @@
 
 import { EntityManager, EntityId, CreatureComponent, NeedsComponent, GeneticsComponent } from '../ecs/Entity'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 export interface GeneticTraits {
   strength: number     // 0.5-2.0, affects damage
@@ -99,7 +100,7 @@ export class GeneticsSystem {
   static mutate(genetics: GeneticsComponent): string | null {
     if (Math.random() >= MUTATION_CHANCE) return null
 
-    const mutation = MUTATIONS[Math.floor(Math.random() * MUTATIONS.length)]
+    const mutation = pickRandom(MUTATIONS)
     // Apply delta with some randomness (±0.3 to ±0.5 range)
     const sign = mutation.delta > 0 ? 1 : -1
     const magnitude = 0.3 + Math.random() * 0.2

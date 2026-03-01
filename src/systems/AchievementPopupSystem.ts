@@ -2,6 +2,7 @@
  * AchievementPopupSystem - 成就弹窗增强系统
  * 提供成就解锁动画、进度追踪、总览面板和粒子庆祝效果
  */
+import { pickRandom } from '../utils/RandomUtils'
 
 export type AchievementRarity = 'common' | 'rare' | 'epic' | 'legendary'
 export type AchievementCategory = 'explore' | 'war' | 'build' | 'disaster' | 'special'
@@ -213,7 +214,7 @@ export class AchievementPopupSystem {
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2
       const speed = 1.5 + Math.random() * 3
-      const c = colors[Math.floor(Math.random() * colors.length)]
+      const c = pickRandom(colors)
       this.particles.push({
         x: isLegendary ? Math.random() * 800 : 0,
         y: isLegendary ? Math.random() * 600 : 0,

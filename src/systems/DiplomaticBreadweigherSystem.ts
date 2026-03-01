@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type BreadweigherForm = 'royal_breadweigher' | 'borough_breadweigher' | 'guild_breadweigher' | 'market_breadweigher'
 
@@ -39,7 +40,7 @@ export class DiplomaticBreadweigherSystem {
       const inspection = 1 + Math.floor(Math.random() * 8)
       if (baking === inspection) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

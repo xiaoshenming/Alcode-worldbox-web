@@ -3,6 +3,7 @@
 // Different pet types offer different bonuses
 
 import { EntityManager, EntityId } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type PetType = 'cat' | 'dog' | 'bird' | 'rabbit' | 'ferret' | 'lizard'
 
@@ -54,12 +55,12 @@ export class CreaturePetSystem {
       if (this.pets.has(id)) continue
       if (this.pets.size >= MAX_PETS) break
       if (Math.random() > 0.04) continue
-      const petType = PET_TYPES[Math.floor(Math.random() * PET_TYPES.length)]
+      const petType = pickRandom(PET_TYPES)
       const names = PET_NAMES[petType]
       this.pets.set(id, {
         entityId: id,
         petType,
-        name: names[Math.floor(Math.random() * names.length)],
+        name: pickRandom(names),
         bond: 20 + Math.floor(Math.random() * 30),
         age: 0,
         adoptedAt: tick,

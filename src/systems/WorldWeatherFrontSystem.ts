@@ -2,6 +2,7 @@
 // Cold fronts, warm fronts, storm fronts affect regions differently
 // Fronts collide to create extreme weather events
 
+import { pickRandom } from '../utils/RandomUtils'
 export type FrontType = 'cold' | 'warm' | 'storm' | 'dry' | 'humid'
 
 export interface WeatherFront {
@@ -64,7 +65,7 @@ export class WorldWeatherFrontSystem {
 
   private spawnFront(tick: number): void {
     if (this.fronts.length >= MAX_FRONTS) return
-    const type = FRONT_LIST[Math.floor(Math.random() * FRONT_LIST.length)]
+    const type = pickRandom(FRONT_LIST)
     // Spawn from edges
     const edge = Math.floor(Math.random() * 4)
     let x: number, y: number, dx: number, dy: number

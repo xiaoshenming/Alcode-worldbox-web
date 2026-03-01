@@ -2,6 +2,7 @@
 // Creatures maintain apiaries that produce honey and pollinate nearby crops
 
 import { EntityManager, EntityId } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type HiveHealth = 'thriving' | 'stable' | 'stressed' | 'collapsed'
 
@@ -37,7 +38,7 @@ export class CreatureApiarySystem {
     if (this.apiaries.length < MAX_APIARIES && Math.random() < BUILD_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         const pos = em.getComponent(eid, 'position') as { x: number; y: number } | undefined
         if (pos) {
           this.apiaries.push({

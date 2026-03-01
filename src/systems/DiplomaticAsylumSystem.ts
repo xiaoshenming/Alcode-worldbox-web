@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type AsylumReason = 'persecution' | 'war' | 'famine' | 'political'
 
@@ -35,11 +36,11 @@ export class DiplomaticAsylumSystem {
     if (this.requests.length < MAX_REQUESTS && Math.random() < REQUEST_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length >= 3) {
-        const seeker = entities[Math.floor(Math.random() * entities.length)]
-        const host = entities[Math.floor(Math.random() * entities.length)]
+        const seeker = pickRandom(entities)
+        const host = pickRandom(entities)
         if (seeker !== host) {
           if (!this.requests.some(r => r.seekerCivId === seeker && r.hostCivId === host)) {
-            const reason = REASONS[Math.floor(Math.random() * REASONS.length)]
+            const reason = pickRandom(REASONS)
             this.requests.push({
               id: this.nextId++,
               seekerCivId: seeker,

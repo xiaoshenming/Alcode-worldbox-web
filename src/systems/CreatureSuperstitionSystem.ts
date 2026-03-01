@@ -2,6 +2,7 @@
 // Positive/negative events near landmarks create superstitions that affect creature behavior
 
 import { EntityManager, PositionComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type SuperstitionType = 'lucky_spot' | 'cursed_ground' | 'sacred_tree' | 'omen_bird' | 'forbidden_path' | 'blessed_water'
 
@@ -71,7 +72,7 @@ export class CreatureSuperstitionSystem {
     })
     if (tooClose) return
 
-    const type = TYPES[Math.floor(Math.random() * TYPES.length)]
+    const type = pickRandom(TYPES)
     const config = TYPE_CONFIG[type]
 
     this.superstitions.push({

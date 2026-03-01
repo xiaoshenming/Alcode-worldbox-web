@@ -3,6 +3,7 @@
 
 import { CivManager } from '../civilization/CivManager'
 import { Civilization } from '../civilization/Civilization'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type CeremonyType = 'coronation' | 'peace_treaty' | 'trade_pact' | 'victory' | 'mourning' | 'festival'
 const CEREMONY_TYPES: CeremonyType[] = ['coronation', 'peace_treaty', 'trade_pact', 'victory', 'mourning', 'festival']
@@ -69,7 +70,7 @@ export class DiplomaticCeremonySystem {
     for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 1) return
 
-    const host = civs[Math.floor(Math.random() * civs.length)]
+    const host = pickRandom(civs)
     const type = this.pickType()
 
     // Select guests (other civs)
@@ -156,7 +157,7 @@ export class DiplomaticCeremonySystem {
 
   private pickType(): CeremonyType {
     const types = CEREMONY_TYPES
-    return types[Math.floor(Math.random() * types.length)]
+    return pickRandom(types)
   }
 
 }

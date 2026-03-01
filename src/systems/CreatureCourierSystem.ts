@@ -2,6 +2,7 @@
 // Couriers carry messages and small goods between villages
 
 import { EntityManager, EntityId } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type DeliveryStatus = 'dispatched' | 'traveling' | 'delivered' | 'lost'
 export type MessagePriority = 'routine' | 'urgent' | 'diplomatic' | 'military'
@@ -51,7 +52,7 @@ export class CreatureCourierSystem {
             fromX: pos.x, fromY: pos.y,
             toX: destX, toY: destY,
             status: 'dispatched',
-            priority: PRIORITIES[Math.floor(Math.random() * PRIORITIES.length)],
+            priority: pickRandom(PRIORITIES),
             progress: 0,
             speed: 1 + Math.random() * 3,
             tick,

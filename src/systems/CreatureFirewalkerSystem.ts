@@ -2,6 +2,7 @@
 // Firewalkers gain heat resistance and mastery over time
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type FirewalkerMastery = 'novice' | 'adept' | 'master' | 'grandmaster'
 
@@ -34,7 +35,7 @@ export class CreatureFirewalkerSystem {
     if (this.firewalkers.length < MAX_FIREWALKERS && Math.random() < ASSIGN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         const already = this.firewalkers.some(f => f.entityId === eid)
         if (!already) {
           this.firewalkers.push({

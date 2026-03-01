@@ -4,6 +4,7 @@
 
 import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type VolcanoState = 'dormant' | 'rumbling' | 'active' | 'erupting' | 'cooling'
 
@@ -97,7 +98,7 @@ export class WorldVolcanicSystem {
         continue
       }
       if (transitions.length > 0) {
-        volcano.state = transitions[Math.floor(Math.random() * transitions.length)]
+        volcano.state = pickRandom(transitions)
       }
     }
   }

@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type EscheatorForm = 'royal_escheator' | 'county_escheator' | 'duchy_escheator' | 'palatine_escheator'
 
@@ -39,7 +40,7 @@ export class DiplomaticEscheatorSystem {
       const escheator = 1 + Math.floor(Math.random() * 8)
       if (crown === escheator) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type AuroraIntensity = 'faint' | 'moderate' | 'bright' | 'spectacular'
 
@@ -45,7 +46,7 @@ export class WorldNorthernLightsSystem {
       const y = Math.floor(Math.random() * maxY)
 
       const intensityIdx = Math.floor(Math.random() * INTENSITIES.length)
-      const palette = COLOR_PALETTES[Math.floor(Math.random() * COLOR_PALETTES.length)]
+      const palette = pickRandom(COLOR_PALETTES)
 
       this.auroras.push({
         id: this.nextId++,

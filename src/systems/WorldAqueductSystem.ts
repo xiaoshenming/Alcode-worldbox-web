@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type AqueductMaterial = 'stone' | 'brick' | 'marble' | 'reinforced'
 
@@ -49,7 +50,7 @@ export class WorldAqueductSystem {
         if (dstX >= 0 && dstX < world.width && dstY >= 0 && dstY < world.height) {
           const dstTile = world.getTile(dstX, dstY)
           if (dstTile != null && dstTile === 3) {
-            const material = MATERIALS[Math.floor(Math.random() * MATERIALS.length)]
+            const material = pickRandom(MATERIALS)
             this.aqueducts.push({
               id: this.nextId++,
               srcX, srcY, dstX, dstY,

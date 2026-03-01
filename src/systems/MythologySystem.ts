@@ -5,6 +5,7 @@
  * 包含创世神话、英雄传说、灾难传说等类型。
  * 按 Shift+Y 打开神话面板。
  */
+import { pickRandom } from '../utils/RandomUtils'
 
 /** 神话类型 */
 type MythType = 'creation' | 'hero' | 'disaster' | 'divine' | 'prophecy' | 'origin'
@@ -143,7 +144,7 @@ export class MythologySystem {
       let type: MythType
       if (!hasCreation) type = 'creation'
       else if (!hasOrigin) type = 'origin'
-      else type = types[Math.floor(Math.random() * types.length)]
+      else type = pickRandom(types)
 
       const tmpl = MYTH_TEMPLATES[type]
       const title = tmpl.titles[Math.floor(Math.random() * tmpl.titles.length)]

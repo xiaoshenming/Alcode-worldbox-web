@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type LampwardenForm = 'royal_lampwarden' | 'borough_lampwarden' | 'guild_lampwarden' | 'parish_lampwarden'
 
@@ -39,7 +40,7 @@ export class DiplomaticLampwardenSystem {
       const watch = 1 + Math.floor(Math.random() * 8)
       if (lighting === watch) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

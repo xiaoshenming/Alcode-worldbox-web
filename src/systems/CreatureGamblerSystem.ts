@@ -2,6 +2,7 @@
 // Luck and win streaks influence outcomes; compulsive gamblers risk ruin
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export interface Gambler {
   id: number
@@ -34,7 +35,7 @@ export class CreatureGamblerSystem {
     if (this.gamblers.length < MAX_GAMBLERS && Math.random() < ASSIGN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         const already = this.gamblers.some(g => g.entityId === eid)
         if (!already) {
           this.gamblers.push({

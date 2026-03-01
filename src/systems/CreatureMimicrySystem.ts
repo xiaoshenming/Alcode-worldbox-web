@@ -2,6 +2,7 @@
 // Mimicry aids in hunting, defense, and social infiltration
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type MimicryType = 'visual' | 'behavioral' | 'acoustic' | 'chemical' | 'aggressive' | 'defensive'
 
@@ -61,7 +62,7 @@ export class CreatureMimicrySystem {
       const target = creatures.find(t => t !== eid) ?? creatures[0]
       if (target === eid) continue
 
-      const type = TYPES[Math.floor(Math.random() * TYPES.length)]
+      const type = pickRandom(TYPES)
       const success = Math.random() < SUCCESS_BASE + (skill / 100) * 0.5
 
       this.attempts.push({

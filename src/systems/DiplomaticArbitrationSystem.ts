@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ArbitrationType = 'territorial' | 'commercial' | 'military' | 'cultural'
 
@@ -39,7 +40,7 @@ export class DiplomaticArbitrationSystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const aType = TYPES[Math.floor(Math.random() * TYPES.length)]
+      const aType = pickRandom(TYPES)
 
       this.cases.push({
         id: this.nextId++,

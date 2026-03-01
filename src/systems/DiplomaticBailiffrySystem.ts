@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type BailiffryForm = 'law_bailiffry' | 'property_bailiffry' | 'court_bailiffry' | 'revenue_bailiffry'
 
@@ -39,7 +40,7 @@ export class DiplomaticBailiffrySystem {
       const bailiff = 1 + Math.floor(Math.random() * 8)
       if (realm === bailiff) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

@@ -5,6 +5,7 @@
  * 变异可能增强传染性、致死率或产生抗药性。
  * 按 Shift+G 查看瘟疫面板。
  */
+import { pickRandom } from '../utils/RandomUtils'
 
 /** 症状类型 */
 type Symptom = 'fever' | 'cough' | 'rash' | 'weakness' | 'madness' | 'blindness'
@@ -82,8 +83,8 @@ const LETHAL_COLORS: string[] = (() => {
 })()
 
 function randomName(): string {
-  return PLAGUE_NAMES_PREFIX[Math.floor(Math.random() * PLAGUE_NAMES_PREFIX.length)] +
-    PLAGUE_NAMES_SUFFIX[Math.floor(Math.random() * PLAGUE_NAMES_SUFFIX.length)]
+  return pickRandom(PLAGUE_NAMES_PREFIX) +
+    pickRandom(PLAGUE_NAMES_SUFFIX)
 }
 
 export class PlagueMutationSystem {
@@ -171,7 +172,7 @@ export class PlagueMutationSystem {
 
   private randomSymptom(): Symptom {
     const all = ALL_SYMPTOMS
-    return all[Math.floor(Math.random() * all.length)]
+    return pickRandom(all)
   }
 
   /* ── 输入 ── */

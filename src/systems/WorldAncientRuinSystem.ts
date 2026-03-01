@@ -3,6 +3,7 @@
 
 import { EntityManager, EntityId, PositionComponent, NeedsComponent } from '../ecs/Entity'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type RuinType = 'temple' | 'library' | 'vault' | 'tomb' | 'fortress'
 const RUIN_TYPES: RuinType[] = ['temple', 'library', 'vault', 'tomb', 'fortress']
@@ -101,9 +102,9 @@ export class WorldAncientRuinSystem {
 
   private spawnRuin(world: WorldLike, tick: number): void {
     const types = RUIN_TYPES
-    const type = types[Math.floor(Math.random() * types.length)]
+    const type = pickRandom(types)
     const names = RUIN_NAMES[type]
-    const name = names[Math.floor(Math.random() * names.length)]
+    const name = pickRandom(names)
     const x = 5 + Math.floor(Math.random() * (world.width - 10))
     const y = 5 + Math.floor(Math.random() * (world.height - 10))
 
@@ -113,7 +114,7 @@ export class WorldAncientRuinSystem {
 
     const dangerLevel = 1 + Math.floor(Math.random() * 5)
     const rewards = RUIN_REWARDS[type]
-    const reward = rewards[Math.floor(Math.random() * rewards.length)]
+    const reward = pickRandom(rewards)
 
     const ruin: AncientRuin = {
       id: nextRuinId++,

@@ -2,6 +2,7 @@
 // Different song types provide various effects to nearby creatures
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type SongType = 'war_chant' | 'lullaby' | 'ballad' | 'hymn' | 'dirge'
 
@@ -47,7 +48,7 @@ export class CreatureBardSystem {
       skill = Math.min(100, skill + 0.04)
       this.bardSkill.set(eid, skill)
 
-      const song = SONG_TYPES[Math.floor(Math.random() * SONG_TYPES.length)]
+      const song = pickRandom(SONG_TYPES)
       const boost = MORALE_MAP[song] * (0.5 + skill / 100)
 
       this.performances.push({

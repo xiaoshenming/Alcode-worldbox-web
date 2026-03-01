@@ -2,6 +2,7 @@
 // Pilgrims travel to holy sites, gaining wisdom and spiritual power
 
 import { EntityManager, PositionComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type PilgrimageGoal = 'sacred_mountain' | 'ancient_temple' | 'holy_spring' | 'ancestor_grave' | 'world_edge'
 
@@ -51,7 +52,7 @@ export class CreaturePilgrimageSystem {
 
       const width = world.width || 200
       const height = world.height || 200
-      const goal = GOALS[Math.floor(Math.random() * GOALS.length)]
+      const goal = pickRandom(GOALS)
 
       this.pilgrimages.push({
         id: this.nextId++,

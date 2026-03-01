@@ -2,6 +2,7 @@
 // Oracles gain accuracy and followers over time
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type OracleDomain = 'weather' | 'war' | 'prosperity' | 'disaster'
 
@@ -35,8 +36,8 @@ export class CreatureOracleSystem {
     if (this.oracles.length < MAX_ORACLES && Math.random() < ASSIGN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
-        const domain = DOMAINS[Math.floor(Math.random() * DOMAINS.length)]
+        const eid = pickRandom(entities)
+        const domain = pickRandom(DOMAINS)
         this.oracles.push({
           entityId: eid,
           visionCount: 0,

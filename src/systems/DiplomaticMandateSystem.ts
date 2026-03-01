@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type MandateForm = 'administrative_mandate' | 'military_mandate' | 'economic_mandate' | 'developmental_mandate'
 
@@ -39,7 +40,7 @@ export class DiplomaticMandateSystem {
       const mandated = 1 + Math.floor(Math.random() * 8)
       if (mandatory === mandated) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.agreements.push({
         id: this.nextId++,

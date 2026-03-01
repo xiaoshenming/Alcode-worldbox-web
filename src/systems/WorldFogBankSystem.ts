@@ -4,6 +4,7 @@
 import { EntityManager } from '../ecs/Entity'
 import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type FogDensity = 'light' | 'moderate' | 'thick' | 'impenetrable'
 
@@ -65,7 +66,7 @@ export class WorldFogBankSystem {
       if (tile === TileType.GRASS || tile === TileType.SAND || tile === TileType.FOREST) {
         const hasWaterNeighbor = this.checkWaterNeighbor(world, x, y, w, h)
         if (hasWaterNeighbor) {
-          const density = DENSITIES[Math.floor(Math.random() * DENSITIES.length)]
+          const density = pickRandom(DENSITIES)
           this.fogs.push({
             id: this.nextId++,
             x,

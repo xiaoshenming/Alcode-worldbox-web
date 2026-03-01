@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type PaviorForm = 'royal_pavior' | 'borough_pavior' | 'guild_pavior' | 'highway_pavior'
 
@@ -39,7 +40,7 @@ export class DiplomaticPaviorSystem {
       const maintenance = 1 + Math.floor(Math.random() * 8)
       if (road === maintenance) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

@@ -2,6 +2,7 @@
 // Rare celestial events that affect creature behavior worldwide
 
 import { EntityManager, NeedsComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type EclipseType = 'solar' | 'lunar'
 export type EclipseEffect = 'panic' | 'worship' | 'power_surge' | 'darkness' | 'prophecy'
@@ -55,7 +56,7 @@ export class WorldEclipseSystem {
       ? 800 + Math.floor(Math.random() * 400)
       : 1200 + Math.floor(Math.random() * 600)
 
-    const effect = EFFECTS[Math.floor(Math.random() * EFFECTS.length)]
+    const effect = pickRandom(EFFECTS)
 
     this.eclipses.push({
       id: this.nextId++,

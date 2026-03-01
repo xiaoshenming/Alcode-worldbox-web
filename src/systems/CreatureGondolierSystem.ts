@@ -2,6 +2,7 @@
 // Creatures near water become gondoliers, ferrying passengers and cargo
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type BoatType = 'raft' | 'canoe' | 'gondola' | 'barge'
 
@@ -39,9 +40,9 @@ export class CreatureGondolierSystem {
     if (this.gondoliers.length < MAX_GONDOLIERS && Math.random() < SPAWN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         if (!this.gondoliers.some(g => g.entityId === eid)) {
-          const boat = BOAT_TYPES[Math.floor(Math.random() * BOAT_TYPES.length)]
+          const boat = pickRandom(BOAT_TYPES)
           this.gondoliers.push({
             id: this.nextId++, entityId: eid,
             skill: 5 + Math.random() * 15,

@@ -2,6 +2,7 @@
 // Master vintners develop renowned vintages that boost cultural prestige
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type WineVariety = 'red' | 'white' | 'rosé' | 'sparkling'
 
@@ -46,7 +47,7 @@ export class CreatureVintnerSystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const wineVariety = WINE_VARIETIES[Math.floor(Math.random() * WINE_VARIETIES.length)]
+      const wineVariety = pickRandom(WINE_VARIETIES)
       const barrelsProduced = 1 + Math.floor(skill / 10)
       const vintage = Math.floor(tick / 10000) + Math.floor(Math.random() * 5)
       const reputation = 10 + skill * 0.6 + Math.random() * 15

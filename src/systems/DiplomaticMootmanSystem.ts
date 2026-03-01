@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type MootmanForm = 'royal_mootman' | 'shire_mootman' | 'hundred_mootman' | 'borough_mootman'
 
@@ -39,7 +40,7 @@ export class DiplomaticMootmanSystem {
       const judicial = 1 + Math.floor(Math.random() * 8)
       if (assembly === judicial) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

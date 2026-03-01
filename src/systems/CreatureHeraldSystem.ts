@@ -2,6 +2,7 @@
 // They boost morale and spread news across the world
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type HeraldRank = 'town_crier' | 'royal_herald' | 'grand_herald' | 'legendary'
 
@@ -41,8 +42,8 @@ export class CreatureHeraldSystem {
     if (this.heralds.length < MAX_HERALDS && Math.random() < RECRUIT_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
-        const rank = RANKS[Math.floor(Math.random() * RANKS.length)]
+        const eid = pickRandom(entities)
+        const rank = pickRandom(RANKS)
         this.heralds.push({
           id: this.nextId++,
           creatureId: eid,

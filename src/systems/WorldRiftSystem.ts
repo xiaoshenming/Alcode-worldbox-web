@@ -4,6 +4,7 @@
 import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
 import { EntityManager, PositionComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type RiftStage = 'forming' | 'stable' | 'unstable' | 'collapsing'
 
@@ -108,7 +109,7 @@ export class WorldRiftSystem {
         const wy = rift.y + Math.floor((Math.random() - 0.5) * WARP_RANGE * 2)
 
         if (wx >= 0 && wx < world.width && wy >= 0 && wy < world.height) {
-          const newTile = WARP_TILES[Math.floor(Math.random() * WARP_TILES.length)]
+          const newTile = pickRandom(WARP_TILES)
           world.setTile(wx, wy, newTile)
           rift.warpsPerformed++
         }

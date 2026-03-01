@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type DisarmamentScope = 'partial' | 'regional' | 'bilateral' | 'comprehensive'
 
@@ -39,7 +40,7 @@ export class DiplomaticDisarmamentSystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const scope = SCOPES[Math.floor(Math.random() * SCOPES.length)]
+      const scope = pickRandom(SCOPES)
 
       this.treaties.push({
         id: this.nextId++,

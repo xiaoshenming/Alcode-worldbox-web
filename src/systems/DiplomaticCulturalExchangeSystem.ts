@@ -4,6 +4,7 @@
 import { Civilization } from '../civilization/Civilization'
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ExchangeType = 'art' | 'music' | 'cuisine' | 'language' | 'technology' | 'religion'
 
@@ -62,11 +63,11 @@ export class DiplomaticCulturalExchangeSystem {
       if (this.exchanges.length >= MAX_EXCHANGES) break
 
       // Pick a random partner
-      const partner = civs[Math.floor(Math.random() * civs.length)]
+      const partner = pickRandom(civs)
       if (partner.id === civ.id) continue
       if (this.hasActiveExchange(civ.id, partner.id)) continue
 
-      const exchangeType = TYPES[Math.floor(Math.random() * TYPES.length)]
+      const exchangeType = pickRandom(TYPES)
 
       this.exchanges.push({
         id: this.nextId++,

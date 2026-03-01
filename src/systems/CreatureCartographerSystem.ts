@@ -2,6 +2,7 @@
 // Maps improve navigation, trade efficiency, and territorial awareness
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type MapType = 'terrain' | 'trade' | 'military' | 'nautical'
 
@@ -46,7 +47,7 @@ export class CreatureCartographerSystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const mapType = MAP_TYPES[Math.floor(Math.random() * MAP_TYPES.length)]
+      const mapType = pickRandom(MAP_TYPES)
       const mapsDrawn = 1 + Math.floor(skill / 15)
       const accuracy = 20 + skill * 0.7 + Math.random() * 10
       const coverage = 10 + skill * 0.5 + mapsDrawn * 3

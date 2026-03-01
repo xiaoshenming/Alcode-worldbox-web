@@ -2,6 +2,7 @@
 // Crystals are harvestable for trade and magic, grow slowly over time
 // Different crystal types have different properties
 
+import { pickRandom } from '../utils/RandomUtils'
 export type CrystalType = 'quartz' | 'amethyst' | 'ruby' | 'sapphire' | 'emerald' | 'obsidian'
 
 export interface CrystalFormation {
@@ -56,7 +57,7 @@ export class WorldCrystalFormationSystem {
     this.formations.push({
       id: nextCrystalId++,
       x, y,
-      type: CRYSTAL_TYPES[Math.floor(Math.random() * CRYSTAL_TYPES.length)],
+      type: pickRandom(CRYSTAL_TYPES),
       size: 1,
       purity: 30 + Math.floor(Math.random() * 50),
       harvestable: false,

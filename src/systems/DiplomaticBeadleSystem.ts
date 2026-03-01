@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type BeadleForm = 'royal_beadle' | 'parish_beadle' | 'church_beadle' | 'university_beadle'
 
@@ -39,7 +40,7 @@ export class DiplomaticBeadleSystem {
       const warden = 1 + Math.floor(Math.random() * 8)
       if (parish === warden) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

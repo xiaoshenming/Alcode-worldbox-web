@@ -6,6 +6,7 @@ import { BuildingType, BuildingComponent } from '../civilization/Civilization'
 import { EntityManager, PositionComponent } from '../ecs/Entity'
 import { ParticleSystem } from './ParticleSystem'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type CropType = 'wheat' | 'corn' | 'rice' | 'potato'
 export type CropStage = 'planted' | 'growing' | 'mature' | 'harvested' | 'dead'
@@ -142,7 +143,7 @@ export class CropSystem {
           const occupied = this.fields.some(f => f.x === cx && f.y === cy && f.stage !== 'harvested' && f.stage !== 'dead')
           if (occupied) continue
 
-          const cropType = CROP_TYPES[Math.floor(Math.random() * CROP_TYPES.length)]
+          const cropType = pickRandom(CROP_TYPES)
           const info = CROP_INFO[cropType]
 
           this.fields.push({

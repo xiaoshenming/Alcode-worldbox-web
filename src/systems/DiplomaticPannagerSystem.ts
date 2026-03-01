@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type PannagerForm = 'forest_pannage' | 'royal_pannage' | 'common_pannage' | 'seasonal_pannage'
 
@@ -39,7 +40,7 @@ export class DiplomaticPannagerSystem {
       const pannager = 1 + Math.floor(Math.random() * 8)
       if (forest === pannager) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

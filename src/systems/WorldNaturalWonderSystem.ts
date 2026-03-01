@@ -4,6 +4,7 @@
 
 import { EntityManager, PositionComponent } from '../ecs/Entity'
 import { CivMemberComponent } from '../civilization/Civilization'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type WonderType = 'waterfall' | 'crystal_cave' | 'ancient_tree' | 'geyser' | 'aurora_zone'
 
@@ -55,7 +56,7 @@ export class WorldNaturalWonderSystem {
       const dx = w.x - x, dy = w.y - y
       if (dx * dx + dy * dy < 900) return // too close
     }
-    const type = WONDER_LIST[Math.floor(Math.random() * WONDER_LIST.length)]
+    const type = pickRandom(WONDER_LIST)
     this.wonders.push({
       id: nextWonderId++,
       type,

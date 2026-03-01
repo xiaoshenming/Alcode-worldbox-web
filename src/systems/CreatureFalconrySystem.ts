@@ -2,6 +2,7 @@
 // Falconers train birds of prey to assist in hunting and scouting
 
 import { EntityManager, EntityId } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type FalconBreed = 'peregrine' | 'gyrfalcon' | 'merlin' | 'kestrel'
 export type FalconTask = 'hunting' | 'scouting' | 'resting' | 'training'
@@ -37,11 +38,11 @@ export class CreatureFalconrySystem {
     if (this.falcons.length < MAX_FALCONS && Math.random() < TAME_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         this.falcons.push({
           id: this.nextId++,
           ownerId: eid,
-          breed: BREEDS[Math.floor(Math.random() * BREEDS.length)],
+          breed: pickRandom(BREEDS),
           task: 'training',
           skill: 10 + Math.floor(Math.random() * 30),
           loyalty: 40 + Math.floor(Math.random() * 30),

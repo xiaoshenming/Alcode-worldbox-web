@@ -2,6 +2,7 @@
 // Creatures craft and age cheeses, improving food quality over time
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type CheeseVariety = 'cheddar' | 'brie' | 'gouda' | 'blue'
 
@@ -36,10 +37,10 @@ export class CreatureCheeseAgerSystem {
     if (this.agers.length < MAX_AGERS && Math.random() < ASSIGN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         const already = this.agers.some(a => a.entityId === eid)
         if (!already) {
-          const variety = VARIETIES[Math.floor(Math.random() * VARIETIES.length)]
+          const variety = pickRandom(VARIETIES)
           this.agers.push({
             entityId: eid,
             cheesesAging: 1,

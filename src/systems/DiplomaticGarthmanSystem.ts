@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type GarthmanForm = 'royal_garthman' | 'manor_garthman' | 'abbey_garthman' | 'borough_garthman'
 
@@ -39,7 +40,7 @@ export class DiplomaticGarthmanSystem {
       const yard = 1 + Math.floor(Math.random() * 8)
       if (garden === yard) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ProcuratorshipForm = 'provincial_procurator' | 'fiscal_procurator' | 'judicial_procurator' | 'military_procurator'
 
@@ -39,7 +40,7 @@ export class DiplomaticProcuratorshipSystem {
       const governed = 1 + Math.floor(Math.random() * 8)
       if (appointer === governed) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

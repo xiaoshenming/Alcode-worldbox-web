@@ -2,6 +2,7 @@
 // Shapeshifters disguise as other species, gain abilities, but risk identity loss
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ShiftForm = 'wolf' | 'eagle' | 'bear' | 'serpent' | 'deer' | 'shadow'
 
@@ -46,7 +47,7 @@ export class CreatureShapeshiftingSystem {
       mastery = Math.min(100, mastery + MASTERY_GROWTH)
       this.masteryMap.set(eid, mastery)
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
       const stability = mastery * (0.4 + Math.random() * 0.6)
 
       this.shifts.push({

@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type TollboothForm = 'royal_tollbooth' | 'bridge_tollbooth' | 'gate_tollbooth' | 'road_tollbooth'
 
@@ -39,7 +40,7 @@ export class DiplomaticTollboothSystem {
       const passage = 1 + Math.floor(Math.random() * 8)
       if (collection === passage) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

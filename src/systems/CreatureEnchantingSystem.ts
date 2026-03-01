@@ -2,6 +2,7 @@
 // Enchantments boost equipment stats like sharpness, protection, and swiftness
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type EnchantType = 'sharpness' | 'protection' | 'swiftness' | 'vitality' | 'flame' | 'frost'
 
@@ -44,7 +45,7 @@ export class CreatureEnchantingSystem {
       skill = Math.min(100, skill + 0.05)
       this.skillMap.set(eid, skill)
 
-      const type = ENCHANT_TYPES[Math.floor(Math.random() * ENCHANT_TYPES.length)]
+      const type = pickRandom(ENCHANT_TYPES)
       const power = skill * (0.4 + Math.random() * 0.6)
 
       this.enchantments.push({

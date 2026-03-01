@@ -2,6 +2,7 @@
 // Jesters perform in settlements, reducing stress and increasing happiness
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type JesterAct = 'juggling' | 'comedy' | 'acrobatics' | 'satire'
 
@@ -37,8 +38,8 @@ export class CreatureJesterSystem {
     if (this.jesters.length < MAX_JESTERS && Math.random() < RECRUIT_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
-        const act = ACTS[Math.floor(Math.random() * ACTS.length)]
+        const eid = pickRandom(entities)
+        const act = pickRandom(ACTS)
         this.jesters.push({
           id: this.nextId++,
           creatureId: eid,

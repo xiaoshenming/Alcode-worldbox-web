@@ -2,6 +2,7 @@
 // Nomads follow seasonal patterns and trade with settled civilizations
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type NomadTradition = 'herders' | 'gatherers' | 'hunters' | 'traders'
 
@@ -38,8 +39,8 @@ export class CreatureNomadSystem {
     if (this.tribes.length < MAX_TRIBES && Math.random() < FORM_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
-        const tradition = TRADITIONS[Math.floor(Math.random() * TRADITIONS.length)]
+        const eid = pickRandom(entities)
+        const tradition = pickRandom(TRADITIONS)
         this.tribes.push({
           id: this.nextId++,
           leaderId: eid,

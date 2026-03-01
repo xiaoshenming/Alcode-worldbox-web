@@ -3,6 +3,7 @@
 
 import { EntityManager, EntityId, PositionComponent, CreatureComponent, NeedsComponent, GeneticsComponent } from '../ecs/Entity'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type MutationType = 'strength' | 'speed' | 'resilience' | 'gigantism' | 'bioluminescence'
 
@@ -84,7 +85,7 @@ export class CreatureMutationSystem {
 
       if (Math.random() > MUTATION_CHANCE * envFactor) continue
 
-      const type = MUTATION_TYPES[Math.floor(Math.random() * MUTATION_TYPES.length)]
+      const type = pickRandom(MUTATION_TYPES)
       if (this.hasMutation(eid, type)) continue
 
       const magnitude = 0.1 + Math.random() * 0.9

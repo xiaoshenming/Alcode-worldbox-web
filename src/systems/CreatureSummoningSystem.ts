@@ -2,6 +2,7 @@
 // Summoners conjure elementals, spirits, golems, phantoms, and familiars
 
 import { EntityManager, CreatureComponent, PositionComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type SummonType = 'elemental' | 'spirit' | 'golem' | 'phantom' | 'familiar'
 
@@ -52,7 +53,7 @@ export class CreatureSummoningSystem {
       mastery = Math.min(100, mastery + MASTERY_GROWTH)
       this.masteryMap.set(eid, mastery)
 
-      const type = SUMMON_TYPES[Math.floor(Math.random() * SUMMON_TYPES.length)]
+      const type = pickRandom(SUMMON_TYPES)
       const power = POWER_BASE[type] * (0.5 + mastery / 100)
 
       this.summons.push({

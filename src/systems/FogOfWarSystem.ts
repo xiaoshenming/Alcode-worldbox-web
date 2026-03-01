@@ -8,6 +8,7 @@ import { ParticleSystem } from '../systems/ParticleSystem';
 import { EventLog } from '../systems/EventLog';
 import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants';
 import { World } from '../game/World';
+import { pickRandom } from '../utils/RandomUtils'
 
 export type FogState = 0 | 1 | 2; // 0=unexplored, 1=explored(dim), 2=visible(clear)
 
@@ -227,7 +228,7 @@ export class FogOfWarSystem {
 
     const reward = this.generateReward(type);
     const descs = DISCOVERY_DESC[type];
-    const description = descs[Math.floor(Math.random() * descs.length)];
+    const description = pickRandom(descs);
 
     const event: DiscoveryEvent = { x, y, type, description, tick, claimed: false, reward };
     fogData.discoveryEvents.push(event);

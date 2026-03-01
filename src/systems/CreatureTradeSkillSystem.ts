@@ -3,6 +3,7 @@
 // Skilled traders generate more resources from trade routes
 
 import { EntityManager, EntityId } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type TradeSkillType = 'bartering' | 'negotiation' | 'appraisal' | 'logistics' | 'diplomacy'
 
@@ -45,12 +46,12 @@ export class CreatureTradeSkillSystem {
       if (this.traders.has(id)) continue
       if (this.traders.size >= MAX_TRADERS) break
       if (Math.random() > 0.06) continue
-      const primary = TRADE_SKILL_LIST[Math.floor(Math.random() * TRADE_SKILL_LIST.length)]
+      const primary = pickRandom(TRADE_SKILL_LIST)
       const skills: Partial<Record<TradeSkillType, number>> = {}
       skills[primary] = 10 + Math.floor(Math.random() * 20)
       // Secondary skill
       if (Math.random() < 0.4) {
-        const secondary = TRADE_SKILL_LIST[Math.floor(Math.random() * TRADE_SKILL_LIST.length)]
+        const secondary = pickRandom(TRADE_SKILL_LIST)
         if (secondary !== primary) skills[secondary] = 5 + Math.floor(Math.random() * 10)
       }
       this.traders.set(id, {

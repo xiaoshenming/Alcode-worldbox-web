@@ -4,6 +4,7 @@
 import { EntityManager, EntityId, PositionComponent, NeedsComponent } from '../ecs/Entity'
 import { CivMemberComponent } from '../civilization/Civilization'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 export interface Bounty {
   id: number
@@ -85,7 +86,7 @@ export class CreatureBountySystem {
     for (const civ of civManager.civilizations.values()) civs.push(civ)
     if (civs.length < 2) return
 
-    const poster = civs[Math.floor(Math.random() * civs.length)]
+    const poster = pickRandom(civs)
     // Find a hostile civ
     let targetCivId = -1
     for (const [civId, rel] of poster.relations) {
@@ -108,7 +109,7 @@ export class CreatureBountySystem {
     if (target === null) return
 
     const reward = MIN_REWARD + Math.floor(Math.random() * (MAX_REWARD - MIN_REWARD))
-    const reason = REASONS[Math.floor(Math.random() * REASONS.length)]
+    const reason = pickRandom(REASONS)
     const bountyId = nextBountyId++
     const bounty: Bounty = {
       id: bountyId,

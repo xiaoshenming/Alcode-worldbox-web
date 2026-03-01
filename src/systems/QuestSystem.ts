@@ -6,6 +6,7 @@ import { EventLog } from './EventLog'
 import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { World } from '../game/World'
 import { QUEST_DESCRIPTIONS, BALLAD_TEMPLATES } from './QuestData'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type QuestType = 'slay_dragon' | 'explore_ruins' | 'defend_village' | 'find_artifact' | 'escort_caravan' | 'holy_pilgrimage'
 
@@ -223,7 +224,7 @@ export class QuestSystem {
     candidates.push('explore_ruins')
 
     if (candidates.length === 0) return null
-    return candidates[Math.floor(Math.random() * candidates.length)]
+    return pickRandom(candidates)
   }
 
   private findQuestTarget(
@@ -315,7 +316,7 @@ export class QuestSystem {
 
   private pickDescription(type: QuestType): string {
     const pool = QUEST_DESCRIPTIONS[type]
-    return pool[Math.floor(Math.random() * pool.length)]
+    return pickRandom(pool)
   }
 
   private updateQuestProgress(
@@ -474,7 +475,7 @@ export class QuestSystem {
         civ.happiness = Math.min(100, civ.happiness + 3)
       }
 
-      const template = BALLAD_TEMPLATES[Math.floor(Math.random() * BALLAD_TEMPLATES.length)]
+      const template = pickRandom(BALLAD_TEMPLATES)
       const balladName = template
         .replace('{name}', creature.name)
         .replace('{title}', hero.title)

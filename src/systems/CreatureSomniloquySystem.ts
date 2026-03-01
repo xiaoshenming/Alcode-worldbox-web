@@ -2,6 +2,7 @@
 // Sleep-talking reveals secrets, prophecies, or nonsense
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type SleepTalkType = 'secret' | 'prophecy' | 'nonsense' | 'memory' | 'warning' | 'confession'
 
@@ -50,9 +51,9 @@ export class CreatureSomniloquySystem {
       if (Math.random() > TALK_CHANCE) continue
       if (this.talks.length >= MAX_TALKS) break
 
-      const talkType = TALK_TYPES[Math.floor(Math.random() * TALK_TYPES.length)]
+      const talkType = pickRandom(TALK_TYPES)
       const phrases = PHRASES[talkType]
-      const content = phrases[Math.floor(Math.random() * phrases.length)]
+      const content = pickRandom(phrases)
 
       let significance: number
       switch (talkType) {

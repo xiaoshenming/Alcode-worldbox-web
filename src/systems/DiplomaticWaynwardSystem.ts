@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type WaynwardForm = 'royal_waynward' | 'shire_waynward' | 'borough_waynward' | 'turnpike_waynward'
 
@@ -39,7 +40,7 @@ export class DiplomaticWaynwardSystem {
       const travel = 1 + Math.floor(Math.random() * 8)
       if (road === travel) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

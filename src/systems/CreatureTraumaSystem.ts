@@ -2,6 +2,7 @@
 // Combat, disasters, and loss cause lasting behavioral changes like avoidance and aggression
 
 import { EntityManager, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type TraumaSource = 'combat' | 'disaster' | 'loss' | 'starvation' | 'exile' | 'betrayal'
 export type TraumaEffect = 'avoidance' | 'aggression' | 'withdrawal' | 'hypervigilance' | 'numbness'
@@ -70,7 +71,7 @@ export class CreatureTraumaSystem {
 
       const source = this.pickSource(creature)
       const effects = EFFECT_BY_SOURCE[source]
-      const effect = effects[Math.floor(Math.random() * effects.length)]
+      const effect = pickRandom(effects)
 
       this.traumas.push({
         id: this.nextId++,
@@ -120,7 +121,7 @@ export class CreatureTraumaSystem {
   }
 
   private pickSource(_creature: CreatureComponent): TraumaSource {
-    return TRAUMA_SOURCES[Math.floor(Math.random() * TRAUMA_SOURCES.length)]
+    return pickRandom(TRAUMA_SOURCES)
   }
 
   private _traumasBuf: Trauma[] = []

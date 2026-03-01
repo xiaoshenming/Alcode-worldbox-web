@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type CrierForm = 'royal_crier' | 'borough_crier' | 'market_crier' | 'court_crier'
 
@@ -39,7 +40,7 @@ export class DiplomaticCrierSystem {
       const audience = 1 + Math.floor(Math.random() * 8)
       if (proclamation === audience) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

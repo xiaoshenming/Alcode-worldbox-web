@@ -4,6 +4,7 @@
 import { Civilization } from '../civilization/Civilization'
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type MarriageType = 'royal' | 'noble' | 'strategic' | 'peace_offering'
 
@@ -42,12 +43,12 @@ export class DiplomaticMarriageSystem {
       const civs = this._civsBuf; civs.length = 0
     for (const civ of civManager.civilizations.values()) civs.push(civ)
       if (civs.length >= 2 && Math.random() < MARRIAGE_CHANCE) {
-        const a = civs[Math.floor(Math.random() * civs.length)]
-        let b = civs[Math.floor(Math.random() * civs.length)]
+        const a = pickRandom(civs)
+        let b = pickRandom(civs)
         if (a.id !== b.id) {
           const rel = a.relations?.get(b.id) ?? 0
           if (rel >= 0) {
-            const type = MARRIAGE_TYPES[Math.floor(Math.random() * MARRIAGE_TYPES.length)]
+            const type = pickRandom(MARRIAGE_TYPES)
             this.marriages.push({
               id: this.nextId++,
               type,

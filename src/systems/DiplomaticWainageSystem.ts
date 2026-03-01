@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type WainageForm = 'royal_wainage' | 'manor_wainage' | 'borough_wainage' | 'guild_wainage'
 
@@ -39,7 +40,7 @@ export class DiplomaticWainageSystem {
       const duty = 1 + Math.floor(Math.random() * 8)
       if (transport === duty) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

@@ -2,6 +2,7 @@
 // Artisans create mosaics that beautify buildings and boost culture
 
 import { EntityManager, EntityId } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type MosaicStyle = 'geometric' | 'figurative' | 'abstract' | 'narrative'
 export type MosaicMaterial = 'stone' | 'glass' | 'ceramic' | 'gem'
@@ -40,12 +41,12 @@ export class CreatureMosaicSystem {
     if (this.mosaics.length < MAX_MOSAICS && Math.random() < CREATE_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
-        const material = MATERIALS[Math.floor(Math.random() * MATERIALS.length)]
+        const eid = pickRandom(entities)
+        const material = pickRandom(MATERIALS)
         this.mosaics.push({
           id: this.nextId++,
           artistId: eid,
-          style: STYLES[Math.floor(Math.random() * STYLES.length)],
+          style: pickRandom(STYLES),
           material,
           beauty: MATERIAL_BEAUTY[material] + Math.floor(Math.random() * 40),
           size: 1 + Math.floor(Math.random() * 5),

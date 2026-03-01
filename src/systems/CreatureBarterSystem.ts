@@ -2,6 +2,7 @@
 // Creatures exchange surplus resources with others for items they need
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type BarterItem = 'food' | 'wood' | 'stone' | 'gold' | 'herb' | 'gem'
 
@@ -46,13 +47,13 @@ export class CreatureBarterSystem {
 
     for (let i = 0; i < arr.length; i++) {
       if (Math.random() > BARTER_CHANCE) continue
-      const partner = arr[Math.floor(Math.random() * arr.length)]
+      const partner = pickRandom(arr)
       if (partner === arr[i]) continue
 
-      const offered = ITEMS[Math.floor(Math.random() * ITEMS.length)]
-      let requested = ITEMS[Math.floor(Math.random() * ITEMS.length)]
+      const offered = pickRandom(ITEMS)
+      let requested = pickRandom(ITEMS)
       while (requested === offered) {
-        requested = ITEMS[Math.floor(Math.random() * ITEMS.length)]
+        requested = pickRandom(ITEMS)
       }
 
       const valRatio = ITEM_VALUES[offered] / ITEM_VALUES[requested]

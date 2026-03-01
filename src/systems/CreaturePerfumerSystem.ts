@@ -2,6 +2,7 @@
 // Perfumers gather essences from nature and blend them into fragrances for trade
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type FragranceType = 'floral' | 'spicy' | 'woody' | 'citrus'
 
@@ -38,9 +39,9 @@ export class CreaturePerfumerSystem {
     if (this.perfumers.length < MAX_PERFUMERS && Math.random() < SPAWN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         if (!this.perfumers.some(p => p.entityId === eid)) {
-          const frag = FRAGRANCE_TYPES[Math.floor(Math.random() * FRAGRANCE_TYPES.length)]
+          const frag = pickRandom(FRAGRANCE_TYPES)
           this.perfumers.push({
             id: this.nextId++, entityId: eid,
             skill: 5 + Math.random() * 15,

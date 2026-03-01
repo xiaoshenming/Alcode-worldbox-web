@@ -2,6 +2,7 @@
 // Creatures build reputation through actions, affecting social interactions
 
 import { EntityManager, EntityId, PositionComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ReputationTier = 'infamous' | 'disliked' | 'neutral' | 'respected' | 'legendary'
 
@@ -143,7 +144,7 @@ export class CreatureReputationSystem {
       for (const eid of entities) {
         if (this.reputations.size >= MAX_TRACKED) break
         if (Math.random() < 0.05 && !this.reputations.has(eid)) {
-          const action = _REPUTATION_ACTIONS[Math.floor(Math.random() * _REPUTATION_ACTIONS.length)]
+          const action = pickRandom(_REPUTATION_ACTIONS)
           if (action === 'trade') this.recordTrade(eid, tick)
           else if (action === 'build') this.recordBuild(eid, tick)
           else this.recordHeal(eid, tick)

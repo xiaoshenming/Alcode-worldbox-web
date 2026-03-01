@@ -4,6 +4,7 @@
 
 import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type EchoSource = 'battle' | 'disaster' | 'celebration' | 'construction' | 'horn_call' | 'thunder'
 const ECHO_SOURCES: EchoSource[] = ['battle', 'disaster', 'celebration', 'construction', 'horn_call', 'thunder']
@@ -70,7 +71,7 @@ export class WorldEchoSystem {
       if (tile === null || tile === TileType.DEEP_WATER || tile === TileType.LAVA) continue
 
       const sources = ECHO_SOURCES
-      const source = sources[Math.floor(Math.random() * sources.length)]
+      const source = pickRandom(sources)
       const config = ECHO_CONFIG[source]
 
       const [minI, maxI] = config.intensity

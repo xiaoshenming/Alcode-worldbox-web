@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ConcordPillar = 'peace' | 'prosperity' | 'justice' | 'unity'
 
@@ -39,7 +40,7 @@ export class DiplomaticConcordSystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const pillar = PILLARS[Math.floor(Math.random() * PILLARS.length)]
+      const pillar = pickRandom(PILLARS)
 
       this.treaties.push({
         id: this.nextId++,

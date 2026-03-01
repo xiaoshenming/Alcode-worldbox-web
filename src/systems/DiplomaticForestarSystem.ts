@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ForestarForm = 'royal_forestar' | 'crown_forestar' | 'shire_forestar' | 'manor_forestar'
 
@@ -39,7 +40,7 @@ export class DiplomaticForestarSystem {
       const management = 1 + Math.floor(Math.random() * 8)
       if (planting === management) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

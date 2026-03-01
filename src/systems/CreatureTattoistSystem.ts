@@ -2,6 +2,7 @@
 // Tattoos grant minor stat bonuses and cultural prestige
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type TattooStyle = 'tribal' | 'runic' | 'celestial' | 'beast'
 
@@ -39,9 +40,9 @@ export class CreatureTattoistSystem {
     if (this.tattoos.length < MAX_TATTOOS && Math.random() < TATTOO_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
-        const style = STYLES[Math.floor(Math.random() * STYLES.length)]
-        const bodyPart = BODY_PARTS[Math.floor(Math.random() * BODY_PARTS.length)]
+        const eid = pickRandom(entities)
+        const style = pickRandom(STYLES)
+        const bodyPart = pickRandom(BODY_PARTS)
         this.tattoos.push({
           id: this.nextId++,
           creatureId: eid,

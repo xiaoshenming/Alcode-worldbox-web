@@ -2,6 +2,7 @@
 // Herbalists gather herbs, brew remedies, and heal the sick
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type HerbType = 'chamomile' | 'ginseng' | 'lavender' | 'echinacea' | 'valerian' | 'turmeric'
 export type RemedyForm = 'poultice' | 'tea' | 'tincture' | 'salve' | 'elixir' | 'incense'
@@ -47,8 +48,8 @@ export class CreatureHerbalismSystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const herb = HERBS[Math.floor(Math.random() * HERBS.length)]
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const herb = pickRandom(HERBS)
+      const form = pickRandom(FORMS)
       const potency = skill * (0.4 + Math.random() * 0.6)
 
       this.remedies.push({

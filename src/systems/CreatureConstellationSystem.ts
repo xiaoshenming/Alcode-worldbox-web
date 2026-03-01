@@ -2,6 +2,7 @@
 // Stargazers identify constellations that grant cultural and navigation bonuses
 
 import { EntityManager, EntityId } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ConstellationType = 'warrior' | 'harvest' | 'voyage' | 'wisdom' | 'fortune'
 
@@ -41,7 +42,7 @@ export class CreatureConstellationSystem {
     if (this.constellations.length < MAX_CONSTELLATIONS && Math.random() < DISCOVER_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         // Pick a name not yet used — two-pass count+sample, zero allocation
         let availCount = 0
         for (const n of NAMES) { if (!this.usedNames.has(n)) availCount++ }
@@ -58,7 +59,7 @@ export class CreatureConstellationSystem {
           this.constellations.push({
             id: this.nextId++,
             name,
-            type: TYPES[Math.floor(Math.random() * TYPES.length)],
+            type: pickRandom(TYPES),
             discoveredBy: eid,
             visibility: 0.5 + Math.random() * 0.5,
             bonusStrength: 5 + Math.floor(Math.random() * 20),

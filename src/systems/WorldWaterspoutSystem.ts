@@ -4,6 +4,7 @@
 import { EntityManager, PositionComponent } from '../ecs/Entity'
 import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type SpoutIntensity = 'weak' | 'moderate' | 'strong' | 'tornadic'
 
@@ -54,7 +55,7 @@ export class WorldWaterspoutSystem {
       const tile = world.getTile(x, y)
 
       if (tile === TileType.SHALLOW_WATER || tile === TileType.DEEP_WATER) {
-        const intensity = INTENSITIES[Math.floor(Math.random() * INTENSITIES.length)]
+        const intensity = pickRandom(INTENSITIES)
         this.spouts.push({
           id: this.nextId++,
           x, y,

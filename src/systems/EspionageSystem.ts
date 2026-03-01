@@ -7,6 +7,7 @@ import { Civilization, BuildingComponent, CivMemberComponent } from '../civiliza
 import { World } from '../game/World'
 import { ParticleSystem } from './ParticleSystem'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 // --- Interfaces ---
 
@@ -129,7 +130,7 @@ export class EspionageSystem {
 
   private assignMission(spy: Spy): void {
     const missions = SPY_MISSIONS_ALL
-    spy.mission = missions[Math.floor(Math.random() * missions.length)]
+    spy.mission = pickRandom(missions)
     spy.missionTimer = 0
   }
 

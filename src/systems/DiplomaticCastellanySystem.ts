@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type CastellanyForm = 'defensive_castellany' | 'administrative_castellany' | 'judicial_castellany' | 'revenue_castellany'
 
@@ -39,7 +40,7 @@ export class DiplomaticCastellanySystem {
       const castellan = 1 + Math.floor(Math.random() * 8)
       if (territory === castellan) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

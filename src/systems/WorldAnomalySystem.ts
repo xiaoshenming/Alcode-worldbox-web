@@ -3,6 +3,7 @@
 
 import { EntityManager, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type AnomalyType = 'rift' | 'vortex' | 'mirage' | 'crystal_storm' | 'void_zone'
 
@@ -99,7 +100,7 @@ export class WorldAnomalySystem {
       })
       if (tooClose) continue
 
-      const type = ANOMALY_TYPES[Math.floor(Math.random() * ANOMALY_TYPES.length)]
+      const type = pickRandom(ANOMALY_TYPES)
       const anomaly: WorldAnomaly = {
         id: nextAnomalyId++,
         type,

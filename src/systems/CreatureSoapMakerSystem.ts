@@ -2,6 +2,7 @@
 // Skill improves with each batch, affecting soap quality
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type SoapRecipe = 'tallow' | 'olive' | 'lye' | 'herbal'
 
@@ -38,10 +39,10 @@ export class CreatureSoapMakerSystem {
     if (this.makers.length < MAX_SOAP_MAKERS && Math.random() < ASSIGN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         const already = this.makers.some(m => m.entityId === eid)
         if (!already) {
-          const recipe = RECIPES[Math.floor(Math.random() * RECIPES.length)]
+          const recipe = pickRandom(RECIPES)
           this.makers.push({
             id: this.nextId++,
             entityId: eid,

@@ -2,6 +2,7 @@
 // Fermented goods boost morale, enable trade, and can cause intoxication effects
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type FermentType = 'fruit_wine' | 'grain_beer' | 'honey_mead' | 'herb_tonic' | 'root_brew' | 'mushroom_elixir'
 
@@ -49,7 +50,7 @@ export class CreatureFermentationSystem {
       skill = Math.min(100, skill + QUALITY_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const type = TYPES[Math.floor(Math.random() * TYPES.length)]
+      const type = pickRandom(TYPES)
       const quality = skill * (0.6 + Math.random() * 0.4)
 
       this.goods.push({

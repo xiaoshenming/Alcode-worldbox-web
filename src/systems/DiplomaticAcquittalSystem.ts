@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type AcquittalForm = 'war_crime_clearing' | 'treaty_violation_dismissal' | 'espionage_acquittal' | 'sabotage_exculpation'
 
@@ -39,7 +40,7 @@ export class DiplomaticAcquittalSystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.verdicts.push({
         id: this.nextId++,

@@ -2,6 +2,7 @@
 // Masons improve building durability and create monuments for their civilization
 
 import { EntityManager, EntityId } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type StoneProject = 'wall' | 'tower' | 'monument' | 'bridge' | 'aqueduct'
 export type ProjectPhase = 'quarrying' | 'shaping' | 'building' | 'complete'
@@ -37,13 +38,13 @@ export class CreatureMasonrySystem {
     if (this.projects.length < MAX_PROJECTS && Math.random() < START_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         const pos = em.getComponent(eid, 'position') as { x: number; y: number } | undefined
         if (pos) {
           this.projects.push({
             id: this.nextId++,
             masonId: eid,
-            type: PROJECT_TYPES[Math.floor(Math.random() * PROJECT_TYPES.length)],
+            type: pickRandom(PROJECT_TYPES),
             phase: 'quarrying',
             x: pos.x,
             y: pos.y,

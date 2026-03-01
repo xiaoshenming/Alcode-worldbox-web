@@ -2,6 +2,7 @@
 // Calligraphy records history, boosts culture, and can be traded as art
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ScriptStyle = 'pictographic' | 'cuneiform' | 'runic' | 'flowing' | 'geometric' | 'symbolic'
 
@@ -47,14 +48,14 @@ export class CreatureCalligraphySystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const style = STYLES[Math.floor(Math.random() * STYLES.length)]
+      const style = pickRandom(STYLES)
       this.works.push({
         id: this.nextId++,
         authorId: eid,
         style,
         skill,
         culturalValue: skill * (0.5 + Math.random() * 0.5),
-        content: CONTENTS[Math.floor(Math.random() * CONTENTS.length)],
+        content: pickRandom(CONTENTS),
         preserved: skill > 60,
         tick,
       })

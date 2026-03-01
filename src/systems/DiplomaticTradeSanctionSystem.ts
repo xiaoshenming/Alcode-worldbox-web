@@ -4,6 +4,7 @@
 import { Civilization } from '../civilization/Civilization'
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type SanctionTarget = 'weapons' | 'food' | 'luxury' | 'raw_materials' | 'technology' | 'labor'
 export type SanctionStatus = 'proposed' | 'active' | 'easing' | 'lifted'
@@ -50,7 +51,7 @@ export class DiplomaticTradeSanctionSystem {
       let iB = Math.floor(Math.random() * civs.length)
       if (iB === iA) iB = (iB + 1) % civs.length
 
-      const target = TARGETS[Math.floor(Math.random() * TARGETS.length)]
+      const target = pickRandom(TARGETS)
 
       this.sanctions.push({
         id: this.nextId++,

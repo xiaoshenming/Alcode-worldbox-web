@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type AletasterForm = 'royal_aletaster' | 'borough_aletaster' | 'guild_aletaster' | 'market_aletaster'
 
@@ -39,7 +40,7 @@ export class DiplomaticAletasterSystem {
       const inspection = 1 + Math.floor(Math.random() * 8)
       if (brewing === inspection) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

@@ -2,6 +2,7 @@
 // Creatures fight in gladiatorial arenas, gaining wins, losses, and fame
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type WeaponSkill = 'sword' | 'spear' | 'axe' | 'fists' | 'trident'
 
@@ -39,10 +40,10 @@ export class CreatureGladiatorSystem {
     if (this.gladiators.length < MAX_GLADIATORS && Math.random() < ASSIGN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         const already = this.gladiators.some(g => g.entityId === eid)
         if (!already) {
-          const weapon = WEAPONS[Math.floor(Math.random() * WEAPONS.length)]
+          const weapon = pickRandom(WEAPONS)
           this.gladiators.push({
             id: this.nextId++,
             entityId: eid,
@@ -68,8 +69,8 @@ export class CreatureGladiatorSystem {
 
     for (const fighters of byArena.values()) {
       if (fighters.length < 2 || Math.random() > 0.02) continue
-      const a = fighters[Math.floor(Math.random() * fighters.length)]
-      let b = fighters[Math.floor(Math.random() * fighters.length)]
+      const a = pickRandom(fighters)
+      let b = pickRandom(fighters)
       if (a.id === b.id) continue
 
       const powerA = WEAPON_POWER[a.weaponSkill] + a.wins * 2

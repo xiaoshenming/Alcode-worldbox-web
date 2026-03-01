@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type AbsolutionForm = 'war_guilt_release' | 'debt_forgiveness' | 'crime_pardon' | 'oath_release'
 
@@ -39,7 +40,7 @@ export class DiplomaticAbsolutionSystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.declarations.push({
         id: this.nextId++,

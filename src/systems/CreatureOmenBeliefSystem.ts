@@ -2,6 +2,7 @@
 // Omens influence morale, migration decisions, and pre-battle rituals
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type OmenType = 'good_harvest' | 'dark_sky' | 'animal_sign' | 'water_omen' | 'fire_portent' | 'wind_whisper'
 
@@ -48,7 +49,7 @@ export class CreatureOmenBeliefSystem {
       if (this.beliefs.length >= MAX_BELIEFS) break
       if (Math.random() > OMEN_CHANCE) continue
 
-      const type = TYPES[Math.floor(Math.random() * TYPES.length)]
+      const type = pickRandom(TYPES)
       this.beliefs.push({
         id: this.nextId++,
         entityId: eid,

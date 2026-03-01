@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ChatelaincyForm = 'fortress_chatelaincy' | 'household_chatelaincy' | 'garrison_chatelaincy' | 'provisioning_chatelaincy'
 
@@ -39,7 +40,7 @@ export class DiplomaticChatelaincySystem {
       const chatelain = 1 + Math.floor(Math.random() * 8)
       if (fortress === chatelain) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

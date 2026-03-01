@@ -4,6 +4,7 @@
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 import { Civilization } from '../civilization/Civilization'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type GuildType = 'merchants' | 'artisans' | 'miners' | 'farmers' | 'sailors' | 'bankers'
 
@@ -45,8 +46,8 @@ export class DiplomaticTradeGuildSystem {
 
     // Form new guilds
     if (this.guilds.length < MAX_GUILDS && Math.random() < FORM_CHANCE) {
-      const guildType = GUILD_TYPES[Math.floor(Math.random() * GUILD_TYPES.length)]
-      const name = GUILD_NAMES[Math.floor(Math.random() * GUILD_NAMES.length)]
+      const guildType = pickRandom(GUILD_TYPES)
+      const name = pickRandom(GUILD_NAMES)
       const memberCount = 2 + Math.floor(Math.random() * Math.min(3, civs.length - 1))
       // 随机选择 memberCount 个文明（零分配，Fisher-Yates partial shuffle 思路）
       const memberCivs: number[] = []

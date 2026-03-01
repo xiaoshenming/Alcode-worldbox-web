@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type PinderForm = 'royal_pinder' | 'manor_pinder' | 'village_pinder' | 'common_pinder'
 
@@ -39,7 +40,7 @@ export class DiplomaticPinderSystem {
       const livestock = 1 + Math.floor(Math.random() * 8)
       if (pound === livestock) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

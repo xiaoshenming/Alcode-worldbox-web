@@ -28,6 +28,7 @@ import type { CreaturePanel } from '../ui/CreaturePanel'
 import type { StatsPanel } from '../ui/StatsPanel'
 import type { TechTreePanel } from '../ui/TechTreePanel'
 import type { CivManager } from '../civilization/CivManager'
+import { pickRandom } from '../utils/RandomUtils'
 
 // Pre-computed highlight pulse colors: 101 steps for alpha 0.40..1.00
 const _HIGHLIGHT_PULSE_COLORS: string[] = (() => {
@@ -233,7 +234,7 @@ export class GameUIHelper {
               if (targetIdx-- === 0) {
                 const comma = key.indexOf(',')
                 const tx = +key.substring(0, comma), ty = +key.substring(comma + 1)
-                const color = _FIREWORK_COLORS[Math.floor(Math.random() * _FIREWORK_COLORS.length)]
+                const color = pickRandom(_FIREWORK_COLORS)
                 this.g.particles.spawnFirework(tx, ty, color)
                 break
               }

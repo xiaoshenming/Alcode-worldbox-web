@@ -2,6 +2,7 @@
 // Alchemists craft healing draughts, strength elixirs, and dangerous poisons
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type PotionType = 'healing' | 'strength' | 'speed' | 'invisibility' | 'fire_resistance' | 'poison'
 
@@ -48,7 +49,7 @@ export class CreatureAlchemySystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const type = POTION_TYPES[Math.floor(Math.random() * POTION_TYPES.length)]
+      const type = pickRandom(POTION_TYPES)
       const potency = POTENCY_BASE[type] * (0.4 + skill / 100)
 
       this.potions.push({

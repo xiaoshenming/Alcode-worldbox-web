@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type AuroraColorPattern = 'green' | 'purple' | 'blue' | 'multicolor'
 
@@ -45,7 +46,7 @@ export class WorldAuroraSystem {
         ? Math.floor(Math.random() * (h * 0.15))
         : h - Math.floor(Math.random() * (h * 0.15))
       const x = Math.floor(Math.random() * w)
-      const pattern = PATTERNS[Math.floor(Math.random() * PATTERNS.length)]
+      const pattern = pickRandom(PATTERNS)
 
       this.auroras.push({
         id: this.nextId++,

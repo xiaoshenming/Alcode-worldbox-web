@@ -4,6 +4,7 @@
 import { EntityManager } from '../ecs/Entity'
 import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type MyceliumType = 'saprophytic' | 'mycorrhizal' | 'parasitic' | 'endophytic'
 
@@ -48,7 +49,7 @@ export class WorldFungalNetworkSystem {
 
       if (tile === TileType.FOREST) {
         if (!this.networks.some(n => n.x === x && n.y === y)) {
-          const mtype = MYCELIUM_TYPES[Math.floor(Math.random() * MYCELIUM_TYPES.length)]
+          const mtype = pickRandom(MYCELIUM_TYPES)
           this.networks.push({
             id: this.nextId++, x, y,
             nodeCount: 2 + Math.floor(Math.random() * 4),

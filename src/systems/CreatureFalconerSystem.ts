@@ -2,6 +2,7 @@
 // Trained raptors provide food, reconnaissance, and prestige
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type RaptorType = 'hawk' | 'falcon' | 'eagle' | 'owl'
 
@@ -46,7 +47,7 @@ export class CreatureFalconerSystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const raptorType = RAPTOR_TYPES[Math.floor(Math.random() * RAPTOR_TYPES.length)]
+      const raptorType = pickRandom(RAPTOR_TYPES)
       const huntSuccess = 15 + skill * 0.7 + Math.random() * 10
       const scoutRange = 3 + Math.floor(skill / 10)
 

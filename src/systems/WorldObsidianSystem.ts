@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ObsidianQuality = 'rough' | 'polished' | 'flawless' | 'legendary'
 
@@ -42,7 +43,7 @@ export class WorldObsidianSystem {
 
       // Spawn near lava or mountains
       if (tile != null && (tile === 7 || tile === 5)) {
-        const quality = QUALITIES[Math.floor(Math.random() * QUALITIES.length)]
+        const quality = pickRandom(QUALITIES)
         this.deposits.push({
           id: this.nextId++,
           x, y,

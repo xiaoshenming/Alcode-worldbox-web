@@ -2,6 +2,7 @@
 // The ring of hammer on hull echoes across the harbor as skilled hands shape timber into seaworthy craft
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type VesselType = 'canoe' | 'galley' | 'caravel' | 'warship'
 
@@ -46,7 +47,7 @@ export class CreatureShipwrightSystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const vesselType = VESSEL_TYPES[Math.floor(Math.random() * VESSEL_TYPES.length)]
+      const vesselType = pickRandom(VESSEL_TYPES)
       const seaworthiness = 30 + skill * 0.6 + Math.random() * 10
 
       this.shipwrights.push({

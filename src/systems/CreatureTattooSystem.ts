@@ -2,6 +2,7 @@
 // Tattoos serve as visual status symbols within civilizations
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type TattooStyle = 'tribal' | 'runic' | 'beast' | 'celestial' | 'war_paint' | 'ancestral'
 
@@ -61,7 +62,7 @@ export class CreatureTattooSystem {
       } else if (creature.isHostile) {
         style = 'war_paint'
       } else {
-        style = STYLES[Math.floor(Math.random() * STYLES.length)]
+        style = pickRandom(STYLES)
       }
 
       this.tattoos.push({

@@ -2,6 +2,7 @@
 // Premonitions warn of disasters, battles, and opportunities
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type VisionType = 'disaster' | 'battle' | 'prosperity' | 'death' | 'discovery' | 'migration'
 
@@ -45,7 +46,7 @@ export class CreaturePremonitionSystem {
       gift = Math.min(100, gift + GIFT_GROWTH)
       this.giftMap.set(eid, gift)
 
-      const vision = VISIONS[Math.floor(Math.random() * VISIONS.length)]
+      const vision = pickRandom(VISIONS)
       const clarity = gift * (0.3 + Math.random() * 0.7)
 
       this.visions.push({

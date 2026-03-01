@@ -1,6 +1,7 @@
 import { World } from '../game/World'
 import { ParticleSystem } from './ParticleSystem'
 import { TileType } from '../utils/Constants'
+import { pickRandom } from '../utils/RandomUtils'
 
 const LEAF_COLORS = ['#cc6622', '#dd8833', '#aa4411', '#eebb44']
 /** Persistent sample result — reused by sampleTile to avoid new{x,y} per successful sample */
@@ -70,7 +71,7 @@ export class AmbientParticleSystem {
             rand(0.01, 0.03),
             -0.05 + rand(0.005, 0.015),
             randInt(150, 250), 250,
-            LEAF_COLORS[Math.floor(Math.random() * LEAF_COLORS.length)], 1.5
+            pickRandom(LEAF_COLORS), 1.5
           )
         }
       }

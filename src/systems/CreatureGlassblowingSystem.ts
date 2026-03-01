@@ -2,6 +2,7 @@
 // Glass items serve as art, tools, windows, and luxury trade goods
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type GlassItem = 'vase' | 'window' | 'lens' | 'bottle' | 'ornament' | 'mirror'
 export type GlassColor = 'clear' | 'amber' | 'cobalt' | 'emerald' | 'ruby' | 'opal'
@@ -48,8 +49,8 @@ export class CreatureGlassblowingSystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const item = ITEMS[Math.floor(Math.random() * ITEMS.length)]
-      const color = COLORS[Math.floor(Math.random() * COLORS.length)]
+      const item = pickRandom(ITEMS)
+      const color = pickRandom(COLORS)
       const quality = skill * (0.5 + Math.random() * 0.5)
 
       this.works.push({

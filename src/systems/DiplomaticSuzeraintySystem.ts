@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type SuzeraintyForm = 'tributary_obligation' | 'military_service' | 'political_deference' | 'economic_tribute'
 
@@ -39,7 +40,7 @@ export class DiplomaticSuzeraintySystem {
       const vassal = 1 + Math.floor(Math.random() * 8)
       if (suzerain === vassal) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.relations.push({
         id: this.nextId++,

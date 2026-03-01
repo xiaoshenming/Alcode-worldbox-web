@@ -4,6 +4,7 @@
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
 import { TileType } from '../utils/Constants'
+import { pickRandom } from '../utils/RandomUtils'
 
 export interface SeaStack {
   id: number
@@ -45,7 +46,7 @@ export class WorldSeaStackSystem {
           x, y,
           height: 10 + Math.random() * 40,
           erosionRate: 0.01 + Math.random() * 0.05,
-          rockType: ROCK_TYPES[Math.floor(Math.random() * ROCK_TYPES.length)],
+          rockType: pickRandom(ROCK_TYPES),
           birdNesting: Math.random() * 30,
           age: 0,
           tick,

@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ParkwardForm = 'royal_parkward' | 'noble_parkward' | 'chase_parkward' | 'forest_parkward'
 
@@ -39,7 +40,7 @@ export class DiplomaticParkwardSystem {
       const ward = 1 + Math.floor(Math.random() * 8)
       if (park === ward) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

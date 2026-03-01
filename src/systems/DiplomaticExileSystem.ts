@@ -4,6 +4,7 @@
 
 import { EntityManager, EntityId } from '../ecs/Entity'
 import { CivMemberComponent } from '../civilization/Civilization'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ExileReason = 'criminal' | 'dissident' | 'heretic' | 'traitor' | 'outcast'
 
@@ -60,7 +61,7 @@ export class DiplomaticExileSystem {
           id: nextExileId++,
           entityId: id,
           originCivId: civId,
-          reason: EXILE_REASONS[Math.floor(Math.random() * EXILE_REASONS.length)],
+          reason: pickRandom(EXILE_REASONS),
           exiledAt: tick,
           status: 'wandering',
         })

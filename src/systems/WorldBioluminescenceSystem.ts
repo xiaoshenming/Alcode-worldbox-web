@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type GlowType = 'algae' | 'jellyfish' | 'fungi' | 'plankton'
 
@@ -45,7 +46,7 @@ export class WorldBioluminescenceSystem {
       const tile = world.getTile(x, y)
 
       if (tile != null && (tile === 0 || tile === 1 || tile === 4)) {
-        const gt = GLOW_TYPES[Math.floor(Math.random() * GLOW_TYPES.length)]
+        const gt = pickRandom(GLOW_TYPES)
         this.zones.push({
           id: this.nextId++,
           x, y,

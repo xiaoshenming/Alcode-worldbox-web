@@ -2,6 +2,7 @@
 // Sanctions reduce trade income and resource flow between hostile civilizations
 
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 export interface Sanction {
   id: number
@@ -105,7 +106,7 @@ export class DiplomaticSanctionSystem {
     if (civs.length < 2) return
 
     // Pick a random civ to consider imposing sanctions
-    const imposer = civs[Math.floor(Math.random() * civs.length)]
+    const imposer = pickRandom(civs)
 
     // Find hostile target
     let targetId = -1
@@ -135,7 +136,7 @@ export class DiplomaticSanctionSystem {
     else if (hostility > 60) severity = 'severe'
     else if (hostility > 45) severity = 'moderate'
 
-    const reason = REASONS[Math.floor(Math.random() * REASONS.length)]
+    const reason = pickRandom(REASONS)
     const sanction: Sanction = {
       id: nextSanctionId++,
       imposerId: imposer.id,

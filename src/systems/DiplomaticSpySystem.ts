@@ -1,6 +1,7 @@
 // Diplomatic Spy System (v2.68) - Civilizations send spies to gather intelligence on rivals
 // Spies can scout, sabotage, steal tech, assassinate, spread propaganda, or counter-spy
 
+import { pickRandom } from '../utils/RandomUtils'
 export type SpyMission = 'scout' | 'sabotage' | 'steal_tech' | 'assassinate' | 'propaganda' | 'counter_spy'
 export type SpyStatus = 'active' | 'captured' | 'returned' | 'dead'
 
@@ -105,7 +106,7 @@ export class DiplomaticSpySystem {
     }
     if (!target) return
 
-    const mission = MISSIONS[Math.floor(Math.random() * MISSIONS.length)]
+    const mission = pickRandom(MISSIONS)
     const skill = 1 + Math.floor(Math.random() * 10)
 
     // Counter-intel from target: count active counter_spy missions targeting this civ

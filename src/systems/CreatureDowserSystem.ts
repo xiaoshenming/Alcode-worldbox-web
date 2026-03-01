@@ -2,6 +2,7 @@
 // Some creatures can sense underground water sources, improving with experience
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type DowserTool = 'rod' | 'pendulum' | 'intuition' | 'crystal'
 
@@ -36,10 +37,10 @@ export class CreatureDowserSystem {
     if (this.dowsers.length < MAX_DOWSERS && Math.random() < ASSIGN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         const already = this.dowsers.some(d => d.entityId === eid)
         if (!already) {
-          const tool = TOOLS[Math.floor(Math.random() * TOOLS.length)]
+          const tool = pickRandom(TOOLS)
           this.dowsers.push({
             entityId: eid,
             waterFound: 0,

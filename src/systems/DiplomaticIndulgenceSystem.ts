@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type IndulgenceForm = 'trade_privilege' | 'border_leniency' | 'tax_exemption' | 'cultural_allowance'
 
@@ -39,7 +40,7 @@ export class DiplomaticIndulgenceSystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.grants.push({
         id: this.nextId++,

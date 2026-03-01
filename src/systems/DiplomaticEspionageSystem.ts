@@ -3,6 +3,7 @@
 
 import { EntityManager, EntityId, PositionComponent } from '../ecs/Entity'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type SpyMission = 'intel' | 'sabotage' | 'steal_tech' | 'assassinate'
 const SPY_MISSIONS: SpyMission[] = ['intel', 'sabotage', 'steal_tech', 'assassinate']
@@ -138,11 +139,11 @@ export class DiplomaticEspionageSystem {
   }
 
   private deploySpy(em: EntityManager, civs: CivLike[], tick: number): void {
-    const originCiv = civs[Math.floor(Math.random() * civs.length)]
+    const originCiv = pickRandom(civs)
     if (civs.length < 2) return
     let target: CivLike
     do {
-      target = civs[Math.floor(Math.random() * civs.length)]
+      target = pickRandom(civs)
     } while (target.id === originCiv.id)
 
     // Pick a creature from origin civ
@@ -159,7 +160,7 @@ export class DiplomaticEspionageSystem {
     const pos = em.getComponent<PositionComponent>(spyEntity, 'position')
     if (!pos) return
     const missions = SPY_MISSIONS
-    const mission = missions[Math.floor(Math.random() * missions.length)]
+    const mission = pickRandom(missions)
 
     const spy: Spy = {
       id: nextSpyId++,

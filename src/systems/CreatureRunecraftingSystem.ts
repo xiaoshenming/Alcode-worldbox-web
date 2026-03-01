@@ -2,6 +2,7 @@
 // Runes enhance equipment and buildings with elemental power
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type RuneType = 'fire' | 'ice' | 'lightning' | 'earth' | 'wind' | 'shadow' | 'light'
 
@@ -43,7 +44,7 @@ export class CreatureRunecraftingSystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const type = RUNE_TYPES[Math.floor(Math.random() * RUNE_TYPES.length)]
+      const type = pickRandom(RUNE_TYPES)
       const power = skill * (0.3 + Math.random() * 0.7)
 
       this.runes.push({

@@ -3,6 +3,7 @@
 
 import { EntityManager, PositionComponent, NeedsComponent } from '../ecs/Entity'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type BeastType = 'phoenix' | 'leviathan' | 'behemoth' | 'griffin' | 'hydra'
 
@@ -126,7 +127,7 @@ export class WorldMythicBeastSystem {
       const tile = world.getTile(x, y)
       if (tile === null) continue
 
-      const type = BEAST_TYPES[Math.floor(Math.random() * BEAST_TYPES.length)]
+      const type = pickRandom(BEAST_TYPES)
 
       // Leviathan needs water
       if (type === 'leviathan' && tile > 1) continue
@@ -141,7 +142,7 @@ export class WorldMythicBeastSystem {
 
       const stats = BEAST_STATS[type]
       const names = BEAST_NAMES[type]
-      const name = names[Math.floor(Math.random() * names.length)]
+      const name = pickRandom(names)
       const hostile = Math.random() < 0.7
 
       const beast: MythicBeast = {

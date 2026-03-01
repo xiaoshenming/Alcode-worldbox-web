@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type AutonomyForm = 'administrative_autonomy' | 'fiscal_independence' | 'judicial_sovereignty' | 'legislative_freedom'
 
@@ -39,7 +40,7 @@ export class DiplomaticAutonomySystem {
       const autonomous = 1 + Math.floor(Math.random() * 8)
       if (grantor === autonomous) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.agreements.push({
         id: this.nextId++,

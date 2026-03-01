@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type BeaconType = 'watchtower' | 'lighthouse' | 'signal_fire' | 'smoke_signal' | 'war_beacon' | 'trade_marker'
 
@@ -74,7 +75,7 @@ export class WorldBeaconSystem {
       // Not too close to existing beacons
       if (this.beacons.some(b => Math.abs(b.x - x) < 8 && Math.abs(b.y - y) < 8)) continue
 
-      const type = allowed[Math.floor(Math.random() * allowed.length)]
+      const type = pickRandom(allowed)
       const [minR, maxR] = BEACON_RANGES[type]
 
       this.beacons.push({

@@ -2,6 +2,7 @@
 // Ventriloquism can deceive enemies, entertain allies, and aid in hunting
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type VoiceTrick = 'distraction' | 'mimicry' | 'intimidation' | 'lure' | 'comedy' | 'warning'
 
@@ -56,7 +57,7 @@ export class CreatureVentriloquismSystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const trick = TRICKS[Math.floor(Math.random() * TRICKS.length)]
+      const trick = pickRandom(TRICKS)
       const baseFx = EFFECTIVENESS_MAP[trick]
       const detected = Math.random() > (skill / 100) * (1 - DETECTION_BASE) + DETECTION_BASE
 

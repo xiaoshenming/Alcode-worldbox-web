@@ -2,6 +2,7 @@
 // Candles provide illumination, trade value, and ceremonial use
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type WickType = 'cotton' | 'hemp' | 'linen' | 'silk'
 
@@ -46,7 +47,7 @@ export class CreatureChandlerSystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const wickType = WICK_TYPES[Math.floor(Math.random() * WICK_TYPES.length)]
+      const wickType = pickRandom(WICK_TYPES)
       const waxStored = 5 + Math.random() * skill * 0.8
       const candlesProduced = 1 + Math.floor(skill / 20)
       const lightOutput = skill * (0.4 + Math.random() * 0.6)

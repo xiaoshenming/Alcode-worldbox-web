@@ -31,6 +31,7 @@ import { CreatureTamingSystem } from '../systems/CreatureTamingSystem'
 import { PlagueMutationSystem } from '../systems/PlagueMutationSystem'
 import { MonumentSystem } from '../systems/MonumentSystem'
 import { CreaturePersonalitySystem } from '../systems/CreaturePersonalitySystem'
+import { pickRandom } from '../utils/RandomUtils'
 
 /** Pre-computed tile names — avoids per-right-click literal array creation */
 const _TILE_NAMES = ['Deep Water', 'Shallow Water', 'Sand', 'Grass', 'Forest', 'Mountain', 'Snow', 'Lava'] as const
@@ -181,7 +182,7 @@ export class GameInputManager {
           sections[sections.length - 1].items.push({
             icon: '\u2B50', label: 'Make Hero', action: () => {
               const abilities = _HERO_ABILITIES
-              const ability = abilities[Math.floor(Math.random() * abilities.length)]
+              const ability = pickRandom(abilities)
               this.ctx.em.addComponent(creatureId, {
                 type: 'hero', level: 1, xp: 0, xpToNext: 30, kills: 0,
                 title: ability.charAt(0).toUpperCase() + ability.slice(1),

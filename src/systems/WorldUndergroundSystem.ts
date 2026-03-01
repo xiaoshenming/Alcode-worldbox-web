@@ -3,6 +3,7 @@
 // Creatures can discover cave entrances and explore underground
 
 import { World } from '../game/World'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type CaveType = 'shallow' | 'deep' | 'crystal' | 'lava' | 'flooded' | 'ancient'
 
@@ -73,7 +74,7 @@ export class WorldUndergroundSystem {
 
       const type = tile === 5
         ? (Math.random() < 0.3 ? 'lava' : Math.random() < 0.5 ? 'deep' : 'crystal')
-        : CAVE_TYPES[Math.floor(Math.random() * CAVE_TYPES.length)]
+        : pickRandom(CAVE_TYPES)
 
       const [minR, maxR] = CAVE_RESOURCES[type]
       const [minD, maxD] = CAVE_DANGER[type]

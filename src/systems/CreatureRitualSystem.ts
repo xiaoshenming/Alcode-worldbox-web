@@ -2,6 +2,7 @@
 // Rain dances, harvest feasts, war cries, healing circles affect morale and luck
 
 import { EntityManager, CreatureComponent, PositionComponent, NeedsComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type RitualType = 'rain_dance' | 'harvest_feast' | 'war_cry' | 'healing_circle' | 'moon_prayer' | 'ancestor_worship'
 export type RitualEffect = 'morale_boost' | 'luck' | 'strength' | 'healing' | 'fertility' | 'protection'
@@ -57,7 +58,7 @@ export class CreatureRitualSystem {
       const needs = em.getComponent<NeedsComponent>(eid, 'needs')
       if (!creature || !needs || needs.health <= 0) continue
 
-      const type = RITUAL_TYPES[Math.floor(Math.random() * RITUAL_TYPES.length)]
+      const type = pickRandom(RITUAL_TYPES)
       const nearby = this.findNearbyCreatures(em, eid, 8)
       if (nearby.length < 2) continue
 

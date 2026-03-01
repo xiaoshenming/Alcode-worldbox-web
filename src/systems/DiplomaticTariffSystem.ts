@@ -4,6 +4,7 @@
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 import { Civilization } from '../civilization/Civilization'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type TariffLevel = 'low' | 'moderate' | 'high' | 'prohibitive'
 
@@ -51,10 +52,10 @@ export class DiplomaticTariffSystem {
 
     // Impose new tariffs
     if (this.tariffs.length < MAX_TARIFFS && Math.random() < TARIFF_CHANCE) {
-      const imposer = civs[Math.floor(Math.random() * civs.length)]
-      const target = civs[Math.floor(Math.random() * civs.length)]
+      const imposer = pickRandom(civs)
+      const target = pickRandom(civs)
       if (imposer.id !== target.id) {
-        const level = LEVELS[Math.floor(Math.random() * LEVELS.length)]
+        const level = pickRandom(LEVELS)
         this.tariffs.push({
           id: this.nextId++,
           imposerCivId: imposer.id,

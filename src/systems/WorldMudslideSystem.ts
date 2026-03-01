@@ -4,6 +4,7 @@
 import { EntityManager, PositionComponent, NeedsComponent } from '../ecs/Entity'
 import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type MudslideScale = 'minor' | 'moderate' | 'severe' | 'catastrophic'
 
@@ -58,7 +59,7 @@ export class WorldMudslideSystem {
       const tile = world.getTile(x, y)
 
       if (tile === TileType.MOUNTAIN || tile === TileType.SNOW) {
-        const scale = SCALES[Math.floor(Math.random() * SCALES.length)]
+        const scale = pickRandom(SCALES)
         const angle = Math.random() * Math.PI * 2
         this.mudslides.push({
           id: this.nextId++,

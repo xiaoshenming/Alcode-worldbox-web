@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type MitigationForm = 'conflict_deescalation' | 'damage_limitation' | 'tension_reduction' | 'crisis_management'
 
@@ -39,7 +40,7 @@ export class DiplomaticMitigationSystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.measures.push({
         id: this.nextId++,

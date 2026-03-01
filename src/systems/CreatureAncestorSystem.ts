@@ -4,6 +4,7 @@
 import { EntityManager, PositionComponent, CreatureComponent, NeedsComponent } from '../ecs/Entity'
 import { CivMemberComponent } from '../civilization/Civilization'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 export interface AncestorSpirit {
   id: number
@@ -92,7 +93,7 @@ export class CreatureAncestorSystem {
       const civ = civManager.civilizations.get(hero.civId)
       if (!civ) continue
 
-      const domain = DOMAINS[Math.floor(Math.random() * DOMAINS.length)]
+      const domain = pickRandom(DOMAINS)
       const ancestor: AncestorSpirit = {
         id: nextAncestorId++,
         name: hero.name,

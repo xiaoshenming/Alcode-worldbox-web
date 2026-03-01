@@ -2,6 +2,7 @@
 // Lullabies reduce stress in nearby young creatures and strengthen social bonds
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export interface Lullaby {
   id: number
@@ -52,7 +53,7 @@ export class CreatureLullabySystem {
           id: this.nextId++,
           singerId: eid,
           targetId: target,
-          melody: MELODIES[Math.floor(Math.random() * MELODIES.length)],
+          melody: pickRandom(MELODIES),
           soothingPower: 40 + Math.random() * 50,
           bondsFormed: 0,
           tick,

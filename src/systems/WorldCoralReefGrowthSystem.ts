@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type CoralType = 'brain' | 'staghorn' | 'fan' | 'table' | 'pillar'
 
@@ -43,7 +44,7 @@ export class WorldCoralReefGrowthSystem {
 
       // Grow in shallow water
       if (tile != null && tile === 1) {
-        const ct = TYPES[Math.floor(Math.random() * TYPES.length)]
+        const ct = pickRandom(TYPES)
         this.reefs.push({
           id: this.nextId++,
           x, y,

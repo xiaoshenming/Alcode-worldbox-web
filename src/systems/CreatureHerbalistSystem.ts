@@ -2,6 +2,7 @@
 // Herbalists collect plants, brew potions, and accumulate botanical knowledge
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type HerbSpecialty = 'healing' | 'poison' | 'buff' | 'antidote'
 
@@ -38,10 +39,10 @@ export class CreatureHerbalistSystem {
     if (this.herbalists.length < MAX_HERBALISTS && Math.random() < SPAWN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         const already = this.herbalists.some(h => h.entityId === eid)
         if (!already) {
-          const spec = SPECIALTIES[Math.floor(Math.random() * SPECIALTIES.length)]
+          const spec = pickRandom(SPECIALTIES)
           this.herbalists.push({
             id: this.nextId++,
             entityId: eid,
@@ -81,7 +82,7 @@ export class CreatureHerbalistSystem {
 
       // Occasionally switch specialty as knowledge grows
       if (h.knowledge > 10 && Math.random() < 0.004) {
-        h.specialty = SPECIALTIES[Math.floor(Math.random() * SPECIALTIES.length)]
+        h.specialty = pickRandom(SPECIALTIES)
       }
     }
 

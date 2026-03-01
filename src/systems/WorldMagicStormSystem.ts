@@ -2,6 +2,7 @@
 // Arcane storms sweep across the map, transforming land and empowering/weakening beings
 // Storm remnants leave behind enchanted zones
 
+import { pickRandom } from '../utils/RandomUtils'
 export type MagicStormType = 'arcane' | 'void' | 'elemental' | 'spirit' | 'chaos'
 
 export interface MagicStorm {
@@ -65,7 +66,7 @@ export class WorldMagicStormSystem {
   private spawnStorm(tick: number): void {
     if (this.storms.length >= MAX_STORMS) return
     if (Math.random() > 0.4) return
-    const type = STORM_TYPES[Math.floor(Math.random() * STORM_TYPES.length)]
+    const type = pickRandom(STORM_TYPES)
     const edge = Math.floor(Math.random() * 4)
     let x: number, y: number, dx: number, dy: number
     switch (edge) {

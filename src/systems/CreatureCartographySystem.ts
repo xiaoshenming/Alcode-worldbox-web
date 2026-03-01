@@ -2,6 +2,7 @@
 // Maps reveal terrain, trade routes, and strategic locations
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type MapType = 'terrain' | 'trade_route' | 'military' | 'resource' | 'nautical' | 'celestial'
 export type MapDetail = 'crude' | 'basic' | 'detailed' | 'masterwork'
@@ -48,7 +49,7 @@ export class CreatureCartographySystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const mapType = MAP_TYPES[Math.floor(Math.random() * MAP_TYPES.length)]
+      const mapType = pickRandom(MAP_TYPES)
       const detailIdx = Math.min(DETAILS.length - 1, Math.floor(skill / 25))
       const accuracy = skill * (0.5 + Math.random() * 0.5)
 

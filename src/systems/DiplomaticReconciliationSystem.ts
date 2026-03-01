@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type ReconciliationStage = 'acknowledgment' | 'dialogue' | 'reparation' | 'healing'
 
@@ -39,7 +40,7 @@ export class DiplomaticReconciliationSystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const stage = STAGES[Math.floor(Math.random() * STAGES.length)]
+      const stage = pickRandom(STAGES)
 
       this.processes.push({
         id: this.nextId++,

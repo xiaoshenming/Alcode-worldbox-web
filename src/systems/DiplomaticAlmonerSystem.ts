@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type AlmonerForm = 'royal_almoner' | 'ecclesiastical_almoner' | 'municipal_almoner' | 'guild_almoner'
 
@@ -39,7 +40,7 @@ export class DiplomaticAlmonerSystem {
       const almoner = 1 + Math.floor(Math.random() * 8)
       if (patron === almoner) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

@@ -2,6 +2,7 @@
 // Skilled rope makers produce stronger, longer ropes essential for construction and sailing
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type RopeType = 'hemp' | 'silk' | 'wire' | 'chain'
 
@@ -46,7 +47,7 @@ export class CreatureRopeMakerSystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const ropeType = ROPE_TYPES[Math.floor(Math.random() * ROPE_TYPES.length)]
+      const ropeType = pickRandom(ROPE_TYPES)
       const ropesMade = 2 + Math.floor(skill / 8)
       const tensileStrength = 15 + skill * 0.7 + Math.random() * 15
       const length = 5 + Math.floor(skill / 4) + Math.random() * 10

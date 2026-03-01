@@ -2,6 +2,7 @@
 // Runners carry messages between settlements at high speed
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type RunnerEndurance = 'novice' | 'trained' | 'elite' | 'legendary'
 
@@ -37,8 +38,8 @@ export class CreatureRunnerSystem {
     if (this.runners.length < MAX_RUNNERS && Math.random() < RECRUIT_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
-        const endurance = ENDURANCES[Math.floor(Math.random() * ENDURANCES.length)]
+        const eid = pickRandom(entities)
+        const endurance = pickRandom(ENDURANCES)
         this.runners.push({
           id: this.nextId++,
           creatureId: eid,

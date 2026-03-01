@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type RiverFlow = 'slow' | 'moderate' | 'fast' | 'torrent'
 
@@ -49,7 +50,7 @@ export class WorldUndergroundRiverSystem {
       this.rivers.push({
         id: this.nextId++,
         segments,
-        flow: FLOWS[Math.floor(Math.random() * FLOWS.length)],
+        flow: pickRandom(FLOWS),
         depth: 10 + Math.random() * 40,
         minerals: Math.random() * 60,
         discovered: false,

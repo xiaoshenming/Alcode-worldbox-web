@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type VicarageForm = 'royal_vicarage' | 'ecclesiastical_vicarage' | 'military_vicarage' | 'administrative_vicarage'
 
@@ -39,7 +40,7 @@ export class DiplomaticVicarageSystem {
       const vicar = 1 + Math.floor(Math.random() * 8)
       if (sovereign === vicar) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

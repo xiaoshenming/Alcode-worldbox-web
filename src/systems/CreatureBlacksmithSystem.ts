@@ -2,6 +2,7 @@
 // Skill and reputation grow with each item forged
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type BlacksmithSpecialty = 'weapons' | 'armor' | 'tools' | 'jewelry'
 
@@ -35,8 +36,8 @@ export class CreatureBlacksmithSystem {
     if (this.smiths.length < MAX_BLACKSMITHS && Math.random() < ASSIGN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
-        const specialty = SPECIALTIES[Math.floor(Math.random() * SPECIALTIES.length)]
+        const eid = pickRandom(entities)
+        const specialty = pickRandom(SPECIALTIES)
         this.smiths.push({
           entityId: eid,
           skill: 10 + Math.floor(Math.random() * 20),

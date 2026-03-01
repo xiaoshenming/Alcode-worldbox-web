@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type PactStrength = 'symbolic' | 'binding' | 'enforced' | 'sacred'
 
@@ -39,7 +40,7 @@ export class DiplomaticNonAggressionSystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const strength = STRENGTHS[Math.floor(Math.random() * STRENGTHS.length)]
+      const strength = pickRandom(STRENGTHS)
 
       this.pacts.push({
         id: this.nextId++,

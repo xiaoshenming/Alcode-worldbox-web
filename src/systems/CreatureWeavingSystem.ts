@@ -2,6 +2,7 @@
 // Woven goods provide warmth, trade value, and cultural identity
 
 import { EntityManager, CreatureComponent } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type FabricType = 'linen' | 'wool' | 'silk' | 'cotton' | 'hemp' | 'tapestry'
 export type PatternStyle = 'plain' | 'striped' | 'checkered' | 'floral' | 'geometric' | 'narrative'
@@ -48,8 +49,8 @@ export class CreatureWeavingSystem {
       skill = Math.min(100, skill + SKILL_GROWTH)
       this.skillMap.set(eid, skill)
 
-      const fabric = FABRICS[Math.floor(Math.random() * FABRICS.length)]
-      const pattern = PATTERNS[Math.floor(Math.random() * PATTERNS.length)]
+      const fabric = pickRandom(FABRICS)
+      const pattern = pickRandom(PATTERNS)
       const quality = skill * (0.5 + Math.random() * 0.5)
 
       this.goods.push({

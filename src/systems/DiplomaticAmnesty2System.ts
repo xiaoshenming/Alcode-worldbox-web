@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type Amnesty2Form = 'general_pardon' | 'political_amnesty' | 'war_prisoner_release' | 'exile_recall'
 
@@ -39,7 +40,7 @@ export class DiplomaticAmnesty2System {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.decrees.push({
         id: this.nextId++,

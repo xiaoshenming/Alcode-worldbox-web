@@ -2,6 +2,7 @@
 // They detect threats early and provide defense bonuses to settlements
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type RangerSpecialty = 'scout' | 'tracker' | 'warden' | 'sentinel'
 
@@ -37,8 +38,8 @@ export class CreatureRangerSystem {
     if (this.rangers.length < MAX_RANGERS && Math.random() < RECRUIT_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
-        const spec = SPECS[Math.floor(Math.random() * SPECS.length)]
+        const eid = pickRandom(entities)
+        const spec = pickRandom(SPECS)
         this.rangers.push({
           id: this.nextId++,
           creatureId: eid,

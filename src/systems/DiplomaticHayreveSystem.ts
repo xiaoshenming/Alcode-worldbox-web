@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type HayreveForm = 'royal_hayreve' | 'manor_hayreve' | 'common_hayreve' | 'demesne_hayreve'
 
@@ -39,7 +40,7 @@ export class DiplomaticHayreveSystem {
       const fodder = 1 + Math.floor(Math.random() * 8)
       if (meadow === fodder) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

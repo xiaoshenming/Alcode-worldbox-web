@@ -2,6 +2,7 @@
 // Groves provide spiritual buffs to nearby creatures
 // Protected by nature spirits that attack intruders
 
+import { pickRandom } from '../utils/RandomUtils'
 export interface SacredGrove {
   id: number
   x: number
@@ -59,7 +60,7 @@ export class WorldSacredGroveSystem {
       power: 2 + Math.floor(Math.random() * 5),
       spiritCount: 1 + Math.floor(Math.random() * 3),
       age: 0,
-      blessingType: BLESSING_TYPES[Math.floor(Math.random() * BLESSING_TYPES.length)],
+      blessingType: pickRandom(BLESSING_TYPES),
       discoveredBy: new Set(),
     })
   }

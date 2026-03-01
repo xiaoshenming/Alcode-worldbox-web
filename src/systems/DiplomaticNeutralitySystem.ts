@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type NeutralityScope = 'military' | 'economic' | 'political' | 'comprehensive'
 
@@ -35,7 +36,7 @@ export class DiplomaticNeutralitySystem {
 
     if (this.declarations.length < MAX_DECLARATIONS && Math.random() < DECLARE_CHANCE) {
       const civId = 1 + Math.floor(Math.random() * 8)
-      const scope = SCOPES[Math.floor(Math.random() * SCOPES.length)]
+      const scope = pickRandom(SCOPES)
 
       this.declarations.push({
         id: this.nextId++,

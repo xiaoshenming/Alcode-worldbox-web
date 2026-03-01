@@ -2,6 +2,7 @@
 // Sentinels patrol borders, detect threats, and raise alarms for their settlements
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type PatrolRoute = 'perimeter' | 'watchtower' | 'roaming' | 'gate'
 
@@ -40,9 +41,9 @@ export class CreatureSentinelSystem {
     if (this.sentinels.length < MAX_SENTINELS && Math.random() < SPAWN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         if (!this.sentinels.some(s => s.entityId === eid)) {
-          const route = PATROL_ROUTES[Math.floor(Math.random() * PATROL_ROUTES.length)]
+          const route = pickRandom(PATROL_ROUTES)
           this.sentinels.push({
             id: this.nextId++,
             entityId: eid,
@@ -82,7 +83,7 @@ export class CreatureSentinelSystem {
         s.shiftDuration = 0
         // Occasionally switch patrol route
         if (Math.random() < 0.1) {
-          s.patrolRoute = PATROL_ROUTES[Math.floor(Math.random() * PATROL_ROUTES.length)]
+          s.patrolRoute = pickRandom(PATROL_ROUTES)
           s.visionRange = ROUTE_VISION[s.patrolRoute]
         }
       }

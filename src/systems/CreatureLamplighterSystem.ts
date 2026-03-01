@@ -2,6 +2,7 @@
 // Lamplighters patrol streets at dusk, lighting lamps and maintaining them
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type FuelType = 'oil' | 'tallow' | 'gas' | 'crystal'
 
@@ -40,9 +41,9 @@ export class CreatureLamplighterSystem {
     if (this.lamplighters.length < MAX_LAMPLIGHTERS && Math.random() < SPAWN_CHANCE) {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
-        const eid = entities[Math.floor(Math.random() * entities.length)]
+        const eid = pickRandom(entities)
         if (!this.lamplighters.some(l => l.entityId === eid)) {
-          const fuel = FUEL_TYPES[Math.floor(Math.random() * FUEL_TYPES.length)]
+          const fuel = pickRandom(FUEL_TYPES)
           this.lamplighters.push({
             id: this.nextId++, entityId: eid,
             skill: 5 + Math.random() * 15,

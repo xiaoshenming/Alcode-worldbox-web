@@ -4,6 +4,7 @@ import { ParticleSystem } from './ParticleSystem'
 import { EntityManager, NeedsComponent, PositionComponent, CreatureComponent } from '../ecs/Entity'
 import { BuildingComponent } from '../civilization/Civilization'
 import { EventLog } from './EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type WeatherType = 'clear' | 'rain' | 'snow' | 'storm' | 'fog' | 'tornado' | 'drought' | 'heatwave'
 
@@ -87,7 +88,7 @@ export class WeatherSystem {
       default:
         types = _WEATHER_DEFAULT
     }
-    const picked = types[Math.floor(Math.random() * types.length)]
+    const picked = pickRandom(types)
     if (picked === 'clear') return // summer clear = no weather event
     this.currentWeather = picked
     this.intensity = 0.3 + Math.random() * 0.7

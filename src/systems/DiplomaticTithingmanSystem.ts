@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type TithingmanForm = 'royal_tithingman' | 'hundred_tithingman' | 'parish_tithingman' | 'manor_tithingman'
 
@@ -39,7 +40,7 @@ export class DiplomaticTithingmanSystem {
       const oversight = 1 + Math.floor(Math.random() * 8)
       if (tithing === oversight) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

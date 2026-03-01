@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type HaywardForm = 'royal_hayward' | 'manor_hayward' | 'parish_hayward' | 'common_hayward'
 
@@ -39,7 +40,7 @@ export class DiplomaticHaywardSystem {
       const neighbor = 1 + Math.floor(Math.random() * 8)
       if (enclosing === neighbor) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.arrangements.push({
         id: this.nextId++,

@@ -5,6 +5,7 @@
  * 预言类型：灾难预言、战争预言、繁荣预言、英雄预言、灭亡预言。
  * 预言成真时触发对应世界事件。按 Shift+O 打开预言面板。
  */
+import { pickRandom } from '../utils/RandomUtils'
 
 /** 预言状态 */
 const enum ProphecyState {
@@ -109,7 +110,7 @@ export class ProphecySystem {
 
     // 自动生成预言
     if (this.tickCounter % GEN_INTERVAL === 0 && this.prophecies.length < MAX_ACTIVE && civCount > 0) {
-      const tmpl = TEMPLATES[Math.floor(Math.random() * TEMPLATES.length)]
+      const tmpl = pickRandom(TEMPLATES)
       const text = tmpl.texts[Math.floor(Math.random() * tmpl.texts.length)]
       const prob = tmpl.baseProbability + (Math.random() - 0.5) * 0.2
       this.prophecies.push({

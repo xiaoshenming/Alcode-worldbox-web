@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type SecessionMethod = 'referendum' | 'declaration' | 'negotiated' | 'revolt'
 
@@ -37,7 +38,7 @@ export class DiplomaticSecessionSystem {
     if (this.movements.length < MAX_MOVEMENTS && Math.random() < MOVEMENT_CHANCE) {
       const parent = 1 + Math.floor(Math.random() * 8)
       const region = 1 + Math.floor(Math.random() * 12)
-      const method = METHODS[Math.floor(Math.random() * METHODS.length)]
+      const method = pickRandom(METHODS)
 
       this.movements.push({
         id: this.nextId++,

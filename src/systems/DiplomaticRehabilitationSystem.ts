@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type RehabilitationForm = 'reputation_restoration' | 'trust_rebuilding' | 'status_recovery' | 'honor_reclamation'
 
@@ -39,7 +40,7 @@ export class DiplomaticRehabilitationSystem {
       const civB = 1 + Math.floor(Math.random() * 8)
       if (civA === civB) return
 
-      const form = FORMS[Math.floor(Math.random() * FORMS.length)]
+      const form = pickRandom(FORMS)
 
       this.processes.push({
         id: this.nextId++,

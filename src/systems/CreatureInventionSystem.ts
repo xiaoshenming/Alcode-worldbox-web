@@ -5,6 +5,7 @@
 import { Civilization } from '../civilization/Civilization'
 import { EntityManager, EntityId, CreatureComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type InventionCategory = 'tool' | 'weapon' | 'agriculture' | 'medicine' | 'construction' | 'navigation'
 
@@ -65,9 +66,9 @@ export class CreatureInventionSystem {
       const creature = em.getComponent<CreatureComponent>(id, 'creature')
       if (!creature) continue
 
-      const category = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)]
+      const category = pickRandom(CATEGORIES)
       const names = INVENTION_NAMES[category]
-      const name = names[Math.floor(Math.random() * names.length)]
+      const name = pickRandom(names)
 
       // Avoid duplicate inventions
       if (this.inventions.some(inv => inv.name === name && inv.category === category)) continue
@@ -81,7 +82,7 @@ export class CreatureInventionSystem {
     for (const civ of civManager.civilizations.values()) civs.push(civ)
       let civId: number | null = null
       if (civs.length > 0) {
-        civId = civs[Math.floor(Math.random() * civs.length)].id
+        civId = pickRandom(civs).id
       }
 
       this.inventions.push({

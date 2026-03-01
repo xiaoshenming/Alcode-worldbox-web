@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type MagneticPolarity = 'north' | 'south' | 'chaotic' | 'null'
 
@@ -43,7 +44,7 @@ export class WorldMagneticFieldSystem {
       const tile = world.getTile(x, y)
 
       if (tile != null) {
-        const polarity = POLARITIES[Math.floor(Math.random() * POLARITIES.length)]
+        const polarity = pickRandom(POLARITIES)
         this.anomalies.push({
           id: this.nextId++,
           x, y,
@@ -65,7 +66,7 @@ export class WorldMagneticFieldSystem {
 
       // Chaotic anomalies may shift polarity
       if (a.polarity === 'chaotic' && Math.random() < 0.005) {
-        a.polarity = POLARITIES[Math.floor(Math.random() * POLARITIES.length)]
+        a.polarity = pickRandom(POLARITIES)
       }
 
       // Anomalies decay over long periods

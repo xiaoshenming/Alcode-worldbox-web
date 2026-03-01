@@ -4,6 +4,7 @@
 import { EntityManager } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
 import { Civilization } from '../civilization/Civilization'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type PledgeType = 'non_aggression' | 'resource_sharing' | 'mutual_defense' | 'border_respect' | 'trade_priority'
 
@@ -44,14 +45,14 @@ export class DiplomaticPledgeSystem {
 
     // Form new pledges
     if (this.pledges.length < MAX_PLEDGES && Math.random() < PLEDGE_CHANCE) {
-      const civA = civs[Math.floor(Math.random() * civs.length)]
-      const civB = civs[Math.floor(Math.random() * civs.length)]
+      const civA = pickRandom(civs)
+      const civB = pickRandom(civs)
       if (civA.id !== civB.id) {
         const existing = this.pledges.find(
           p => p.fromCivId === civA.id && p.toCivId === civB.id && p.strength > 0
         )
         if (!existing) {
-          const type = TYPES[Math.floor(Math.random() * TYPES.length)]
+          const type = pickRandom(TYPES)
           this.pledges.push({
             id: this.nextId++,
             fromCivId: civA.id,

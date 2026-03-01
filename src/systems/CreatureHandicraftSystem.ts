@@ -2,6 +2,7 @@
 // Crafted items boost prestige and can be traded between civilizations
 
 import { EntityManager } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 export type CraftType = 'jewelry' | 'pottery' | 'weapon' | 'textile' | 'sculpture' | 'instrument'
 
@@ -47,7 +48,7 @@ export class CreatureHandicraftSystem {
       if (this.crafts.length >= MAX_CRAFTS) break
       if (Math.random() > CRAFT_CHANCE) continue
 
-      const type = TYPES[Math.floor(Math.random() * TYPES.length)]
+      const type = pickRandom(TYPES)
       const quality = 30 + Math.random() * QUALITY_VARIANCE + Math.random() * 40
       this.crafts.push({
         id: this.nextId++,
