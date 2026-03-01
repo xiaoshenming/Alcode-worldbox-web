@@ -50,7 +50,10 @@ export class WorldLaharSystem {
       l.destructionPath = Math.min(100, l.destructionPath + l.velocity * 0.01)
     }
 
-    for (let _i = this.lahars.length - 1; _i >= 0; _i--) { if (this.lahars[_i].velocity <= 1) this.lahars.splice(_i, 1) }
+    for (let _i = this.lahars.length - 1; _i >= 0; _i--) {
+      const e = this.lahars[_i]
+      if (e.velocity <= 1) this.lahars.splice(_i, 1)
+    }
   }
 
 }

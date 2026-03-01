@@ -44,7 +44,10 @@ export class CreatureEngraverSystem {
       e.detailPrecision = Math.min(100, e.detailPrecision + 0.01)
     }
 
-    for (let _i = this.engravers.length - 1; _i >= 0; _i--) { if (this.engravers[_i].engravingSkill <= 4) this.engravers.splice(_i, 1) }
+    for (let _i = this.engravers.length - 1; _i >= 0; _i--) {
+      const e = this.engravers[_i]
+      if (e.engravingSkill <= 4) this.engravers.splice(_i, 1)
+    }
   }
 
 }

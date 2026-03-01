@@ -44,7 +44,10 @@ export class CreaturePuddlerSystem {
       p.ironPurity = Math.min(100, p.ironPurity + 0.01)
     }
 
-    for (let _i = this.puddlers.length - 1; _i >= 0; _i--) { if (this.puddlers[_i].puddlingSkill <= 4) this.puddlers.splice(_i, 1) }
+    for (let _i = this.puddlers.length - 1; _i >= 0; _i--) {
+      const e = this.puddlers[_i]
+      if (e.puddlingSkill <= 4) this.puddlers.splice(_i, 1)
+    }
   }
 
 }

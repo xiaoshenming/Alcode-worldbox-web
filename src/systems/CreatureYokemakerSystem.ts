@@ -44,7 +44,10 @@ export class CreatureYokemakerSystem {
       y.outputQuality = Math.min(100, y.outputQuality + 0.01)
     }
 
-    for (let _i = this.yokemakers.length - 1; _i >= 0; _i--) { if (this.yokemakers[_i].woodCarving <= 4) this.yokemakers.splice(_i, 1) }
+    for (let _i = this.yokemakers.length - 1; _i >= 0; _i--) {
+      const e = this.yokemakers[_i]
+      if (e.woodCarving <= 4) this.yokemakers.splice(_i, 1)
+    }
   }
 
 }

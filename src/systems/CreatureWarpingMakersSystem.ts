@@ -44,7 +44,10 @@ export class CreatureWarpingMakersSystem {
       m.efficiency = Math.min(100, m.efficiency + 0.01)
     }
 
-    for (let _i = this.makers.length - 1; _i >= 0; _i--) { if (this.makers[_i].tensionControl <= 4) this.makers.splice(_i, 1) }
+    for (let _i = this.makers.length - 1; _i >= 0; _i--) {
+      const e = this.makers[_i]
+      if (e.tensionControl <= 4) this.makers.splice(_i, 1)
+    }
   }
 
 }

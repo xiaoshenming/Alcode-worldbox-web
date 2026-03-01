@@ -44,7 +44,10 @@ export class CreatureCooperSystem {
       c.outputQuality = Math.min(100, c.outputQuality + 0.01)
     }
 
-    for (let _i = this.coopers.length - 1; _i >= 0; _i--) { if (this.coopers[_i].staveShaping <= 4) this.coopers.splice(_i, 1) }
+    for (let _i = this.coopers.length - 1; _i >= 0; _i--) {
+      const e = this.coopers[_i]
+      if (e.staveShaping <= 4) this.coopers.splice(_i, 1)
+    }
   }
 
 }

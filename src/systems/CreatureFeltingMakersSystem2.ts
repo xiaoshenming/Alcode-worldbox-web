@@ -44,7 +44,10 @@ export class CreatureFeltingMakers2System {
       m.densityControl = Math.min(100, m.densityControl + 0.01)
     }
 
-    for (let _i = this.makers.length - 1; _i >= 0; _i--) { if (this.makers[_i].needleSkill <= 3) this.makers.splice(_i, 1) }
+    for (let _i = this.makers.length - 1; _i >= 0; _i--) {
+      const e = this.makers[_i]
+      if (e.needleSkill <= 3) this.makers.splice(_i, 1)
+    }
   }
 
 }

@@ -44,7 +44,10 @@ export class CreatureSwagerSystem {
       s.dimensionalAccuracy = Math.min(100, s.dimensionalAccuracy + 0.01)
     }
 
-    for (let _i = this.swagers.length - 1; _i >= 0; _i--) { if (this.swagers[_i].swagingSkill <= 4) this.swagers.splice(_i, 1) }
+    for (let _i = this.swagers.length - 1; _i >= 0; _i--) {
+      const e = this.swagers[_i]
+      if (e.swagingSkill <= 4) this.swagers.splice(_i, 1)
+    }
   }
 
 }

@@ -44,7 +44,10 @@ export class CreatureForgerSystem {
       f.structuralIntegrity = Math.min(100, f.structuralIntegrity + 0.01)
     }
 
-    for (let _i = this.forgers.length - 1; _i >= 0; _i--) { if (this.forgers[_i].forgingSkill <= 4) this.forgers.splice(_i, 1) }
+    for (let _i = this.forgers.length - 1; _i >= 0; _i--) {
+      const e = this.forgers[_i]
+      if (e.forgingSkill <= 4) this.forgers.splice(_i, 1)
+    }
   }
 
 }

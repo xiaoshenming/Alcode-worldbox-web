@@ -44,7 +44,10 @@ export class CreatureTinkerSystem {
       t.outputQuality = Math.min(100, t.outputQuality + 0.01)
     }
 
-    for (let _i = this.tinkers.length - 1; _i >= 0; _i--) { if (this.tinkers[_i].metalRepair <= 4) this.tinkers.splice(_i, 1) }
+    for (let _i = this.tinkers.length - 1; _i >= 0; _i--) {
+      const e = this.tinkers[_i]
+      if (e.metalRepair <= 4) this.tinkers.splice(_i, 1)
+    }
   }
 
 }

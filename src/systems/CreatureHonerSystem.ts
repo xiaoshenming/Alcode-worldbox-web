@@ -44,7 +44,10 @@ export class CreatureHonerSystem {
       h.crosshatchAngle = Math.min(100, h.crosshatchAngle + 0.01)
     }
 
-    for (let _i = this.honers.length - 1; _i >= 0; _i--) { if (this.honers[_i].honingSkill <= 4) this.honers.splice(_i, 1) }
+    for (let _i = this.honers.length - 1; _i >= 0; _i--) {
+      const e = this.honers[_i]
+      if (e.honingSkill <= 4) this.honers.splice(_i, 1)
+    }
   }
 
 }

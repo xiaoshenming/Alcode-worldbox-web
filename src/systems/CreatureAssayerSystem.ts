@@ -44,7 +44,10 @@ export class CreatureAssayerSystem {
       a.purityAssessment = Math.min(100, a.purityAssessment + 0.01)
     }
 
-    for (let _i = this.assayers.length - 1; _i >= 0; _i--) { if (this.assayers[_i].assayingSkill <= 4) this.assayers.splice(_i, 1) }
+    for (let _i = this.assayers.length - 1; _i >= 0; _i--) {
+      const e = this.assayers[_i]
+      if (e.assayingSkill <= 4) this.assayers.splice(_i, 1)
+    }
   }
 
 }

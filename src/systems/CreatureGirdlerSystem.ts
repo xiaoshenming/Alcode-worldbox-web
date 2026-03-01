@@ -44,7 +44,10 @@ export class CreatureGirdlerSystem {
       g.outputQuality = Math.min(100, g.outputQuality + 0.01)
     }
 
-    for (let _i = this.girdlers.length - 1; _i >= 0; _i--) { if (this.girdlers[_i].leatherCutting <= 4) this.girdlers.splice(_i, 1) }
+    for (let _i = this.girdlers.length - 1; _i >= 0; _i--) {
+      const e = this.girdlers[_i]
+      if (e.leatherCutting <= 4) this.girdlers.splice(_i, 1)
+    }
   }
 
 }

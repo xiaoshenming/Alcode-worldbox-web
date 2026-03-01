@@ -44,7 +44,10 @@ export class CreatureCoinerSystem {
       c.reliefDepth = Math.min(100, c.reliefDepth + 0.01)
     }
 
-    for (let _i = this.coiners.length - 1; _i >= 0; _i--) { if (this.coiners[_i].coiningSkill <= 4) this.coiners.splice(_i, 1) }
+    for (let _i = this.coiners.length - 1; _i >= 0; _i--) {
+      const e = this.coiners[_i]
+      if (e.coiningSkill <= 4) this.coiners.splice(_i, 1)
+    }
   }
 
 }

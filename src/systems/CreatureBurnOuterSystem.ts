@@ -44,7 +44,10 @@ export class CreatureBurnOuterSystem {
       b.materialRemoval = Math.min(100, b.materialRemoval + 0.01)
     }
 
-    for (let _i = this.burnOuters.length - 1; _i >= 0; _i--) { if (this.burnOuters[_i].burnOutSkill <= 4) this.burnOuters.splice(_i, 1) }
+    for (let _i = this.burnOuters.length - 1; _i >= 0; _i--) {
+      const e = this.burnOuters[_i]
+      if (e.burnOutSkill <= 4) this.burnOuters.splice(_i, 1)
+    }
   }
 
 }

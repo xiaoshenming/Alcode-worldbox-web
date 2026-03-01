@@ -44,7 +44,10 @@ export class CreatureFurbisherSystem {
       f.lustreQuality = Math.min(100, f.lustreQuality + 0.01)
     }
 
-    for (let _i = this.furbishers.length - 1; _i >= 0; _i--) { if (this.furbishers[_i].furbishingSkill <= 4) this.furbishers.splice(_i, 1) }
+    for (let _i = this.furbishers.length - 1; _i >= 0; _i--) {
+      const e = this.furbishers[_i]
+      if (e.furbishingSkill <= 4) this.furbishers.splice(_i, 1)
+    }
   }
 
 }

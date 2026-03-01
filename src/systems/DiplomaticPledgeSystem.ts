@@ -87,7 +87,10 @@ export class DiplomaticPledgeSystem {
     }
 
     // Clean up dead pledges
-    for (let _i = this.pledges.length - 1; _i >= 0; _i--) { if (this.pledges[_i].strength <= 0) this.pledges.splice(_i, 1) }
+    for (let _i = this.pledges.length - 1; _i >= 0; _i--) {
+      const e = this.pledges[_i]
+      if (e.strength <= 0) this.pledges.splice(_i, 1)
+    }
   }
 
   private _pledgesBuf: DiplomaticPledge[] = []

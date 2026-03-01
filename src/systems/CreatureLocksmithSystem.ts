@@ -44,7 +44,10 @@ export class CreatureLocksmithSystem {
       l.outputQuality = Math.min(100, l.outputQuality + 0.01)
     }
 
-    for (let _i = this.locksmiths.length - 1; _i >= 0; _i--) { if (this.locksmiths[_i].precisionWork <= 4) this.locksmiths.splice(_i, 1) }
+    for (let _i = this.locksmiths.length - 1; _i >= 0; _i--) {
+      const e = this.locksmiths[_i]
+      if (e.precisionWork <= 4) this.locksmiths.splice(_i, 1)
+    }
   }
 
 }

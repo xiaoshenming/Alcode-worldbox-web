@@ -44,7 +44,10 @@ export class CreatureSpotfacerSystem {
       s.depthConsistency = Math.min(100, s.depthConsistency + 0.01)
     }
 
-    for (let _i = this.spotfacers.length - 1; _i >= 0; _i--) { if (this.spotfacers[_i].spotfacingSkill <= 4) this.spotfacers.splice(_i, 1) }
+    for (let _i = this.spotfacers.length - 1; _i >= 0; _i--) {
+      const e = this.spotfacers[_i]
+      if (e.spotfacingSkill <= 4) this.spotfacers.splice(_i, 1)
+    }
   }
 
 }

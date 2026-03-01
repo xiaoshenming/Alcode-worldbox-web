@@ -44,7 +44,10 @@ export class CreatureSwedgerSystem {
       s.surfaceFinish = Math.min(100, s.surfaceFinish + 0.01)
     }
 
-    for (let _i = this.swedgers.length - 1; _i >= 0; _i--) { if (this.swedgers[_i].swedgingSkill <= 4) this.swedgers.splice(_i, 1) }
+    for (let _i = this.swedgers.length - 1; _i >= 0; _i--) {
+      const e = this.swedgers[_i]
+      if (e.swedgingSkill <= 4) this.swedgers.splice(_i, 1)
+    }
   }
 
 }

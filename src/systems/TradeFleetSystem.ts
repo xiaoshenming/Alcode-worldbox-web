@@ -89,7 +89,10 @@ export class TradeFleetSystem {
   /** 移除路线及其关联的船只 */
   removeRoute(routeId: number): void {
     this.routes.delete(routeId);
-    for (let _i = this.ships.length - 1; _i >= 0; _i--) { if (this.ships[_i].routeId === routeId) this.ships.splice(_i, 1) }
+    for (let _i = this.ships.length - 1; _i >= 0; _i--) {
+      const e = this.ships[_i]
+      if (e.routeId === routeId) this.ships.splice(_i, 1)
+    }
   }
 
   /** 每 tick 更新船只位置、货物指示和波纹 */

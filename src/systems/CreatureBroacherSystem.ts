@@ -44,7 +44,10 @@ export class CreatureBroacherSystem {
       b.keywayCutting = Math.min(100, b.keywayCutting + 0.01)
     }
 
-    for (let _i = this.broachers.length - 1; _i >= 0; _i--) { if (this.broachers[_i].broachingSkill <= 4) this.broachers.splice(_i, 1) }
+    for (let _i = this.broachers.length - 1; _i >= 0; _i--) {
+      const e = this.broachers[_i]
+      if (e.broachingSkill <= 4) this.broachers.splice(_i, 1)
+    }
   }
 
 }

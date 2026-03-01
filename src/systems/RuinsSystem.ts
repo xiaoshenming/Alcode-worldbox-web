@@ -63,6 +63,9 @@ export class RuinsSystem {
    * 移除价值为 0 的废墟
    */
   removeDecayedRuins(): void {
-    for (let _i = this.ruins.length - 1; _i >= 0; _i--) { if (this.ruins[_i].value <= 0) this.ruins.splice(_i, 1) }
+    for (let _i = this.ruins.length - 1; _i >= 0; _i--) {
+      const e = this.ruins[_i]
+      if (e.value <= 0) this.ruins.splice(_i, 1)
+    }
   }
 }

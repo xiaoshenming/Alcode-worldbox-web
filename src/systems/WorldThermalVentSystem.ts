@@ -49,7 +49,10 @@ export class WorldThermalVentSystem {
       v.pressure = 30 + 10 * Math.sin(tick * 0.0005 + v.id)
     }
 
-    for (let _i = this.vents.length - 1; _i >= 0; _i--) { if (this.vents[_i].heatOutput <= 20) this.vents.splice(_i, 1) }
+    for (let _i = this.vents.length - 1; _i >= 0; _i--) {
+      const e = this.vents[_i]
+      if (e.heatOutput <= 20) this.vents.splice(_i, 1)
+    }
   }
 
 }

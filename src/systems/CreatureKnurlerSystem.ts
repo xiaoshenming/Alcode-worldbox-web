@@ -44,7 +44,10 @@ export class CreatureKnurlerSystem {
       k.gripQuality = Math.min(100, k.gripQuality + 0.01)
     }
 
-    for (let _i = this.knurlers.length - 1; _i >= 0; _i--) { if (this.knurlers[_i].knurlingSkill <= 4) this.knurlers.splice(_i, 1) }
+    for (let _i = this.knurlers.length - 1; _i >= 0; _i--) {
+      const e = this.knurlers[_i]
+      if (e.knurlingSkill <= 4) this.knurlers.splice(_i, 1)
+    }
   }
 
 }

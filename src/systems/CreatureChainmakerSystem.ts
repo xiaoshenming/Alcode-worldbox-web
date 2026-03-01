@@ -44,7 +44,10 @@ export class CreatureChainmakerSystem {
       c.outputQuality = Math.min(100, c.outputQuality + 0.01)
     }
 
-    for (let _i = this.chainmakers.length - 1; _i >= 0; _i--) { if (this.chainmakers[_i].linkForging <= 4) this.chainmakers.splice(_i, 1) }
+    for (let _i = this.chainmakers.length - 1; _i >= 0; _i--) {
+      const e = this.chainmakers[_i]
+      if (e.linkForging <= 4) this.chainmakers.splice(_i, 1)
+    }
   }
 
 }

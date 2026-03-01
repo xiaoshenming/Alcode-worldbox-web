@@ -82,7 +82,10 @@ export class CreatureGrudgeSystem {
     for (const g of this.grudges) {
       g.intensity -= DECAY_RATE
     }
-    for (let _i = this.grudges.length - 1; _i >= 0; _i--) { if (this.grudges[_i].intensity <= 0) this.grudges.splice(_i, 1) }
+    for (let _i = this.grudges.length - 1; _i >= 0; _i--) {
+      const e = this.grudges[_i]
+      if (e.intensity <= 0) this.grudges.splice(_i, 1)
+    }
   }
 
   private cleanup(): void {

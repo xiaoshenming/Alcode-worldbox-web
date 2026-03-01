@@ -44,7 +44,10 @@ export class CreaturePlowrightSystem {
       p.outputQuality = Math.min(100, p.outputQuality + 0.01)
     }
 
-    for (let _i = this.plowrights.length - 1; _i >= 0; _i--) { if (this.plowrights[_i].ironForging <= 4) this.plowrights.splice(_i, 1) }
+    for (let _i = this.plowrights.length - 1; _i >= 0; _i--) {
+      const e = this.plowrights[_i]
+      if (e.ironForging <= 4) this.plowrights.splice(_i, 1)
+    }
   }
 
 }

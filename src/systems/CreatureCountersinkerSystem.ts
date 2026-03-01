@@ -44,7 +44,10 @@ export class CreatureCountersinkerSystem {
       c.flushAlignment = Math.min(100, c.flushAlignment + 0.01)
     }
 
-    for (let _i = this.countersinkers.length - 1; _i >= 0; _i--) { if (this.countersinkers[_i].countersinkingSkill <= 4) this.countersinkers.splice(_i, 1) }
+    for (let _i = this.countersinkers.length - 1; _i >= 0; _i--) {
+      const e = this.countersinkers[_i]
+      if (e.countersinkingSkill <= 4) this.countersinkers.splice(_i, 1)
+    }
   }
 
 }

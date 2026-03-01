@@ -49,7 +49,10 @@ export class WorldHotSpring2System {
       s.healingPotency = Math.min(100, s.healingPotency + 0.005)
     }
 
-    for (let _i = this.springs.length - 1; _i >= 0; _i--) { if (this.springs[_i].waterTemp <= 30) this.springs.splice(_i, 1) }
+    for (let _i = this.springs.length - 1; _i >= 0; _i--) {
+      const e = this.springs[_i]
+      if (e.waterTemp <= 30) this.springs.splice(_i, 1)
+    }
   }
 
 }

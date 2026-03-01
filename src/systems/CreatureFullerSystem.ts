@@ -44,7 +44,10 @@ export class CreatureFullerSystem {
       f.grooveDepth = Math.min(100, f.grooveDepth + 0.01)
     }
 
-    for (let _i = this.fullers.length - 1; _i >= 0; _i--) { if (this.fullers[_i].fulleringSkill <= 4) this.fullers.splice(_i, 1) }
+    for (let _i = this.fullers.length - 1; _i >= 0; _i--) {
+      const e = this.fullers[_i]
+      if (e.fulleringSkill <= 4) this.fullers.splice(_i, 1)
+    }
   }
 
 }

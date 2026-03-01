@@ -44,7 +44,10 @@ export class CreatureDrawerSystem {
       d.wireQuality = Math.min(100, d.wireQuality + 0.01)
     }
 
-    for (let _i = this.drawers.length - 1; _i >= 0; _i--) { if (this.drawers[_i].drawingSkill <= 4) this.drawers.splice(_i, 1) }
+    for (let _i = this.drawers.length - 1; _i >= 0; _i--) {
+      const e = this.drawers[_i]
+      if (e.drawingSkill <= 4) this.drawers.splice(_i, 1)
+    }
   }
 
 }

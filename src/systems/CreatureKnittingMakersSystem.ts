@@ -44,7 +44,10 @@ export class CreatureKnittingMakersSystem {
       m.outputRate = Math.min(1, m.outputRate + 0.005)
     }
 
-    for (let _i = this.makers.length - 1; _i >= 0; _i--) { if (this.makers[_i].skillLevel <= 5) this.makers.splice(_i, 1) }
+    for (let _i = this.makers.length - 1; _i >= 0; _i--) {
+      const e = this.makers[_i]
+      if (e.skillLevel <= 5) this.makers.splice(_i, 1)
+    }
   }
 
 }

@@ -54,7 +54,10 @@ export class WorldGeyserFieldSystem {
       f.waterTemperature = Math.max(40, f.waterTemperature - 0.02)
     }
 
-    for (let _i = this.fields.length - 1; _i >= 0; _i--) { if (this.fields[_i].waterTemperature <= 40) this.fields.splice(_i, 1) }
+    for (let _i = this.fields.length - 1; _i >= 0; _i--) {
+      const e = this.fields[_i]
+      if (e.waterTemperature <= 40) this.fields.splice(_i, 1)
+    }
   }
 
 }

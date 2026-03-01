@@ -44,7 +44,10 @@ export class CreatureAnvilsmithSystem {
       a.outputQuality = Math.min(100, a.outputQuality + 0.01)
     }
 
-    for (let _i = this.anvilsmiths.length - 1; _i >= 0; _i--) { if (this.anvilsmiths[_i].heavyForging <= 4) this.anvilsmiths.splice(_i, 1) }
+    for (let _i = this.anvilsmiths.length - 1; _i >= 0; _i--) {
+      const e = this.anvilsmiths[_i]
+      if (e.heavyForging <= 4) this.anvilsmiths.splice(_i, 1)
+    }
   }
 
 }

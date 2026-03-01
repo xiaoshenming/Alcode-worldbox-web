@@ -44,7 +44,10 @@ export class CreatureBridlemakerSystem {
       b.outputQuality = Math.min(100, b.outputQuality + 0.01)
     }
 
-    for (let _i = this.bridlemakers.length - 1; _i >= 0; _i--) { if (this.bridlemakers[_i].leatherBraiding <= 4) this.bridlemakers.splice(_i, 1) }
+    for (let _i = this.bridlemakers.length - 1; _i >= 0; _i--) {
+      const e = this.bridlemakers[_i]
+      if (e.leatherBraiding <= 4) this.bridlemakers.splice(_i, 1)
+    }
   }
 
 }

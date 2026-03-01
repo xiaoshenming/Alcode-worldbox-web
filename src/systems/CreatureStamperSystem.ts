@@ -44,7 +44,10 @@ export class CreatureStamperSystem {
       s.outputConsistency = Math.min(100, s.outputConsistency + 0.01)
     }
 
-    for (let _i = this.stampers.length - 1; _i >= 0; _i--) { if (this.stampers[_i].stampingSkill <= 4) this.stampers.splice(_i, 1) }
+    for (let _i = this.stampers.length - 1; _i >= 0; _i--) {
+      const e = this.stampers[_i]
+      if (e.stampingSkill <= 4) this.stampers.splice(_i, 1)
+    }
   }
 
 }

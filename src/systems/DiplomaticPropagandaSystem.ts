@@ -75,7 +75,10 @@ export class DiplomaticPropagandaSystem {
 
   private cleanup(): void {
     // Remove ineffective propaganda
-    for (let _i = this.propaganda.length - 1; _i >= 0; _i--) { if (this.propaganda[_i].effectiveness <= 1) this.propaganda.splice(_i, 1) }
+    for (let _i = this.propaganda.length - 1; _i >= 0; _i--) {
+      const e = this.propaganda[_i]
+      if (e.effectiveness <= 1) this.propaganda.splice(_i, 1)
+    }
     if (this.propaganda.length > MAX_PROPAGANDA) {
       this.propaganda.sort((a, b) => b.effectiveness - a.effectiveness)
       this.propaganda.length = MAX_PROPAGANDA

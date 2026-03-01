@@ -44,7 +44,10 @@ export class CreatureStringMakerSystem {
       s.outputQuality = Math.min(100, s.outputQuality + 0.01)
     }
 
-    for (let _i = this.stringMakers.length - 1; _i >= 0; _i--) { if (this.stringMakers[_i].fiberTwisting <= 4) this.stringMakers.splice(_i, 1) }
+    for (let _i = this.stringMakers.length - 1; _i >= 0; _i--) {
+      const e = this.stringMakers[_i]
+      if (e.fiberTwisting <= 4) this.stringMakers.splice(_i, 1)
+    }
   }
 
 }

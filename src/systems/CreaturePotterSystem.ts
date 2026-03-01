@@ -44,7 +44,10 @@ export class CreaturePotterSystem {
       p.outputQuality = Math.min(100, p.outputQuality + 0.01)
     }
 
-    for (let _i = this.potters.length - 1; _i >= 0; _i--) { if (this.potters[_i].wheelControl <= 4) this.potters.splice(_i, 1) }
+    for (let _i = this.potters.length - 1; _i >= 0; _i--) {
+      const e = this.potters[_i]
+      if (e.wheelControl <= 4) this.potters.splice(_i, 1)
+    }
   }
 
 }

@@ -44,7 +44,10 @@ export class CreatureBurnisherSystem {
       b.reflectiveFinish = Math.min(100, b.reflectiveFinish + 0.01)
     }
 
-    for (let _i = this.burnishers.length - 1; _i >= 0; _i--) { if (this.burnishers[_i].burnishingSkill <= 4) this.burnishers.splice(_i, 1) }
+    for (let _i = this.burnishers.length - 1; _i >= 0; _i--) {
+      const e = this.burnishers[_i]
+      if (e.burnishingSkill <= 4) this.burnishers.splice(_i, 1)
+    }
   }
 
 }

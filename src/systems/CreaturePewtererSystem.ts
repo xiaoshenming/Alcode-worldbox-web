@@ -44,7 +44,10 @@ export class CreaturePewtererSystem {
       p.outputQuality = Math.min(100, p.outputQuality + 0.01)
     }
 
-    for (let _i = this.pewterers.length - 1; _i >= 0; _i--) { if (this.pewterers[_i].alloyCasting <= 4) this.pewterers.splice(_i, 1) }
+    for (let _i = this.pewterers.length - 1; _i >= 0; _i--) {
+      const e = this.pewterers[_i]
+      if (e.alloyCasting <= 4) this.pewterers.splice(_i, 1)
+    }
   }
 
 }

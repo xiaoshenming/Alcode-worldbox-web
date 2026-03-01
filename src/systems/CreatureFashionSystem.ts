@@ -83,7 +83,10 @@ export class CreatureFashionSystem {
       // Decay
       trend.popularity = Math.max(0, trend.popularity - TREND_DECAY)
     }
-    for (let _i = this.trends.length - 1; _i >= 0; _i--) { if (this.trends[_i].popularity <= 5) this.trends.splice(_i, 1) }
+    for (let _i = this.trends.length - 1; _i >= 0; _i--) {
+      const e = this.trends[_i]
+      if (e.popularity <= 5) this.trends.splice(_i, 1)
+    }
   }
 
   getTrends(): FashionTrend[] {

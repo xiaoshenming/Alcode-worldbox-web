@@ -44,7 +44,10 @@ export class CreatureFlatterSystem {
       f.thicknessControl = Math.min(100, f.thicknessControl + 0.01)
     }
 
-    for (let _i = this.flatters.length - 1; _i >= 0; _i--) { if (this.flatters[_i].flattingSkill <= 4) this.flatters.splice(_i, 1) }
+    for (let _i = this.flatters.length - 1; _i >= 0; _i--) {
+      const e = this.flatters[_i]
+      if (e.flattingSkill <= 4) this.flatters.splice(_i, 1)
+    }
   }
 
 }

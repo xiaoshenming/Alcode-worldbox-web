@@ -50,7 +50,10 @@ export class WorldPyroclasticFlowSystem {
       f.density = Math.max(0, f.density - 0.05)
     }
 
-    for (let _i = this.flows.length - 1; _i >= 0; _i--) { if (this.flows[_i].speed <= 1) this.flows.splice(_i, 1) }
+    for (let _i = this.flows.length - 1; _i >= 0; _i--) {
+      const e = this.flows[_i]
+      if (e.speed <= 1) this.flows.splice(_i, 1)
+    }
   }
 
 }

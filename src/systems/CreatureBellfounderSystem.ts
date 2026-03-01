@@ -44,7 +44,10 @@ export class CreatureBellfounderSystem {
       b.outputQuality = Math.min(100, b.outputQuality + 0.01)
     }
 
-    for (let _i = this.bellfounders.length - 1; _i >= 0; _i--) { if (this.bellfounders[_i].bronzeCasting <= 4) this.bellfounders.splice(_i, 1) }
+    for (let _i = this.bellfounders.length - 1; _i >= 0; _i--) {
+      const e = this.bellfounders[_i]
+      if (e.bronzeCasting <= 4) this.bellfounders.splice(_i, 1)
+    }
   }
 
 }

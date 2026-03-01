@@ -44,7 +44,10 @@ export class CreatureReamerSystem {
       r.dimensionalTolerance = Math.min(100, r.dimensionalTolerance + 0.01)
     }
 
-    for (let _i = this.reamers.length - 1; _i >= 0; _i--) { if (this.reamers[_i].reamingSkill <= 4) this.reamers.splice(_i, 1) }
+    for (let _i = this.reamers.length - 1; _i >= 0; _i--) {
+      const e = this.reamers[_i]
+      if (e.reamingSkill <= 4) this.reamers.splice(_i, 1)
+    }
   }
 
 }

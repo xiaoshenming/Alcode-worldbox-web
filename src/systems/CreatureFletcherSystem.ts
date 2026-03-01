@@ -44,7 +44,10 @@ export class CreatureFletcherSystem {
       f.outputQuality = Math.min(100, f.outputQuality + 0.01)
     }
 
-    for (let _i = this.fletchers.length - 1; _i >= 0; _i--) { if (this.fletchers[_i].featherCutting <= 4) this.fletchers.splice(_i, 1) }
+    for (let _i = this.fletchers.length - 1; _i >= 0; _i--) {
+      const e = this.fletchers[_i]
+      if (e.featherCutting <= 4) this.fletchers.splice(_i, 1)
+    }
   }
 
 }

@@ -44,7 +44,10 @@ export class CreatureUpsetterSystem {
       u.headForming = Math.min(100, u.headForming + 0.01)
     }
 
-    for (let _i = this.upsetters.length - 1; _i >= 0; _i--) { if (this.upsetters[_i].upsettingSkill <= 4) this.upsetters.splice(_i, 1) }
+    for (let _i = this.upsetters.length - 1; _i >= 0; _i--) {
+      const e = this.upsetters[_i]
+      if (e.upsettingSkill <= 4) this.upsetters.splice(_i, 1)
+    }
   }
 
 }

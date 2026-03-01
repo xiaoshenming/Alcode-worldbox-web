@@ -44,7 +44,10 @@ export class CreatureToolsmithSystem {
       t.outputQuality = Math.min(100, t.outputQuality + 0.01)
     }
 
-    for (let _i = this.toolsmiths.length - 1; _i >= 0; _i--) { if (this.toolsmiths[_i].metalWorking <= 4) this.toolsmiths.splice(_i, 1) }
+    for (let _i = this.toolsmiths.length - 1; _i >= 0; _i--) {
+      const e = this.toolsmiths[_i]
+      if (e.metalWorking <= 4) this.toolsmiths.splice(_i, 1)
+    }
   }
 
 }

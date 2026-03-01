@@ -44,7 +44,10 @@ export class CreatureScabbardMakerSystem {
       m.outputQuality = Math.min(100, m.outputQuality + 0.01)
     }
 
-    for (let _i = this.makers.length - 1; _i >= 0; _i--) { if (this.makers[_i].leatherWorking <= 4) this.makers.splice(_i, 1) }
+    for (let _i = this.makers.length - 1; _i >= 0; _i--) {
+      const e = this.makers[_i]
+      if (e.leatherWorking <= 4) this.makers.splice(_i, 1)
+    }
   }
 
 }

@@ -44,7 +44,10 @@ export class CreatureScriberSystem {
       s.markingDepth = Math.min(100, s.markingDepth + 0.01)
     }
 
-    for (let _i = this.scribers.length - 1; _i >= 0; _i--) { if (this.scribers[_i].scribingSkill <= 4) this.scribers.splice(_i, 1) }
+    for (let _i = this.scribers.length - 1; _i >= 0; _i--) {
+      const e = this.scribers[_i]
+      if (e.scribingSkill <= 4) this.scribers.splice(_i, 1)
+    }
   }
 
 }
