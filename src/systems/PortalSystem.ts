@@ -59,34 +59,6 @@ export class PortalSystem {
   private _portalsBuf: Portal[] = [];
   private readonly _portalDashBuf: number[] = [0, 0];
 
-  createPortalPair(x1: number, y1: number, x2: number, y2: number): [number, number] | null {
-    if (this.pairCount >= MAX_PORTAL_PAIRS) return null;
-
-    const color = PORTAL_COLORS[this.pairCount % PORTAL_COLORS.length];
-    const idA = this.nextId++;
-    const idB = this.nextId++;
-
-    this.portals.set(idA, {
-      id: idA, x: x1, y: y1, pairedId: idB,
-      color, active: true, cooldown: 0,
-    });
-    this.portals.set(idB, {
-      id: idB, x: x2, y: y2, pairedId: idA,
-      color, active: true, cooldown: 0,
-    });
-    this.pairCount++;
-    return [idA, idB];
-  }
-
-  removePortal(id: number): void {
-    const portal = this.portals.get(id);
-    if (!portal) return;
-    const paired = this.portals.get(portal.pairedId);
-    this.portals.delete(id);
-    if (paired) this.portals.delete(paired.id);
-    this.pairCount = Math.max(0, this.pairCount - 1);
-  }
-
   update(em: EntityManager, tick: number): void {
     this.animTick = tick;
 
@@ -285,11 +257,6 @@ export class PortalSystem {
       if (dx * dx + dy * dy <= TELEPORT_RADIUS * TELEPORT_RADIUS) return portal;
     }
     return null;
-  }
-
-  setActive(id: number, active: boolean): void {
-    const portal = this.portals.get(id);
-    if (portal) portal.active = active;
   }
 
   clear(): void {

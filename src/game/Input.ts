@@ -145,10 +145,6 @@ export class Input {
     this.onMouseMove = callback
   }
 
-  setOnMouseUp(callback: InputCallback): void {
-    this.onMouseUp = callback
-  }
-
   setOnRightClick(callback: (wx: number, wy: number, screenX: number, screenY: number) => void): void {
     this.onRightClick = callback
   }

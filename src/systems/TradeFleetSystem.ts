@@ -86,33 +86,6 @@ export class TradeFleetSystem {
   private readonly _dashBuf: number[] = [0, 0];
   private readonly _emptyDash: number[] = [];
 
-  /**
-   * 注册一条贸易路线，自动生成来回两艘货船
-   * @param routeId 路线唯一 ID
-   * @param fromX 起点 tile X
-   * @param fromY 起点 tile Y
-   * @param toX 终点 tile X
-   * @param toY 终点 tile Y
-   * @param civIdA 文明 A ID
-   * @param civIdB 文明 B ID
-   * @param colorA 文明 A 颜色
-   * @param colorB 文明 B 颜色
-   */
-  registerRoute(
-    routeId: number,
-    fromX: number, fromY: number,
-    toX: number, toY: number,
-    civIdA: number, civIdB: number,
-    colorA: string, colorB: string
-  ): void {
-    if (this.routes.has(routeId)) return;
-    this.routes.set(routeId, { routeId, fromX, fromY, toX, toY, civIdA, civIdB, colorA, colorB });
-    // A→B 船
-    this.ships.push({ routeId, progress: 0, direction: 1, color: colorA });
-    // B→A 船，从终点出发
-    this.ships.push({ routeId, progress: 1, direction: -1, color: colorB });
-  }
-
   /** 移除路线及其关联的船只 */
   removeRoute(routeId: number): void {
     this.routes.delete(routeId);

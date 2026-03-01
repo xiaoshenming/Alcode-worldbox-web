@@ -105,10 +105,6 @@ export class World {
     return this._fullDirty || this.dirtyRegions.size > 0
   }
 
-  getDirtyRegions(): Set<number> {
-    return this.dirtyRegions
-  }
-
   setTile(x: number, y: number, type: TileType): void {
     if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
       this.tiles[y][x] = type

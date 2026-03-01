@@ -64,32 +64,6 @@ export class ZoneManagementSystem {
   private _zonesBuf: Zone[] = [];
 
   /**
-   * 添加一个矩形区域
-   * @param x 区域左上角世界坐标 X
-   * @param y 区域左上角世界坐标 Y
-   * @param w 区域宽度（世界单位）
-   * @param h 区域高度（世界单位）
-   * @param type 区域类型：forbidden | protected | warzone | resource
-   * @param name 区域名称
-   * @returns 新区域的唯一 ID
-   */
-  addZone(x: number, y: number, w: number, h: number, type: string, name: string): number {
-    const resolvedType = ZONE_TYPES.includes(type) ? type : 'forbidden';
-    const id = this.nextId++;
-    const label = ZONE_LABELS[resolvedType] ?? resolvedType;
-    this.zones.set(id, { id, x, y, w, h, type: resolvedType, name, description: '', panelInfoStr: `[${label}] ${w}x${h}` });
-    return id;
-  }
-
-  /**
-   * 删除指定 ID 的区域
-   * @param id 区域 ID
-   */
-  removeZone(id: number): void {
-    this.zones.delete(id);
-  }
-
-  /**
    * 查询某个世界坐标所在的区域类型
    * @param worldX 世界坐标 X
    * @param worldY 世界坐标 Y
@@ -113,28 +87,6 @@ export class ZoneManagementSystem {
    */
   getZone(id: number): Zone | undefined {
     return this.zones.get(id);
-  }
-
-  /**
-   * 设置区域描述
-   * @param id 区域 ID
-   * @param desc 描述文本
-   */
-  setDescription(id: number, desc: string): void {
-    const zone = this.zones.get(id);
-    if (zone) zone.description = desc;
-  }
-
-  /**
-   * 切换区域类型
-   * @param id 区域 ID
-   * @param newType 新类型
-   */
-  changeZoneType(id: number, newType: string): void {
-    const zone = this.zones.get(id);
-    if (zone && ZONE_TYPES.includes(newType)) {
-      zone.type = newType;
-    }
   }
 
   /**

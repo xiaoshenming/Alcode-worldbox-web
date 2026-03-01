@@ -21,29 +21,7 @@ const CULTURE_BONUS_RATE = 0.2
 
 export class RuinsSystem {
   private ruins: Ruin[] = []
-  private nextId: number = 0
   private lastDecayTick: number = 0
-
-  /**
-   * 在指定位置创建废墟
-   */
-  createRuin(x: number, y: number, civName: string, tick: number, value: number): void {
-    // 超过上限时移除最老的废墟
-    while (this.ruins.length >= MAX_RUINS) {
-      this.ruins.shift()
-    }
-
-    const ruin: Ruin = {
-      id: this.nextId++,
-      x,
-      y,
-      originCivName: civName,
-      createdTick: tick,
-      value: Math.max(0, Math.min(100, value)),
-      discovered: false,
-    }
-    this.ruins.push(ruin)
-  }
 
   /**
    * 每帧更新：根据经过的时间衰减废墟价值

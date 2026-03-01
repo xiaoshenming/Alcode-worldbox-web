@@ -79,21 +79,6 @@ export class PowerFavoriteSystem {
   }
 
   /**
-   * 处理右键点击，移除命中的槽位
-   * @param x 鼠标 x 坐标
-   * @param y 鼠标 y 坐标
-   * @param screenW 屏幕宽度
-   * @param screenH 屏幕高度
-   * @returns 是否成功移除
-   */
-  handleRightClick(x: number, y: number, screenW: number, screenH: number): boolean {
-    const idx = this.hitTest(x, y, screenW, screenH);
-    if (idx < 0 || !this.slots[idx]) return false;
-    this.removeFavorite(idx);
-    return true;
-  }
-
-  /**
    * 渲染收藏栏到 Canvas
    * @param ctx Canvas 2D 渲染上下文
    * @param screenW 屏幕宽度

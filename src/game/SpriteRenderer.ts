@@ -63,18 +63,6 @@ export class SpriteRenderer {
   }
 
   /**
-   * Get a ship sprite for the given ship type and direction.
-   */
-  getShipSprite(shipType: string, direction: Direction): OffscreenCanvas {
-    const key = `ship_${shipType}_${direction}`
-    const cached = this.spriteCache.get(key)
-    if (cached) return cached
-
-    const fallbackKey = `ship_${shipType}_down`
-    return this.spriteCache.get(fallbackKey) || this.createEmptySprite()
-  }
-
-  /**
    * Generate all sprites and cache them.
    */
   private generateAllSprites(): void {

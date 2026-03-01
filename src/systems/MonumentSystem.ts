@@ -75,22 +75,6 @@ export class MonumentSystem {
     this._headerStr = `\u{1F3DB}\u{FE0F} 纪念碑 (${done}/${this.monuments.length})`
   }
 
-  /** 开始建造纪念碑 */
-  build(civId: number, type: MonumentType, x: number, y: number, tick: number): Monument {
-    const info = MONUMENT_INFO[type]
-    const name = `${info.label}#${nextMonumentId}`
-    const m: Monument = {
-      id: nextMonumentId++, type, name,
-      civId, x, y, buildProgress: 0, buildProgressStr: '0', durability: 1,
-      radius: info.radius, buffs: [...info.buffs],
-      createdTick: tick, completed: false,
-      nameLabel: `${name} (${info.label})`,
-    }
-    this.monuments.push(m)
-    this._rebuildHeaderCache()
-    return m
-  }
-
   /** 获取某位置的增益 */
   getBuffsAt(x: number, y: number): { type: BuffType; value: number }[] {
     const result: { type: BuffType; value: number }[] = []
@@ -120,18 +104,6 @@ export class MonumentSystem {
     return this._completedMonumentsBuf
   }
 
-  /** 对纪念碑造成伤害 */
-  damage(monumentId: number, amount: number): void {
-    const m = this.monuments.find(m => m.id === monumentId)
-    if (m) {
-      m.durability = Math.max(0, m.durability - amount)
-      if (m.durability <= 0) {
-        const idx = this.monuments.indexOf(m)
-        if (idx >= 0) { this.monuments[idx] = this.monuments[this.monuments.length - 1]; this.monuments.pop() }
-      }
-    }
-  }
-
   /* ── 更新 ── */
 
   update(tick: number): void {
@@ -158,15 +130,6 @@ export class MonumentSystem {
     if (e.shiftKey && e.key.toUpperCase() === 'U') {
       this.visible = !this.visible
       this.scrollY = 0
-      return true
-    }
-    return false
-  }
-
-  handleWheel(mx: number, my: number, dy: number): boolean {
-    if (!this.visible) return false
-    if (mx >= this.panelX && mx <= this.panelX + PANEL_W && my >= this.panelY + HEADER_H && my <= this.panelY + PANEL_H) {
-      this.scrollY = clamp(this.scrollY + dy * 0.5, 0, Math.max(0, this.monuments.length * ROW_H - (PANEL_H - HEADER_H)))
       return true
     }
     return false

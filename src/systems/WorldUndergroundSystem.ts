@@ -109,17 +109,6 @@ export class WorldUndergroundSystem {
     }
   }
 
-  discoverCave(x: number, y: number): CaveNode | null {
-    for (const cave of this.caves) {
-      if (!cave.discovered && Math.abs(cave.x - x) < 3 && Math.abs(cave.y - y) < 3) {
-        cave.discovered = true
-        this.totalDiscovered++
-        return cave
-      }
-    }
-    return null
-  }
-
   private _discoveredCavesBuf: CaveNode[] = []
   getDiscoveredCaves(): CaveNode[] {
     this._discoveredCavesBuf.length = 0

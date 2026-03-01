@@ -68,13 +68,6 @@ export class KeybindSystem {
     return null;
   }
 
-  /** Check if a KeyboardEvent matches the binding for a given action. */
-  isPressed(e: KeyboardEvent, action: string): boolean {
-    const binding = this.bindings.get(action);
-    if (!binding) return false;
-    return this.eventToCombo(e) === binding.key;
-  }
-
   /** Reset all bindings to their defaults and clear storage. */
   resetToDefaults(): void {
     for (const b of this.bindings.values()) {
@@ -94,59 +87,6 @@ export class KeybindSystem {
 
   togglePanel(): void { this.panelOpen = !this.panelOpen; this.waitingForKey = null; this.scrollOffset = 0; }
   isPanelOpen(): boolean { return this.panelOpen; }
-
-  /** Handle keyboard input for the rebind panel. Returns true if the event was consumed. */
-  handlePanelInput(e: KeyboardEvent): boolean {
-    if (!this.panelOpen) return false;
-    if (e.key === 'Escape') {
-      if (this.waitingForKey) { this.waitingForKey = null; return true; }
-      this.panelOpen = false;
-      return true;
-    }
-    if (this.waitingForKey) {
-      const combo = this.eventToCombo(e);
-      if (combo === 'Escape') { this.waitingForKey = null; return true; }
-      this.rebind(this.waitingForKey, combo);
-      this.waitingForKey = null;
-      return true;
-    }
-    return false;
-  }
-
-  /** Handle mouse click on the rebind panel. Call with canvas-relative coords. */
-  handlePanelClick(x: number, y: number, screenW: number, screenH: number): boolean {
-    if (!this.panelOpen) return false;
-    const pw = Math.min(500, screenW - 40);
-    const ph = Math.min(400, screenH - 40);
-    const px = (screenW - pw) / 2;
-    const py = (screenH - ph) / 2;
-    if (x < px || x > px + pw || y < py || y > py + ph) { this.panelOpen = false; return true; }
-
-    const entries = this.getAllBindings();
-    const rowH = 28;
-    const headerH = 50;
-    const footerH = 36;
-    // Reset button
-    const resetY = py + ph - footerH + 6;
-    if (y >= resetY && y <= resetY + 24 && x >= px + pw / 2 - 60 && x <= px + pw / 2 + 60) {
-      this.resetToDefaults();
-      return true;
-    }
-    // Row clicks
-    const ry = y - py - headerH + this.scrollOffset;
-    const idx = Math.floor(ry / rowH);
-    if (idx >= 0 && idx < entries.length) {
-      this.waitingForKey = entries[idx].action;
-    }
-    return true;
-  }
-
-  /** Handle scroll on the panel. */
-  handlePanelScroll(deltaY: number): boolean {
-    if (!this.panelOpen) return false;
-    this.scrollOffset = Math.max(0, this.scrollOffset + deltaY * 0.5);
-    return true;
-  }
 
   /** Render the keybind configuration panel overlay. */
   render(ctx: CanvasRenderingContext2D, screenW: number, screenH: number): void {

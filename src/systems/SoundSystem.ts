@@ -2,8 +2,6 @@
 
 /** Pre-computed achievement notes — avoids per-call array creation */
 const _ACHIEVEMENT_NOTES = [523, 659, 784, 1047] as const // C5, E5, G5, C6
-/** Pre-computed level-up frequencies — avoids per-call array creation */
-const _LEVELUP_FREQS = [400, 500, 600, 800] as const
 
 export class SoundSystem {
   private ctx: AudioContext | null = null
@@ -120,23 +118,6 @@ export class SoundSystem {
     setTimeout(() => this.playTone(600, 0.08, 'square', 0.05), 120)
   }
 
-  playResearch(): void {
-    if (this.muted) return
-    const ctx = this.getCtx()
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.type = 'sine'
-    osc.frequency.setValueAtTime(600, ctx.currentTime)
-    osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.2)
-    osc.frequency.exponentialRampToValueAtTime(900, ctx.currentTime + 0.35)
-    gain.gain.setValueAtTime(0.1, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4)
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    osc.start()
-    osc.stop(ctx.currentTime + 0.4)
-  }
-
   playTrade(): void {
     if (this.muted) return
     this.playTone(500, 0.08, 'triangle', 0.08)
@@ -178,47 +159,4 @@ export class SoundSystem {
     })
   }
 
-  playClick(): void {
-    this.playTone(800, 0.04, 'square', 0.04)
-  }
-
-  playWarning(): void {
-    if (this.muted) return
-    this.playTone(200, 0.15, 'sawtooth', 0.1)
-    setTimeout(() => this.playTone(180, 0.2, 'sawtooth', 0.08), 180)
-  }
-
-  playHeal(): void {
-    if (this.muted) return
-    const ctx = this.getCtx()
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.type = 'sine'
-    osc.frequency.setValueAtTime(400, ctx.currentTime)
-    osc.frequency.linearRampToValueAtTime(800, ctx.currentTime + 0.3)
-    gain.gain.setValueAtTime(0.06, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35)
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    osc.start()
-    osc.stop(ctx.currentTime + 0.35)
-  }
-
-  playLevelUp(): void {
-    if (this.muted) return
-    const ctx = this.getCtx()
-    const freqs = _LEVELUP_FREQS
-    freqs.forEach((freq, i) => {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.type = 'triangle'
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.08)
-      gain.gain.setValueAtTime(0.08, ctx.currentTime + i * 0.08)
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.15)
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.start(ctx.currentTime + i * 0.08)
-      osc.stop(ctx.currentTime + i * 0.08 + 0.15)
-    })
-  }
 }

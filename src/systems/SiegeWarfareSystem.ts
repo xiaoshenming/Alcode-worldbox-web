@@ -146,15 +146,6 @@ export class SiegeWarfareSystem {
     return result
   }
 
-  resolveSiege(siegeId: number): SiegeOutcome {
-    const siege = this.sieges.get(siegeId);
-    if (!siege) return 'ongoing';
-    if (!siege.resolved) return 'ongoing';
-    if (siege.progress >= 100) return 'captured';
-    if (siege.defenderMorale <= MORALE_RETREAT_THRESHOLD) return 'captured';
-    return 'repelled';
-  }
-
   render(ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number, zoom: number): void {
     const tileSize = 16 * zoom;
     if (zoom !== this._lastZoom) {
@@ -227,7 +218,4 @@ export class SiegeWarfareSystem {
     }
   }
 
-  removeSiege(siegeId: number): void {
-    this.sieges.delete(siegeId);
-  }
 }

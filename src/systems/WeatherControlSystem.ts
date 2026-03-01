@@ -74,15 +74,7 @@ export class WeatherControlSystem {
 
   getIntensity(): number { return this.intensity }
 
-  setDuration(ticks: number): void {
-    this.duration = Math.max(0, ticks)
-    this.remaining = this.duration
-    this._durStr = `${this.remaining}/${this.duration}`
-    this._rebuildStatusStr()
-  }
-
   isLocked(): boolean { return this.locked }
-  toggleLock(): void { this.locked = !this.locked; this._rebuildStatusStr() }
   togglePanel(): void { this.panelOpen = !this.panelOpen }
   isPanelOpen(): boolean { return this.panelOpen }
 

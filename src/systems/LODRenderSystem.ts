@@ -1,5 +1,5 @@
 /** LODRenderSystem - zoom-dependent detail levels for entities and terrain */
-import { EntityManager, EntityId, PositionComponent, RenderComponent, CreatureComponent } from '../ecs/Entity'
+import { RenderComponent, CreatureComponent } from '../ecs/Entity'
 import { Camera } from '../game/Camera'
 
 export type LODLevel = 'full' | 'medium' | 'low' | 'icon'
@@ -20,7 +20,6 @@ const DEFAULT_THRESHOLDS: LODThresholds = {
 export class LODRenderSystem {
   private thresholds: LODThresholds = { ...DEFAULT_THRESHOLDS }
   private currentLOD: LODLevel = 'full'
-  private entityCounts = { rendered: 0, culled: 0 }
   // Cached font strings — rebuilt only when zoom changes
   private _lastZoom = -1
   private _fullFont = ''
@@ -44,51 +43,6 @@ export class LODRenderSystem {
 
   getLOD(): LODLevel {
     return this.currentLOD
-  }
-
-  /** Render creatures with appropriate detail level */
-  renderCreatures(
-    ctx: CanvasRenderingContext2D,
-    entities: EntityId[],
-    em: EntityManager,
-    camX: number, camY: number, zoom: number,
-    viewW: number, viewH: number
-  ): void {
-    this.entityCounts.rendered = 0
-    this.entityCounts.culled = 0
-
-    for (const id of entities) {
-      const pos = em.getComponent<PositionComponent>(id, 'position')
-      if (!pos) continue
-
-      const sx = (pos.x - camX) * zoom
-      const sy = (pos.y - camY) * zoom
-
-      // Frustum cull
-      if (sx < -zoom || sx > viewW + zoom || sy < -zoom || sy > viewH + zoom) {
-        this.entityCounts.culled++
-        continue
-      }
-
-      this.entityCounts.rendered++
-      const render = em.getComponent<RenderComponent>(id, 'render')
-      const creature = em.getComponent<CreatureComponent>(id, 'creature')
-
-      switch (this.currentLOD) {
-        case 'full':
-          this.renderFull(ctx, sx, sy, zoom, render, creature)
-          break
-        case 'medium':
-          this.renderMedium(ctx, sx, sy, zoom, render, creature)
-          break
-        case 'low':
-          this.renderLow(ctx, sx, sy, zoom, render)
-          break
-        case 'icon':
-          this.renderIcon(ctx, sx, sy, zoom, render)
-          break
-      }
-    }
   }
 
   /** Full detail: body + name + health bar */

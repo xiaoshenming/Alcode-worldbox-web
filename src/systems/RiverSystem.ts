@@ -181,8 +181,4 @@ export class RiverSystem {
     return this.rivers
   }
 
-  /** Check if a tile is part of a river */
-  isRiverTile(x: number, y: number): boolean {
-    return this.riverSet.has(this.key(x, y))
-  }
 }

@@ -267,30 +267,10 @@ export class MiningSystem {
     return null
   }
 
-  buildMine(civId: number, deposit: OreDeposit): boolean {
-    if (!deposit.discovered || deposit.discoveredBy !== civId) return false
-    if (deposit.mineBuilt) return false
-    if (deposit.reserves <= 0) return false
-
-    deposit.mineBuilt = true
-    EventLog.log('trade',
-      `Mine built on ${ORE_NAMES[deposit.type]} deposit at (${deposit.x},${deposit.y})`, 0)
-    return true
-  }
-
   getDepositsForCiv(civId: number): OreDeposit[] {
     this._civDepBuf.length = 0
     for (const d of this.deposits) { if (d.discoveredBy === civId) this._civDepBuf.push(d) }
     return this._civDepBuf
-  }
-
-  getOreAt(x: number, y: number): OreType {
-    if (x < 0 || x >= this.WORLD_W || y < 0 || y >= this.WORLD_H) return OreType.NONE
-    return this.oreMap[y][x]
-  }
-
-  getOreMap(): OreType[][] {
-    return this.oreMap
   }
 
   getDiscoveredDeposits(): OreDeposit[] {

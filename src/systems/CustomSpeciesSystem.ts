@@ -88,11 +88,6 @@ export class CustomSpeciesSystem {
     return buf
   }
 
-  deleteSpecies(id: string): void {
-    this.species.delete(id);
-    this.save();
-  }
-
   togglePanel(): void { this.panelOpen = !this.panelOpen; }
   isPanelOpen(): boolean { return this.panelOpen; }
 

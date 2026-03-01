@@ -252,16 +252,6 @@ export class SandboxSettingsSystem {
 
   // ── Input ────────────────────────────────────────────────────
 
-  handleDrag(mx: number, my: number, screenW: number, screenH: number): boolean {
-    if (!this.panelOpen || !this.draggingKey) return false;
-    const { x, y } = this.panelRect(screenW, screenH);
-    const i = PARAM_KEYS.indexOf(this.draggingKey);
-    if (i < 0) { this.draggingKey = null; return false; }
-    const { sx, sw } = this.sliderRect(x, y, i);
-    this.applySlider(mx, sx, sw, this.draggingKey);
-    return true;
-  }
-
   /** Call on mouseup to end slider drag. */
   endDrag(): void { this.draggingKey = null; }
 

@@ -121,14 +121,6 @@ export class SiegeSystem {
     return null
   }
 
-  /** Add siege equipment to an active siege. */
-  addEquipment(siegeId: number, type: SiegeEquipmentType): boolean {
-    const siege = this.sieges.get(siegeId)
-    if (!siege) return false
-    siege.equipment.push({ type, buildProgress: 0, deployed: false })
-    return true
-  }
-
   /**
    * Main update loop. Advances all active sieges by one tick.
    * @param tick - Current game tick

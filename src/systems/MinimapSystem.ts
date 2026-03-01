@@ -134,46 +134,6 @@ export class MinimapSystem {
     ctx.restore()
   }
 
-  /**
-   * Rebuild the offscreen cache with current mode data.
-   * Called from render() — the actual heavy work only happens every 30 ticks
-   * because update() gates lastRedrawTick.
-   */
-  renderToCache(
-    world: World,
-    civManager: CivManager,
-    em: EntityManager,
-    mapWidth: number,
-    mapHeight: number
-  ): void {
-    this.ensureCache(mapWidth, mapHeight)
-    const c = this.cacheCtx
-    if (!c) return
-
-    c.clearRect(0, 0, mapWidth, mapHeight)
-
-    // Always draw terrain base
-    this.drawTerrain(c, world, mapWidth, mapHeight)
-
-    switch (this.mode) {
-      case 'terrain':
-        // terrain-only, already drawn
-        break
-      case 'political':
-        this.drawPolitical(c, civManager, mapWidth, mapHeight)
-        break
-      case 'population':
-        this.drawPopulation(c, mapWidth, mapHeight)
-        break
-      case 'resources':
-        this.drawResources(c, world, mapWidth, mapHeight)
-        break
-      case 'military':
-        this.drawMilitary(c, em, civManager, mapWidth, mapHeight)
-        break
-    }
-  }
-
   // --- Private rendering helpers ---
 
   private ensureCache(w: number, h: number): void {
