@@ -26,23 +26,7 @@ describe('EraSystem.getEra', () => {
     expect(sys.getEra(1)).toBe('stone')
     expect(sys.getEra(2)).toBe('renaissance')
   })
-})
-
-describe('EraSystem.getEraInfo', () => {
-  let sys: EraSystem
-  beforeEach(() => { sys = makeSys() })
-
-  it('可查询stone时代信息', () => {
-    const info = sys.getEraInfo('stone')
-    expect(info).toBeDefined()
-    expect(info.name).toBe('stone')
-    expect(info.displayName).toBeDefined()
-  })
-  it('可查询所有5种时代信息', () => {
-    const eras: EraName[] = ['stone', 'bronze', 'iron', 'medieval', 'renaissance']
-    eras.forEach(e => {
-      const info = sys.getEraInfo(e)
-      expect(info.name).toBe(e)
-    })
+  it('未登记文明返回stone默认值', () => {
+    expect(sys.getEra(999)).toBe('stone')
   })
 })

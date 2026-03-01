@@ -65,12 +65,6 @@ export class EraSystem {
     return this.civEras.get(civId) ?? 'stone'
   }
 
-  getEraInfo(era: EraName): { name: string; displayName: string; color: string; techRequired: number; bonuses: string[] } {
-    const def = ERA_MAP.get(era)
-    if (!def) return { name: era, displayName: era, color: '#888', techRequired: 0, bonuses: [] }
-    return { name: def.name, displayName: def.displayName, color: def.color, techRequired: def.techRequired, bonuses: def.bonuses }
-  }
-
   update(civManager: CivManager, em: EntityManager, particles: ParticleSystem, tick: number, timeline?: TimelineSystem): void {
     // Check era transitions every 120 ticks
     if (tick - this.lastCheckTick >= 120) {

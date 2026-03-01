@@ -41,7 +41,6 @@ const STYLE_COLOR_TABLES: Record<BorderStyle, string[]> = {} as Record<BorderSty
   STYLE_COLOR_TABLES[style] = tbl
 })
 const MAX_PARTICLES = 40
-const REPULSION_STRENGTH = 0.6
 
 // Pre-computed particle glow colors per style: 51 steps for alpha 0.00..0.50
 // stop0 colors (alpha=alpha), stop1 always 'rgba(r,g,b,0)'
@@ -57,28 +56,40 @@ const PARTICLE_GLOW_TABLE: Record<BorderStyle, { stop0: string[]; stop1: string 
   PARTICLE_GLOW_TABLE[style] = { stop0, stop1: `rgba(${r},${g},${b},0)` }
 })
 
+/** Pre-allocated particle pool — avoids splice + push object allocation per frame */
+const _particlePool: BorderParticle[] = Array.from({ length: MAX_PARTICLES }, () => ({
+  x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 1, phase: 0
+}))
+
 export class WorldBorderSystem {
   private style: BorderStyle = 'VOID'
   private animTime = 0
-  private particles: BorderParticle[] = []
+  /** Active particle count — pool slots [0, _particleCount) are active */
+  private _particleCount = 0
 
   /** 更新边界动画状态，每帧调用 */
   update(tick: number): void {
     this.animTime += 0.016
 
-    // 更新粒子
-    for (let i = this.particles.length - 1; i >= 0; i--) {
-      const p = this.particles[i]
+    // 更新粒子：逆序 swap-remove 代替 splice，零GC
+    for (let i = this._particleCount - 1; i >= 0; i--) {
+      const p = _particlePool[i]
       p.x += p.vx
       p.y += p.vy
       p.life -= 0.016
       if (p.life <= 0) {
-        this.particles.splice(i, 1)
+        // 用最后一个活跃粒子覆盖当前槽（swap-remove）
+        this._particleCount--
+        if (i < this._particleCount) {
+          const last = _particlePool[this._particleCount]
+          p.x = last.x; p.y = last.y; p.vx = last.vx; p.vy = last.vy
+          p.life = last.life; p.maxLife = last.maxLife; p.phase = last.phase
+        }
       }
     }
 
-    // 生成新粒子
-    if (this.particles.length < MAX_PARTICLES && Math.random() < 0.15) {
+    // 生成新粒子（池未满时）
+    if (this._particleCount < MAX_PARTICLES && Math.random() < 0.15) {
       this.spawnParticle()
     }
   }
@@ -160,41 +171,12 @@ export class WorldBorderSystem {
   /** 设置边界视觉风格 */
   setBorderStyle(style: BorderStyle): void {
     this.style = style
-    this.particles.length = 0
+    this._particleCount = 0
   }
 
   /** 获取当前边界风格 */
   getBorderStyle(): BorderStyle {
     return this.style
-  }
-
-  /**
-   * 计算指定 tile 坐标受到的边界排斥力
-   * @returns 力向量 { fx, fy }，指向远离边界的方向
-   */
-  getRepulsionForce(x: number, y: number): { fx: number; fy: number } {
-    let fx = 0
-    let fy = 0
-
-    const distLeft = x
-    const distRight = WORLD_WIDTH - 1 - x
-    const distTop = y
-    const distBottom = WORLD_HEIGHT - 1 - y
-
-    if (distLeft < BORDER_WIDTH) {
-      fx += REPULSION_STRENGTH * (1 - distLeft / BORDER_WIDTH)
-    }
-    if (distRight < BORDER_WIDTH) {
-      fx -= REPULSION_STRENGTH * (1 - distRight / BORDER_WIDTH)
-    }
-    if (distTop < BORDER_WIDTH) {
-      fy += REPULSION_STRENGTH * (1 - distTop / BORDER_WIDTH)
-    }
-    if (distBottom < BORDER_WIDTH) {
-      fy -= REPULSION_STRENGTH * (1 - distBottom / BORDER_WIDTH)
-    }
-
-    return { fx, fy }
   }
 
   /**
@@ -244,26 +226,27 @@ export class WorldBorderSystem {
     }
   }
 
-  /** 在边界带随机生成粒子 */
+  /** 在边界带随机生成粒子（写入池槽，零GC） */
   private spawnParticle(): void {
+    const slot = _particlePool[this._particleCount]
     const edge = Math.floor(Math.random() * 4)
-    let x: number, y: number, vx: number, vy: number
     switch (edge) {
       case 0: // 上
-        x = Math.random() * WORLD_WIDTH; y = Math.random() * BORDER_WIDTH
-        vx = (Math.random() - 0.5) * 0.3; vy = 0.1 + Math.random() * 0.1; break
+        slot.x = Math.random() * WORLD_WIDTH; slot.y = Math.random() * BORDER_WIDTH
+        slot.vx = (Math.random() - 0.5) * 0.3; slot.vy = 0.1 + Math.random() * 0.1; break
       case 1: // 下
-        x = Math.random() * WORLD_WIDTH; y = WORLD_HEIGHT - Math.random() * BORDER_WIDTH
-        vx = (Math.random() - 0.5) * 0.3; vy = -(0.1 + Math.random() * 0.1); break
+        slot.x = Math.random() * WORLD_WIDTH; slot.y = WORLD_HEIGHT - Math.random() * BORDER_WIDTH
+        slot.vx = (Math.random() - 0.5) * 0.3; slot.vy = -(0.1 + Math.random() * 0.1); break
       case 2: // 左
-        x = Math.random() * BORDER_WIDTH; y = Math.random() * WORLD_HEIGHT
-        vx = 0.1 + Math.random() * 0.1; vy = (Math.random() - 0.5) * 0.3; break
+        slot.x = Math.random() * BORDER_WIDTH; slot.y = Math.random() * WORLD_HEIGHT
+        slot.vx = 0.1 + Math.random() * 0.1; slot.vy = (Math.random() - 0.5) * 0.3; break
       default: // 右
-        x = WORLD_WIDTH - Math.random() * BORDER_WIDTH; y = Math.random() * WORLD_HEIGHT
-        vx = -(0.1 + Math.random() * 0.1); vy = (Math.random() - 0.5) * 0.3; break
+        slot.x = WORLD_WIDTH - Math.random() * BORDER_WIDTH; slot.y = Math.random() * WORLD_HEIGHT
+        slot.vx = -(0.1 + Math.random() * 0.1); slot.vy = (Math.random() - 0.5) * 0.3; break
     }
     const life = 1.5 + Math.random() * 2
-    this.particles.push({ x, y, vx, vy, life, maxLife: life, phase: Math.random() * Math.PI * 2 })
+    slot.life = life; slot.maxLife = life; slot.phase = Math.random() * Math.PI * 2
+    this._particleCount++
   }
 
   /** 渲染边界粒子 */
@@ -273,12 +256,13 @@ export class WorldBorderSystem {
     cameraY: number,
     zoom: number
   ): void {
-    if (this.particles.length === 0) return
+    if (this._particleCount === 0) return
 
     const prev = ctx.globalCompositeOperation
     ctx.globalCompositeOperation = this.style === 'FIRE' ? 'lighter' : 'source-over'
 
-    for (const p of this.particles) {
+    for (let i = 0; i < this._particleCount; i++) {
+      const p = _particlePool[i]
       const screenX = (p.x * TILE_SIZE - cameraX) * zoom
       const screenY = (p.y * TILE_SIZE - cameraY) * zoom
 
