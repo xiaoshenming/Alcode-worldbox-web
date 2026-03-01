@@ -113,7 +113,6 @@ export class EventNotificationSystem {
   }
 
   toggleHistory(): void { this.histVisible = !this.histVisible; }
-  isHistoryVisible(): boolean { return this.histVisible; }
 
   /** 清空所有通知状态 */
   clear(): void {

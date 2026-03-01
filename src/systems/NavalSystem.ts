@@ -551,14 +551,4 @@ export class NavalSystem {
     }
     return count
   }
-
-  getShipsByType(em: EntityManager, civId: number): Record<ShipComponent['shipType'], number> {
-    const counts: Record<ShipComponent['shipType'], number> = { warship: 0, trader: 0, explorer: 0, fishing: 0 }
-    const ships = em.getEntitiesWithComponent('ship')
-    for (const id of ships) {
-      const s = em.getComponent<ShipComponent>(id, 'ship')
-      if (s && s.civId === civId) counts[s.shipType]++
-    }
-    return counts
-  }
 }

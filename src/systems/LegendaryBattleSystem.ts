@@ -222,16 +222,6 @@ export class LegendaryBattleSystem {
     return null
   }
 
-  /** Returns the phase name for a given battle ID. */
-  getBattleScale(battleId: number): BattlePhase | null {
-    return this.battles.get(battleId)?.phase ?? null
-  }
-
-  /** Returns all generated war story strings. */
-  getWarStories(): string[] {
-    return this.warStories
-  }
-
   private mergeBattle(
     battle: BattleInfo, civCounts: Map<number, EntityId[]>,
     centerX: number, centerY: number, tick: number

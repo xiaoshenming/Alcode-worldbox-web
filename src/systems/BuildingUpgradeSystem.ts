@@ -214,19 +214,6 @@ export class BuildingUpgradeSystem {
     return bonus;
   }
 
-  /** Returns granary food capacity multiplier */
-  getGranaryFoodBonus(em: EntityManager, civ: Civilization): number {
-    let bonus = 1.0;
-    for (const id of civ.buildings) {
-      const b = em.getComponent<BuildingComponent>(id, 'building');
-      if (b && b.buildingType === BuildingType.GRANARY) {
-        const effectMult = 1 + 0.2 * (b.level - 1);
-        bonus += 0.2 * effectMult;
-      }
-    }
-    return bonus;
-  }
-
   /** Clean up tracking for removed buildings */
   removeBuilding(id: EntityId): void {
     this.lastCheck.delete(id);

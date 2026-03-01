@@ -14,9 +14,6 @@ describe('MapGenSystem', () => {
   it('private rivers数组初始为空', () => {
     expect((sys as any).rivers).toHaveLength(0)
   })
-  it('private clusters数组初始为空', () => {
-    expect((sys as any).clusters).toHaveLength(0)
-  })
   it('getRiverCount与private rivers长度一致', () => {
     expect(sys.getRiverCount()).toBe((sys as any).rivers.length)
   })

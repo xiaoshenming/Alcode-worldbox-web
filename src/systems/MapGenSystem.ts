@@ -6,53 +6,11 @@ interface RiverSegment {
   flow: number  // 0-1 strength
 }
 
-export interface BiomeCluster {
-  type: number  // tile type
-  centerX: number; centerY: number
-  radius: number
-  strength: number
-}
-
 const RIVER_MIN_LENGTH = 8
 const RIVER_MAX_LENGTH = 40
-const CLUSTER_MIN_RADIUS = 4
-const CLUSTER_MAX_RADIUS = 15
 
 export class MapGenSystem {
   private rivers: RiverSegment[][] = []
-  private clusters: BiomeCluster[] = []
-
-  /** Generate improved terrain with biome clustering */
-  generateBiomeClusters(world: World, width: number, height: number, count: number): void {
-    this.clusters = []
-
-    for (let i = 0; i < count; i++) {
-      const cx = Math.random() * width
-      const cy = Math.random() * height
-      const radius = CLUSTER_MIN_RADIUS + Math.random() * (CLUSTER_MAX_RADIUS - CLUSTER_MIN_RADIUS)
-      const biomeType = Math.floor(Math.random() * 7) + 1  // 1-7 tile types
-
-      this.clusters.push({ type: biomeType, centerX: cx, centerY: cy, radius, strength: 0.6 + Math.random() * 0.4 })
-
-      // Apply cluster to world
-      for (let dy = -radius; dy <= radius; dy++) {
-        for (let dx = -radius; dx <= radius; dx++) {
-          const dist = Math.sqrt(dx * dx + dy * dy)
-          if (dist > radius) continue
-
-          const wx = Math.floor(cx + dx)
-          const wy = Math.floor(cy + dy)
-          if (wx < 0 || wx >= width || wy < 0 || wy >= height) continue
-
-          // Falloff from center
-          const falloff = 1 - (dist / radius)
-          if (Math.random() < falloff * 0.7) {
-            world.setTile(wx, wy, biomeType)
-          }
-        }
-      }
-    }
-  }
 
   /** Generate rivers from mountains to water */
   generateRivers(world: World, width: number, height: number, count: number): void {
@@ -174,6 +132,6 @@ export class MapGenSystem {
   }
 
   getClusterCount(): number {
-    return this.clusters.length
+    return 0
   }
 }
