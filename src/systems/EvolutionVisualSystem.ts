@@ -44,6 +44,8 @@ export class EvolutionVisualSystem {
   /** Pre-computed min tick for timeline — updated in pushEvent, avoids O(N) scan each render */
   private _minT = Infinity
   private _minTStr = ''
+  /** Pre-computed max tick for timeline — updated in pushEvent, avoids O(N) scan each render */
+  private _maxT = -Infinity
   /** Pre-computed max-end tick string for timeline — rebuilt when maxT or zoom changes */
   private _prevMaxTEnd = -1
   private _maxTEndStr = ''
@@ -79,6 +81,7 @@ export class EvolutionVisualSystem {
   pushEvent(event: EvolutionEvent): void {
     this.events.push(event)
     if (event.tick < this._minT) { this._minT = event.tick; this._minTStr = `t:${event.tick}` }
+    if (event.tick > this._maxT) { this._maxT = event.tick }
     if (this.notifs.length >= MAX_NOTIF) this.notifs.shift()
     this.notifs.push({ event, startTick: -1, alpha: 1, speciesMutStr: `${event.species}: ${event.mutation}` })
   }
@@ -302,8 +305,7 @@ export class EvolutionVisualSystem {
     ctx.fillStyle = 'rgba(20,20,40,0.8)'
     ctx.beginPath(); ctx.roundRect(ox, oy, w, h, 4); ctx.fill()
     const minT = this._minT
-    let maxT = -Infinity
-    for (const e of this.events) { if (e.tick > maxT) maxT = e.tick }
+    const maxT = this._maxT
     const range = Math.max(1, (maxT - minT) * this.tlZoom)
     const ay = oy + h / 2, uw = w - 16
     ctx.strokeStyle = DIM; ctx.lineWidth = 1

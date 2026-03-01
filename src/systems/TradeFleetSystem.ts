@@ -50,6 +50,10 @@ const TILE_SIZE = 16;
 const CARGO_TTL = 60;
 const MAX_RIPPLES_PER_ROUTE = 4;
 const RIPPLE_MAX_AGE = 40;
+/** Max pre-allocated cargo indicator slots */
+const MAX_INDICATORS = 32;
+/** Max pre-allocated ripple slots */
+const MAX_RIPPLES = 64;
 
 // Pre-computed ripple stroke colors: 101 steps for alpha 0.00..0.30 (t 0..1)
 // alpha = 0.3 * (1 - t)
@@ -65,8 +69,14 @@ const RIPPLE_STROKE_COLORS: string[] = (() => {
 export class TradeFleetSystem {
   private routes: Map<number, TradeRoute> = new Map();
   private ships: TradeShip[] = [];
-  private indicators: CargoIndicator[] = [];
-  private ripples: Ripple[] = [];
+  /** Fixed-size pool — ttl<=0 means inactive slot */
+  private readonly indicators: CargoIndicator[] = Array.from({ length: MAX_INDICATORS }, () => ({
+    x: 0, y: 0, ttl: 0, icon: 0 as 0 | 1,
+  }));
+  /** Fixed-size pool — age<0 means inactive slot */
+  private readonly ripples: Ripple[] = Array.from({ length: MAX_RIPPLES }, () => ({
+    x: 0, y: 0, age: -1, maxAge: RIPPLE_MAX_AGE,
+  }));
   private tradeVolume = 0;
   private dashOffset = 0;
   private _lastZoom = -1;
@@ -142,18 +152,17 @@ export class TradeFleetSystem {
     }
 
     // 更新货物指示
-    for (let i = this.indicators.length - 1; i >= 0; i--) {
+    for (let i = 0; i < this.indicators.length; i++) {
+      if (this.indicators[i].ttl <= 0) continue;
       this.indicators[i].ttl--;
-      if (this.indicators[i].ttl <= 0) {
-        this.indicators.splice(i, 1);
-      }
     }
 
     // 更新波纹
-    for (let i = this.ripples.length - 1; i >= 0; i--) {
+    for (let i = 0; i < this.ripples.length; i++) {
+      if (this.ripples[i].age < 0) continue;
       this.ripples[i].age++;
       if (this.ripples[i].age >= this.ripples[i].maxAge) {
-        this.ripples.splice(i, 1);
+        this.ripples[i].age = -1;  // mark slot inactive
       }
     }
 
@@ -164,16 +173,21 @@ export class TradeFleetSystem {
         let count = 0
         for (let i = 0; i < this.ripples.length; i++) {
           const r = this.ripples[i]
+          if (r.age < 0) continue
           if (Math.abs(r.x - route.fromX) + Math.abs(r.y - route.fromY) < threshold) count++
         }
         if (count < MAX_RIPPLES_PER_ROUTE) {
-          const t = Math.random();
-          this.ripples.push({
-            x: route.fromX + (route.toX - route.fromX) * t,
-            y: route.fromY + (route.toY - route.fromY) * t,
-            age: 0,
-            maxAge: RIPPLE_MAX_AGE,
-          });
+          // Find inactive slot
+          for (let ri = 0; ri < this.ripples.length; ri++) {
+            if (this.ripples[ri].age >= 0) continue;
+            const t = Math.random();
+            const rp = this.ripples[ri];
+            rp.x = route.fromX + (route.toX - route.fromX) * t;
+            rp.y = route.fromY + (route.toY - route.fromY) * t;
+            rp.age = 0;
+            rp.maxAge = RIPPLE_MAX_AGE;
+            break;
+          }
         }
       }
     }
@@ -194,6 +208,7 @@ export class TradeFleetSystem {
 
     // 渲染波纹
     for (let i = 0; i < this.ripples.length; i++) {
+      if (this.ripples[i].age < 0) continue;
       this.renderRipple(ctx, this.ripples[i], camX, camY, zoom);
     }
 
@@ -207,6 +222,7 @@ export class TradeFleetSystem {
 
     // 渲染货物指示
     for (let i = 0; i < this.indicators.length; i++) {
+      if (this.indicators[i].ttl <= 0) continue;
       this.renderIndicator(ctx, this.indicators[i], camX, camY, zoom);
     }
 
@@ -233,12 +249,16 @@ export class TradeFleetSystem {
   private onArrival(x: number, y: number): void {
     this.tradeVolume++;
     this.iconFlip = (this.iconFlip + 1) % 2;
-    this.indicators.push({
-      x,
-      y,
-      ttl: CARGO_TTL,
-      icon: this.iconFlip as 0 | 1,
-    });
+    // Find inactive slot in pool
+    for (let i = 0; i < this.indicators.length; i++) {
+      if (this.indicators[i].ttl > 0) continue;
+      const ind = this.indicators[i];
+      ind.x = x;
+      ind.y = y;
+      ind.ttl = CARGO_TTL;
+      ind.icon = this.iconFlip as 0 | 1;
+      break;
+    }
   }
 
   private renderRoute(
@@ -356,14 +376,11 @@ export class TradeFleetSystem {
     const sy = (ind.y * TILE_SIZE - camY) * zoom;
     const floatY = -((CARGO_TTL - ind.ttl) * 0.3) * zoom;
     const alpha = Math.min(1, ind.ttl / 20);
-    const size = Math.max(6, 10 * zoom);
 
-    ctx.save();
     ctx.globalAlpha = alpha;
     ctx.font = this._indFont;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(ind.icon === 0 ? '\uD83D\uDCB0' : '\uD83D\uDCE6', sx, sy + floatY);
-    ctx.restore();
   }
 }
