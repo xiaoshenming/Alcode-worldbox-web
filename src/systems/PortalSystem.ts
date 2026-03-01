@@ -183,15 +183,15 @@ export class PortalSystem {
     // Draw energy lines between paired portals that are close enough
     this.renderEnergyLines(ctx, cameraX, cameraY, zoom, time);
 
-    // Draw each portal
+    // Draw each portal — single save/restore for all portals (no transform used)
+    if (this.portals.size > 0) {
+    ctx.save();
     for (const portal of this.portals.values()) {
       if (!portal.active) continue;
 
       const sx = (portal.x - cameraX) * tileZoom + tileZoom * 0.5;
       const sy = (portal.y - cameraY) * tileZoom + tileZoom * 0.5;
       const baseRadius = Math.max(4, 12 * zoom);
-
-      ctx.save();
 
       // Outer glow
       ctx.globalAlpha = 0.2 + 0.1 * Math.sin(time * 2);
@@ -224,8 +224,8 @@ export class PortalSystem {
       ctx.beginPath();
       ctx.arc(sx, sy, coreR * 0.45, 0, Math.PI * 2);
       ctx.fill();
-
-      ctx.restore();
+    }
+    ctx.restore();
     }
 
     // Draw particles — batch by color to minimize state changes, avoid per-particle save/restore
