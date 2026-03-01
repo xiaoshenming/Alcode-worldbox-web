@@ -82,33 +82,16 @@ const SELECTION_DEATH_THRESHOLD = 20 // deaths before natural selection kicks in
 /** Pre-computed causes array — avoids per-call literal array in checkNaturalSelection */
 const _DEATH_CAUSES: ReadonlyArray<'combat' | 'hunger' | 'disease'> = ['combat', 'hunger', 'disease'] as const
 
-// Natural selection trait templates (created dynamically per species)
+// Pre-allocated singleton trait objects — makeSelectionTrait() returns references to avoid GC
+const _TRAIT_COMBAT: EvolutionTrait = { name: 'Battle Hardened', description: 'Natural selection favored tougher individuals', effect: 'defense_boost', magnitude: 0.05, source: 'natural_selection' }
+const _TRAIT_HUNGER: EvolutionTrait = { name: 'Efficient Metabolism', description: 'Natural selection favored those who need less food', effect: 'hunger_slow', magnitude: 0.1, source: 'natural_selection' }
+const _TRAIT_DISEASE: EvolutionTrait = { name: 'Disease Resistant', description: 'Natural selection favored immune resilience', effect: 'disease_resist', magnitude: 0.1, source: 'natural_selection' }
+
 function makeSelectionTrait(cause: 'combat' | 'hunger' | 'disease'): EvolutionTrait {
   switch (cause) {
-    case 'combat':
-      return {
-        name: 'Battle Hardened',
-        description: 'Natural selection favored tougher individuals',
-        effect: 'defense_boost',
-        magnitude: 0.05,
-        source: 'natural_selection',
-      }
-    case 'hunger':
-      return {
-        name: 'Efficient Metabolism',
-        description: 'Natural selection favored those who need less food',
-        effect: 'hunger_slow',
-        magnitude: 0.1,
-        source: 'natural_selection',
-      }
-    case 'disease':
-      return {
-        name: 'Disease Resistant',
-        description: 'Natural selection favored immune resilience',
-        effect: 'disease_resist',
-        magnitude: 0.1,
-        source: 'natural_selection',
-      }
+    case 'combat': return _TRAIT_COMBAT
+    case 'hunger': return _TRAIT_HUNGER
+    case 'disease': return _TRAIT_DISEASE
   }
 }
 

@@ -47,6 +47,7 @@ export class CinematicModeSystem {
   private active = false
   private points: InterestPoint[] = []
   private currentSegment: CruiseSegment | null = null
+  private _segBuf: CruiseSegment = { p0x: 0, p0y: 0, p1x: 0, p1y: 0, p2x: 0, p2y: 0, p3x: 0, p3y: 0, targetIdx: -1 }
   private segmentStart = 0
   private lastTargetIdx = -1
   /** 黑边动画进度 0..1 */
@@ -213,7 +214,13 @@ export class CinematicModeSystem {
     const p2y = my + Math.sin(angle2) * spread * (0.3 + Math.random() * 0.5)
 
     this.lastTargetIdx = idx
-    return { p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y, targetIdx: idx }
+    const seg = this._segBuf
+    seg.p0x = p0x; seg.p0y = p0y
+    seg.p1x = p1x; seg.p1y = p1y
+    seg.p2x = p2x; seg.p2y = p2y
+    seg.p3x = p3x; seg.p3y = p3y
+    seg.targetIdx = idx
+    return seg
   }
 
   /** 随机选择下一个兴趣点（避免连续重复） */
