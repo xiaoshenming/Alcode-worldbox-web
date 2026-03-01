@@ -174,27 +174,6 @@ export class MinimapSystem {
     }
   }
 
-  handleClick(
-    clickX: number,
-    clickY: number,
-    mapX: number,
-    mapY: number,
-    mapWidth: number,
-    mapHeight: number
-  ): { worldX: number; worldY: number } | null {
-    const relX = clickX - mapX
-    const relY = clickY - mapY
-
-    if (relX < 0 || relX >= mapWidth || relY < 0 || relY >= mapHeight) {
-      return null
-    }
-
-    const worldX = (relX / mapWidth) * this.worldWidth * TILE_SIZE
-    const worldY = (relY / mapHeight) * this.worldHeight * TILE_SIZE
-
-    return { worldX, worldY }
-  }
-
   // --- Private rendering helpers ---
 
   private ensureCache(w: number, h: number): void {

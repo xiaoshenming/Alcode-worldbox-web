@@ -28,7 +28,6 @@ const RANK_MULTIPLIER: Record<ProfessionRank, number> = { apprentice: 1.0, journ
 type BonusKey = 'foodOutput' | 'combatDamage' | 'buildSpeed' | 'miningRate' | 'tradeIncome' | 'researchRate' | 'faithGain' | 'craftQuality'
 type ProfessionBonus = Record<BonusKey, number>
 const BONUS_KEYS: BonusKey[] = ['foodOutput', 'combatDamage', 'buildSpeed', 'miningRate', 'tradeIncome', 'researchRate', 'faithGain', 'craftQuality']
-const NEUTRAL_BONUS: ProfessionBonus = { foodOutput: 1, combatDamage: 1, buildSpeed: 1, miningRate: 1, tradeIncome: 1, researchRate: 1, faithGain: 1, craftQuality: 1 }
 
 /** 每个职业的主要加成键和加成值，其余键为 1.0 */
 const PROFESSION_PRIMARY: Record<ProfessionType, { key: BonusKey; val: number }[]> = {
@@ -65,15 +64,6 @@ const PANEL_W = 360, PANEL_H = 320, HEADER_H = 36
 
 function clamp(v: number, lo: number, hi: number): number { return v < lo ? lo : v > hi ? hi : v }
 
-function buildBonus(profType: ProfessionType, rank: ProfessionRank): ProfessionBonus {
-  const bonus = { ...NEUTRAL_BONUS }
-  const mult = RANK_MULTIPLIER[rank]
-  for (const { key, val } of PROFESSION_PRIMARY[profType]) {
-    bonus[key] = 1 + (val - 1) * mult
-  }
-  return bonus
-}
-
 export class CreatureProfessionSystem {
   private professions: Map<number, ProfessionData> = new Map()
   private civManager: CivManager | null = null
@@ -96,6 +86,8 @@ export class CreatureProfessionSystem {
     foodOutput: '', combatDamage: '', buildSpeed: '', miningRate: '',
     tradeIncome: '', researchRate: '', faithGain: '', craftQuality: '',
   }
+  /** Pre-allocated bonus object — reused by getBonus() to avoid per-call spread allocation */
+  private _bonusBuf: ProfessionBonus = { foodOutput: 1, combatDamage: 1, buildSpeed: 1, miningRate: 1, tradeIncome: 1, researchRate: 1, faithGain: 1, craftQuality: 1 }
 
   setCivManager(cm: CivManager): void { this.civManager = cm }
   setSelectedEntity(id: number): void { this.selectedEntity = id }
@@ -105,11 +97,19 @@ export class CreatureProfessionSystem {
     return this.professions.get(entityId)
   }
 
-  /** 获取职业加成（含等级倍率） */
+  /** 获取职业加成（含等级倍率）— 返回预分配缓存对象，零GC */
   getBonus(entityId: number): ProfessionBonus {
     const prof = this.professions.get(entityId)
-    if (!prof) return { ...NEUTRAL_BONUS }
-    return buildBonus(prof.type, prof.rank)
+    const buf = this._bonusBuf
+    // Reset to neutral
+    buf.foodOutput = 1; buf.combatDamage = 1; buf.buildSpeed = 1; buf.miningRate = 1
+    buf.tradeIncome = 1; buf.researchRate = 1; buf.faithGain = 1; buf.craftQuality = 1
+    if (!prof) return buf
+    const mult = RANK_MULTIPLIER[prof.rank]
+    for (const { key, val } of PROFESSION_PRIMARY[prof.type]) {
+      buf[key] = 1 + (val - 1) * mult
+    }
+    return buf
   }
 
   /** 移除实体 */
