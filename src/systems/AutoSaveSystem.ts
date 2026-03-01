@@ -142,10 +142,10 @@ export class AutoSaveSystem {
       this._savingTextWidth = ctx.measureText('Saving...').width
       this._savedTextWidth  = ctx.measureText('Saved').width
     }
-    const metrics = { width: this.indicatorState === IndicatorState.Saving ? this._savingTextWidth : this._savedTextWidth }
+    const textWidth = this.indicatorState === IndicatorState.Saving ? this._savingTextWidth : this._savedTextWidth
     const padX = 10
     const padY = 6
-    const pillW = metrics.width + padX * 2
+    const pillW = textWidth + padX * 2
     const pillH = 20 + padY
     const pillX = x - pillW
     const pillY = y - 14

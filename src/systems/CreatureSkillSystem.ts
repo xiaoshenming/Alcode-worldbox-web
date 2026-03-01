@@ -298,7 +298,7 @@ export class CreatureSkillSystem {
       ctx.font = 'bold 11px monospace'
       ctx.fillText(sk.name, px + PANEL_W / 2, ny + 42)
       ctx.fillStyle = '#999'; ctx.font = '10px monospace'
-      ctx.fillText(sk.levelDescStr ?? `Lv.${sk.levelReq} ${sk.desc}`, px + PANEL_W / 2, ny + 58)
+      ctx.fillText(sk.levelDescStr!, px + PANEL_W / 2, ny + 58)
     }
 
     ctx.textAlign = 'left'

@@ -73,8 +73,7 @@ export class WorldSeedSystem {
     ctx.globalAlpha = 0.5
     ctx.fillStyle = '#000'
     if (this._displayTextWidth === 0) this._displayTextWidth = ctx.measureText(text).width
-    const metrics = { width: this._displayTextWidth }
-    ctx.fillRect(x - 2, y - 11, metrics.width + 4, 14)
+    ctx.fillRect(x - 2, y - 11, this._displayTextWidth + 4, 14)
     ctx.globalAlpha = 0.8
     ctx.fillStyle = '#aaa'
     ctx.fillText(text, x, y)

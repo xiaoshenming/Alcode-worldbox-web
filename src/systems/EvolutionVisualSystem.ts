@@ -187,7 +187,7 @@ export class EvolutionVisualSystem {
       ctx.fillStyle = c; ctx.font = 'bold 10px monospace'; ctx.textBaseline = 'top'
       ctx.fillText(ln.node.species, nx + 4, ny + 3)
       ctx.fillStyle = DIM; ctx.font = '9px monospace'
-      ctx.fillText(ln.node.nodeInfoStr ?? `pop:${ln.node.population} t:${ln.node.appearTick}`, nx + 4, ny + 18)
+      ctx.fillText(ln.node.nodeInfoStr!, nx + 4, ny + 18)
       for (const ch of ln.children) draw(ch)
     }
     for (const r of roots) draw(r)

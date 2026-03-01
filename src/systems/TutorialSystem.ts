@@ -192,8 +192,8 @@ export class TutorialSystem {
     this.drawButton(ctx, nextX, btnY, btnW, btnH, 'Next', '#FFD700', '#1a1a2e');
     this.drawButton(ctx, skipX, btnY, btnW, btnH, 'Skip', '#888', '#1a1a2e');
 
-    this.btnRects.next = { x: nextX, y: btnY, w: btnW, h: btnH };
-    this.btnRects.skip = { x: skipX, y: btnY, w: btnW, h: btnH };
+    this.btnRects.next.x = nextX; this.btnRects.next.y = btnY; this.btnRects.next.w = btnW; this.btnRects.next.h = btnH;
+    this.btnRects.skip.x = skipX; this.btnRects.skip.y = btnY; this.btnRects.skip.w = btnW; this.btnRects.skip.h = btnH;
 
     ctx.restore();
   }
