@@ -46,6 +46,8 @@ export class FormationSystem {
   private _lastZoom = -1
   private _iconFont = ''
   private _formationsBuf: Formation[] = []
+  /** Reusable bonus object — avoids per-call {attack,defense,speed} allocation in getFormationBonus */
+  private _bonusBuf = { attack: 1, defense: 1, speed: 1 }
   // Reusable flat buffers for render() positions (avoids {x,y}[] alloc per formation per frame)
   private _renderPosXBuf: number[] = []
   private _renderPosYBuf: number[] = []
@@ -243,15 +245,14 @@ export class FormationSystem {
 
   getFormationBonus(id: number): { attack: number; defense: number; speed: number } {
     const f = this.formations.get(id)
-    if (!f) return { attack: 1, defense: 1, speed: 1 }
+    if (!f) { this._bonusBuf.attack = 1; this._bonusBuf.defense = 1; this._bonusBuf.speed = 1; return this._bonusBuf }
     const base = FORMATION_BONUSES[f.type]
     // Scale bonus by morale: at 0 morale bonuses are reduced to 70%
     const moraleScale = 0.7 + 0.3 * (f.morale / MORALE_MAX)
-    return {
-      attack: base.attack * moraleScale,
-      defense: base.defense * moraleScale,
-      speed: base.speed,
-    }
+    this._bonusBuf.attack = base.attack * moraleScale
+    this._bonusBuf.defense = base.defense * moraleScale
+    this._bonusBuf.speed = base.speed
+    return this._bonusBuf
   }
 
   getFormations(): Formation[] {

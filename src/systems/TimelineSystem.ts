@@ -31,6 +31,8 @@ export class TimelineSystem {
   private history: HistoricalEvent[] = []
   private currentEraIndex: number = 0
   private maxEvents: number = 200
+  /** Cached era info object — updated in-place when era changes, avoids per-call {name,color,index} allocation */
+  private _eraInfo = { name: ERA_DEFINITIONS[0].name, color: ERA_DEFINITIONS[0].color, index: 0 }
 
   constructor() {
     this.history.push({
@@ -73,7 +75,10 @@ export class TimelineSystem {
 
   getCurrentEra(): { name: string; color: string; index: number } {
     const era = ERA_DEFINITIONS[this.currentEraIndex]
-    return { name: era.name, color: era.color, index: this.currentEraIndex }
+    this._eraInfo.name = era.name
+    this._eraInfo.color = era.color
+    this._eraInfo.index = this.currentEraIndex
+    return this._eraInfo
   }
 
   getEraProgress(tick: number): number {
