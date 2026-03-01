@@ -76,20 +76,20 @@ export class MigrationSystem {
 
       let cells = speciesGroups.get(creature.species)
       if (!cells) { cells = new Map(); speciesGroups.set(creature.species, cells) }
-      if (!cells.has(cellKey)) {
+      let cellArr = cells.get(cellKey)
+      if (!cellArr) {
         // Get or reuse a cell array from pool
-        let arr: EntityId[]
         if (this._cellPoolNext < this._cellPool.length) {
-          arr = this._cellPool[this._cellPoolNext++]
-          arr.length = 0
+          cellArr = this._cellPool[this._cellPoolNext++]
+          cellArr.length = 0
         } else {
-          arr = []
-          this._cellPool.push(arr)
+          cellArr = []
+          this._cellPool.push(cellArr)
           this._cellPoolNext++
         }
-        cells.set(cellKey, arr)
+        cells.set(cellKey, cellArr)
       }
-      cells.get(cellKey)!.push(id)
+      cellArr.push(id)
     }
 
     // For each species, find clusters of 3+ within 8 tiles

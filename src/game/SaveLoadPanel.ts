@@ -12,10 +12,10 @@ export interface SaveLoadDeps {
 }
 
 export function showSaveLoadPanel(mode: 'save' | 'load', deps: SaveLoadDeps): void {
-  let panel = document.getElementById('saveLoadPanel')
-  if (panel) { panel.remove(); return }
+  const existing = document.getElementById('saveLoadPanel')
+  if (existing) { existing.remove(); return }
 
-  panel = document.createElement('div')
+  const panel = document.createElement('div')
   panel.id = 'saveLoadPanel'
   panel.className = 'panel'
   Object.assign(panel.style, {
@@ -61,7 +61,7 @@ export function showSaveLoadPanel(mode: 'save' | 'load', deps: SaveLoadDeps): vo
       btn.addEventListener('click', () => {
         const ok = SaveSystem.save(deps.world, deps.em, deps.civManager, deps.resources, slot)
         btn.textContent = ok ? 'Saved!' : 'Failed'
-        setTimeout(() => { if (panel!.parentNode) panel!.remove() }, 800)
+        setTimeout(() => { if (panel.parentNode) panel.remove() }, 800)
       })
       row.appendChild(btn)
     } else if (mode === 'load' && hasSave) {
@@ -72,7 +72,7 @@ export function showSaveLoadPanel(mode: 'save' | 'load', deps: SaveLoadDeps): vo
         const ok = SaveSystem.load(deps.world, deps.em, deps.civManager, deps.resources, slot)
         if (ok) deps.world.markFullDirty()
         loadBtn.textContent = ok ? 'Loaded!' : 'Failed'
-        setTimeout(() => { if (panel!.parentNode) panel!.remove() }, 800)
+        setTimeout(() => { if (panel.parentNode) panel.remove() }, 800)
       })
       row.appendChild(loadBtn)
       if (slot !== 'auto') {
@@ -81,7 +81,7 @@ export function showSaveLoadPanel(mode: 'save' | 'load', deps: SaveLoadDeps): vo
         delBtn.style.cssText = 'padding:2px 8px;cursor:pointer;color:#f66'
         delBtn.addEventListener('click', () => {
           SaveSystem.deleteSave(slot)
-          if (panel!.parentNode) panel!.remove()
+          if (panel.parentNode) panel.remove()
           showSaveLoadPanel(mode, deps)
         })
         row.appendChild(delBtn)
@@ -95,7 +95,7 @@ export function showSaveLoadPanel(mode: 'save' | 'load', deps: SaveLoadDeps): vo
   const closeBtn = document.createElement('button')
   closeBtn.textContent = 'Close'
   closeBtn.style.cssText = 'padding:2px 16px;cursor:pointer'
-  closeBtn.addEventListener('click', () => { if (panel!.parentNode) panel!.remove() })
+  closeBtn.addEventListener('click', () => { if (panel.parentNode) panel.remove() })
   closeRow.appendChild(closeBtn)
   panel.appendChild(closeRow)
 
