@@ -2,6 +2,7 @@
 // Duels resolve disputes, establish dominance, and can end in death or submission
 
 import { EntityManager, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { pickWeighted } from '../utils/RandomUtils'
 
 export type DuelOutcome = 'victory' | 'defeat' | 'draw' | 'fled'
 export type DuelStake = 'honor' | 'territory' | 'mate' | 'leadership' | 'grudge'
@@ -44,7 +45,7 @@ const STAKE_WEIGHTS: Record<DuelStake, number> = {
   leadership: 0.1,
   grudge: 0.2,
 }
-const STAKE_ENTRIES = Object.entries(STAKE_WEIGHTS) as [DuelStake, number][]
+const STAKE_TYPES = Object.keys(STAKE_WEIGHTS) as DuelStake[]
 
 export class CreatureRivalryDuelSystem {
   private activeDuels: Duel[] = []
@@ -179,13 +180,7 @@ export class CreatureRivalryDuelSystem {
   }
 
   private pickStake(): DuelStake {
-    const r = Math.random()
-    let cumulative = 0
-    for (const [stake, weight] of STAKE_ENTRIES) {
-      cumulative += weight
-      if (r <= cumulative) return stake as DuelStake
-    }
-    return 'honor'
+    return pickWeighted(STAKE_TYPES, STAKE_WEIGHTS, 'honor')
   }
 
 }

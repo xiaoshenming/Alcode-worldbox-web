@@ -2,6 +2,7 @@
 // Mentorship bonds form between experienced and young creatures, boosting learning speed
 
 import { EntityManager, PositionComponent, CreatureComponent } from '../ecs/Entity'
+import { pickWeighted } from '../utils/RandomUtils'
 
 export interface MentorBond {
   id: number
@@ -30,7 +31,7 @@ const SKILL_WEIGHTS: Record<MentorSkill, number> = {
   leadership: 0.1,
   survival: 0.15,
 }
-const SKILL_ENTRIES = Object.entries(SKILL_WEIGHTS) as [MentorSkill, number][]
+const SKILL_TYPES = Object.keys(SKILL_WEIGHTS) as MentorSkill[]
 
 export class CreatureMentorSystem {
   private bonds: MentorBond[] = []
@@ -80,13 +81,7 @@ export class CreatureMentorSystem {
         const dy = mPos.y - aPos.y
         if (dx * dx + dy * dy > PROXIMITY_RANGE * PROXIMITY_RANGE) continue
 
-        const roll = Math.random()
-        let cumulative = 0
-        let skill: MentorSkill = 'survival'
-        for (const [s, w] of SKILL_ENTRIES) {
-          cumulative += w
-          if (roll <= cumulative) { skill = s; break }
-        }
+        const skill = pickWeighted(SKILL_TYPES, SKILL_WEIGHTS, 'survival')
 
         const mentorAge = em.getComponent<CreatureComponent>(mentorId, 'creature')?.age ?? MENTOR_MIN_AGE
         const quality = Math.min(100, 30 + Math.floor((mentorAge / MENTOR_MIN_AGE) * 40) + Math.floor(Math.random() * 20))

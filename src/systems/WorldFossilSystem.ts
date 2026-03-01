@@ -4,6 +4,7 @@
 
 import { World } from '../game/World'
 import { TileType } from '../utils/Constants'
+import { pickRandom, pickWeighted } from '../utils/RandomUtils'
 
 export type FossilType = 'bone' | 'shell' | 'plant' | 'amber' | 'footprint' | 'artifact'
 export type FossilAge = 'ancient' | 'old' | 'recent'
@@ -28,7 +29,12 @@ const DISCOVERY_CHANCE = 0.03
 const FOSSIL_TYPES: FossilType[] = ['bone', 'shell', 'plant', 'amber', 'footprint', 'artifact']
 const AGES: FossilAge[] = ['ancient', 'old', 'recent']
 const RARITIES: FossilRarity[] = ['common', 'uncommon', 'rare', 'legendary']
-const RARITY_WEIGHTS = [0.5, 0.3, 0.15, 0.05]
+const RARITY_WEIGHTS: Record<FossilRarity, number> = {
+  common: 0.5,
+  uncommon: 0.3,
+  rare: 0.15,
+  legendary: 0.05,
+}
 
 const KNOWLEDGE_BY_RARITY: Record<FossilRarity, number> = {
   common: 2,
@@ -39,14 +45,8 @@ const KNOWLEDGE_BY_RARITY: Record<FossilRarity, number> = {
 
 const VALID_TERRAIN = new Set([TileType.MOUNTAIN, TileType.SAND, TileType.SNOW])
 
-function pickRarity(): FossilRarity {
-  const r = Math.random()
-  let cumulative = 0
-  for (let i = 0; i < RARITY_WEIGHTS.length; i++) {
-    cumulative += RARITY_WEIGHTS[i]
-    if (r < cumulative) return RARITIES[i]
-  }
-  return 'common'
+function pickRarityWeighted(): FossilRarity {
+  return pickWeighted(RARITIES, RARITY_WEIGHTS, 'common')
 }
 
 export class WorldFossilSystem {
@@ -82,9 +82,9 @@ export class WorldFossilSystem {
       this.fossils.push({
         id: this.nextId++,
         x, y,
-        type: FOSSIL_TYPES[Math.floor(Math.random() * FOSSIL_TYPES.length)],
-        age: AGES[Math.floor(Math.random() * AGES.length)],
-        rarity: pickRarity(),
+        type: pickRandom(FOSSIL_TYPES),
+        age: pickRandom(AGES),
+        rarity: pickRarityWeighted(),
         discovered: false,
         discoveredTick: 0,
       })

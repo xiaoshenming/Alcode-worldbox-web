@@ -2,6 +2,7 @@
 // Dreams can be prophetic, nightmarish, or nostalgic, influencing next-day actions
 
 import { EntityManager } from '../ecs/Entity'
+import { pickWeighted } from '../utils/RandomUtils'
 
 export type DreamType = 'prophetic' | 'nightmare' | 'nostalgic' | 'peaceful' | 'adventure' | 'warning'
 
@@ -18,7 +19,9 @@ const CHECK_INTERVAL = 1200
 const DREAM_CHANCE = 0.03
 const MAX_DREAM_LOG = 60
 
-const DREAM_WEIGHTS: Record<DreamType, { weight: number; moodMin: number; moodMax: number }> = {
+interface DreamConfig { weight: number; moodMin: number; moodMax: number }
+
+const DREAM_CONFIGS: Record<DreamType, DreamConfig> = {
   prophetic: { weight: 0.1, moodMin: 5, moodMax: 15 },
   nightmare: { weight: 0.2, moodMin: -20, moodMax: -5 },
   nostalgic: { weight: 0.2, moodMin: -5, moodMax: 10 },
@@ -27,7 +30,16 @@ const DREAM_WEIGHTS: Record<DreamType, { weight: number; moodMin: number; moodMa
   warning: { weight: 0.1, moodMin: -10, moodMax: 0 },
 }
 
-const DREAM_TYPES = Object.keys(DREAM_WEIGHTS) as DreamType[]
+const DREAM_WEIGHTS: Record<DreamType, number> = {
+  prophetic: 0.1,
+  nightmare: 0.2,
+  nostalgic: 0.2,
+  peaceful: 0.25,
+  adventure: 0.15,
+  warning: 0.1,
+}
+
+const DREAM_TYPES = Object.keys(DREAM_CONFIGS) as DreamType[]
 
 export class CreatureDreamSystem {
   private dreamLog: Dream[] = []
@@ -49,7 +61,7 @@ export class CreatureDreamSystem {
       if (Math.random() > DREAM_CHANCE) continue
 
       const type = this.pickDreamType()
-      const config = DREAM_WEIGHTS[type]
+      const config = DREAM_CONFIGS[type]
       const moodEffect = config.moodMin + Math.random() * (config.moodMax - config.moodMin)
 
       this.dreamLog.push({
@@ -64,13 +76,7 @@ export class CreatureDreamSystem {
   }
 
   private pickDreamType(): DreamType {
-    const r = Math.random()
-    let cumulative = 0
-    for (const type of DREAM_TYPES) {
-      cumulative += DREAM_WEIGHTS[type].weight
-      if (r <= cumulative) return type
-    }
-    return 'peaceful'
+    return pickWeighted(DREAM_TYPES, DREAM_WEIGHTS, 'peaceful')
   }
 
   private pruneLog(): void {
