@@ -65,6 +65,13 @@ export class CreaturePerfumersSystem {
     for (let i = this.perfumers.length - 1; i >= 0; i--) {
       if (this.perfumers[i].tick < cutoff) this.perfumers.splice(i, 1)
     }
+  
+    // Prune dead entities from skillMap (every 3600 ticks)
+    if (tick % 3600 === 0 && this.skillMap.size > 0) {
+      for (const id of this.skillMap.keys()) {
+        if (!em.hasComponent(id, 'creature')) this.skillMap.delete(id)
+      }
+    }
   }
 
 }

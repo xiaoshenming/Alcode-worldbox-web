@@ -65,6 +65,13 @@ export class CreatureFletchersSystem {
     for (let i = this.fletchers.length - 1; i >= 0; i--) {
       if (this.fletchers[i].tick < cutoff) this.fletchers.splice(i, 1)
     }
+  
+    // Prune dead entities from skillMap (every 3600 ticks)
+    if (tick % 3600 === 0 && this.skillMap.size > 0) {
+      for (const id of this.skillMap.keys()) {
+        if (!em.hasComponent(id, 'creature')) this.skillMap.delete(id)
+      }
+    }
   }
 
 }
