@@ -88,7 +88,6 @@ export class MinimapEnhancedSystem {
     this.mode = MODES[(MODES.indexOf(this.mode) + 1) % MODES.length];
   }
 
-  updateHeatmap(mode: MinimapMode, data: MinimapHeatData): void { this.heatmaps.set(mode, data); }
   update(tick: number): void { this.tick = tick; }
 
   /** 渲染小地图 */

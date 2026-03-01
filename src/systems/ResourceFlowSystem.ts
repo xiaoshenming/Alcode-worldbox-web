@@ -111,17 +111,6 @@ export class ResourceFlowSystem {
   }
 
   /**
-   * 设置鼠标屏幕坐标，用于悬停检测
-   * @param sx 屏幕 X
-   * @param sy 屏幕 Y
-   */
-  setMousePosition(sx: number, sy: number): void {
-    this.mouseScreenX = sx;
-    this.mouseScreenY = sy;
-    this.mouseTracked = true;
-  }
-
-  /**
    * 每 tick 更新粒子位置
    * @param _tick 当前游戏 tick（保留签名兼容性）
    */

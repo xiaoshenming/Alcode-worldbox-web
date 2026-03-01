@@ -3,7 +3,6 @@
 
 import { CivManager } from '../civilization/CivManager'
 import { EntityManager } from '../ecs/Entity'
-import { EventLog } from './EventLog'
 
 /** Reputation level thresholds and labels */
 export type ReputationLevel = 'revered' | 'respected' | 'neutral' | 'distrusted' | 'despised'
@@ -20,19 +19,6 @@ export type ReputationAction =
   | 'ally_helped'
   | 'espionage_caught'
 
-/** Reputation change values for each action type */
-const ACTION_DELTAS: Record<ReputationAction, number> = {
-  war_won: 5,
-  alliance_broken: -15,
-  trade_success: 3,
-  city_conquered: -8,
-  city_liberated: 2,
-  wonder_built: 10,
-  disease_spread: -5,
-  ally_helped: 8,
-  espionage_caught: -12,
-}
-
 /** Reputation level boundaries (lower bound inclusive) */
 const LEVEL_THRESHOLDS: { min: number; level: ReputationLevel }[] = [
   { min: 60, level: 'revered' },
@@ -42,7 +28,6 @@ const LEVEL_THRESHOLDS: { min: number; level: ReputationLevel }[] = [
   { min: -100, level: 'despised' },
 ]
 
-const MIN_REPUTATION = -100
 const MAX_REPUTATION = 100
 const DECAY_RATE = 0.02
 const DECAY_INTERVAL = 60
@@ -91,39 +76,6 @@ export class ReputationSystem {
   }
 
   /**
-   * Record a reputation-affecting action for a civilization.
-   * @param civId - The civilization performing the action
-   * @param action - The type of action taken
-   * @param tick - Current world tick for logging
-   * @param civManager - Optional, used to resolve civ name for event log
-   */
-  recordAction(civId: number, action: ReputationAction, tick: number, civManager?: CivManager): void {
-    const delta = ACTION_DELTAS[action]
-    const current = this.reputations.get(civId) ?? 0
-    const newRep = this.clamp(current + delta)
-    this.reputations.set(civId, newRep)
-
-    // Track history
-    if (!this.history.has(civId)) {
-      this.history.set(civId, [])
-    }
-    const hist = this.history.get(civId)
-    if (!hist) return
-    hist.push({ action, tick, delta })
-    if (hist.length > this.maxHistoryPerCiv) {
-      hist.shift()
-    }
-
-    // Log significant reputation shifts
-    const oldLevel = this.levelFromScore(current)
-    const newLevel = this.levelFromScore(newRep)
-    if (oldLevel !== newLevel) {
-      const civName = civManager?.civilizations.get(civId)?.name ?? `Civ#${civId}`
-      EventLog.log('diplomacy', `${civName} is now ${newLevel} (reputation ${Math.round(newRep)})`, tick)
-    }
-  }
-
-  /**
    * Get the raw reputation score for a civilization.
    * @param civId - The civilization to query
    * @returns Reputation score from -100 to 100, or 0 if untracked
@@ -167,17 +119,6 @@ export class ReputationSystem {
   }
 
   /**
-   * Returns an alliance formation chance modifier based on reputation.
-   * Positive reputation increases the chance, negative decreases it.
-   * @param civId - The civilization to query
-   * @returns Multiplier in the range [0.5, 1.5]
-   */
-  getAllianceChanceModifier(civId: number): number {
-    const rep = this.getReputation(civId)
-    return 1.0 + (rep / MAX_REPUTATION) * 0.5
-  }
-
-  /**
    * Get recent reputation history for a civilization (for UI/debug).
    * @param civId - The civilization to query
    * @param count - Max entries to return
@@ -194,9 +135,5 @@ export class ReputationSystem {
       if (score >= min) return level
     }
     return 'despised'
-  }
-
-  private clamp(value: number): number {
-    return Math.max(MIN_REPUTATION, Math.min(MAX_REPUTATION, value))
   }
 }

@@ -63,51 +63,6 @@ export class NaturalDisasterRecoverySystem {
   private tickCounter: number = 0
 
   /**
-   * Register a new disaster-affected area for recovery.
-   * Scans the zone for damaged terrain and destroyed buildings.
-   */
-  reportDisaster(
-    x: number,
-    y: number,
-    radius: number,
-    type: DisasterType,
-    world: World,
-    entityManager: EntityManager,
-    tick: number
-  ): number {
-    if (this.recoveryZones.length >= MAX_ZONES) {
-      // Evict the most-progressed zone to make room
-      let maxIdx = 0
-      for (let i = 1; i < this.recoveryZones.length; i++) {
-        if (this.recoveryZones[i].progress > this.recoveryZones[maxIdx].progress) {
-          maxIdx = i
-        }
-      }
-      this.recoveryZones.splice(maxIdx, 1)
-    }
-
-    const damagedTiles = this.scanDamagedTiles(x, y, radius, world)
-    const destroyedBuildings = this.scanDestroyedBuildings(x, y, radius, entityManager)
-
-    const zoneId = nextZoneId++
-    const zone: RecoveryZone = {
-      id: zoneId,
-      centerX: x,
-      centerY: y,
-      radius,
-      disasterType: type,
-      progress: 0,
-      startTick: tick,
-      damagedTiles,
-      destroyedBuildings,
-    }
-
-    this.recoveryZones.push(zone)
-    EventLog.log('disaster', `Recovery started near (${x},${y}) after ${type}`, tick)
-    return zoneId
-  }
-
-  /**
    * Advance recovery for all active zones.
    * Called each game tick from the main loop.
    */

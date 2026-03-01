@@ -135,34 +135,10 @@ export class ResourceScarcitySystem {
     return s.capacity <= 0 ? 0 : clamp(s.current / s.capacity, 0, 1)
   }
 
-  /** Whether the civilization is in famine (food CRITICAL for 120+ ticks) */
-  isFamine(civId: number): boolean {
-    const state = this.states.get(civId)
-    return state ? state.famineTicks >= FAMINE_THRESHOLD_TICKS : false
-  }
-
   /** Whether the civilization is in drought (water SCARCE or worse) */
   isDrought(civId: number): boolean {
     const wl = this.getResourceLevel(civId, 'WATER')
     return wl === 'SCARCE' || wl === 'CRITICAL' || wl === 'DEPLETED'
-  }
-
-  /** Production modifier (0.1-1.0), reduced by drought and food/wood scarcity */
-  getProductionModifier(civId: number): number {
-    let m = 1.0
-    if (this.isDrought(civId)) m *= 0.5
-    const foodPct = this.getResourcePercent(civId, 'FOOD')
-    if (foodPct < 0.5) m *= 0.5 + foodPct
-    if (this.getResourcePercent(civId, 'WOOD') < 0.25) m *= 0.7
-    return clamp(m, 0.1, 1.0)
-  }
-
-  /** Health drain per tick from starvation (0 if no starvation) */
-  getHealthDrain(civId: number): number {
-    const fl = this.getResourceLevel(civId, 'FOOD')
-    if (fl === 'DEPLETED') return STARVATION_HEALTH_DRAIN
-    if (fl === 'CRITICAL') return STARVATION_HEALTH_DRAIN * 0.3
-    return 0
   }
 
   // ── Private ───────────────────────────────────────────────────────────

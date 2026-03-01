@@ -50,13 +50,6 @@ export class PopulationSystem {
   /** Pool of arrays to avoid allocating new ones each cycle */
   private _civMembersBuf: number[][] = []
 
-  /** Drain and return accumulated events since last call */
-  drainEvents(): PopulationEvent[] {
-    const events = this.pendingEvents
-    this.pendingEvents = []
-    return events
-  }
-
   update(em: EntityManager, world: World, civManager: CivManager, particles: ParticleSystem, tick: number): void {
     // Aging is handled by AISystem (creature.age += 0.1 per tick) — no duplicate here
 
