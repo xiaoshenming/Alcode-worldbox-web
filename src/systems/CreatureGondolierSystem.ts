@@ -86,7 +86,9 @@ export class CreatureGondolierSystem {
 
     // Remove gondoliers whose creatures no longer exist
     for (let i = this.gondoliers.length - 1; i >= 0; i--) {
-      if (!em.hasComponent(this.gondoliers[i].entityId, 'creature')) this.gondoliers.splice(i, 1)
+      const g = this.gondoliers[i]
+      if (!em.hasComponent(g.entityId, 'creature')) this.gondoliers.splice(i, 1)
+
     }
   }
 

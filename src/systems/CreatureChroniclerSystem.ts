@@ -64,7 +64,9 @@ export class CreatureChroniclerSystem {
     }
 
     for (let i = this.chroniclers.length - 1; i >= 0; i--) {
-      if (!em.hasComponent(this.chroniclers[i].entityId, 'creature')) this.chroniclers.splice(i, 1)
+      const c = this.chroniclers[i]
+      if (!em.hasComponent(c.entityId, 'creature')) this.chroniclers.splice(i, 1)
+
     }
   }
 

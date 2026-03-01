@@ -74,7 +74,9 @@ export class CreatureCheeseAgerSystem {
 
     // Remove agers whose creatures no longer exist
     for (let i = this.agers.length - 1; i >= 0; i--) {
-      if (!em.hasComponent(this.agers[i].entityId, 'creature')) this.agers.splice(i, 1)
+      const a = this.agers[i]
+      if (!em.hasComponent(a.entityId, 'creature')) this.agers.splice(i, 1)
+
     }
   }
 

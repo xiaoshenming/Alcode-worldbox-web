@@ -80,7 +80,9 @@ export class CreatureSoapMakerSystem {
 
     // Remove makers whose creatures no longer exist
     for (let i = this.makers.length - 1; i >= 0; i--) {
-      if (!em.hasComponent(this.makers[i].entityId, 'creature')) this.makers.splice(i, 1)
+      const m = this.makers[i]
+      if (!em.hasComponent(m.entityId, 'creature')) this.makers.splice(i, 1)
+
     }
   }
 

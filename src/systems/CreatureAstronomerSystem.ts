@@ -84,7 +84,9 @@ export class CreatureAstronomerSystem {
 
     // Remove astronomers whose creatures no longer exist
     for (let i = this.astronomers.length - 1; i >= 0; i--) {
-      if (!em.hasComponent(this.astronomers[i].entityId, 'creature')) this.astronomers.splice(i, 1)
+      const a = this.astronomers[i]
+      if (!em.hasComponent(a.entityId, 'creature')) this.astronomers.splice(i, 1)
+
     }
   }
 

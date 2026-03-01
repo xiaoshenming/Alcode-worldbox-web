@@ -71,7 +71,9 @@ export class CreatureDowserSystem {
 
     // Remove dowsers whose creatures no longer exist
     for (let i = this.dowsers.length - 1; i >= 0; i--) {
-      if (!em.hasComponent(this.dowsers[i].entityId, 'creature')) this.dowsers.splice(i, 1)
+      const d = this.dowsers[i]
+      if (!em.hasComponent(d.entityId, 'creature')) this.dowsers.splice(i, 1)
+
     }
   }
 

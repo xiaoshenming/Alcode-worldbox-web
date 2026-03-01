@@ -88,7 +88,9 @@ export class CreatureLamplighterSystem {
 
     // Remove lamplighters whose creatures no longer exist
     for (let i = this.lamplighters.length - 1; i >= 0; i--) {
-      if (!em.hasComponent(this.lamplighters[i].entityId, 'creature')) this.lamplighters.splice(i, 1)
+      const l = this.lamplighters[i]
+      if (!em.hasComponent(l.entityId, 'creature')) this.lamplighters.splice(i, 1)
+
     }
   }
 

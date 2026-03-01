@@ -91,7 +91,9 @@ export class CreatureSentinelSystem {
 
     // Remove sentinels whose creatures no longer exist
     for (let i = this.sentinels.length - 1; i >= 0; i--) {
-      if (!em.hasComponent(this.sentinels[i].entityId, 'creature')) this.sentinels.splice(i, 1)
+      const s = this.sentinels[i]
+      if (!em.hasComponent(s.entityId, 'creature')) this.sentinels.splice(i, 1)
+
     }
   }
 

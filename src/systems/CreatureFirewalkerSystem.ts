@@ -71,7 +71,9 @@ export class CreatureFirewalkerSystem {
     }
 
     for (let i = this.firewalkers.length - 1; i >= 0; i--) {
-      if (!em.hasComponent(this.firewalkers[i].entityId, 'creature')) this.firewalkers.splice(i, 1)
+      const f = this.firewalkers[i]
+      if (!em.hasComponent(f.entityId, 'creature')) this.firewalkers.splice(i, 1)
+
     }
   }
 

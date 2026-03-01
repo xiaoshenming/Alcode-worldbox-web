@@ -86,7 +86,9 @@ export class CreatureWeaverSystem {
 
     // Remove weavers whose creatures no longer exist
     for (let i = this.weavers.length - 1; i >= 0; i--) {
-      if (!em.hasComponent(this.weavers[i].entityId, 'creature')) this.weavers.splice(i, 1)
+      const w = this.weavers[i]
+      if (!em.hasComponent(w.entityId, 'creature')) this.weavers.splice(i, 1)
+
     }
   }
 

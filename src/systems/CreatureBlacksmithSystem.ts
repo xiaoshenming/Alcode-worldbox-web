@@ -68,7 +68,9 @@ export class CreatureBlacksmithSystem {
     }
 
     for (let i = this.smiths.length - 1; i >= 0; i--) {
-      if (!em.hasComponent(this.smiths[i].entityId, 'creature')) this.smiths.splice(i, 1)
+      const s = this.smiths[i]
+      if (!em.hasComponent(s.entityId, 'creature')) this.smiths.splice(i, 1)
+
     }
   }
 

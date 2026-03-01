@@ -83,7 +83,9 @@ export class CreaturePerfumerSystem {
 
     // Remove perfumers whose creatures no longer exist
     for (let i = this.perfumers.length - 1; i >= 0; i--) {
-      if (!em.hasComponent(this.perfumers[i].entityId, 'creature')) this.perfumers.splice(i, 1)
+      const p = this.perfumers[i]
+      if (!em.hasComponent(p.entityId, 'creature')) this.perfumers.splice(i, 1)
+
     }
   }
 
