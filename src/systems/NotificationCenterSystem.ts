@@ -12,6 +12,10 @@ interface NotificationEntry {
   hasPosition: boolean
   spawnTick: number
   alpha: number
+  /** Cached truncated text for NOTIF display (maxW=NOTIF_W-36) */
+  notifText: string
+  /** Cached truncated text for HIST display (maxW=HIST_W-30) */
+  histText: string
 }
 
 const MAX_VISIBLE = 5
@@ -54,7 +58,7 @@ export class NotificationCenterSystem {
   constructor() {
     this.pool = new Array<NotificationEntry>(POOL_SIZE)
     for (let i = 0; i < POOL_SIZE; i++) {
-      this.pool[i] = { active: false, message: '', category: 'info', x: 0, y: 0, hasPosition: false, spawnTick: 0, alpha: 0 }
+      this.pool[i] = { active: false, message: '', category: 'info', x: 0, y: 0, hasPosition: false, spawnTick: 0, alpha: 0, notifText: '', histText: '' }
     }
   }
 
@@ -66,6 +70,7 @@ export class NotificationCenterSystem {
     e.active = true; e.message = message; e.category = category
     e.x = x ?? 0; e.y = y ?? 0; e.hasPosition = x !== undefined && y !== undefined
     e.spawnTick = -1; e.alpha = 1
+    e.notifText = ''; e.histText = ''  // invalidate truncate cache
     this.rmIdx(this.vis, idx); this.rmIdx(this.hist, idx)
     this.vis.unshift(idx)
     if (this.vis.length > MAX_VISIBLE) this.vis.pop()
@@ -135,8 +140,8 @@ export class NotificationCenterSystem {
       ctx.fillText(CAT_ICON[e.category], ix, iy + 1)
       // Text
       ctx.fillStyle = '#eee'; ctx.font = '11px monospace'; ctx.textAlign = 'left'
-      const text = this.truncate(ctx, e.message, NOTIF_W - 36)
-      ctx.fillText(text, bx + 28, iy + 1)
+      if (!e.notifText) e.notifText = this.truncate(ctx, e.message, NOTIF_W - 36)
+      ctx.fillText(e.notifText, bx + 28, iy + 1)
       // Position dot
       if (e.hasPosition) {
         ctx.fillStyle = CAT_COLOR[e.category]; ctx.font = '9px monospace'; ctx.textAlign = 'right'
@@ -171,7 +176,8 @@ export class NotificationCenterSystem {
       ctx.fillStyle = CAT_COLOR[e.category]
       ctx.beginPath(); ctx.arc(px + 12, ey + HIST_LH / 2, 4, 0, Math.PI * 2); ctx.fill()
       ctx.fillStyle = e.active ? '#ccc' : '#888'
-      ctx.fillText(this.truncate(ctx, e.message, HIST_W - 30), px + 22, ey + HIST_LH / 2)
+      if (!e.histText) e.histText = this.truncate(ctx, e.message, HIST_W - 30)
+      ctx.fillText(e.histText, px + 22, ey + HIST_LH / 2)
       ey += HIST_LH
     }
     ctx.restore(); ctx.textAlign = 'left'
