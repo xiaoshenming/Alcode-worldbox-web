@@ -28,6 +28,7 @@ export interface WorldStats {
 export class AchievementSystem {
   private achievements: Achievement[] = []
   private _unlockedBuf: Achievement[] = []
+  private _progressBuf = { unlocked: 0, total: 0 }
   private notifications: { text: string; icon: string; alpha: number; y: number; textWidth: number }[] = []
   private stats: WorldStats = {
     totalPopulation: 0, totalCivs: 0, totalBuildings: 0,
@@ -71,6 +72,7 @@ export class AchievementSystem {
     this.achievements = defs.map(([id, name, description, icon, condition]) => ({
       id, name, description, icon, condition, unlocked: false, unlockedAt: 0
     }))
+    this._progressBuf.total = this.achievements.length
   }
 
   updateStats(stats: WorldStats): void {
@@ -84,6 +86,7 @@ export class AchievementSystem {
       if (a.condition(this.stats)) {
         a.unlocked = true
         a.unlockedAt = this.stats.worldTick
+        this._progressBuf.unlocked++
         this.showNotification(a)
       }
     }
@@ -178,9 +181,7 @@ export class AchievementSystem {
   }
 
   getProgress(): { unlocked: number; total: number } {
-    let unlocked = 0
-    for (const a of this.achievements) { if (a.unlocked) unlocked++ }
-    return { unlocked, total: this.achievements.length }
+    return this._progressBuf
   }
 
   // Increment counters for events that happen once (deaths, births, wars)

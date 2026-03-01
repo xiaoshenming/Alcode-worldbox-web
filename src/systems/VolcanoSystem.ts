@@ -221,16 +221,4 @@ export class VolcanoSystem {
     }
   }
 
-  serialize(): object {
-    return { volcanoes: this.volcanoes }
-  }
-
-  deserialize(data: any): void {
-    if (!data) return
-    this.volcanoes = data.volcanoes ?? []
-    if (this.volcanoes.length > 0) {
-      let maxId = 0; for (const v of this.volcanoes) { if (v.id > maxId) maxId = v.id }
-      nextVolcanoId = maxId + 1
-    }
-  }
 }

@@ -178,22 +178,4 @@ export class SeasonSystem {
     }
   }
 
-  /** Serialize for save system */
-  serialize(): object {
-    return {
-      currentSeason: this.currentSeason,
-      seasonTick: this.seasonTick,
-      yearCount: this.yearCount,
-      transitionProgress: this.transitionProgress,
-    }
-  }
-
-  /** Deserialize from save */
-  deserialize(data: any): void {
-    if (!data) return
-    this.currentSeason = data.currentSeason ?? Season.Spring
-    this.seasonTick = data.seasonTick ?? 0
-    this.yearCount = data.yearCount ?? 0
-    this.transitionProgress = data.transitionProgress ?? 1
-  }
 }

@@ -203,16 +203,4 @@ export class AnimalMigrationSystem {
     this.advanceRoutes(em)
   }
 
-  serialize(): object {
-    return {
-      routes: this.routes,
-      lastSeason: this.lastSeason,
-    }
-  }
-
-  deserialize(data: any): void {
-    if (!data) return
-    this.routes = data.routes ?? []
-    this.lastSeason = data.lastSeason ?? Season.Spring
-  }
 }

@@ -1,12 +1,12 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代84完成。深度GC优化第三十轮 — 共生成4个perf commit。主要成果：1) 删除9处死代码方法（无外部生产调用者），累计删减约250行：BattleReplaySystem.recordFrame（含new Array+push{}）、AmbientSoundMixer.getMixState+SoundMixState接口（含push({...ls})+map(e=>({...e}))）、ObjectPoolSystem.getAllStats（含3层嵌套return{}）、RuinsSystem.discoverRuin（含find+return{techBonus,cultureBonus}）、SeasonSystem.getTileColorShift（含两路return{r,g,b}）、EraVisualSystem.getUITheme（含return{borderColor,accentColor,bgAlpha}）、MinimapSystem.handleClick（含return{worldX,worldY}）、EventNotificationSystem.handleClick+getRecentEvents（含return{navigateTo:{x,y}}两层嵌套+数组push）；2) CreatureProfessionSystem.getBonus热路径优化：添加_bonusBuf预分配对象，将{...NEUTRAL_BONUS}spread分配改为原地reset+update，同时删除buildBonus函数和NEUTRAL_BONUS常量；3) 更新7个测试文件适配方法删除（私有字段直接读取替代）。5432测试全通过，TypeScript clean，构建成功，全部push完成。
+🧠 AI 上轮笔记：迭代85完成。深度GC优化第三十一轮 — 共生成4个perf commit。主要成果：1) 删除GeneticDisplaySystem整个类（无外部调用者，含getTraits/getFamilyTree/buildNode等多处push{}/return{}分配，约230行）；2) 删除TradeEconomySystem.getGlobalPrices()（含{...spread}分配，无生产调用者）；3) EraVisualSystem.getCurrentStyle()预分配_styleBuf缓存：过渡期（~120帧）从每帧new EraVisualStyle{11字段}改为原地更新_styleBuf，非过渡期直接返回from/to引用（零分配）；4) 删除BloodMoonSystem.serialize()+deserialize()（return {5字段}，无生产调用者）；5) 删除NotificationCenterSystem.getClickedNotification()（return{x,y}，无生产调用者）；6) 删除WorldEventTimelineSystem三个死代码方法handleClick/handleWheel/handleMouseMove（含return{worldX,worldY}）+hoveredIndex字段+HOVER_BG常量+hover高亮块，净减约80行；7) 更新3个测试文件适配方法删除。5430测试全通过，TypeScript clean，构建成功，全部push完成。
 🎯 AI 自定优先级：[
-  "1. 扫描 LoyaltySystem.getCivCenter(return {x,y}) 和 pickEdgeTerritory — 每10帧叛乱检查，触发频率低，但可以优化",
-  "2. 检查 GeneticsSystem.ts:53/88 return {} — 查找调用频率（crossbreed/mutate路径）",
-  "3. 扫描 EntityInspectorSystem.buildTree — 事件驱动（点击实体时），但内部有大量push{}，可以优化",
-  "4. 检查 GeneticDisplaySystem.ts:102/202 return {} — 是否有外部调用者",
-  "5. 扫描 EraVisualSystem.getCurrentStyle — 私有方法，每帧render时调用，但返回EraVisualStyle对象（过渡期），可���缓存"
+  "1. 检查VolcanoSystem.serialize()/deserialize()是否有外部调用者（本轮发现无调用者但未删，需确认）",
+  "2. 扫描MinimapEnhancedSystem的方法 — minimapEnhanced在Game.ts只调用update/render，其他getter方法可能是死代码",
+  "3. 检查AchievementContentSystem.getProgress(id)的return {unlocked}是否被优化（被GameUISetup调用，低频但有return{}）",
+  "4. 扫描CinematicModeSystem.buildSegment()返回的CruiseSegment对象 — 内部每段巡游时调用，低频但可以缓存",
+  "5. 扫描所有System.serialize()方法 — 这类方法在SaveSystem未使用时都是死代码（grep 'serialize' src/game/SaveSystem.ts确认）"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
@@ -80,10 +80,14 @@
   "【迭代83新增】扫描模式：grep 'return {' + 确认调用者 + 判断频率 — 死代码方法无调用者直接删，低频(<60tick)可暂留，高频(每帧)必须缓存",
   "【迭代84新增】删除死代码前必须确认：grep -rn 'methodName' src/game/ src/systems/ — 不只grep src/，因为Game.ts中可能有内部调用（如CreatureProfessionSystem.getBonus在render中调用）",
   "【迭代84新增】热路径Record<K,V>预分配缓存模式：getBonus这类返回固定结构Record对象的方法，添加_bonusBuf预分配，改为原地reset+更新字段返回，零GC",
-  "【迭代84新增】死代码扫描批量策略：同时检查handleClick/getRecentEvents/getMixState/getAllStats等UI类方法，这类方法常因UI重构而失去调用者"
+  "【迭代84新增】死代码扫描批量策略：同时检查handleClick/getRecentEvents/getMixState/getAllStats等UI类方法，这类方法常因UI重构而失去调用者",
+  "【迭代85新增】handleClick+handleWheel+handleMouseMove三件套是典型UI交互死代码：若系统在Game.ts只调用update/render，这三个方法必然无调用者，且handleClick通常含return{x,y}分配",
+  "【迭代85新增】删除handleMouseMove后联动清理：hoveredIndex字段只被handleMouseMove写入，删方法后字段变为只读（永远-1），连同render中的hover高亮块一起删除，减少更多代码",
+  "【迭代85新增】serialize/deserialize死代码规律：若SaveSystem.ts中没有grep到对应系统的serialize调用，则该系统的serialize/deserialize是安全可删的死代码",
+  "【迭代85新增】有测试但无生产调用者的方法处理策略：若方法本身返回对象（GC），有测试验证接口但生产不用，可以保留（不删），因为测试文件也是文档；若完全无价值则同时删方法和测试"
 ]
 
-迭代轮次: 85/100
+迭代轮次: 86/100
 
 
 🔄 自我进化（每轮必做）：
@@ -92,6 +96,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-03-01T13:02:06+08:00"
+  "last_updated": "2026-03-01T13:26:25+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。

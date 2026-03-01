@@ -104,16 +104,6 @@ export class MinimapEnhancedSystem {
   addWarMarker(x: number, y: number, intensity: number): void { this.warMarkers.push({ x, y, intensity }); }
   clearWarMarkers(): void { this.warMarkers.length = 0; }
 
-  /** 处理小地图点击，返回对应的世界坐标 */
-  handleClick(
-    minimapX: number, minimapY: number,
-    minimapWidth: number, minimapHeight: number,
-    worldWidth: number, worldHeight: number
-  ): { worldX: number; worldY: number } | null {
-    if (minimapX < 0 || minimapX > minimapWidth || minimapY < 0 || minimapY > minimapHeight) return null;
-    return { worldX: (minimapX / minimapWidth) * worldWidth, worldY: (minimapY / minimapHeight) * worldHeight };
-  }
-
   handleHover(minimapX: number, minimapY: number, minimapWidth: number, minimapHeight: number): void {
     const h = this._hoverBuf;
     h.minimapX = minimapX; h.minimapY = minimapY;
