@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { SpatialHashSystem } from '../systems/SpatialHashSystem'
 import { EntityManager } from '../ecs/Entity'
 

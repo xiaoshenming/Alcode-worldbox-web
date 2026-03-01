@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { CombatSystem } from '../systems/CombatSystem'
 import { EntityManager } from '../ecs/Entity'
 
