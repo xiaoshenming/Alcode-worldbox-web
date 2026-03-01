@@ -198,36 +198,36 @@ describe('SeasonSystem.getAnimalActivityMultiplier', () => {
   })
 })
 
-// ── getTileColorShift ─────────────────────────────────────────────────────────
+// ── tileColorShift (via SEASON_CONFIGS私有字段) ──────────────────────────────
 
-describe('SeasonSystem.getTileColorShift', () => {
-  it('spring 色偏：g 为正值（绿意盎然）', () => {
+describe('SeasonSystem tileColorShift config', () => {
+  it('spring tileColorShift.g > 0（绿意盎然）', () => {
     const ss = makeSS()
     setSeason(ss, Season.Spring, 1)
-    const shift = ss.getTileColorShift()
-    expect(shift.g).toBeGreaterThan(0)
+    const cfg = (ss as any).getConfig()
+    expect(cfg.tileColorShift.g).toBeGreaterThan(0)
   })
 
-  it('winter 色偏：b 为正值（蓝白冰雪）', () => {
+  it('winter tileColorShift.b > 0（蓝白冰雪）', () => {
     const ss = makeSS()
     setSeason(ss, Season.Winter, 1)
-    const shift = ss.getTileColorShift()
-    expect(shift.b).toBeGreaterThan(0)
+    const cfg = (ss as any).getConfig()
+    expect(cfg.tileColorShift.b).toBeGreaterThan(0)
   })
 
-  it('autumn 色偏：r 为正值（暖色秋叶）', () => {
+  it('autumn tileColorShift.r > 0（暖色秋叶）', () => {
     const ss = makeSS()
     setSeason(ss, Season.Autumn, 1)
-    const shift = ss.getTileColorShift()
-    expect(shift.r).toBeGreaterThan(0)
+    const cfg = (ss as any).getConfig()
+    expect(cfg.tileColorShift.r).toBeGreaterThan(0)
   })
 
-  it('返回对象有 r/g/b 三个字段', () => {
+  it('tileColorShift有r/g/b三个字段', () => {
     const ss = makeSS()
     setSeason(ss, Season.Summer, 1)
-    const shift = ss.getTileColorShift()
-    expect(typeof shift.r).toBe('number')
-    expect(typeof shift.g).toBe('number')
-    expect(typeof shift.b).toBe('number')
+    const cfg = (ss as any).getConfig()
+    expect(typeof cfg.tileColorShift.r).toBe('number')
+    expect(typeof cfg.tileColorShift.g).toBe('number')
+    expect(typeof cfg.tileColorShift.b).toBe('number')
   })
 })

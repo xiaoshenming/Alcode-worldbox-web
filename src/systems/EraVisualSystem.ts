@@ -263,16 +263,6 @@ export class EraVisualSystem {
     ctx.restore()
   }
 
-  /** Get current UI theme colors for external UI components. */
-  getUITheme(): { borderColor: string; accentColor: string; bgAlpha: number } {
-    const style = this.getCurrentStyle()
-    return {
-      borderColor: style.uiBorderColor,
-      accentColor: style.uiAccentColor,
-      bgAlpha: style.uiBgAlpha,
-    }
-  }
-
   /** Interpolate between current and target era styles during transition. */
   private getCurrentStyle(): EraVisualStyle {
     const from = this.styles.get(this.currentEra)

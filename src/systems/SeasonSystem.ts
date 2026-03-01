@@ -134,19 +134,6 @@ export class SeasonSystem {
     return current.animalActivityMultiplier
   }
 
-  getTileColorShift(): { r: number; g: number; b: number } {
-    const current = SEASON_CONFIGS[this.currentSeason]
-    if (this.transitionProgress < 1) {
-      const prev = SEASON_CONFIGS[this.getPreviousSeason()]
-      return {
-        r: prev.tileColorShift.r + (current.tileColorShift.r - prev.tileColorShift.r) * this.transitionProgress,
-        g: prev.tileColorShift.g + (current.tileColorShift.g - prev.tileColorShift.g) * this.transitionProgress,
-        b: prev.tileColorShift.b + (current.tileColorShift.b - prev.tileColorShift.b) * this.transitionProgress,
-      }
-    }
-    return { ...current.tileColorShift }
-  }
-
   getDayLengthRatio(): number {
     return this.getConfig().dayLengthRatio
   }
