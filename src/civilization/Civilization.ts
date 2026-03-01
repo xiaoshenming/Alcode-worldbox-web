@@ -1,4 +1,5 @@
 import { Component, EntityId } from '../ecs/Entity'
+import { pickRandom } from '../utils/RandomUtils'
 
 // Culture traits
 export type CultureTrait = 'warrior' | 'merchant' | 'scholar' | 'nature' | 'builder'
@@ -307,13 +308,13 @@ function pickUniqueCivName(): string {
   // Try unused names first
   const available = CIV_NAMES.filter(n => !usedCivNames.has(n))
   if (available.length > 0) {
-    const name = available[Math.floor(Math.random() * available.length)]
+    const name = pickRandom(available)
     usedCivNames.add(name)
     return name
   }
   // All names used — append number suffix
   for (let suffix = 2; ; suffix++) {
-    const base = CIV_NAMES[Math.floor(Math.random() * CIV_NAMES.length)]
+    const base = pickRandom(CIV_NAMES)
     const name = `${base} ${suffix}`
     if (!usedCivNames.has(name)) {
       usedCivNames.add(name)
@@ -336,11 +337,11 @@ export function createCivilization(): Civilization {
     relations: new Map(),
     tradeRoutes: [],
     culture: {
-      trait: CULTURE_TRAITS[Math.floor(Math.random() * CULTURE_TRAITS.length)],
+      trait: pickRandom(CULTURE_TRAITS),
       strength: 10
     },
     religion: {
-      type: RELIGION_TYPES[Math.floor(Math.random() * RELIGION_TYPES.length)],
+      type: pickRandom(RELIGION_TYPES),
       faith: 5,
       temples: 0,
       blessing: null,

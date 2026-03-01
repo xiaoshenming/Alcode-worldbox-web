@@ -3,6 +3,7 @@ import { World } from '../game/World'
 import { TileType, WORLD_WIDTH, WORLD_HEIGHT } from '../utils/Constants'
 import { Civilization, createCivilization, BuildingType, BuildingComponent, CivMemberComponent, RELIGION_NAMES } from './Civilization'
 import { EventLog } from '../systems/EventLog'
+import { pickRandom } from '../utils/RandomUtils'
 
 /** Tax penalty per taxRate level (0-3) — avoids per-call literal array creation in updateHappiness */
 const _TAX_PENALTY: readonly number[] = [0, -0.01, -0.03, -0.06] as const
@@ -716,7 +717,7 @@ export class CivManager {
   }
 
   private grantBlessing(civ: Civilization): void {
-    const [type, desc] = _BLESSINGS[Math.floor(Math.random() * _BLESSINGS.length)]
+    const [type, desc] = pickRandom(_BLESSINGS)
     civ.religion.blessing = type
     civ.religion.blessingTimer = 3000 // ~50 seconds at normal speed
     EventLog.log('building', `${RELIGION_NAMES[civ.religion.type]}: ${civ.name} received ${desc}`, 0)

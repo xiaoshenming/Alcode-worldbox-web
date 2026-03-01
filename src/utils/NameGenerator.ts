@@ -1,3 +1,4 @@
+import { pickRandom } from './RandomUtils'
 const PREFIXES: Record<string, string[]> = {
   human: ['Al', 'Bran', 'Cor', 'Dar', 'Ed', 'Fen', 'Gar', 'Hal', 'Ira', 'Jon', 'Kel', 'Lor', 'Mar', 'Nor', 'Os'],
   elf: ['Ael', 'Cel', 'Ela', 'Fae', 'Gal', 'Ith', 'Lir', 'Nol', 'Syl', 'Thi', 'Val', 'Zep'],
@@ -19,10 +20,10 @@ export function generateName(species: string): string {
   const suffixes = SUFFIXES[species]
 
   if (prefixes && suffixes) {
-    const pre = prefixes[Math.floor(Math.random() * prefixes.length)]
-    const suf = suffixes[Math.floor(Math.random() * suffixes.length)]
+    const pre = pickRandom(prefixes)
+    const suf = pickRandom(suffixes)
     return pre + suf
   }
 
-  return ANIMAL_NAMES[Math.floor(Math.random() * ANIMAL_NAMES.length)]
+  return pickRandom(ANIMAL_NAMES)
 }
