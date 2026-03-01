@@ -85,13 +85,16 @@ export class AchievementProgressSystem {
   private _panelRect = { x: 0, y: 0, w: PANEL_W, h: PANEL_H }
   private _panelSW = 0
   private _panelSH = 0
+  /** O(1) lookup map — avoids achievements.find() linear scan in updateProgress/hasDone/getById */
+  private _byId = new Map<string, Achievement>()
 
   constructor() {
     this.achievements = makeAchievements();
+    for (const a of this.achievements) this._byId.set(a.id, a)
   }
 
   updateProgress(id: string, value: number): void {
-    const a = this.achievements.find(v => v.id === id);
+    const a = this._byId.get(id);
     if (!a || a.completed) return;
     a.current = Math.min(value, a.target);
     a.progressStr = a.target > 0 ? (a.current / a.target * 100).toFixed(0) : '0';
@@ -107,11 +110,11 @@ export class AchievementProgressSystem {
   }
 
   isCompleted(id: string): boolean {
-    return this.achievements.find(a => a.id === id)?.completed ?? false;
+    return this._byId.get(id)?.completed ?? false;
   }
 
   getProgress(id: string): number {
-    const a = this.achievements.find(v => v.id === id);
+    const a = this._byId.get(id);
     if (!a) return 0;
     return a.target > 0 ? Math.min(a.current / a.target, 1) : 0;
   }
