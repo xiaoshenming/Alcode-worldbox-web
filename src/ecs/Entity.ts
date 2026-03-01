@@ -13,6 +13,8 @@ export class EntityManager {
   private components: Map<string, Map<EntityId, Component>> = new Map()
   private cacheVersion = 0
   private queryCache: Map<string, { version: number; result: EntityId[] }> = new Map()
+  /** Reusable buffer for component maps in getEntitiesWithComponents — avoids new[] per call */
+  private _mapsBuf: Map<EntityId, Component>[] = []
 
   private invalidateCache(): void {
     this.cacheVersion++
@@ -67,12 +69,16 @@ export class EntityManager {
     if (types.length === 0) return []
     if (types.length === 1) return this.getEntitiesWithComponent(types[0])
 
-    const cacheKey = types.join('|')
+    // Build cacheKey without join() for 2-4 arg common cases
+    let cacheKey: string
+    if (types.length === 2) cacheKey = types[0] + '|' + types[1]
+    else if (types.length === 3) cacheKey = types[0] + '|' + types[1] + '|' + types[2]
+    else cacheKey = types.join('|')
     const cached = this.queryCache.get(cacheKey)
     if (cached && cached.version === this.cacheVersion) return cached.result
 
     // Collect component maps, bail early if any type has no entities
-    const maps: Map<EntityId, Component>[] = []
+    const maps = this._mapsBuf; maps.length = 0
     for (const type of types) {
       const compMap = this.components.get(type)
       if (!compMap || compMap.size === 0) return []
