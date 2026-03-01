@@ -1,18 +1,18 @@
 {
-  "notes": "迭代107。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.53MB（相比上轮1.57MB减少约40KB）；(2)4个系统的加权随机选择改用pickWeighted——CreatureMentorSystem（SKILL_ENTRIES→pickWeighted）、CreatureRivalryDuelSystem（STAKE_ENTRIES→pickWeighted）、CreatureDreamSystem（嵌套{weight:n}分离为DREAM_CONFIGS+DREAM_WEIGHTS后用pickWeighted）、WorldFossilSystem（并行数组改为Record<FossilRarity,number>+pickWeighted+pickRandom）；(3)大规模批量优化：293个文件390处Math.floor(Math.random()*arr.length)替换为pickRandom(arr)，同时为所有文件添加import；(4)修复pre-commit hook误报问题：添加is_inside_string()启发式函数排除字符串字面量中的感叹号；(5)所有提交均推送成功。",
+  "notes": "迭代108。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.52MB；(2)消除50处IIFE箭头函数GC源——将 for(_i){if(!((p)=>cond)(arr[_i]))arr.splice(_i,1)} 重构为多行+const alias；(3)扩展99处单行for-splice为多行风格+const alias（CreatureAnnealer等craftsman系统）；(4)提取pruneDeadEntities工具函数——消除96个文件相同的6行skillMap清理代码块→1行调用，新建EntityUtils.ts；(5)8处civilization/utils目录的pickRandom扩展；(6)修复双括号简化引入的31处运算符优先级bug(!x<N→!(x<N))；共5次提交全部推送。",
   "priorities": [
     "1. 【持续监控】tsc+vitest+build三重验证保持全绿",
-    "2. 【已完成】pickRandom工具函数覆盖已达最大范围（390处全替换）",
-    "3. 【已完成】pickWeighted工具函数现覆盖17个系统",
-    "4. 【可探索】3个Diplomatic系统变体可能有重复结构（DiplomaticWarReparationSystem vs DiplomaticWarReparationsSystem）",
-    "5. 【可探索】扫描splice(index, 1)在大数组中的O(n)性能问题，换成swap-and-pop模式"
+    "2. 【可探索】CityLayoutSystem.ts A*开放列表线性查找min(O(n))——可改为二叉堆，但maxIter=500限制了实际影响",
+    "3. 【可探索】扫描src/powers/、src/entities/、src/game/目录是否有未优化的代码",
+    "4. 【可探索】DiplomaticWarReparationSystem vs DiplomaticWarReparationsSystem已确认是不同系统（不同字段和逻辑）",
+    "5. 【可探索】CreatureCalligraphySystem每次update全量遍历skillMap（每1500tick一次）——可改为tick%3600的方式"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
     "子代理并行修复大批量文件极高效：4组并行代理可在几分钟内修复160+文件",
     "manualChunks按文件名前缀分组是最安全的代码分割方案 — 不改源码，只改vite配置",
     "Iterable<T>替代T[]可消除spread分配，但检查消费侧是否用了.length/.includes等数组方法",
-    "getAllEntities()返回Array.from()���照 — removeEntity-during-iteration是安全的",
+    "getAllEntities()返回Array.from()快照 — removeEntity-during-iteration是安全的",
     "queue.shift()在BFS中是O(n²)陷阱 — 用索引指针head++替代",
     "Camera.getVisibleBounds()等热路径方法应返回缓存对象而非每次new — 每帧调用4次累积显著GC压力",
     "渲染路径中的闭包/对象字面量/getBoundingClientRect()都是隐性GC源 — 预分配+脏标记是标准修复模式",
@@ -43,9 +43,12 @@
     "【迭代105新增】skillMap内存泄漏规模评估：实体ID单调递增不复用 → 死亡实体的Map条目永久积累 → 按每entry≈50B计算，101系统*10000历史实体≈50MB潜在泄漏。解法：update末尾 if(tick%3600===0&&map.size>0) 扫描清理",
     "【迭代105新增】Python批量修改系统文件的import添加策略：(1)先找文件中最后一个import行用last_import[-1].end()；(2)若文件无import则检查JSDoc注释末尾*/再插入；(3)若文件完全没有注释/import则直接在头部插入。必须分三种情况处理！",
     "【迭代106新增】加权随机选择模式提取：当多个系统有private pickXxx()用相同的r=Math.random()+cum累积模式时，可提取为pickWeighted<T>(types,weights,fallback)泛型工具函数——需要参数是Record<T,number>而非其他结构",
-    "【迭代107新增】arr[Math.floor(Math.random()*arr.length)]是pickRandom(arr)的标准替换候选，用Python re.sub(r'(\\w+)\\[Math\\.floor\\(Math\\.random\\(\\)\\s*\\*\\s*\\1\\.length\\)\\]', lambda m: f'pickRandom({m.group(1)})')可批量替换293个文件390处",
-    "【迭代107新增】pre-commit hook的非空断言检测会误报字符串字面量中的感叹号（如'Walls breached! Attack'）——解法：添加is_inside_string()函数计算pos前引号数量的奇偶性来判断是否在字符串内",
-    "【迭代107新增】嵌套{weight:n}结构要拆分为两个Record才能用pickWeighted：CONFIGS保留完整数据，WEIGHTS只存weight字段；两个常量共存，没有重复因为职责不同"
+    "【迭代107新增】arr[Math.floor(Math.random()*arr.length)]是pickRandom(arr)的标准替换候选，用Python re.sub批量替换293个文件390处",
+    "【迭代107新增】pre-commit hook的非空断言检测会误报字符串字面量中的感叹号——解法：添加is_inside_string()函数计算pos前引号数量的奇偶性",
+    "【迭代107新增】嵌套{weight:n}结构要拆分为两个Record才能用pickWeighted：CONFIGS保留完整数据，WEIGHTS只存weight字段",
+    "【迭代108新增】IIFE箭头函数在清理循环中是隐性GC源：for(_i){if(!((p)=>cond)(arr[_i]))...} 每次迭代分配箭头函数对象 → 改为for+const+内联条件三行写法。Python正则可批量替换：pattern=re.compile(r'for .+ if \\(!\\(\\((\\w+)\\) => (.+?)\\)\\(this\\.(\\w+)\\[_i\\]\\)\\) this\\.\\3\\.splice\\(_i, 1\\) \\}')",
+    "【迭代108新增】批量简化操作要分两步验证：(1)替换后立即tsc验证；(2)简化括号时务必考虑运算符优先级——!x<N与!(x<N)语义完全不同，含比较运算符的简单条件必须保留括号",
+    "【迭代108新增】pruneDeadEntities工具函数提取模式：96个文件相同的6行skillMap清理块可提取为1行函数调用。新建EntityUtils.ts，注意架构方向utils→ecs是允许的（ecs是被utils依赖的下层）"
   ],
-  "last_updated": "2026-03-02T07:10:00+08:00"
+  "last_updated": "2026-03-02T07:30:00+08:00"
 }
