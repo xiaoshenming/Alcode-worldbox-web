@@ -2,6 +2,9 @@ import { CivManager } from '../civilization/CivManager'
 import { Civilization, TECHNOLOGIES, Technology, TECH_TREE, BuildingType, BuildingComponent } from '../civilization/Civilization'
 import { EventLog } from './EventLog'
 
+/** O(1) lookup map for technology by name — avoids TECHNOLOGIES.find() linear scan */
+const TECH_MAP = new Map<string, Technology>(TECHNOLOGIES.map(t => [t.name, t]))
+
 export class TechSystem {
   private tickCounter: number = 0
   private _availBuf: Technology[] = []
@@ -182,7 +185,7 @@ export class TechSystem {
   static getTechBonus(civ: Civilization, effectType: string): number {
     let bonus = 0
     for (const techName of civ.research.completed) {
-      const tech = TECHNOLOGIES.find(t => t.name === techName)
+      const tech = TECH_MAP.get(techName)
       if (!tech) continue
       for (const effect of tech.effects) {
         if (effect.type === effectType) {
@@ -203,7 +206,7 @@ export class TechSystem {
       if (!civ.research.currentTech) {
         const next = this.pickNextTech(civ, civManager)
         if (next) {
-          const tech = TECHNOLOGIES.find(t => t.name === next)
+          const tech = TECH_MAP.get(next)
           if (tech && civ.resources.gold >= tech.cost) {
             civ.resources.gold -= tech.cost
             civ.research.currentTech = next
@@ -214,7 +217,7 @@ export class TechSystem {
       }
 
       // Advance current research
-      const tech = TECHNOLOGIES.find(t => t.name === civ.research.currentTech)
+      const tech = TECH_MAP.get(civ.research.currentTech ?? "")
       if (!tech) {
         civ.research.currentTech = null
         continue
