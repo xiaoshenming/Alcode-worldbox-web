@@ -62,7 +62,8 @@ export class WorldPumiceFieldSystem {
     }
 
     for (let i = this.fields.length - 1; i >= 0; i--) {
-      if (this.fields[i].buoyancy <= 0 || this.fields[i].size <= 0) {
+      const f = this.fields[i]
+      if (f.buoyancy <= 0 || f.size <= 0) {
         this.fields.splice(i, 1)
       }
     }

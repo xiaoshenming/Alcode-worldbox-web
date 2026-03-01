@@ -67,7 +67,8 @@ export class WorldWhirlwindSystem {
 
     const cutoff = tick - 8000
     for (let i = this.whirlwinds.length - 1; i >= 0; i--) {
-      if (this.whirlwinds[i].tick < cutoff || this.whirlwinds[i].force <= 0) {
+      const w = this.whirlwinds[i]
+      if (w.tick < cutoff || w.force <= 0) {
         this.whirlwinds.splice(i, 1)
       }
     }

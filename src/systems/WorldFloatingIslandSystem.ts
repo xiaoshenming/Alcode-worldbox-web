@@ -63,7 +63,8 @@ export class WorldFloatingIslandSystem {
 
     const cutoff = tick - 100000
     for (let i = this.islands.length - 1; i >= 0; i--) {
-      if (this.islands[i].tick < cutoff || this.islands[i].magicLevel <= 0) {
+      const isl = this.islands[i]
+      if (isl.tick < cutoff || isl.magicLevel <= 0) {
         this.islands.splice(i, 1)
       }
     }

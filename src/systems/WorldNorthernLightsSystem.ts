@@ -72,7 +72,8 @@ export class WorldNorthernLightsSystem {
 
     // Remove expired
     for (let i = this.auroras.length - 1; i >= 0; i--) {
-      if (tick - this.auroras[i].tick > this.auroras[i].duration) {
+      const a = this.auroras[i]
+      if (tick - a.tick > a.duration) {
         this.auroras.splice(i, 1)
       }
     }

@@ -65,7 +65,8 @@ export class WorldFrostHollowSystem {
 
     // Remove dissipated hollows
     for (let i = this.hollows.length - 1; i >= 0; i--) {
-      if (this.hollows[i].frostDuration <= 0 || this.hollows[i].airPooling <= 10) {
+      const h = this.hollows[i]
+      if (h.frostDuration <= 0 || h.airPooling <= 10) {
         this.hollows.splice(i, 1)
       }
     }

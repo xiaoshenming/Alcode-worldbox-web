@@ -108,7 +108,8 @@ export class WorldIceSheetSystem {
 
   private cleanup(): void {
     for (let i = this.iceSheets.length - 1; i >= 0; i--) {
-      if (this.iceSheets[i].thickness <= 0 || this.iceSheets[i].area <= 0) {
+      const ice = this.iceSheets[i]
+      if (ice.thickness <= 0 || ice.area <= 0) {
         this.iceSheets.splice(i, 1)
       }
     }

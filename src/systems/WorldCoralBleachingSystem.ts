@@ -79,8 +79,9 @@ export class WorldCoralBleachingSystem {
 
     // Remove dead coral after a while
     for (let i = this.events.length - 1; i >= 0; i--) {
-      const age = tick - this.events[i].tick
-      if (this.events[i].stage === 'dead' && age > 350000) {
+      const e = this.events[i]
+      const age = tick - e.tick
+      if (e.stage === 'dead' && age > 350000) {
         this.events.splice(i, 1)
       }
     }

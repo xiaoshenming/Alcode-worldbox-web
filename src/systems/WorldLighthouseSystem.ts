@@ -85,7 +85,8 @@ export class WorldLighthouseSystem {
     // Remove ruined lighthouses after time
     const cutoff = tick - 100000
     for (let i = this.lighthouses.length - 1; i >= 0; i--) {
-      if (this.lighthouses[i].state === 'ruined' && this.lighthouses[i].tick < cutoff) {
+      const lt = this.lighthouses[i]
+      if (lt.state === 'ruined' && lt.tick < cutoff) {
         this.lighthouses.splice(i, 1)
       }
     }

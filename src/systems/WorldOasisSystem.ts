@@ -136,7 +136,8 @@ export class WorldOasisSystem {
 
   private cleanupDried(): void {
     for (let i = this.oases.length - 1; i >= 0; i--) {
-      if (this.oases[i].waterLevel <= 0 && this.oases[i].drying) {
+      const o = this.oases[i]
+      if (o.waterLevel <= 0 && o.drying) {
         this.oases.splice(i, 1)
       }
     }

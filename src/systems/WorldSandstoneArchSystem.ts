@@ -59,7 +59,8 @@ export class WorldSandstoneArchSystem {
 
     const cutoff = tick - 55000
     for (let i = this.zones.length - 1; i >= 0; i--) {
-      if (this.zones[i].tick < cutoff || this.zones[i].stability <= 0) {
+      const z = this.zones[i]
+      if (z.tick < cutoff || z.stability <= 0) {
         this.zones.splice(i, 1)
       }
     }

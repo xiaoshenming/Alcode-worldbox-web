@@ -61,7 +61,8 @@ export class WorldIceShelfSystem {
 
     const cutoff = tick - 100000
     for (let i = this.shelves.length - 1; i >= 0; i--) {
-      if (this.shelves[i].tick < cutoff || this.shelves[i].thickness < 10) {
+      const sh = this.shelves[i]
+      if (sh.tick < cutoff || sh.thickness < 10) {
         this.shelves.splice(i, 1)
       }
     }

@@ -61,7 +61,8 @@ export class WorldMangroveSwampSystem {
     }
 
     for (let i = this.swamps.length - 1; i >= 0; i--) {
-      if (tick - this.swamps[i].tick > 80000 && this.swamps[i].density < 15) {
+      const sw = this.swamps[i]
+      if (tick - sw.tick > 80000 && sw.density < 15) {
         this.swamps.splice(i, 1)
       }
     }

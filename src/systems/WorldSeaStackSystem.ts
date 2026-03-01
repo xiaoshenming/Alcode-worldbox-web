@@ -62,7 +62,8 @@ export class WorldSeaStackSystem {
 
     const cutoff = tick - 95000
     for (let i = this.stacks.length - 1; i >= 0; i--) {
-      if (this.stacks[i].tick < cutoff || this.stacks[i].height < 1) {
+      const st = this.stacks[i]
+      if (st.tick < cutoff || st.height < 1) {
         this.stacks.splice(i, 1)
       }
     }

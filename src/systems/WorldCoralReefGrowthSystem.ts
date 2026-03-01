@@ -73,7 +73,8 @@ export class WorldCoralReefGrowthSystem {
 
     // Remove dead reefs
     for (let i = this.reefs.length - 1; i >= 0; i--) {
-      if (this.reefs[i].health <= 10 && this.reefs[i].coverage < 5) {
+      const r = this.reefs[i]
+      if (r.health <= 10 && r.coverage < 5) {
         this.reefs.splice(i, 1)
       }
     }

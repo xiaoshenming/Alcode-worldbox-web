@@ -60,7 +60,8 @@ export class WorldKelpForestSystem {
     }
 
     for (let i = this.forests.length - 1; i >= 0; i--) {
-      if (tick - this.forests[i].tick > 90000 && this.forests[i].density < 10) {
+      const f = this.forests[i]
+      if (tick - f.tick > 90000 && f.density < 10) {
         this.forests.splice(i, 1)
       }
     }

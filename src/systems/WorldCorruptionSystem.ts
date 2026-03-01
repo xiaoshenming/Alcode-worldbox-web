@@ -161,8 +161,9 @@ export class WorldCorruptionSystem {
 
   private decaySources(): void {
     for (let i = this.sources.length - 1; i >= 0; i--) {
-      this.sources[i].strength -= 0.001
-      if (this.sources[i].strength <= 0.01) {
+      const s = this.sources[i]
+      s.strength -= 0.001
+      if (s.strength <= 0.01) {
         this.sources[i] = this.sources[this.sources.length - 1]
         this.sources.pop()
       }

@@ -148,7 +148,8 @@ export class WorldRiftSystem {
 
   private cleanup(): void {
     for (let i = this.rifts.length - 1; i >= 0; i--) {
-      if (this.rifts[i].age >= this.rifts[i].maxAge) {
+      const r = this.rifts[i]
+      if (r.age >= r.maxAge) {
         this.rifts.splice(i, 1)
       }
     }

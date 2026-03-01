@@ -67,7 +67,8 @@ export class WorldBasaltColumnSystem {
 
     // Remove fully eroded formations
     for (let i = this.formations.length - 1; i >= 0; i--) {
-      if (this.formations[i].height <= 0.5 || this.formations[i].hexagonalPerfection <= 0) {
+      const f = this.formations[i]
+      if (f.height <= 0.5 || f.hexagonalPerfection <= 0) {
         this.formations.splice(i, 1)
       }
     }
