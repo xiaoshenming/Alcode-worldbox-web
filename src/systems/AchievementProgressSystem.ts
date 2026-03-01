@@ -81,6 +81,10 @@ export class AchievementProgressSystem {
   private _headerStr = '成就  0%'
   /** Cached completion rate (0–1) — updated in updateProgress, avoids O(N) scan in render */
   private _completionRate = 0
+  /** Cached panel rect — reused to avoid {x,y,w,h} allocation on every render/click */
+  private _panelRect = { x: 0, y: 0, w: PANEL_W, h: PANEL_H }
+  private _panelSW = 0
+  private _panelSH = 0
 
   constructor() {
     this.achievements = makeAchievements();
@@ -151,9 +155,12 @@ export class AchievementProgressSystem {
   }
 
   private panelRect(screenW: number, screenH: number) {
-    const x = (screenW - PANEL_W) / 2;
-    const y = (screenH - PANEL_H) / 2;
-    return { x, y, w: PANEL_W, h: PANEL_H };
+    if (screenW !== this._panelSW || screenH !== this._panelSH) {
+      this._panelSW = screenW; this._panelSH = screenH
+      this._panelRect.x = (screenW - PANEL_W) / 2
+      this._panelRect.y = (screenH - PANEL_H) / 2
+    }
+    return this._panelRect
   }
 
   render(ctx: CanvasRenderingContext2D, screenW: number, screenH: number): void {
