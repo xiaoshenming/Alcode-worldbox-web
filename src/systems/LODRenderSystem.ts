@@ -21,6 +21,8 @@ export class LODRenderSystem {
   private thresholds: LODThresholds = { ...DEFAULT_THRESHOLDS }
   private currentLOD: LODLevel = 'full'
   private entityCounts = { rendered: 0, culled: 0 }
+  /** Cached stats object — reused by getStats() to avoid per-call spread allocation */
+  private _statsCache = { rendered: 0, culled: 0, lod: 'full' as LODLevel }
   // Cached font strings — rebuilt only when zoom changes
   private _lastZoom = -1
   private _fullFont = ''
@@ -165,7 +167,10 @@ export class LODRenderSystem {
 
   /** Get render stats for debug display */
   getStats(): { rendered: number; culled: number; lod: LODLevel } {
-    return { ...this.entityCounts, lod: this.currentLOD }
+    this._statsCache.rendered = this.entityCounts.rendered
+    this._statsCache.culled = this.entityCounts.culled
+    this._statsCache.lod = this.currentLOD
+    return this._statsCache
   }
 
   setThresholds(t: Partial<LODThresholds>): void {

@@ -12,6 +12,15 @@ export enum OreType {
   ADAMANTINE = 6
 }
 
+/** Pre-computed mining bonus singletons — avoids per-call object allocation in getMiningBonus */
+const _BONUS_COPPER     = { military: 5,  wealth: 2,  culture: 0  } as const
+const _BONUS_IRON       = { military: 10, wealth: 3,  culture: 0  } as const
+const _BONUS_GOLD       = { military: 0,  wealth: 15, culture: 2  } as const
+const _BONUS_GEMS       = { military: 0,  wealth: 8,  culture: 12 } as const
+const _BONUS_MITHRIL    = { military: 20, wealth: 10, culture: 5  } as const
+const _BONUS_ADAMANTINE = { military: 25, wealth: 12, culture: 3  } as const
+const _BONUS_NONE       = { military: 0,  wealth: 0,  culture: 0  } as const
+
 export interface OreDeposit {
   x: number
   y: number
@@ -292,20 +301,13 @@ export class MiningSystem {
 
   getMiningBonus(oreType: OreType): { military: number; wealth: number; culture: number } {
     switch (oreType) {
-      case OreType.COPPER:
-        return { military: 5, wealth: 2, culture: 0 }
-      case OreType.IRON:
-        return { military: 10, wealth: 3, culture: 0 }
-      case OreType.GOLD:
-        return { military: 0, wealth: 15, culture: 2 }
-      case OreType.GEMS:
-        return { military: 0, wealth: 8, culture: 12 }
-      case OreType.MITHRIL:
-        return { military: 20, wealth: 10, culture: 5 }
-      case OreType.ADAMANTINE:
-        return { military: 25, wealth: 12, culture: 3 }
-      default:
-        return { military: 0, wealth: 0, culture: 0 }
+      case OreType.COPPER:    return _BONUS_COPPER
+      case OreType.IRON:      return _BONUS_IRON
+      case OreType.GOLD:      return _BONUS_GOLD
+      case OreType.GEMS:      return _BONUS_GEMS
+      case OreType.MITHRIL:   return _BONUS_MITHRIL
+      case OreType.ADAMANTINE: return _BONUS_ADAMANTINE
+      default:                return _BONUS_NONE
     }
   }
 }
