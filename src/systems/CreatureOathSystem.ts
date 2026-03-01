@@ -2,6 +2,7 @@
 // Oaths bind creatures to specific behaviors and grant mood/combat bonuses
 
 import { EntityManager } from '../ecs/Entity'
+import { pickWeighted } from '../utils/RandomUtils'
 
 export type OathType = 'loyalty' | 'vengeance' | 'protection' | 'pilgrimage' | 'silence' | 'service'
 
@@ -50,7 +51,7 @@ export class CreatureOathSystem {
     for (const eid of entities) {
       if (Math.random() > OATH_CHANCE) continue
 
-      const type = this.pickType()
+      const type = pickWeighted(OATH_TYPES, OATH_WEIGHTS, 'loyalty')
       let targetId: number | null = null
       if (entities.length >= 2) {
         let tidx = Math.floor(Math.random() * (entities.length - 1))
@@ -71,15 +72,7 @@ export class CreatureOathSystem {
     }
   }
 
-  private pickType(): OathType {
-    const r = Math.random()
-    let cum = 0
-    for (const t of OATH_TYPES) {
-      cum += OATH_WEIGHTS[t]
-      if (r <= cum) return t
-    }
-    return 'loyalty'
-  }
+
 
   private resolveFulfillment(tick: number): void {
     for (const oath of this.oaths) {

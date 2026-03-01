@@ -3,6 +3,7 @@
 
 import { World } from '../game/World'
 import { EntityManager } from '../ecs/Entity'
+import { pickWeighted } from '../utils/RandomUtils'
 
 export type MemorialType = 'battle' | 'disaster' | 'founding' | 'miracle' | 'tragedy' | 'victory'
 
@@ -59,7 +60,7 @@ export class WorldMemorialSystem {
     if (this.memorials.length >= MAX_MEMORIALS) return
     if (Math.random() > MEMORIAL_CHANCE) return
 
-    const type = this.pickType()
+    const type = pickWeighted(MEMORIAL_TYPES, MEMORIAL_WEIGHTS, 'battle')
     const names = MEMORIAL_NAMES[type]
     const name = names[Math.floor(Math.random() * names.length)]
 
@@ -77,15 +78,7 @@ export class WorldMemorialSystem {
     })
   }
 
-  private pickType(): MemorialType {
-    const r = Math.random()
-    let cum = 0
-    for (const t of MEMORIAL_TYPES) {
-      cum += MEMORIAL_WEIGHTS[t]
-      if (r <= cum) return t
-    }
-    return 'battle'
-  }
+
 
   private ageMemorials(): void {
     for (const m of this.memorials) {

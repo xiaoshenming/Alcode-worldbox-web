@@ -2,6 +2,7 @@
 // When leaders die or are deposed, succession crises can trigger civil wars
 
 import { EntityManager } from '../ecs/Entity'
+import { pickWeighted } from '../utils/RandomUtils'
 
 export type SuccessionType = 'hereditary' | 'election' | 'conquest' | 'council' | 'divine_right'
 export type CrisisStatus = 'stable' | 'contested' | 'civil_war' | 'resolved'
@@ -51,7 +52,7 @@ export class DiplomaticSuccessionSystem {
 
     const civs = _CIV_POOL
     const civ = civs[Math.floor(Math.random() * civs.length)]
-    const type = this.pickType()
+    const type = pickWeighted(TYPES, SUCCESSION_WEIGHTS, 'hereditary')
 
     this.events.push({
       id: this.nextId++,
@@ -65,15 +66,7 @@ export class DiplomaticSuccessionSystem {
     })
   }
 
-  private pickType(): SuccessionType {
-    const r = Math.random()
-    let cum = 0
-    for (const t of TYPES) {
-      cum += SUCCESSION_WEIGHTS[t]
-      if (r <= cum) return t
-    }
-    return 'hereditary'
-  }
+
 
   private resolveCrises(tick: number): void {
     for (const ev of this.events) {
