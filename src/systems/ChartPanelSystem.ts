@@ -36,6 +36,8 @@ export class ChartPanelSystem {
   /** Cached current value string */
   private _prevCurrentVal = -1;
   private _currentValStr = '0';
+  /** Persistent scale result — reused by niceScale to avoid new{max,step} per render */
+  private _scaleResult = { max: 10, step: 2 };
   private _prevCurrentKey: keyof ChartDataPoint = 'population';
   /** Cached X-axis tick labels — rebuilt when tMin or tRange changes */
   private _xLabels: string[] = ['', '', '', '', ''];
@@ -101,7 +103,8 @@ export class ChartPanelSystem {
   }
 
   private niceScale(maxVal: number): { max: number; step: number } {
-    if (maxVal <= 0) return { max: 10, step: 2 };
+    const r = this._scaleResult;
+    if (maxVal <= 0) { r.max = 10; r.step = 2; return r; }
     const mag = Math.pow(10, Math.floor(Math.log10(maxVal)));
     const norm = maxVal / mag;
     let niceMax: number;
@@ -110,7 +113,7 @@ export class ChartPanelSystem {
     else if (norm <= 5) niceMax = 5 * mag;
     else if (norm <= 7) niceMax = 7 * mag;
     else niceMax = 10 * mag;
-    return { max: niceMax, step: niceMax / 5 };
+    r.max = niceMax; r.step = niceMax / 5; return r;
   }
 
   render(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number): void {
