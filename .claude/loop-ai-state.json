@@ -1,17 +1,17 @@
 {
-  "notes": "迭代98/100完成。主要工作：(1)全面最终验证——tsc零错误、854测试文件/4973测试全通过、构建成功零警告、总包体1.6MB(在2MB限制内)；(2)消除了全部非空断言：SaveLoadPanel.ts将`let panel = getElementById()`改为`const existing`早退出+`const panel = createElement()`，消除4处`panel!.xxx`；MigrationSystem.ts用`cellArr`局部变量重构，消除`cells.get(cellKey)!.push(id)`；(3)深度质量扫描结论：as any仅1处(main.ts debug用)、非空断言0处、热路径无GC分配、Object.keys/values/entries全在模块级常量初始化(非热路径)、Array.from全在对象池预分配(正确模式)、3个纯数据文件合理无测试、构建产物完全干净无警告。项目现已达到极致质量水准——as any 1处、非空断言 0处、GC热路径 0处、测试覆盖率 844/847系统文件(99.6%)、包体1.6MB。",
+  "notes": "迭代99/100完成。主要工作：(1)README更新真实数据——badges从~120k/921改为~106k/847，代码规模表从旧数据(731系统/~99k行)更新为真实值(847系统/875文件/~105,900行)，新增'工程质量'章节记录98轮迭代成果；(2)意外发现TechTreePanel.ts遗漏了2处非空断言：levelGroups.get(tech.level)!.push()用局部变量模式修复，canvas.getContext('2d')!通过改ctx类型为CanvasRenderingContext2D|null+renderTree加null guard修复；(3)最终扫描：as any仅1处(main.ts debug)、非空断言真正达到0处(此前迭代98报告0处是误报，TechTreePanel.ts被漏扫)。当前质量：tsc零错误、854/4973测试全过、构建1.6MB零警告。",
   "priorities": [
-    "1. 【最终状态】项目质量已达极致：as any仅1处、非空断言0处、全系统测试覆盖99.6%、零GC热路径、构建干净无警告",
-    "2. 第99轮可以做最终文档整理：更新README、记录架构决策、总结98轮优化成果",
-    "3. 第100轮可以做最终发布验证：检查index.html、确认生产环境可用、整理dist目录",
-    "4. 可选：CivManager.ts(844行)内部有多个职责区域，理论可拆分为CivDiplomacy/CivEconomy等，但风险高收益低",
-    "5. 已完成：非空断言从5处→0处，这是本项目最后一个类型安全隐患"
+    "1. 【最终状态-已确认】非空断言真正为0处(包括TechTreePanel.ts)、as any 1处、测试99.6%、包体1.6MB、零GC热路径",
+    "2. 第100轮可以做最终发布验证：检查index.html正确性、确认dist目录可直接部署、验证没有硬编码localhost地址",
+    "3. 可选：完整扫描是否还有其他UI文件(如TechTreePanel这类)隐藏非空断言——建议用grep '[^a-zA-Z]!\\.'全文扫描",
+    "4. 可选：检查index.html的meta标签、viewport、favicon是否完整",
+    "5. 已完成：README数据同步到真实值，新增工程质量章节"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
     "子代理并行修复大批量文件极高效：4组并行代理可在几分钟内修复160+文件",
     "manualChunks按文件名前缀分组是最安全的代码分割方案 — 不改源码，只改vite配置",
-    "Iterable<T>替代T[]可消除spread分配，但需检查消费端是否用了.length/.includes等数组方法",
+    "Iterable<T>替代T[]可消除spread分配，但需检查消费���是否用了.length/.includes等数组方法",
     "getAllEntities()返回Array.from()快照 — removeEntity-during-iteration是安全的",
     "queue.shift()在BFS中是O(n²)陷阱 — 用索引指针head++替代",
     "Camera.getVisibleBounds()等热路径方法应返回缓存对象而非每次new — 每帧调用4次累积显著GC压力",
@@ -37,7 +37,9 @@
     "【迭代97新增】代码质量饱和度：经过97轮迭代，项目已达极高质量水平——as any仅1处、非空断言仅1处、零GC热路径、全系统测试覆盖、零循环依赖",
     "【迭代97新增】sys-shared chunk设计原则：存放被2+个不同chunk同时引用的基础模块，避免chunk层面的虚假循环引用",
     "【迭代98新增】非空断言消除技巧：SaveLoadPanel的panel!.xxx通过将let+getElementById+createElement重构为const panel=createElement()+early return消除；Map.get()!.xxx通过提取局部变量+同步赋值消除",
-    "【迭代98新增】最终质量基线：as any 1处、非空断言0处、GC热路径0处、测试99.6%、包体1.6MB、构建零警告——这是98轮迭代的终极成果"
+    "【迭代99新增】非空断言全文扫描必须用grep '[^a-zA-Z]!\\.'而非字符串搜索——grep会警告stray backslash但仍能正确匹配，或用Python re.findall更可靠",
+    "【迭代99新增】canvas.getContext('2d')!是常见UI代码中的非空断言——改为ctx: CanvasRenderingContext2D|null + renderTree加null guard可消除，既正确又安全",
+    "【迭代99新增】README数字同步：代码规模数字随死代码删除而变化(921→847系统，~120k→~106k行)，最终轮次应更新badges和表格到真实值"
   ],
-  "last_updated": "2026-03-01T19:40:00+08:00"
+  "last_updated": "2026-03-01T19:45:00+08:00"
 }
