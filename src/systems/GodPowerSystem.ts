@@ -3,7 +3,7 @@
 import { World } from '../game/World'
 import { EntityManager, PositionComponent, NeedsComponent, CreatureComponent } from '../ecs/Entity'
 import { CivManager } from '../civilization/CivManager'
-import { Civilization, CivMemberComponent } from '../civilization/Civilization'
+
 import { ParticleSystem } from './ParticleSystem'
 import { TileType } from '../utils/Constants'
 import { EventLog } from './EventLog'

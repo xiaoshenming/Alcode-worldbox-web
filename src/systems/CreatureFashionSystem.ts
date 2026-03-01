@@ -2,7 +2,7 @@
 // Fashion trends spread through civs, affecting morale and social status
 // Trends evolve over time and can be influenced by trade
 
-import { EntityManager, EntityId } from '../ecs/Entity'
+
 
 export type FashionCategory = 'headwear' | 'clothing' | 'jewelry' | 'warpaint' | 'hairstyle'
 
