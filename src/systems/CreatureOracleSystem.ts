@@ -66,7 +66,8 @@ export class CreatureOracleSystem {
     }
 
     for (let i = this.oracles.length - 1; i >= 0; i--) {
-      if (!em.hasComponent(this.oracles[i].entityId, 'creature') || !this.oracles[i].active) {
+      const o = this.oracles[i]
+      if (!em.hasComponent(o.entityId, 'creature') || !o.active) {
         this.oracles.splice(i, 1)
       }
     }
