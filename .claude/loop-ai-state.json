@@ -1,11 +1,11 @@
 {
-  "notes": "迭代104。项目状态：完美+CI防护。本轮任务：(1)全量验证通过：tsc零错误、4975/4975测试全过、构建1.55MB零警告；(2)消除InfoPanel.ts中2处diplomacyDiv非空断言——改用局部变量+null guard；(3)优化CreatureDanceSystem和CreatureArtSystem的getAllEntities调用→getEntitiesWithComponent('creature')（避免遍历非creature实体）；(4)重大重构：提取52个SpringSystem中完全相同的private hasAdjacentTile方法到src/utils/WorldUtils.ts共享工具函数——净减349行代码，构建体积从342KB降到332KB；(5)清理多个文件的未使用import：CreatureFashionSystem(EntityManager/EntityId)、GodPowerSystem(Civilization/CivMemberComponent)、SpriteRenderer(SpriteDef)、Game.ts(SaveSystem/TradeRoute/EntityType/MenuSection/HeroComponent/VelocityComponent/GeneticsComponent)共9个符号。所有提交已推送GitHub。",
+  "notes": "迭代105。项目状态：完美+CI防护+内存泄漏修复。本轮任务：(1)全量验证通过：tsc零错误、4975/4975测试全过、构建1.57MB零警告；(2)移除Game.ts中WorldStats未使用import；(3)提取4个系统的重复roundRect方法到src/utils/CanvasUtils.ts工具函数（SeasonVisualSystem/MiniGameSystem/TutorialSystem/PowerFavoriteSystem）——净减26行；(4)重大修复：发现并修复101个技能系统的skillMap内存泄漏——实体ID单调递增不复用，死亡实体的Map条目永远积累；解决方案是在每个系统update末尾插入tick%3600清理代码。所有提交本地完成，GitHub网络连接失败（SSL port 443连接超时），需下轮再推送。",
   "priorities": [
-    "1. 【已完成】InfoPanel非空断言消除+DanceSystem/ArtSystem getAllEntities优化",
-    "2. 【已完成】hasAdjacentTile重构：52文件→WorldUtils.ts工具函数（净减349行，构建-9.6KB）",
-    "3. 【已完成】批量清理9个未使用import符号",
-    "4. 【项目状态】tsc零错误 + 4975测试全过 + 1.55MB构建 + pre-commit hook + CI，防护体系完整",
-    "5. 【可选】World.ts中的hasAdjacentTile签名2（不同参数风格）——仅1个文件，影响小"
+    "1. 【待推送】4个提交需要推送到GitHub（网络问题导致本轮失败）",
+    "2. 【已完成】WorldStats未使用import清理",
+    "3. 【已完成】roundRect提取到CanvasUtils.ts（4个文件→1个工具函数）",
+    "4. 【已完成-重大】101个技能系统skillMap内存泄漏修复：96个skillMap+5个其他Map字段",
+    "5. 【可选】lerpColor有3种不同实现（返回值格式不同，不能简单合并）"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -39,7 +39,10 @@
     "【迭代102新增】GitHub Actions CI配置要点：uses actions/checkout@v4 + setup-node@v4（Node 20）+ npm ci安装 + npx tsc --noEmit + npx vitest run + npm run build + bundle大小守卫（du -sb统计字节，>2MB失败）",
     "【迭代103新增】内存泄漏检测模式：寻找系统内的 Map<EntityId, T> 字段 → 检查所有 removeEntity 调用路径是否都清理了这个 Map → 确保每条死亡路径（老死、饥死、战死等）都有对应的 .delete(id)",
     "【迭代104新增】跨多文件重复私有方法提取策略：(1)用Python脚本统计所有private方法在多少文件中出现；(2)验证实现是否完全相同（去重版本数）；(3)用Python批量替换——移除method+改this.call为call+添加import；(4)tsc+vitest验证；整个流程<5分钟完成52个文件的重构",
-    "【迭代104新增】未使用import扫描：用Python re.finditer提取import符号→re.search(\\\\bsym\\\\b)精确词边界搜索（避免AutoSaveSystem包含SaveSystem的误报）→批量移除，注意空行清理"
+    "【迭代104新增】未使用import扫描：用Python re.finditer提取import符号→re.search(\\\\bsym\\\\b)精确词边界搜索（避免AutoSaveSystem包含SaveSystem的误报）→批量移除，注意空行清理",
+    "【迭代105新增】skillMap内存泄漏规模评估：实体ID单调递增不复用 → 死亡实体的Map条目永久积累 → 按每entry≈50B计算，101系统*10000历史实体≈50MB潜在泄漏。解法：update末尾 if(tick%3600===0&&map.size>0) 扫描清理",
+    "【迭代105新增】Python批量修改系统文件的import添加策略：(1)先找文件中最后一个import行用last_import[-1].end()；(2)若文件无import则检查JSDoc注释末尾*/再插入；(3)若文件完全没有注释/import则直接在头部插入。必须分三种情况处理！",
+    "【迭代105新增】roundRect/lerpColor等Canvas辅助函数：实现相似但返回格式不同的方法不能合并（lerpColor一返回hex一返回rgb）；严格规范化后实现完全相同的才可以提取到CanvasUtils.ts"
   ],
-  "last_updated": "2026-03-02T05:40:00+08:00"
+  "last_updated": "2026-03-02T06:10:00+08:00"
 }
