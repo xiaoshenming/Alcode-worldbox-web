@@ -29,7 +29,10 @@ export class AISystem {
   private resources: ResourceSystem | null = null
   /** Batch index for staggered updates — only process 1/3 of entities per tick */
   private batchIndex: number = 0
-  private _newbornsBuf: { species: EntityType; x: number; y: number; motherId: EntityId; fatherId: EntityId }[] = []
+  /** Pre-allocated newborn record slots — reused each tick to avoid per-birth object allocation */
+  private _newbornsBuf: { species: EntityType; x: number; y: number; motherId: EntityId; fatherId: EntityId }[] =
+    Array.from({ length: 32 }, () => ({ species: 'human' as EntityType, x: 0, y: 0, motherId: 0, fatherId: 0 }))
+  private _newbornsCount = 0
   private _walkableTargetBuf = { x: 0, y: 0 }
   private _threatBuf: { id: EntityId; dist: number } = { id: 0, dist: 0 }
 
@@ -283,7 +286,7 @@ export class AISystem {
 
   private updateBreeding(entities: EntityId[]): void {
     const newborns = this._newbornsBuf
-    newborns.length = 0
+    this._newbornsCount = 0
 
     for (const id of entities) {
       if (!this.em.hasComponent(id, 'creature')) continue
@@ -326,14 +329,20 @@ export class AISystem {
             const dist2 = ddx * ddx + ddy * ddy
 
             if (dist2 < 9 && Math.random() < 0.005 * fertilityMod) {
-              newborns.push({ species: creature.species as EntityType, x: pos.x, y: pos.y, motherId: id, fatherId: otherId })
+              if (this._newbornsCount < newborns.length) {
+                const slot = newborns[this._newbornsCount++]
+                slot.species = creature.species as EntityType
+                slot.x = pos.x; slot.y = pos.y
+                slot.motherId = id; slot.fatherId = otherId
+              }
               this.breedCooldown.set(id, 300)
               break
             }
       }
     }
 
-    for (const baby of newborns) {
+    for (let bi = 0; bi < this._newbornsCount; bi++) {
+      const baby = newborns[bi]
       const babyId = this.factory.spawn(baby.species, baby.x, baby.y)
       const babyCreature = this.em.getComponent<CreatureComponent>(babyId, 'creature')
 
