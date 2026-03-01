@@ -340,7 +340,7 @@ export class AchievementPopupSystem {
   private renderPanel(ctx: CanvasRenderingContext2D, sw: number, sh: number): void {
     const pw = Math.min(520, sw - 40), ph = Math.min(420, sh - 40)
     const px = (sw - pw) / 2, py = (sh - ph) / 2
-    this.panelRect = { x: px, y: py, w: pw, h: ph }
+    const r = this.panelRect; r.x = px; r.y = py; r.w = pw; r.h = ph
     ctx.save()
     // 遮罩
     ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0, 0, sw, sh)
