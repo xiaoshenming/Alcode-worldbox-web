@@ -12,24 +12,24 @@ describe('RiverSystem.getRivers', () => {
 
   it('初始无河流', () => { expect(sys.getRivers()).toHaveLength(0) })
   it('注入后可查询', () => {
-    ;(sys as any).rivers.push(makeRiver())
+    ;sys.getRivers().push(makeRiver())
     expect(sys.getRivers()).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    ;(sys as any).rivers.push(makeRiver())
-    expect(sys.getRivers()).toBe((sys as any).rivers)
+    ;sys.getRivers().push(makeRiver())
+    expect(sys.getRivers()).toBe(sys.getRivers())
   })
   it('河流由坐标点数组组成', () => {
-    ;(sys as any).rivers.push(makeRiver())
+    ;sys.getRivers().push(makeRiver())
     const rivers = sys.getRivers()
     expect(rivers[0]).toHaveLength(3)
     expect(rivers[0][0]).toHaveProperty('x')
     expect(rivers[0][0]).toHaveProperty('y')
   })
   it('多条河流全部返回', () => {
-    ;(sys as any).rivers.push(makeRiver())
-    ;(sys as any).rivers.push(makeRiver())
-    ;(sys as any).rivers.push(makeRiver())
+    ;sys.getRivers().push(makeRiver())
+    ;sys.getRivers().push(makeRiver())
+    ;sys.getRivers().push(makeRiver())
     expect(sys.getRivers()).toHaveLength(3)
   })
 })

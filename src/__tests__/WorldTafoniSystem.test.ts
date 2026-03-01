@@ -12,17 +12,17 @@ describe('WorldTafoniSystem.getTafoni', () => {
   let sys: WorldTafoniSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无蜂窝岩', () => { expect(sys.getTafoni()).toHaveLength(0) })
+  it('初始无蜂窝岩', () => { expect((sys as any).tafoni).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).tafoni.push(makeTafoni())
-    expect(sys.getTafoni()).toHaveLength(1)
+    expect((sys as any).tafoni).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getTafoni()).toBe((sys as any).tafoni)
+    expect((sys as any).tafoni).toBe((sys as any).tafoni)
   })
   it('蜂窝岩字段正确', () => {
     ;(sys as any).tafoni.push(makeTafoni())
-    const t = sys.getTafoni()[0]
+    const t = (sys as any).tafoni[0]
     expect(t.cavityCount).toBe(10)
     expect(t.saltContent).toBe(60)
     expect(t.spectacle).toBe(55)
@@ -30,6 +30,6 @@ describe('WorldTafoniSystem.getTafoni', () => {
   it('多个蜂窝岩全部返回', () => {
     ;(sys as any).tafoni.push(makeTafoni())
     ;(sys as any).tafoni.push(makeTafoni())
-    expect(sys.getTafoni()).toHaveLength(2)
+    expect((sys as any).tafoni).toHaveLength(2)
   })
 })

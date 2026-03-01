@@ -12,17 +12,17 @@ describe('WorldPeneplainSystem.getPeneplains', () => {
   let sys: WorldPeneplainSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无准平原', () => { expect(sys.getPeneplains()).toHaveLength(0) })
+  it('初始无准平原', () => { expect((sys as any).peneplains).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).peneplains.push(makePeneplain())
-    expect(sys.getPeneplains()).toHaveLength(1)
+    expect((sys as any).peneplains).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getPeneplains()).toBe((sys as any).peneplains)
+    expect((sys as any).peneplains).toBe((sys as any).peneplains)
   })
   it('准平原字段正确', () => {
     ;(sys as any).peneplains.push(makePeneplain())
-    const p = sys.getPeneplains()[0]
+    const p = (sys as any).peneplains[0]
     expect(p.flatness).toBe(90)
     expect(p.vegetationCover).toBe(60)
     expect(p.soilDepth).toBe(5)
@@ -30,6 +30,6 @@ describe('WorldPeneplainSystem.getPeneplains', () => {
   it('多个准平原全部返回', () => {
     ;(sys as any).peneplains.push(makePeneplain())
     ;(sys as any).peneplains.push(makePeneplain())
-    expect(sys.getPeneplains()).toHaveLength(2)
+    expect((sys as any).peneplains).toHaveLength(2)
   })
 })

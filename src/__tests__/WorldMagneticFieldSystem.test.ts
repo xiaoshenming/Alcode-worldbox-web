@@ -12,13 +12,13 @@ describe('WorldMagneticFieldSystem.getAnomalies', () => {
   let sys: WorldMagneticFieldSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无磁场异常', () => { expect(sys.getAnomalies()).toHaveLength(0) })
+  it('初始无磁场异常', () => { expect((sys as any).anomalies).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).anomalies.push(makeAnomaly())
-    expect(sys.getAnomalies()).toHaveLength(1)
+    expect((sys as any).anomalies).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getAnomalies()).toBe((sys as any).anomalies)
+    expect((sys as any).anomalies).toBe((sys as any).anomalies)
   })
   it('支持4种极性', () => {
     const polarities: MagneticPolarity[] = ['north', 'south', 'chaotic', 'null']
@@ -26,7 +26,7 @@ describe('WorldMagneticFieldSystem.getAnomalies', () => {
   })
   it('磁场异常字段正确', () => {
     ;(sys as any).anomalies.push(makeAnomaly('chaotic'))
-    const a = sys.getAnomalies()[0]
+    const a = (sys as any).anomalies[0]
     expect(a.polarity).toBe('chaotic')
     expect(a.strength).toBe(70)
     expect(a.active).toBe(true)

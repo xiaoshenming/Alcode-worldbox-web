@@ -15,5 +15,5 @@ describe('EraVisualSystem', () => {
     sys.setEra('bronze' as any)
     expect((sys as any).targetEra).toBe('bronze')
   })
-  it('currentEra初始为stone', () => { expect((sys as any).currentEra).toBe('stone') })
+  it('currentEra初始为stone', () => { expect(sys.getCurrentEra()).toBe('stone') })
 })

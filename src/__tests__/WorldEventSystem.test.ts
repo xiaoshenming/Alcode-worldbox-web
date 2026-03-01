@@ -24,7 +24,7 @@ describe('WorldEventSystem', () => {
     expect(sys.getEventHistory()).toHaveLength(0)
   })
   it('注入eventHistory后可查询', () => {
-    ;(sys as any).eventHistory.push({ id: 'flood', name: '洪水', tick: 500 })
+    ;sys.getEventHistory().push({ id: 'flood', name: '洪水', tick: 500 })
     const h = sys.getEventHistory()
     expect(h).toHaveLength(1)
     expect(h[0].id).toBe('flood')

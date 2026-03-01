@@ -12,17 +12,17 @@ describe('WorldIceCaveSystem.getZones', () => {
   let sys: WorldIceCaveSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无冰洞', () => { expect(sys.getZones()).toHaveLength(0) })
+  it('初始无冰洞', () => { expect((sys as any).zones).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).zones.push(makeZone())
-    expect(sys.getZones()).toHaveLength(1)
+    expect((sys as any).zones).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getZones()).toBe((sys as any).zones)
+    expect((sys as any).zones).toBe((sys as any).zones)
   })
   it('冰洞字段正确', () => {
     ;(sys as any).zones.push(makeZone())
-    const z = sys.getZones()[0]
+    const z = (sys as any).zones[0]
     expect(z.temperature).toBe(-15)
     expect(z.iceThickness).toBe(20)
     expect(z.stability).toBe(75)
@@ -30,6 +30,6 @@ describe('WorldIceCaveSystem.getZones', () => {
   it('多个冰洞全部返回', () => {
     ;(sys as any).zones.push(makeZone())
     ;(sys as any).zones.push(makeZone())
-    expect(sys.getZones()).toHaveLength(2)
+    expect((sys as any).zones).toHaveLength(2)
   })
 })

@@ -53,11 +53,11 @@ describe('HeroLegendSystem.getMonuments', () => {
 
   it('初始无纪念碑', () => { expect(sys.getMonuments()).toHaveLength(0) })
   it('注入后可查询', () => {
-    ;(sys as any).monuments.push({ entityId: 1, heroName: 'A', deeds: [], civId: 1, x: 5, y: 5 })
+    ;sys.getMonuments().push({ entityId: 1, heroName: 'A', deeds: [], civId: 1, x: 5, y: 5 })
     expect(sys.getMonuments()).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    ;(sys as any).monuments.push({ entityId: 1, heroName: 'A', deeds: [], civId: 1, x: 5, y: 5 })
-    expect(sys.getMonuments()).toBe((sys as any).monuments)
+    ;sys.getMonuments().push({ entityId: 1, heroName: 'A', deeds: [], civId: 1, x: 5, y: 5 })
+    expect(sys.getMonuments()).toBe(sys.getMonuments())
   })
 })

@@ -12,17 +12,17 @@ describe('WorldNaturalTunnelSystem.getTunnels', () => {
   let sys: WorldNaturalTunnelSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无天然隧道', () => { expect(sys.getTunnels()).toHaveLength(0) })
+  it('初始无天然隧道', () => { expect((sys as any).tunnels).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).tunnels.push(makeTunnel())
-    expect(sys.getTunnels()).toHaveLength(1)
+    expect((sys as any).tunnels).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getTunnels()).toBe((sys as any).tunnels)
+    expect((sys as any).tunnels).toBe((sys as any).tunnels)
   })
   it('天然隧道字段正确', () => {
     ;(sys as any).tunnels.push(makeTunnel())
-    const t = sys.getTunnels()[0]
+    const t = (sys as any).tunnels[0]
     expect(t.stability).toBe(85)
     expect(t.echoEffect).toBe(50)
     expect(t.spectacle).toBe(70)

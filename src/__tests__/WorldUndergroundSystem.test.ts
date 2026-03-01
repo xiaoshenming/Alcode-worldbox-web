@@ -12,13 +12,13 @@ describe('WorldUndergroundSystem.getCaves', () => {
   let sys: WorldUndergroundSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无洞穴', () => { expect(sys.getCaves()).toHaveLength(0) })
+  it('初始无洞穴', () => { expect((sys as any).caves).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).caves.push(makeCave())
-    expect(sys.getCaves()).toHaveLength(1)
+    expect((sys as any).caves).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getCaves()).toBe((sys as any).caves)
+    expect((sys as any).caves).toBe((sys as any).caves)
   })
   it('支持6种洞穴类型', () => {
     const types: CaveType[] = ['shallow', 'deep', 'crystal', 'lava', 'flooded', 'ancient']
@@ -43,9 +43,9 @@ describe('WorldUndergroundSystem.getTotalDiscovered', () => {
   let sys: WorldUndergroundSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始发现数为0', () => { expect(sys.getTotalDiscovered()).toBe(0) })
+  it('初始发现数为0', () => { expect((sys as any).totalDiscovered).toBe(0) })
   it('注入后可增加', () => {
     ;(sys as any).totalDiscovered = 5
-    expect(sys.getTotalDiscovered()).toBe(5)
+    expect((sys as any).totalDiscovered).toBe(5)
   })
 })

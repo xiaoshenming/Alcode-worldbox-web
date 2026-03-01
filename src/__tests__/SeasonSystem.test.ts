@@ -204,28 +204,28 @@ describe('SeasonSystem tileColorShift config', () => {
   it('spring tileColorShift.g > 0（绿意盎然）', () => {
     const ss = makeSS()
     setSeason(ss, Season.Spring, 1)
-    const cfg = (ss as any).getConfig()
+    const cfg = ss.getConfig()
     expect(cfg.tileColorShift.g).toBeGreaterThan(0)
   })
 
   it('winter tileColorShift.b > 0（蓝白冰雪）', () => {
     const ss = makeSS()
     setSeason(ss, Season.Winter, 1)
-    const cfg = (ss as any).getConfig()
+    const cfg = ss.getConfig()
     expect(cfg.tileColorShift.b).toBeGreaterThan(0)
   })
 
   it('autumn tileColorShift.r > 0（暖色秋叶）', () => {
     const ss = makeSS()
     setSeason(ss, Season.Autumn, 1)
-    const cfg = (ss as any).getConfig()
+    const cfg = ss.getConfig()
     expect(cfg.tileColorShift.r).toBeGreaterThan(0)
   })
 
   it('tileColorShift有r/g/b三个字段', () => {
     const ss = makeSS()
     setSeason(ss, Season.Summer, 1)
-    const cfg = (ss as any).getConfig()
+    const cfg = ss.getConfig()
     expect(typeof cfg.tileColorShift.r).toBe('number')
     expect(typeof cfg.tileColorShift.g).toBe('number')
     expect(typeof cfg.tileColorShift.b).toBe('number')

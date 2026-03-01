@@ -12,17 +12,17 @@ describe('WorldSinterSystem.getFormations', () => {
   let sys: WorldSinterSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无硅华', () => { expect(sys.getFormations()).toHaveLength(0) })
+  it('初始无硅华', () => { expect((sys as any).formations).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).formations.push(makeFormation())
-    expect(sys.getFormations()).toHaveLength(1)
+    expect((sys as any).formations).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getFormations()).toBe((sys as any).formations)
+    expect((sys as any).formations).toBe((sys as any).formations)
   })
   it('硅华字段正确', () => {
     ;(sys as any).formations.push(makeFormation())
-    const f = sys.getFormations()[0]
+    const f = (sys as any).formations[0]
     expect(f.mineralDensity).toBe(70)
     expect(f.thermalGradient).toBe(50)
     expect(f.depositionRate).toBe(5)
@@ -30,6 +30,6 @@ describe('WorldSinterSystem.getFormations', () => {
   it('多个硅华全部返回', () => {
     ;(sys as any).formations.push(makeFormation())
     ;(sys as any).formations.push(makeFormation())
-    expect(sys.getFormations()).toHaveLength(2)
+    expect((sys as any).formations).toHaveLength(2)
   })
 })

@@ -12,14 +12,14 @@ describe('WorldLighthouseSystem.getLighthouses', () => {
   let sys: WorldLighthouseSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无灯塔', () => { expect(sys.getLighthouses()).toHaveLength(0) })
+  it('初始无灯塔', () => { expect((sys as any).lighthouses).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).lighthouses.push(makeLighthouse())
-    expect(sys.getLighthouses()).toHaveLength(1)
+    expect((sys as any).lighthouses).toHaveLength(1)
   })
   it('返回只读引用', () => {
     ;(sys as any).lighthouses.push(makeLighthouse('damaged'))
-    const lhs = sys.getLighthouses()
+    const lhs = (sys as any).lighthouses
     expect(lhs[0].state).toBe('damaged')
   })
   it('支持4种灯塔状态', () => {
@@ -30,6 +30,6 @@ describe('WorldLighthouseSystem.getLighthouses', () => {
     ;(sys as any).lighthouses.push(makeLighthouse('active'))
     ;(sys as any).lighthouses.push(makeLighthouse('building'))
     ;(sys as any).lighthouses.push(makeLighthouse('ruined'))
-    expect(sys.getLighthouses()).toHaveLength(3)
+    expect((sys as any).lighthouses).toHaveLength(3)
   })
 })

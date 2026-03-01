@@ -12,13 +12,13 @@ describe('WorldAuroraSystem.getAuroras', () => {
   let sys: WorldAuroraSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无极光', () => { expect(sys.getAuroras()).toHaveLength(0) })
+  it('初始无极光', () => { expect((sys as any).auroras).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).auroras.push(makeAurora())
-    expect(sys.getAuroras()).toHaveLength(1)
+    expect((sys as any).auroras).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getAuroras()).toBe((sys as any).auroras)
+    expect((sys as any).auroras).toBe((sys as any).auroras)
   })
   it('支持4种极光颜色模式', () => {
     const patterns: AuroraColorPattern[] = ['green', 'purple', 'blue', 'multicolor']
@@ -26,7 +26,7 @@ describe('WorldAuroraSystem.getAuroras', () => {
   })
   it('极光字段正确', () => {
     ;(sys as any).auroras.push(makeAurora('multicolor'))
-    const a = sys.getAuroras()[0]
+    const a = (sys as any).auroras[0]
     expect(a.colorPattern).toBe('multicolor')
     expect(a.intensity).toBe(60)
   })

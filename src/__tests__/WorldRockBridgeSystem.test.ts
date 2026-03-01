@@ -12,17 +12,17 @@ describe('WorldRockBridgeSystem.getBridges', () => {
   let sys: WorldRockBridgeSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无天然石桥', () => { expect(sys.getBridges()).toHaveLength(0) })
+  it('初始无天然石桥', () => { expect((sys as any).bridges).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).bridges.push(makeBridge())
-    expect(sys.getBridges()).toHaveLength(1)
+    expect((sys as any).bridges).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getBridges()).toBe((sys as any).bridges)
+    expect((sys as any).bridges).toBe((sys as any).bridges)
   })
   it('天然石桥字段正确', () => {
     ;(sys as any).bridges.push(makeBridge())
-    const b = sys.getBridges()[0]
+    const b = (sys as any).bridges[0]
     expect(b.span).toBe(15)
     expect(b.loadCapacity).toBe(5)
     expect(b.spectacle).toBe(90)

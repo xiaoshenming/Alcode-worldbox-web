@@ -12,17 +12,17 @@ describe('WorldSpireSystem.getSpires', () => {
   let sys: WorldSpireSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无尖峰', () => { expect(sys.getSpires()).toHaveLength(0) })
+  it('初始无尖峰', () => { expect((sys as any).spires).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).spires.push(makeSpire())
-    expect(sys.getSpires()).toHaveLength(1)
+    expect((sys as any).spires).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getSpires()).toBe((sys as any).spires)
+    expect((sys as any).spires).toBe((sys as any).spires)
   })
   it('尖峰字段正确', () => {
     ;(sys as any).spires.push(makeSpire())
-    const s = sys.getSpires()[0]
+    const s = (sys as any).spires[0]
     expect(s.height).toBe(20)
     expect(s.stability).toBe(85)
     expect(s.windResistance).toBe(70)

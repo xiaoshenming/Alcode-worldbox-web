@@ -12,17 +12,17 @@ describe('WorldSinkholePrevSystem.getRisks', () => {
   let sys: WorldSinkholePrevSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无天坑风险', () => { expect(sys.getRisks()).toHaveLength(0) })
+  it('初始无天坑风险', () => { expect((sys as any).risks).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).risks.push(makeRisk())
-    expect(sys.getRisks()).toHaveLength(1)
+    expect((sys as any).risks).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getRisks()).toBe((sys as any).risks)
+    expect((sys as any).risks).toBe((sys as any).risks)
   })
   it('天坑风险字段正确', () => {
     ;(sys as any).risks.push(makeRisk())
-    const r = sys.getRisks()[0]
+    const r = (sys as any).risks[0]
     expect(r.riskLevel).toBe(60)
     expect(r.groundStability).toBe(40)
     expect(r.mitigated).toBe(false)

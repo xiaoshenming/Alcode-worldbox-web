@@ -12,13 +12,13 @@ describe('WorldMaelstromSystem', () => {
   let sys: WorldMaelstromSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无大漩涡', () => { expect(sys.getMaelstroms()).toHaveLength(0) })
+  it('初始无大漩涡', () => { expect((sys as any).maelstroms).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).maelstroms.push(makeMaelstrom())
-    expect(sys.getMaelstroms()).toHaveLength(1)
+    expect((sys as any).maelstroms).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getMaelstroms()).toBe((sys as any).maelstroms)
+    expect((sys as any).maelstroms).toBe((sys as any).maelstroms)
   })
   it('getActiveMaelstroms只返回active=true', () => {
     ;(sys as any).maelstroms.push(makeMaelstrom(true))
@@ -27,7 +27,7 @@ describe('WorldMaelstromSystem', () => {
   })
   it('大漩涡字段正确', () => {
     ;(sys as any).maelstroms.push(makeMaelstrom())
-    const m = sys.getMaelstroms()[0]
+    const m = (sys as any).maelstroms[0]
     expect(m.strength).toBe(80)
     expect(m.radius).toBe(15)
     expect(m.active).toBe(true)

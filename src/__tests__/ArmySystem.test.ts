@@ -38,15 +38,15 @@ describe('ArmySystem.getArmies', () => {
 
   it('注入军队后可查询到', () => {
     const army = makeArmy(1)
-    ;(sys as any).armies.set(1, army)
+    ;sys.getArmies().set(1, army)
     expect(sys.getArmies().size).toBe(1)
     expect(sys.getArmies().get(1)).toBe(army)
   })
 
   it('多个文明的军队都能查询到', () => {
-    ;(sys as any).armies.set(1, makeArmy(1))
-    ;(sys as any).armies.set(2, makeArmy(2, { state: 'marching' }))
-    ;(sys as any).armies.set(3, makeArmy(3, { state: 'sieging' }))
+    ;sys.getArmies().set(1, makeArmy(1))
+    ;sys.getArmies().set(2, makeArmy(2, { state: 'marching' }))
+    ;sys.getArmies().set(3, makeArmy(3, { state: 'sieging' }))
     expect(sys.getArmies().size).toBe(3)
   })
 
@@ -57,7 +57,7 @@ describe('ArmySystem.getArmies', () => {
   it('军队 state 字段可以是所有有效值', () => {
     const states: Army['state'][] = ['idle', 'marching', 'sieging', 'defending']
     states.forEach((state, i) => {
-      ;(sys as any).armies.set(i, makeArmy(i, { state }))
+      ;sys.getArmies().set(i, makeArmy(i, { state }))
     })
     const armies = sys.getArmies()
     states.forEach((state, i) => {
@@ -67,7 +67,7 @@ describe('ArmySystem.getArmies', () => {
 
   it('军队的 morale 和 soldiers 字段正确', () => {
     const army = makeArmy(10, { soldiers: [1, 2, 3], morale: 75, state: 'marching' })
-    ;(sys as any).armies.set(10, army)
+    ;sys.getArmies().set(10, army)
     const result = sys.getArmies().get(10)!
     expect(result.soldiers).toHaveLength(3)
     expect(result.morale).toBe(75)
@@ -76,7 +76,7 @@ describe('ArmySystem.getArmies', () => {
 
   it('getArmies 返回的是内部 Map 的直接引用', () => {
     // 外部修改可影响内部（直接引用）
-    ;(sys as any).armies.set(5, makeArmy(5))
+    ;sys.getArmies().set(5, makeArmy(5))
     const ref = sys.getArmies()
     ref.delete(5)
     expect(sys.getArmies().size).toBe(0)

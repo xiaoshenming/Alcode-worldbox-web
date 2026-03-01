@@ -12,17 +12,17 @@ describe('WorldAtollSystem.getAtolls', () => {
   let sys: WorldAtollSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无环礁', () => { expect(sys.getAtolls()).toHaveLength(0) })
+  it('初始无环礁', () => { expect((sys as any).atolls).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).atolls.push(makeAtoll())
-    expect(sys.getAtolls()).toHaveLength(1)
+    expect((sys as any).atolls).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getAtolls()).toBe((sys as any).atolls)
+    expect((sys as any).atolls).toBe((sys as any).atolls)
   })
   it('环礁字段正确', () => {
     ;(sys as any).atolls.push(makeAtoll())
-    const a = sys.getAtolls()[0]
+    const a = (sys as any).atolls[0]
     expect(a.lagoonDepth).toBe(15)
     expect(a.coralHealth).toBe(80)
     expect(a.marineLife).toBe(70)

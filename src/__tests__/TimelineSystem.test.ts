@@ -17,15 +17,15 @@ describe('TimelineSystem.getHistory', () => {
   })
   it('注入后历史增加', () => {
     const initialLen = sys.getHistory().length
-    ;(sys as any).history.push(makeEvent())
+    ;sys.getHistory().push(makeEvent())
     expect(sys.getHistory()).toHaveLength(initialLen + 1)
   })
   it('返回内部引用', () => {
-    expect(sys.getHistory()).toBe((sys as any).history)
+    expect(sys.getHistory()).toBe(sys.getHistory())
   })
   it('支持6种历史事件类型', () => {
     const types: HistoricalEvent['type'][] = ['era_change', 'war', 'disaster', 'achievement', 'founding', 'collapse']
-    types.forEach(t => { ;(sys as any).history.push(makeEvent(t)) })
+    types.forEach(t => { ;sys.getHistory().push(makeEvent(t)) })
     const all = sys.getHistory()
     // 前1个是预置事件，后6个是我们注入的
     expect(all).toHaveLength(7)

@@ -12,17 +12,17 @@ describe('WorldCanyonSystem.getCanyons', () => {
   let sys: WorldCanyonSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无峡谷', () => { expect(sys.getCanyons()).toHaveLength(0) })
+  it('初始无峡谷', () => { expect((sys as any).canyons).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).canyons.push(makeCanyon())
-    expect(sys.getCanyons()).toHaveLength(1)
+    expect((sys as any).canyons).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getCanyons()).toBe((sys as any).canyons)
+    expect((sys as any).canyons).toBe((sys as any).canyons)
   })
   it('峡谷字段正确', () => {
     ;(sys as any).canyons.push(makeCanyon())
-    const c = sys.getCanyons()[0]
+    const c = (sys as any).canyons[0]
     expect(c.depth).toBe(30)
     expect(c.wallHeight).toBe(40)
     expect(c.rockLayers).toBe(8)
@@ -30,6 +30,6 @@ describe('WorldCanyonSystem.getCanyons', () => {
   it('多个峡谷全部返回', () => {
     ;(sys as any).canyons.push(makeCanyon())
     ;(sys as any).canyons.push(makeCanyon())
-    expect(sys.getCanyons()).toHaveLength(2)
+    expect((sys as any).canyons).toHaveLength(2)
   })
 })

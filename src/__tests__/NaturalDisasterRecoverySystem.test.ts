@@ -37,10 +37,10 @@ describe('NaturalDisasterRecoverySystem.getRecoveryProgress', () => {
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
   it('不存在的id返回-1', () => { expect(sys.getRecoveryProgress(999)).toBe(-1) })
-  it('注入后���回正确进度', () => {
-    ;(sys as any).recoveryZones.push(makeZone(0.3))
-    const id = (sys as any).recoveryZones[0].id
-    expect(sys.getRecoveryProgress(id)).toBe(0.3)
+  it('注入后返回正确进度', () => {
+    const zone = makeZone(0.3)
+    ;(sys as any).recoveryZones.push(zone)
+    expect(sys.getRecoveryProgress(zone.id)).toBe(0.3)
   })
 })
 

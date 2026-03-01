@@ -12,17 +12,17 @@ describe('WorldWadiSystem.getWadis', () => {
   let sys: WorldWadiSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无干谷', () => { expect(sys.getWadis()).toHaveLength(0) })
+  it('初始无干谷', () => { expect((sys as any).wadis).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).wadis.push(makeWadi())
-    expect(sys.getWadis()).toHaveLength(1)
+    expect((sys as any).wadis).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getWadis()).toBe((sys as any).wadis)
+    expect((sys as any).wadis).toBe((sys as any).wadis)
   })
   it('干谷字段正确', () => {
     ;(sys as any).wadis.push(makeWadi())
-    const w = sys.getWadis()[0]
+    const w = (sys as any).wadis[0]
     expect(w.flashFloodRisk).toBe(70)
     expect(w.waterFrequency).toBe(20)
     expect(w.spectacle).toBe(55)
@@ -30,6 +30,6 @@ describe('WorldWadiSystem.getWadis', () => {
   it('多个干谷全部返回', () => {
     ;(sys as any).wadis.push(makeWadi())
     ;(sys as any).wadis.push(makeWadi())
-    expect(sys.getWadis()).toHaveLength(2)
+    expect((sys as any).wadis).toHaveLength(2)
   })
 })

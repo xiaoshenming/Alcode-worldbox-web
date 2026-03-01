@@ -17,18 +17,18 @@ describe('WorldChronicleSystem.getChronicles', () => {
 
   it('初始无记录', () => { expect(sys.getChronicles()).toHaveLength(0) })
   it('注入后可查询', () => {
-    ;(sys as any).chronicles.push(makeChronicle())
+    ;sys.getChronicles().push(makeChronicle())
     expect(sys.getChronicles()).toHaveLength(1)
   })
   it('按category过滤', () => {
-    ;(sys as any).chronicles.push(makeChronicle('war'))
-    ;(sys as any).chronicles.push(makeChronicle('hero'))
+    ;sys.getChronicles().push(makeChronicle('war'))
+    ;sys.getChronicles().push(makeChronicle('hero'))
     expect(sys.getChronicles({ category: 'war' })).toHaveLength(1)
     expect(sys.getChronicles({ category: 'hero' })).toHaveLength(1)
   })
   it('按minImportance过滤', () => {
-    ;(sys as any).chronicles.push(makeChronicle('war', 1))
-    ;(sys as any).chronicles.push(makeChronicle('hero', 3))
+    ;sys.getChronicles().push(makeChronicle('war', 1))
+    ;sys.getChronicles().push(makeChronicle('hero', 3))
     expect(sys.getChronicles({ minImportance: 2 })).toHaveLength(1)
     expect(sys.getChronicles({ minImportance: 3 })).toHaveLength(1)
   })
@@ -44,7 +44,7 @@ describe('WorldChronicleSystem.getRecentChronicles', () => {
 
   it('空时返回[]', () => { expect(sys.getRecentChronicles(5)).toHaveLength(0) })
   it('返回末尾N条', () => {
-    for (let i = 0; i < 15; i++) { ;(sys as any).chronicles.push(makeChronicle()) }
+    for (let i = 0; i < 15; i++) { ;sys.getChronicles().push(makeChronicle()) }
     expect(sys.getRecentChronicles(10)).toHaveLength(10)
   })
 })
@@ -55,8 +55,8 @@ describe('WorldChronicleSystem.getChroniclesByCiv', () => {
 
   it('无匹配返回[]', () => { expect(sys.getChroniclesByCiv(99)).toHaveLength(0) })
   it('按civId过滤', () => {
-    ;(sys as any).chronicles.push(makeChronicle('war', 2, 1))
-    ;(sys as any).chronicles.push(makeChronicle('hero', 2, 2))
+    ;sys.getChronicles().push(makeChronicle('war', 2, 1))
+    ;sys.getChronicles().push(makeChronicle('hero', 2, 2))
     expect(sys.getChroniclesByCiv(1)).toHaveLength(1)
   })
 })

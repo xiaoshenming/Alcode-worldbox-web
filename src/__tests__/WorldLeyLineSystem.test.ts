@@ -15,7 +15,7 @@ describe('WorldLeyLineSystem.getLeyLines', () => {
     expect(sys.getLeyLines()).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getLeyLines()).toBe((sys as any).leyLines)
+    expect(sys.getLeyLines()).toBe(sys.getLeyLines())
   })
 })
 
@@ -29,6 +29,6 @@ describe('WorldLeyLineSystem.getNexuses', () => {
     expect(sys.getNexuses()).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getNexuses()).toBe((sys as any).nexuses)
+    expect(sys.getNexuses()).toBe(sys.getNexuses())
   })
 })

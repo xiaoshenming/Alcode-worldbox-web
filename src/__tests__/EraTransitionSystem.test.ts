@@ -129,7 +129,7 @@ describe('EraTransitionSystem.addHistoryEntry', () => {
       ets.addHistoryEntry(makeEntry(i, { type }))
     })
     const history = ets.getHistory()
-    expect(history.map(h => h.type)).toEqual(types)
+    expect(history.map((h: any) => h.type)).toEqual(types)
   })
 })
 

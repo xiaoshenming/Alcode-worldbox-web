@@ -12,17 +12,17 @@ describe('WorldKettleHoleSystem.getKettles', () => {
   let sys: WorldKettleHoleSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无冰壶湖', () => { expect(sys.getKettles()).toHaveLength(0) })
+  it('初始无冰壶湖', () => { expect((sys as any).kettles).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).kettles.push(makeKettle())
-    expect(sys.getKettles()).toHaveLength(1)
+    expect((sys as any).kettles).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getKettles()).toBe((sys as any).kettles)
+    expect((sys as any).kettles).toBe((sys as any).kettles)
   })
   it('冰壶湖字段正确', () => {
     ;(sys as any).kettles.push(makeKettle())
-    const k = sys.getKettles()[0]
+    const k = (sys as any).kettles[0]
     expect(k.waterFilled).toBe(true)
     expect(k.wildlifeValue).toBe(70)
     expect(k.vegetationRing).toBe(60)

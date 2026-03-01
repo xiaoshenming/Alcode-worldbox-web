@@ -100,9 +100,9 @@ describe('GodPowerSystem.activatePower effect properties', () => {
 
   it('支持所有合法的 GodPowerType', () => {
     const powers: GodPowerType[] = ['bless', 'curse', 'volcano', 'time_warp', 'divine_storm']
-    powers.forEach(p => gps.activatePower(p, 0, 0))
+    powers.forEach((p: any) => gps.activatePower(p, 0, 0))
     expect(gps.getActiveEffects()).toHaveLength(powers.length)
-    const types = gps.getActiveEffects().map(e => e.type)
+    const types = gps.getActiveEffects().map((e: any) => e.type)
     expect(types).toEqual(powers)
   })
 })

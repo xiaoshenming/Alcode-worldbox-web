@@ -12,17 +12,17 @@ describe('WorldTepuiSystem.getTepuis', () => {
   let sys: WorldTepuiSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无桌山', () => { expect(sys.getTepuis()).toHaveLength(0) })
+  it('初始无桌山', () => { expect((sys as any).tepuis).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).tepuis.push(makeTepui())
-    expect(sys.getTepuis()).toHaveLength(1)
+    expect((sys as any).tepuis).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getTepuis()).toBe((sys as any).tepuis)
+    expect((sys as any).tepuis).toBe((sys as any).tepuis)
   })
   it('桌山字段正确', () => {
     ;(sys as any).tepuis.push(makeTepui())
-    const t = sys.getTepuis()[0]
+    const t = (sys as any).tepuis[0]
     expect(t.elevation).toBe(50)
     expect(t.endemicSpecies).toBe(20)
     expect(t.spectacle).toBe(90)

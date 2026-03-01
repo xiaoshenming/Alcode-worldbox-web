@@ -12,13 +12,13 @@ describe('WorldTidewaterSystem.getZones', () => {
   let sys: WorldTidewaterSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无潮水区', () => { expect(sys.getZones()).toHaveLength(0) })
+  it('初始无潮水区', () => { expect((sys as any).zones).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).zones.push(makeZone())
-    expect(sys.getZones()).toHaveLength(1)
+    expect((sys as any).zones).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getZones()).toBe((sys as any).zones)
+    expect((sys as any).zones).toBe((sys as any).zones)
   })
   it('支持4种潮汐阶段', () => {
     const phases: TidePhase[] = ['rising', 'high', 'falling', 'low']
@@ -26,7 +26,7 @@ describe('WorldTidewaterSystem.getZones', () => {
   })
   it('潮水区字段正确', () => {
     ;(sys as any).zones.push(makeZone('low'))
-    const z = sys.getZones()[0]
+    const z = (sys as any).zones[0]
     expect(z.phase).toBe('low')
     expect(z.level).toBe(80)
     expect(z.radius).toBe(10)

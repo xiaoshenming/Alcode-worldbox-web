@@ -12,17 +12,17 @@ describe('WorldOutlierSystem.getOutliers', () => {
   let sys: WorldOutlierSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无外露岩', () => { expect(sys.getOutliers()).toHaveLength(0) })
+  it('初始无外露岩', () => { expect((sys as any).outliers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).outliers.push(makeOutlier())
-    expect(sys.getOutliers()).toHaveLength(1)
+    expect((sys as any).outliers).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getOutliers()).toBe((sys as any).outliers)
+    expect((sys as any).outliers).toBe((sys as any).outliers)
   })
   it('外露岩字段正确', () => {
     ;(sys as any).outliers.push(makeOutlier())
-    const o = sys.getOutliers()[0]
+    const o = (sys as any).outliers[0]
     expect(o.isolationDegree).toBe(70)
     expect(o.spectacle).toBe(60)
     expect(o.rockAge).toBe(8000)

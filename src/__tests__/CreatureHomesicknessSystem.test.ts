@@ -12,19 +12,19 @@ describe('CreatureHomesicknessSystem.getStates', () => {
   let sys: CreatureHomesicknessSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无思乡状态', () => { expect((sys as any).states).toHaveLength(0) })
+  it('初始无思乡状态', () => { expect(sys.getStates()).toHaveLength(0) })
   it('注入后可查询', () => {
-    ;(sys as any).states.push(makeState(1))
-    expect((sys as any).states[0].entityId).toBe(1)
+    ;sys.getStates().push(makeState(1))
+    expect(sys.getStates()[0].entityId).toBe(1)
   })
   it('返回内部引用', () => {
-    ;(sys as any).states.push(makeState(1))
-    expect((sys as any).states).toBe((sys as any).states)
+    ;sys.getStates().push(makeState(1))
+    expect(sys.getStates()).toBe(sys.getStates())
   })
   it('多个全部返回', () => {
-    ;(sys as any).states.push(makeState(1))
-    ;(sys as any).states.push(makeState(2))
-    expect((sys as any).states).toHaveLength(2)
+    ;sys.getStates().push(makeState(1))
+    ;sys.getStates().push(makeState(2))
+    expect(sys.getStates()).toHaveLength(2)
   })
 })
 
@@ -34,8 +34,8 @@ describe('CreatureHomesicknessSystem.getByEntity', () => {
 
   it('未注入返回 undefined', () => { expect(sys.getByEntity(999)).toBeUndefined() })
   it('找到对应实体', () => {
-    ;(sys as any).states.push(makeState(1))
-    ;(sys as any).states.push(makeState(2))
+    ;sys.getStates().push(makeState(1))
+    ;sys.getStates().push(makeState(2))
     const s = sys.getByEntity(2)
     expect(s).toBeDefined()
     expect(s!.entityId).toBe(2)

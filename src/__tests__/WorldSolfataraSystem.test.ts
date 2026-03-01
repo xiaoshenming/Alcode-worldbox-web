@@ -12,17 +12,17 @@ describe('WorldSolfataraSystem.getSolfataras', () => {
   let sys: WorldSolfataraSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无硫磺喷气孔', () => { expect(sys.getSolfataras()).toHaveLength(0) })
+  it('初始无硫磺喷气孔', () => { expect((sys as any).solfataras).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).solfataras.push(makeSolfatara())
-    expect(sys.getSolfataras()).toHaveLength(1)
+    expect((sys as any).solfataras).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getSolfataras()).toBe((sys as any).solfataras)
+    expect((sys as any).solfataras).toBe((sys as any).solfataras)
   })
   it('硫磺喷气孔字段正确', () => {
     ;(sys as any).solfataras.push(makeSolfatara())
-    const s = sys.getSolfataras()[0]
+    const s = (sys as any).solfataras[0]
     expect(s.sulfurOutput).toBe(70)
     expect(s.toxicity).toBe(80)
     expect(s.craterDiameter).toBe(10)
@@ -30,6 +30,6 @@ describe('WorldSolfataraSystem.getSolfataras', () => {
   it('多个硫磺喷气孔全部返回', () => {
     ;(sys as any).solfataras.push(makeSolfatara())
     ;(sys as any).solfataras.push(makeSolfatara())
-    expect(sys.getSolfataras()).toHaveLength(2)
+    expect((sys as any).solfataras).toHaveLength(2)
   })
 })

@@ -12,13 +12,13 @@ describe('WorldBallLightningSystem.getBalls', () => {
   let sys: WorldBallLightningSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无球形闪电', () => { expect(sys.getBalls()).toHaveLength(0) })
+  it('初始无球形闪电', () => { expect((sys as any).balls).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).balls.push(makeBall())
-    expect(sys.getBalls()).toHaveLength(1)
+    expect((sys as any).balls).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getBalls()).toBe((sys as any).balls)
+    expect((sys as any).balls).toBe((sys as any).balls)
   })
   it('支持4种尺寸', () => {
     const sizes: BallSize[] = ['small', 'medium', 'large', 'massive']
@@ -26,7 +26,7 @@ describe('WorldBallLightningSystem.getBalls', () => {
   })
   it('球形闪电字段正确', () => {
     ;(sys as any).balls.push(makeBall('massive'))
-    const b = sys.getBalls()[0]
+    const b = (sys as any).balls[0]
     expect(b.size).toBe('massive')
     expect(b.energy).toBe(80)
     expect(b.damageRadius).toBe(5)

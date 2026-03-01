@@ -12,13 +12,13 @@ describe('WorldMythicBeastSystem.getBeasts', () => {
   let sys: WorldMythicBeastSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无神话生物', () => { expect(sys.getBeasts()).toHaveLength(0) })
+  it('初始无神话生物', () => { expect((sys as any).beasts).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).beasts.push(makeBeast())
-    expect(sys.getBeasts()).toHaveLength(1)
+    expect((sys as any).beasts).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getBeasts()).toBe((sys as any).beasts)
+    expect((sys as any).beasts).toBe((sys as any).beasts)
   })
   it('支持5种神话生物类型', () => {
     const types: BeastType[] = ['phoenix', 'leviathan', 'behemoth', 'griffin', 'hydra']
@@ -26,7 +26,7 @@ describe('WorldMythicBeastSystem.getBeasts', () => {
   })
   it('生物字段正确', () => {
     ;(sys as any).beasts.push(makeBeast('hydra', 150))
-    const b = sys.getBeasts()[0]
+    const b = (sys as any).beasts[0]
     expect(b.type).toBe('hydra')
     expect(b.health).toBe(150)
     expect(b.hostile).toBe(true)

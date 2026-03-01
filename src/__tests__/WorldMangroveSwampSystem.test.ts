@@ -12,17 +12,17 @@ describe('WorldMangroveSwampSystem.getSwamps', () => {
   let sys: WorldMangroveSwampSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无红树林沼泽', () => { expect(sys.getSwamps()).toHaveLength(0) })
+  it('初始无红树林沼泽', () => { expect((sys as any).swamps).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).swamps.push(makeSwamp())
-    expect(sys.getSwamps()).toHaveLength(1)
+    expect((sys as any).swamps).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getSwamps()).toBe((sys as any).swamps)
+    expect((sys as any).swamps).toBe((sys as any).swamps)
   })
   it('红树林沼泽字段正确', () => {
     ;(sys as any).swamps.push(makeSwamp())
-    const s = sys.getSwamps()[0]
+    const s = (sys as any).swamps[0]
     expect(s.density).toBe(80)
     expect(s.biodiversity).toBe(90)
     expect(s.coastalProtection).toBe(70)

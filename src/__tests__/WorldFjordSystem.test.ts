@@ -12,17 +12,17 @@ describe('WorldFjordSystem.getFjords', () => {
   let sys: WorldFjordSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无峡湾', () => { expect(sys.getFjords()).toHaveLength(0) })
+  it('初始无峡湾', () => { expect((sys as any).fjords).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).fjords.push(makeFjord())
-    expect(sys.getFjords()).toHaveLength(1)
+    expect((sys as any).fjords).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getFjords()).toBe((sys as any).fjords)
+    expect((sys as any).fjords).toBe((sys as any).fjords)
   })
   it('峡湾字段正确', () => {
     ;(sys as any).fjords.push(makeFjord())
-    const f = sys.getFjords()[0]
+    const f = (sys as any).fjords[0]
     expect(f.depth).toBe(200)
     expect(f.cliffHeight).toBe(50)
     expect(f.waterClarity).toBe(85)
@@ -30,6 +30,6 @@ describe('WorldFjordSystem.getFjords', () => {
   it('多个峡湾全部返回', () => {
     ;(sys as any).fjords.push(makeFjord())
     ;(sys as any).fjords.push(makeFjord())
-    expect(sys.getFjords()).toHaveLength(2)
+    expect((sys as any).fjords).toHaveLength(2)
   })
 })

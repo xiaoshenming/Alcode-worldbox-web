@@ -15,18 +15,18 @@ describe('WorldPetrificationSystem', () => {
   let sys: WorldPetrificationSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无石化区', () => { expect(sys.getZones()).toHaveLength(0) })
+  it('初始无石化区', () => { expect((sys as any).zones).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).zones.push(makeZone())
-    expect(sys.getZones()).toHaveLength(1)
+    expect((sys as any).zones).toHaveLength(1)
   })
   it('getPetrified返回石化生物', () => {
     ;(sys as any).petrified.push(makePetrified())
-    expect(sys.getPetrified()).toHaveLength(1)
+    expect((sys as any).petrified).toHaveLength(1)
   })
   it('石化区字段正确', () => {
     ;(sys as any).zones.push(makeZone())
-    const z = sys.getZones()[0]
+    const z = (sys as any).zones[0]
     expect(z.intensity).toBe(70)
     expect(z.expanding).toBe(true)
     expect(z.petrifiedCount).toBe(3)

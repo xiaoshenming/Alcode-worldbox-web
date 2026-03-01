@@ -91,18 +91,18 @@ describe('EspionageSystem.getTributes', () => {
   beforeEach(() => { es = makeES() })
 
   it('初始无贡品记录', () => {
-    expect(es.getTributes()).toHaveLength(0)
+    expect((es as any).tributes).toHaveLength(0)
   })
 
   it('注入贡品记录后可查询', () => {
     ;(es as any).tributes.push({ fromCivId: 1, toCivId: 2, amount: 500, lastTick: 100 })
-    expect(es.getTributes()).toHaveLength(1)
-    expect(es.getTributes()[0].amount).toBe(500)
+    expect((es as any).tributes).toHaveLength(1)
+    expect((es as any).tributes[0].amount).toBe(500)
   })
 
   it('返回内部引用', () => {
     ;(es as any).tributes.push({ fromCivId: 1, toCivId: 2, amount: 100, lastTick: 0 })
-    expect(es.getTributes()).toBe((es as any).tributes)
+    expect((es as any).tributes).toBe((es as any).tributes)
   })
 })
 
@@ -135,20 +135,20 @@ describe('EspionageSystem.addBorderConflict', () => {
   it('添加边界冲突后可查询', () => {
     es.addBorderConflict(1, 2, 100)
     expect(es.hasJustification(1, 2)).toBe(true)
-    expect(es.getJustifications()[0].reason).toBe('border_conflict')
-    expect(es.getJustifications()[0].tick).toBe(100)
+    expect((es as any).warJustifications[0].reason).toBe('border_conflict')
+    expect((es as any).warJustifications[0].tick).toBe(100)
   })
 
   it('重复添加不产生重复记录', () => {
     es.addBorderConflict(1, 2, 100)
     es.addBorderConflict(1, 2, 200)
-    expect(es.getJustifications()).toHaveLength(1)
+    expect((es as any).warJustifications).toHaveLength(1)
   })
 
   it('不同方向各自独立', () => {
     es.addBorderConflict(1, 2, 100)
     es.addBorderConflict(2, 1, 200)
-    expect(es.getJustifications()).toHaveLength(2)
+    expect((es as any).warJustifications).toHaveLength(2)
   })
 })
 
@@ -160,18 +160,18 @@ describe('EspionageSystem.addReligiousTension', () => {
   it('添加宗教紧张关系后可查询', () => {
     es.addReligiousTension(3, 4, 50)
     expect(es.hasJustification(3, 4)).toBe(true)
-    expect(es.getJustifications()[0].reason).toBe('religious_diff')
+    expect((es as any).warJustifications[0].reason).toBe('religious_diff')
   })
 
   it('重复添加不产生重复记录', () => {
     es.addReligiousTension(1, 2, 0)
     es.addReligiousTension(1, 2, 0)
-    expect(es.getJustifications()).toHaveLength(1)
+    expect((es as any).warJustifications).toHaveLength(1)
   })
 
   it('边界冲突和宗教紧张可共存（不同 reason）', () => {
     es.addBorderConflict(1, 2, 0)
     es.addReligiousTension(1, 2, 0)
-    expect(es.getJustifications()).toHaveLength(2)
+    expect((es as any).warJustifications).toHaveLength(2)
   })
 })

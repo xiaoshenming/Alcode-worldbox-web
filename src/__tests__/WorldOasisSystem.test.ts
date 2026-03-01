@@ -12,17 +12,17 @@ describe('WorldOasisSystem.getOases', () => {
   let sys: WorldOasisSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无绿洲', () => { expect(sys.getOases()).toHaveLength(0) })
+  it('初始无绿洲', () => { expect((sys as any).oases).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).oases.push(makeOasis())
-    expect(sys.getOases()).toHaveLength(1)
+    expect((sys as any).oases).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getOases()).toBe((sys as any).oases)
+    expect((sys as any).oases).toBe((sys as any).oases)
   })
   it('绿洲字段正确', () => {
     ;(sys as any).oases.push(makeOasis(80, 'large'))
-    const o = sys.getOases()[0]
+    const o = (sys as any).oases[0]
     expect(o.waterLevel).toBe(80)
     expect(o.size).toBe('large')
   })

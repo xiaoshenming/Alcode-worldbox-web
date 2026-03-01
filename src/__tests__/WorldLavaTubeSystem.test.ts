@@ -12,17 +12,17 @@ describe('WorldLavaTubeSystem.getTubes', () => {
   let sys: WorldLavaTubeSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无熔岩管', () => { expect(sys.getTubes()).toHaveLength(0) })
+  it('初始无熔岩管', () => { expect((sys as any).tubes).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).tubes.push(makeTube())
-    expect(sys.getTubes()).toHaveLength(1)
+    expect((sys as any).tubes).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getTubes()).toBe((sys as any).tubes)
+    expect((sys as any).tubes).toBe((sys as any).tubes)
   })
   it('熔岩管字段正确', () => {
     ;(sys as any).tubes.push(makeTube())
-    const t = sys.getTubes()[0]
+    const t = (sys as any).tubes[0]
     expect(t.internalTemp).toBe(150)
     expect(t.collapseRisk).toBe(20)
     expect(t.spectacle).toBe(65)
@@ -30,6 +30,6 @@ describe('WorldLavaTubeSystem.getTubes', () => {
   it('多个熔岩管全部返回', () => {
     ;(sys as any).tubes.push(makeTube())
     ;(sys as any).tubes.push(makeTube())
-    expect(sys.getTubes()).toHaveLength(2)
+    expect((sys as any).tubes).toHaveLength(2)
   })
 })

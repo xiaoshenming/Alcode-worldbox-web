@@ -12,23 +12,23 @@ describe('CreatureOmenBeliefSystem.getBeliefs', () => {
   let sys: CreatureOmenBeliefSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无信念', () => { expect((sys as any).beliefs).toHaveLength(0) })
+  it('初始无信念', () => { expect(sys.getBeliefs()).toHaveLength(0) })
   it('注入后可查询', () => {
-    ;(sys as any).beliefs.push(makeOmen(1, 'dark_sky'))
-    expect((sys as any).beliefs[0].type).toBe('dark_sky')
+    ;sys.getBeliefs().push(makeOmen(1, 'dark_sky'))
+    expect(sys.getBeliefs()[0].type).toBe('dark_sky')
   })
   it('返回内部引用', () => {
-    ;(sys as any).beliefs.push(makeOmen(1))
-    expect((sys as any).beliefs).toBe((sys as any).beliefs)
+    ;sys.getBeliefs().push(makeOmen(1))
+    expect(sys.getBeliefs()).toBe(sys.getBeliefs())
   })
   it('支持所有6种预兆类型', () => {
     const types: OmenType[] = ['good_harvest', 'dark_sky', 'animal_sign', 'water_omen', 'fire_portent', 'wind_whisper']
-    types.forEach((t, i) => { ;(sys as any).beliefs.push(makeOmen(i + 1, t)) })
-    expect((sys as any).beliefs).toHaveLength(6)
+    types.forEach((t, i) => { ;sys.getBeliefs().push(makeOmen(i + 1, t)) })
+    expect(sys.getBeliefs()).toHaveLength(6)
   })
   it('多个全部返回', () => {
-    ;(sys as any).beliefs.push(makeOmen(1))
-    ;(sys as any).beliefs.push(makeOmen(2))
-    expect((sys as any).beliefs).toHaveLength(2)
+    ;sys.getBeliefs().push(makeOmen(1))
+    ;sys.getBeliefs().push(makeOmen(2))
+    expect(sys.getBeliefs()).toHaveLength(2)
   })
 })

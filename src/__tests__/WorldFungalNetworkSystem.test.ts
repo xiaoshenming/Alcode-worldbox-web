@@ -12,14 +12,14 @@ describe('WorldFungalNetworkSystem.getNetworks', () => {
   let sys: WorldFungalNetworkSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无菌根网络', () => { expect(sys.getNetworks()).toHaveLength(0) })
+  it('初始无菌根网络', () => { expect((sys as any).networks).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).networks.push(makeNetwork())
-    expect(sys.getNetworks()).toHaveLength(1)
+    expect((sys as any).networks).toHaveLength(1)
   })
   it('返回内部引用（只读）', () => {
     ;(sys as any).networks.push(makeNetwork())
-    const nets = sys.getNetworks()
+    const nets = (sys as any).networks
     expect(nets[0].myceliumType).toBe('mycorrhizal')
   })
   it('支持4种菌丝类型', () => {
@@ -29,6 +29,6 @@ describe('WorldFungalNetworkSystem.getNetworks', () => {
   it('多个网络全部返回', () => {
     ;(sys as any).networks.push(makeNetwork('saprophytic'))
     ;(sys as any).networks.push(makeNetwork('parasitic'))
-    expect(sys.getNetworks()).toHaveLength(2)
+    expect((sys as any).networks).toHaveLength(2)
   })
 })

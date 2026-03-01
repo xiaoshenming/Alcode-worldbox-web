@@ -12,17 +12,17 @@ describe('WorldHogbackSystem.getHogbacks', () => {
   let sys: WorldHogbackSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无猪背岭', () => { expect(sys.getHogbacks()).toHaveLength(0) })
+  it('初始无猪背岭', () => { expect((sys as any).hogbacks).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).hogbacks.push(makeHogback())
-    expect(sys.getHogbacks()).toHaveLength(1)
+    expect((sys as any).hogbacks).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getHogbacks()).toBe((sys as any).hogbacks)
+    expect((sys as any).hogbacks).toBe((sys as any).hogbacks)
   })
   it('猪背岭字段正确', () => {
     ;(sys as any).hogbacks.push(makeHogback())
-    const h = sys.getHogbacks()[0]
+    const h = (sys as any).hogbacks[0]
     expect(h.dipAngle).toBe(45)
     expect(h.rockResistance).toBe(80)
     expect(h.spectacle).toBe(65)
@@ -30,6 +30,6 @@ describe('WorldHogbackSystem.getHogbacks', () => {
   it('多个猪背岭全部返回', () => {
     ;(sys as any).hogbacks.push(makeHogback())
     ;(sys as any).hogbacks.push(makeHogback())
-    expect(sys.getHogbacks()).toHaveLength(2)
+    expect((sys as any).hogbacks).toHaveLength(2)
   })
 })

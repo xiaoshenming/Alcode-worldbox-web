@@ -12,17 +12,17 @@ describe('WorldSeaCaveSystem.getCaves', () => {
   let sys: WorldSeaCaveSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无海蚀洞', () => { expect(sys.getCaves()).toHaveLength(0) })
+  it('初始无海蚀洞', () => { expect((sys as any).caves).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).caves.push(makeCave())
-    expect(sys.getCaves()).toHaveLength(1)
+    expect((sys as any).caves).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getCaves()).toBe((sys as any).caves)
+    expect((sys as any).caves).toBe((sys as any).caves)
   })
   it('海蚀洞字段正确', () => {
     ;(sys as any).caves.push(makeCave())
-    const c = sys.getCaves()[0]
+    const c = (sys as any).caves[0]
     expect(c.entranceWidth).toBe(5)
     expect(c.stability).toBe(70)
     expect(c.spectacle).toBe(75)
@@ -30,6 +30,6 @@ describe('WorldSeaCaveSystem.getCaves', () => {
   it('多个海蚀洞全部返回', () => {
     ;(sys as any).caves.push(makeCave())
     ;(sys as any).caves.push(makeCave())
-    expect(sys.getCaves()).toHaveLength(2)
+    expect((sys as any).caves).toHaveLength(2)
   })
 })

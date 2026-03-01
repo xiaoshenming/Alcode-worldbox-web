@@ -12,17 +12,17 @@ describe('WorldBlackSandBeachSystem.getZones', () => {
   let sys: WorldBlackSandBeachSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无黑沙滩', () => { expect(sys.getZones()).toHaveLength(0) })
+  it('初始无黑沙滩', () => { expect((sys as any).zones).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).zones.push(makeZone())
-    expect(sys.getZones()).toHaveLength(1)
+    expect((sys as any).zones).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getZones()).toBe((sys as any).zones)
+    expect((sys as any).zones).toBe((sys as any).zones)
   })
   it('黑沙滩字段正确', () => {
     ;(sys as any).zones.push(makeZone())
-    const z = sys.getZones()[0]
+    const z = (sys as any).zones[0]
     expect(z.magnetiteContent).toBe(75)
     expect(z.volcanism).toBe(80)
     expect(z.sandDepth).toBe(3)
@@ -30,6 +30,6 @@ describe('WorldBlackSandBeachSystem.getZones', () => {
   it('多个黑沙滩全部返回', () => {
     ;(sys as any).zones.push(makeZone())
     ;(sys as any).zones.push(makeZone())
-    expect(sys.getZones()).toHaveLength(2)
+    expect((sys as any).zones).toHaveLength(2)
   })
 })

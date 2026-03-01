@@ -12,14 +12,14 @@ describe('CreatureHandicraftSystem.getCrafts', () => {
   let sys: CreatureHandicraftSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无手工艺', () => { expect((sys as any).crafts).toHaveLength(0) })
+  it('初始无手工艺', () => { expect(sys.getCrafts()).toHaveLength(0) })
   it('注入后可查询', () => {
-    ;(sys as any).crafts.push(makeCraft(1, 'textile'))
-    expect((sys as any).crafts[0].type).toBe('textile')
+    ;sys.getCrafts().push(makeCraft(1, 'textile'))
+    expect(sys.getCrafts()[0].type).toBe('textile')
   })
   it('返回内部引用', () => {
-    ;(sys as any).crafts.push(makeCraft(1))
-    expect((sys as any).crafts).toBe((sys as any).crafts)
+    ;sys.getCrafts().push(makeCraft(1))
+    expect(sys.getCrafts()).toBe(sys.getCrafts())
   })
 })
 
@@ -28,13 +28,13 @@ describe('CreatureHandicraftSystem.getByCrafter', () => {
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
   it('无匹配返回空', () => {
-    ;(sys as any).crafts.push(makeCraft(1))
+    ;sys.getCrafts().push(makeCraft(1))
     expect(sys.getByCrafter(999)).toHaveLength(0)
   })
   it('过滤特定工匠', () => {
-    ;(sys as any).crafts.push(makeCraft(1))
-    ;(sys as any).crafts.push(makeCraft(1))
-    ;(sys as any).crafts.push(makeCraft(2))
+    ;sys.getCrafts().push(makeCraft(1))
+    ;sys.getCrafts().push(makeCraft(1))
+    ;sys.getCrafts().push(makeCraft(2))
     expect(sys.getByCrafter(1)).toHaveLength(2)
   })
 })

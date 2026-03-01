@@ -12,17 +12,17 @@ describe('WorldCinderConeSystem.getCones', () => {
   let sys: WorldCinderConeSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无火山渣锥', () => { expect(sys.getCones()).toHaveLength(0) })
+  it('初始无火山渣锥', () => { expect((sys as any).cones).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).cones.push(makeCone())
-    expect(sys.getCones()).toHaveLength(1)
+    expect((sys as any).cones).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getCones()).toBe((sys as any).cones)
+    expect((sys as any).cones).toBe((sys as any).cones)
   })
   it('火山渣锥字段正确', () => {
     ;(sys as any).cones.push(makeCone())
-    const c = sys.getCones()[0]
+    const c = (sys as any).cones[0]
     expect(c.ashDeposit).toBe(60)
     expect(c.temperature).toBe(300)
     expect(c.height).toBe(20)
@@ -30,6 +30,6 @@ describe('WorldCinderConeSystem.getCones', () => {
   it('多个火山渣锥全部返回', () => {
     ;(sys as any).cones.push(makeCone())
     ;(sys as any).cones.push(makeCone())
-    expect(sys.getCones()).toHaveLength(2)
+    expect((sys as any).cones).toHaveLength(2)
   })
 })

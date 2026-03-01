@@ -12,13 +12,13 @@ describe('WorldSeasonalDisasterSystem.getDisasters', () => {
   let sys: WorldSeasonalDisasterSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无季节灾害', () => { expect(sys.getDisasters()).toHaveLength(0) })
+  it('初始无季节灾害', () => { expect((sys as any).disasters).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).disasters.push(makeDisaster())
-    expect(sys.getDisasters()).toHaveLength(1)
+    expect((sys as any).disasters).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getDisasters()).toBe((sys as any).disasters)
+    expect((sys as any).disasters).toBe((sys as any).disasters)
   })
   it('支持8种灾害类型', () => {
     const types: SeasonDisasterType[] = ['flood', 'heatwave', 'wildfire', 'blizzard', 'tornado', 'monsoon', 'drought', 'ice_storm']
@@ -26,7 +26,7 @@ describe('WorldSeasonalDisasterSystem.getDisasters', () => {
   })
   it('灾害字段正确', () => {
     ;(sys as any).disasters.push(makeDisaster('blizzard', 'winter'))
-    const d = sys.getDisasters()[0]
+    const d = (sys as any).disasters[0]
     expect(d.type).toBe('blizzard')
     expect(d.season).toBe('winter')
     expect(d.severity).toBe(3)

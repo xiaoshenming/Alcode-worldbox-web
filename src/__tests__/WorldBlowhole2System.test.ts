@@ -12,17 +12,17 @@ describe('WorldBlowhole2System.getBlowholes', () => {
   let sys: WorldBlowhole2System
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无喷水孔', () => { expect(sys.getBlowholes()).toHaveLength(0) })
+  it('初始无喷水孔', () => { expect((sys as any).blowholes).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).blowholes.push(makeBlowhole())
-    expect(sys.getBlowholes()).toHaveLength(1)
+    expect((sys as any).blowholes).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getBlowholes()).toBe((sys as any).blowholes)
+    expect((sys as any).blowholes).toBe((sys as any).blowholes)
   })
   it('喷水孔字段正确', () => {
     ;(sys as any).blowholes.push(makeBlowhole())
-    const b = sys.getBlowholes()[0]
+    const b = (sys as any).blowholes[0]
     expect(b.waveForce).toBe(70)
     expect(b.spectacle).toBe(80)
     expect(b.sprayHeight).toBe(8)

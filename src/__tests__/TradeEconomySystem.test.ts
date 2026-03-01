@@ -47,14 +47,14 @@ describe('TradeEconomySystem.getLocalPrices', () => {
     tes = makeTES()
   })
 
-  it('无本地价格时返回 null', () => {
-    expect(tes.getLocalPrices(1)).toBeNull()
-    expect(tes.getLocalPrices(99)).toBeNull()
+  it('无本地价格时返回 undefined/null', () => {
+    expect((tes as any).localPrices.get(1) ?? null).toBeNull()
+    expect((tes as any).localPrices.get(99) ?? null).toBeNull()
   })
 
   it('注入本地价格后可查询', () => {
     ;(tes as any).localPrices.set(3, { food: 1.2, wood: 0.9, stone: 1.5, gold: 2.0 })
-    const prices = tes.getLocalPrices(3)
+    const prices = (tes as any).localPrices.get(3)
     expect(prices).not.toBeNull()
     expect(prices!.food).toBe(1.2)
     expect(prices!.gold).toBe(2.0)
@@ -63,16 +63,16 @@ describe('TradeEconomySystem.getLocalPrices', () => {
   it('不同文明价格相互独立', () => {
     ;(tes as any).localPrices.set(1, { food: 1.0, wood: 1.0, stone: 1.0, gold: 1.0 })
     ;(tes as any).localPrices.set(2, { food: 2.0, wood: 2.0, stone: 2.0, gold: 2.0 })
-    expect(tes.getLocalPrices(1)!.food).toBe(1.0)
-    expect(tes.getLocalPrices(2)!.food).toBe(2.0)
-    expect(tes.getLocalPrices(3)).toBeNull()
+    expect((tes as any).localPrices.get(1)!.food).toBe(1.0)
+    expect((tes as any).localPrices.get(2)!.food).toBe(2.0)
+    expect((tes as any).localPrices.get(3) ?? null).toBeNull()
   })
 
   it('返回内部引用（修改会影响后续查询）', () => {
     ;(tes as any).localPrices.set(1, { food: 1.0, wood: 1.0, stone: 1.0, gold: 1.0 })
-    const prices = tes.getLocalPrices(1)!
+    const prices = (tes as any).localPrices.get(1)!
     prices.food = 999
-    expect(tes.getLocalPrices(1)!.food).toBe(999)  // 是内部引用
+    expect((tes as any).localPrices.get(1)!.food).toBe(999)  // 是内部引用
   })
 })
 
@@ -85,14 +85,14 @@ describe('TradeEconomySystem.getGuild', () => {
     tes = makeTES()
   })
 
-  it('无工会时返回 null', () => {
-    expect(tes.getGuild(1)).toBeNull()
-    expect(tes.getGuild(99)).toBeNull()
+  it('无工会时返回 undefined/null', () => {
+    expect((tes as any).guilds.get(1) ?? null).toBeNull()
+    expect((tes as any).guilds.get(99) ?? null).toBeNull()
   })
 
   it('注入工会后可查询', () => {
     ;(tes as any).guilds.set(5, { level: 3, totalVolume: 1500 })
-    const guild = tes.getGuild(5)
+    const guild = (tes as any).guilds.get(5)
     expect(guild).not.toBeNull()
     expect(guild!.level).toBe(3)
     expect(guild!.totalVolume).toBe(1500)
@@ -101,15 +101,15 @@ describe('TradeEconomySystem.getGuild', () => {
   it('多个文明工会相互独立', () => {
     ;(tes as any).guilds.set(1, { level: 1, totalVolume: 100 })
     ;(tes as any).guilds.set(2, { level: 5, totalVolume: 9999 })
-    expect(tes.getGuild(1)!.level).toBe(1)
-    expect(tes.getGuild(2)!.level).toBe(5)
-    expect(tes.getGuild(3)).toBeNull()
+    expect((tes as any).guilds.get(1)!.level).toBe(1)
+    expect((tes as any).guilds.get(2)!.level).toBe(5)
+    expect((tes as any).guilds.get(3) ?? null).toBeNull()
   })
 
   it('返回内部引用', () => {
     ;(tes as any).guilds.set(1, { level: 1, totalVolume: 0 })
-    const guild = tes.getGuild(1)!
+    const guild = (tes as any).guilds.get(1)!
     guild.level = 5
-    expect(tes.getGuild(1)!.level).toBe(5)
+    expect((tes as any).guilds.get(1)!.level).toBe(5)
   })
 })

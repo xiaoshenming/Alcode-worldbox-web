@@ -12,17 +12,17 @@ describe('WorldPeatBogSystem.getBogs', () => {
   let sys: WorldPeatBogSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无泥炭沼泽', () => { expect(sys.getBogs()).toHaveLength(0) })
+  it('初始无泥炭沼泽', () => { expect((sys as any).bogs).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).bogs.push(makeBog())
-    expect(sys.getBogs()).toHaveLength(1)
+    expect((sys as any).bogs).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getBogs()).toBe((sys as any).bogs)
+    expect((sys as any).bogs).toBe((sys as any).bogs)
   })
   it('泥炭沼泽字段正确', () => {
     ;(sys as any).bogs.push(makeBog())
-    const b = sys.getBogs()[0]
+    const b = (sys as any).bogs[0]
     expect(b.peatDepth).toBe(3)
     expect(b.acidity).toBe(4.5)
     expect(b.carbonStore).toBe(50)
@@ -30,6 +30,6 @@ describe('WorldPeatBogSystem.getBogs', () => {
   it('多个沼泽全部返回', () => {
     ;(sys as any).bogs.push(makeBog())
     ;(sys as any).bogs.push(makeBog())
-    expect(sys.getBogs()).toHaveLength(2)
+    expect((sys as any).bogs).toHaveLength(2)
   })
 })

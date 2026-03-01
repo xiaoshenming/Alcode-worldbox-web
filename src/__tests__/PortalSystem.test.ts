@@ -17,18 +17,22 @@ describe('PortalSystem.getPortals', () => {
 
   it('初始无传送门', () => { expect(sys.getPortals()).toHaveLength(0) })
   it('注入后可查询', () => {
-    ;(sys as any).portals.set(1, makePortal(2))
+    const p = makePortal(2)
+    ;(sys as any).portals.set(p.id, p)
     expect(sys.getPortals()).toHaveLength(1)
   })
   it('传送门字段正确', () => {
-    ;(sys as any).portals.set(1, makePortal(2))
-    const p = sys.getPortals()[0]
-    expect(p.pairedId).toBe(2)
-    expect(p.active).toBe(true)
+    const p = makePortal(2)
+    ;(sys as any).portals.set(p.id, p)
+    const result = sys.getPortals()[0]
+    expect(result.pairedId).toBe(2)
+    expect(result.active).toBe(true)
   })
   it('多个传送门全部返回', () => {
-    ;(sys as any).portals.set(1, makePortal(2))
-    ;(sys as any).portals.set(2, makePortal(1))
+    const p1 = makePortal(2)
+    const p2 = makePortal(1)
+    ;(sys as any).portals.set(p1.id, p1)
+    ;(sys as any).portals.set(p2.id, p2)
     expect(sys.getPortals()).toHaveLength(2)
   })
 })

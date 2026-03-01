@@ -46,7 +46,7 @@ describe('AchievementProgressSystem.updateProgress + isCompleted', () => {
     expect(aps.isCompleted('first_kill')).toBe(true)
   })
 
-  it('成就完成��再次更新进度无效（不可重复完成）', () => {
+  it('成就完成后再次更新进度无效（不可重复完成）', () => {
     aps.updateProgress('first_civ', 1)
     expect(aps.isCompleted('first_civ')).toBe(true)
     // 如果 updateProgress 已完成就跳过（不崩溃）
@@ -117,13 +117,13 @@ describe('AchievementProgressSystem.getByCategory', () => {
   it('exploration 分类有预定义成就', () => {
     const result = aps.getByCategory('exploration')
     expect(result.length).toBeGreaterThan(0)
-    result.forEach(a => expect(a.category).toBe('exploration'))
+    result.forEach((a: any) => expect(a.category).toBe('exploration'))
   })
 
   it('civilization 分类有预定义成就', () => {
     const result = aps.getByCategory('civilization')
     expect(result.length).toBeGreaterThan(0)
-    result.forEach(a => expect(a.category).toBe('civilization'))
+    result.forEach((a: any) => expect(a.category).toBe('civilization'))
   })
 
   it('combat 分类有预定义成就', () => {
@@ -148,7 +148,7 @@ describe('AchievementProgressSystem.getByCategory', () => {
   it('各分类成就 id 对应正确分类', () => {
     const civAchievements = aps.getByCategory('civilization')
     // 已知 'first_civ' 属于 civilization 分类
-    expect(civAchievements.some(a => a.id === 'first_civ')).toBe(true)
+    expect(civAchievements.some((a: any) => a.id === 'first_civ')).toBe(true)
   })
 })
 

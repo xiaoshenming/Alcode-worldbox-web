@@ -30,7 +30,7 @@ describe('BuildingUpgradeSystem', () => {
     const em = new EntityManager()
     const civ = makeCiv()
     const target = em.createEntity()
-    const mockCivManager = { getCultureBonus: () => 1 }
+    const mockCivManager = { getCultureBonus: () => 1, civilizations: new Map() }
     const result = sys.getWallDamageReduction(em, target, civ.id, mockCivManager as any)
     expect(result).toBe(1.0)
   })

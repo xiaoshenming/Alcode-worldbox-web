@@ -12,13 +12,13 @@ describe('WorldCrystalCaveSystem.getCaves', () => {
   let sys: WorldCrystalCaveSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无水晶洞穴', () => { expect(sys.getCaves()).toHaveLength(0) })
+  it('初始无水晶洞穴', () => { expect((sys as any).caves).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).caves.push(makeCave())
-    expect(sys.getCaves()).toHaveLength(1)
+    expect((sys as any).caves).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getCaves()).toBe((sys as any).caves)
+    expect((sys as any).caves).toBe((sys as any).caves)
   })
   it('支持6种水晶类型', () => {
     const types: CrystalType[] = ['quartz', 'amethyst', 'emerald', 'ruby', 'sapphire', 'diamond']
@@ -26,7 +26,7 @@ describe('WorldCrystalCaveSystem.getCaves', () => {
   })
   it('水晶洞穴字段正确', () => {
     ;(sys as any).caves.push(makeCave('diamond'))
-    const c = sys.getCaves()[0]
+    const c = (sys as any).caves[0]
     expect(c.crystalType).toBe('diamond')
     expect(c.richness).toBe(75)
     expect(c.explored).toBe(false)

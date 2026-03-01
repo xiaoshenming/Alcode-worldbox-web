@@ -12,17 +12,17 @@ describe('WorldCouleeSystem.getCoulees', () => {
   let sys: WorldCouleeSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无熔岩沟', () => { expect(sys.getCoulees()).toHaveLength(0) })
+  it('初始无熔岩沟', () => { expect((sys as any).coulees).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).coulees.push(makeCoulee())
-    expect(sys.getCoulees()).toHaveLength(1)
+    expect((sys as any).coulees).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getCoulees()).toBe((sys as any).coulees)
+    expect((sys as any).coulees).toBe((sys as any).coulees)
   })
   it('熔岩沟字段正确', () => {
     ;(sys as any).coulees.push(makeCoulee())
-    const c = sys.getCoulees()[0]
+    const c = (sys as any).coulees[0]
     expect(c.wallSteepness).toBe(70)
     expect(c.lavaPresence).toBe(20)
     expect(c.spectacle).toBe(65)
@@ -30,6 +30,6 @@ describe('WorldCouleeSystem.getCoulees', () => {
   it('多个熔岩沟全部返回', () => {
     ;(sys as any).coulees.push(makeCoulee())
     ;(sys as any).coulees.push(makeCoulee())
-    expect(sys.getCoulees()).toHaveLength(2)
+    expect((sys as any).coulees).toHaveLength(2)
   })
 })

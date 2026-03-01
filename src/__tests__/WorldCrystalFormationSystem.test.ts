@@ -14,7 +14,7 @@ describe('WorldCrystalFormationSystem.getFormations', () => {
 
   it('初始无水晶', () => { expect(sys.getFormations()).toHaveLength(0) })
   it('注入后可查询', () => {
-    ;(sys as any).formations.push(makeFormation())
+    ;sys.getFormations().push(makeFormation())
     expect(sys.getFormations()).toHaveLength(1)
   })
   it('支持6种水晶类型', () => {
@@ -22,7 +22,7 @@ describe('WorldCrystalFormationSystem.getFormations', () => {
     expect(types).toHaveLength(6)
   })
   it('水晶字段正确', () => {
-    ;(sys as any).formations.push(makeFormation('ruby'))
+    ;sys.getFormations().push(makeFormation('ruby'))
     const f = sys.getFormations()[0]
     expect(f.type).toBe('ruby')
     expect(f.purity).toBe(85)
@@ -36,8 +36,8 @@ describe('WorldCrystalFormationSystem.getFormationCount', () => {
 
   it('初始数量为0', () => { expect(sys.getFormationCount()).toBe(0) })
   it('注入后数量正确', () => {
-    ;(sys as any).formations.push(makeFormation())
-    ;(sys as any).formations.push(makeFormation())
+    ;sys.getFormations().push(makeFormation())
+    ;sys.getFormations().push(makeFormation())
     expect(sys.getFormationCount()).toBe(2)
   })
 })

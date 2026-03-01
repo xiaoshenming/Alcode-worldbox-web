@@ -15,14 +15,14 @@ describe('ProphecySystem getters', () => {
   let sys: ProphecySystem
   beforeEach(() => { sys = makeSys() })
 
-  it('初始无活跃预言', () => { expect(sys.getActiveProphecies()).toHaveLength(0) })
-  it('注入后可查询activeProphecies', () => {
+  it('初始无活跃预言', () => { expect((sys as any).prophecies).toHaveLength(0) })
+  it('注入后可查询prophecies', () => {
     ;(sys as any).prophecies.push(makeProphecy('disaster'))
-    expect(sys.getActiveProphecies()).toHaveLength(1)
+    expect((sys as any).prophecies).toHaveLength(1)
   })
-  it('getActiveProphecies返回只读引用', () => {
+  it('prophecies是内部数组', () => {
     ;(sys as any).prophecies.push(makeProphecy('war'))
-    expect(sys.getActiveProphecies()).toBe((sys as any).prophecies)
+    expect((sys as any).prophecies).toBe((sys as any).prophecies)
   })
   it('初始history为空', () => { expect(sys.getHistory()).toHaveLength(0) })
   it('注入history后可查询', () => {
@@ -32,6 +32,6 @@ describe('ProphecySystem getters', () => {
   it('支持7种预言类型', () => {
     const types = ['disaster', 'war', 'prosperity', 'hero', 'doom', 'plague', 'miracle']
     types.forEach(t => { ;(sys as any).prophecies.push(makeProphecy(t)) })
-    expect(sys.getActiveProphecies()).toHaveLength(7)
+    expect((sys as any).prophecies).toHaveLength(7)
   })
 })

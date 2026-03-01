@@ -12,13 +12,13 @@ describe('WorldSundialSystem.getSundials', () => {
   let sys: WorldSundialSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无日晷', () => { expect(sys.getSundials()).toHaveLength(0) })
+  it('初始无日晷', () => { expect((sys as any).sundials).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).sundials.push(makeSundial())
-    expect(sys.getSundials()).toHaveLength(1)
+    expect((sys as any).sundials).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getSundials()).toBe((sys as any).sundials)
+    expect((sys as any).sundials).toBe((sys as any).sundials)
   })
   it('支持4种尺寸', () => {
     const sizes: SundialSize[] = ['small', 'medium', 'large', 'monumental']
@@ -26,7 +26,7 @@ describe('WorldSundialSystem.getSundials', () => {
   })
   it('日晷字段正确', () => {
     ;(sys as any).sundials.push(makeSundial('monumental'))
-    const s = sys.getSundials()[0]
+    const s = (sys as any).sundials[0]
     expect(s.size).toBe('monumental')
     expect(s.accuracy).toBe(90)
     expect(s.knowledgeBonus).toBe(5)

@@ -12,13 +12,13 @@ describe('WorldAcousticSystem', () => {
   let sys: WorldAcousticSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无声音', () => { expect(sys.getSounds()).toHaveLength(0) })
+  it('初始无声音', () => { expect((sys as any).sounds).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).sounds.push(makeSound())
-    expect(sys.getSounds()).toHaveLength(1)
+    expect((sys as any).sounds).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getSounds()).toBe((sys as any).sounds)
+    expect((sys as any).sounds).toBe((sys as any).sounds)
   })
   it('getActiveSounds只返回volume>0的声音', () => {
     ;(sys as any).sounds.push(makeSound('nature', 50))

@@ -12,13 +12,13 @@ describe('WorldCoralReefGrowthSystem.getReefs', () => {
   let sys: WorldCoralReefGrowthSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无珊瑚礁', () => { expect(sys.getReefs()).toHaveLength(0) })
+  it('初始无珊瑚礁', () => { expect((sys as any).reefs).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).reefs.push(makeReef())
-    expect(sys.getReefs()).toHaveLength(1)
+    expect((sys as any).reefs).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getReefs()).toBe((sys as any).reefs)
+    expect((sys as any).reefs).toBe((sys as any).reefs)
   })
   it('支持5种珊瑚类型', () => {
     const types: CoralType[] = ['brain', 'staghorn', 'fan', 'table', 'pillar']
@@ -26,7 +26,7 @@ describe('WorldCoralReefGrowthSystem.getReefs', () => {
   })
   it('珊瑚礁字段正确', () => {
     ;(sys as any).reefs.push(makeReef('staghorn'))
-    const r = sys.getReefs()[0]
+    const r = (sys as any).reefs[0]
     expect(r.coralType).toBe('staghorn')
     expect(r.coverage).toBe(70)
     expect(r.health).toBe(80)

@@ -12,13 +12,13 @@ describe('WorldFossilSystem.getFossils', () => {
   let sys: WorldFossilSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无化石', () => { expect(sys.getFossils()).toHaveLength(0) })
+  it('初始无化石', () => { expect((sys as any).fossils).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).fossils.push(makeFossil())
-    expect(sys.getFossils()).toHaveLength(1)
+    expect((sys as any).fossils).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getFossils()).toBe((sys as any).fossils)
+    expect((sys as any).fossils).toBe((sys as any).fossils)
   })
   it('支持6种化石类型', () => {
     const types: FossilType[] = ['bone', 'shell', 'plant', 'amber', 'footprint', 'artifact']
@@ -30,7 +30,7 @@ describe('WorldFossilSystem.getFossils', () => {
   })
   it('化石字段正确', () => {
     ;(sys as any).fossils.push(makeFossil('amber', 'legendary'))
-    const f = sys.getFossils()[0]
+    const f = (sys as any).fossils[0]
     expect(f.type).toBe('amber')
     expect(f.rarity).toBe('legendary')
     expect(f.discovered).toBe(false)

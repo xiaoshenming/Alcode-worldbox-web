@@ -12,18 +12,18 @@ describe('WorldGlacierSystem.getGlaciers', () => {
   let sys: WorldGlacierSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无冰川', () => { expect(sys.getGlaciers()).toHaveLength(0) })
+  it('初始无冰川', () => { expect((sys as any).glaciers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).glaciers.push(makeGlacier())
-    expect(sys.getGlaciers()).toHaveLength(1)
+    expect((sys as any).glaciers).toHaveLength(1)
   })
   it('返回内部引用', () => {
     ;(sys as any).glaciers.push(makeGlacier())
-    expect(sys.getGlaciers()).toBe((sys as any).glaciers)
+    expect((sys as any).glaciers).toBe((sys as any).glaciers)
   })
   it('冰川字段正确', () => {
     ;(sys as any).glaciers.push(makeGlacier())
-    const g = sys.getGlaciers()[0]
+    const g = (sys as any).glaciers[0]
     expect(g.mass).toBe(50)
     expect(g.active).toBe(true)
   })

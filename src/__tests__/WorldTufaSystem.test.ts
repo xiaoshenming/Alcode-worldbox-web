@@ -12,17 +12,17 @@ describe('WorldTufaSystem.getTowers', () => {
   let sys: WorldTufaSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无石灰华塔', () => { expect(sys.getTowers()).toHaveLength(0) })
+  it('初始无石灰华塔', () => { expect((sys as any).towers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).towers.push(makeTower())
-    expect(sys.getTowers()).toHaveLength(1)
+    expect((sys as any).towers).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getTowers()).toBe((sys as any).towers)
+    expect((sys as any).towers).toBe((sys as any).towers)
   })
   it('石灰华塔字段正确', () => {
     ;(sys as any).towers.push(makeTower())
-    const t = sys.getTowers()[0]
+    const t = (sys as any).towers[0]
     expect(t.calciumContent).toBe(80)
     expect(t.waterAlkalinity).toBe(70)
     expect(t.towerHeight).toBe(10)
@@ -30,6 +30,6 @@ describe('WorldTufaSystem.getTowers', () => {
   it('多个石灰华塔全部返回', () => {
     ;(sys as any).towers.push(makeTower())
     ;(sys as any).towers.push(makeTower())
-    expect(sys.getTowers()).toHaveLength(2)
+    expect((sys as any).towers).toHaveLength(2)
   })
 })

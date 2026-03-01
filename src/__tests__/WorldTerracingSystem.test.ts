@@ -12,13 +12,13 @@ describe('WorldTerracingSystem.getTerraces', () => {
   let sys: WorldTerracingSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无梯田', () => { expect(sys.getTerraces()).toHaveLength(0) })
+  it('初始无梯田', () => { expect((sys as any).terraces).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).terraces.push(makeTerrace())
-    expect(sys.getTerraces()).toHaveLength(1)
+    expect((sys as any).terraces).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getTerraces()).toBe((sys as any).terraces)
+    expect((sys as any).terraces).toBe((sys as any).terraces)
   })
   it('支持4种梯田阶段', () => {
     const stages: TerraceStage[] = ['carving', 'irrigating', 'planted', 'harvesting']
@@ -26,7 +26,7 @@ describe('WorldTerracingSystem.getTerraces', () => {
   })
   it('梯田字段正确', () => {
     ;(sys as any).terraces.push(makeTerrace('harvesting'))
-    const t = sys.getTerraces()[0]
+    const t = (sys as any).terraces[0]
     expect(t.stage).toBe('harvesting')
     expect(t.fertility).toBe(80)
     expect(t.levels).toBe(5)

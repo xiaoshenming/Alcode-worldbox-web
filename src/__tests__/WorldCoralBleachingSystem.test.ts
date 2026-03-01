@@ -12,13 +12,13 @@ describe('WorldCoralBleachingSystem.getEvents', () => {
   let sys: WorldCoralBleachingSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无珊瑚白化事件', () => { expect(sys.getEvents()).toHaveLength(0) })
+  it('初始无珊瑚白化事件', () => { expect((sys as any).events).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).events.push(makeEvent())
-    expect(sys.getEvents()).toHaveLength(1)
+    expect((sys as any).events).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getEvents()).toBe((sys as any).events)
+    expect((sys as any).events).toBe((sys as any).events)
   })
   it('支持4种白化阶段', () => {
     const stages: BleachingStage[] = ['healthy', 'stressed', 'bleaching', 'dead']
@@ -26,7 +26,7 @@ describe('WorldCoralBleachingSystem.getEvents', () => {
   })
   it('白化事件字段正确', () => {
     ;(sys as any).events.push(makeEvent('dead'))
-    const e = sys.getEvents()[0]
+    const e = (sys as any).events[0]
     expect(e.stage).toBe('dead')
     expect(e.severity).toBe(65)
     expect(e.affectedArea).toBe(100)

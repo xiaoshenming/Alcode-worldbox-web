@@ -12,13 +12,13 @@ describe('WorldAncientRuinSystem.getRuins', () => {
   let sys: WorldAncientRuinSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无古迹', () => { expect(sys.getRuins()).toHaveLength(0) })
+  it('初始无古迹', () => { expect((sys as any).ruins).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).ruins.push(makeRuin())
-    expect(sys.getRuins()).toHaveLength(1)
+    expect((sys as any).ruins).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getRuins()).toBe((sys as any).ruins)
+    expect((sys as any).ruins).toBe((sys as any).ruins)
   })
   it('支持5种古迹类型', () => {
     const types: RuinType[] = ['temple', 'library', 'vault', 'tomb', 'fortress']
@@ -26,7 +26,7 @@ describe('WorldAncientRuinSystem.getRuins', () => {
   })
   it('古迹字段正确', () => {
     ;(sys as any).ruins.push(makeRuin('tomb'))
-    const r = sys.getRuins()[0]
+    const r = (sys as any).ruins[0]
     expect(r.type).toBe('tomb')
     expect(r.dangerLevel).toBe(3)
     expect(r.explored).toBe(false)

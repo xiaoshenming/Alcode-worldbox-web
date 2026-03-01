@@ -34,7 +34,7 @@ describe('CultureSystem.getCulture', () => {
 
   beforeEach(() => { cs = makeCS() })
 
-  it('无文化时返回 undefined', () => {
+  it('无��化时返回 undefined', () => {
     expect(cs.getCulture(1)).toBeUndefined()
   })
 

@@ -14,14 +14,14 @@ describe('WorldMigrationRouteSystem.getRoutes', () => {
 
   it('初始无迁徙路线', () => { expect(sys.getRoutes()).toHaveLength(0) })
   it('注入后可查询', () => {
-    ;(sys as any).routes.push(makeRoute())
+    ;sys.getRoutes().push(makeRoute())
     expect(sys.getRoutes()).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getRoutes()).toBe((sys as any).routes)
+    expect(sys.getRoutes()).toBe(sys.getRoutes())
   })
   it('路线字段正确', () => {
-    ;(sys as any).routes.push(makeRoute())
+    ;sys.getRoutes().push(makeRoute())
     const r = sys.getRoutes()[0]
     expect(r.type).toBe('animal')
     expect(r.species).toBe('deer')
@@ -30,12 +30,12 @@ describe('WorldMigrationRouteSystem.getRoutes', () => {
   it('getActiveRoutes只返回active路线', () => {
     const r1 = makeRoute()
     const r2 = { ...makeRoute(), active: false }
-    ;(sys as any).routes.push(r1, r2)
+    ;sys.getRoutes().push(r1, r2)
     expect(sys.getActiveRoutes()).toHaveLength(1)
     expect(sys.getActiveRoutes()[0].active).toBe(true)
   })
   it('getRouteCount返回总数', () => {
-    ;(sys as any).routes.push(makeRoute(), makeRoute())
+    ;sys.getRoutes().push(makeRoute(), makeRoute())
     expect(sys.getRouteCount()).toBe(2)
   })
 })

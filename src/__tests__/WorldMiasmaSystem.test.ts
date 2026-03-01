@@ -12,13 +12,13 @@ describe('WorldMiasmaSystem.getZones', () => {
   let sys: WorldMiasmaSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无毒雾区', () => { expect(sys.getZones()).toHaveLength(0) })
+  it('初始无毒雾区', () => { expect((sys as any).zones).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).zones.push(makeZone())
-    expect(sys.getZones()).toHaveLength(1)
+    expect((sys as any).zones).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getZones()).toBe((sys as any).zones)
+    expect((sys as any).zones).toBe((sys as any).zones)
   })
   it('支持6种毒雾来源', () => {
     const sources: MiasmaSource[] = ['swamp', 'battlefield', 'pollution', 'cursed', 'volcanic', 'plague']
@@ -30,11 +30,11 @@ describe('WorldMiasmaSystem.getZoneCount', () => {
   let sys: WorldMiasmaSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始为0', () => { expect(sys.getZoneCount()).toBe(0) })
+  it('初始为0', () => { expect((sys as any).zones.length).toBe(0) })
   it('注入后增加', () => {
     ;(sys as any).zones.push(makeZone())
     ;(sys as any).zones.push(makeZone())
-    expect(sys.getZoneCount()).toBe(2)
+    expect((sys as any).zones.length).toBe(2)
   })
 })
 

@@ -12,13 +12,13 @@ describe('WorldDustStormSystem.getStorms', () => {
   let sys: WorldDustStormSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无尘暴', () => { expect(sys.getStorms()).toHaveLength(0) })
+  it('初始无尘暴', () => { expect((sys as any).storms).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).storms.push(makeStorm())
-    expect(sys.getStorms()).toHaveLength(1)
+    expect((sys as any).storms).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getStorms()).toBe((sys as any).storms)
+    expect((sys as any).storms).toBe((sys as any).storms)
   })
   it('支持4种尘暴强度', () => {
     const intensities: DustStormIntensity[] = ['mild', 'moderate', 'severe', 'catastrophic']

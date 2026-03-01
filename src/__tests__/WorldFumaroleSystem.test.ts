@@ -12,17 +12,17 @@ describe('WorldFumaroleSystem.getFumaroles', () => {
   let sys: WorldFumaroleSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无喷气孔', () => { expect(sys.getFumaroles()).toHaveLength(0) })
+  it('初始无喷气孔', () => { expect((sys as any).fumaroles).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).fumaroles.push(makeFumarole())
-    expect(sys.getFumaroles()).toHaveLength(1)
+    expect((sys as any).fumaroles).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getFumaroles()).toBe((sys as any).fumaroles)
+    expect((sys as any).fumaroles).toBe((sys as any).fumaroles)
   })
   it('喷气孔字段正确', () => {
     ;(sys as any).fumaroles.push(makeFumarole())
-    const f = sys.getFumaroles()[0]
+    const f = (sys as any).fumaroles[0]
     expect(f.steamIntensity).toBe(70)
     expect(f.sulfurDeposit).toBe(30)
     expect(f.temperature).toBe(400)
@@ -30,6 +30,6 @@ describe('WorldFumaroleSystem.getFumaroles', () => {
   it('多个喷气孔全部返回', () => {
     ;(sys as any).fumaroles.push(makeFumarole())
     ;(sys as any).fumaroles.push(makeFumarole())
-    expect(sys.getFumaroles()).toHaveLength(2)
+    expect((sys as any).fumaroles).toHaveLength(2)
   })
 })

@@ -53,10 +53,10 @@ describe('QuestSystem.getActiveQuests', () => {
 
     const active = qs.getActiveQuests()
     expect(active).toHaveLength(2)
-    expect(active.map(q => q.id)).toContain(1)
-    expect(active.map(q => q.id)).toContain(4)
-    expect(active.map(q => q.id)).not.toContain(2)
-    expect(active.map(q => q.id)).not.toContain(3)
+    expect(active.map((q: any) => q.id)).toContain(1)
+    expect(active.map((q: any) => q.id)).toContain(4)
+    expect(active.map((q: any) => q.id)).not.toContain(2)
+    expect(active.map((q: any) => q.id)).not.toContain(3)
   })
 
   it('全部完成时返回空数组', () => {
@@ -105,6 +105,7 @@ describe('QuestSystem.getLegends', () => {
       ballads: 3,
       civId: 1,
     }
+    // getLegends() 返回 Legend[]（数组），需通过私有 legends Map 注入数据
     ;(qs as any).legends.set(42, legend)
     const legends = qs.getLegends()
     expect(legends).toHaveLength(1)

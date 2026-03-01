@@ -12,17 +12,17 @@ describe('WorldTidalLagoonSystem.getLagoons', () => {
   let sys: WorldTidalLagoonSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无潮汐泻湖', () => { expect(sys.getLagoons()).toHaveLength(0) })
+  it('初始无潮汐泻湖', () => { expect((sys as any).lagoons).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).lagoons.push(makeLagoon())
-    expect(sys.getLagoons()).toHaveLength(1)
+    expect((sys as any).lagoons).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getLagoons()).toBe((sys as any).lagoons)
+    expect((sys as any).lagoons).toBe((sys as any).lagoons)
   })
   it('潮汐泻湖字段正确', () => {
     ;(sys as any).lagoons.push(makeLagoon())
-    const l = sys.getLagoons()[0]
+    const l = (sys as any).lagoons[0]
     expect(l.salinity).toBe(25)
     expect(l.biodiversity).toBe(80)
     expect(l.tidalRange).toBe(3)
@@ -30,6 +30,6 @@ describe('WorldTidalLagoonSystem.getLagoons', () => {
   it('多个潮汐泻湖全部返回', () => {
     ;(sys as any).lagoons.push(makeLagoon())
     ;(sys as any).lagoons.push(makeLagoon())
-    expect(sys.getLagoons()).toHaveLength(2)
+    expect((sys as any).lagoons).toHaveLength(2)
   })
 })

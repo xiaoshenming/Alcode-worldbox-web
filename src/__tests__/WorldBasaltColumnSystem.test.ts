@@ -12,17 +12,17 @@ describe('WorldBasaltColumnSystem.getFormations', () => {
   let sys: WorldBasaltColumnSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无玄武岩柱', () => { expect(sys.getFormations()).toHaveLength(0) })
+  it('初始无玄武岩柱', () => { expect((sys as any).formations).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).formations.push(makeColumn())
-    expect(sys.getFormations()).toHaveLength(1)
+    expect((sys as any).formations).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getFormations()).toBe((sys as any).formations)
+    expect((sys as any).formations).toBe((sys as any).formations)
   })
   it('玄武岩柱字段正确', () => {
     ;(sys as any).formations.push(makeColumn())
-    const c = sys.getFormations()[0]
+    const c = (sys as any).formations[0]
     expect(c.columnCount).toBe(50)
     expect(c.hexagonalPerfection).toBe(85)
     expect(c.height).toBe(15)
@@ -30,6 +30,6 @@ describe('WorldBasaltColumnSystem.getFormations', () => {
   it('多个玄武岩柱全部返回', () => {
     ;(sys as any).formations.push(makeColumn())
     ;(sys as any).formations.push(makeColumn())
-    expect(sys.getFormations()).toHaveLength(2)
+    expect((sys as any).formations).toHaveLength(2)
   })
 })

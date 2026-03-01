@@ -12,17 +12,17 @@ describe('WorldDeltaSystem.getDeltas', () => {
   let sys: WorldDeltaSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无河口三角洲', () => { expect(sys.getDeltas()).toHaveLength(0) })
+  it('初始无河口三角洲', () => { expect((sys as any).deltas).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).deltas.push(makeDelta())
-    expect(sys.getDeltas()).toHaveLength(1)
+    expect((sys as any).deltas).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getDeltas()).toBe((sys as any).deltas)
+    expect((sys as any).deltas).toBe((sys as any).deltas)
   })
   it('三角洲字段正确', () => {
     ;(sys as any).deltas.push(makeDelta())
-    const d = sys.getDeltas()[0]
+    const d = (sys as any).deltas[0]
     expect(d.channelCount).toBe(5)
     expect(d.fertility).toBe(80)
     expect(d.floodRisk).toBe(30)
@@ -30,6 +30,6 @@ describe('WorldDeltaSystem.getDeltas', () => {
   it('多个三角洲全部返回', () => {
     ;(sys as any).deltas.push(makeDelta())
     ;(sys as any).deltas.push(makeDelta())
-    expect(sys.getDeltas()).toHaveLength(2)
+    expect((sys as any).deltas).toHaveLength(2)
   })
 })

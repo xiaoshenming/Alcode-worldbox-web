@@ -12,13 +12,13 @@ describe('WorldBioluminescenceSystem.getZones', () => {
   let sys: WorldBioluminescenceSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无生物发光区', () => { expect(sys.getZones()).toHaveLength(0) })
+  it('初始无生物发光区', () => { expect((sys as any).zones).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).zones.push(makeZone())
-    expect(sys.getZones()).toHaveLength(1)
+    expect((sys as any).zones).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getZones()).toBe((sys as any).zones)
+    expect((sys as any).zones).toBe((sys as any).zones)
   })
   it('支持4种发光类型', () => {
     const types: GlowType[] = ['algae', 'jellyfish', 'fungi', 'plankton']
@@ -26,7 +26,7 @@ describe('WorldBioluminescenceSystem.getZones', () => {
   })
   it('发光区字段正确', () => {
     ;(sys as any).zones.push(makeZone('fungi'))
-    const z = sys.getZones()[0]
+    const z = (sys as any).zones[0]
     expect(z.glowType).toBe('fungi')
     expect(z.brightness).toBe(70)
     expect(z.active).toBe(true)

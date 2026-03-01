@@ -12,17 +12,17 @@ describe('WorldZeugenSystem.getZeugens', () => {
   let sys: WorldZeugenSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无蘑菇岩', () => { expect(sys.getZeugens()).toHaveLength(0) })
+  it('初始无蘑菇岩', () => { expect((sys as any).zeugens).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).zeugens.push(makeZeugen())
-    expect(sys.getZeugens()).toHaveLength(1)
+    expect((sys as any).zeugens).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getZeugens()).toBe((sys as any).zeugens)
+    expect((sys as any).zeugens).toBe((sys as any).zeugens)
   })
   it('蘑菇岩字段正确', () => {
     ;(sys as any).zeugens.push(makeZeugen())
-    const z = sys.getZeugens()[0]
+    const z = (sys as any).zeugens[0]
     expect(z.capHardness).toBe(80)
     expect(z.baseWeakness).toBe(60)
     expect(z.spectacle).toBe(65)

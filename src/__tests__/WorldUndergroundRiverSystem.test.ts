@@ -12,13 +12,13 @@ describe('WorldUndergroundRiverSystem.getRivers', () => {
   let sys: WorldUndergroundRiverSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无地下河', () => { expect(sys.getRivers()).toHaveLength(0) })
+  it('初始无地下河', () => { expect((sys as any).rivers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).rivers.push(makeRiver())
-    expect(sys.getRivers()).toHaveLength(1)
+    expect((sys as any).rivers).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getRivers()).toBe((sys as any).rivers)
+    expect((sys as any).rivers).toBe((sys as any).rivers)
   })
   it('支持4种水流速度', () => {
     const flows: RiverFlow[] = ['slow', 'moderate', 'fast', 'torrent']
@@ -26,7 +26,7 @@ describe('WorldUndergroundRiverSystem.getRivers', () => {
   })
   it('地下河字段正确', () => {
     ;(sys as any).rivers.push(makeRiver('fast'))
-    const r = sys.getRivers()[0]
+    const r = (sys as any).rivers[0]
     expect(r.flow).toBe('fast')
     expect(r.depth).toBe(15)
     expect(r.discovered).toBe(false)

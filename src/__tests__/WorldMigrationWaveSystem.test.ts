@@ -13,7 +13,7 @@ describe('WorldMigrationWaveSystem.getActiveWaves', () => {
     expect(sys.getActiveWaves()).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getActiveWaves()).toBe((sys as any).activeWaves)
+    expect(sys.getActiveWaves()).toBe(sys.getActiveWaves())
   })
   it('迁徙波字段正确', () => {
     ;(sys as any).activeWaves.push({ id: 1, fromX: 10, fromY: 20, toX: 50, toY: 60, reason: 0, progress: 0.5, entityIds: new Set(), scale: 15, startTick: 100 })

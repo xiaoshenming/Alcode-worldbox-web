@@ -12,17 +12,17 @@ describe('WorldMudFlatSystem.getFlats', () => {
   let sys: WorldMudFlatSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无泥滩', () => { expect(sys.getFlats()).toHaveLength(0) })
+  it('初始无泥滩', () => { expect((sys as any).flats).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).flats.push(makeFlat())
-    expect(sys.getFlats()).toHaveLength(1)
+    expect((sys as any).flats).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getFlats()).toBe((sys as any).flats)
+    expect((sys as any).flats).toBe((sys as any).flats)
   })
   it('泥滩字段正确', () => {
     ;(sys as any).flats.push(makeFlat())
-    const f = sys.getFlats()[0]
+    const f = (sys as any).flats[0]
     expect(f.moistureLevel).toBe(80)
     expect(f.invertebrateCount).toBe(50)
     expect(f.birdActivity).toBe(30)

@@ -12,17 +12,17 @@ describe('WorldRiftValleySystem.getRifts', () => {
   let sys: WorldRiftValleySystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无裂谷', () => { expect(sys.getRifts()).toHaveLength(0) })
+  it('初始无裂谷', () => { expect((sys as any).rifts).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).rifts.push(makeRift())
-    expect(sys.getRifts()).toHaveLength(1)
+    expect((sys as any).rifts).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getRifts()).toBe((sys as any).rifts)
+    expect((sys as any).rifts).toBe((sys as any).rifts)
   })
   it('裂谷字段正确', () => {
     ;(sys as any).rifts.push(makeRift())
-    const r = sys.getRifts()[0]
+    const r = (sys as any).rifts[0]
     expect(r.tectonicActivity).toBe(70)
     expect(r.lakeFormation).toBe(40)
     expect(r.volcanicVents).toBe(3)

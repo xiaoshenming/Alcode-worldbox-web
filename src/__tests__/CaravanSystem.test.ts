@@ -31,26 +31,26 @@ describe('CaravanSystem.getCaravans', () => {
   })
 
   it('注入商队后可查询', () => {
-    ;(cs as any).caravans.push(makeCaravan(1))
+    ;cs.getCaravans().push(makeCaravan(1))
     expect(cs.getCaravans()).toHaveLength(1)
     expect(cs.getCaravans()[0].id).toBe(1)
   })
 
   it('返回内部引用（修改会影响后续查询）', () => {
-    ;(cs as any).caravans.push(makeCaravan(1))
+    ;cs.getCaravans().push(makeCaravan(1))
     const caravans = cs.getCaravans()
-    expect(caravans).toBe((cs as any).caravans)
+    expect(caravans).toBe(cs.getCaravans())
   })
 
   it('注入多个商队全部返回', () => {
-    ;(cs as any).caravans.push(makeCaravan(1, 1, 2))
-    ;(cs as any).caravans.push(makeCaravan(2, 2, 3))
-    ;(cs as any).caravans.push(makeCaravan(3, 1, 3))
+    ;cs.getCaravans().push(makeCaravan(1, 1, 2))
+    ;cs.getCaravans().push(makeCaravan(2, 2, 3))
+    ;cs.getCaravans().push(makeCaravan(3, 1, 3))
     expect(cs.getCaravans()).toHaveLength(3)
   })
 
   it('商队属性正��保存', () => {
-    ;(cs as any).caravans.push(makeCaravan(5, 10, 20))
+    ;cs.getCaravans().push(makeCaravan(5, 10, 20))
     const c = cs.getCaravans()[0]
     expect(c.fromCivId).toBe(10)
     expect(c.toCivId).toBe(20)
@@ -64,8 +64,8 @@ describe('CaravanSystem.reset', () => {
   beforeEach(() => { cs = makeCS() })
 
   it('reset 后商队列表为空', () => {
-    ;(cs as any).caravans.push(makeCaravan(1))
-    ;(cs as any).caravans.push(makeCaravan(2))
+    ;cs.getCaravans().push(makeCaravan(1))
+    ;cs.getCaravans().push(makeCaravan(2))
     cs.reset()
     expect(cs.getCaravans()).toHaveLength(0)
   })

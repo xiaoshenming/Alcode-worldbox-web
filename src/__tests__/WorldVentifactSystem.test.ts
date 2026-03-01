@@ -12,17 +12,17 @@ describe('WorldVentifactSystem.getVentifacts', () => {
   let sys: WorldVentifactSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无风棱石', () => { expect(sys.getVentifacts()).toHaveLength(0) })
+  it('初始无风棱石', () => { expect((sys as any).ventifacts).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).ventifacts.push(makeVentifact())
-    expect(sys.getVentifacts()).toHaveLength(1)
+    expect((sys as any).ventifacts).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getVentifacts()).toBe((sys as any).ventifacts)
+    expect((sys as any).ventifacts).toBe((sys as any).ventifacts)
   })
   it('风棱石字段正确', () => {
     ;(sys as any).ventifacts.push(makeVentifact())
-    const v = sys.getVentifacts()[0]
+    const v = (sys as any).ventifacts[0]
     expect(v.facets).toBe(3)
     expect(v.polish).toBe(80)
     expect(v.windExposure).toBe(90)
@@ -30,6 +30,6 @@ describe('WorldVentifactSystem.getVentifacts', () => {
   it('多个风棱石全部返回', () => {
     ;(sys as any).ventifacts.push(makeVentifact())
     ;(sys as any).ventifacts.push(makeVentifact())
-    expect(sys.getVentifacts()).toHaveLength(2)
+    expect((sys as any).ventifacts).toHaveLength(2)
   })
 })

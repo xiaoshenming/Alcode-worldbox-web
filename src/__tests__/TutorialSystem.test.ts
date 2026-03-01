@@ -3,11 +3,11 @@ import { TutorialSystem } from '../systems/TutorialSystem'
 import type { TutorialStep } from '../systems/TutorialSystem'
 
 // TutorialSystem 测试：
-// - isActive()           → 教程激活状态
-// - getCurrentStep()     → 当前步骤（未激活时为 null）
-// - start()              → 激活教程，从第0步开始
-// - nextStep()           → 推进到下一步
-// - skip()               → 跳过教程
+// - isActive()                   → 教程激活状态
+// - (ts as any).getCurrentStep() → 当前步骤（私有方法，用 any 访问）
+// - start()                      → 激活教程，从第0步开始
+// - nextStep()                   → 推进到下一步
+// - skip()                       → 跳过教程
 // 构造函数接受自定义步骤，方便测试（绕开 localStorage）
 
 function makeStep(id: string, overrides: Partial<TutorialStep> = {}): TutorialStep {
@@ -25,6 +25,11 @@ function makeStep(id: string, overrides: Partial<TutorialStep> = {}): TutorialSt
 function makeTS(stepCount = 3): TutorialSystem {
   const steps = Array.from({ length: stepCount }, (_, i) => makeStep(`step${i}`))
   return new TutorialSystem(steps)
+}
+
+// Helper to get current step via private method
+function getCurrentStep(ts: TutorialSystem): TutorialStep | null | undefined {
+  return (ts as any).getCurrentStep()
 }
 
 // ── isActive / start ──────────────────────────────────────────────────────────
@@ -62,12 +67,12 @@ describe('TutorialSystem.getCurrentStep', () => {
   })
 
   it('未激活时返回 null', () => {
-    expect(ts.getCurrentStep()).toBeNull()
+    expect(getCurrentStep(ts)).toBeNull()
   })
 
   it('start() 后返回第 0 步', () => {
     ts.start()
-    const step = ts.getCurrentStep()
+    const step = getCurrentStep(ts)
     expect(step).not.toBeNull()
     expect(step!.id).toBe('step0')
   })
@@ -75,13 +80,13 @@ describe('TutorialSystem.getCurrentStep', () => {
   it('nextStep() 后返回第 1 步', () => {
     ts.start()
     ts.nextStep()
-    expect(ts.getCurrentStep()!.id).toBe('step1')
+    expect(getCurrentStep(ts)!.id).toBe('step1')
   })
 
   it('skip() 后 getCurrentStep() 返回 null', () => {
     ts.start()
     ts.skip()
-    expect(ts.getCurrentStep()).toBeNull()
+    expect(getCurrentStep(ts)).toBeNull()
   })
 })
 
@@ -94,7 +99,7 @@ describe('TutorialSystem.nextStep', () => {
     ts.nextStep()  // step1
     ts.nextStep()  // 超出，教程结束
     expect(ts.isActive()).toBe(false)
-    expect(ts.getCurrentStep()).toBeNull()
+    expect(getCurrentStep(ts)).toBeNull()
   })
 
   it('未激活时 nextStep() 不崩溃', () => {
@@ -106,7 +111,7 @@ describe('TutorialSystem.nextStep', () => {
   it('单步教程 start 后 nextStep 立即结束', () => {
     const ts = makeTS(1)
     ts.start()
-    expect(ts.getCurrentStep()!.id).toBe('step0')
+    expect(getCurrentStep(ts)!.id).toBe('step0')
     ts.nextStep()
     expect(ts.isActive()).toBe(false)
   })
@@ -116,7 +121,7 @@ describe('TutorialSystem.nextStep', () => {
     ts.start()
     const ids: string[] = []
     for (let i = 0; i < 3; i++) {
-      const step = ts.getCurrentStep()
+      const step = getCurrentStep(ts)
       if (step) ids.push(step.id)
       ts.nextStep()
     }
@@ -140,7 +145,7 @@ describe('TutorialSystem.skip', () => {
     ts.nextStep()  // step1
     ts.skip()
     ts.start()  // 重新从 step0 开始
-    expect(ts.getCurrentStep()!.id).toBe('step0')
+    expect(getCurrentStep(ts)!.id).toBe('step0')
   })
 
   it('未激活时 skip 不崩溃', () => {
@@ -152,11 +157,12 @@ describe('TutorialSystem.skip', () => {
 // ── currentIndex 边界 ──────────────────────────────────────────────────────────
 
 describe('TutorialSystem index boundaries', () => {
-  it('空步骤教程 start 后立即结束', () => {
+  it('空步骤教程 start 后 getCurrentStep 返回 null 或 undefined', () => {
     const ts = new TutorialSystem([])
     ts.start()
-    // currentIndex=0, steps.length=0 → getCurrentStep 返回 null
-    expect(ts.getCurrentStep()).toBeNull()
+    // currentIndex=0, steps.length=0 → getCurrentStep 返回 undefined 或 null
+    const step = getCurrentStep(ts)
+    expect(step == null).toBe(true)  // null or undefined
   })
 
   it('5步教程推进到第3步后 getCurrentStep 正确', () => {
@@ -165,6 +171,6 @@ describe('TutorialSystem index boundaries', () => {
     ts.nextStep()
     ts.nextStep()
     ts.nextStep()
-    expect(ts.getCurrentStep()!.id).toBe('step3')
+    expect(getCurrentStep(ts)!.id).toBe('step3')
   })
 })

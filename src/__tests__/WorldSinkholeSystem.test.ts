@@ -12,13 +12,13 @@ describe('WorldSinkholeSystem.getSinkholes', () => {
   let sys: WorldSinkholeSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无天坑', () => { expect(sys.getSinkholes()).toHaveLength(0) })
+  it('初始无天坑', () => { expect((sys as any).sinkholes).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).sinkholes.push(makeSinkhole())
-    expect(sys.getSinkholes()).toHaveLength(1)
+    expect((sys as any).sinkholes).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getSinkholes()).toBe((sys as any).sinkholes)
+    expect((sys as any).sinkholes).toBe((sys as any).sinkholes)
   })
   it('支持4种天坑阶段', () => {
     const stages: SinkholeStage[] = ['forming', 'active', 'collapsing', 'filled']

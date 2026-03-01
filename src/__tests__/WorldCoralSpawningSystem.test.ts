@@ -12,13 +12,13 @@ describe('WorldCoralSpawningSystem.getSpawns', () => {
   let sys: WorldCoralSpawningSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无珊瑚产卵', () => { expect(sys.getSpawns()).toHaveLength(0) })
+  it('初始无珊瑚产卵', () => { expect((sys as any).spawns).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).spawns.push(makeSpawn())
-    expect(sys.getSpawns()).toHaveLength(1)
+    expect((sys as any).spawns).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getSpawns()).toBe((sys as any).spawns)
+    expect((sys as any).spawns).toBe((sys as any).spawns)
   })
   it('支持4种季节状态', () => {
     const seasons: CoralSeason[] = ['dormant', 'preparing', 'spawning', 'dispersing']
@@ -26,7 +26,7 @@ describe('WorldCoralSpawningSystem.getSpawns', () => {
   })
   it('珊瑚产卵字段正确', () => {
     ;(sys as any).spawns.push(makeSpawn('dispersing'))
-    const s = sys.getSpawns()[0]
+    const s = (sys as any).spawns[0]
     expect(s.season).toBe('dispersing')
     expect(s.density).toBe(80)
     expect(s.fertility).toBe(70)

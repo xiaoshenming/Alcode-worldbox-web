@@ -12,14 +12,14 @@ describe('WorldIrrigationSystem.getChannels', () => {
   let sys: WorldIrrigationSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无水渠', () => { expect(sys.getChannels()).toHaveLength(0) })
+  it('初始无水渠', () => { expect((sys as any).channels).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).channels.push(makeChannel())
-    expect(sys.getChannels()).toHaveLength(1)
+    expect((sys as any).channels).toHaveLength(1)
   })
   it('返回只读引用', () => {
     ;(sys as any).channels.push(makeChannel())
-    expect(sys.getChannels()[0].state).toBe('flowing')
+    expect((sys as any).channels[0].state).toBe('flowing')
   })
   it('支持4种渠道状态', () => {
     const states: ChannelState[] = ['planned', 'digging', 'flowing', 'silted']
@@ -29,6 +29,6 @@ describe('WorldIrrigationSystem.getChannels', () => {
     ;(sys as any).channels.push(makeChannel('planned'))
     ;(sys as any).channels.push(makeChannel('flowing'))
     ;(sys as any).channels.push(makeChannel('silted'))
-    expect(sys.getChannels()).toHaveLength(3)
+    expect((sys as any).channels).toHaveLength(3)
   })
 })

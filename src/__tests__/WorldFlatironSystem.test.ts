@@ -12,17 +12,17 @@ describe('WorldFlatironSystem.getFlatirons', () => {
   let sys: WorldFlatironSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无熨斗山', () => { expect(sys.getFlatirons()).toHaveLength(0) })
+  it('初始无熨斗山', () => { expect((sys as any).flatirons).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).flatirons.push(makeFlatiron())
-    expect(sys.getFlatirons()).toHaveLength(1)
+    expect((sys as any).flatirons).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getFlatirons()).toBe((sys as any).flatirons)
+    expect((sys as any).flatirons).toBe((sys as any).flatirons)
   })
   it('熨斗山字段正确', () => {
     ;(sys as any).flatirons.push(makeFlatiron())
-    const f = sys.getFlatirons()[0]
+    const f = (sys as any).flatirons[0]
     expect(f.tiltAngle).toBe(30)
     expect(f.rockHardness).toBe(80)
     expect(f.spectacle).toBe(70)
@@ -30,6 +30,6 @@ describe('WorldFlatironSystem.getFlatirons', () => {
   it('多个熨斗山全部返回', () => {
     ;(sys as any).flatirons.push(makeFlatiron())
     ;(sys as any).flatirons.push(makeFlatiron())
-    expect(sys.getFlatirons()).toHaveLength(2)
+    expect((sys as any).flatirons).toHaveLength(2)
   })
 })

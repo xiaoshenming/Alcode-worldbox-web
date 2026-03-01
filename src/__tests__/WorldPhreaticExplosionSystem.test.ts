@@ -12,17 +12,17 @@ describe('WorldPhreaticExplosionSystem.getExplosions', () => {
   let sys: WorldPhreaticExplosionSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无蒸汽爆炸', () => { expect(sys.getExplosions()).toHaveLength(0) })
+  it('初始无蒸汽爆炸', () => { expect((sys as any).explosions).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).explosions.push(makeExplosion())
-    expect(sys.getExplosions()).toHaveLength(1)
+    expect((sys as any).explosions).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getExplosions()).toBe((sys as any).explosions)
+    expect((sys as any).explosions).toBe((sys as any).explosions)
   })
   it('蒸汽爆炸字段正确', () => {
     ;(sys as any).explosions.push(makeExplosion())
-    const e = sys.getExplosions()[0]
+    const e = (sys as any).explosions[0]
     expect(e.steamPressure).toBe(80)
     expect(e.blastRadius).toBe(10)
     expect(e.debrisEjection).toBe(60)

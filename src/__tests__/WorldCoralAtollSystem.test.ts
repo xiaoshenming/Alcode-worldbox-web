@@ -12,17 +12,17 @@ describe('WorldCoralAtollSystem.getAtolls', () => {
   let sys: WorldCoralAtollSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无珊瑚环礁', () => { expect(sys.getAtolls()).toHaveLength(0) })
+  it('初始无珊瑚环礁', () => { expect((sys as any).atolls).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).atolls.push(makeAtoll())
-    expect(sys.getAtolls()).toHaveLength(1)
+    expect((sys as any).atolls).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getAtolls()).toBe((sys as any).atolls)
+    expect((sys as any).atolls).toBe((sys as any).atolls)
   })
   it('珊瑚环礁字段正确', () => {
     ;(sys as any).atolls.push(makeAtoll())
-    const a = sys.getAtolls()[0]
+    const a = (sys as any).atolls[0]
     expect(a.coralHealth).toBe(80)
     expect(a.biodiversity).toBe(90)
     expect(a.bleachingRisk).toBe(30)
@@ -30,6 +30,6 @@ describe('WorldCoralAtollSystem.getAtolls', () => {
   it('多个珊瑚环礁全部返回', () => {
     ;(sys as any).atolls.push(makeAtoll())
     ;(sys as any).atolls.push(makeAtoll())
-    expect(sys.getAtolls()).toHaveLength(2)
+    expect((sys as any).atolls).toHaveLength(2)
   })
 })

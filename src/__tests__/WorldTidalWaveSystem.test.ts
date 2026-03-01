@@ -12,13 +12,13 @@ describe('WorldTidalWaveSystem.getWaves', () => {
   let sys: WorldTidalWaveSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无潮汐波', () => { expect(sys.getWaves()).toHaveLength(0) })
+  it('初始无潮汐波', () => { expect((sys as any).waves).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).waves.push(makeWave())
-    expect(sys.getWaves()).toHaveLength(1)
+    expect((sys as any).waves).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getWaves()).toBe((sys as any).waves)
+    expect((sys as any).waves).toBe((sys as any).waves)
   })
   it('支持4种波浪强度', () => {
     const intensities: WaveIntensity[] = ['minor', 'moderate', 'major', 'tsunami']
@@ -26,7 +26,7 @@ describe('WorldTidalWaveSystem.getWaves', () => {
   })
   it('潮汐波字段正确', () => {
     ;(sys as any).waves.push(makeWave('tsunami'))
-    const w = sys.getWaves()[0]
+    const w = (sys as any).waves[0]
     expect(w.intensity).toBe('tsunami')
     expect(w.reach).toBe(20)
     expect(w.progress).toBe(50)

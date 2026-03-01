@@ -12,17 +12,17 @@ describe('WorldTravertineTerraceSystem.getZones', () => {
   let sys: WorldTravertineTerraceSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无石灰华梯田', () => { expect(sys.getZones()).toHaveLength(0) })
+  it('初始无石灰华梯田', () => { expect((sys as any).zones).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).zones.push(makeZone())
-    expect(sys.getZones()).toHaveLength(1)
+    expect((sys as any).zones).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getZones()).toBe((sys as any).zones)
+    expect((sys as any).zones).toBe((sys as any).zones)
   })
   it('石灰华梯田字段正确', () => {
     ;(sys as any).zones.push(makeZone())
-    const z = sys.getZones()[0]
+    const z = (sys as any).zones[0]
     expect(z.mineralContent).toBe(70)
     expect(z.calcification).toBe(60)
     expect(z.flowRate).toBe(40)

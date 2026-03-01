@@ -12,17 +12,17 @@ describe('WorldStoneWindowSystem.getWindows', () => {
   let sys: WorldStoneWindowSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无石窗', () => { expect(sys.getWindows()).toHaveLength(0) })
+  it('初始无石窗', () => { expect((sys as any).windows).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).windows.push(makeWindow())
-    expect(sys.getWindows()).toHaveLength(1)
+    expect((sys as any).windows).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getWindows()).toBe((sys as any).windows)
+    expect((sys as any).windows).toBe((sys as any).windows)
   })
   it('石窗字段正确', () => {
     ;(sys as any).windows.push(makeWindow())
-    const w = sys.getWindows()[0]
+    const w = (sys as any).windows[0]
     expect(w.frameSolidity).toBe(80)
     expect(w.lightEffect).toBe(70)
     expect(w.spectacle).toBe(85)

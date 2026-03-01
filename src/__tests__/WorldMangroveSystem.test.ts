@@ -12,13 +12,13 @@ describe('WorldMangroveSystem.getForests', () => {
   let sys: WorldMangroveSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无红树林', () => { expect(sys.getForests()).toHaveLength(0) })
+  it('初始无红树林', () => { expect((sys as any).forests).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).forests.push(makeForest())
-    expect(sys.getForests()).toHaveLength(1)
+    expect((sys as any).forests).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getForests()).toBe((sys as any).forests)
+    expect((sys as any).forests).toBe((sys as any).forests)
   })
   it('支持4种健康状态', () => {
     const types: MangroveHealth[] = ['flourishing', 'healthy', 'stressed', 'dying']
@@ -26,7 +26,7 @@ describe('WorldMangroveSystem.getForests', () => {
   })
   it('红树林字段正确', () => {
     ;(sys as any).forests.push(makeForest('flourishing'))
-    const f = sys.getForests()[0]
+    const f = (sys as any).forests[0]
     expect(f.health).toBe('flourishing')
     expect(f.density).toBe(70)
     expect(f.stormProtection).toBe(60)

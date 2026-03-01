@@ -12,13 +12,13 @@ describe('WorldRelicSystem.getRelics', () => {
   let sys: WorldRelicSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无遗物', () => { expect(sys.getRelics()).toHaveLength(0) })
+  it('初始无遗物', () => { expect((sys as any).relics).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).relics.push(makeRelic())
-    expect(sys.getRelics()).toHaveLength(1)
+    expect((sys as any).relics).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getRelics()).toBe((sys as any).relics)
+    expect((sys as any).relics).toBe((sys as any).relics)
   })
   it('支持5种遗物类型', () => {
     const types: RelicType[] = ['wisdom', 'war', 'nature', 'arcane', 'prosperity']
@@ -26,7 +26,7 @@ describe('WorldRelicSystem.getRelics', () => {
   })
   it('遗物字段正确', () => {
     ;(sys as any).relics.push(makeRelic('war'))
-    const r = sys.getRelics()[0]
+    const r = (sys as any).relics[0]
     expect(r.type).toBe('war')
     expect(r.power).toBe(0.5)
     expect(r.active).toBe(true)

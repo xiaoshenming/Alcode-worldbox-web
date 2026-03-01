@@ -29,16 +29,16 @@ describe('TradeNegotiationSystem.getNegotiations', () => {
 
   it('初始无谈判', () => { expect(sys.getNegotiations()).toHaveLength(0) })
   it('注入后可查询', () => {
-    ;(sys as any).negotiations.push(makeNeg())
+    ;sys.getNegotiations().push(makeNeg())
     expect(sys.getNegotiations()).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    ;(sys as any).negotiations.push(makeNeg())
-    expect(sys.getNegotiations()).toBe((sys as any).negotiations)
+    ;sys.getNegotiations().push(makeNeg())
+    expect(sys.getNegotiations()).toBe(sys.getNegotiations())
   })
   it('支持4种谈判状态', () => {
     const statuses: NegotiationStatus[] = ['pending', 'accepted', 'rejected', 'expired']
-    statuses.forEach(s => { ;(sys as any).negotiations.push(makeNeg(s)) })
+    statuses.forEach(s => { ;sys.getNegotiations().push(makeNeg(s)) })
     expect(sys.getNegotiations()).toHaveLength(4)
   })
 })

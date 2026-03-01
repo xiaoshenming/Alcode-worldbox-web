@@ -156,7 +156,7 @@ describe('Camera', () => {
       camera.x = 100
       camera.y = 100
       camera.startDrag(0, 0)
-      expect(camera.getDragging()).toBe(true)
+      expect((camera as any).isDragging).toBe(true)
       camera.drag(10, 10)
       // pan(-10, -10) → x increases by 10
       expect(camera.x).not.toBe(100) // 位置改变
@@ -165,7 +165,7 @@ describe('Camera', () => {
     it('endDrag 后停止拖拽状态', () => {
       camera.startDrag(0, 0)
       camera.endDrag()
-      expect(camera.getDragging()).toBe(false)
+      expect((camera as any).isDragging).toBe(false)
     })
   })
 })

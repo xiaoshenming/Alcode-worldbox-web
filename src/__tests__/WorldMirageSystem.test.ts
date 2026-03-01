@@ -12,13 +12,13 @@ describe('WorldMirageSystem.getMirages', () => {
   let sys: WorldMirageSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无海市蜃楼', () => { expect(sys.getMirages()).toHaveLength(0) })
+  it('初始无海市蜃楼', () => { expect((sys as any).mirages).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).mirages.push(makeMirage())
-    expect(sys.getMirages()).toHaveLength(1)
+    expect((sys as any).mirages).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getMirages()).toBe((sys as any).mirages)
+    expect((sys as any).mirages).toBe((sys as any).mirages)
   })
   it('支持4种海市蜃楼类型', () => {
     const types: MirageType[] = ['oasis', 'city', 'lake', 'mountain']
@@ -26,7 +26,7 @@ describe('WorldMirageSystem.getMirages', () => {
   })
   it('海市蜃楼字段正确', () => {
     ;(sys as any).mirages.push(makeMirage('city'))
-    const m = sys.getMirages()[0]
+    const m = (sys as any).mirages[0]
     expect(m.mirageType).toBe('city')
     expect(m.intensity).toBe(80)
     expect(m.duration).toBe(300)

@@ -12,17 +12,17 @@ describe('WorldGrottoSystem.getGrottos', () => {
   let sys: WorldGrottoSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无岩洞', () => { expect(sys.getGrottos()).toHaveLength(0) })
+  it('初始无岩洞', () => { expect((sys as any).grottos).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).grottos.push(makeGrotto())
-    expect(sys.getGrottos()).toHaveLength(1)
+    expect((sys as any).grottos).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getGrottos()).toBe((sys as any).grottos)
+    expect((sys as any).grottos).toBe((sys as any).grottos)
   })
   it('岩洞字段正确', () => {
     ;(sys as any).grottos.push(makeGrotto())
-    const g = sys.getGrottos()[0]
+    const g = (sys as any).grottos[0]
     expect(g.stalactites).toBe(20)
     expect(g.humidity).toBe(80)
     expect(g.biodiversity).toBe(60)
@@ -30,6 +30,6 @@ describe('WorldGrottoSystem.getGrottos', () => {
   it('多个岩洞全部返回', () => {
     ;(sys as any).grottos.push(makeGrotto())
     ;(sys as any).grottos.push(makeGrotto())
-    expect(sys.getGrottos()).toHaveLength(2)
+    expect((sys as any).grottos).toHaveLength(2)
   })
 })

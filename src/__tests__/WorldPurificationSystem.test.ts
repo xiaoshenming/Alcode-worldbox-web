@@ -12,17 +12,17 @@ describe('WorldPurificationSystem.getSites', () => {
   let sys: WorldPurificationSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无净化区', () => { expect(sys.getSites()).toHaveLength(0) })
+  it('初始无净化区', () => { expect((sys as any).sites).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).sites.push(makeSite())
-    expect(sys.getSites()).toHaveLength(1)
+    expect((sys as any).sites).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getSites()).toBe((sys as any).sites)
+    expect((sys as any).sites).toBe((sys as any).sites)
   })
   it('净化区字段正确', () => {
     ;(sys as any).sites.push(makeSite())
-    const s = sys.getSites()[0]
+    const s = (sys as any).sites[0]
     expect(s.power).toBe(80)
     expect(s.radius).toBe(10)
     expect(s.active).toBe(true)

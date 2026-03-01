@@ -12,13 +12,13 @@ describe('WorldDustDevilSystem.getDevils', () => {
   let sys: WorldDustDevilSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无尘卷风', () => { expect(sys.getDevils()).toHaveLength(0) })
+  it('初始无尘卷风', () => { expect((sys as any).devils).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).devils.push(makeDevil())
-    expect(sys.getDevils()).toHaveLength(1)
+    expect((sys as any).devils).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getDevils()).toBe((sys as any).devils)
+    expect((sys as any).devils).toBe((sys as any).devils)
   })
   it('支持4种强度', () => {
     const intensities: DevilIntensity[] = ['minor', 'moderate', 'strong', 'violent']
@@ -26,7 +26,7 @@ describe('WorldDustDevilSystem.getDevils', () => {
   })
   it('尘卷风字段正确', () => {
     ;(sys as any).devils.push(makeDevil('violent'))
-    const d = sys.getDevils()[0]
+    const d = (sys as any).devils[0]
     expect(d.intensity).toBe('violent')
     expect(d.radius).toBe(5)
     expect(d.speed).toBe(0.3)

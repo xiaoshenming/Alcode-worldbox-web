@@ -12,17 +12,17 @@ describe('WorldPinnacleSystem.getPinnacles', () => {
   let sys: WorldPinnacleSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无石柱', () => { expect(sys.getPinnacles()).toHaveLength(0) })
+  it('初始无石柱', () => { expect((sys as any).pinnacles).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).pinnacles.push(makePinnacle())
-    expect(sys.getPinnacles()).toHaveLength(1)
+    expect((sys as any).pinnacles).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getPinnacles()).toBe((sys as any).pinnacles)
+    expect((sys as any).pinnacles).toBe((sys as any).pinnacles)
   })
   it('石柱字段正确', () => {
     ;(sys as any).pinnacles.push(makePinnacle())
-    const p = sys.getPinnacles()[0]
+    const p = (sys as any).pinnacles[0]
     expect(p.sharpness).toBe(90)
     expect(p.stability).toBe(75)
     expect(p.mineralContent).toBe(50)

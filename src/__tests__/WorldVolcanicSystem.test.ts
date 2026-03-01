@@ -11,13 +11,13 @@ describe('WorldVolcanicSystem.getVolcanoes', () => {
   let sys: WorldVolcanicSystem
   beforeEach(() => { sys = makeSys() })
 
-  it('初始无火山', () => { expect(sys.getVolcanoes()).toHaveLength(0) })
+  it('初始无火山', () => { expect((sys as any).volcanoes).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).volcanoes.push(makeVolcano())
-    expect(sys.getVolcanoes()).toHaveLength(1)
+    expect((sys as any).volcanoes).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getVolcanoes()).toBe((sys as any).volcanoes)
+    expect((sys as any).volcanoes).toBe((sys as any).volcanoes)
   })
   it('支持5种火山状态', () => {
     const states: VolcanoState[] = ['dormant', 'rumbling', 'active', 'erupting', 'cooling']

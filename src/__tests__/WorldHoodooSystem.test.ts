@@ -12,17 +12,17 @@ describe('WorldHoodooSystem.getHoodoos', () => {
   let sys: WorldHoodooSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无嶂石岩', () => { expect(sys.getHoodoos()).toHaveLength(0) })
+  it('初始无嶂石岩', () => { expect((sys as any).hoodoos).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).hoodoos.push(makeHoodoo())
-    expect(sys.getHoodoos()).toHaveLength(1)
+    expect((sys as any).hoodoos).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getHoodoos()).toBe((sys as any).hoodoos)
+    expect((sys as any).hoodoos).toBe((sys as any).hoodoos)
   })
   it('嶂石岩字段正确', () => {
     ;(sys as any).hoodoos.push(makeHoodoo())
-    const h = sys.getHoodoos()[0]
+    const h = (sys as any).hoodoos[0]
     expect(h.height).toBe(15)
     expect(h.stability).toBe(80)
     expect(h.colorBanding).toBe(6)

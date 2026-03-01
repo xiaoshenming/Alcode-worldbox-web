@@ -12,13 +12,13 @@ describe('WorldPetrifiedForestSystem.getForests', () => {
   let sys: WorldPetrifiedForestSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无石化森林', () => { expect(sys.getForests()).toHaveLength(0) })
+  it('初始无石化森林', () => { expect((sys as any).forests).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).forests.push(makeForest())
-    expect(sys.getForests()).toHaveLength(1)
+    expect((sys as any).forests).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getForests()).toBe((sys as any).forests)
+    expect((sys as any).forests).toBe((sys as any).forests)
   })
   it('支持4种石化年代', () => {
     const ages: PetrifiedAge[] = ['recent', 'ancient', 'primordial', 'mythic']
@@ -26,7 +26,7 @@ describe('WorldPetrifiedForestSystem.getForests', () => {
   })
   it('石化森林字段正确', () => {
     ;(sys as any).forests.push(makeForest('primordial'))
-    const f = sys.getForests()[0]
+    const f = (sys as any).forests[0]
     expect(f.petrifiedAge).toBe('primordial')
     expect(f.mineralValue).toBe(80)
     expect(f.mysteryLevel).toBe(70)

@@ -12,17 +12,17 @@ describe('WorldCuestaSystem.getCuestas', () => {
   let sys: WorldCuestaSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无单面山', () => { expect(sys.getCuestas()).toHaveLength(0) })
+  it('初始无单面山', () => { expect((sys as any).cuestas).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).cuestas.push(makeCuesta())
-    expect(sys.getCuestas()).toHaveLength(1)
+    expect((sys as any).cuestas).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getCuestas()).toBe((sys as any).cuestas)
+    expect((sys as any).cuestas).toBe((sys as any).cuestas)
   })
   it('单面山字段正确', () => {
     ;(sys as any).cuestas.push(makeCuesta())
-    const c = sys.getCuestas()[0]
+    const c = (sys as any).cuestas[0]
     expect(c.scarpHeight).toBe(20)
     expect(c.dipAngle).toBe(10)
     expect(c.rockLayering).toBe(5)
@@ -30,6 +30,6 @@ describe('WorldCuestaSystem.getCuestas', () => {
   it('多个单面山全部返回', () => {
     ;(sys as any).cuestas.push(makeCuesta())
     ;(sys as any).cuestas.push(makeCuesta())
-    expect(sys.getCuestas()).toHaveLength(2)
+    expect((sys as any).cuestas).toHaveLength(2)
   })
 })

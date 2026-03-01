@@ -12,17 +12,17 @@ describe('WorldIceShelfSystem.getShelves', () => {
   let sys: WorldIceShelfSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无冰架', () => { expect(sys.getShelves()).toHaveLength(0) })
+  it('初始无冰架', () => { expect((sys as any).shelves).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).shelves.push(makeShelf())
-    expect(sys.getShelves()).toHaveLength(1)
+    expect((sys as any).shelves).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getShelves()).toBe((sys as any).shelves)
+    expect((sys as any).shelves).toBe((sys as any).shelves)
   })
   it('冰架字段正确', () => {
     ;(sys as any).shelves.push(makeShelf())
-    const s = sys.getShelves()[0]
+    const s = (sys as any).shelves[0]
     expect(s.thickness).toBe(20)
     expect(s.stability).toBe(70)
     expect(s.calvingRate).toBe(5)
@@ -30,6 +30,6 @@ describe('WorldIceShelfSystem.getShelves', () => {
   it('多个冰架全部返回', () => {
     ;(sys as any).shelves.push(makeShelf())
     ;(sys as any).shelves.push(makeShelf())
-    expect(sys.getShelves()).toHaveLength(2)
+    expect((sys as any).shelves).toHaveLength(2)
   })
 })

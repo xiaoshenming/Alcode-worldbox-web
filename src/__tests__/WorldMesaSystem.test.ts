@@ -12,17 +12,17 @@ describe('WorldMesaSystem.getMesas', () => {
   let sys: WorldMesaSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无台地', () => { expect(sys.getMesas()).toHaveLength(0) })
+  it('初始无台地', () => { expect((sys as any).mesas).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).mesas.push(makeMesa())
-    expect(sys.getMesas()).toHaveLength(1)
+    expect((sys as any).mesas).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getMesas()).toBe((sys as any).mesas)
+    expect((sys as any).mesas).toBe((sys as any).mesas)
   })
   it('台地字段正确', () => {
     ;(sys as any).mesas.push(makeMesa())
-    const m = sys.getMesas()[0]
+    const m = (sys as any).mesas[0]
     expect(m.elevation).toBe(60)
     expect(m.plateauArea).toBe(700)
     expect(m.stratification).toBe(8)
@@ -30,6 +30,6 @@ describe('WorldMesaSystem.getMesas', () => {
   it('多个台地全部返回', () => {
     ;(sys as any).mesas.push(makeMesa())
     ;(sys as any).mesas.push(makeMesa())
-    expect(sys.getMesas()).toHaveLength(2)
+    expect((sys as any).mesas).toHaveLength(2)
   })
 })

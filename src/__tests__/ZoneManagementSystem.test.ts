@@ -4,7 +4,7 @@ import { ZoneManagementSystem } from '../systems/ZoneManagementSystem'
 function makeSys(): ZoneManagementSystem { return new ZoneManagementSystem() }
 let nextId = 1
 function makeZone() {
-  return { id: nextId++, x: 0, y: 0, w: 10, h: 10, type: 'farming', name: 'Farm Zone', description: 'A farming area' }
+  return { id: nextId++, x: 0, y: 0, w: 10, h: 10, type: 'farming', name: 'Farm Zone', description: 'A farming area', panelInfoStr: '[farming] 10x10' }
 }
 
 describe('ZoneManagementSystem.getZone', () => {

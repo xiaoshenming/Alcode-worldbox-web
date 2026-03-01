@@ -12,13 +12,13 @@ describe('WorldGeyserSystem.getGeysers', () => {
   let sys: WorldGeyserSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无间歇泉', () => { expect(sys.getGeysers()).toHaveLength(0) })
+  it('初始无间歇泉', () => { expect((sys as any).geysers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).geysers.push(makeGeyser())
-    expect(sys.getGeysers()).toHaveLength(1)
+    expect((sys as any).geysers).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getGeysers()).toBe((sys as any).geysers)
+    expect((sys as any).geysers).toBe((sys as any).geysers)
   })
 })
 

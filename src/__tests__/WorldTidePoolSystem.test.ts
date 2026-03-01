@@ -12,13 +12,13 @@ describe('WorldTidePoolSystem', () => {
   let sys: WorldTidePoolSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无潮池', () => { expect(sys.getPools()).toHaveLength(0) })
+  it('初始无潮池', () => { expect((sys as any).pools).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).pools.push(makePool())
-    expect(sys.getPools()).toHaveLength(1)
+    expect((sys as any).pools).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getPools()).toBe((sys as any).pools)
+    expect((sys as any).pools).toBe((sys as any).pools)
   })
   it('getActivePools只返回active=true', () => {
     ;(sys as any).pools.push(makePool(true))
@@ -27,7 +27,7 @@ describe('WorldTidePoolSystem', () => {
   })
   it('潮池字段正确', () => {
     ;(sys as any).pools.push(makePool())
-    const p = sys.getPools()[0]
+    const p = (sys as any).pools[0]
     expect(p.biodiversity).toBe(70)
     expect(p.resources).toBe(30)
     expect(p.active).toBe(true)

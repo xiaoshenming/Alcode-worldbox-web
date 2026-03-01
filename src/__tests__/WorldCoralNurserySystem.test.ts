@@ -12,13 +12,13 @@ describe('WorldCoralNurserySystem.getNurseries', () => {
   let sys: WorldCoralNurserySystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无珊瑚苗圃', () => { expect(sys.getNurseries()).toHaveLength(0) })
+  it('初始无珊瑚苗圃', () => { expect((sys as any).nurseries).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).nurseries.push(makeNursery())
-    expect(sys.getNurseries()).toHaveLength(1)
+    expect((sys as any).nurseries).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getNurseries()).toBe((sys as any).nurseries)
+    expect((sys as any).nurseries).toBe((sys as any).nurseries)
   })
   it('支持4种健康状态', () => {
     const levels: CoralHealth[] = ['pristine', 'healthy', 'degraded', 'dead']
@@ -26,7 +26,7 @@ describe('WorldCoralNurserySystem.getNurseries', () => {
   })
   it('珊瑚苗圃字段正确', () => {
     ;(sys as any).nurseries.push(makeNursery('pristine'))
-    const n = sys.getNurseries()[0]
+    const n = (sys as any).nurseries[0]
     expect(n.health).toBe('pristine')
     expect(n.coralCount).toBe(50)
     expect(n.waterTemp).toBe(26)

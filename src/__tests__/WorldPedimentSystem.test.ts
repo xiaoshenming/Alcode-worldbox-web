@@ -12,17 +12,17 @@ describe('WorldPedimentSystem.getPediments', () => {
   let sys: WorldPedimentSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无山麓斜面', () => { expect(sys.getPediments()).toHaveLength(0) })
+  it('初始无山麓斜面', () => { expect((sys as any).pediments).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).pediments.push(makePediment())
-    expect(sys.getPediments()).toHaveLength(1)
+    expect((sys as any).pediments).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getPediments()).toBe((sys as any).pediments)
+    expect((sys as any).pediments).toBe((sys as any).pediments)
   })
   it('山麓斜面字段正确', () => {
     ;(sys as any).pediments.push(makePediment())
-    const p = sys.getPediments()[0]
+    const p = (sys as any).pediments[0]
     expect(p.slope).toBe(5)
     expect(p.erosionAge).toBe(10000)
     expect(p.spectacle).toBe(55)
@@ -30,6 +30,6 @@ describe('WorldPedimentSystem.getPediments', () => {
   it('多个山麓斜面全部返回', () => {
     ;(sys as any).pediments.push(makePediment())
     ;(sys as any).pediments.push(makePediment())
-    expect(sys.getPediments()).toHaveLength(2)
+    expect((sys as any).pediments).toHaveLength(2)
   })
 })

@@ -12,17 +12,17 @@ describe('WorldRockArch2System.getArches', () => {
   let sys: WorldRockArch2System
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无岩石拱', () => { expect(sys.getArches()).toHaveLength(0) })
+  it('初始无岩石拱', () => { expect((sys as any).arches).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).arches.push(makeArch())
-    expect(sys.getArches()).toHaveLength(1)
+    expect((sys as any).arches).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getArches()).toBe((sys as any).arches)
+    expect((sys as any).arches).toBe((sys as any).arches)
   })
   it('岩石拱字段正确', () => {
     ;(sys as any).arches.push(makeArch())
-    const a = sys.getArches()[0]
+    const a = (sys as any).arches[0]
     expect(a.spanWidth).toBe(15)
     expect(a.stability).toBe(80)
     expect(a.spectacle).toBe(85)

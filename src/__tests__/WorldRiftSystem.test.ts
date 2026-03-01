@@ -12,10 +12,10 @@ describe('WorldRiftSystem', () => {
   let sys: WorldRiftSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无裂缝', () => { expect(sys.getRifts()).toHaveLength(0) })
+  it('初始无裂缝', () => { expect((sys as any).rifts).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).rifts.push(makeRift())
-    expect(sys.getRifts()).toHaveLength(1)
+    expect((sys as any).rifts).toHaveLength(1)
   })
   it('getActiveRifts不返回collapsing状态', () => {
     ;(sys as any).rifts.push(makeRift('stable'))

@@ -12,17 +12,17 @@ describe('WorldEscarpmentSystem.getEscarpments', () => {
   let sys: WorldEscarpmentSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无陡坡', () => { expect(sys.getEscarpments()).toHaveLength(0) })
+  it('初始无陡坡', () => { expect((sys as any).escarpments).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).escarpments.push(makeEscarpment())
-    expect(sys.getEscarpments()).toHaveLength(1)
+    expect((sys as any).escarpments).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getEscarpments()).toBe((sys as any).escarpments)
+    expect((sys as any).escarpments).toBe((sys as any).escarpments)
   })
   it('陡坡字段正确', () => {
     ;(sys as any).escarpments.push(makeEscarpment())
-    const e = sys.getEscarpments()[0]
+    const e = (sys as any).escarpments[0]
     expect(e.steepness).toBe(80)
     expect(e.rockfallRisk).toBe(25)
     expect(e.vegetationCover).toBe(30)

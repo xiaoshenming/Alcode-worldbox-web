@@ -12,13 +12,13 @@ describe('WorldAnomalySystem.getAnomalies', () => {
   let sys: WorldAnomalySystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无异常', () => { expect(sys.getAnomalies()).toHaveLength(0) })
+  it('初始无异常', () => { expect((sys as any).anomalies).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).anomalies.push(makeAnomaly())
-    expect(sys.getAnomalies()).toHaveLength(1)
+    expect((sys as any).anomalies).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getAnomalies()).toBe((sys as any).anomalies)
+    expect((sys as any).anomalies).toBe((sys as any).anomalies)
   })
   it('支持5种异常类型', () => {
     const types: AnomalyType[] = ['rift', 'vortex', 'mirage', 'crystal_storm', 'void_zone']

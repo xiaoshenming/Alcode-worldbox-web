@@ -18,20 +18,23 @@ describe('FormationSystem.getFormations', () => {
 
   it('初始无阵型', () => { expect(sys.getFormations()).toHaveLength(0) })
   it('注入后可查询', () => {
-    ;(sys as any).formations.set(1, makeFormation(1))
+    const f = makeFormation(1)
+    ;(sys as any).formations.set(f.id, f)
     expect(sys.getFormations()).toHaveLength(1)
   })
   it('阵型字段正确', () => {
-    ;(sys as any).formations.set(1, makeFormation(2, 'wedge'))
-    const f = sys.getFormations()[0]
-    expect(f.civId).toBe(2)
-    expect(f.type).toBe('wedge')
-    expect(f.members).toHaveLength(3)
+    const f = makeFormation(2, 'wedge')
+    ;(sys as any).formations.set(f.id, f)
+    const result = sys.getFormations()[0]
+    expect(result.civId).toBe(2)
+    expect(result.type).toBe('wedge')
+    expect(result.members).toHaveLength(3)
   })
   it('支持5种阵型类型', () => {
     const types: FormationType[] = ['line', 'wedge', 'circle', 'square', 'scatter']
     types.forEach((t, i) => {
-      ;(sys as any).formations.set(i + 1, makeFormation(i + 1, t))
+      const f = makeFormation(i + 1, t)
+      ;(sys as any).formations.set(f.id, f)
     })
     expect(sys.getFormations()).toHaveLength(5)
   })
@@ -47,13 +50,15 @@ describe('FormationSystem.getFormationBonus', () => {
     expect(bonus.defense).toBe(1.0)
   })
   it('line阵型有攻击加成', () => {
-    ;(sys as any).formations.set(1, makeFormation(1, 'line'))
-    const bonus = sys.getFormationBonus(1)
+    const f = makeFormation(1, 'line')
+    ;(sys as any).formations.set(f.id, f)
+    const bonus = sys.getFormationBonus(f.id)
     expect(bonus.attack).toBeGreaterThan(1.0)
   })
   it('circle阵型有防御加成', () => {
-    ;(sys as any).formations.set(1, makeFormation(1, 'circle'))
-    const bonus = sys.getFormationBonus(1)
+    const f = makeFormation(1, 'circle')
+    ;(sys as any).formations.set(f.id, f)
+    const bonus = sys.getFormationBonus(f.id)
     expect(bonus.defense).toBeGreaterThan(1.0)
   })
 })

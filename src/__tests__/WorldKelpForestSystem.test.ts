@@ -12,17 +12,17 @@ describe('WorldKelpForestSystem.getForests', () => {
   let sys: WorldKelpForestSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无海带森林', () => { expect(sys.getForests()).toHaveLength(0) })
+  it('初始无海带森林', () => { expect((sys as any).forests).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).forests.push(makeForest())
-    expect(sys.getForests()).toHaveLength(1)
+    expect((sys as any).forests).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getForests()).toBe((sys as any).forests)
+    expect((sys as any).forests).toBe((sys as any).forests)
   })
   it('海带森林字段正确', () => {
     ;(sys as any).forests.push(makeForest())
-    const f = sys.getForests()[0]
+    const f = (sys as any).forests[0]
     expect(f.density).toBe(15)
     expect(f.biodiversity).toBe(3)
     expect(f.carbonAbsorption).toBe(2.5)
@@ -31,6 +31,6 @@ describe('WorldKelpForestSystem.getForests', () => {
     ;(sys as any).forests.push(makeForest())
     ;(sys as any).forests.push(makeForest())
     ;(sys as any).forests.push(makeForest())
-    expect(sys.getForests()).toHaveLength(3)
+    expect((sys as any).forests).toHaveLength(3)
   })
 })

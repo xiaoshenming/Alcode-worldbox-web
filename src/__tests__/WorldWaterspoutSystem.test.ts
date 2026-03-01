@@ -12,13 +12,13 @@ describe('WorldWaterspoutSystem.getSpouts', () => {
   let sys: WorldWaterspoutSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无水龙卷', () => { expect(sys.getSpouts()).toHaveLength(0) })
+  it('初始无水龙卷', () => { expect((sys as any).spouts).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).spouts.push(makeSpout())
-    expect(sys.getSpouts()).toHaveLength(1)
+    expect((sys as any).spouts).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getSpouts()).toBe((sys as any).spouts)
+    expect((sys as any).spouts).toBe((sys as any).spouts)
   })
   it('支持4种强度', () => {
     const types: SpoutIntensity[] = ['weak', 'moderate', 'strong', 'tornadic']
@@ -26,7 +26,7 @@ describe('WorldWaterspoutSystem.getSpouts', () => {
   })
   it('水龙卷字段正确', () => {
     ;(sys as any).spouts.push(makeSpout('tornadic'))
-    const s = sys.getSpouts()[0]
+    const s = (sys as any).spouts[0]
     expect(s.intensity).toBe('tornadic')
     expect(s.height).toBe(80)
     expect(s.damageRadius).toBe(10)

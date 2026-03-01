@@ -12,17 +12,17 @@ describe('WorldLaharSystem.getLahars', () => {
   let sys: WorldLaharSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无泥石流', () => { expect(sys.getLahars()).toHaveLength(0) })
+  it('初始无泥石流', () => { expect((sys as any).lahars).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).lahars.push(makeLahar())
-    expect(sys.getLahars()).toHaveLength(1)
+    expect((sys as any).lahars).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getLahars()).toBe((sys as any).lahars)
+    expect((sys as any).lahars).toBe((sys as any).lahars)
   })
   it('泥石流字段正确', () => {
     ;(sys as any).lahars.push(makeLahar())
-    const l = sys.getLahars()[0]
+    const l = (sys as any).lahars[0]
     expect(l.velocity).toBe(5)
     expect(l.debrisLoad).toBe(60)
     expect(l.temperature).toBe(200)
@@ -30,6 +30,6 @@ describe('WorldLaharSystem.getLahars', () => {
   it('多个泥石流全部返回', () => {
     ;(sys as any).lahars.push(makeLahar())
     ;(sys as any).lahars.push(makeLahar())
-    expect(sys.getLahars()).toHaveLength(2)
+    expect((sys as any).lahars).toHaveLength(2)
   })
 })

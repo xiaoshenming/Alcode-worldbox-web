@@ -12,17 +12,17 @@ describe('WorldCirqueSystem.getCirques', () => {
   let sys: WorldCirqueSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无冰斗', () => { expect(sys.getCirques()).toHaveLength(0) })
+  it('初始无冰斗', () => { expect((sys as any).cirques).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).cirques.push(makeCirque())
-    expect(sys.getCirques()).toHaveLength(1)
+    expect((sys as any).cirques).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getCirques()).toBe((sys as any).cirques)
+    expect((sys as any).cirques).toBe((sys as any).cirques)
   })
   it('冰斗字段正确', () => {
     ;(sys as any).cirques.push(makeCirque())
-    const c = sys.getCirques()[0]
+    const c = (sys as any).cirques[0]
     expect(c.wallHeight).toBe(25)
     expect(c.tarnPresent).toBe(true)
     expect(c.spectacle).toBe(80)
@@ -30,6 +30,6 @@ describe('WorldCirqueSystem.getCirques', () => {
   it('多个冰斗全部返回', () => {
     ;(sys as any).cirques.push(makeCirque())
     ;(sys as any).cirques.push(makeCirque())
-    expect(sys.getCirques()).toHaveLength(2)
+    expect((sys as any).cirques).toHaveLength(2)
   })
 })

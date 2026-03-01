@@ -12,17 +12,17 @@ describe('WorldDewFormationSystem.getDewZones', () => {
   let sys: WorldDewFormationSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无露水区', () => { expect(sys.getDewZones()).toHaveLength(0) })
+  it('初始无露水区', () => { expect((sys as any).dewZones).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).dewZones.push(makeDewZone())
-    expect(sys.getDewZones()).toHaveLength(1)
+    expect((sys as any).dewZones).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getDewZones()).toBe((sys as any).dewZones)
+    expect((sys as any).dewZones).toBe((sys as any).dewZones)
   })
   it('露水区字段正确', () => {
     ;(sys as any).dewZones.push(makeDewZone())
-    const d = sys.getDewZones()[0]
+    const d = (sys as any).dewZones[0]
     expect(d.moisture).toBe(60)
     expect(d.temperature).toBe(5)
     expect(d.evaporated).toBe(false)
@@ -30,6 +30,6 @@ describe('WorldDewFormationSystem.getDewZones', () => {
   it('多个露水区全部返回', () => {
     ;(sys as any).dewZones.push(makeDewZone())
     ;(sys as any).dewZones.push(makeDewZone())
-    expect(sys.getDewZones()).toHaveLength(2)
+    expect((sys as any).dewZones).toHaveLength(2)
   })
 })

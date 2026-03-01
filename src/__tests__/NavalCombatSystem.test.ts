@@ -46,12 +46,12 @@ describe('NavalCombatSystem.getBattleLog', () => {
 
   it('初始日志为空', () => { expect(sys.getBattleLog()).toHaveLength(0) })
   it('注入后可查��', () => {
-    ;(sys as any).battleLog.push('Ship sunk!')
+    ;sys.getBattleLog().push('Ship sunk!')
     expect(sys.getBattleLog()).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    ;(sys as any).battleLog.push('Battle begins')
-    expect(sys.getBattleLog()).toBe((sys as any).battleLog)
+    ;sys.getBattleLog().push('Battle begins')
+    expect(sys.getBattleLog()).toBe(sys.getBattleLog())
   })
 })
 

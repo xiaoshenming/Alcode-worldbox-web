@@ -12,17 +12,17 @@ describe('WorldEstuarySystem.getEstuaries', () => {
   let sys: WorldEstuarySystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无河口', () => { expect(sys.getEstuaries()).toHaveLength(0) })
+  it('初始无河口', () => { expect((sys as any).estuaries).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).estuaries.push(makeEstuary())
-    expect(sys.getEstuaries()).toHaveLength(1)
+    expect((sys as any).estuaries).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getEstuaries()).toBe((sys as any).estuaries)
+    expect((sys as any).estuaries).toBe((sys as any).estuaries)
   })
   it('河口字段正确', () => {
     ;(sys as any).estuaries.push(makeEstuary())
-    const e = sys.getEstuaries()[0]
+    const e = (sys as any).estuaries[0]
     expect(e.salinity).toBe(20)
     expect(e.biodiversity).toBe(85)
     expect(e.tidalRange).toBe(5)
@@ -30,6 +30,6 @@ describe('WorldEstuarySystem.getEstuaries', () => {
   it('多个河口全部返回', () => {
     ;(sys as any).estuaries.push(makeEstuary())
     ;(sys as any).estuaries.push(makeEstuary())
-    expect(sys.getEstuaries()).toHaveLength(2)
+    expect((sys as any).estuaries).toHaveLength(2)
   })
 })

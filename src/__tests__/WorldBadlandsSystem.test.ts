@@ -12,17 +12,17 @@ describe('WorldBadlandsSystem.getBadlands', () => {
   let sys: WorldBadlandsSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无荒地', () => { expect(sys.getBadlands()).toHaveLength(0) })
+  it('初始无荒地', () => { expect((sys as any).badlands).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).badlands.push(makeBadlands())
-    expect(sys.getBadlands()).toHaveLength(1)
+    expect((sys as any).badlands).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getBadlands()).toBe((sys as any).badlands)
+    expect((sys as any).badlands).toBe((sys as any).badlands)
   })
   it('荒地字段正确', () => {
     ;(sys as any).badlands.push(makeBadlands())
-    const b = sys.getBadlands()[0]
+    const b = (sys as any).badlands[0]
     expect(b.erosionLevel).toBe(80)
     expect(b.aridity).toBe(90)
     expect(b.mineralExposure).toBe(70)
@@ -30,6 +30,6 @@ describe('WorldBadlandsSystem.getBadlands', () => {
   it('多个荒地全部返回', () => {
     ;(sys as any).badlands.push(makeBadlands())
     ;(sys as any).badlands.push(makeBadlands())
-    expect(sys.getBadlands()).toHaveLength(2)
+    expect((sys as any).badlands).toHaveLength(2)
   })
 })

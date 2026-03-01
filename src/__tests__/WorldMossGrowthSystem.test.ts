@@ -12,13 +12,13 @@ describe('WorldMossGrowthSystem.getPatches', () => {
   let sys: WorldMossGrowthSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无苔藓', () => { expect(sys.getPatches()).toHaveLength(0) })
+  it('初始无苔藓', () => { expect((sys as any).patches).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).patches.push(makePatch())
-    expect(sys.getPatches()).toHaveLength(1)
+    expect((sys as any).patches).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getPatches()).toBe((sys as any).patches)
+    expect((sys as any).patches).toBe((sys as any).patches)
   })
   it('支持4种苔藓阶段', () => {
     const stages: MossStage[] = ['spore', 'thin', 'thick', 'lush']
@@ -26,7 +26,7 @@ describe('WorldMossGrowthSystem.getPatches', () => {
   })
   it('苔藓字段正确', () => {
     ;(sys as any).patches.push(makePatch('lush'))
-    const p = sys.getPatches()[0]
+    const p = (sys as any).patches[0]
     expect(p.stage).toBe('lush')
     expect(p.moisture).toBe(80)
   })

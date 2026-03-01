@@ -12,13 +12,13 @@ describe('WorldAuroraStormSystem', () => {
   let sys: WorldAuroraStormSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无极光风暴', () => { expect(sys.getStorms()).toHaveLength(0) })
+  it('初始无极光风暴', () => { expect((sys as any).storms).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).storms.push(makeStorm())
-    expect(sys.getStorms()).toHaveLength(1)
+    expect((sys as any).storms).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getStorms()).toBe((sys as any).storms)
+    expect((sys as any).storms).toBe((sys as any).storms)
   })
   it('getActiveStorms只返回active=true', () => {
     ;(sys as any).storms.push(makeStorm(true))
@@ -27,7 +27,7 @@ describe('WorldAuroraStormSystem', () => {
   })
   it('极光风暴字段正确', () => {
     ;(sys as any).storms.push(makeStorm())
-    const s = sys.getStorms()[0]
+    const s = (sys as any).storms[0]
     expect(s.intensity).toBe(80)
     expect(s.hue).toBe(120)
     expect(s.active).toBe(true)

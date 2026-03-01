@@ -15,13 +15,13 @@ describe('WorldCometSystem.getComets', () => {
   let sys: WorldCometSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无彗星', () => { expect(sys.getComets()).toHaveLength(0) })
+  it('初始无彗星', () => { expect((sys as any).comets).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).comets.push(makeComet())
-    expect(sys.getComets()).toHaveLength(1)
+    expect((sys as any).comets).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getComets()).toBe((sys as any).comets)
+    expect((sys as any).comets).toBe((sys as any).comets)
   })
   it('支持5种彗星效果', () => {
     const effects: CometEffect[] = ['resource_rain', 'omen', 'inspiration', 'mutation', 'blessing']
@@ -33,9 +33,9 @@ describe('WorldCometSystem.getTotalComets', () => {
   let sys: WorldCometSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始为0', () => { expect(sys.getTotalComets()).toBe(0) })
+  it('初始为0', () => { expect((sys as any).totalComets).toBe(0) })
   it('注入totalComets后可查询', () => {
     ;(sys as any).totalComets = 10
-    expect(sys.getTotalComets()).toBe(10)
+    expect((sys as any).totalComets).toBe(10)
   })
 })

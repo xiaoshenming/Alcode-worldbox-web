@@ -42,7 +42,7 @@ describe('CityLayoutSystem.getCityLevel', () => {
     expect(cls.getCityLevel(3)).toBe('city')
   })
 
-  it('注入 capital 级别布局后正确返回', () => {
+  it('注入 capital 级别布局后正确��回', () => {
     ;(cls as any).layouts.set(4, makeCityLayout('capital'))
     expect(cls.getCityLevel(4)).toBe('capital')
   })
@@ -96,7 +96,7 @@ describe('CityLayoutSystem.removeCity', () => {
     expect(cls.getRoads(1)).toHaveLength(0)
   })
 
-  it('删除不存在的城市不报错', () => {
+  it('删除不��在的城市不报错', () => {
     expect(() => cls.removeCity(999)).not.toThrow()
   })
 })

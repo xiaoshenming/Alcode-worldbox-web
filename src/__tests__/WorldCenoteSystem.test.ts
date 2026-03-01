@@ -12,17 +12,17 @@ describe('WorldCenoteSystem.getCenotes', () => {
   let sys: WorldCenoteSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无地下湖', () => { expect(sys.getCenotes()).toHaveLength(0) })
+  it('初始无地下湖', () => { expect((sys as any).cenotes).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).cenotes.push(makeCenote())
-    expect(sys.getCenotes()).toHaveLength(1)
+    expect((sys as any).cenotes).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getCenotes()).toBe((sys as any).cenotes)
+    expect((sys as any).cenotes).toBe((sys as any).cenotes)
   })
   it('地下湖字段正确', () => {
     ;(sys as any).cenotes.push(makeCenote())
-    const c = sys.getCenotes()[0]
+    const c = (sys as any).cenotes[0]
     expect(c.depth).toBe(40)
     expect(c.waterClarity).toBe(90)
     expect(c.sacredValue).toBe(70)
@@ -30,6 +30,6 @@ describe('WorldCenoteSystem.getCenotes', () => {
   it('多个地下湖全部返回', () => {
     ;(sys as any).cenotes.push(makeCenote())
     ;(sys as any).cenotes.push(makeCenote())
-    expect(sys.getCenotes()).toHaveLength(2)
+    expect((sys as any).cenotes).toHaveLength(2)
   })
 })

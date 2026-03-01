@@ -11,10 +11,10 @@ describe('AchievementPopupSystem', () => {
   let sys: AchievementPopupSystem
   beforeEach(() => { sys = makeSys() })
   it('getUnlockedCount初始为0', () => { expect(sys.getUnlockedCount()).toBe(0) })
-  it('getTotalCount初始为0（未注册任何成就）', () => { expect(sys.getTotalCount()).toBe(0) })
+  it('getTotalCount初始为0（未注册任何成就）', () => { expect((sys as any).achievements.size).toBe(0) })
   it('registerAchievement 后 getTotalCount 增加', () => {
     sys.registerAchievement(makeAch())
-    expect(sys.getTotalCount()).toBe(1)
+    expect((sys as any).achievements.size).toBe(1)
   })
   it('isUnlocked 未解锁成就返回false', () => {
     sys.registerAchievement(makeAch())

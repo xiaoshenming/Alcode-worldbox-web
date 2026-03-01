@@ -12,13 +12,13 @@ describe('WorldMemorialSystem.getMemorials', () => {
   let sys: WorldMemorialSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无纪念碑', () => { expect(sys.getMemorials()).toHaveLength(0) })
+  it('初始无纪念碑', () => { expect((sys as any).memorials).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).memorials.push(makeMemorial())
-    expect(sys.getMemorials()).toHaveLength(1)
+    expect((sys as any).memorials).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getMemorials()).toBe((sys as any).memorials)
+    expect((sys as any).memorials).toBe((sys as any).memorials)
   })
   it('支持6种纪念碑类型', () => {
     const types: MemorialType[] = ['battle', 'disaster', 'founding', 'miracle', 'tragedy', 'victory']

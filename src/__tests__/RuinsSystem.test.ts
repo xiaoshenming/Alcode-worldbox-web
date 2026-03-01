@@ -17,15 +17,15 @@ describe('RuinsSystem.getRuins', () => {
 
   it('初始无废墟', () => { expect(sys.getRuins()).toHaveLength(0) })
   it('注入后可查询', () => {
-    ;(sys as any).ruins.push(makeRuin())
+    ;sys.getRuins().push(makeRuin())
     expect(sys.getRuins()).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    ;(sys as any).ruins.push(makeRuin())
-    expect(sys.getRuins()).toBe((sys as any).ruins)
+    ;sys.getRuins().push(makeRuin())
+    expect(sys.getRuins()).toBe(sys.getRuins())
   })
   it('废墟字段正确', () => {
-    ;(sys as any).ruins.push(makeRuin(10, 20))
+    ;sys.getRuins().push(makeRuin(10, 20))
     const r = sys.getRuins()[0]
     expect(r.x).toBe(10)
     expect(r.y).toBe(20)
@@ -33,9 +33,9 @@ describe('RuinsSystem.getRuins', () => {
     expect(r.value).toBe(50)
   })
   it('多个废墟全部返回', () => {
-    ;(sys as any).ruins.push(makeRuin(1, 1))
-    ;(sys as any).ruins.push(makeRuin(2, 2))
-    ;(sys as any).ruins.push(makeRuin(3, 3))
+    ;sys.getRuins().push(makeRuin(1, 1))
+    ;sys.getRuins().push(makeRuin(2, 2))
+    ;sys.getRuins().push(makeRuin(3, 3))
     expect(sys.getRuins()).toHaveLength(3)
   })
 })
@@ -48,13 +48,13 @@ describe('RuinsSystem.getRuinAt', () => {
     expect(sys.getRuinAt(5, 5)).toBeUndefined()
   })
   it('注入后可按坐标查询', () => {
-    ;(sys as any).ruins.push(makeRuin(5, 5))
+    ;sys.getRuins().push(makeRuin(5, 5))
     const r = sys.getRuinAt(5, 5)
     expect(r).toBeDefined()
     expect(r!.x).toBe(5)
   })
   it('坐标不匹配时返回undefined', () => {
-    ;(sys as any).ruins.push(makeRuin(5, 5))
+    ;sys.getRuins().push(makeRuin(5, 5))
     expect(sys.getRuinAt(99, 99)).toBeUndefined()
   })
 })

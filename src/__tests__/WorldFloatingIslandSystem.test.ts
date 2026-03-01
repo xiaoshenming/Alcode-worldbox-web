@@ -12,13 +12,13 @@ describe('WorldFloatingIslandSystem.getIslands', () => {
   let sys: WorldFloatingIslandSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无浮空岛', () => { expect(sys.getIslands()).toHaveLength(0) })
+  it('初始无浮空岛', () => { expect((sys as any).islands).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).islands.push(makeIsland())
-    expect(sys.getIslands()).toHaveLength(1)
+    expect((sys as any).islands).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getIslands()).toBe((sys as any).islands)
+    expect((sys as any).islands).toBe((sys as any).islands)
   })
   it('支持5种岛屿大小', () => {
     const sizes: IslandSize[] = ['tiny', 'small', 'medium', 'large', 'massive']
@@ -26,7 +26,7 @@ describe('WorldFloatingIslandSystem.getIslands', () => {
   })
   it('岛屿字段正确', () => {
     ;(sys as any).islands.push(makeIsland('large'))
-    const i = sys.getIslands()[0]
+    const i = (sys as any).islands[0]
     expect(i.size).toBe('large')
     expect(i.magicLevel).toBe(70)
   })

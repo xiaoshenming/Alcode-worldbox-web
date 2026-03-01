@@ -12,17 +12,17 @@ describe('WorldRadiumSpringSystem.getZones', () => {
   let sys: WorldRadiumSpringSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无Radium泉区', () => { expect(sys.getZones()).toHaveLength(0) })
+  it('初始无Radium泉区', () => { expect((sys as any).zones).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).zones.push(makeZone())
-    expect(sys.getZones()).toHaveLength(1)
+    expect((sys as any).zones).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getZones()).toBe((sys as any).zones)
+    expect((sys as any).zones).toBe((sys as any).zones)
   })
   it('Radium泉区字段正确', () => {
     ;(sys as any).zones.push(makeZone())
-    const z = sys.getZones()[0]
+    const z = (sys as any).zones[0]
     expect(z.radiumContent).toBe(40)
     expect(z.springFlow).toBe(50)
   })

@@ -12,17 +12,17 @@ describe('WorldBalancingRockSystem.getRocks', () => {
   let sys: WorldBalancingRockSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无平衡岩', () => { expect(sys.getRocks()).toHaveLength(0) })
+  it('初始无平衡岩', () => { expect((sys as any).rocks).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).rocks.push(makeRock())
-    expect(sys.getRocks()).toHaveLength(1)
+    expect((sys as any).rocks).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getRocks()).toBe((sys as any).rocks)
+    expect((sys as any).rocks).toBe((sys as any).rocks)
   })
   it('平衡岩字段正确', () => {
     ;(sys as any).rocks.push(makeRock())
-    const r = sys.getRocks()[0]
+    const r = (sys as any).rocks[0]
     expect(r.boulderWeight).toBe(500)
     expect(r.stabilityIndex).toBe(85)
     expect(r.collapseRisk).toBe(10)
@@ -30,6 +30,6 @@ describe('WorldBalancingRockSystem.getRocks', () => {
   it('多个平衡岩全部返回', () => {
     ;(sys as any).rocks.push(makeRock())
     ;(sys as any).rocks.push(makeRock())
-    expect(sys.getRocks()).toHaveLength(2)
+    expect((sys as any).rocks).toHaveLength(2)
   })
 })

@@ -47,11 +47,11 @@ describe('AchievementSystem.getAll', () => {
 
   it('初始所有成就未解锁', () => {
     const all = as.getAll()
-    expect(all.every(a => !a.unlocked)).toBe(true)
+    expect(all.every((a: any) => !a.unlocked)).toBe(true)
   })
 
   it('每个成就都有 id/name/description/icon 字段', () => {
-    as.getAll().forEach(a => {
+    as.getAll().forEach((a: any) => {
       expect(typeof a.id).toBe('string')
       expect(typeof a.name).toBe('string')
       expect(typeof a.description).toBe('string')
@@ -80,7 +80,7 @@ describe('AchievementSystem.getUnlocked', () => {
 
   it('解锁的成就 unlocked 字段为 true', () => {
     as.updateStats(makeStats({ totalPopulation: 1 }))
-    as.getUnlocked().forEach(a => expect(a.unlocked).toBe(true))
+    ;as.getUnlocked().forEach((a: any) => expect(a.unlocked).toBe(true))
   })
 })
 
@@ -120,27 +120,27 @@ describe('AchievementSystem.updateStats 条件触发', () => {
 
   it('totalPopulation >= 1 解锁 first_life', () => {
     as.updateStats(makeStats({ totalPopulation: 1 }))
-    expect(as.getUnlocked().some(a => a.id === 'first_life')).toBe(true)
+    expect(as.getUnlocked().some((a: any) => a.id === 'first_life')).toBe(true)
   })
 
   it('totalPopulation >= 10 解锁 small_village', () => {
     as.updateStats(makeStats({ totalPopulation: 10 }))
-    expect(as.getUnlocked().some(a => a.id === 'small_village')).toBe(true)
+    expect(as.getUnlocked().some((a: any) => a.id === 'small_village')).toBe(true)
   })
 
   it('totalCivs >= 1 解锁 first_civ', () => {
     as.updateStats(makeStats({ totalCivs: 1 }))
-    expect(as.getUnlocked().some(a => a.id === 'first_civ')).toBe(true)
+    expect(as.getUnlocked().some((a: any) => a.id === 'first_civ')).toBe(true)
   })
 
   it('totalWars >= 1 解锁 first_war', () => {
     as.updateStats(makeStats({ totalWars: 1 }))
-    expect(as.getUnlocked().some(a => a.id === 'first_war')).toBe(true)
+    expect(as.getUnlocked().some((a: any) => a.id === 'first_war')).toBe(true)
   })
 
   it('maxTechLevel >= 2 解锁 tech_bronze', () => {
     as.updateStats(makeStats({ maxTechLevel: 2 }))
-    expect(as.getUnlocked().some(a => a.id === 'tech_bronze')).toBe(true)
+    expect(as.getUnlocked().some((a: any) => a.id === 'tech_bronze')).toBe(true)
   })
 
   it('条件不满足时不解锁', () => {
@@ -157,7 +157,7 @@ describe('AchievementSystem.updateStats 条件触发', () => {
 
   it('heroCount >= 1 解锁 hero_born', () => {
     as.updateStats(makeStats({ heroCount: 1 }))
-    expect(as.getUnlocked().some(a => a.id === 'hero_born')).toBe(true)
+    expect(as.getUnlocked().some((a: any) => a.id === 'hero_born')).toBe(true)
   })
 })
 

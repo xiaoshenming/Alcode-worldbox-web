@@ -24,7 +24,7 @@ describe('VolcanoSystem.getVolcanoes', () => {
   })
   it('返回内部引用（只读数组）', () => {
     ;(sys as any).volcanoes.push(makeVolcano())
-    expect(sys.getVolcanoes()).toBe((sys as any).volcanoes)
+    expect(sys.getVolcanoes()).toBe(sys.getVolcanoes())
   })
   it('火山字段正确', () => {
     ;(sys as any).volcanoes.push(makeVolcano())

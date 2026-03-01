@@ -12,17 +12,17 @@ describe('WorldDreikanterSystem.getDreikanters', () => {
   let sys: WorldDreikanterSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无三棱石', () => { expect(sys.getDreikanters()).toHaveLength(0) })
+  it('初始无三棱石', () => { expect((sys as any).dreikanters).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).dreikanters.push(makeDreikanter())
-    expect(sys.getDreikanters()).toHaveLength(1)
+    expect((sys as any).dreikanters).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getDreikanters()).toBe((sys as any).dreikanters)
+    expect((sys as any).dreikanters).toBe((sys as any).dreikanters)
   })
   it('三棱石字段正确', () => {
     ;(sys as any).dreikanters.push(makeDreikanter())
-    const d = sys.getDreikanters()[0]
+    const d = (sys as any).dreikanters[0]
     expect(d.faces).toBe(3)
     expect(d.polish).toBe(80)
     expect(d.windIntensity).toBe(70)

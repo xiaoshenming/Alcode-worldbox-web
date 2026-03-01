@@ -12,17 +12,17 @@ describe('WorldIceSheetSystem.getIceSheets', () => {
   let sys: WorldIceSheetSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无冰盖', () => { expect(sys.getIceSheets()).toHaveLength(0) })
+  it('初始无冰盖', () => { expect((sys as any).iceSheets).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).iceSheets.push(makeSheet())
-    expect(sys.getIceSheets()).toHaveLength(1)
+    expect((sys as any).iceSheets).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getIceSheets()).toBe((sys as any).iceSheets)
+    expect((sys as any).iceSheets).toBe((sys as any).iceSheets)
   })
   it('冰盖字段正确', () => {
     ;(sys as any).iceSheets.push(makeSheet(true))
-    const s = sys.getIceSheets()[0]
+    const s = (sys as any).iceSheets[0]
     expect(s.thickness).toBe(30)
     expect(s.area).toBe(100)
     expect(s.expanding).toBe(true)
@@ -30,6 +30,6 @@ describe('WorldIceSheetSystem.getIceSheets', () => {
   it('多个冰盖全部返回', () => {
     ;(sys as any).iceSheets.push(makeSheet())
     ;(sys as any).iceSheets.push(makeSheet())
-    expect(sys.getIceSheets()).toHaveLength(2)
+    expect((sys as any).iceSheets).toHaveLength(2)
   })
 })

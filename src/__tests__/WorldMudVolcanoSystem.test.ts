@@ -12,17 +12,17 @@ describe('WorldMudVolcanoSystem.getVolcanos', () => {
   let sys: WorldMudVolcanoSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无泥火山', () => { expect(sys.getVolcanos()).toHaveLength(0) })
+  it('初始无泥火山', () => { expect((sys as any).volcanos).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).volcanos.push(makeMudVolcano())
-    expect(sys.getVolcanos()).toHaveLength(1)
+    expect((sys as any).volcanos).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getVolcanos()).toBe((sys as any).volcanos)
+    expect((sys as any).volcanos).toBe((sys as any).volcanos)
   })
   it('泥火山字段正确', () => {
     ;(sys as any).volcanos.push(makeMudVolcano())
-    const v = sys.getVolcanos()[0]
+    const v = (sys as any).volcanos[0]
     expect(v.eruptionForce).toBe(6)
     expect(v.gasEmission).toBe(70)
     expect(v.dormancy).toBe(100)

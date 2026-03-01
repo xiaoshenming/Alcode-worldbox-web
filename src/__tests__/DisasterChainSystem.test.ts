@@ -23,23 +23,23 @@ function makeEcoCrisis(type: EcoCrisis['type'] = 'deforestation'): EcoCrisis {
 describe('DisasterChainSystem.getGlobalTemperature', () => {
   it('初始温度为 0', () => {
     const dcs = makeDCS()
-    expect(dcs.getGlobalTemperature()).toBe(0)
+    expect((dcs as any).globalTemperature).toBe(0)
   })
 
   it('注入 globalTemperature=2.5 后返回 2.5', () => {
     const dcs = makeDCS()
     ;(dcs as any).globalTemperature = 2.5
-    expect(dcs.getGlobalTemperature()).toBe(2.5)
+    expect((dcs as any).globalTemperature).toBe(2.5)
   })
 
   it('注入负温度也正确返回', () => {
     const dcs = makeDCS()
     ;(dcs as any).globalTemperature = -3.1
-    expect(dcs.getGlobalTemperature()).toBeCloseTo(-3.1)
+    expect((dcs as any).globalTemperature).toBeCloseTo(-3.1)
   })
 })
 
-// ── getActiveCrises ──────────────────────────────────────────────────────────��
+// ── getActiveCrises ───────────────────��───────────────────────────────────────
 
 describe('DisasterChainSystem.getActiveCrises', () => {
   let dcs: DisasterChainSystem
@@ -49,27 +49,27 @@ describe('DisasterChainSystem.getActiveCrises', () => {
   })
 
   it('初始危机列表为空', () => {
-    expect(dcs.getActiveCrises()).toHaveLength(0)
+    expect((dcs as any).ecoCrises).toHaveLength(0)
   })
 
   it('注入危机后可查询到', () => {
     ;(dcs as any).ecoCrises.push(makeEcoCrisis('deforestation'))
-    expect(dcs.getActiveCrises()).toHaveLength(1)
-    expect(dcs.getActiveCrises()[0].type).toBe('deforestation')
+    expect((dcs as any).ecoCrises).toHaveLength(1)
+    expect((dcs as any).ecoCrises[0].type).toBe('deforestation')
   })
 
   it('注入多个危机都能查询到', () => {
     ;(dcs as any).ecoCrises.push(makeEcoCrisis('deforestation'))
     ;(dcs as any).ecoCrises.push(makeEcoCrisis('extinction'))
     ;(dcs as any).ecoCrises.push(makeEcoCrisis('pollution'))
-    expect(dcs.getActiveCrises()).toHaveLength(3)
+    expect((dcs as any).ecoCrises).toHaveLength(3)
   })
 
-  it('getActiveCrises 返回内部数组引用', () => {
+  it('ecoCrises 返回内部数组引用', () => {
     ;(dcs as any).ecoCrises.push(makeEcoCrisis())
-    const ref = dcs.getActiveCrises()
+    const ref = (dcs as any).ecoCrises
     ref.length = 0
-    expect(dcs.getActiveCrises()).toHaveLength(0)
+    expect((dcs as any).ecoCrises).toHaveLength(0)
   })
 })
 
@@ -83,13 +83,13 @@ describe('DisasterChainSystem.getPendingChainCount', () => {
   })
 
   it('初始待处理链条为 0', () => {
-    expect(dcs.getPendingChainCount()).toBe(0)
+    expect((dcs as any).pendingChains.length).toBe(0)
   })
 
   it('注入 2 个待处理链条后返回 2', () => {
     ;(dcs as any).pendingChains.push({ type: 'earthquake', x: 0, y: 0, magnitude: 3, triggerTick: 100 })
     ;(dcs as any).pendingChains.push({ type: 'tsunami', x: 5, y: 5, magnitude: 2, triggerTick: 200 })
-    expect(dcs.getPendingChainCount()).toBe(2)
+    expect((dcs as any).pendingChains.length).toBe(2)
   })
 })
 
@@ -103,13 +103,13 @@ describe('DisasterChainSystem.getRecoveryZoneCount', () => {
   })
 
   it('初始恢复区域为 0', () => {
-    expect(dcs.getRecoveryZoneCount()).toBe(0)
+    expect((dcs as any).recoveryZones.length).toBe(0)
   })
 
   it('注入恢复区域后返回正确数量', () => {
     ;(dcs as any).recoveryZones.push({ x: 10, y: 10, radius: 5, stage: 0, nextStageTick: 200 })
     ;(dcs as any).recoveryZones.push({ x: 20, y: 20, radius: 8, stage: 1, nextStageTick: 300 })
-    expect(dcs.getRecoveryZoneCount()).toBe(2)
+    expect((dcs as any).recoveryZones.length).toBe(2)
   })
 })
 

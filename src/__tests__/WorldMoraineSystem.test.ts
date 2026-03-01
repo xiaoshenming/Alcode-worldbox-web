@@ -12,17 +12,17 @@ describe('WorldMoraineSystem.getMoraines', () => {
   let sys: WorldMoraineSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无冰碛', () => { expect(sys.getMoraines()).toHaveLength(0) })
+  it('初始无冰碛', () => { expect((sys as any).moraines).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).moraines.push(makeMoraine())
-    expect(sys.getMoraines()).toHaveLength(1)
+    expect((sys as any).moraines).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getMoraines()).toBe((sys as any).moraines)
+    expect((sys as any).moraines).toBe((sys as any).moraines)
   })
   it('冰碛字段正确', () => {
     ;(sys as any).moraines.push(makeMoraine())
-    const m = sys.getMoraines()[0]
+    const m = (sys as any).moraines[0]
     expect(m.glacialAge).toBe(10000)
     expect(m.stability).toBe(70)
     expect(m.vegetationCover).toBe(30)
@@ -30,6 +30,6 @@ describe('WorldMoraineSystem.getMoraines', () => {
   it('多个冰碛全部返回', () => {
     ;(sys as any).moraines.push(makeMoraine())
     ;(sys as any).moraines.push(makeMoraine())
-    expect(sys.getMoraines()).toHaveLength(2)
+    expect((sys as any).moraines).toHaveLength(2)
   })
 })

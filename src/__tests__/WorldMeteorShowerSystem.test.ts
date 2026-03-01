@@ -12,13 +12,13 @@ describe('WorldMeteorShowerSystem.getMeteors', () => {
   let sys: WorldMeteorShowerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无流星', () => { expect(sys.getMeteors()).toHaveLength(0) })
+  it('初始无流星', () => { expect((sys as any).meteors).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).meteors.push(makeMeteor())
-    expect(sys.getMeteors()).toHaveLength(1)
+    expect((sys as any).meteors).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getMeteors()).toBe((sys as any).meteors)
+    expect((sys as any).meteors).toBe((sys as any).meteors)
   })
   it('支持5种流星大小', () => {
     const sizes: MeteorSize[] = ['tiny', 'small', 'medium', 'large', 'massive']

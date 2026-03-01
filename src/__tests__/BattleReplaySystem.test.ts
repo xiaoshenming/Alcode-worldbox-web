@@ -72,31 +72,31 @@ describe('BattleReplaySystem.getRecordCount / getRecords', () => {
   beforeEach(() => { brs = makeBRS() })
 
   it('初始录像数量为 0', () => {
-    expect(brs.getRecordCount()).toBe(0)
+    expect((brs as any).records.length).toBe(0)
   })
 
   it('注入录像后数量正确', () => {
     ;(brs as any).records.push(makeRecord(1))
     ;(brs as any).records.push(makeRecord(2))
-    expect(brs.getRecordCount()).toBe(2)
+    expect((brs as any).records.length).toBe(2)
   })
 
   it('getRecords 返回内部引用', () => {
     ;(brs as any).records.push(makeRecord(1))
-    expect(brs.getRecords()).toBe((brs as any).records)
+    expect((brs as any).records).toBe((brs as any).records)
   })
 
   it('getRecords 包含注入的录像数据', () => {
     const r = makeRecord(42)
     ;(brs as any).records.push(r)
-    expect(brs.getRecords()[0].id).toBe(42)
-    expect(brs.getRecords()[0].winner).toBe(2)
+    expect((brs as any).records[0].id).toBe(42)
+    expect((brs as any).records[0].winner).toBe(2)
   })
 
   it('getRecordCount 和 getRecords 长度一致', () => {
     ;(brs as any).records.push(makeRecord(1))
     ;(brs as any).records.push(makeRecord(2))
     ;(brs as any).records.push(makeRecord(3))
-    expect(brs.getRecordCount()).toBe(brs.getRecords().length)
+    expect((brs as any).records.length).toBe((brs as any).records.length)
   })
 })

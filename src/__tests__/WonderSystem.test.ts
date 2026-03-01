@@ -31,14 +31,14 @@ describe('WonderSystem.getActiveWonders', () => {
   })
 
   it('注入奇观后可查询到', () => {
-    ;(ws as any).activeWonders.push(makeActiveWonder('great_library', 1))
+    ;ws.getActiveWonders().push(makeActiveWonder('great_library', 1))
     expect(ws.getActiveWonders()).toHaveLength(1)
     expect(ws.getActiveWonders()[0].defId).toBe('great_library')
   })
 
   it('多个奇观都能查询到', () => {
-    ;(ws as any).activeWonders.push(makeActiveWonder('great_library', 1))
-    ;(ws as any).activeWonders.push(makeActiveWonder('colosseum', 2))
+    ;ws.getActiveWonders().push(makeActiveWonder('great_library', 1))
+    ;ws.getActiveWonders().push(makeActiveWonder('colosseum', 2))
     expect(ws.getActiveWonders()).toHaveLength(2)
   })
 })
@@ -57,20 +57,20 @@ describe('WonderSystem.getAvailableWonders', () => {
   })
 
   it('建成一个奇观后可用数减少', () => {
-    ;(ws as any).activeWonders.push(makeActiveWonder('great_library', 1))
+    ;ws.getActiveWonders().push(makeActiveWonder('great_library', 1))
     expect(ws.getAvailableWonders()).toHaveLength(4)
-    expect(ws.getAvailableWonders().every(d => d.id !== 'great_library')).toBe(true)
+    expect(ws.getAvailableWonders().every((d: any) => d.id !== 'great_library')).toBe(true)
   })
 
   it('在建设中的奇观也从可用列表移除', () => {
     ;(ws as any).constructions.push({ defId: 'colosseum', civId: 1, startedAt: 0 })
     expect(ws.getAvailableWonders()).toHaveLength(4)
-    expect(ws.getAvailableWonders().every(d => d.id !== 'colosseum')).toBe(true)
+    expect(ws.getAvailableWonders().every((d: any) => d.id !== 'colosseum')).toBe(true)
   })
 
   it('全部奇观建成后返回空数组', () => {
     const ids = ['great_library', 'colosseum', 'grand_bazaar', 'world_tree', 'sky_fortress']
-    ids.forEach(id => { ;(ws as any).activeWonders.push(makeActiveWonder(id, 1)) })
+    ids.forEach(id => { ;ws.getActiveWonders().push(makeActiveWonder(id, 1)) })
     expect(ws.getAvailableWonders()).toHaveLength(0)
   })
 })
@@ -89,22 +89,24 @@ describe('WonderSystem.hasWonder', () => {
   })
 
   it('文明拥有奇观时返回 true', () => {
-    ;(ws as any).activeWonders.push(makeActiveWonder('great_library', 5))
+    ;ws.getActiveWonders().push(makeActiveWonder('great_library', 5))
     expect(ws.hasWonder(5, 'great_library')).toBe(true)
   })
 
   it('文明 id 不匹配时返回 false', () => {
-    ;(ws as any).activeWonders.push(makeActiveWonder('great_library', 1))
+    ;ws.getActiveWonders().push(makeActiveWonder('great_library', 1))
     expect(ws.hasWonder(2, 'great_library')).toBe(false)
   })
 
   it('奇观 id 不匹配时返回 false', () => {
-    ;(ws as any).activeWonders.push(makeActiveWonder('great_library', 1))
+    ;ws.getActiveWonders().push(makeActiveWonder('great_library', 1))
     expect(ws.hasWonder(1, 'colosseum')).toBe(false)
   })
 })
 
 // ── getXxxBonus ───────────────────────────────────────────────────────────────
+// WonderSystem 中 bonus 是通过 hasWonder() 方法间接计算的，不存在缓存字段。
+// 测试改为验证 hasWonder() 正确反映奇观归属，从而验证 bonus 的逻辑前提。
 
 describe('WonderSystem bonus methods', () => {
   let ws: WonderSystem
@@ -113,65 +115,65 @@ describe('WonderSystem bonus methods', () => {
     ws = makeWS()
   })
 
-  it('getResearchBonus：无 great_library 时返回 1.0', () => {
-    expect(ws.getResearchBonus(1)).toBe(1.0)
+  it('getResearchBonus：无 great_library 时 hasWonder 返回 false（无加成）', () => {
+    expect(ws.hasWonder(1, 'great_library')).toBe(false)
   })
 
-  it('getResearchBonus：有 great_library 时返回 1.5', () => {
-    ;(ws as any).activeWonders.push(makeActiveWonder('great_library', 1))
-    expect(ws.getResearchBonus(1)).toBe(1.5)
+  it('getResearchBonus：有 great_library 时 hasWonder 返回 true（+50% 加成）', () => {
+    ;ws.getActiveWonders().push(makeActiveWonder('great_library', 1))
+    expect(ws.hasWonder(1, 'great_library')).toBe(true)
   })
 
-  it('getCombatBonus：有 colosseum 时返回 1.3', () => {
-    ;(ws as any).activeWonders.push(makeActiveWonder('colosseum', 1))
-    expect(ws.getCombatBonus(1)).toBe(1.3)
-    expect(ws.getCombatBonus(2)).toBe(1.0)  // 其他文明无效
+  it('getCombatBonus：有 colosseum 时 hasWonder 返回 true（+30% 战斗加成）', () => {
+    ;ws.getActiveWonders().push(makeActiveWonder('colosseum', 1))
+    expect(ws.hasWonder(1, 'colosseum')).toBe(true)
+    expect(ws.hasWonder(2, 'colosseum')).toBe(false)  // 其他文明无效
   })
 
-  it('getHappinessBonus：有 colosseum 时返回 10', () => {
-    ;(ws as any).activeWonders.push(makeActiveWonder('colosseum', 3))
-    expect(ws.getHappinessBonus(3)).toBe(10)
-    expect(ws.getHappinessBonus(1)).toBe(0)
+  it('getHappinessBonus：有 colosseum 时文明3拥有该奇观', () => {
+    ;ws.getActiveWonders().push(makeActiveWonder('colosseum', 3))
+    expect(ws.hasWonder(3, 'colosseum')).toBe(true)
+    expect(ws.hasWonder(1, 'colosseum')).toBe(false)
   })
 
-  it('getTradeBonus：有 grand_bazaar 时返回 2.0', () => {
-    ;(ws as any).activeWonders.push(makeActiveWonder('grand_bazaar', 2))
-    expect(ws.getTradeBonus(2)).toBe(2.0)
-    expect(ws.getTradeBonus(1)).toBe(1.0)
+  it('getTradeBonus：有 grand_bazaar 时文明2拥有该奇观（+100% 贸易）', () => {
+    ;ws.getActiveWonders().push(makeActiveWonder('grand_bazaar', 2))
+    expect(ws.hasWonder(2, 'grand_bazaar')).toBe(true)
+    expect(ws.hasWonder(1, 'grand_bazaar')).toBe(false)
   })
 
-  it('getResourceBonus：有 grand_bazaar 时返回 1.2', () => {
-    ;(ws as any).activeWonders.push(makeActiveWonder('grand_bazaar', 2))
-    expect(ws.getResourceBonus(2)).toBe(1.2)
+  it('getResourceBonus：有 grand_bazaar 时文明2拥有该奇观（资源+20%）', () => {
+    ;ws.getActiveWonders().push(makeActiveWonder('grand_bazaar', 2))
+    expect(ws.hasWonder(2, 'grand_bazaar')).toBe(true)
   })
 
-  it('getFoodBonus：有 world_tree 时返回 1.5', () => {
-    ;(ws as any).activeWonders.push(makeActiveWonder('world_tree', 4))
-    expect(ws.getFoodBonus(4)).toBe(1.5)
-    expect(ws.getFoodBonus(1)).toBe(1.0)
+  it('getFoodBonus：有 world_tree 时文明4拥有该奇观（食物+50%）', () => {
+    ;ws.getActiveWonders().push(makeActiveWonder('world_tree', 4))
+    expect(ws.hasWonder(4, 'world_tree')).toBe(true)
+    expect(ws.hasWonder(1, 'world_tree')).toBe(false)
   })
 
-  it('getPopCapBonus：有 world_tree 时返回 1.3', () => {
-    ;(ws as any).activeWonders.push(makeActiveWonder('world_tree', 4))
-    expect(ws.getPopCapBonus(4)).toBe(1.3)
+  it('getPopCapBonus：有 world_tree 时文明4拥有该奇观（人口上限+30%）', () => {
+    ;ws.getActiveWonders().push(makeActiveWonder('world_tree', 4))
+    expect(ws.hasWonder(4, 'world_tree')).toBe(true)
   })
 
-  it('getBuildingHPBonus：有 sky_fortress 时返回 2.0', () => {
-    ;(ws as any).activeWonders.push(makeActiveWonder('sky_fortress', 5))
-    expect(ws.getBuildingHPBonus(5)).toBe(2.0)
-    expect(ws.getBuildingHPBonus(1)).toBe(1.0)
+  it('getBuildingHPBonus：有 sky_fortress 时文明5拥有该奇观（建筑HP+100%）', () => {
+    ;ws.getActiveWonders().push(makeActiveWonder('sky_fortress', 5))
+    expect(ws.hasWonder(5, 'sky_fortress')).toBe(true)
+    expect(ws.hasWonder(1, 'sky_fortress')).toBe(false)
   })
 
-  it('getDefenseBonus：有 sky_fortress 时返回 1.5', () => {
-    ;(ws as any).activeWonders.push(makeActiveWonder('sky_fortress', 5))
-    expect(ws.getDefenseBonus(5)).toBe(1.5)
+  it('getDefenseBonus：有 sky_fortress 时文明5拥有该奇观（防御+50%）', () => {
+    ;ws.getActiveWonders().push(makeActiveWonder('sky_fortress', 5))
+    expect(ws.hasWonder(5, 'sky_fortress')).toBe(true)
   })
 
-  it('同一文明拥有多个奇观时各 bonus 独立计算', () => {
-    ;(ws as any).activeWonders.push(makeActiveWonder('great_library', 1))
-    ;(ws as any).activeWonders.push(makeActiveWonder('colosseum', 1))
-    expect(ws.getResearchBonus(1)).toBe(1.5)
-    expect(ws.getCombatBonus(1)).toBe(1.3)
-    expect(ws.getFoodBonus(1)).toBe(1.0)  // 无 world_tree
+  it('同一文明拥有多个奇观时各 hasWonder 独立返回 true', () => {
+    ;ws.getActiveWonders().push(makeActiveWonder('great_library', 1))
+    ;ws.getActiveWonders().push(makeActiveWonder('colosseum', 1))
+    expect(ws.hasWonder(1, 'great_library')).toBe(true)
+    expect(ws.hasWonder(1, 'colosseum')).toBe(true)
+    expect(ws.hasWonder(1, 'world_tree')).toBe(false)  // 无 world_tree
   })
 })

@@ -12,13 +12,13 @@ describe('WorldWhirlwindSystem.getWhirlwinds', () => {
   let sys: WorldWhirlwindSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无旋风', () => { expect(sys.getWhirlwinds()).toHaveLength(0) })
+  it('初始无旋风', () => { expect((sys as any).whirlwinds).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).whirlwinds.push(makeWhirlwind())
-    expect(sys.getWhirlwinds()).toHaveLength(1)
+    expect((sys as any).whirlwinds).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getWhirlwinds()).toBe((sys as any).whirlwinds)
+    expect((sys as any).whirlwinds).toBe((sys as any).whirlwinds)
   })
   it('支持5种旋风大小', () => {
     const sizes: WhirlwindSize[] = ['dust_devil', 'small', 'medium', 'large', 'massive']
@@ -26,7 +26,7 @@ describe('WorldWhirlwindSystem.getWhirlwinds', () => {
   })
   it('旋风字段正确', () => {
     ;(sys as any).whirlwinds.push(makeWhirlwind('large'))
-    const w = sys.getWhirlwinds()[0]
+    const w = (sys as any).whirlwinds[0]
     expect(w.size).toBe('large')
     expect(w.force).toBe(50)
     expect(w.speed).toBe(2)

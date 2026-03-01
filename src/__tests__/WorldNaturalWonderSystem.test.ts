@@ -14,7 +14,7 @@ describe('WorldNaturalWonderSystem.getWonders', () => {
 
   it('初始无自然奇观', () => { expect(sys.getWonders()).toHaveLength(0) })
   it('注入后可查询', () => {
-    ;(sys as any).wonders.push(makeWonder())
+    ;sys.getWonders().push(makeWonder())
     expect(sys.getWonders()).toHaveLength(1)
   })
   it('支持5种奇观类型', () => {
@@ -22,7 +22,7 @@ describe('WorldNaturalWonderSystem.getWonders', () => {
     expect(types).toHaveLength(5)
   })
   it('奇观字段正确', () => {
-    ;(sys as any).wonders.push(makeWonder('geyser'))
+    ;sys.getWonders().push(makeWonder('geyser'))
     const w = sys.getWonders()[0]
     expect(w.type).toBe('geyser')
     expect(w.power).toBe(3)
@@ -36,8 +36,8 @@ describe('WorldNaturalWonderSystem.getWonderCount', () => {
 
   it('初始数量为0', () => { expect(sys.getWonderCount()).toBe(0) })
   it('注入后数量正确', () => {
-    ;(sys as any).wonders.push(makeWonder())
-    ;(sys as any).wonders.push(makeWonder())
+    ;sys.getWonders().push(makeWonder())
+    ;sys.getWonders().push(makeWonder())
     expect(sys.getWonderCount()).toBe(2)
   })
 })

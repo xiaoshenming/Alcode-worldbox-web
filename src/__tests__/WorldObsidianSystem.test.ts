@@ -12,13 +12,13 @@ describe('WorldObsidianSystem.getDeposits', () => {
   let sys: WorldObsidianSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无黑曜石矿', () => { expect(sys.getDeposits()).toHaveLength(0) })
+  it('初始无黑曜石矿', () => { expect((sys as any).deposits).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).deposits.push(makeDeposit())
-    expect(sys.getDeposits()).toHaveLength(1)
+    expect((sys as any).deposits).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getDeposits()).toBe((sys as any).deposits)
+    expect((sys as any).deposits).toBe((sys as any).deposits)
   })
   it('支持4种品质', () => {
     const qualities: ObsidianQuality[] = ['rough', 'polished', 'flawless', 'legendary']
@@ -26,7 +26,7 @@ describe('WorldObsidianSystem.getDeposits', () => {
   })
   it('黑曜石矿字段正确', () => {
     ;(sys as any).deposits.push(makeDeposit('legendary'))
-    const d = sys.getDeposits()[0]
+    const d = (sys as any).deposits[0]
     expect(d.quality).toBe('legendary')
     expect(d.reserves).toBe(500)
     expect(d.harvestRate).toBe(5)

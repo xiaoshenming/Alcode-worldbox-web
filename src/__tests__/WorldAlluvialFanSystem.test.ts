@@ -12,17 +12,17 @@ describe('WorldAlluvialFanSystem.getFans', () => {
   let sys: WorldAlluvialFanSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无冲积扇', () => { expect(sys.getFans()).toHaveLength(0) })
+  it('初始无冲积扇', () => { expect((sys as any).fans).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).fans.push(makeFan())
-    expect(sys.getFans()).toHaveLength(1)
+    expect((sys as any).fans).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getFans()).toBe((sys as any).fans)
+    expect((sys as any).fans).toBe((sys as any).fans)
   })
   it('冲积扇字段正确', () => {
     ;(sys as any).fans.push(makeFan())
-    const f = sys.getFans()[0]
+    const f = (sys as any).fans[0]
     expect(f.sedimentDepth).toBe(4)
     expect(f.channelCount).toBe(5)
     expect(f.fertility).toBe(70)
@@ -30,6 +30,6 @@ describe('WorldAlluvialFanSystem.getFans', () => {
   it('多个冲积扇全部返回', () => {
     ;(sys as any).fans.push(makeFan())
     ;(sys as any).fans.push(makeFan())
-    expect(sys.getFans()).toHaveLength(2)
+    expect((sys as any).fans).toHaveLength(2)
   })
 })

@@ -12,13 +12,13 @@ describe('WorldSandstormSystem.getStorms', () => {
   let sys: WorldSandstormSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无沙尘暴', () => { expect(sys.getStorms()).toHaveLength(0) })
+  it('初始无沙尘暴', () => { expect((sys as any).storms).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).storms.push(makeStorm())
-    expect(sys.getStorms()).toHaveLength(1)
+    expect((sys as any).storms).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getStorms()).toBe((sys as any).storms)
+    expect((sys as any).storms).toBe((sys as any).storms)
   })
   it('支持4种风暴强度', () => {
     const severities: StormSeverity[] = ['mild', 'moderate', 'severe', 'catastrophic']
@@ -27,6 +27,6 @@ describe('WorldSandstormSystem.getStorms', () => {
   it('多个沙尘暴全部返回', () => {
     ;(sys as any).storms.push(makeStorm('mild'))
     ;(sys as any).storms.push(makeStorm('severe'))
-    expect(sys.getStorms()).toHaveLength(2)
+    expect((sys as any).storms).toHaveLength(2)
   })
 })

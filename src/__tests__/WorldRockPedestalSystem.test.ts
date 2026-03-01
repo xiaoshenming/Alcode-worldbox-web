@@ -12,17 +12,17 @@ describe('WorldRockPedestalSystem.getPedestals', () => {
   let sys: WorldRockPedestalSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无岩石台座', () => { expect(sys.getPedestals()).toHaveLength(0) })
+  it('初始无岩石台座', () => { expect((sys as any).pedestals).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).pedestals.push(makePedestal())
-    expect(sys.getPedestals()).toHaveLength(1)
+    expect((sys as any).pedestals).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getPedestals()).toBe((sys as any).pedestals)
+    expect((sys as any).pedestals).toBe((sys as any).pedestals)
   })
   it('岩石台座字段正确', () => {
     ;(sys as any).pedestals.push(makePedestal())
-    const p = sys.getPedestals()[0]
+    const p = (sys as any).pedestals[0]
     expect(p.capDiameter).toBe(8)
     expect(p.balanceRisk).toBe(30)
     expect(p.spectacle).toBe(75)

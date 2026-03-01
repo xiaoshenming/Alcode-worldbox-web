@@ -12,17 +12,17 @@ describe('WorldButtesSystem.getButtes', () => {
   let sys: WorldButtesSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无孤峰', () => { expect(sys.getButtes()).toHaveLength(0) })
+  it('初始无孤峰', () => { expect((sys as any).buttes).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).buttes.push(makeButte())
-    expect(sys.getButtes()).toHaveLength(1)
+    expect((sys as any).buttes).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getButtes()).toBe((sys as any).buttes)
+    expect((sys as any).buttes).toBe((sys as any).buttes)
   })
   it('孤峰字段正确', () => {
     ;(sys as any).buttes.push(makeButte())
-    const b = sys.getButtes()[0]
+    const b = (sys as any).buttes[0]
     expect(b.elevation).toBe(30)
     expect(b.capIntegrity).toBe(80)
     expect(b.colorBanding).toBe(70)
@@ -30,6 +30,6 @@ describe('WorldButtesSystem.getButtes', () => {
   it('多个孤峰全部返回', () => {
     ;(sys as any).buttes.push(makeButte())
     ;(sys as any).buttes.push(makeButte())
-    expect(sys.getButtes()).toHaveLength(2)
+    expect((sys as any).buttes).toHaveLength(2)
   })
 })

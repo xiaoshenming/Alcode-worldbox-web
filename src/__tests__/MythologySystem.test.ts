@@ -42,10 +42,10 @@ describe('MythologySystem.getCulturalSimilarity', () => {
   let sys: MythologySystem
   beforeEach(() => { sys = makeSys() })
 
-  it('无神话时相似���为0', () => {
+  it('无神话时相似度为0', () => {
     expect(sys.getCulturalSimilarity(1, 2)).toBe(0)
   })
-  it('类型完全不同时相似度为0', () => {
+  it('类型完全不同时相���度为0', () => {
     ;(sys as any).myths.set(1, [makeMyth(1, 'creation')])
     ;(sys as any).myths.set(2, [makeMyth(2, 'hero')])
     expect(sys.getCulturalSimilarity(1, 2)).toBe(0)

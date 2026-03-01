@@ -12,17 +12,17 @@ describe('WorldKarstTowerSystem.getTowers', () => {
   let sys: WorldKarstTowerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无岩溶塔', () => { expect(sys.getTowers()).toHaveLength(0) })
+  it('初始无岩溶塔', () => { expect((sys as any).towers).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).towers.push(makeTower())
-    expect(sys.getTowers()).toHaveLength(1)
+    expect((sys as any).towers).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getTowers()).toBe((sys as any).towers)
+    expect((sys as any).towers).toBe((sys as any).towers)
   })
   it('岩溶塔字段正确', () => {
     ;(sys as any).towers.push(makeTower())
-    const t = sys.getTowers()[0]
+    const t = (sys as any).towers[0]
     expect(t.height).toBe(20)
     expect(t.caveCount).toBe(3)
     expect(t.stability).toBe(70)

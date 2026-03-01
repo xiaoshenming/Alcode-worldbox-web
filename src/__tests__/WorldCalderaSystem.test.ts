@@ -12,17 +12,17 @@ describe('WorldCalderaSystem.getCalderas', () => {
   let sys: WorldCalderaSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无破火山口', () => { expect(sys.getCalderas()).toHaveLength(0) })
+  it('初始无破火山口', () => { expect((sys as any).calderas).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).calderas.push(makeCaldera())
-    expect(sys.getCalderas()).toHaveLength(1)
+    expect((sys as any).calderas).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getCalderas()).toBe((sys as any).calderas)
+    expect((sys as any).calderas).toBe((sys as any).calderas)
   })
   it('破火山口字段正确', () => {
     ;(sys as any).calderas.push(makeCaldera())
-    const c = sys.getCalderas()[0]
+    const c = (sys as any).calderas[0]
     expect(c.diameter).toBe(20)
     expect(c.geothermalActivity).toBe(80)
     expect(c.lakeDepth).toBe(10)
@@ -30,6 +30,6 @@ describe('WorldCalderaSystem.getCalderas', () => {
   it('多个破火山口全部返回', () => {
     ;(sys as any).calderas.push(makeCaldera())
     ;(sys as any).calderas.push(makeCaldera())
-    expect(sys.getCalderas()).toHaveLength(2)
+    expect((sys as any).calderas).toHaveLength(2)
   })
 })

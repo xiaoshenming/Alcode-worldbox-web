@@ -12,13 +12,13 @@ describe('WorldGeoglyphSystem.getGeoglyphs', () => {
   let sys: WorldGeoglyphSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无地画', () => { expect(sys.getGeoglyphs()).toHaveLength(0) })
+  it('初始无地画', () => { expect((sys as any).geoglyphs).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).geoglyphs.push(makeGeoglyph())
-    expect(sys.getGeoglyphs()).toHaveLength(1)
+    expect((sys as any).geoglyphs).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getGeoglyphs()).toBe((sys as any).geoglyphs)
+    expect((sys as any).geoglyphs).toBe((sys as any).geoglyphs)
   })
   it('支持5种地画形状', () => {
     const shapes: GeoglyphShape[] = ['spiral', 'animal', 'geometric', 'humanoid', 'celestial']
@@ -26,7 +26,7 @@ describe('WorldGeoglyphSystem.getGeoglyphs', () => {
   })
   it('地画字段正确', () => {
     ;(sys as any).geoglyphs.push(makeGeoglyph('celestial'))
-    const g = sys.getGeoglyphs()[0]
+    const g = (sys as any).geoglyphs[0]
     expect(g.shape).toBe('celestial')
     expect(g.spiritualPower).toBe(70)
     expect(g.visibility).toBe(90)

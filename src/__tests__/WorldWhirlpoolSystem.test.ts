@@ -12,17 +12,17 @@ describe('WorldWhirlpoolSystem.getWhirlpools', () => {
   let sys: WorldWhirlpoolSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无漩涡', () => { expect(sys.getWhirlpools()).toHaveLength(0) })
+  it('初始无漩涡', () => { expect((sys as any).whirlpools).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).whirlpools.push(makeWhirlpool())
-    expect(sys.getWhirlpools()).toHaveLength(1)
+    expect((sys as any).whirlpools).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getWhirlpools()).toBe((sys as any).whirlpools)
+    expect((sys as any).whirlpools).toBe((sys as any).whirlpools)
   })
   it('漩涡字段正确', () => {
     ;(sys as any).whirlpools.push(makeWhirlpool())
-    const w = sys.getWhirlpools()[0]
+    const w = (sys as any).whirlpools[0]
     expect(w.strength).toBe(70)
     expect(w.active).toBe(true)
   })

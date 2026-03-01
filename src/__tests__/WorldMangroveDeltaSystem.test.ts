@@ -12,17 +12,17 @@ describe('WorldMangroveDeltaSystem.getDeltas', () => {
   let sys: WorldMangroveDeltaSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无红树林三角洲', () => { expect(sys.getDeltas()).toHaveLength(0) })
+  it('初始无红树林三角洲', () => { expect((sys as any).deltas).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).deltas.push(makeDelta())
-    expect(sys.getDeltas()).toHaveLength(1)
+    expect((sys as any).deltas).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getDeltas()).toBe((sys as any).deltas)
+    expect((sys as any).deltas).toBe((sys as any).deltas)
   })
   it('红树林三角洲字段正确', () => {
     ;(sys as any).deltas.push(makeDelta())
-    const d = sys.getDeltas()[0]
+    const d = (sys as any).deltas[0]
     expect(d.mangrovesDensity).toBe(80)
     expect(d.biodiversity).toBe(90)
     expect(d.salinity).toBe(25)

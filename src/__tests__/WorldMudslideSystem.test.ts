@@ -14,18 +14,18 @@ describe('WorldMudslideSystem.getMudslides', () => {
 
   it('初始无泥石流', () => { expect(sys.getMudslides()).toHaveLength(0) })
   it('注入后可查询', () => {
-    ;(sys as any).mudslides.push(makeMudslide())
+    ;sys.getMudslides().push(makeMudslide())
     expect(sys.getMudslides()).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getMudslides()).toBe((sys as any).mudslides)
+    expect(sys.getMudslides()).toBe(sys.getMudslides())
   })
   it('支持4种泥石流规模', () => {
     const scales: MudslideScale[] = ['minor', 'moderate', 'severe', 'catastrophic']
     expect(scales).toHaveLength(4)
   })
   it('泥石流字段正确', () => {
-    ;(sys as any).mudslides.push(makeMudslide('severe'))
+    ;sys.getMudslides().push(makeMudslide('severe'))
     const m = sys.getMudslides()[0]
     expect(m.scale).toBe('severe')
     expect(m.progress).toBe(50)

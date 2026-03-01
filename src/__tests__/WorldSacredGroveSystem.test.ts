@@ -14,14 +14,14 @@ describe('WorldSacredGroveSystem.getGroves', () => {
 
   it('初始无圣林', () => { expect(sys.getGroves()).toHaveLength(0) })
   it('注入后可查询', () => {
-    ;(sys as any).groves.push(makeGrove())
+    ;sys.getGroves().push(makeGrove())
     expect(sys.getGroves()).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getGroves()).toBe((sys as any).groves)
+    expect(sys.getGroves()).toBe(sys.getGroves())
   })
   it('圣林字段正确', () => {
-    ;(sys as any).groves.push(makeGrove())
+    ;sys.getGroves().push(makeGrove())
     const g = sys.getGroves()[0]
     expect(g.power).toBe(7)
     expect(g.blessingType).toBe('healing')
@@ -34,7 +34,7 @@ describe('WorldSacredGroveSystem.getGroveAt', () => {
 
   it('无圣林时返回undefined', () => { expect(sys.getGroveAt(20, 30)).toBeUndefined() })
   it('坐标在范围内时返回圣林', () => {
-    ;(sys as any).groves.push(makeGrove(20, 30))
+    ;sys.getGroves().push(makeGrove(20, 30))
     expect(sys.getGroveAt(20, 30)).toBeDefined()
   })
 })
@@ -45,8 +45,8 @@ describe('WorldSacredGroveSystem.getGroveCount', () => {
 
   it('初始数量为0', () => { expect(sys.getGroveCount()).toBe(0) })
   it('注入后数量正确', () => {
-    ;(sys as any).groves.push(makeGrove())
-    ;(sys as any).groves.push(makeGrove())
+    ;sys.getGroves().push(makeGrove())
+    ;sys.getGroves().push(makeGrove())
     expect(sys.getGroveCount()).toBe(2)
   })
 })

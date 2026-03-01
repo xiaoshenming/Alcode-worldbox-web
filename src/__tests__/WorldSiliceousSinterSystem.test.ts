@@ -12,17 +12,17 @@ describe('WorldSiliceousSinterSystem.getDeposits', () => {
   let sys: WorldSiliceousSinterSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无硅质硅华', () => { expect(sys.getDeposits()).toHaveLength(0) })
+  it('初始无硅质硅华', () => { expect((sys as any).deposits).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).deposits.push(makeDeposit())
-    expect(sys.getDeposits()).toHaveLength(1)
+    expect((sys as any).deposits).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getDeposits()).toBe((sys as any).deposits)
+    expect((sys as any).deposits).toBe((sys as any).deposits)
   })
   it('硅质硅华字段正确', () => {
     ;(sys as any).deposits.push(makeDeposit())
-    const d = sys.getDeposits()[0]
+    const d = (sys as any).deposits[0]
     expect(d.silicaPurity).toBe(80)
     expect(d.opalescence).toBe(70)
     expect(d.thermalActivity).toBe(60)

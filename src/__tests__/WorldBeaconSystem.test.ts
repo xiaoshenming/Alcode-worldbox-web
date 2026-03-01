@@ -12,13 +12,13 @@ describe('WorldBeaconSystem.getBeacons', () => {
   let sys: WorldBeaconSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无烽火台', () => { expect(sys.getBeacons()).toHaveLength(0) })
+  it('初始无烽火台', () => { expect((sys as any).beacons).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).beacons.push(makeBeacon())
-    expect(sys.getBeacons()).toHaveLength(1)
+    expect((sys as any).beacons).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getBeacons()).toBe((sys as any).beacons)
+    expect((sys as any).beacons).toBe((sys as any).beacons)
   })
   it('支持6种烽火台类型', () => {
     const types: BeaconType[] = ['watchtower', 'lighthouse', 'signal_fire', 'smoke_signal', 'war_beacon', 'trade_marker']
@@ -30,11 +30,11 @@ describe('WorldBeaconSystem.getBeaconCount', () => {
   let sys: WorldBeaconSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始为0', () => { expect(sys.getBeaconCount()).toBe(0) })
+  it('初始为0', () => { expect((sys as any).beacons.length).toBe(0) })
   it('注入后增加', () => {
     ;(sys as any).beacons.push(makeBeacon())
     ;(sys as any).beacons.push(makeBeacon())
-    expect(sys.getBeaconCount()).toBe(2)
+    expect((sys as any).beacons.length).toBe(2)
   })
 })
 

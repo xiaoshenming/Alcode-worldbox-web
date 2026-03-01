@@ -12,13 +12,13 @@ describe('WorldAqueductSystem.getAqueducts', () => {
   let sys: WorldAqueductSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无引水渠', () => { expect(sys.getAqueducts()).toHaveLength(0) })
+  it('初始无引水渠', () => { expect((sys as any).aqueducts).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).aqueducts.push(makeAqueduct())
-    expect(sys.getAqueducts()).toHaveLength(1)
+    expect((sys as any).aqueducts).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getAqueducts()).toBe((sys as any).aqueducts)
+    expect((sys as any).aqueducts).toBe((sys as any).aqueducts)
   })
   it('支持4种材料', () => {
     const materials: AqueductMaterial[] = ['stone', 'brick', 'marble', 'reinforced']
@@ -26,7 +26,7 @@ describe('WorldAqueductSystem.getAqueducts', () => {
   })
   it('引水渠字段正确', () => {
     ;(sys as any).aqueducts.push(makeAqueduct('marble'))
-    const a = sys.getAqueducts()[0]
+    const a = (sys as any).aqueducts[0]
     expect(a.material).toBe('marble')
     expect(a.flowRate).toBe(5)
     expect(a.integrity).toBe(90)

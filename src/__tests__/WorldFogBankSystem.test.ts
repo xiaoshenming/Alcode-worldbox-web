@@ -14,7 +14,7 @@ describe('WorldFogBankSystem.getFogs', () => {
 
   it('初始无雾区', () => { expect(sys.getFogs()).toHaveLength(0) })
   it('注入后可查询', () => {
-    ;(sys as any).fogs.push(makeFog())
+    ;sys.getFogs().push(makeFog())
     expect(sys.getFogs()).toHaveLength(1)
   })
   it('支持4种雾密度', () => {
@@ -22,15 +22,15 @@ describe('WorldFogBankSystem.getFogs', () => {
     expect(densities).toHaveLength(4)
   })
   it('雾区字段正确', () => {
-    ;(sys as any).fogs.push(makeFog('thick'))
+    ;sys.getFogs().push(makeFog('thick'))
     const f = sys.getFogs()[0]
     expect(f.density).toBe('thick')
     expect(f.visibility).toBe(40)
     expect(f.speedPenalty).toBe(0.5)
   })
   it('多个雾区全部返回', () => {
-    ;(sys as any).fogs.push(makeFog())
-    ;(sys as any).fogs.push(makeFog())
+    ;sys.getFogs().push(makeFog())
+    ;sys.getFogs().push(makeFog())
     expect(sys.getFogs()).toHaveLength(2)
   })
 })

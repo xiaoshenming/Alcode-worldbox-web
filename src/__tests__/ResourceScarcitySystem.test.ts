@@ -40,7 +40,7 @@ describe('ResourceScarcitySystem.getResourceLevel', () => {
       expect(level).toBeDefined()
     })
   })
-  it('支持5种稀缺等级', () => {
+  it('支持5���稀缺等级', () => {
     const levels: ScarcityLevel[] = ['ABUNDANT', 'SUFFICIENT', 'SCARCE', 'CRITICAL', 'DEPLETED']
     expect(levels).toHaveLength(5)
   })

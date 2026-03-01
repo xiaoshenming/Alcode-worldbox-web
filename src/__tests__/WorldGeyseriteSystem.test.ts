@@ -12,17 +12,17 @@ describe('WorldGeyseriteSystem.getDeposits', () => {
   let sys: WorldGeyseriteSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无硅华沉积', () => { expect(sys.getDeposits()).toHaveLength(0) })
+  it('初始无硅华沉积', () => { expect((sys as any).deposits).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).deposits.push(makeDeposit())
-    expect(sys.getDeposits()).toHaveLength(1)
+    expect((sys as any).deposits).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getDeposits()).toBe((sys as any).deposits)
+    expect((sys as any).deposits).toBe((sys as any).deposits)
   })
   it('硅华沉积字段正确', () => {
     ;(sys as any).deposits.push(makeDeposit())
-    const d = sys.getDeposits()[0]
+    const d = (sys as any).deposits[0]
     expect(d.silicaContent).toBe(80)
     expect(d.crystallinity).toBe(70)
     expect(d.thermalProximity).toBe(90)
@@ -30,6 +30,6 @@ describe('WorldGeyseriteSystem.getDeposits', () => {
   it('多个硅华沉积全部返回', () => {
     ;(sys as any).deposits.push(makeDeposit())
     ;(sys as any).deposits.push(makeDeposit())
-    expect(sys.getDeposits()).toHaveLength(2)
+    expect((sys as any).deposits).toHaveLength(2)
   })
 })

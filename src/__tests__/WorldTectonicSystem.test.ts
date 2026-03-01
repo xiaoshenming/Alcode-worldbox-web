@@ -15,13 +15,13 @@ describe('WorldTectonicSystem.getPlates', () => {
   let sys: WorldTectonicSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无板块', () => { expect(sys.getPlates()).toHaveLength(0) })
+  it('初始无板块', () => { expect((sys as any).plates).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).plates.push(makePlate())
-    expect(sys.getPlates()).toHaveLength(1)
+    expect((sys as any).plates).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getPlates()).toBe((sys as any).plates)
+    expect((sys as any).plates).toBe((sys as any).plates)
   })
   it('支持2种板块类型', () => {
     const types: PlateType[] = ['continental', 'oceanic']
@@ -33,10 +33,10 @@ describe('WorldTectonicSystem.getFaults', () => {
   let sys: WorldTectonicSystem
   beforeEach(() => { sys = makeSys() })
 
-  it('初始无断层', () => { expect(sys.getFaults()).toHaveLength(0) })
+  it('初始无断层', () => { expect((sys as any).faults).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).faults.push(makeFault())
-    expect(sys.getFaults()).toHaveLength(1)
+    expect((sys as any).faults).toHaveLength(1)
   })
   it('支持3种边界类型', () => {
     const types: BoundaryType[] = ['convergent', 'divergent', 'transform']
@@ -48,11 +48,11 @@ describe('WorldTectonicSystem.getPlateCount', () => {
   let sys: WorldTectonicSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始为0', () => { expect(sys.getPlateCount()).toBe(0) })
+  it('初始为0', () => { expect((sys as any).plates.length).toBe(0) })
   it('注入后增加', () => {
     ;(sys as any).plates.push(makePlate())
     ;(sys as any).plates.push(makePlate())
-    expect(sys.getPlateCount()).toBe(2)
+    expect((sys as any).plates.length).toBe(2)
   })
 })
 

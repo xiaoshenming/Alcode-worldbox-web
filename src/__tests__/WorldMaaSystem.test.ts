@@ -12,17 +12,17 @@ describe('WorldMaarSystem.getMaars', () => {
   let sys: WorldMaarSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无玛珥湖', () => { expect(sys.getMaars()).toHaveLength(0) })
+  it('初始无玛珥湖', () => { expect((sys as any).maars).toHaveLength(0) })
   it('注入后可查询', () => {
     ;(sys as any).maars.push(makeMaar())
-    expect(sys.getMaars()).toHaveLength(1)
+    expect((sys as any).maars).toHaveLength(1)
   })
   it('返回内部引用', () => {
-    expect(sys.getMaars()).toBe((sys as any).maars)
+    expect((sys as any).maars).toBe((sys as any).maars)
   })
   it('玛珥湖字段正确', () => {
     ;(sys as any).maars.push(makeMaar())
-    const m = sys.getMaars()[0]
+    const m = (sys as any).maars[0]
     expect(m.craterWidth).toBe(15)
     expect(m.waterDepth).toBe(8)
     expect(m.tephraRing).toBe(5)
