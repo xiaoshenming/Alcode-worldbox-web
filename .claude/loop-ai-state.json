@@ -1,18 +1,18 @@
 {
-  "notes": "迭代108。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.52MB；(2)消除50处IIFE箭头函数GC源——将 for(_i){if(!((p)=>cond)(arr[_i]))arr.splice(_i,1)} 重构为多行+const alias；(3)扩展99处单行for-splice为多行风格+const alias（CreatureAnnealer等craftsman系统）；(4)提取pruneDeadEntities工具函数——消除96个文件相同的6行skillMap清理代码块→1行调用，新建EntityUtils.ts；(5)8处civilization/utils目录的pickRandom扩展；(6)修复双括号简化引入的31处运算符优先级bug(!x<N→!(x<N))；共5次提交全部推送。",
+  "notes": "迭代109。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.52MB；(2)CityLayoutSystem.renderWalls热路径——将gates.some()闭包替换为预建_gateKeySet(O(1))，消除每帧渲染的GC；(3)CalligraphySystem手写skillMap清理替换为pruneDeadEntities；(4)17处单行hasComponent清理扩展为多行+const alias；(5)15+18=33处for循环多次访问arr[i]无alias——批量添加const别名；(6)TechSystem/AchievementProgressSystem——用Map替换find()线性查找，O(n)→O(1)；(7)WorldPetrificationSystem——用Set替换嵌套some()查找(O(zones*entities*petrified)→O(1))；共8次提交全部推送。",
   "priorities": [
     "1. 【持续监控】tsc+vitest+build三重验证保持全绿",
-    "2. 【可探索】CityLayoutSystem.ts A*开放列表线性查找min(O(n))——可改为二叉堆，但maxIter=500限制了实际影响",
-    "3. 【可探索】扫描src/powers/、src/entities/、src/game/目录是否有未优化的代码",
-    "4. 【可探索】DiplomaticWarReparationSystem vs DiplomaticWarReparationsSystem已确认是不同系统（不同字段和逻辑）",
-    "5. 【可探索】CreatureCalligraphySystem每次update全量遍历skillMap（每1500tick一次）——可改为tick%3600的方式"
+    "2. 【可探索】NavalSystem有11次getEntitiesWithComponents调用——分析是否在同一update周期内，可预缓存",
+    "3. 【可探索】其他系统中有.some(x=>x.entityId===eid)且数组较大的情况——用Set优化",
+    "4. 【可探索】WorldLeyLineSystem/DisasterWarningSystem等有多次push({})的系统——看是否在热路径",
+    "5. 【可探索】QuestSystem/ArmySystem等核心系统有无内存泄漏（Map无delete清理）"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
     "子代理并行修复大批量文件极高效：4组并行代理可在几分钟内修复160+文件",
     "manualChunks按文件名前缀分组是最安全的代码分割方案 — 不改源码，只改vite配置",
     "Iterable<T>替代T[]可消除spread分配，但检查消费侧是否用了.length/.includes等数组方法",
-    "getAllEntities()返回Array.from()快照 — removeEntity-during-iteration是安全的",
+    "getAllEntities()返回Array.from()���照 — removeEntity-during-iteration是安全的",
     "queue.shift()在BFS中是O(n²)陷阱 — 用索引指针head++替代",
     "Camera.getVisibleBounds()等热路径方法应返回缓存对象而非每次new — 每帧调用4次累积显著GC压力",
     "渲染路径中的闭包/对象字面量/getBoundingClientRect()都是隐性GC源 — 预分配+脏标记是标准修复模式",
@@ -46,9 +46,13 @@
     "【迭代107新增】arr[Math.floor(Math.random()*arr.length)]是pickRandom(arr)的标准替换候选，用Python re.sub批量替换293个文件390处",
     "【迭代107新增】pre-commit hook的非空断言检测会误报字符串字面量中的感叹号——解法：添加is_inside_string()函数计算pos前引号数量的奇偶性",
     "【迭代107新增】嵌套{weight:n}结构要拆分为两个Record才能用pickWeighted：CONFIGS保留完整数据，WEIGHTS只存weight字段",
-    "【迭代108新增】IIFE箭头函数在清理循环中是隐性GC源：for(_i){if(!((p)=>cond)(arr[_i]))...} 每次迭代分配箭头函数对象 → 改为for+const+内联条件三行写法。Python正则可批量替换：pattern=re.compile(r'for .+ if \\(!\\(\\((\\w+)\\) => (.+?)\\)\\(this\\.(\\w+)\\[_i\\]\\)\\) this\\.\\3\\.splice\\(_i, 1\\) \\}')",
+    "【迭代108新增】IIFE箭头函数在清理循环中是隐性GC源：for(_i){if(!((p)=>cond)(arr[_i]))...} 每次迭代分配箭头函数对象 → 改为for+const+内联条件三行写法。Python正则可批量替换",
     "【迭代108新增】批量简化操作要分两步验证：(1)替换后立即tsc验证；(2)简化括号时务必考虑运算符优先级——!x<N与!(x<N)语义完全不同，含比较运算符的简单条件必须保留括号",
-    "【迭代108新增】pruneDeadEntities工具函数提取模式：96个文件相同的6行skillMap清理块可提取为1行函数调用。新建EntityUtils.ts，注意架构方向utils→ecs是允许的（ecs是被utils依赖的下层）"
+    "【迭代108新增】pruneDeadEntities工具函数提取模式：96个文件相同的6行skillMap清理块可提取为1行函数调用。新建EntityUtils.ts，注意架构方向utils→ecs是允许的（ecs是被utils依赖的下层）",
+    "【迭代109新增】渲染热路径中Array.some()是隐性GC源——render每帧调用时，gates.some(g=>g.x===w.x&&g.y===w.y)每次创建闭包。解法：提前建_gateKeySet = new Set<number>()，用x*10000+y做数值键，O(1)查找。",
+    "【迭代109新增】静态常量数组的find()查找可预建Map优化：TechSystem的TECHNOLOGIES.find()/AchievementProgressSystem的achievements.find()——用模块级或实例级Map<key,T>替换，初始化一次，后续O(1)",
+    "【迭代109新增】嵌套循环中的.some()在O(n³)路径中危险：for(zone of zones){for(eid of entities){if(arr.some(...))}} — 用Set<number>追踪活跃ID可降为O(1)，对petrified/poisoned等状态集合特别有效",
+    "【迭代109新增】Python批量替换for循环中多次访问arr[i]的安全方法：逐行扫描找循环头→收集循环体→检查arr[i].field次数→在循环体第一行插入const alias = arr[i]→替换body中的arr[i].field为alias.field。注意替换时只替换.field形式避免影响.splice(i,1)"
   ],
-  "last_updated": "2026-03-02T07:30:00+08:00"
+  "last_updated": "2026-03-02T08:00:00+08:00"
 }
