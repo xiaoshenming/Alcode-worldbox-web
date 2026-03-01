@@ -5,8 +5,9 @@ describe('NotificationCenterSystem', () => {
   let sys: NotificationCenterSystem
   beforeEach(() => { sys = makeSys() })
   it('初始histOpen为false', () => { expect((sys as any).histOpen).toBe(false) })
-  it('getClickedNotification无点击返回null', () => {
-    expect(sys.getClickedNotification(-999, -999, 1920)).toBeNull()
+  it('初始pool无active槽', () => {
+    const pool = (sys as any).pool
+    expect(pool.every((e: any) => !e.active)).toBe(true)
   })
   it('push 不崩溃', () => {
     expect(() => sys.push('Test message', 'info')).not.toThrow()

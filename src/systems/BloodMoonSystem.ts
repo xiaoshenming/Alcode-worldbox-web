@@ -310,25 +310,4 @@ export class BloodMoonSystem {
 
     ctx.globalCompositeOperation = prevComposite
   }
-
-  /** Serialize state for save system. */
-  serialize(): object {
-    return {
-      cooldown: this.cooldown,
-      elapsed: this.elapsed,
-      active: this.active,
-      ticksSinceLastMoon: this.ticksSinceLastMoon,
-      rainSeed: this.rainSeed,
-    }
-  }
-
-  /** Restore state from save data. */
-  deserialize(data: Record<string, number | boolean> | null): void {
-    if (!data) return
-    this.cooldown = (data.cooldown as number) ?? this.cooldown
-    this.elapsed = (data.elapsed as number) ?? 0
-    this.active = (data.active as boolean) ?? false
-    this.ticksSinceLastMoon = (data.ticksSinceLastMoon as number) ?? 0
-    this.rainSeed = (data.rainSeed as number) ?? 0
-  }
 }

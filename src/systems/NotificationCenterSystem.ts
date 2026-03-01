@@ -100,21 +100,6 @@ export class NotificationCenterSystem {
   toggleHistory(): void { this.histOpen = !this.histOpen; this.histScroll = 0 }
   isHistoryOpen(): boolean { return this.histOpen }
 
-  /** Returns jump target if a visible notification with position was clicked, else null. */
-  getClickedNotification(clickX: number, clickY: number, screenW: number): { x: number; y: number } | null {
-    const bx = screenW - NOTIF_W - NOTIF_PAD
-    let by = NOTIF_PAD
-    for (const idx of this.vis) {
-      const e = this.pool[idx]
-      if (e.active && e.hasPosition &&
-          clickX >= bx && clickX <= bx + NOTIF_W && clickY >= by && clickY <= by + NOTIF_H) {
-        return { x: e.x, y: e.y }
-      }
-      by += NOTIF_H + NOTIF_GAP
-    }
-    return null
-  }
-
   /** Clear all notifications and history. */
   clear(): void {
     for (let i = 0; i < POOL_SIZE; i++) this.pool[i].active = false
