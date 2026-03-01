@@ -19,7 +19,7 @@ const TOP_MARGIN = 50
 export class TechTreePanel {
   private element: HTMLElement
   private canvas: HTMLCanvasElement
-  private ctx: CanvasRenderingContext2D
+  private ctx: CanvasRenderingContext2D | null = null
   private civManager: CivManager
   private selectedCivId: number | null = null
   private visible: boolean = false
@@ -44,12 +44,13 @@ export class TechTreePanel {
     this.canvas.height = 340
     this.canvas.style.cssText = 'background:#111;border-radius:6px;width:100%'
     this.element.appendChild(this.canvas)
-    this.ctx = this.canvas.getContext('2d')!
+    this.ctx = this.canvas.getContext('2d')
 
     // Pre-compute level groups and node positions (static data)
     for (const tech of TECHNOLOGIES) {
-      if (!this.levelGroups.has(tech.level)) this.levelGroups.set(tech.level, [])
-      this.levelGroups.get(tech.level)!.push(tech)
+      let levelArr = this.levelGroups.get(tech.level)
+      if (!levelArr) { levelArr = []; this.levelGroups.set(tech.level, levelArr) }
+      levelArr.push(tech)
     }
     const w = this.canvas.width
     for (let level = 1; level <= 5; level++) {
@@ -127,6 +128,7 @@ export class TechTreePanel {
 
   private renderTree(): void {
     const ctx = this.ctx
+    if (!ctx) return
     const w = this.canvas.width
     const h = this.canvas.height
 

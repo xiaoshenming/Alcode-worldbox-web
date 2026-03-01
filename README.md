@@ -6,8 +6,8 @@
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![Vite](https://img.shields.io/badge/Vite-6.0-646CFF)
-![Lines](https://img.shields.io/badge/代码量-~120k_lines-green)
-![Systems](https://img.shields.io/badge/ECS_Systems-921-orange)
+![Lines](https://img.shields.io/badge/代码量-~106k_lines-green)
+![Systems](https://img.shields.io/badge/ECS_Systems-847-orange)
 
 ## 快速开始
 
@@ -228,7 +228,7 @@ npm run preview
 ```
 src/
 ├── main.ts              # 入口
-├── game/                # 核心引擎 (8 文件)
+├── game/                # 核心引擎 (12 文件)
 │   ├── Game.ts          # 主游戏循环
 │   ├── World.ts         # 世界地图
 │   ├── Camera.ts        # 摄像机（缩放/平移）
@@ -239,7 +239,7 @@ src/
 │   └── SaveSystem.ts    # 存档系统
 ├── ecs/                 # ECS 框架
 │   └── Entity.ts        # 实体管理
-├── systems/             # 游戏系统 (921 个)
+├── systems/             # 游戏系统 (847 个)
 ├── civilization/        # 文明管理
 ├── entities/            # 实体工厂
 ├── ui/                  # UI 组件 (8 个)
@@ -290,15 +290,40 @@ src/
 ## 代码规模
 
 | 模块 | 文件数 | 代码行数 |
-|------|--------|---------|
-| systems/ | 731 | ~102,000 |
-| game/ | 8 | ~5,800 |
-| ui/ | 8 | ~1,300 |
-| civilization/ | 2 | ~1,100 |
-| utils/ | 4 | ~330 |
-| ecs/ | 1 | ~240 |
-| entities/ | 1 | ~105 |
-| **合计** | **722** | **~99,000** |
+|------|--------|----------:|
+| systems/ | 847 | ~94,600 |
+| game/ | 12 | ~7,900 |
+| ui/ | 8 | ~1,400 |
+| civilization/ | 2 | ~1,200 |
+| utils/ | 4 | ~420 |
+| ecs/ | 1 | ~274 |
+| entities/ | 1 | ~108 |
+| **合计** | **875** | **~105,900** |
+
+## 工程质量
+
+经过 98 轮迭代优化，项目达到以下质量指标：
+
+| 指标 | 数值 |
+|------|-----:|
+| TypeScript 类型错误 | 0 |
+| `as any` 用法 | 1（仅 debug 用途）|
+| 非空断言 `!` | 0 |
+| 热路径 GC 分配 | 0 |
+| 单元测试文件 | 854 |
+| 单元测试总数 | 4,973 |
+| 系统文件测试覆盖 | 844/847（99.6%）|
+| 构建产物大小 | 1.6 MB（< 2 MB 限制）|
+| 构建警告 | 0 |
+
+### 关键优化成果
+
+- **A\* 寻路**：优先队列从线性数组改为二叉堆，Pop 从 O(n) 降至 O(log n)
+- **空间哈希**：字符串键改为数值编码，消除 insert/query 的 GC 分配
+- **批量调度**：703 个系统调用按签名分组批量执行，净减 1147 行代码
+- **对象池**：预分配缓冲区，`_xxxBuf.length = 0` 重置视图，热路径零 new
+- **代码分割**：Vite manualChunks 按功能分 8 个 chunk，首屏按需加载
+- **Game.ts 瘦身**：提取 3 个模块减少 763 行，单文件职责清晰
 
 ## 浏览器兼容性
 
