@@ -69,5 +69,4 @@ export class DiplomaticWoodreveSystem {
     }
   }
 
-  getArrangements(): WoodreveArrangement[] { return this.arrangements }
 }

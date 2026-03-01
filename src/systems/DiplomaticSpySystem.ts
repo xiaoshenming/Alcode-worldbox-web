@@ -42,19 +42,7 @@ export class DiplomaticSpySystem {
 
   private _civSpiesBuf: Spy[] = []
   private _activeSpiesBuf2: Spy[] = []
-  getSpies(): Spy[] { return this.spies }
   getSpyCount(): number { return this.spies.length }
-  getSpiesByCiv(civId: number): Spy[] {
-    this._civSpiesBuf.length = 0
-    for (const s of this.spies) { if (s.originCivId === civId) this._civSpiesBuf.push(s) }
-    return this._civSpiesBuf
-  }
-  getActiveSpies(): Spy[] {
-    this._activeSpiesBuf2.length = 0
-    for (const s of this.spies) { if (s.status === 'active') this._activeSpiesBuf2.push(s) }
-    return this._activeSpiesBuf2
-  }
-  getIncidents(): SpyIncident[] { return this.incidents }
 
   private countActiveSpies(): number {
     let n = 0

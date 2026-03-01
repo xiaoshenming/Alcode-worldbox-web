@@ -66,5 +66,4 @@ export class DiplomaticExtraditionSystem {
     }
   }
 
-  getAgreements(): ExtraditionAgreement[] { return this.agreements }
 }

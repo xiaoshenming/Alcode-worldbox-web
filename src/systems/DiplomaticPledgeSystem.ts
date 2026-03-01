@@ -90,13 +90,6 @@ export class DiplomaticPledgeSystem {
   }
 
   private _pledgesBuf: DiplomaticPledge[] = []
-  getPledges(): DiplomaticPledge[] {
-    return this.pledges
-  }
 
-  getByCiv(civId: number): DiplomaticPledge[] {
-    this._pledgesBuf.length = 0
-    for (const p of this.pledges) { if (p.fromCivId === civId || p.toCivId === civId) this._pledgesBuf.push(p) }
-    return this._pledgesBuf
-  }
+
 }

@@ -64,5 +64,4 @@ export class DiplomaticNeutralitySystem {
     }
   }
 
-  getDeclarations(): NeutralityDeclaration[] { return this.declarations }
 }

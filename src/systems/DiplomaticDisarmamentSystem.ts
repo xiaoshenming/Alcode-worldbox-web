@@ -69,5 +69,4 @@ export class DiplomaticDisarmamentSystem {
     }
   }
 
-  getTreaties(): DisarmamentTreaty[] { return this.treaties }
 }

@@ -69,5 +69,4 @@ export class DiplomaticGarbleSystem {
     }
   }
 
-  getArrangements(): GarblerArrangement[] { return this.arrangements }
 }

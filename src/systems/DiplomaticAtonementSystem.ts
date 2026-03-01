@@ -69,5 +69,4 @@ export class DiplomaticAtonementSystem {
     }
   }
 
-  getProcesses(): AtonementProcess[] { return this.processes }
 }

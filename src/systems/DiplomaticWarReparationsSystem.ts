@@ -91,5 +91,4 @@ export class DiplomaticWarReparationsSystem {
     }
   }
 
-  getReparations(): readonly WarReparation[] { return this.reparations }
 }

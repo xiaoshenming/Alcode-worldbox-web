@@ -69,5 +69,4 @@ export class DiplomaticSheriffdomSystem {
     }
   }
 
-  getArrangements(): SheriffdomArrangement[] { return this.arrangements }
 }

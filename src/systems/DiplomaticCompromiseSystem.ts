@@ -69,5 +69,4 @@ export class DiplomaticCompromiseSystem {
     for (let _i = this.agreements.length - 1; _i >= 0; _i--) { if (!((a) => a.status === 'proposing' || a.status === 'counter_offer')(this.agreements[_i])) this.agreements.splice(_i, 1) }
   }
 
-  getAgreements(): CompromiseAgreement[] { return this.agreements }
 }

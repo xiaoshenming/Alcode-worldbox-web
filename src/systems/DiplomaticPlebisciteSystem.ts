@@ -90,5 +90,4 @@ export class DiplomaticPlebisciteSystem {
     return this._nationsBuf
   }
 
-  getPacts(): readonly PlebiscitePact[] { return this.pacts }
 }

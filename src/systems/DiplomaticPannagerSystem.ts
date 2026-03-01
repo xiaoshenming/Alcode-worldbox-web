@@ -69,5 +69,4 @@ export class DiplomaticPannagerSystem {
     }
   }
 
-  getArrangements(): PannagerArrangement[] { return this.arrangements }
 }

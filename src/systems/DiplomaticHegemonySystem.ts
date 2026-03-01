@@ -69,5 +69,4 @@ export class DiplomaticHegemonySystem {
     }
   }
 
-  getRelations(): HegemonyRelation[] { return this.relations }
 }

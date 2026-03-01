@@ -69,5 +69,4 @@ export class DiplomaticPurveyorSystem {
     }
   }
 
-  getArrangements(): PurveyorArrangement[] { return this.arrangements }
 }

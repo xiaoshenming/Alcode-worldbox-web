@@ -69,5 +69,4 @@ export class DiplomaticPardonSystem {
     }
   }
 
-  getDecrees(): PardonDecree[] { return this.decrees }
 }

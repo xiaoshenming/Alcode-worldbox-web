@@ -69,5 +69,4 @@ export class DiplomaticProvostshipSystem {
     }
   }
 
-  getArrangements(): ProvostshipArrangement[] { return this.arrangements }
 }

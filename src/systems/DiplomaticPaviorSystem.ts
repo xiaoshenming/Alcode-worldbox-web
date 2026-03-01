@@ -69,5 +69,4 @@ export class DiplomaticPaviorSystem {
     }
   }
 
-  getArrangements(): PaviorArrangement[] { return this.arrangements }
 }

@@ -69,5 +69,4 @@ export class DiplomaticVicarageSystem {
     }
   }
 
-  getArrangements(): VicarageArrangement[] { return this.arrangements }
 }

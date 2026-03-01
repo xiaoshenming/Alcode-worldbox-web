@@ -69,5 +69,4 @@ export class DiplomaticDispensationSystem {
     }
   }
 
-  getGrants(): DispensationGrant[] { return this.grants }
 }

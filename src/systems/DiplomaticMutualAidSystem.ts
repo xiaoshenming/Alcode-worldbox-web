@@ -69,5 +69,4 @@ export class DiplomaticMutualAidSystem {
     }
   }
 
-  getPacts(): MutualAidPact[] { return this.pacts }
 }

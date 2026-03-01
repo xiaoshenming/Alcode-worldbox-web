@@ -76,5 +76,4 @@ export class DiplomaticTribunalSystem {
     }
   }
 
-  getProceedings(): readonly TribunalProceeding[] { return this.proceedings }
 }

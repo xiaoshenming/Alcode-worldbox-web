@@ -69,5 +69,4 @@ export class DiplomaticCastellanySystem {
     }
   }
 
-  getArrangements(): CastellanyArrangement[] { return this.arrangements }
 }

@@ -97,10 +97,4 @@ export class DiplomaticSuccessionSystem {
     }
   }
 
-  getEvents(): SuccessionEvent[] { return this.events }
-  getActiveCrises(): SuccessionEvent[] {
-    this._crisesBuf.length = 0
-    for (const e of this.events) { if (e.status === 'contested' || e.status === 'civil_war') this._crisesBuf.push(e) }
-    return this._crisesBuf
-  }
 }

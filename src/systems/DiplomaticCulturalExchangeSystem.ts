@@ -103,10 +103,4 @@ export class DiplomaticCulturalExchangeSystem {
   }
 
   private _civExchangesBuf: CulturalExchange[] = []
-  getExchanges(): CulturalExchange[] { return this.exchanges }
-  getCivExchanges(civId: number): CulturalExchange[] {
-    this._civExchangesBuf.length = 0
-    for (const e of this.exchanges) { if (e.senderCivId === civId || e.receiverCivId === civId) this._civExchangesBuf.push(e) }
-    return this._civExchangesBuf
-  }
 }

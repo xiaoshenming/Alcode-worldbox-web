@@ -69,5 +69,4 @@ export class DiplomaticRegencySystem {
     }
   }
 
-  getArrangements(): RegencyArrangement[] { return this.arrangements }
 }

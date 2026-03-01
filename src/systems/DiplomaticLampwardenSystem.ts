@@ -69,5 +69,4 @@ export class DiplomaticLampwardenSystem {
     }
   }
 
-  getArrangements(): LampwardenArrangement[] { return this.arrangements }
 }

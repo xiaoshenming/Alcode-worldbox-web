@@ -69,5 +69,4 @@ export class DiplomaticChatelaincySystem {
     }
   }
 
-  getArrangements(): ChatelaincyArrangement[] { return this.arrangements }
 }

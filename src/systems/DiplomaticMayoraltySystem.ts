@@ -69,5 +69,4 @@ export class DiplomaticMayoraltySystem {
     }
   }
 
-  getArrangements(): MayoraltyArrangement[] { return this.arrangements }
 }

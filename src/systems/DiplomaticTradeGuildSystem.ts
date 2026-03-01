@@ -85,5 +85,4 @@ export class DiplomaticTradeGuildSystem {
     }
   }
 
-  getGuilds(): readonly TradeGuild[] { return this.guilds }
 }

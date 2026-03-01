@@ -91,10 +91,4 @@ export class DiplomaticTradeSanctionSystem {
   }
 
   private _sanctionsBuf: TradeSanction[] = []
-  getSanctions(): readonly TradeSanction[] { return this.sanctions }
-  getSanctionsAgainst(civId: number): TradeSanction[] {
-    this._sanctionsBuf.length = 0
-    for (const s of this.sanctions) { if (s.targetCivId === civId && s.status === 'active') this._sanctionsBuf.push(s) }
-    return this._sanctionsBuf
-  }
 }

@@ -69,5 +69,4 @@ export class DiplomaticTributeSystem {
     }
   }
 
-  getArrangements(): TributeArrangement[] { return this.arrangements }
 }

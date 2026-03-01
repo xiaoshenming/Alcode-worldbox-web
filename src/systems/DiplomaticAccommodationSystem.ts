@@ -69,5 +69,4 @@ export class DiplomaticAccommodationSystem {
     }
   }
 
-  getProceedings(): AccommodationProceeding[] { return this.proceedings }
 }

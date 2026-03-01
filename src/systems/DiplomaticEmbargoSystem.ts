@@ -101,10 +101,4 @@ export class DiplomaticEmbargoSystem {
   }
 
   private _embargoesBuf: Embargo[] = []
-  getEmbargoes(): readonly Embargo[] { return this.embargoes }
-  getEmbargoesAgainst(civId: number): Embargo[] {
-    this._embargoesBuf.length = 0
-    for (const e of this.embargoes) { if (e.targetCivId === civId && e.status === 'active') this._embargoesBuf.push(e) }
-    return this._embargoesBuf
-  }
 }

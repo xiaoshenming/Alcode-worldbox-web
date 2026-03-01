@@ -69,5 +69,4 @@ export class DiplomaticVindicationSystem {
     }
   }
 
-  getProceedings(): VindicationProceeding[] { return this.proceedings }
 }

@@ -69,5 +69,4 @@ export class DiplomaticAutonomySystem {
     }
   }
 
-  getAgreements(): AutonomyAgreement[] { return this.agreements }
 }

@@ -68,5 +68,4 @@ export class DiplomaticDetenteSystem {
     }
   }
 
-  getTreaties(): DetenteAgreement[] { return this.treaties }
 }

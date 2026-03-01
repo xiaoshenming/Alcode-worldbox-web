@@ -69,5 +69,4 @@ export class DiplomaticConcordatSystem {
     }
   }
 
-  getProceedings(): ConcordatProceeding[] { return this.proceedings }
 }

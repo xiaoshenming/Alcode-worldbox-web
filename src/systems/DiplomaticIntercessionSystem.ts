@@ -64,5 +64,4 @@ export class DiplomaticIntercessionSystem {
     for (let _i = this.actions.length - 1; _i >= 0; _i--) { if (!((a) => a.result === 'active')(this.actions[_i])) this.actions.splice(_i, 1) }
   }
 
-  getActions(): IntercessionAction[] { return this.actions }
 }

@@ -69,5 +69,4 @@ export class DiplomaticDominionSystem {
     }
   }
 
-  getRelations(): DominionRelation[] { return this.relations }
 }

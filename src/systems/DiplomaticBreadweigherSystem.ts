@@ -69,5 +69,4 @@ export class DiplomaticBreadweigherSystem {
     }
   }
 
-  getArrangements(): BreadweigherArrangement[] { return this.arrangements }
 }

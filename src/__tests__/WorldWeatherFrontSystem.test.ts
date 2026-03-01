@@ -15,19 +15,19 @@ describe('WorldWeatherFrontSystem', () => {
   let sys: WorldWeatherFrontSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无天气锋', () => { expect(sys.getFronts()).toHaveLength(0) })
-  it('注入后可查询', () => {
+  it('初始无天气锋', () => { expect((sys as any).fronts).toHaveLength(0) })
+  it('注入后fronts包含数据', () => {
     ;(sys as any).fronts.push(makeFront())
-    expect(sys.getFronts()).toHaveLength(1)
+    expect((sys as any).fronts).toHaveLength(1)
   })
-  it('getFrontCount返回数量', () => {
+  it('fronts数量可手动统计', () => {
     ;(sys as any).fronts.push(makeFront())
     ;(sys as any).fronts.push(makeFront('warm'))
-    expect(sys.getFrontCount()).toBe(2)
+    expect((sys as any).fronts.length).toBe(2)
   })
-  it('getCollisions返回碰撞列表', () => {
+  it('collisions可注入', () => {
     ;(sys as any).collisions.push(makeCollision(1, 2))
-    expect(sys.getCollisions()).toHaveLength(1)
+    expect((sys as any).collisions).toHaveLength(1)
   })
   it('支持5种锋面类型', () => {
     const types: FrontType[] = ['cold', 'warm', 'storm', 'dry', 'humid']

@@ -69,5 +69,4 @@ export class DiplomaticWoodwardSystem {
     }
   }
 
-  getArrangements(): WoodwardArrangement[] { return this.arrangements }
 }

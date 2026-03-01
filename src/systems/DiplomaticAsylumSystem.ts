@@ -72,5 +72,4 @@ export class DiplomaticAsylumSystem {
     }
   }
 
-  getRequests(): readonly AsylumRequest[] { return this.requests }
 }

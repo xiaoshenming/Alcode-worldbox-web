@@ -69,5 +69,4 @@ export class DiplomaticCoexistenceSystem {
     }
   }
 
-  getAgreements(): CoexistenceAgreement[] { return this.agreements }
 }

@@ -69,5 +69,4 @@ export class DiplomaticHayreveSystem {
     }
   }
 
-  getArrangements(): HayreveArrangement[] { return this.arrangements }
 }

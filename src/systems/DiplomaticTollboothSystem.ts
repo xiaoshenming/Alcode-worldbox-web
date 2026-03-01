@@ -69,5 +69,4 @@ export class DiplomaticTollboothSystem {
     }
   }
 
-  getArrangements(): TollboothArrangement[] { return this.arrangements }
 }

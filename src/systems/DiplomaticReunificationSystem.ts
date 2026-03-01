@@ -69,5 +69,4 @@ export class DiplomaticReunificationSystem {
     }
   }
 
-  getTreaties(): ReunificationTreaty[] { return this.treaties }
 }

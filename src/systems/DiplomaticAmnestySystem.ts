@@ -69,5 +69,4 @@ export class DiplomaticAmnestySystem {
     }
   }
 
-  getTreaties(): AmnestyAgreement[] { return this.treaties }
 }

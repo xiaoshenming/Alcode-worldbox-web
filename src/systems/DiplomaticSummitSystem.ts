@@ -135,13 +135,9 @@ export class DiplomaticSummitSystem {
     ctx.restore()
   }
 
-  getActiveSummit(): Summit | null {
-    return this.activeSummit
-  }
 
-  getSummitHistory(): Summit[] {
-    return this.summits
-  }
+
+
 
   // ── Private ──────────────────────────────────────────────
 

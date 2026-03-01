@@ -69,5 +69,4 @@ export class DiplomaticRangerSystem {
     }
   }
 
-  getArrangements(): RangerArrangement[] { return this.arrangements }
 }

@@ -67,5 +67,4 @@ export class DiplomaticSecessionSystem {
     }
   }
 
-  getMovements(): SecessionMovement[] { return this.movements }
 }

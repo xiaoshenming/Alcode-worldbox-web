@@ -4,12 +4,12 @@ function makeSys() { return new DiplomaticCommonwealthSystem() }
 describe('DiplomaticCommonwealthSystem', () => {
   let sys: DiplomaticCommonwealthSystem
   beforeEach(() => { sys = makeSys() })
-  it('初始getUnions为空', () => { expect(sys.getUnions()).toHaveLength(0) })
+  it('初始getUnions为空', () => { expect((sys as any).unions).toHaveLength(0) })
   it('注入后getUnions返回数据', () => {
     ;(sys as any).unions.push({ id: 1 })
-    expect(sys.getUnions()).toHaveLength(1)
+    expect((sys as any).unions).toHaveLength(1)
   })
-  it('getUnions返回数组', () => { expect(Array.isArray(sys.getUnions())).toBe(true) })
+  it('getUnions返回数组', () => { expect(Array.isArray((sys as any).unions)).toBe(true) })
   it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
   it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })

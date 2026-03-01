@@ -69,5 +69,4 @@ export class DiplomaticForbearanceSystem {
     }
   }
 
-  getAgreements(): ForbearanceAgreement[] { return this.agreements }
 }

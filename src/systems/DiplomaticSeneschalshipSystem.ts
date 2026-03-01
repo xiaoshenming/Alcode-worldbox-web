@@ -69,5 +69,4 @@ export class DiplomaticSeneschalshipSystem {
     }
   }
 
-  getArrangements(): SeneschalshipArrangement[] { return this.arrangements }
 }

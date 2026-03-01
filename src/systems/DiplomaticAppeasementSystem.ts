@@ -69,5 +69,4 @@ export class DiplomaticAppeasementSystem {
     }
   }
 
-  getPolicies(): AppeasementPolicy[] { return this.policies }
 }

@@ -69,5 +69,4 @@ export class DiplomaticExonerationSystem {
     }
   }
 
-  getProceedings(): ExonerationProceeding[] { return this.proceedings }
 }

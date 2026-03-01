@@ -159,6 +159,4 @@ export class DiplomaticCeremonySystem {
     return types[Math.floor(Math.random() * types.length)]
   }
 
-  getCeremonies(): Ceremony[] { return this.ceremonies }
-  getHistory(): CeremonyRecord[] { return this.history }
 }

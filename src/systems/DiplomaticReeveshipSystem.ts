@@ -69,5 +69,4 @@ export class DiplomaticReeveshipSystem {
     }
   }
 
-  getArrangements(): ReeveshipArrangement[] { return this.arrangements }
 }

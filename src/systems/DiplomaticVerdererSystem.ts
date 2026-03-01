@@ -69,5 +69,4 @@ export class DiplomaticVerdererSystem {
     }
   }
 
-  getArrangements(): VerdererArrangement[] { return this.arrangements }
 }

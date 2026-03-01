@@ -69,5 +69,4 @@ export class DiplomaticReciprocitySystem {
     }
   }
 
-  getAgreements(): ReciprocityAgreement[] { return this.agreements }
 }

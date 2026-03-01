@@ -69,5 +69,4 @@ export class DiplomaticPoundwardSystem {
     }
   }
 
-  getArrangements(): PoundwardArrangement[] { return this.arrangements }
 }

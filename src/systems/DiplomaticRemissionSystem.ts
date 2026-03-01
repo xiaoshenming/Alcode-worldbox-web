@@ -69,5 +69,4 @@ export class DiplomaticRemissionSystem {
     }
   }
 
-  getActs(): RemissionAct[] { return this.acts }
 }

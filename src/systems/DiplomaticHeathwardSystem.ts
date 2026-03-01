@@ -69,5 +69,4 @@ export class DiplomaticHeathwardSystem {
     }
   }
 
-  getArrangements(): HeathwardArrangement[] { return this.arrangements }
 }

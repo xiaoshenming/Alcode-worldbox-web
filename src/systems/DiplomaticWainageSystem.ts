@@ -69,5 +69,4 @@ export class DiplomaticWainageSystem {
     }
   }
 
-  getArrangements(): WainageArrangement[] { return this.arrangements }
 }

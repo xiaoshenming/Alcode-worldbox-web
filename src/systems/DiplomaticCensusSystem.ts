@@ -65,21 +65,13 @@ export class DiplomaticCensusSystem {
     }
   }
 
-  getRecords(): Census[] { return this.records }
-  getLatestCensus(civId: number): Census | undefined {
+  private getLatestCensus(civId: number): Census | undefined {
     let latest: Census | undefined
-    for (let _i = 0; _i < this.records.length; _i++) {
-      const r = this.records[_i]
-      if (r.civId === civId && (!latest || r.tick > latest.tick)) latest = r
+    for (const r of this.records) {
+      if (r.civId === civId) {
+        if (!latest || r.tick > latest.tick) latest = r
+      }
     }
     return latest
-  }
-  getCivHistory(civId: number): Census[] {
-    const result: Census[] = []
-    for (let _i = 0; _i < this.records.length; _i++) {
-      if (this.records[_i].civId === civId) result.push(this.records[_i])
-    }
-    result.sort((a, b) => a.tick - b.tick)
-    return result
   }
 }

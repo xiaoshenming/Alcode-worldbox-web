@@ -69,5 +69,4 @@ export class DiplomaticFieldwardSystem {
     }
   }
 
-  getArrangements(): FieldwardArrangement[] { return this.arrangements }
 }

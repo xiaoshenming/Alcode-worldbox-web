@@ -69,5 +69,4 @@ export class DiplomaticMarshalshipSystem {
     }
   }
 
-  getArrangements(): MarshalshipArrangement[] { return this.arrangements }
 }

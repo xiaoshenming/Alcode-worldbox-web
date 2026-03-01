@@ -69,5 +69,4 @@ export class DiplomaticGarthmanSystem {
     }
   }
 
-  getArrangements(): GarthmanArrangement[] { return this.arrangements }
 }

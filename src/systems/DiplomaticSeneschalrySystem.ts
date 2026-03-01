@@ -69,5 +69,4 @@ export class DiplomaticSeneschalrySystem {
     }
   }
 
-  getArrangements(): SeneschalryArrangement[] { return this.arrangements }
 }

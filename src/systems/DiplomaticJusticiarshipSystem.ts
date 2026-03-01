@@ -69,5 +69,4 @@ export class DiplomaticJusticiarshipSystem {
     }
   }
 
-  getArrangements(): JusticiarshipArrangement[] { return this.arrangements }
 }

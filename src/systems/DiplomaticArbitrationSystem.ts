@@ -69,5 +69,4 @@ export class DiplomaticArbitrationSystem {
     }
   }
 
-  getCases(): ArbitrationCase[] { return this.cases }
 }

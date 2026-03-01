@@ -69,5 +69,4 @@ export class DiplomaticCommonwealthSystem {
     }
   }
 
-  getUnions(): CommonwealthUnion[] { return this.unions }
 }

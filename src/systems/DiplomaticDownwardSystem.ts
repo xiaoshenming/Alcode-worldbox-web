@@ -69,5 +69,4 @@ export class DiplomaticDownwardSystem {
     }
   }
 
-  getArrangements(): DownwardArrangement[] { return this.arrangements }
 }

@@ -62,5 +62,4 @@ export class DiplomaticMediationSystem {
     for (let _i = this.mediations.length - 1; _i >= 0; _i--) { if (!((m) => m.outcome === 'pending' || m.duration < 50)(this.mediations[_i])) this.mediations.splice(_i, 1) }
   }
 
-  getMediations(): MediationProcess[] { return this.mediations }
 }

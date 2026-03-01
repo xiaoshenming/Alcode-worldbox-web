@@ -69,5 +69,4 @@ export class DiplomaticBeaconwardSystem {
     }
   }
 
-  getArrangements(): BeaconwardArrangement[] { return this.arrangements }
 }

@@ -69,5 +69,4 @@ export class DiplomaticGatewardSystem {
     }
   }
 
-  getArrangements(): GatewardArrangement[] { return this.arrangements }
 }

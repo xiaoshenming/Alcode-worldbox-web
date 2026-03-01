@@ -69,5 +69,4 @@ export class DiplomaticIndulgenceSystem {
     }
   }
 
-  getGrants(): IndulgenceGrant[] { return this.grants }
 }

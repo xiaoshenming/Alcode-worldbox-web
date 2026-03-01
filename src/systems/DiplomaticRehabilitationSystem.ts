@@ -69,5 +69,4 @@ export class DiplomaticRehabilitationSystem {
     }
   }
 
-  getProcesses(): RehabilitationProcess[] { return this.processes }
 }

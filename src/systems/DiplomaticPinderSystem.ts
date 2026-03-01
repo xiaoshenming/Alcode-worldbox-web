@@ -69,5 +69,4 @@ export class DiplomaticPinderSystem {
     }
   }
 
-  getArrangements(): PinderArrangement[] { return this.arrangements }
 }

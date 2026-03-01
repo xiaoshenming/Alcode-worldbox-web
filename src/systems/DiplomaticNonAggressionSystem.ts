@@ -69,5 +69,4 @@ export class DiplomaticNonAggressionSystem {
     }
   }
 
-  getPacts(): NonAggressionPact[] { return this.pacts }
 }

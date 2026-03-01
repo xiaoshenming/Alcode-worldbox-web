@@ -69,5 +69,4 @@ export class DiplomaticHaywardSystem {
     }
   }
 
-  getArrangements(): HaywardArrangement[] { return this.arrangements }
 }

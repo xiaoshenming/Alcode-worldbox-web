@@ -63,5 +63,4 @@ export class DiplomaticEntente2System {
     for (let _i = this.ententes.length - 1; _i >= 0; _i--) { if (!((e) => e.level !== 'allied' || e.duration < 200)(this.ententes[_i])) this.ententes.splice(_i, 1) }
   }
 
-  getEntentes(): EntenteAgreement2[] { return this.ententes }
 }

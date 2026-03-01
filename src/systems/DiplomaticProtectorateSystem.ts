@@ -69,5 +69,4 @@ export class DiplomaticProtectorateSystem {
     }
   }
 
-  getRelations(): ProtectorateRelation[] { return this.relations }
 }

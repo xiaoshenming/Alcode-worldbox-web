@@ -69,5 +69,4 @@ export class DiplomaticAgisterSystem {
     }
   }
 
-  getArrangements(): AgisterArrangement[] { return this.arrangements }
 }

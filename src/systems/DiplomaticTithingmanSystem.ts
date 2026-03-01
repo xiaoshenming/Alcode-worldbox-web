@@ -69,5 +69,4 @@ export class DiplomaticTithingmanSystem {
     }
   }
 
-  getArrangements(): TithingmanArrangement[] { return this.arrangements }
 }

@@ -69,5 +69,4 @@ export class DiplomaticReparationSystem {
     }
   }
 
-  getAgreements(): ReparationAgreement[] { return this.agreements }
 }

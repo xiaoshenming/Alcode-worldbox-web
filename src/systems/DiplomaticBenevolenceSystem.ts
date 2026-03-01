@@ -69,5 +69,4 @@ export class DiplomaticBenevolenceSystem {
     }
   }
 
-  getInitiatives(): BenevolenceInitiative[] { return this.initiatives }
 }

@@ -69,5 +69,4 @@ export class DiplomaticImperiumSystem {
     }
   }
 
-  getRelations(): ImperiumRelation[] { return this.relations }
 }

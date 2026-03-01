@@ -69,5 +69,4 @@ export class DiplomaticMuragersSystem {
     }
   }
 
-  getArrangements(): MuragerArrangement[] { return this.arrangements }
 }

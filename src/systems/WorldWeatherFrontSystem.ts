@@ -127,24 +127,4 @@ export class WorldWeatherFrontSystem {
       }
     }
   }
-
-  getFronts(): WeatherFront[] {
-    return this.fronts
-  }
-
-  getCollisions(): FrontCollision[] {
-    return this.collisions
-  }
-
-  getFrontAt(x: number, y: number): WeatherFront | undefined {
-    for (const f of this.fronts) {
-      const dx = f.x - x, dy = f.y - y
-      if (Math.abs(dx) <= f.width / 2 && Math.abs(dy) <= f.length / 2) return f
-    }
-    return undefined
-  }
-
-  getFrontCount(): number {
-    return this.fronts.length
-  }
 }

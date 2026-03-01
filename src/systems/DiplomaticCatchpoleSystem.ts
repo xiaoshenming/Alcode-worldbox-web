@@ -69,5 +69,4 @@ export class DiplomaticCatchpoleSystem {
     }
   }
 
-  getArrangements(): CatchpoleArrangement[] { return this.arrangements }
 }

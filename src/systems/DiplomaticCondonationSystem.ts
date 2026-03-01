@@ -69,5 +69,4 @@ export class DiplomaticCondonationSystem {
     }
   }
 
-  getPolicies(): CondonationPolicy[] { return this.policies }
 }

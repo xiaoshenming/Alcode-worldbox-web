@@ -69,5 +69,4 @@ export class DiplomaticAcquittalSystem {
     }
   }
 
-  getVerdicts(): AcquittalVerdict[] { return this.verdicts }
 }

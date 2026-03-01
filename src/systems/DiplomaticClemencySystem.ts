@@ -69,5 +69,4 @@ export class DiplomaticClemencySystem {
     }
   }
 
-  getActs(): ClemencyAct[] { return this.acts }
 }

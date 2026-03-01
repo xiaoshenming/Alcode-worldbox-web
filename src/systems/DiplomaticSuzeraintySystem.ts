@@ -69,5 +69,4 @@ export class DiplomaticSuzeraintySystem {
     }
   }
 
-  getRelations(): SuzeraintyRelation[] { return this.relations }
 }

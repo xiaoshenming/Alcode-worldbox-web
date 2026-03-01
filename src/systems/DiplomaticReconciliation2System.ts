@@ -66,5 +66,4 @@ export class DiplomaticReconciliation2System {
     for (let _i = this.processes.length - 1; _i >= 0; _i--) { if (!((p) => p.stage !== 'renewed' || p.duration < 100)(this.processes[_i])) this.processes.splice(_i, 1) }
   }
 
-  getProcesses(): ReconciliationProcess2[] { return this.processes }
 }

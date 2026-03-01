@@ -90,5 +90,4 @@ export class DiplomaticRansomSystem {
     }
   }
 
-  getNegotiations(): readonly RansomNegotiation[] { return this.negotiations }
 }

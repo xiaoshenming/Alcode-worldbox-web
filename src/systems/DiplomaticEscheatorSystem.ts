@@ -69,5 +69,4 @@ export class DiplomaticEscheatorSystem {
     }
   }
 
-  getArrangements(): EscheatorArrangement[] { return this.arrangements }
 }

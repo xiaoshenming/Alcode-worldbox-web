@@ -69,5 +69,4 @@ export class DiplomaticTrusteeshipSystem {
     }
   }
 
-  getArrangements(): TrusteeshipArrangement[] { return this.arrangements }
 }

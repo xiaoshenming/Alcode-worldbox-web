@@ -69,5 +69,4 @@ export class DiplomaticForestarSystem {
     }
   }
 
-  getArrangements(): ForestarArrangement[] { return this.arrangements }
 }

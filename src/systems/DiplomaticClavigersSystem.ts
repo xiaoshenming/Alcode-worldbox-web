@@ -69,5 +69,4 @@ export class DiplomaticClavigersSystem {
     }
   }
 
-  getArrangements(): ClavigerArrangement[] { return this.arrangements }
 }

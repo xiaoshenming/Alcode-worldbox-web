@@ -69,5 +69,4 @@ export class DiplomaticConfederationSystem {
     }
   }
 
-  getPacts(): ConfederationPact[] { return this.pacts }
 }

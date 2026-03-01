@@ -58,18 +58,10 @@ export class DiplomaticSanctionSystem {
   private _onCivBuf: Sanction[] = []
   private _sanctionMap: Map<number, number> = new Map()
 
-  getSanctions(): Sanction[] { return this.sanctions }
-
-  getActiveSanctions(): Sanction[] {
+  private getActiveSanctions(): Sanction[] {
     this._activeBuf.length = 0
     for (const s of this.sanctions) { if (s.active) this._activeBuf.push(s) }
     return this._activeBuf
-  }
-
-  getSanctionsOn(civId: number): Sanction[] {
-    this._onCivBuf.length = 0
-    for (const s of this.sanctions) { if (s.targetId === civId && s.active) this._onCivBuf.push(s) }
-    return this._onCivBuf
   }
 
   update(dt: number, civManager: CivManagerLike, tick: number): void {

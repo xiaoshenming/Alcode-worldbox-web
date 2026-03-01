@@ -102,12 +102,4 @@ export class DiplomaticBlockadeSystem {
   }
 
   private _blockadesBuf: Blockade[] = []
-  getBlockades(): Blockade[] { return this.blockades }
-  getBlockadesAgainst(civId: number): Blockade[] {
-    this._blockadesBuf.length = 0
-    for (const b of this.blockades) { if (b.targetId === civId) this._blockadesBuf.push(b) }
-    return this._blockadesBuf
-  }
-  getTotalImposed(): number { return this.totalImposed }
-  getTotalBroken(): number { return this.totalBroken }
 }

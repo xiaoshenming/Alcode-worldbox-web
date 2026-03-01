@@ -69,5 +69,4 @@ export class DiplomaticMandateSystem {
     }
   }
 
-  getAgreements(): MandateAgreement[] { return this.agreements }
 }

@@ -90,13 +90,6 @@ export class DiplomaticTariffSystem {
   }
 
   private _tariffsBuf: Tariff[] = []
-  getTariffs(): Tariff[] {
-    return this.tariffs
-  }
 
-  getByTarget(civId: number): Tariff[] {
-    this._tariffsBuf.length = 0
-    for (const t of this.tariffs) { if (t.targetCivId === civId) this._tariffsBuf.push(t) }
-    return this._tariffsBuf
-  }
+
 }

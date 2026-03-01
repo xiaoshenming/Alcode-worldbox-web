@@ -69,5 +69,4 @@ export class DiplomaticHarbingerSystem {
     }
   }
 
-  getArrangements(): HarbingerArrangement[] { return this.arrangements }
 }

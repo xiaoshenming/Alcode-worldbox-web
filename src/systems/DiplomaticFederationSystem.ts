@@ -69,5 +69,4 @@ export class DiplomaticFederationSystem {
     }
   }
 
-  getAgreements(): FederationAgreement[] { return this.agreements }
 }

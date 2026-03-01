@@ -69,5 +69,4 @@ export class DiplomaticParkwardSystem {
     }
   }
 
-  getArrangements(): ParkwardArrangement[] { return this.arrangements }
 }

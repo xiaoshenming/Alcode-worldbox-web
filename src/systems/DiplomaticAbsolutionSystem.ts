@@ -69,5 +69,4 @@ export class DiplomaticAbsolutionSystem {
     }
   }
 
-  getDeclarations(): AbsolutionDeclaration[] { return this.declarations }
 }

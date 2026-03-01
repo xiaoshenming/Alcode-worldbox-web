@@ -69,5 +69,4 @@ export class DiplomaticSolidaritySystem {
     }
   }
 
-  getPacts(): SolidarityPact[] { return this.pacts }
 }

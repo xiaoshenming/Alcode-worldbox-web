@@ -69,5 +69,4 @@ export class DiplomaticStewardshipSystem {
     }
   }
 
-  getAgreements(): StewardshipAgreement[] { return this.agreements }
 }

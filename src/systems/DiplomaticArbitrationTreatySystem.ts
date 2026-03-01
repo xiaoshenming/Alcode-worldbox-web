@@ -66,5 +66,4 @@ export class DiplomaticArbitrationTreatySystem {
     }
   }
 
-  getTreaties(): ArbitrationTreaty[] { return this.treaties }
 }

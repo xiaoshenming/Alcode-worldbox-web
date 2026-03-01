@@ -70,5 +70,4 @@ export class DiplomaticAnnexationSystem {
     }
   }
 
-  getTreaties(): AnnexationTreaty[] { return this.treaties }
 }

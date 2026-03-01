@@ -69,5 +69,4 @@ export class DiplomaticLenitySystem {
     }
   }
 
-  getPolicies(): LenityPolicy[] { return this.policies }
 }

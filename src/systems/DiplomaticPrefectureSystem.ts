@@ -69,5 +69,4 @@ export class DiplomaticPrefectureSystem {
     }
   }
 
-  getArrangements(): PrefectureArrangement[] { return this.arrangements }
 }

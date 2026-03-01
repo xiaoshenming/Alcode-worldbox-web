@@ -69,5 +69,4 @@ export class DiplomaticAletasterSystem {
     }
   }
 
-  getArrangements(): AletasterArrangement[] { return this.arrangements }
 }

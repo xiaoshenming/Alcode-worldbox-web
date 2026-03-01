@@ -69,5 +69,4 @@ export class DiplomaticBailiffshipSystem {
     }
   }
 
-  getArrangements(): BailiffshipArrangement[] { return this.arrangements }
 }

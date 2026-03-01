@@ -69,5 +69,4 @@ export class DiplomaticBeadleSystem {
     }
   }
 
-  getArrangements(): BeadleArrangement[] { return this.arrangements }
 }

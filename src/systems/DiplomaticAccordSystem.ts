@@ -69,5 +69,4 @@ export class DiplomaticAccordSystem {
     }
   }
 
-  getAccords(): AccordAgreement[] { return this.accords }
 }

@@ -69,5 +69,4 @@ export class DiplomaticSheriffaltySystem {
     }
   }
 
-  getArrangements(): SheriffaltyArrangement[] { return this.arrangements }
 }

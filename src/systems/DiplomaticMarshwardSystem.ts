@@ -69,5 +69,4 @@ export class DiplomaticMarshwardSystem {
     }
   }
 
-  getArrangements(): MarshwardArrangement[] { return this.arrangements }
 }

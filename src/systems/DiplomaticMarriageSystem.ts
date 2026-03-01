@@ -91,10 +91,4 @@ export class DiplomaticMarriageSystem {
   }
 
   private _marriagesBuf: PoliticalMarriage[] = []
-  getMarriages(): readonly PoliticalMarriage[] { return this.marriages }
-  getMarriagesByCiv(civId: number): PoliticalMarriage[] {
-    this._marriagesBuf.length = 0
-    for (const m of this.marriages) { if (m.civA === civId || m.civB === civId) this._marriagesBuf.push(m) }
-    return this._marriagesBuf
-  }
 }

@@ -69,5 +69,4 @@ export class DiplomaticHerbalistSystem {
     }
   }
 
-  getArrangements(): HerbalistArrangement[] { return this.arrangements }
 }

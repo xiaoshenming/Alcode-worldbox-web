@@ -69,5 +69,4 @@ export class DiplomaticBridgewardSystem {
     }
   }
 
-  getArrangements(): BridgewardArrangement[] { return this.arrangements }
 }

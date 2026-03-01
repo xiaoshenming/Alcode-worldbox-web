@@ -86,11 +86,5 @@ export class DiplomaticPropagandaSystem {
   }
 
   private _propagandaBuf: Propaganda[] = []
-  getPropaganda(): Propaganda[] { return this.propaganda }
   getPropagandaCount(): number { return this.propaganda.length }
-  getByTarget(civId: number): Propaganda[] {
-    this._propagandaBuf.length = 0
-    for (const p of this.propaganda) { if (p.targetCivId === civId) this._propagandaBuf.push(p) }
-    return this._propagandaBuf
-  }
 }

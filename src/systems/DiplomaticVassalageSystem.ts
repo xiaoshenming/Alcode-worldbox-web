@@ -69,5 +69,4 @@ export class DiplomaticVassalageSystem {
     }
   }
 
-  getRelations(): VassalageRelation[] { return this.relations }
 }

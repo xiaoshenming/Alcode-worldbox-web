@@ -75,5 +75,4 @@ export class DiplomaticNavalBlockadeSystem {
     }
   }
 
-  getBlockades(): readonly NavalBlockade[] { return this.blockades }
 }

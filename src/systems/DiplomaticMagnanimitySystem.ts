@@ -69,5 +69,4 @@ export class DiplomaticMagnanimitySystem {
     }
   }
 
-  getGestures(): MagnanimityGesture[] { return this.gestures }
 }

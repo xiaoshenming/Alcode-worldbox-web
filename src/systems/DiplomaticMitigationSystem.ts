@@ -69,5 +69,4 @@ export class DiplomaticMitigationSystem {
     }
   }
 
-  getMeasures(): MitigationMeasure[] { return this.measures }
 }

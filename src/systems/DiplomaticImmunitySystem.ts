@@ -69,5 +69,4 @@ export class DiplomaticImmunitySystem {
     }
   }
 
-  getAgreements(): ImmunityAgreement[] { return this.agreements }
 }

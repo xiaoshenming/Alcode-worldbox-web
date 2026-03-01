@@ -69,5 +69,4 @@ export class DiplomaticWaynwardSystem {
     }
   }
 
-  getArrangements(): WaynwardArrangement[] { return this.arrangements }
 }

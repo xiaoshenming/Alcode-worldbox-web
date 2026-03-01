@@ -69,5 +69,4 @@ export class DiplomaticBorsholderSystem {
     }
   }
 
-  getArrangements(): BorsholderArrangement[] { return this.arrangements }
 }

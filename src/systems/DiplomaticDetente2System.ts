@@ -63,5 +63,4 @@ export class DiplomaticDetente2System {
     for (let _i = this.processes.length - 1; _i >= 0; _i--) { if (!((p) => p.phase !== 'partnership' || p.duration < 150)(this.processes[_i])) this.processes.splice(_i, 1) }
   }
 
-  getProcesses(): DetenteProcess2[] { return this.processes }
 }

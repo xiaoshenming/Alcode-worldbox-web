@@ -69,5 +69,4 @@ export class DiplomaticMootmanSystem {
     }
   }
 
-  getArrangements(): MootmanArrangement[] { return this.arrangements }
 }

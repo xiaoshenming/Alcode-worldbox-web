@@ -69,5 +69,4 @@ export class DiplomaticReconciliationSystem {
     }
   }
 
-  getProcesses(): ReconciliationProcess[] { return this.processes }
 }

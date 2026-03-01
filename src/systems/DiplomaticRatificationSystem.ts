@@ -66,10 +66,4 @@ export class DiplomaticRatificationSystem {
   }
 
   private _ratificationsBuf: Ratification[] = []
-  getRatifications(): readonly Ratification[] { return this.ratifications }
-  getByTreaty(type: TreatyType): Ratification[] {
-    this._ratificationsBuf.length = 0
-    for (const r of this.ratifications) { if (r.treatyType === type) this._ratificationsBuf.push(r) }
-    return this._ratificationsBuf
-  }
 }

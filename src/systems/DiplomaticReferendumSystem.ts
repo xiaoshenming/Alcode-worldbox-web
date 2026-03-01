@@ -66,10 +66,4 @@ export class DiplomaticReferendumSystem {
   }
 
   private _referendumsBuf: Referendum[] = []
-  getReferendums(): readonly Referendum[] { return this.referendums }
-  getByTopic(topic: ReferendumTopic): Referendum[] {
-    this._referendumsBuf.length = 0
-    for (const r of this.referendums) { if (r.topic === topic) this._referendumsBuf.push(r) }
-    return this._referendumsBuf
-  }
 }

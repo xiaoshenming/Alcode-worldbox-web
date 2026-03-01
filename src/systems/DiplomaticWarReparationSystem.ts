@@ -114,18 +114,4 @@ export class DiplomaticWarReparationSystem {
   private hasActiveReparation(loserId: number, victorId: number): boolean {
     return this.reparations.some(r => r.loserCivId === loserId && r.victorCivId === victorId && r.status === 'active')
   }
-
-  getReparations(): WarReparation[] { return this.reparations }
-  getActiveReparations(): WarReparation[] {
-    this._activeBuf.length = 0
-    for (const r of this.reparations) { if (r.status === 'active') this._activeBuf.push(r) }
-    return this._activeBuf
-  }
-  getCivDebt(civId: number): number {
-    let debt = 0
-    for (const r of this.reparations) {
-      if (r.loserCivId === civId && r.status === 'active') debt += (r.totalAmount - r.paidAmount)
-    }
-    return debt
-  }
 }

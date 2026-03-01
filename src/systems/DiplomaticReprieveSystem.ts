@@ -69,5 +69,4 @@ export class DiplomaticReprieveSystem {
     }
   }
 
-  getGrants(): ReprieveGrant[] { return this.grants }
 }

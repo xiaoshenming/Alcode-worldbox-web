@@ -92,5 +92,4 @@ export class DiplomaticArmisticSystem {
     }
   }
 
-  getArmistices(): readonly Armistice[] { return this.armistices }
 }

@@ -69,5 +69,4 @@ export class DiplomaticPatronageSystem {
     }
   }
 
-  getArrangements(): PatronageArrangement[] { return this.arrangements }
 }

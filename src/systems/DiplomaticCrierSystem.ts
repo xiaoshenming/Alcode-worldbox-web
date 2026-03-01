@@ -69,5 +69,4 @@ export class DiplomaticCrierSystem {
     }
   }
 
-  getArrangements(): CrierArrangement[] { return this.arrangements }
 }

@@ -69,5 +69,4 @@ export class DiplomaticConcordSystem {
     }
   }
 
-  getTreaties(): ConcordTreaty[] { return this.treaties }
 }

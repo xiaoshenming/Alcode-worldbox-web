@@ -82,5 +82,4 @@ export class DiplomaticCeasefireSystem {
     }
   }
 
-  getCeasefires(): readonly Ceasefire[] { return this.ceasefires }
 }

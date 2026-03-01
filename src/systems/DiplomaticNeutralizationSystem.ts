@@ -74,5 +74,4 @@ export class DiplomaticNeutralizationSystem {
     }
   }
 
-  getTreaties(): NeutralityTreaty[] { return this.treaties }
 }

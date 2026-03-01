@@ -69,5 +69,4 @@ export class DiplomaticWarrenerSystem {
     }
   }
 
-  getArrangements(): WarrenerArrangement[] { return this.arrangements }
 }

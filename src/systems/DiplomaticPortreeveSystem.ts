@@ -69,5 +69,4 @@ export class DiplomaticPortreeveSystem {
     }
   }
 
-  getArrangements(): PortreeveArrangement[] { return this.arrangements }
 }

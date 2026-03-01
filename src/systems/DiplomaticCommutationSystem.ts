@@ -69,5 +69,4 @@ export class DiplomaticCommutationSystem {
     }
   }
 
-  getActs(): CommutationAct[] { return this.acts }
 }

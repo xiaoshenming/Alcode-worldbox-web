@@ -69,5 +69,4 @@ export class DiplomaticAlmonerSystem {
     }
   }
 
-  getArrangements(): AlmonerArrangement[] { return this.arrangements }
 }

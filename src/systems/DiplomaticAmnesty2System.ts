@@ -69,5 +69,4 @@ export class DiplomaticAmnesty2System {
     }
   }
 
-  getDecrees(): Amnesty2Decree[] { return this.decrees }
 }
