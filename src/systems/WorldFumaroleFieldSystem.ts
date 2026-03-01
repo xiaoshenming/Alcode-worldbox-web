@@ -52,7 +52,10 @@ export class WorldFumaroleFieldSystem {
       f.heatIntensity = Math.max(10, f.heatIntensity - 0.005)
     }
 
-    for (let _i = this.fields.length - 1; _i >= 0; _i--) { if (!((f) => f.age < 95)(this.fields[_i])) this.fields.splice(_i, 1) }
+    for (let _i = this.fields.length - 1; _i >= 0; _i--) {
+      const f = this.fields[_i]
+      if (!((f.age < 95))) this.fields.splice(_i, 1)
+    }
   }
 
 }

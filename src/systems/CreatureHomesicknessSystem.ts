@@ -83,7 +83,10 @@ export class CreatureHomesicknessSystem {
     }
 
     // Remove for dead creatures
-    for (let _i = this.states.length - 1; _i >= 0; _i--) { if (!((s) => em.hasComponent(s.entityId, 'creature'))(this.states[_i])) this.states.splice(_i, 1) }
+    for (let _i = this.states.length - 1; _i >= 0; _i--) {
+      const s = this.states[_i]
+      if (!((em.hasComponent(s.entityId, 'creature')))) this.states.splice(_i, 1)
+    }
   }
 
   getStates(): HomesicknessState[] {

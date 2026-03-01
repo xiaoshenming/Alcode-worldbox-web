@@ -62,7 +62,10 @@ export class DiplomaticArbitrementSystem {
       }
     }
 
-    for (let _i = this.cases.length - 1; _i >= 0; _i--) { if (!((c) => c.phase !== 'ruling' || c.duration < 100)(this.cases[_i])) this.cases.splice(_i, 1) }
+    for (let _i = this.cases.length - 1; _i >= 0; _i--) {
+      const c = this.cases[_i]
+      if (!((c.phase !== 'ruling' || c.duration < 100))) this.cases.splice(_i, 1)
+    }
   }
 
 }

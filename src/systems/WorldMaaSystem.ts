@@ -49,7 +49,10 @@ export class WorldMaarSystem {
       m.tephraRing = Math.max(0, m.tephraRing - 0.005)
     }
 
-    for (let _i = this.maars.length - 1; _i >= 0; _i--) { if (!((m) => m.age < 100)(this.maars[_i])) this.maars.splice(_i, 1) }
+    for (let _i = this.maars.length - 1; _i >= 0; _i--) {
+      const m = this.maars[_i]
+      if (!((m.age < 100))) this.maars.splice(_i, 1)
+    }
   }
 
 }

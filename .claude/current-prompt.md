@@ -1,19 +1,19 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代106。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过（+22个新测试）、构建约1.57MB；(2)移除3个测试文件中的未使用beforeEach import；(3)创建RandomUtils.ts工具文件，提取pickWeighted和pickRandom函数——13个系统的加权随机选择统一使用该工具（净减少~120行重复代码）；(4)扩展CanvasUtils.ts：新增lerpColorHex/lerpColorRgb（从TerraformingSystem/EraTransitionSystem/EraVisualSystem提取）、roundRectArc（从WorldDashboardSystem/TechTreePanel提取）；(5)为WorldUtils、CanvasUtils、RandomUtils新增单元测试（+22个测试用例）；(6)所有提交均推送成功（修复了上轮的gitconfig proxy问题）。
+🧠 AI 上轮笔记：迭代107。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.53MB（相比上轮1.57MB减少约40KB）；(2)4个系统的加权随机选择改用pickWeighted——CreatureMentorSystem（SKILL_ENTRIES→pickWeighted）、CreatureRivalryDuelSystem（STAKE_ENTRIES→pickWeighted）、CreatureDreamSystem（嵌套{weight:n}分离为DREAM_CONFIGS+DREAM_WEIGHTS后用pickWeighted）、WorldFossilSystem（并行数组改为Record<FossilRarity,number>+pickWeighted+pickRandom）；(3)大规模批量优化：293个文件390处Math.floor(Math.random()*arr.length)替换为pickRandom(arr)，同时为所有文件添加import；(4)修复pre-commit hook误报问题：添加is_inside_string()启发式函数排除字符串字面量中的感叹号；(5)所有提交均推送成功。
 🎯 AI 自定优先级：[
-  "1. 【可选】pruneOld在11个文件中出现但实现各异，无法简单合并",
-  "2. 【可选】cleanup在25个文件中出现但实现各异，无法合并",
-  "3. 【可选】CreatureDreamSystem.DREAM_WEIGHTS用嵌套对象{weight:n}结构——可以重构为扁平Record以使用pickWeighted",
-  "4. 【可探索】WorldFossilSystem.pickRarity用两个并行数组——可以改为Record<FossilRarity,number>结构",
-  "5. 【持续监控】tsc+vitest+build三重验证保持全绿"
+  "1. 【持续监控】tsc+vitest+build三重验证保持全绿",
+  "2. 【已完成】pickRandom工具函数覆盖已达最大范围（390处全替换）",
+  "3. 【已完成】pickWeighted工具函数现覆盖17个系统",
+  "4. 【可探索】3个Diplomatic系统变体可能有重复结构（DiplomaticWarReparationSystem vs DiplomaticWarReparationsSystem）",
+  "5. 【可探索】扫描splice(index, 1)在大数组中的O(n)性能问题，换成swap-and-pop模式"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
   "子代理并行修复大批量文件极高效：4组并行代理可在几分钟内修复160+文件",
   "manualChunks按文件名前缀分组是最安全的代码分割方案 — 不改源码，只改vite配置",
-  "Iterable<T>替代T[]可消除spread分配，但��检查消费侧是否用了.length/.includes等数组方法",
-  "getAllEntities()返回Array.from()快照 — removeEntity-during-iteration是安全的",
+  "Iterable<T>替代T[]可消除spread分配，但检查消费侧是否用了.length/.includes等数组方法",
+  "getAllEntities()返回Array.from()���照 — removeEntity-during-iteration是安全的",
   "queue.shift()在BFS中是O(n²)陷阱 — 用索引指针head++替代",
   "Camera.getVisibleBounds()等热路径方法应返回缓存对象而非每次new — 每帧调用4次累积显著GC压力",
   "渲染路径中的闭包/对象字面量/getBoundingClientRect()都是隐性GC源 — 预分配+脏标记是标准修复模式",
@@ -43,12 +43,13 @@
   "【迭代104新增】未使用import扫描：用Python re.finditer提取import符号→re.search(\\\\bsym\\\\b)精确词边界搜索（避免AutoSaveSystem包含SaveSystem的误报）→批量移除，注意空行清理",
   "【迭代105新增】skillMap内存泄漏规模评估：实体ID单调递增不复用 → 死亡实体的Map条目永久积累 → 按每entry≈50B计算，101系统*10000历史实体≈50MB潜在泄漏。解法：update末尾 if(tick%3600===0&&map.size>0) 扫描清理",
   "【迭代105新增】Python批量修改系统文件的import添加策略：(1)先找文件中最后一个import行用last_import[-1].end()；(2)若文件无import则检查JSDoc注释末尾*/再插入；(3)若文件完全没有注释/import则直接在头部插入。必须分三种情况处理！",
-  "【迭代105新增】roundRect/lerpColor等Canvas辅助函数：实现相似但返回格式不同的方法不能合并（lerpColor一返回hex一返回rgb）；严格规范化后实现完全相同的才可以提取到CanvasUtils.ts",
   "【迭代106新增】加权随机选择模式提取：当多个系统有private pickXxx()用相同的r=Math.random()+cum累积模式时，可提取为pickWeighted<T>(types,weights,fallback)泛型工具函数——需要参数是Record<T,number>而非其他结构",
-  "【迭代106新增】没有import语句的系统文件添加import的策略：检查是否有'/**'开头的JSDoc → 找*/ → 在其后插入；若是//单行注释开头 → 在第一个空行后插入；Python re.finditer('^import', multiline)找不到则直接在文件顶部插入"
+  "【迭代107新增】arr[Math.floor(Math.random()*arr.length)]是pickRandom(arr)的标准替换候选，用Python re.sub(r'(\\w+)\\[Math\\.floor\\(Math\\.random\\(\\)\\s*\\*\\s*\\1\\.length\\)\\]', lambda m: f'pickRandom({m.group(1)})')可批量替换293个文件390处",
+  "【迭代107新增】pre-commit hook的非空断言检测会误报字符串字面量中的感叹号（如'Walls breached! Attack'）——解法：添加is_inside_string()函数计算pos前引号数量的奇偶性来判断是否在字符串内",
+  "【迭代107新增】嵌套{weight:n}结构要拆分为两个Record才能用pickWeighted：CONFIGS保留完整数据，WEIGHTS只存weight字段；两个常量共存，没有重复因为职责不同"
 ]
 
-迭代轮次: 8/100
+迭代轮次: 9/100
 
 
 🔄 自我进化（每轮必做）：
@@ -57,6 +58,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-03-02T06:46:54+08:00"
+  "last_updated": "2026-03-02T07:02:56+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。

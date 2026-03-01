@@ -83,7 +83,10 @@ export class WorldFungalNetworkSystem {
     }
 
     // Remove dead networks
-    for (let _i = this.networks.length - 1; _i >= 0; _i--) { if (!((n) => n.connectivity > 1 && n.nodeCount > 0)(this.networks[_i])) this.networks.splice(_i, 1) }
+    for (let _i = this.networks.length - 1; _i >= 0; _i--) {
+      const n = this.networks[_i]
+      if (!((n.connectivity > 1 && n.nodeCount > 0))) this.networks.splice(_i, 1)
+    }
   }
 
 }

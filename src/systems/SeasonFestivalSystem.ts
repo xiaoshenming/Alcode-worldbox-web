@@ -87,7 +87,10 @@ export class SeasonFestivalSystem {
         if (this.history.length > MAX_HISTORY) this.history.shift()
       }
     }
-    for (let _i = this.festivals.length - 1; _i >= 0; _i--) { if (!((f) => f.active)(this.festivals[_i])) this.festivals.splice(_i, 1) }
+    for (let _i = this.festivals.length - 1; _i >= 0; _i--) {
+      const f = this.festivals[_i]
+      if (!((f.active))) this.festivals.splice(_i, 1)
+    }
 
     // Try to start new festivals
     if (tick >= this.nextCheckTick) {

@@ -52,7 +52,10 @@ export class WorldPhreaticExplosionSystem {
       e.groundwaterDepth = Math.min(80, e.groundwaterDepth + 0.01)
     }
 
-    for (let _i = this.explosions.length - 1; _i >= 0; _i--) { if (!((e) => e.age < 80)(this.explosions[_i])) this.explosions.splice(_i, 1) }
+    for (let _i = this.explosions.length - 1; _i >= 0; _i--) {
+      const e = this.explosions[_i]
+      if (!((e.age < 80))) this.explosions.splice(_i, 1)
+    }
   }
 
 }

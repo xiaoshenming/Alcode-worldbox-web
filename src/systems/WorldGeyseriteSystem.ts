@@ -52,7 +52,10 @@ export class WorldGeyseriteSystem {
       d.thermalProximity = Math.max(10, d.thermalProximity - 0.004)
     }
 
-    for (let _i = this.deposits.length - 1; _i >= 0; _i--) { if (!((d) => d.age < 96)(this.deposits[_i])) this.deposits.splice(_i, 1) }
+    for (let _i = this.deposits.length - 1; _i >= 0; _i--) {
+      const d = this.deposits[_i]
+      if (!((d.age < 96))) this.deposits.splice(_i, 1)
+    }
   }
 
 }

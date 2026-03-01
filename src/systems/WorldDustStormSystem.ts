@@ -78,7 +78,10 @@ export class WorldDustStormSystem {
   }
 
   private expireStorms(tick: number): void {
-    for (let _i = this.storms.length - 1; _i >= 0; _i--) { if (!((s) => tick - s.startTick < s.duration)(this.storms[_i])) this.storms.splice(_i, 1) }
+    for (let _i = this.storms.length - 1; _i >= 0; _i--) {
+      const s = this.storms[_i]
+      if (!((tick - s.startTick < s.duration))) this.storms.splice(_i, 1)
+    }
   }
 
   private applyEffects(em: EntityManager): void {

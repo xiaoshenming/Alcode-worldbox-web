@@ -72,7 +72,10 @@ export class CreatureHandicraftSystem {
 
     // Remove old crafts
     const cutoff = tick - 8000
-    for (let _i = this.crafts.length - 1; _i >= 0; _i--) { if (!((c) => c.tick > cutoff)(this.crafts[_i])) this.crafts.splice(_i, 1) }
+    for (let _i = this.crafts.length - 1; _i >= 0; _i--) {
+      const c = this.crafts[_i]
+      if (!((c.tick > cutoff))) this.crafts.splice(_i, 1)
+    }
   }
 
   getCrafts(): Handicraft[] {

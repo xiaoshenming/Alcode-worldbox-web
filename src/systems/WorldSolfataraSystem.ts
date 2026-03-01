@@ -49,7 +49,10 @@ export class WorldSolfataraSystem {
       s.toxicity = Math.min(80, s.toxicity + 0.005)
     }
 
-    for (let _i = this.solfataras.length - 1; _i >= 0; _i--) { if (!((s) => s.sulfurOutput < 100)(this.solfataras[_i])) this.solfataras.splice(_i, 1) }
+    for (let _i = this.solfataras.length - 1; _i >= 0; _i--) {
+      const s = this.solfataras[_i]
+      if (!((s.sulfurOutput < 100))) this.solfataras.splice(_i, 1)
+    }
   }
 
 }

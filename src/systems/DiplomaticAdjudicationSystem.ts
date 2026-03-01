@@ -64,7 +64,10 @@ export class DiplomaticAdjudicationSystem {
       }
     }
 
-    for (let _i = this.cases.length - 1; _i >= 0; _i--) { if (!((c) => c.verdict === 'pending' || c.duration < 80)(this.cases[_i])) this.cases.splice(_i, 1) }
+    for (let _i = this.cases.length - 1; _i >= 0; _i--) {
+      const c = this.cases[_i]
+      if (!((c.verdict === 'pending' || c.duration < 80))) this.cases.splice(_i, 1)
+    }
   }
 
 }

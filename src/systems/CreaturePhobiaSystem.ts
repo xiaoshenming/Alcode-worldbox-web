@@ -71,7 +71,10 @@ export class CreaturePhobiaSystem {
 
   private pruneOld(): void {
     // Remove phobias that have faded (severity near minimum)
-    for (let _i = this.phobias.length - 1; _i >= 0; _i--) { if (!((p) => p.severity > 1.1)(this.phobias[_i])) this.phobias.splice(_i, 1) }
+    for (let _i = this.phobias.length - 1; _i >= 0; _i--) {
+      const p = this.phobias[_i]
+      if (!((p.severity > 1.1))) this.phobias.splice(_i, 1)
+    }
     if (this.phobias.length > MAX_PHOBIAS) {
       this.phobias.splice(0, this.phobias.length - MAX_PHOBIAS)
     }

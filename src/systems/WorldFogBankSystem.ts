@@ -93,7 +93,10 @@ export class WorldFogBankSystem {
     }
 
     // Remove dissipated fogs
-    for (let _i = this.fogs.length - 1; _i >= 0; _i--) { if (!((f) => f.visibility < 95 && f.radius > 1)(this.fogs[_i])) this.fogs.splice(_i, 1) }
+    for (let _i = this.fogs.length - 1; _i >= 0; _i--) {
+      const f = this.fogs[_i]
+      if (!((f.visibility < 95 && f.radius > 1))) this.fogs.splice(_i, 1)
+    }
   }
 
   private checkWaterNeighbor(world: World, x: number, y: number, w: number, h: number): boolean {

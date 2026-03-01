@@ -61,7 +61,10 @@ export class DiplomaticIntercessionSystem {
       if (a.influence < 20 && a.duration > 50) a.result = 'rejected'
     }
 
-    for (let _i = this.actions.length - 1; _i >= 0; _i--) { if (!((a) => a.result === 'active')(this.actions[_i])) this.actions.splice(_i, 1) }
+    for (let _i = this.actions.length - 1; _i >= 0; _i--) {
+      const a = this.actions[_i]
+      if (!((a.result === 'active'))) this.actions.splice(_i, 1)
+    }
   }
 
 }

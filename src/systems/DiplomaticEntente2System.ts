@@ -60,7 +60,10 @@ export class DiplomaticEntente2System {
       if (e.level === 'strategic' && e.mutualTrust > 80) e.level = 'allied'
     }
 
-    for (let _i = this.ententes.length - 1; _i >= 0; _i--) { if (!((e) => e.level !== 'allied' || e.duration < 200)(this.ententes[_i])) this.ententes.splice(_i, 1) }
+    for (let _i = this.ententes.length - 1; _i >= 0; _i--) {
+      const e = this.ententes[_i]
+      if (!((e.level !== 'allied' || e.duration < 200))) this.ententes.splice(_i, 1)
+    }
   }
 
 }

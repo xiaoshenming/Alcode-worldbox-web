@@ -52,7 +52,10 @@ export class WorldSinterSystem {
       f.thermalGradient = Math.max(10, f.thermalGradient - 0.006)
     }
 
-    for (let _i = this.formations.length - 1; _i >= 0; _i--) { if (!((f) => f.age < 94)(this.formations[_i])) this.formations.splice(_i, 1) }
+    for (let _i = this.formations.length - 1; _i >= 0; _i--) {
+      const f = this.formations[_i]
+      if (!((f.age < 94))) this.formations.splice(_i, 1)
+    }
   }
 
 }

@@ -63,7 +63,10 @@ export class DiplomaticRapprochementSystem {
       }
     }
 
-    for (let _i = this.processes.length - 1; _i >= 0; _i--) { if (!((p) => p.stage !== 'normalized' || p.duration < 120)(this.processes[_i])) this.processes.splice(_i, 1) }
+    for (let _i = this.processes.length - 1; _i >= 0; _i--) {
+      const p = this.processes[_i]
+      if (!((p.stage !== 'normalized' || p.duration < 120))) this.processes.splice(_i, 1)
+    }
   }
 
 }

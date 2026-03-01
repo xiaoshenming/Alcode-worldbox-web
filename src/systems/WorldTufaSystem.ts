@@ -52,7 +52,10 @@ export class WorldTufaSystem {
       t.porosityLevel = Math.min(80, t.porosityLevel + 0.005)
     }
 
-    for (let _i = this.towers.length - 1; _i >= 0; _i--) { if (!((t) => t.age < 97)(this.towers[_i])) this.towers.splice(_i, 1) }
+    for (let _i = this.towers.length - 1; _i >= 0; _i--) {
+      const t = this.towers[_i]
+      if (!((t.age < 97))) this.towers.splice(_i, 1)
+    }
   }
 
 }

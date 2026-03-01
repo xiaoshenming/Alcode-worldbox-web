@@ -80,7 +80,10 @@ export class DiplomaticSanctionSystem {
 
     // Clean up inactive
     if (this.sanctions.length > MAX_SANCTIONS * 2) {
-      for (let _i = this.sanctions.length - 1; _i >= 0; _i--) { if (!((s) => s.active)(this.sanctions[_i])) this.sanctions.splice(_i, 1) }
+      for (let _i = this.sanctions.length - 1; _i >= 0; _i--) {
+      const s = this.sanctions[_i]
+      if (!((s.active))) this.sanctions.splice(_i, 1)
+    }
     }
 
     // Impose new sanctions
