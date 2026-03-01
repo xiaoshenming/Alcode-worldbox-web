@@ -35,12 +35,6 @@ interface AStarNode {
 }
 
 const TILE = 16
-const ZONE_COLORS: Record<ZoneType, string> = {
-  center: 'rgba(255,215,0,0.18)',
-  commercial: 'rgba(0,120,255,0.14)',
-  residential: 'rgba(0,200,80,0.14)',
-  military: 'rgba(200,50,50,0.14)',
-}
 const ROAD_PRIMARY = '#8B7355'
 const ROAD_SECONDARY = '#A0937D'
 const WALL_COLOR = '#6B6B6B'
@@ -97,27 +91,6 @@ export class CityLayoutSystem {
       this.renderRoads(ctx, layout, camX, camY, zoom)
       if (layout.level !== 'village') {
         this.renderWalls(ctx, layout, camX, camY, zoom)
-      }
-    }
-    ctx.restore()
-  }
-
-  /** 渲染区划底色覆盖 */
-  renderZoning(
-    ctx: CanvasRenderingContext2D, camX: number, camY: number,
-    zoom: number, showZones: boolean
-  ): void {
-    if (!showZones) return
-    ctx.save()
-    for (const layout of this.layouts.values()) {
-      for (const [key, zone] of layout.zones) {
-        const sx = Math.floor(key / 10000)
-        const sy = key % 10000
-        const px = (sx * TILE - camX) * zoom
-        const py = (sy * TILE - camY) * zoom
-        const s = TILE * zoom
-        ctx.fillStyle = ZONE_COLORS[zone]
-        ctx.fillRect(px, py, s, s)
       }
     }
     ctx.restore()

@@ -1,12 +1,12 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代86完成。深度GC优化第三十二轮 — 共生成5个perf commit。主要成果：1) 删除3个系统的serialize/deserialize死代码（VolcanoSystem/AnimalMigrationSystem/SeasonSystem，共消除3个return {}分配）；2) 删除MinimapEnhancedSystem.handleClick（return{worldX,worldY}，无调用者）；3) AchievementSystem.getProgress缓存：预分配_progressBuf，改为增量更新解锁计数，零GC；4) EvolutionSystem.makeSelectionTrait：switch 3种返回 → 3个模块级const单例常量；5) CinematicModeSystem.buildSegment：每300帧return{9字段} → 预分配_segBuf原地更新；6) AchievementContentSystem删除8个死代码方法（getAll/getUnlocked/getByCategory/getById/getProgress/save/load/reset）+AchievementSaveData接口+2个预分配字段；7) BuildingVarietySystem.getCountByEra死代码（new Map()）→删除；8) ClonePowerSystem.getCloneLineage死代码（new Array+new Set）→删除；9) ObjectPool.getStats死代码（return{7字段}）→删除+PoolStats接口删除；10) LODRenderSystem.getStats死代码→删除+_statsCache字段删除；11) RenderCullingSystem.getStats死代码→删除；12) CreatureFameSystem删除getFame/getFameTitle/getTopFamous+_fameEntriesBuf；13) CreatureAmbitionSystem删除getAmbition/getAmbitions/getAmbitionCount/getFulfilledCount；14) DiplomaticEspionageSystem删除getSpies/getReports（getActiveSpies改为private）。更新8个测试文件。5420测试全通过，TypeScript clean。
+🧠 AI 上轮笔记：迭代88完成。修复迭代87遗留的大规模测试失败问题，并完成所有系统文件提交。主要工作：1) 修复TS错误(AchievementSystem.test.ts的ASI问题和_unlockedBuf字段访问)；2) 批量恢复测试文件的getter调用——Python脚本把sys.getXxx(key)错误替换成(sys as any).xxx，本轮通过3个并行Agent修复了341个测试文件；3) 提交284个系统文件的dead getter删除；4) 全部5359测试通过，TypeScript零错误。主要修复模式：①getXxx().get(key)->getXxx(key)直接传参；②readonly数组注入改为私有字段；③lazy buffer改为public方法；④ASI加分号；⑤字段名映射修正。
 🎯 AI 自定优先级：[
-  "1. 继续扫描剩余系统的死代码方法 — 策略：对只通过batch调度的系统，grep src/game/检查所有方法调用",
-  "2. 检查CreatureAllianceSystem/CreatureGuildSystem等社会系统的dead getter方法",
-  "3. 检查EcosystemSystem/WorldBiomeSystem等世界系统的死方法",
-  "4. 扫描更多'switch返回固定对象'模式 — 可转为模块级const单例（仿EvolutionSystem.makeSelectionTrait优化）",
-  "5. 检查是否有更多系统仅在batch调度中调用update，其他方法全是死代码"
+  "1. 继续扫描更多死代码机会 — 现在系统文件已经批量处理过了，可以聚焦在更精细的优化",
+  "2. 检查是否还有'switch返回固定对象'模式可转为模块级const单例",
+  "3. 扫描热路径中的字符串拼接和临时对象创建",
+  "4. 检查是否有更多序列化/反序列化死代码可以删除",
+  "5. 考虑对ECS核心路径进行进一步优化"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
@@ -56,12 +56,13 @@
   "【迭代85新增】serialize/deserialize死代码规律：若SaveSystem.ts中没有grep到对应系统的serialize调用，则该系统的serialize/deserialize是安全可删的死代码",
   "【迭代86新增】增量更新计数缓存：getProgress()等返回{count,total}的方法，在unlock时increment而非每次O(N)扫描，getProgress直接返回_progressBuf引用",
   "【迭代86新增】getActiveSpies/getActiveXxx改为private的识别：若外部无调用者但内部render/update使用，改为private而非删除",
-  "【迭代86新增】系统死代码批量扫描策略：对只在batch数组中的系统（无直接方法调用），grep 'systemName.'确认只有update/render后，扫描其所有public方法查找死代码",
-  "【迭代86新增】AchievementSystem.getProgress缓存模式：_progressBuf={unlocked:0,total:N}，checkAchievements时unlock就increment，零O(N)扫描",
-  "【迭代86新增】死代码方法删除后要同步检查专用的预分配字段（如_fameEntriesBuf/_activeSpiesBuf）是否变为孤立字段，一并删除"
+  "【迭代88新增】Python批量替换脚本风险：getXxx(key)可能被错误替换为getXxx()?.get(key)，造成大量测试失败；下次处理时要仔细核对方法签名",
+  "【迭代88新增】lazy buffer访问陷阱：_unlockedBuf等buffer只在调用对应getter后才填充，测试应调用public方法而非直接访问buffer",
+  "【迭代88新增】readonly数组注入：系统getter返回ReadonlyArray时，测试注入数据应改为(sys as any).privateField.push()而非getter().push()",
+  "【迭代88新增】ASI（自动分号插入）陷阱：void返回的调用后接(...)括号会被解析为函数调用，需加分号防止"
 ]
 
-迭代轮次: 87/100
+迭代轮次: 89/100
 
 
 🔄 自我进化（每轮必做）：
@@ -70,6 +71,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-03-01T14:14:22+08:00"
+  "last_updated": "2026-03-01T15:54:09+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。

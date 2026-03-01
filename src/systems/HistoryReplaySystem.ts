@@ -199,13 +199,4 @@ export class HistoryReplaySystem {
     ctx.restore()
   }
 
-  /** Get population history for charts */
-  getPopulationHistory(): { tick: number; pop: number }[] {
-    return this.snapshots.map(s => ({ tick: s.tick, pop: s.population }))
-  }
-
-  /** Get civ history for charts */
-  getCivHistory(): { tick: number; count: number }[] {
-    return this.snapshots.map(s => ({ tick: s.tick, count: s.civCount }))
-  }
 }

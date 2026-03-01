@@ -91,19 +91,6 @@ export class WorldLawSystem {
   }
 
   /**
-   * 设置指定分类下某条法则的值
-   * @param category 分类 key
-   * @param name 参数 name
-   * @param value 新值，会被 clamp 到 [0.1, 5.0]
-   */
-  setLaw(category: string, name: string, value: number): void {
-    const cat = this.categories.find(c => c.key === category)
-    if (!cat) return
-    const p = cat.params.find(pp => pp.name === name)
-    if (p) { p.value = clamp(value, p.min, p.max); p.valueStr = p.value.toFixed(2) }
-  }
-
-  /**
    * 处理键盘事件
    * @param key 按键字符串（event.key）
    * @returns 是否消费了该事件
