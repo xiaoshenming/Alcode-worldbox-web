@@ -124,18 +124,4 @@ export class CreatureDanceSystem {
     }
   }
 
-  private _activeDancesBuf: DanceEvent[] = []
-  getActiveDances(): DanceEvent[] {
-    this._activeDancesBuf.length = 0
-    for (const d of this.dances) { if (d.intensity > 0) this._activeDancesBuf.push(d) }
-    return this._activeDancesBuf
-  }
-
-  getDanceAt(x: number, y: number): DanceEvent | undefined {
-    return this.dances.find(d => {
-      const dx = d.x - x
-      const dy = d.y - y
-      return dx * dx + dy * dy <= GATHER_RADIUS * GATHER_RADIUS
-    })
-  }
 }

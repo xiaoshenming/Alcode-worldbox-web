@@ -148,7 +148,4 @@ export class CreatureMentorSystem {
   getEntityBond(entityId: number): MentorBond | null {
     return this.bonds.find(b => b.mentorId === entityId || b.apprenticeId === entityId) ?? null
   }
-
-  isMentor(entityId: number): boolean { return this.mentorIds.has(entityId) }
-  isApprentice(entityId: number): boolean { return this.apprenticeIds.has(entityId) }
 }

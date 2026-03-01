@@ -82,9 +82,4 @@ export class CreatureDivinationSystem {
     }
   }
 
-  getBelievedCount(): number {
-    let n = 0
-    for (const d of this.divinations) { if (d.believed) n++ }
-    return n
-  }
 }

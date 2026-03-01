@@ -90,9 +90,4 @@ export class CreatureLegacySystem {
     }
   }
 
-  getHeroicCount(): number {
-    let n = 0
-    for (const l of this.legacies) { if (l.type === 'heroic') n++ }
-    return n
-  }
 }

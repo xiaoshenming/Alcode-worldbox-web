@@ -30,7 +30,6 @@ export class CreatureRumorSystem {
   private rumors: Rumor[] = []
   private nextId = 1
   private lastCheck = 0
-  private _mostSpreadBuf: Rumor[] = []
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -83,12 +82,4 @@ export class CreatureRumorSystem {
     }
   }
 
-  getMostSpread(count: number): Rumor[] {
-    const buf = this._mostSpreadBuf
-    buf.length = 0
-    for (const r of this.rumors) buf.push(r)
-    buf.sort((a, b) => b.spreadCount - a.spreadCount)
-    if (buf.length > count) buf.length = count
-    return buf
-  }
 }

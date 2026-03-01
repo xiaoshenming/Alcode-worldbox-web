@@ -79,9 +79,4 @@ export class CreatureDreamSystem {
     }
   }
 
-  getNightmareCount(): number {
-    let n = 0
-    for (const d of this.dreamLog) { if (d.type === 'nightmare') n++ }
-    return n
-  }
 }

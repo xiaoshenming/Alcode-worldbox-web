@@ -35,7 +35,6 @@ const ITEM_TYPES = Object.keys(ITEM_VALUES) as CollectibleType[]
 export class CreatureCollectionSystem {
   private collections = new Map<number, Collection>()
   private lastCheck = 0
-  private _topCollectorsBuf: Collection[] = []
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -167,11 +166,4 @@ export class CreatureCollectionSystem {
     }
   }
 
-  getTopCollectors(n: number): Collection[] {
-    const buf = this._topCollectorsBuf; buf.length = 0
-    for (const c of this.collections.values()) buf.push(c)
-    buf.sort((a, b) => b.totalValue - a.totalValue)
-    if (buf.length > n) buf.length = n
-    return buf
-  }
 }
