@@ -1,11 +1,11 @@
 {
-  "notes": "迭代102。项目状态：完美+CI防护。本轮任务：(1)GitHub push积压提交成功（7a06b29）；(2)全量验证：tsc零错误、4973/4973测试全过、构建1.6MB零警告；(3)新增GitHub Actions CI工作流（.github/workflows/ci.yml），每次push自动运行tsc+vitest+build+bundle大小检查；(4)bundle大小守卫：>2MB则CI失败，防止bundle膨胀。非空断言扫描确认3处误报（字符串字面量），as any=1（main.ts调试可接受）。超500行文件：TerrainDecorationSystem(505行，仅超5行，内聚性好不拆)，其他均为已知情况。",
+  "notes": "迭代103。项目状态：完美+CI防护。本轮任务：(1)全量验证通过：tsc零错误、4975/4975测试全过、构建1.6MB零警告；(2)发现并修复AISystem.ts内存泄漏：饥饿死亡路径（needs.health<=0）未清理breedCooldown，与老死路径不一致；(3)添加breedCooldown内存泄漏修复的回归测试（2个测试用例）；(4)GitHub push成功。本轮深入扫描分析：hasAdjacentTile方法在52个SpringSystem中重复，但因修改风险大暂不重构；portShipCount Map在港口删除时不清理，但数量有限影响微小；批次系统787个小系统在resetWorld时不重建，是设计意图。",
   "priorities": [
-    "1. 【已完成】GitHub Actions CI工作流上线——每次push自动验证tsc+vitest+build",
-    "2. 【已完成】GitHub push成功——所有积压提交已推送",
-    "3. 【项目状态】tsc零错误 + 4973测试全过 + 1.6MB构建 + pre-commit hook + CI，防护体系完整",
-    "4. 【可选】Game.ts 4106行仍超500行规范——多次重构后的结果，进一步拆分需谨慎评估",
-    "5. 【可选】TerrainDecorationSystem 505行（超5行）——内聚性好，暂不拆分"
+    "1. 【已完成】AISystem内存泄漏修复+回归测试",
+    "2. 【已完成】GitHub push成功——2个新提交已推送",
+    "3. 【项目状态】tsc零错误 + 4975测试全过 + 1.6MB构建 + pre-commit hook + CI，防护体系完整",
+    "4. 【可选】hasAdjacentTile在52个SpringSystem中重复——重构风险高，影响面广，需谨慎评估",
+    "5. 【可选】Game.ts 4106行仍超500行规范——多次重构后的结果，进一步拆分需谨慎评估"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -36,7 +36,8 @@
     "【迭代100新增-最重要】非空断言扫描必须同时用两种正则：① [^a-zA-Z]!\\. 匹配 x!.y 形式；② \\)!(?=[.\\[;,\\)\\s]|$) 匹配 func()! 形式。只用其中一种必然漏报！推荐用Python re.finditer两轮扫描。",
     "【迭代100新增】非空断言修复模式汇总：getContext()! → |null字段+守卫; getElementById()! → throw new Error; .pop()!/.shift()! 在length>0后 → as类型断言; .find()!/.get()! → if(!x)continue/return",
     "【迭代101新增】pre-commit hook可用Python脚本实现非空断言检测——读取git show :path获取staged内容，跳过注释行，两种正则双重扫描",
-    "【迭代102新增】GitHub Actions CI配置要点：uses actions/checkout@v4 + setup-node@v4（Node 20）+ npm ci安装 + npx tsc --noEmit + npx vitest run + npm run build + bundle大小守卫（du -sb统计字节，>2MB失败）"
+    "【迭代102新增】GitHub Actions CI配置要点：uses actions/checkout@v4 + setup-node@v4（Node 20）+ npm ci安装 + npx tsc --noEmit + npx vitest run + npm run build + bundle大小守卫（du -sb统计字节，>2MB失败）",
+    "【迭代103新增】内存泄漏检测模式：寻找系统内的 Map<EntityId, T> 字段 → 检查所有 removeEntity 调用路径是否都清理了这个 Map → 确保每条死亡路径（老死、饥死、战死等）都有对应的 .delete(id)"
   ],
-  "last_updated": "2026-03-02T04:35:00+08:00"
+  "last_updated": "2026-03-02T05:00:00+08:00"
 }
