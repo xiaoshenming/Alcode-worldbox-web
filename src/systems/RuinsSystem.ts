@@ -68,25 +68,6 @@ export class RuinsSystem {
   }
 
   /**
-   * 发现废墟，返回科技和文化加成；已发现或无效则返回 null
-   */
-  discoverRuin(
-    ruinId: number,
-    discovererCiv: string
-  ): { techBonus: number; cultureBonus: number } | null {
-    const ruin = this.ruins.find((r) => r.id === ruinId)
-    if (!ruin || ruin.discovered || ruin.value <= 0) return null
-
-    ruin.discovered = true
-    ruin.discoveredBy = discovererCiv
-
-    return {
-      techBonus: ruin.value * TECH_BONUS_RATE,
-      cultureBonus: ruin.value * CULTURE_BONUS_RATE,
-    }
-  }
-
-  /**
    * 获取所有废墟
    */
   getRuins(): Ruin[] {

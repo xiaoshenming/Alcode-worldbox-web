@@ -2,7 +2,7 @@
  * AmbientSoundMixer - 环境音效混合器系统
  *
  * 根据游戏状态（时间、天气、季节、战争、文明密度等）动态计算多层环境音效的音量。
- * 纯状态管理，不涉及任何实际音频播放，供外部音频系统消费 getMixState()。
+ * 纯状态管理，不涉及任何实际音频播放。
  */
 
 export type SoundLayer = 'nature' | 'weather' | 'season' | 'war' | 'civilization';
@@ -17,13 +17,6 @@ export interface LayerState {
   targetVolume: number;
   muted: boolean;
   activeSound: string;
-}
-
-export interface SoundMixState {
-  masterVolume: number;
-  muted: boolean;
-  layers: LayerState[];
-  pendingEvents: Array<{ event: SoundEvent; volume: number; tick: number }>;
 }
 
 interface PendingEvent {
@@ -189,19 +182,6 @@ export class AmbientSoundMixer {
 
     this._pendingEvents.push({ event, volume: clamp01(volume), tick: now });
     this._lastEventTick.set(event, now);
-  }
-
-  getMixState(): SoundMixState {
-    const layers: LayerState[] = [];
-    for (const ls of this._layers.values()) {
-      layers.push({ ...ls });
-    }
-    return {
-      masterVolume: this._masterVolume,
-      muted: this._muted,
-      layers,
-      pendingEvents: this._pendingEvents.map((e) => ({ ...e })),
-    };
   }
 
   renderVolumeIndicator(ctx: CanvasRenderingContext2D, x: number, y: number): void {

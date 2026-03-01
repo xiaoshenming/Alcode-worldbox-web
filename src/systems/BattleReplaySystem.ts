@@ -77,34 +77,6 @@ export class BattleReplaySystem {
     };
   }
 
-  recordFrame(frame: BattleFrame): void {
-    const rec = this.recording;
-    if (!rec || rec.frames.length >= MAX_FRAMES) return;
-    if (rec.frames.length === 0) {
-      rec.startTick = frame.tick;
-      for (const side of rec.sides) {
-        let cnt = 0;
-        for (const u of frame.units) { if (u.side === side.civId) cnt++ }
-        side.startCount = cnt;
-      }
-    }
-    rec.endTick = frame.tick;
-    // Copy unit/attack data field-by-field to avoid spread allocation overhead
-    const uLen = frame.units.length
-    const units: BattleUnit[] = new Array(uLen)
-    for (let i = 0; i < uLen; i++) {
-      const src = frame.units[i]
-      units[i] = { id: src.id, x: src.x, y: src.y, hp: src.hp, maxHp: src.maxHp, side: src.side, alive: src.alive }
-    }
-    const aLen = frame.attacks.length
-    const attacks: BattleAttack[] = new Array(aLen)
-    for (let i = 0; i < aLen; i++) {
-      const src = frame.attacks[i]
-      attacks[i] = { fromX: src.fromX, fromY: src.fromY, toX: src.toX, toY: src.toY }
-    }
-    rec.frames.push({ tick: frame.tick, units, attacks });
-  }
-
   stopRecording(winnerId: number): void {
     const rec = this.recording;
     if (!rec) return;

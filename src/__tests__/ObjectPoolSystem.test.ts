@@ -4,16 +4,13 @@ function makeSys() { return new ObjectPoolSystem() }
 describe('ObjectPoolSystem', () => {
   let sys: ObjectPoolSystem
   beforeEach(() => { sys = makeSys() })
-  it('getAllStats返回对象', () => { expect(typeof sys.getAllStats()).toBe('object') })
-  it('getAllStats包含particles/vec2s字段', () => {
-    const stats = sys.getAllStats()
-    expect(stats).toHaveProperty('particles')
-    expect(stats).toHaveProperty('vec2s')
+  it('particles池存在', () => { expect(sys.particles).toBeDefined() })
+  it('particles池包含hitRate字段', () => {
+    const stats = (sys as any).particles.getStats()
+    expect(stats).toHaveProperty('hitRate')
+    expect(stats.hitRate).toBe(0)
   })
-  it('初始 hitRate 为 0', () => {
-    const stats = sys.getAllStats()
-    expect(stats.particles.hitRate).toBe(0)
-  })
+  it('vec2s池存在', () => { expect(sys.vec2s).toBeDefined() })
   it('particles池totalCreated等于initialSize(64)', () => { expect((sys as any).particles.totalCreated).toBe(64) })
   it('particles池acquireCount初始为0', () => { expect((sys as any).particles.acquireCount).toBe(0) })
 })

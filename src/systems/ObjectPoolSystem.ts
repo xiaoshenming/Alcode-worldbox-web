@@ -219,22 +219,4 @@ export class ObjectPoolSystem {
       }
     }
   }
-
-  // ---- Statistics ----
-
-  getAllStats(): Record<string, PoolStats> {
-    return {
-      particles: this.particles.getStats(),
-      vec2s: this.vec2s.getStats(),
-      arrays: {
-        totalCreated: this.arrayAcquireCount - this.arrayHitCount + this.arrayPool.length,
-        activeCount: this.arrayActiveCount,
-        freeCount: this.arrayPool.length,
-        peakUsage: 0,
-        acquireCount: this.arrayAcquireCount,
-        hitCount: this.arrayHitCount,
-        hitRate: this.arrayAcquireCount > 0 ? this.arrayHitCount / this.arrayAcquireCount : 0,
-      },
-    }
-  }
 }

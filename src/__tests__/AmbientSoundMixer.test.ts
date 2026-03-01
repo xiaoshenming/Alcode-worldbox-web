@@ -26,11 +26,9 @@ describe('AmbientSoundMixer', () => {
     sys.toggleMute()
     expect(sys.isMuted()).toBe(false)
   })
-  it('getMixState 返回对象', () => {
-    const state = sys.getMixState()
-    expect(typeof state).toBe('object')
-    expect(state.masterVolume).toBe(1)
-    expect(state.muted).toBe(false)
+  it('masterVolume私有字段为1', () => {
+    expect((sys as any)._masterVolume).toBe(1)
+    expect((sys as any)._muted).toBe(false)
   })
   it('update 不崩溃', () => {
     expect(() => sys.update(0, ctx)).not.toThrow()
