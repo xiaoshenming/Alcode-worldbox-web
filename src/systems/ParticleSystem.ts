@@ -17,10 +17,9 @@ export class ParticleSystem {
   private activeCount: number = 0
   private readonly MAX_PARTICLES = 500
 
-  // External rendering iterates this — returns only active particles
-  get particles(): Particle[] {
-    return this.pool.slice(0, this.activeCount)
-  }
+  // Zero-alloc access for rendering — expose pool and activeCount directly
+  getPool(): Particle[] { return this.pool }
+  getActiveCount(): number { return this.activeCount }
 
   private allocate(x: number, y: number, vx: number, vy: number, life: number, maxLife: number, color: string, size: number): void {
     if (this.activeCount < this.pool.length) {

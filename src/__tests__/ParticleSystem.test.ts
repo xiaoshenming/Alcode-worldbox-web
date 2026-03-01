@@ -9,8 +9,8 @@ describe('ParticleSystem', () => {
 
   it('初始activeCount为0', () => { expect((sys as any).activeCount).toBe(0) })
   it('初始pool为数组', () => { expect(Array.isArray((sys as any).pool)).toBe(true) })
-  it('particles getter返回数组', () => { expect(Array.isArray(sys.particles)).toBe(true) })
-  it('particles getter初始长度为0', () => { expect(sys.particles).toHaveLength(0) })
+  it('getPool()返回数组', () => { expect(Array.isArray(sys.getPool())).toBe(true) })
+  it('getActiveCount()初始为0', () => { expect(sys.getActiveCount()).toBe(0) })
   it('spawnExplosion后activeCount增加', () => {
     sys.spawnExplosion(10, 20)
     expect((sys as any).activeCount).toBeGreaterThan(0)

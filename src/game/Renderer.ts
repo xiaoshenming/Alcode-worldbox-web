@@ -730,7 +730,10 @@ export class Renderer {
     this._particleObjNext = 0  // reset particle object pool pointer
     const byColor = this._particleByColor
 
-    for (const p of particles.particles) {
+    const pool = particles.getPool()
+    const activeCount = particles.getActiveCount()
+    for (let _pi = 0; _pi < activeCount; _pi++) {
+      const p = pool[_pi]
       const screenX = p.x * tileSize + offsetX + tileSize / 2
       const screenY = p.y * tileSize + offsetY + tileSize / 2
 
