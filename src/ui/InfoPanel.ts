@@ -131,6 +131,8 @@ export class InfoPanel {
   }
 
   private renderDiplomacyPairs(civArr: { id: number; color: string; relations: Map<number, number> }[], _count: number): void {
+    const diplomacyDiv = this.diplomacyDiv
+    if (!diplomacyDiv) return
     const parts: string[] = []
     for (let i = 0; i < civArr.length; i++) {
       for (let j = i + 1; j < civArr.length; j++) {
@@ -140,10 +142,12 @@ export class InfoPanel {
         parts.push(`<span style="color:${civArr[i].color}">■</span>-<span style="color:${civArr[j].color}">■</span> <span style="color:${relColor}">${label} (${Math.round(rel)})</span> `)
       }
     }
-    this.diplomacyDiv!.innerHTML = parts.join('')
+    diplomacyDiv.innerHTML = parts.join('')
   }
 
   private renderDiplomacyTopPairs(civArr: { id: number; color: string; relations: Map<number, number> }[]): void {
+    const diplomacyDiv = this.diplomacyDiv
+    if (!diplomacyDiv) return
     // Collect all pairs with their relation values
     const pairs: { i: number; j: number; rel: number }[] = []
     for (let i = 0; i < civArr.length; i++) {
@@ -168,6 +172,6 @@ export class InfoPanel {
       parts.push(`<span style="color:#666">... +${pairs.length - MAX_DIPLOMACY_PAIRS} more</span>`)
     }
 
-    this.diplomacyDiv!.innerHTML = parts.join('')
+    diplomacyDiv.innerHTML = parts.join('')
   }
 }
