@@ -2,6 +2,7 @@
 // Gossip about events, other creatures, and dangers propagates through social networks
 
 import { EntityManager } from '../ecs/Entity'
+import { pickWeighted } from '../utils/RandomUtils'
 
 export type RumorTopic = 'danger' | 'treasure' | 'betrayal' | 'hero' | 'monster' | 'miracle'
 
@@ -44,7 +45,7 @@ export class CreatureRumorSystem {
     const entities = em.getEntitiesWithComponents('creature')
     for (const eid of entities) {
       if (Math.random() > RUMOR_CHANCE) continue
-      const topic = this.pickTopic()
+      const topic = pickWeighted(TOPICS, TOPIC_WEIGHTS, 'danger')
       this.rumors.push({
         id: this.nextId++,
         topic,
@@ -57,15 +58,7 @@ export class CreatureRumorSystem {
     }
   }
 
-  private pickTopic(): RumorTopic {
-    const r = Math.random()
-    let cum = 0
-    for (const t of TOPICS) {
-      cum += TOPIC_WEIGHTS[t]
-      if (r <= cum) return t
-    }
-    return 'danger'
-  }
+
 
   private spreadRumors(): void {
     for (const rumor of this.rumors) {

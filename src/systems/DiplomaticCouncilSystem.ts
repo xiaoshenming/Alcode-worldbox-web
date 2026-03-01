@@ -3,6 +3,7 @@
 
 import { EntityManager } from '../ecs/Entity'
 import { CivMemberComponent } from '../civilization/Civilization'
+import { pickWeighted } from '../utils/RandomUtils'
 
 export type CouncilTopic = 'war_declaration' | 'trade_pact' | 'territory_dispute' | 'resource_sharing' | 'exile_vote' | 'alliance_formation'
 
@@ -79,7 +80,7 @@ export class DiplomaticCouncilSystem {
       if (!usedIdx.has(idx)) { usedIdx.add(idx); members.push(civArray[idx]) }
     }
 
-    const topic = this.pickTopic()
+    const topic = pickWeighted(TOPICS, TOPIC_WEIGHTS, 'trade_pact')
     this.councils.push({
       id: this.nextId++,
       memberCivIds: members,
@@ -90,15 +91,7 @@ export class DiplomaticCouncilSystem {
     })
   }
 
-  private pickTopic(): CouncilTopic {
-    const r = Math.random()
-    let cum = 0
-    for (const t of TOPICS) {
-      cum += TOPIC_WEIGHTS[t]
-      if (r <= cum) return t
-    }
-    return 'trade_pact'
-  }
+
 
   private conductVotes(): void {
     for (const council of this.councils) {
