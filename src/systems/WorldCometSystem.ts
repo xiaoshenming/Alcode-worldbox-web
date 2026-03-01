@@ -2,6 +2,7 @@
 // Rare but impactful events bringing resources, omens, or mutations
 
 import { EntityManager, PositionComponent, NeedsComponent } from '../ecs/Entity'
+import { pickWeighted } from '../utils/RandomUtils'
 
 export type CometEffect = 'resource_rain' | 'omen' | 'inspiration' | 'mutation' | 'blessing'
 
@@ -55,7 +56,7 @@ export class WorldCometSystem {
     const endX = Math.random() * w
     const endY = h
 
-    const effect = this.pickEffect()
+    const effect = pickWeighted(EFFECTS, EFFECT_WEIGHTS, 'omen')
     const speed = 0.5 + Math.random() * 2
     const duration = 800 + Math.floor(Math.random() * 1200)
 
@@ -71,15 +72,7 @@ export class WorldCometSystem {
     this.totalComets++
   }
 
-  private pickEffect(): CometEffect {
-    const r = Math.random()
-    let cum = 0
-    for (const e of EFFECTS) {
-      cum += EFFECT_WEIGHTS[e]
-      if (r <= cum) return e
-    }
-    return 'omen'
-  }
+
 
   private updateComets(tick: number, em: EntityManager, world: { width: number; height: number }): void {
     for (const comet of this.comets) {

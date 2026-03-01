@@ -2,6 +2,7 @@
 // Fears affect creature movement and decision-making behavior
 
 import { EntityManager } from '../ecs/Entity'
+import { pickWeighted } from '../utils/RandomUtils'
 
 export type FearType = 'water' | 'fire' | 'heights' | 'darkness' | 'crowds' | 'storms'
 
@@ -44,7 +45,7 @@ export class CreaturePhobiaSystem {
     for (const eid of entities) {
       if (Math.random() > PHOBIA_CHANCE) continue
       // Avoid duplicate phobias for same entity+fear
-      const fear = this.pickFear()
+      const fear = pickWeighted(FEARS, FEAR_WEIGHTS, 'darkness')
       const exists = this.phobias.some(p => p.entityId === eid && p.fear === fear)
       if (exists) continue
 
@@ -58,15 +59,7 @@ export class CreaturePhobiaSystem {
     }
   }
 
-  private pickFear(): FearType {
-    const r = Math.random()
-    let cum = 0
-    for (const f of FEARS) {
-      cum += FEAR_WEIGHTS[f]
-      if (r <= cum) return f
-    }
-    return 'darkness'
-  }
+
 
   private evolveSeverity(): void {
     for (const p of this.phobias) {

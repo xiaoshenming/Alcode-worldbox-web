@@ -2,6 +2,7 @@
 // Shamans and elders read signs from nature, influencing tribe decisions
 
 import { EntityManager } from '../ecs/Entity'
+import { pickWeighted } from '../utils/RandomUtils'
 
 export type DivinationType = 'stars' | 'bones' | 'flames' | 'water' | 'dreams' | 'birds'
 
@@ -51,7 +52,7 @@ export class CreatureDivinationSystem {
     for (const eid of entities) {
       if (Math.random() > DIVINE_CHANCE) continue
 
-      const method = this.pickMethod()
+      const method = pickWeighted(METHODS, METHOD_WEIGHTS, 'stars')
       const prediction = PREDICTIONS[Math.floor(Math.random() * PREDICTIONS.length)]
 
       this.divinations.push({
@@ -66,15 +67,7 @@ export class CreatureDivinationSystem {
     }
   }
 
-  private pickMethod(): DivinationType {
-    const r = Math.random()
-    let cum = 0
-    for (const m of METHODS) {
-      cum += METHOD_WEIGHTS[m]
-      if (r <= cum) return m
-    }
-    return 'stars'
-  }
+
 
   private pruneOld(): void {
     if (this.divinations.length > MAX_DIVINATIONS) {

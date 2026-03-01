@@ -2,6 +2,7 @@
 // High-wisdom creatures have more accurate intuitions, triggering early reactions
 
 import { EntityManager, CreatureComponent, NeedsComponent } from '../ecs/Entity'
+import { pickWeighted } from '../utils/RandomUtils'
 
 export type IntuitionSense = 'danger' | 'opportunity' | 'weather' | 'betrayal' | 'treasure' | 'death'
 
@@ -55,7 +56,7 @@ export class CreatureIntuitionSystem {
       const needs = em.getComponent<NeedsComponent>(eid, 'needs')
       if (!creature || !needs || needs.health <= 0) continue
 
-      const sense = this.pickSense()
+      const sense = pickWeighted(SENSE_TYPES, SENSE_WEIGHTS, 'danger')
       const wisdom = this.getWisdom(creature)
       const accuracy = Math.min(100, BASE_ACCURACY + wisdom * WISDOM_ACCURACY_BONUS + Math.random() * 15)
 
@@ -71,15 +72,7 @@ export class CreatureIntuitionSystem {
     }
   }
 
-  private pickSense(): IntuitionSense {
-    const r = Math.random()
-    let cum = 0
-    for (const s of SENSE_TYPES) {
-      cum += SENSE_WEIGHTS[s]
-      if (r <= cum) return s
-    }
-    return 'danger'
-  }
+
 
   private getWisdom(creature: CreatureComponent): number {
     // Use age as proxy for wisdom

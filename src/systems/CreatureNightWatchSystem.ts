@@ -2,6 +2,7 @@
 // Sentries protect villages from nocturnal threats, gaining vigilance skill
 
 import { EntityManager } from '../ecs/Entity'
+import { pickWeighted } from '../utils/RandomUtils'
 
 export type WatchShift = 'dusk' | 'midnight' | 'dawn'
 
@@ -41,7 +42,7 @@ export class CreatureNightWatchSystem {
     const entities = em.getEntitiesWithComponents('creature')
     for (const eid of entities) {
       if (Math.random() > WATCH_CHANCE) continue
-      const shift = this.pickShift()
+      const shift = pickWeighted(SHIFTS, SHIFT_WEIGHTS, 'midnight')
       this.watches.push({
         id: this.nextId++,
         sentryId: eid,
@@ -53,15 +54,7 @@ export class CreatureNightWatchSystem {
     }
   }
 
-  private pickShift(): WatchShift {
-    const r = Math.random()
-    let cum = 0
-    for (const s of SHIFTS) {
-      cum += SHIFT_WEIGHTS[s]
-      if (r <= cum) return s
-    }
-    return 'midnight'
-  }
+
 
   private processThreats(): void {
     for (const w of this.watches) {
