@@ -53,7 +53,7 @@ export class CreatureArtSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    const entities = em.getAllEntities()
+    const entities = em.getEntitiesWithComponent('creature')
     for (const eid of entities) {
       const creature = em.getComponent<CreatureComponent>(eid, 'creature')
       if (!creature) continue

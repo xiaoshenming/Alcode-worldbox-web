@@ -2,7 +2,7 @@
 // Creatures gather for ritual dances at various occasions
 // Dances provide temporary buffs to participants (morale, combat, fertility)
 
-import { EntityManager, CreatureComponent, PositionComponent } from '../ecs/Entity'
+import { EntityManager, PositionComponent } from '../ecs/Entity'
 
 export type DanceType = 'celebration' | 'war' | 'rain' | 'harvest' | 'funeral' | 'mating'
 
@@ -62,11 +62,10 @@ export class CreatureDanceSystem {
 
       // Count nearby creatures as participants
       let nearby = 0
-      const entities = em.getAllEntities()
+      const entities = em.getEntitiesWithComponents('position', 'creature')
       for (const eid of entities) {
         const pos = em.getComponent<PositionComponent>(eid, 'position')
-        const creature = em.getComponent<CreatureComponent>(eid, 'creature')
-        if (!pos || !creature) continue
+        if (!pos) continue
         const dx = pos.x - dance.x
         const dy = pos.y - dance.y
         if (dx * dx + dy * dy <= GATHER_RADIUS * GATHER_RADIUS) {
@@ -91,14 +90,13 @@ export class CreatureDanceSystem {
 
     // Try to spawn new dances near creatures
     if (this.dances.length < MAX_DANCES) {
-      const entities = em.getAllEntities()
+      const entities = em.getEntitiesWithComponents('position', 'creature')
       for (const eid of entities) {
         if (this.dances.length >= MAX_DANCES) break
         if (Math.random() > SPAWN_CHANCE) continue
 
         const pos = em.getComponent<PositionComponent>(eid, 'position')
-        const creature = em.getComponent<CreatureComponent>(eid, 'creature')
-        if (!pos || !creature) continue
+        if (!pos) continue
 
         // Don't spawn too close to existing dances
         const tooClose = this.dances.some(d => {
