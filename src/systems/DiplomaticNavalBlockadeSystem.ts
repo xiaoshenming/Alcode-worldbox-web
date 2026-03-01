@@ -69,7 +69,8 @@ export class DiplomaticNavalBlockadeSystem {
 
     const cutoff = tick - 40000
     for (let i = this.blockades.length - 1; i >= 0; i--) {
-      if (this.blockades[i].tick < cutoff || this.blockades[i].effectiveness <= 0) {
+      const b = this.blockades[i]
+      if (b.tick < cutoff || b.effectiveness <= 0) {
         this.blockades.splice(i, 1)
       }
     }

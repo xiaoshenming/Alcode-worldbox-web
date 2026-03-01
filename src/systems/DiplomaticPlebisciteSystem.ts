@@ -77,7 +77,8 @@ export class DiplomaticPlebisciteSystem {
 
     const cutoff = tick - 51000
     for (let i = this.pacts.length - 1; i >= 0; i--) {
-      if (this.pacts[i].status === 'expired' && this.pacts[i].tick < cutoff) {
+      const p = this.pacts[i]
+      if (p.status === 'expired' && p.tick < cutoff) {
         this.pacts.splice(i, 1)
       }
     }

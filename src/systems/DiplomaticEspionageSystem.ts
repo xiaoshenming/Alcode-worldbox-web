@@ -127,7 +127,8 @@ export class DiplomaticEspionageSystem {
 
     // Remove discovered spies after a while
     for (let i = this.spies.length - 1; i >= 0; i--) {
-      if (this.spies[i].discovered && tick - this.spies[i].startTick > 5000) {
+      const s = this.spies[i]
+      if (s.discovered && tick - s.startTick > 5000) {
         this.spies.splice(i, 1)
       }
     }

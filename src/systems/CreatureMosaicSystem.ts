@@ -66,7 +66,8 @@ export class CreatureMosaicSystem {
     // Remove old completed mosaics
     const cutoff = tick - 180000
     for (let i = this.mosaics.length - 1; i >= 0; i--) {
-      if (this.mosaics[i].completeness >= 100 && this.mosaics[i].tick < cutoff) {
+      const m = this.mosaics[i]
+      if (m.completeness >= 100 && m.tick < cutoff) {
         this.mosaics.splice(i, 1)
       }
     }

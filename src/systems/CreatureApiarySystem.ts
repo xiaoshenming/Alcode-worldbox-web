@@ -79,7 +79,8 @@ export class CreatureApiarySystem {
     // Remove collapsed apiaries
     const cutoff = tick - 100000
     for (let i = this.apiaries.length - 1; i >= 0; i--) {
-      if (this.apiaries[i].health === 'collapsed' && this.apiaries[i].tick < cutoff) {
+      const a = this.apiaries[i]
+      if (a.health === 'collapsed' && a.tick < cutoff) {
         this.apiaries.splice(i, 1)
       }
     }

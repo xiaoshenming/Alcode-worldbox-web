@@ -65,7 +65,8 @@ export class CreatureAstrologySystem {
     // Clear expired readings
     const now = tick
     for (let i = this.readings.length - 1; i >= 0; i--) {
-      if (now - this.readings[i].tick > this.readings[i].duration) {
+      const r = this.readings[i]
+      if (now - r.tick > r.duration) {
         this.readings.splice(i, 1)
       }
     }

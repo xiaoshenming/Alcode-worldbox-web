@@ -104,8 +104,9 @@ export class CreatureArtSystem {
 
     // Decay fame of old artworks
     for (let i = this.artworks.length - 1; i >= 0; i--) {
-      this.artworks[i].fame -= FAME_DECAY
-      if (this.artworks[i].fame <= 0 && this.artworks.length > 20) {
+      const a = this.artworks[i]
+      a.fame -= FAME_DECAY
+      if (a.fame <= 0 && this.artworks.length > 20) {
         this.artworks.splice(i, 1)
       }
     }

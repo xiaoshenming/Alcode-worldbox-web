@@ -64,7 +64,8 @@ export class WorldAvalancheSystem {
 
     const cutoff = tick - 6000
     for (let i = this.avalanches.length - 1; i >= 0; i--) {
-      if (this.avalanches[i].tick < cutoff || this.avalanches[i].force <= 0) {
+      const a = this.avalanches[i]
+      if (a.tick < cutoff || a.force <= 0) {
         this.avalanches.splice(i, 1)
       }
     }

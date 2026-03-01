@@ -191,8 +191,9 @@ export class CreatureMigrationMemorySystem {
 
   private decayMemories(): void {
     for (let i = this.memories.length - 1; i >= 0; i--) {
-      this.memories[i].quality -= QUALITY_DECAY
-      if (this.memories[i].quality < MIN_QUALITY) {
+      const m = this.memories[i]
+      m.quality -= QUALITY_DECAY
+      if (m.quality < MIN_QUALITY) {
         this.memories.splice(i, 1)
       }
     }
@@ -200,7 +201,8 @@ export class CreatureMigrationMemorySystem {
 
   private pruneDeadCreatures(em: EntityManager): void {
     for (let i = this.memories.length - 1; i >= 0; i--) {
-      if (!em.hasComponent(this.memories[i].creatureId, 'creature')) {
+      const m = this.memories[i]
+      if (!em.hasComponent(m.creatureId, 'creature')) {
         this.memories.splice(i, 1)
       }
     }

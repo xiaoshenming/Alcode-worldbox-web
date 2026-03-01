@@ -67,9 +67,10 @@ export class WorldAnomalySystem {
 
     // Decay and remove expired anomalies
     for (let i = this.anomalies.length - 1; i >= 0; i--) {
-      this.anomalies[i].duration -= dt
-      if (this.anomalies[i].duration <= 0) {
-        EventLog.log('world_event', `${ANOMALY_LABELS[this.anomalies[i].type]} has dissipated`, tick)
+      const a = this.anomalies[i]
+      a.duration -= dt
+      if (a.duration <= 0) {
+        EventLog.log('world_event', `${ANOMALY_LABELS[a.type]} has dissipated`, tick)
         this.anomalies.splice(i, 1)
       }
     }

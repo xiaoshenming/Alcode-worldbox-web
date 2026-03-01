@@ -58,7 +58,8 @@ export class WorldBarrierIslandSystem {
 
     const cutoff = tick - 92000
     for (let i = this.islands.length - 1; i >= 0; i--) {
-      if (this.islands[i].tick < cutoff || this.islands[i].sandVolume < 5) {
+      const isle = this.islands[i]
+      if (isle.tick < cutoff || isle.sandVolume < 5) {
         this.islands.splice(i, 1)
       }
     }

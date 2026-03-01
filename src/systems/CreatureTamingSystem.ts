@@ -99,7 +99,8 @@ export class CreatureTamingSystem {
   /** 移除死亡实体相关记录 */
   removeEntity(entityId: number): void {
     for (let i = this.records.length - 1; i >= 0; i--) {
-      if (this.records[i].animalId === entityId || this.records[i].ownerId === entityId) {
+      const r = this.records[i]
+      if (r.animalId === entityId || r.ownerId === entityId) {
         this.records[i] = this.records[this.records.length - 1]
         this.records.pop()
       }

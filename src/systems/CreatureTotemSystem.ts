@@ -118,8 +118,9 @@ export class CreatureTotemSystem {
 
   private decayTotems(): void {
     for (let i = this.totems.length - 1; i >= 0; i--) {
-      this.totems[i].power -= POWER_DECAY
-      if (this.totems[i].power <= 0) {
+      const t = this.totems[i]
+      t.power -= POWER_DECAY
+      if (t.power <= 0) {
         this.totems.splice(i, 1)
       }
     }

@@ -71,7 +71,8 @@ export class CreatureMasonrySystem {
     // Remove old completed projects
     const cutoff = tick - 120000
     for (let i = this.projects.length - 1; i >= 0; i--) {
-      if (this.projects[i].phase === 'complete' && this.projects[i].tick < cutoff) {
+      const p = this.projects[i]
+      if (p.phase === 'complete' && p.tick < cutoff) {
         this.projects.splice(i, 1)
       }
     }

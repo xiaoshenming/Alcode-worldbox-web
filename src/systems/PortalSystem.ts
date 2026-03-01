@@ -134,8 +134,9 @@ export class PortalSystem {
 
     // Update flashes
     for (let i = this.flashes.length - 1; i >= 0; i--) {
-      this.flashes[i].life--;
-      if (this.flashes[i].life <= 0) {
+      const f = this.flashes[i]
+      f.life--;
+      if (f.life <= 0) {
         this.flashes.splice(i, 1);
       }
     }
