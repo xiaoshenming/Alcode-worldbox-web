@@ -115,11 +115,14 @@ export class AchievementSystem {
     const baseX = canvasWidth / 2
     let baseY = 60
 
+    // Single save/restore for entire loop — globalAlpha set explicitly per notification
+    ctx.save()
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
     for (const n of this.notifications) {
       const alpha = Math.min(1, n.alpha)
       const slideY = n.alpha > 2.5 ? (3.0 - n.alpha) * 2 * 40 : 0 // slide in from top
 
-      ctx.save()
       ctx.globalAlpha = alpha
 
       // Background pill
@@ -152,8 +155,6 @@ export class AchievementSystem {
 
       // Text
       ctx.fillStyle = '#fff'
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
       ctx.fillText(n.text, baseX, py + pillH / 2)
 
       // "Achievement Unlocked" subtitle
@@ -161,9 +162,9 @@ export class AchievementSystem {
       ctx.fillStyle = '#aaa'
       ctx.fillText('Achievement Unlocked!', baseX, py + pillH + 10)
 
-      ctx.restore()
       baseY += pillH + 24
     }
+    ctx.restore()
   }
 
   getUnlocked(): Achievement[] {
