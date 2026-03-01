@@ -3,6 +3,8 @@ import { ParticleSystem } from './ParticleSystem'
 import { TileType } from '../utils/Constants'
 
 const LEAF_COLORS = ['#cc6622', '#dd8833', '#aa4411', '#eebb44']
+/** Persistent sample result — reused by sampleTile to avoid new{x,y} per successful sample */
+const _SAMPLE: { x: number; y: number } = { x: 0, y: 0 }
 
 function rand(min: number, max: number): number {
   return min + Math.random() * (max - min)
@@ -21,7 +23,9 @@ function sampleTile(
     const x = Math.floor(rand(vx, vx + vw))
     const y = Math.floor(rand(vy, vy + vh))
     if (x < 0 || y < 0 || x >= world.width || y >= world.height) continue
-    if (!types || types.includes(world.tiles[y][x])) return { x, y }
+    if (!types || types.includes(world.tiles[y][x])) {
+      _SAMPLE.x = x; _SAMPLE.y = y; return _SAMPLE
+    }
   }
   return null
 }
