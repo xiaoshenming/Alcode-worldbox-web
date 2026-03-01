@@ -1,11 +1,11 @@
 {
-  "notes": "迭代83完成。深度GC优化第二十九轮 — 共生成4个perf commit。主要成果：1) WorldBorderSystem粒子系统：splice+push{}改为预分配_particlePool[MAX_PARTICLES]+swap-remove模式，消除每帧粒子生命周期GC；2) 删除死代码：EraSystem.getEraInfo、WorldBorderSystem.getRepulsionForce、LegendaryBattleSystem.getVisualEffects+DUST_OFFSETS数组、EvolutionSystem.getAdaptationProgress、StatisticsTracker.getSummary、GeneticDisplaySystem import+空实例化调用（6处，累计删除100+行）；3) 更新5个测试文件适配死代码删除（EraSystem/WorldBorderSystem/EvolutionSystem/StatisticsTracker）。全面扫描确认：所有优先级列表项已验证——_politicalData.push({})是懒增长模式（运行期不分配）、WorldBorderSystem.getRepulsionForce已删除、AchievementSystem.getProgress在tick%30=0低频调用、NotificationCenterSystem.getNavigationTarget和CivManager.collectTradeRouteData均无调用者（已知死代码但无需删除）。5432测试全通过，TypeScript clean，构建成功，push完成。",
+  "notes": "迭代84完成。深度GC优化第三十轮 — 共生成4个perf commit。主要成果：1) 删除9处死代码方法（无外部生产调用者），累计删减约250行：BattleReplaySystem.recordFrame（含new Array+push{}）、AmbientSoundMixer.getMixState+SoundMixState接口（含push({...ls})+map(e=>({...e}))）、ObjectPoolSystem.getAllStats（含3层嵌套return{}）、RuinsSystem.discoverRuin（含find+return{techBonus,cultureBonus}）、SeasonSystem.getTileColorShift（含两路return{r,g,b}）、EraVisualSystem.getUITheme（含return{borderColor,accentColor,bgAlpha}）、MinimapSystem.handleClick（含return{worldX,worldY}）、EventNotificationSystem.handleClick+getRecentEvents（含return{navigateTo:{x,y}}两层嵌套+数组push）；2) CreatureProfessionSystem.getBonus热路径优化：添加_bonusBuf预分配对象，将{...NEUTRAL_BONUS}spread分配改为原地reset+update，同时删除buildBonus函数和NEUTRAL_BONUS常量；3) 更新7个测试文件适配方法删除（私有字段直接读取替代）。5432测试全通过，TypeScript clean，构建成功，全部push完成。",
   "priorities": [
-    "1. 扫描 LoyaltySystem.getCivCenter(return {x,y}) 和 pickEdgeTerritory(return {x,y}) — 已确认每10帧调用但叛乱触发极低频，可跳过",
-    "2. 检查 CityLayoutSystem.ts:317 return {x,y} — 查找其调用频率",
-    "3. 扫描 ClonePowerSystem.ts:82 return {} — 确认调用路径",
-    "4. 检查 FogOfWarSystem.ts:247-257 多个 return {} — 这些是什么调用路径",
-    "5. 扫描 TradeNegotiationSystem.ts:233 return {} — 确认调用频率"
+    "1. 扫描 LoyaltySystem.getCivCenter(return {x,y}) 和 pickEdgeTerritory — 每10帧叛乱检查，触发频率低，但可以优化",
+    "2. 检查 GeneticsSystem.ts:53/88 return {} — 查找调用频率（crossbreed/mutate路径）",
+    "3. 扫描 EntityInspectorSystem.buildTree — 事件驱动（点击实体时），但内部有大量push{}，可以优化",
+    "4. 检查 GeneticDisplaySystem.ts:102/202 return {} — 是否有外部调用者",
+    "5. 扫描 EraVisualSystem.getCurrentStyle — 私有方法，每帧render时调用，但返回EraVisualStyle对象（过渡期），可���缓存"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -76,7 +76,10 @@
     "【迭代83新增】粒子数组splice+push方案→swap-remove模式：逆序swap-remove比splice快O(1)，将最后一个活跃槽字段复制到被删除槽，_particleCount--即可，零GC",
     "【迭代83新增】new XXX()但未赋值的死实例化：grep 'new XxxSystem()' 无赋值目标时为纯死代码，连同import一并删除",
     "【迭代83新增】测试文件中 getSummary()/getXxx() 类型的便利方法删除后，改为 (st as any).privateField 直接读取私有字段，确保不重复触发GC分配",
-    "【迭代83新增】扫描模式：grep 'return {' + 确认调用者 + 判断频率 — 死代码方法无调用者直接删，低频(<60tick)可暂留，高频(每帧)必须缓存"
+    "【迭代83新增】扫描模式：grep 'return {' + 确认调用者 + 判断频率 — 死代码方法无调用者直接删，低频(<60tick)可暂留，高频(每帧)必须缓存",
+    "【迭代84新增】删除死代码前必须确认：grep -rn 'methodName' src/game/ src/systems/ — 不只grep src/，因为Game.ts中可能有内部调用（如CreatureProfessionSystem.getBonus在render中调用）",
+    "【迭代84新增】热路径Record<K,V>预分配缓存模式：getBonus这类返回固定结构Record对象的方法，添加_bonusBuf预分配，改为原地reset+更新字段返回，零GC",
+    "【迭代84新增】死代码扫描批量策略：同时检查handleClick/getRecentEvents/getMixState/getAllStats等UI类方法，这类方法常因UI重构而失去调用者"
   ],
-  "last_updated": "2026-03-01T12:20:00+08:00"
+  "last_updated": "2026-03-01T12:55:00+08:00"
 }
