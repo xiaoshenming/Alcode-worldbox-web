@@ -63,6 +63,13 @@ export class CreaturePremonitionSystem {
     for (let i = this.visions.length - 1; i >= 0; i--) {
       if (this.visions[i].tick < cutoff) this.visions.splice(i, 1)
     }
+  
+    // Prune dead entities from giftMap (every 3600 ticks)
+    if (tick % 3600 === 0 && this.giftMap.size > 0) {
+      for (const id of this.giftMap.keys()) {
+        if (!em.hasComponent(id, 'creature')) this.giftMap.delete(id)
+      }
+    }
   }
 
 }

@@ -69,6 +69,13 @@ export class CreatureTelepathySystem {
         this.links.splice(i, 1)
       }
     }
+  
+    // Prune dead entities from powerMap (every 3600 ticks)
+    if (tick % 3600 === 0 && this.powerMap.size > 0) {
+      for (const id of this.powerMap.keys()) {
+        if (!em.hasComponent(id, 'creature')) this.powerMap.delete(id)
+      }
+    }
   }
 
 }

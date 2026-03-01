@@ -65,6 +65,13 @@ export class CreatureShapeshiftingSystem {
     for (let i = this.shifts.length - 1; i >= 0; i--) {
       if (this.shifts[i].tick < cutoff) this.shifts.splice(i, 1)
     }
+  
+    // Prune dead entities from masteryMap (every 3600 ticks)
+    if (tick % 3600 === 0 && this.masteryMap.size > 0) {
+      for (const id of this.masteryMap.keys()) {
+        if (!em.hasComponent(id, 'creature')) this.masteryMap.delete(id)
+      }
+    }
   }
 
 }

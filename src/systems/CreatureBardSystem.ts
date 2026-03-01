@@ -67,6 +67,13 @@ export class CreatureBardSystem {
         this.performances.splice(i, 1)
       }
     }
+  
+    // Prune dead entities from bardSkill (every 3600 ticks)
+    if (tick % 3600 === 0 && this.bardSkill.size > 0) {
+      for (const id of this.bardSkill.keys()) {
+        if (!em.hasComponent(id, 'creature')) this.bardSkill.delete(id)
+      }
+    }
   }
 
 }
