@@ -2,6 +2,7 @@
 // Springs carrying dissolved radon gas from radium decay underground
 
 import { World } from '../game/World'
+import { hasAdjacentTile } from '../utils/WorldUtils'
 import { EntityManager } from '../ecs/Entity'
 import { TileType } from '../utils/Constants'
 
@@ -33,8 +34,8 @@ export class WorldRadonSpringSystem {
       if (this.zones.length >= MAX_ZONES) break
       const x = Math.floor(Math.random() * w)
       const y = Math.floor(Math.random() * h)
-      const nearWater = this.hasAdjacentTile(world, x, y, TileType.SHALLOW_WATER) || this.hasAdjacentTile(world, x, y, TileType.DEEP_WATER)
-      const nearMountain = this.hasAdjacentTile(world, x, y, TileType.MOUNTAIN)
+      const nearWater = hasAdjacentTile(world, x, y, TileType.SHALLOW_WATER) || hasAdjacentTile(world, x, y, TileType.DEEP_WATER)
+      const nearMountain = hasAdjacentTile(world, x, y, TileType.MOUNTAIN)
       if (!nearWater && !nearMountain) continue
       if (Math.random() > FORM_CHANCE) continue
 
@@ -54,14 +55,6 @@ export class WorldRadonSpringSystem {
     }
   }
 
-  private hasAdjacentTile(world: World, x: number, y: number, tileType: number): boolean {
-    for (let dx = -1; dx <= 1; dx++) {
-      for (let dy = -1; dy <= 1; dy++) {
-        if (dx === 0 && dy === 0) continue
-        if (world.getTile(x + dx, y + dy) === tileType) return true
-      }
-    }
-    return false
-  }
+
 
 }
