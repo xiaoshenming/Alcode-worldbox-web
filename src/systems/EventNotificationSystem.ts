@@ -58,7 +58,11 @@ const HIST_ROW = 24;
 
 export class EventNotificationSystem {
   private nextId = 1;
-  private indicators: EdgeIndicator[] = [];
+  /** Pre-allocated indicator slots — reused every frame to avoid per-frame object creation */
+  private readonly _indicatorPool: EdgeIndicator[] = Array.from({ length: MAX_IND }, () => ({
+    event: null as unknown as GameEvent, screenX: 0, screenY: 0, angle: 0, labelWidth: 0,
+  }));
+  private _indicatorCount = 0;
   private activeMarquee: Marquee | null = null;
   private marqueeQueue: GameEvent[] = [];
   private mqHead = 0;  // head pointer for shift()-free dequeue
@@ -114,8 +118,8 @@ export class EventNotificationSystem {
   /** 处理点击，返回需要导航到的世界坐标 */
   handleClick(x: number, y: number): { navigateTo?: { x: number; y: number } } | null {
     const hitR = (IND_SZ + 10) * (IND_SZ + 10);
-    for (let i = 0; i < this.indicators.length; i++) {
-      const ind = this.indicators[i];
+    for (let i = 0; i < this._indicatorCount; i++) {
+      const ind = this._indicatorPool[i];
       const dx = x - ind.screenX, dy = y - ind.screenY;
       if (dx * dx + dy * dy < hitR) {
         return { navigateTo: { x: ind.event.worldX, y: ind.event.worldY } };
@@ -137,7 +141,7 @@ export class EventNotificationSystem {
 
   /** 清空所有通知状态 */
   clear(): void {
-    this.indicators.length = 0;
+    this._indicatorCount = 0;
     this.activeMarquee = null;
     this.marqueeQueue.length = 0;
     this.mqHead = 0;
@@ -167,7 +171,7 @@ export class EventNotificationSystem {
   private rebuildIndicators(
     camX: number, camY: number, sw: number, sh: number, zoom: number
   ): void {
-    this.indicators.length = 0;
+    this._indicatorCount = 0;
     const candidates = this._candidatesBuf; candidates.length = 0;
     for (let i = 0; i < this.histCount && candidates.length < MAX_IND * 2; i++) {
       const evt = this.histBuf[(this.histHead - 1 - i + HIST_CAP) % HIST_CAP];
@@ -178,7 +182,8 @@ export class EventNotificationSystem {
     }
 
     const m = IND_MARGIN;
-    for (let i = 0; i < Math.min(candidates.length, MAX_IND); i++) {
+    const maxI = Math.min(candidates.length, MAX_IND);
+    for (let i = 0; i < maxI; i++) {
       const evt = candidates[i];
       const sx = (evt.worldX - camX) * zoom, sy = (evt.worldY - camY) * zoom;
       const cx = sw / 2, cy = sh / 2;
@@ -200,7 +205,10 @@ export class EventNotificationSystem {
         edgeX = Math.max(m, Math.min(sw - m, cx + t * Math.cos(angle)));
         edgeY = cy + (sh / 2 - m) * Math.sign(Math.sin(angle));
       }
-      this.indicators.push({ event: evt, screenX: edgeX, screenY: edgeY, angle, labelWidth: 0 });
+      // Reuse pre-allocated pool slot
+      const slot = this._indicatorPool[this._indicatorCount++];
+      slot.event = evt; slot.screenX = edgeX; slot.screenY = edgeY;
+      slot.angle = angle; slot.labelWidth = 0;
     }
   }
 
@@ -222,8 +230,8 @@ export class EventNotificationSystem {
 
   private renderIndicators(ctx: CanvasRenderingContext2D): void {
     ctx.save();
-    for (let i = 0; i < this.indicators.length; i++) {
-      const ind = this.indicators[i];
+    for (let i = 0; i < this._indicatorCount; i++) {
+      const ind = this._indicatorPool[i];
       const color = COLORS[ind.event.category];
       // 三角形箭头
       ctx.save();
@@ -265,8 +273,7 @@ export class EventNotificationSystem {
     const text = mq.text;  // Use pre-computed text — no per-frame template literal
     ctx.save();
     ctx.font = 'bold 13px monospace';
-    const measured = ctx.measureText(text).width;
-    if (mq.textWidth === 0 || Math.abs(mq.textWidth - measured) > 1) mq.textWidth = measured;
+    if (mq.textWidth === 0) mq.textWidth = ctx.measureText(text).width;
     ctx.fillStyle = 'rgba(0,0,0,0.65)';
     ctx.fillRect(0, 0, screenWidth, MQ_H);
     ctx.fillStyle = color;

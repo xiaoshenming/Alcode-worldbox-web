@@ -321,7 +321,6 @@ export class DiplomacyVisualSystem {
       const sx = (b.x - camX) * tileSize;
       const sy = (b.y - camY) * tileSize - floatY;
 
-      ctx.save();
       ctx.globalAlpha = Math.max(0.1, alpha);
       ctx.font = this._labelFont;
       if (b.textWidthZoom !== zoom) { b.textWidthZoom = zoom; b.textWidth = ctx.measureText(b.text).width; }
@@ -336,9 +335,8 @@ export class DiplomacyVisualSystem {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(b.text, sx, sy);
-      ctx.globalAlpha = 1;
-      ctx.restore();
     }
+    ctx.globalAlpha = 1;
   }
 
   private renderTerritoryHighlight(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {
