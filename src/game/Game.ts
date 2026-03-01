@@ -106,7 +106,6 @@ import { WorldBorderSystem } from '../systems/WorldBorderSystem'
 import { EnhancedTooltipSystem } from '../systems/EnhancedTooltipSystem'
 import { NavalCombatSystem } from '../systems/NavalCombatSystem'
 import { ReligionSpreadSystem } from '../systems/ReligionSpreadSystem'
-import { GeneticDisplaySystem } from '../systems/GeneticDisplaySystem'
 import { LODRenderSystem } from '../systems/LODRenderSystem'
 import { BuildingVarietySystem } from '../systems/BuildingVarietySystem'
 import { HistoryReplaySystem } from '../systems/HistoryReplaySystem'
@@ -2063,7 +2062,6 @@ export class Game {
     this.enhancedTooltip = new EnhancedTooltipSystem()
     this.navalCombat = new NavalCombatSystem()
     this.religionSpread = new ReligionSpreadSystem()
-    new GeneticDisplaySystem()
     this.lodRender = new LODRenderSystem()
     this.buildingVariety = new BuildingVarietySystem()
     this.historyReplay = new HistoryReplaySystem()
