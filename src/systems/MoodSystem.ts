@@ -54,6 +54,11 @@ export interface MoodModifier {
   combatStrength: number  // multiplier
 }
 
+/** Pre-computed singleton mood modifier objects — avoids per-call object allocation */
+const _MOD_HIGH: MoodModifier = { workSpeed: 1.2, combatStrength: 1.1 }
+const _MOD_LOW: MoodModifier = { workSpeed: 0.7, combatStrength: 0.85 }
+const _MOD_NEUTRAL: MoodModifier = { workSpeed: 1.0, combatStrength: 1.0 }
+
 // ── System ───────────────────────────────────────────────────────────
 
 /**
@@ -189,9 +194,9 @@ export class MoodSystem {
    */
   getMoodModifier(entityId: number): MoodModifier {
     const m = this.getMood(entityId)
-    if (m > 75) return { workSpeed: 1.2, combatStrength: 1.1 }
-    if (m < 25) return { workSpeed: 0.7, combatStrength: 0.85 }
-    return { workSpeed: 1.0, combatStrength: 1.0 }
+    if (m > 75) return _MOD_HIGH
+    if (m < 25) return _MOD_LOW
+    return _MOD_NEUTRAL
   }
 
   /**

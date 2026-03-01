@@ -69,6 +69,10 @@ export class WorldEventTimelineSystem {
   private hoveredIndex = -1;
   private _prevEventCount = -1;
   private _headerStr = 'World Timeline (0)';
+  /** Cached panel rect — rebuilt when screen size changes */
+  private _panelRect = { x: 0, y: 0, w: 0, h: 0 };
+  private _panelSW = 0;
+  private _panelSH = 0;
 
   /** 创建世界事件时间轴系统 */
   constructor() {
@@ -342,11 +346,15 @@ export class WorldEventTimelineSystem {
 
   /** 获取面板矩形区域 */
   private getPanelRect(screenW: number, screenH: number): { x: number; y: number; w: number; h: number } {
-    const w = Math.min(PANEL_MAX_WIDTH, Math.max(PANEL_MIN_WIDTH, screenW * PANEL_WIDTH_RATIO));
-    const h = screenH - PANEL_MARGIN * 2;
-    const x = screenW - w - PANEL_MARGIN;
-    const y = PANEL_MARGIN;
-    return { x, y, w, h };
+    if (screenW !== this._panelSW || screenH !== this._panelSH) {
+      this._panelSW = screenW; this._panelSH = screenH;
+      const w = Math.min(PANEL_MAX_WIDTH, Math.max(PANEL_MIN_WIDTH, screenW * PANEL_WIDTH_RATIO));
+      this._panelRect.w = w;
+      this._panelRect.h = screenH - PANEL_MARGIN * 2;
+      this._panelRect.x = screenW - w - PANEL_MARGIN;
+      this._panelRect.y = PANEL_MARGIN;
+    }
+    return this._panelRect;
   }
 
   /** 截断文本以适应最大宽度 */

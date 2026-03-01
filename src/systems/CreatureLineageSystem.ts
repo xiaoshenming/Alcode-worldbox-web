@@ -31,6 +31,10 @@ export class CreatureLineageSystem {
   private selectedId = -1;
   private panelOpen = false;
   private nodes: NodeLayout[] = [];
+  /** Cached panel rect — rebuilt when screen size changes */
+  private _panelRect = { x: 0, y: 0, w: 0, h: 0 };
+  private _panelSW = 0;
+  private _panelSH = 0;
 
   /**
    * 注册一次生育事件
@@ -146,8 +150,13 @@ export class CreatureLineageSystem {
   // --- 内部方法 ---
 
   private panelRect(sw: number, sh: number) {
-    const w = Math.min(600, sw - 40), h = Math.min(450, sh - 40);
-    return { x: (sw - w) / 2, y: (sh - h) / 2, w, h };
+    if (sw !== this._panelSW || sh !== this._panelSH) {
+      this._panelSW = sw; this._panelSH = sh;
+      const w = Math.min(600, sw - 40), h = Math.min(450, sh - 40);
+      this._panelRect.x = (sw - w) / 2; this._panelRect.y = (sh - h) / 2;
+      this._panelRect.w = w; this._panelRect.h = h;
+    }
+    return this._panelRect;
   }
 
   private drawPanel(ctx: CanvasRenderingContext2D, p: { x: number; y: number; w: number; h: number }): void {

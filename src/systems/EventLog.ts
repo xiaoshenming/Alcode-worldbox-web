@@ -36,7 +36,7 @@ const MAX_EVENTS = 200
 
 class EventLogSingleton {
   // Ring buffer replaces shifting array — O(1) insert, O(1) oldest-eviction
-  private _buf: WorldEvent[] = new Array(MAX_EVENTS)
+  private _buf: WorldEvent[] = Array.from({ length: MAX_EVENTS }, () => ({ type: 'birth' as EventType, message: '', tick: 0, color: '' }))
   private _head = 0  // write pointer
   private _count = 0
   private listeners: Array<(e: WorldEvent) => void> = []
@@ -52,13 +52,11 @@ class EventLogSingleton {
   }
 
   log(type: EventType, message: string, tick: number): void {
-    const event: WorldEvent = {
-      type,
-      message,
-      tick,
-      color: EVENT_COLORS[type]
-    }
-    this._buf[this._head] = event
+    const event = this._buf[this._head]
+    event.type = type
+    event.message = message
+    event.tick = tick
+    event.color = EVENT_COLORS[type]
     this._head = (this._head + 1) % MAX_EVENTS
     if (this._count < MAX_EVENTS) this._count++
     for (const fn of this.listeners) {

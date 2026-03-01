@@ -46,6 +46,10 @@ export class SandboxSettingsSystem {
   private valueStrs: Record<string, string> = {};
   private panelOpen = false;
   private draggingKey: string | null = null;
+  /** Cached panel rect — rebuilt when screen size changes */
+  private _panelRect = { x: 0, y: 0, w: PANEL_W, h: 0 };
+  private _panelSW = 0;
+  private _panelSH = 0;
 
   constructor() {
     this.resetToDefaults();
@@ -107,11 +111,15 @@ export class SandboxSettingsSystem {
   // ── Layout helpers ───────────────────────────────────────────
 
   private panelRect(sw: number, sh: number) {
-    const rows = PARAM_KEYS.length + BOOL_KEYS.length;
-    const h = HEADER_H + rows * ROW_H + FOOTER_H;
-    const x = Math.round((sw - PANEL_W) / 2);
-    const y = Math.round((sh - h) / 2);
-    return { x, y, w: PANEL_W, h };
+    if (sw !== this._panelSW || sh !== this._panelSH) {
+      this._panelSW = sw; this._panelSH = sh;
+      const rows = PARAM_KEYS.length + BOOL_KEYS.length;
+      const h = HEADER_H + rows * ROW_H + FOOTER_H;
+      this._panelRect.x = Math.round((sw - PANEL_W) / 2);
+      this._panelRect.y = Math.round((sh - h) / 2);
+      this._panelRect.h = h;
+    }
+    return this._panelRect;
   }
 
   private sliderRect(px: number, py: number, rowIdx: number) {
