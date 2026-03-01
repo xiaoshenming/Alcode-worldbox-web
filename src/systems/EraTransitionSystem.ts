@@ -178,17 +178,6 @@ export class EraTransitionSystem {
     }
   }
 
-  /** 处理滚动（历史面板） */
-  handleScroll(x: number, _y: number, delta: number): boolean {
-    if (this.historyVisible && x < 280) {
-      this.historyScroll += delta > 0 ? 30 : -30;
-      const maxScroll = Math.max(0, this.history.length * 60 - 400);
-      this.historyScroll = Math.max(0, Math.min(this.historyScroll, maxScroll));
-      return true;
-    }
-    return false;
-  }
-
   // ─── 纪元转换动画 ───
 
   private renderTransition(ctx: CanvasRenderingContext2D, w: number, h: number): void {

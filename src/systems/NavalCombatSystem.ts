@@ -40,16 +40,6 @@ export class NavalCombatSystem {
   private _shipBuf: [EntityId, ShipComponent][] = []
   private _battlesBuf: NavalBattle[] = []
 
-  /** Register a ship entity */
-  registerShip(entityId: EntityId, ship: ShipComponent): void {
-    this.ships.set(entityId, ship)
-  }
-
-  /** Remove a ship (sunk or docked) */
-  removeShip(entityId: EntityId): void {
-    this.ships.delete(entityId)
-  }
-
   update(tick: number, em: EntityManager, civManager: CivManager): void {
     // Expire old battles
     for (const [id, battle] of this.battles) {

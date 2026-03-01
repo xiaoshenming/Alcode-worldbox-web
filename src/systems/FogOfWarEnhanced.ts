@@ -84,14 +84,6 @@ export class FogOfWarEnhanced {
   }
 
   /**
-   * 设置地形数据用于视线遮挡判断
-   * @param terrain 地形类型数组，与世界同大小
-   */
-  setTerrainData(terrain: Uint8Array): void {
-    this.terrainData = terrain;
-  }
-
-  /**
    * 切换当前显示的文明视角
    * @param civId 文明 ID
    */
@@ -389,31 +381,8 @@ export class FogOfWarEnhanced {
     return total > 0 ? (explored / total) * 100 : 0;
   }
 
-  /**
-   * 启用或禁用迷雾系统
-   * @param enabled 是否启用
-   */
-  setEnabled(enabled: boolean): void {
-    this.enabled = enabled;
-  }
-
   /** 查询迷雾系统是否启用 */
   isEnabled(): boolean {
     return this.enabled;
-  }
-
-  /** 强制标记为需要重新计算 */
-  markDirty(): void {
-    this.dirty = true;
-  }
-
-  /** 重置指定文明的探索记忆 */
-  resetCivExploration(civId: number): void {
-    const map = this.civMaps.get(civId);
-    if (map) map.fill(FOG_UNEXPLORED);
-    if (civId === this.activeCivId) {
-      this.visibilityMap.fill(FOG_UNEXPLORED);
-      this.dirty = true;
-    }
   }
 }

@@ -70,15 +70,6 @@ export class FormationSystem {
     return id
   }
 
-  dissolveFormation(id: number): void {
-    this.formations.delete(id)
-  }
-
-  setFormationType(id: number, type: FormationType): void {
-    const f = this.formations.get(id)
-    if (f) f.type = type
-  }
-
   update(em: EntityManager, _world: World, _tick: number): void {
     for (const f of this.formations.values()) {
       // Remove dead members (entities that no longer exist in the EntityManager)

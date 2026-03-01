@@ -21,30 +21,6 @@ export class EntitySearchSystem {
   togglePanel(): void { this.panelOpen = !this.panelOpen; if (!this.panelOpen) this.clear() }
   isPanelOpen(): boolean { return this.panelOpen }
 
-  /** Set search query and trigger search. */
-  setQuery(q: string): void { this.query = q.toLowerCase() }
-
-  /** Run search against entity manager. Call after setQuery. */
-  search(entities: Array<{ id: number; label: string; x: number; y: number }>): void {
-    if (!this.query) { this.results = []; return }
-    this.results = entities
-      .filter(e => e.label.toLowerCase().includes(this.query))
-      .slice(0, 20)
-      .map(e => ({ entityId: e.id, label: e.label, x: e.x, y: e.y, coordStr: `(${e.x},${e.y})` }))
-    this.selectedIdx = this.results.length > 0 ? 0 : -1
-  }
-
-
-  selectNext(): void {
-    if (this.results.length === 0) return
-    this.selectedIdx = (this.selectedIdx + 1) % this.results.length
-  }
-
-  selectPrev(): void {
-    if (this.results.length === 0) return
-    this.selectedIdx = (this.selectedIdx - 1 + this.results.length) % this.results.length
-  }
-
   clear(): void { this.query = ''; this.results = []; this.selectedIdx = -1 }
 
   /** Render search panel overlay. */

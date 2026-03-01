@@ -323,13 +323,6 @@ export class MusicSystem {
     }
   }
 
-  setMood(mood: string): void {
-    if (VALID_MOODS.includes(mood as Mood)) {
-      this.targetMood = mood as Mood
-      if (this.ctx) this.crossfadeToNewMood()
-    }
-  }
-
   setMuted(muted: boolean): void {
     this.muted = muted
     if (!muted) {
@@ -346,20 +339,6 @@ export class MusicSystem {
     this.masterVolume = Math.max(0, Math.min(1, v))
     if (this.masterGain && !this.muted && this.ctx) {
       this.masterGain.gain.setValueAtTime(this.masterVolume, this.ctx.currentTime)
-    }
-  }
-
-  setMusicVolume(v: number): void {
-    this.musicVolume = Math.max(0, Math.min(1, v))
-    if (this.musicGain && this.ctx) {
-      this.musicGain.gain.setValueAtTime(this.musicVolume, this.ctx.currentTime)
-    }
-  }
-
-  setAmbientVolume(v: number): void {
-    this.ambientVolume = Math.max(0, Math.min(1, v))
-    if (this.ambientGain && this.ctx) {
-      this.ambientGain.gain.setValueAtTime(this.ambientVolume, this.ctx.currentTime)
     }
   }
 

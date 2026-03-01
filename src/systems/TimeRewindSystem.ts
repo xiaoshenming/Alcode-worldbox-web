@@ -48,26 +48,6 @@ export class TimeRewindSystem {
     return this.selectedIndex
   }
 
-  /** Select a snapshot by index; returns it or null if invalid */
-  selectSnapshot(index: number): WorldSnapshot | null {
-    if (index < 0 || index >= this.snapshots.length) return null
-    this.selectedIndex = index
-    this.confirmPending = true
-    return this.snapshots[index]
-  }
-
-  isTimelineVisible(): boolean {
-    return this.timelineVisible
-  }
-
-  toggleTimeline(): void {
-    this.timelineVisible = !this.timelineVisible
-    if (!this.timelineVisible) {
-      this.selectedIndex = -1
-      this.confirmPending = false
-    }
-  }
-
   /** Called every tick; auto-captures every CAPTURE_INTERVAL ticks */
   update(tick: number, populationCount: number, civCount: number): void {
     if (tick > 0 && tick % CAPTURE_INTERVAL === 0) {

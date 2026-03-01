@@ -108,29 +108,6 @@ export class PlagueMutationSystem {
     this._headerStr = `\u{1F9A0} 瘟疫毒株 (${active} 活跃 / ${this.strains.length} 总计)`
   }
 
-  /** 创建原始毒株 */
-  createStrain(tick: number, symptoms?: Symptom[]): PlagueStrain {
-    const syms: Symptom[] = symptoms ?? [this.randomSymptom()]
-    const strain: PlagueStrain = {
-      id: nextStrainId++,
-      name: randomName(),
-      parentId: 0,
-      infectRate: 0.1 + Math.random() * 0.3,
-      lethality: syms.reduce((s, sy) => s + SYMPTOM_INFO[sy].lethalityMod, 0.02),
-      mutationRate: 0.05 + Math.random() * 0.1,
-      symptoms: syms,
-      infected: 0, deaths: 0,
-      createdTick: tick, extinct: false,
-      infectStr: '', lethalStr: '', statsStr: '感染:0 死亡:0', parentStr: '', nameStr: '',
-    }
-    strain.infectStr = `传染${Math.round(strain.infectRate * 100)}%`
-    strain.lethalStr = `致死${(strain.lethality * 100).toFixed(1)}%`
-    strain.nameStr = `\u{1F9A0} ${strain.name}`
-    this.strains.push(strain)
-    this._rebuildHeaderCache()
-    return strain
-  }
-
   /** 获取活跃毒株 */
   getActiveStrains(): readonly PlagueStrain[] {
     this._activeStrainsBuf.length = 0
@@ -138,26 +115,10 @@ export class PlagueMutationSystem {
     return this._activeStrainsBuf
   }
 
-  /** 记录感染 */
-  recordInfection(strainId: number): void {
-    const s = this.strains.find(s => s.id === strainId)
-    if (s) { s.infected++; s.statsStr = `感染:${s.infected} 死亡:${s.deaths}` }
-  }
-
   /** 记录死亡 */
   recordDeath(strainId: number): void {
     const s = this.strains.find(s => s.id === strainId)
     if (s) { s.deaths++; s.statsStr = `感染:${s.infected} 死亡:${s.deaths}` }
-  }
-
-  /** 标记灭绝 */
-  markExtinct(strainId: number): void {
-    const s = this.strains.find(s => s.id === strainId)
-    if (s && !s.extinct) {
-      s.extinct = true
-      s.nameStr = `\u{1F480} ${s.name}`
-      this._rebuildHeaderCache()
-    }
   }
 
   /* ── 更新 ── */
@@ -219,15 +180,6 @@ export class PlagueMutationSystem {
     if (e.shiftKey && e.key.toUpperCase() === 'G') {
       this.visible = !this.visible
       this.scrollY = 0
-      return true
-    }
-    return false
-  }
-
-  handleWheel(mx: number, my: number, dy: number): boolean {
-    if (!this.visible) return false
-    if (mx >= this.panelX && mx <= this.panelX + PANEL_W && my >= this.panelY + HEADER_H && my <= this.panelY + PANEL_H) {
-      this.scrollY = clamp(this.scrollY + dy * 0.5, 0, Math.max(0, this.strains.length * ROW_H - (PANEL_H - HEADER_H)))
       return true
     }
     return false

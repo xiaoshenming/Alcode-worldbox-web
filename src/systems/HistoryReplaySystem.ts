@@ -94,13 +94,6 @@ export class HistoryReplaySystem {
     this.scrubbing = false
   }
 
-  /** Scrub to a position (0.0 - 1.0) */
-  scrubTo(pct: number): void {
-    if (this.snapshots.length === 0) return
-    this.replayIndex = Math.floor(pct * (this.snapshots.length - 1))
-    this.scrubbing = true
-  }
-
   /** Step forward/backward */
   step(delta: number): void {
     if (this.snapshots.length === 0) return

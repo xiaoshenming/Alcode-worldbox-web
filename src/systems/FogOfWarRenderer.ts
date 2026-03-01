@@ -56,11 +56,6 @@ export class FogOfWarRenderer {
     }
   }
 
-  /** 标记迷雾状态已变化，需要重绘 */
-  markDirty(): void {
-    this.fogVersion++
-  }
-
   private ensureCanvas(w: number, h: number): void {
     if (!this.fogCanvas || this.cachedWidth !== w || this.cachedHeight !== h) {
       this.fogCanvas = new OffscreenCanvas(w, h)

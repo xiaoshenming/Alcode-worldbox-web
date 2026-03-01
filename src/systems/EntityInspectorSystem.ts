@@ -47,27 +47,6 @@ export class EntityInspectorSystem {
     this._flatDirty = true
   }
 
-  /** Toggle expand/collapse of a node at given flat index. */
-  toggleNode(flatIdx: number): void {
-    let count = 0
-    const toggle = (nodes: PropNode[]): boolean => {
-      for (const n of nodes) {
-        if (count === flatIdx) { n.expanded = !n.expanded; this._flatDirty = true; return true }
-        count++
-        if (n.expanded && n.children.length > 0) {
-          if (toggle(n.children)) return true
-        }
-      }
-      return false
-    }
-    toggle(this.tree)
-  }
-
-  handleScroll(delta: number): void {
-    if (!this.panelOpen) return
-    this.scrollOffset = Math.max(0, this.scrollOffset + delta * 20)
-  }
-
   render(ctx: CanvasRenderingContext2D, screenW: number, screenH: number): void {
     if (!this.panelOpen || this.entityId === null) return
 

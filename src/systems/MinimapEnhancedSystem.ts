@@ -12,7 +12,6 @@ export interface MinimapHeatData {
 }
 
 interface WarMarker { x: number; y: number; intensity: number }
-interface HoverState { minimapX: number; minimapY: number; minimapWidth: number; minimapHeight: number }
 
 const MODES: MinimapMode[] = ['terrain', 'population', 'war', 'resource', 'faith'];
 const MODE_LABELS: Record<MinimapMode, string> = {
@@ -53,9 +52,6 @@ function getColorLerp(mode: MinimapMode): ((t: number) => ColorBuf) | null {
   }
 }
 
-const PREVIEW_SIZE = 120;
-const PREVIEW_ZOOM = 2;
-
 // Pre-computed heatmap palette: 101 steps for val 0.00..1.00
 // Rebuilt whenever mode changes. alpha = 0.30 + val * 0.60
 type HeatPalette = string[]
@@ -83,13 +79,6 @@ export class MinimapEnhancedSystem {
   private mode: MinimapMode = 'terrain';
   private heatmaps: Map<MinimapMode, MinimapHeatData> = new Map();
   private warMarkers: WarMarker[] = [];
-  private hoverState: HoverState | null = null;
-  /** Persistent HoverState object — reused in handleHover to avoid new{} each call */
-  private _hoverBuf: HoverState = { minimapX: 0, minimapY: 0, minimapWidth: 1, minimapHeight: 1 };
-  /** Cached tile coordinate label — rebuilt when tileX/tileY changes */
-  private _prevTileX = -1;
-  private _prevTileY = -1;
-  private _tileStr = 'Tile: 0,0';
   private tick = 0;
 
   setMode(mode: MinimapMode): void { this.mode = mode; }
@@ -100,17 +89,6 @@ export class MinimapEnhancedSystem {
   }
 
   updateHeatmap(mode: MinimapMode, data: MinimapHeatData): void { this.heatmaps.set(mode, data); }
-  addWarMarker(x: number, y: number, intensity: number): void { this.warMarkers.push({ x, y, intensity }); }
-  clearWarMarkers(): void { this.warMarkers.length = 0; }
-
-  handleHover(minimapX: number, minimapY: number, minimapWidth: number, minimapHeight: number): void {
-    const h = this._hoverBuf;
-    h.minimapX = minimapX; h.minimapY = minimapY;
-    h.minimapWidth = minimapWidth; h.minimapHeight = minimapHeight;
-    this.hoverState = h;
-  }
-
-  clearHover(): void { this.hoverState = null; }
   update(tick: number): void { this.tick = tick; }
 
   /** 渲染小地图 */
@@ -136,70 +114,6 @@ export class MinimapEnhancedSystem {
     ctx.font = '11px monospace';
     ctx.textAlign = 'center';
     ctx.fillText(MODE_LABELS[this.mode], x + width / 2, y - 4);
-    ctx.restore();
-  }
-
-  /** 渲染悬停预览窗口 */
-  renderPreview(ctx: CanvasRenderingContext2D, mouseX: number, mouseY: number): void {
-    if (!this.hoverState) return;
-    const heat = this.heatmaps.get(this.mode);
-    if (!heat) return;
-
-    const { minimapX, minimapY, minimapWidth, minimapHeight } = this.hoverState;
-    const normX = minimapX / minimapWidth;
-    const normY = minimapY / minimapHeight;
-    const px = mouseX + 16;
-    const py = mouseY - PREVIEW_SIZE - 16;
-
-    ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.85)';
-    ctx.fillRect(px - 2, py - 2, PREVIEW_SIZE + 4, PREVIEW_SIZE + 24);
-
-    const lerpFn = getColorLerp(this.mode);
-    if (lerpFn) {
-      const pal = _HEAT_PALETTES.get(this.mode);
-      const srcR = 1 / (PREVIEW_ZOOM * 2);
-      const sU = Math.max(0, normX - srcR), eU = Math.min(1, normX + srcR);
-      const sV = Math.max(0, normY - srcR), eV = Math.min(1, normY + srcR);
-      const steps = 24;
-      const cellS = PREVIEW_SIZE / steps;
-      for (let sy = 0; sy < steps; sy++) {
-        for (let sx = 0; sx < steps; sx++) {
-          const u = sU + (sx / steps) * (eU - sU);
-          const v = sV + (sy / steps) * (eV - sV);
-          const di = Math.floor(v * heat.height) * heat.width + Math.floor(u * heat.width);
-          const val = heat.data[di] ?? 0;
-          if (pal && pal.length > 0) {
-            ctx.fillStyle = pal[Math.round(val * 100)];
-          } else {
-            const c = lerpFn(val);
-            ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
-          }
-          ctx.fillRect(px + sx * cellS, py + sy * cellS, cellS + 0.5, cellS + 0.5);
-        }
-      }
-    } else {
-      ctx.fillStyle = '#333';
-      ctx.fillRect(px, py, PREVIEW_SIZE, PREVIEW_SIZE);
-      ctx.fillStyle = '#888';
-      ctx.font = '10px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('Terrain Preview', px + PREVIEW_SIZE / 2, py + PREVIEW_SIZE / 2);
-    }
-
-    ctx.fillStyle = '#fff';
-    ctx.font = '10px monospace';
-    ctx.textAlign = 'left';
-    const tileX = Math.floor(normX * heat.width);
-    const tileY = Math.floor(normY * heat.height);
-    if (tileX !== this._prevTileX || tileY !== this._prevTileY) {
-      this._prevTileX = tileX; this._prevTileY = tileY;
-      this._tileStr = `Tile: ${tileX},${tileY}`;
-    }
-    ctx.fillText(this._tileStr, px + 2, py + PREVIEW_SIZE + 12);
-    ctx.strokeStyle = MODE_BORDER_COLORS[this.mode];
-    ctx.lineWidth = 1;
-    ctx.strokeRect(px, py, PREVIEW_SIZE, PREVIEW_SIZE + 20);
     ctx.restore();
   }
 

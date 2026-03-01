@@ -199,35 +199,6 @@ export class MoodSystem {
     return _MOD_NEUTRAL
   }
 
-  /**
-   * Returns desertion probability (0-1).
-   * - Mood > 25: 0 risk
-   * - Mood 10-25: linear 0-0.15
-   * - Mood < 10: 0.15-0.5 (may rebel or flee)
-   */
-  getDesertionRisk(entityId: number): number {
-    const m = this.getMood(entityId)
-    if (m > 25) return 0
-    if (m >= 10) return (25 - m) / 100   // 0 → 0.15
-    return 0.15 + (10 - m) / 100 * 3.5   // 0.15 → 0.5
-  }
-
-  /**
-   * Apply a temporary victory boost to a creature after winning combat.
-   */
-  applyVictory(entityId: number): void {
-    const data = this.getOrCreate(entityId)
-    data.victoryBoost = FACTOR.VICTORY_BOOST
-  }
-
-  /**
-   * Apply a temporary loss penalty to a creature after an ally dies.
-   */
-  applyLoss(entityId: number): void {
-    const data = this.getOrCreate(entityId)
-    data.lossBoost = FACTOR.LOSS_PENALTY
-  }
-
   // ── Private helpers ────────────────────────────────────────────────
 
   private getOrCreate(entityId: number): MoodData {

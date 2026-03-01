@@ -204,38 +204,6 @@ export class FlockingSystem {
     }
   }
 
-  /** Render flock debug visualization */
-  renderDebug(
-    ctx: CanvasRenderingContext2D,
-    camX: number, camY: number, zoom: number
-  ): void {
-    ctx.save()
-    ctx.globalAlpha = 0.2
-    ctx.strokeStyle = '#88aaff'
-    ctx.lineWidth = 1
-
-    for (const flock of this.flocks.values()) {
-      if (flock.count < 3) continue
-      const sx = (flock.centroidX - camX) * zoom
-      const sy = (flock.centroidY - camY) * zoom
-
-      // Draw flock radius
-      ctx.beginPath()
-      ctx.arc(sx, sy, FLOCK_RADIUS * zoom * 0.5, 0, Math.PI * 2)
-      ctx.stroke()
-
-      // Draw flock direction
-      ctx.globalAlpha = 0.4
-      ctx.beginPath()
-      ctx.moveTo(sx, sy)
-      ctx.lineTo(sx + flock.avgVx * zoom * 2, sy + flock.avgVy * zoom * 2)
-      ctx.stroke()
-      ctx.globalAlpha = 0.2
-    }
-
-    ctx.restore()
-  }
-
   getFlockCount(): number {
     return this.flocks.size
   }

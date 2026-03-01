@@ -211,64 +211,6 @@ export class UnifiedParticleSystem {
     this.ptype[idx] = TYPE_IDS[type];
   }
 
-  // ===================== 发射 API =====================
-
-  /** 在指定位置发射 count 个粒子 */
-  emit(type: ParticleType, x: number, y: number, count: number): void {
-    for (let i = 0; i < count; i++) {
-      const idx = this.alloc();
-      if (idx === -1) return;
-      this.initParticle(idx, type, x, y);
-    }
-  }
-
-  /** 爆发式发射：粒子在 radius 范围内随机分布 */
-  emitBurst(type: ParticleType, x: number, y: number, count: number, radius: number): void {
-    for (let i = 0; i < count; i++) {
-      const idx = this.alloc();
-      if (idx === -1) return;
-      const angle = Math.random() * Math.PI * 2;
-      const dist = Math.random() * radius;
-      this.initParticle(idx, type, x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-      // 爆发方向：从中心向外
-      this.pvx[idx] += Math.cos(angle) * 1.5;
-      this.pvy[idx] += Math.sin(angle) * 1.5;
-    }
-  }
-
-  /** 持续流式发射，返回 streamId */
-  emitStream(type: ParticleType, x: number, y: number, dx: number, dy: number, rate: number): number {
-    // 找一个空闲 slot
-    let slot = -1;
-    for (let i = 0; i < MAX_STREAMS; i++) {
-      const id = (this.nextStreamId + i) % MAX_STREAMS;
-      if (!this.streams[id].active) {
-        slot = id;
-        break;
-      }
-    }
-    if (slot === -1) return -1;
-
-    const s = this.streams[slot];
-    s.type = type;
-    s.x = x;
-    s.y = y;
-    s.dx = dx;
-    s.dy = dy;
-    s.rate = rate;
-    s.accumulator = 0;
-    s.active = true;
-    this.nextStreamId = (slot + 1) % MAX_STREAMS;
-    return slot;
-  }
-
-  /** 停止流式发射 */
-  stopStream(streamId: number): void {
-    if (streamId >= 0 && streamId < MAX_STREAMS) {
-      this.streams[streamId].active = false;
-    }
-  }
-
   // ===================== 更新 =====================
 
   /** 每帧更新所有活跃粒子和流式发射器 */

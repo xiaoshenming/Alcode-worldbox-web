@@ -119,8 +119,6 @@ export class MythologySystem {
     return totalUnique > 0 ? shared / totalUnique : 0
   }
 
-  setSelectedCiv(civId: number): void { this.selectedCivId = civId }
-
   /* ── 更新 ── */
 
   update(tick: number, civIds: Iterable<number>): void {
@@ -173,31 +171,6 @@ export class MythologySystem {
     if (e.shiftKey && e.key.toUpperCase() === 'Y') {
       this.visible = !this.visible
       this.scrollY = 0
-      return true
-    }
-    return false
-  }
-
-  handleMouseDown(mx: number, my: number): boolean {
-    if (!this.visible) return false
-    if (mx >= this.panelX && mx <= this.panelX + PANEL_W && my >= this.panelY && my <= this.panelY + HEADER_H) {
-      this.dragging = true; this.dragOX = mx - this.panelX; this.dragOY = my - this.panelY; return true
-    }
-    return mx >= this.panelX && mx <= this.panelX + PANEL_W && my >= this.panelY && my <= this.panelY + PANEL_H
-  }
-
-  handleMouseMove(mx: number, my: number): boolean {
-    if (this.dragging) { this.panelX = mx - this.dragOX; this.panelY = my - this.dragOY; return true }
-    return false
-  }
-
-  handleMouseUp(): boolean { if (this.dragging) { this.dragging = false; return true } return false }
-
-  handleWheel(mx: number, my: number, dy: number): boolean {
-    if (!this.visible) return false
-    if (mx >= this.panelX && mx <= this.panelX + PANEL_W && my >= this.panelY + HEADER_H && my <= this.panelY + PANEL_H) {
-      const myths = this.myths.get(this.selectedCivId) ?? []
-      this.scrollY = clamp(this.scrollY + dy * 0.5, 0, Math.max(0, myths.length * ROW_H - (PANEL_H - HEADER_H - TAB_H)))
       return true
     }
     return false

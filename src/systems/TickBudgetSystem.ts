@@ -57,41 +57,6 @@ export class TickBudgetSystem {
     this.frameElapsed = performance.now() - this.frameStart;
   }
 
-  /** Returns false if the system should be skipped this frame. */
-  beginSystem(name: string, priority: SystemPriority): boolean {
-    let rec = this.systems.get(name);
-    if (!rec) {
-      rec = {
-        priority, times: new Float64Array(HISTORY), writeIdx: 0,
-        sum: 0, lastTime: 0, skipCount: 0, frequency: 1, frameCounter: 0, startMark: 0,
-      };
-      this.systems.set(name, rec);
-    }
-    rec.frameCounter++;
-    if (priority === 'critical') {
-      rec.startMark = performance.now();
-      return true;
-    }
-    if (rec.frameCounter < rec.frequency) { rec.skipCount++; return false; }
-    const elapsed = performance.now() - this.frameStart;
-    if (elapsed >= this.budgetMs && priority !== 'high') { rec.skipCount++; return false; }
-    rec.frameCounter = 0;
-    rec.startMark = performance.now();
-    return true;
-  }
-
-  endSystem(name: string): void {
-    const rec = this.systems.get(name);
-    if (!rec) return;
-    const elapsed = performance.now() - rec.startMark;
-    rec.lastTime = elapsed;
-    const idx = rec.writeIdx;
-    rec.sum -= rec.times[idx];
-    rec.times[idx] = elapsed;
-    rec.sum += elapsed;
-    rec.writeIdx = (idx + 1) % HISTORY;
-  }
-
   private adaptFrequencies(): void {
     const fps = this.currentFps;
     for (const rec of this.systems.values()) {
@@ -123,11 +88,6 @@ export class TickBudgetSystem {
     this.reportDirty = false;
     return this.reportCache;
   }
-
-
-  resetSkipCounts(): void {
-    for (const rec of this.systems.values()) rec.skipCount = 0;
-  }
 }
 
 // --- Spatial Hash ---
@@ -145,15 +105,6 @@ export class SpatialHash {
 
   clear(): void {
     for (const arr of this.cells.values()) arr.length = 0;
-  }
-
-  insert(id: number, x: number, y: number): void {
-    const cx = Math.floor(x * this.invCell);
-    const cy = Math.floor(y * this.invCell);
-    const key = cy * 100000 + cx;
-    let bucket = this.cells.get(key);
-    if (!bucket) { bucket = []; this.cells.set(key, bucket); }
-    bucket.push(id);
   }
 
   /** Query entity ids within radius tiles of (x, y). */

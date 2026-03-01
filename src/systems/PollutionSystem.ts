@@ -63,21 +63,6 @@ export class PollutionSystem {
 
   /* ── 公共 API ── */
 
-  /** 注册污染源（工厂、矿场等） */
-  addSource(x: number, y: number, rate: number, civId: number): void {
-    this.sources.push({ x, y, rate, civId })
-  }
-
-  /** 移除某坐标的污染源 */
-  removeSource(x: number, y: number): void {
-    for (let i = this.sources.length - 1; i >= 0; i--) {
-      if (this.sources[i].x === x && this.sources[i].y === y) {
-        this.sources[i] = this.sources[this.sources.length - 1]
-        this.sources.pop()
-      }
-    }
-  }
-
   /** 获取某地块污染值 0-1 */
   getPollution(x: number, y: number): number {
     if (x < 0 || x >= this.w || y < 0 || y >= this.h) return 0

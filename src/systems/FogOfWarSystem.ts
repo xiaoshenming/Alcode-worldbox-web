@@ -258,39 +258,9 @@ export class FogOfWarSystem {
     }
   }
 
-  private claimDiscovery(event: DiscoveryEvent, civId: number): void {
+  private claimDiscovery(event: DiscoveryEvent, _civId: number): void {
     if (event.claimed) return;
     event.claimed = true;
-
-    // We don't have direct access to CivManager here, but the caller (update) does.
-    // Instead, store civId on the event and apply rewards in the update loop.
-    // For simplicity, we apply via a deferred approach — store in a queue.
-    // Actually, let's just apply inline since we have civId context.
-    this._pendingRewards.push({ civId, reward: event.reward });
-  }
-
-  // Pending rewards to apply (processed in update after reveal pass)
-  private _pendingRewards: { civId: number; reward: DiscoveryEvent['reward'] }[] = [];
-
-  /** Call after update to apply discovery rewards to civilizations */
-  applyPendingRewards(civManager: CivManager): void {
-    for (const { civId, reward } of this._pendingRewards) {
-      const civ = civManager.civilizations.get(civId);
-      if (!civ) continue;
-      if (reward.gold) civ.resources.gold += reward.gold;
-      if (reward.food) civ.resources.food += reward.food;
-      if (reward.techBoost && civ.research.currentTech) {
-        civ.research.progress = Math.min(100, civ.research.progress + reward.techBoost);
-      }
-      // lost_tribe adds population — handled by spawning logic externally
-      // For now, just bump population count directly for simplicity
-      if (reward.food && !reward.gold && !reward.techBoost && !reward.xp) {
-        // This heuristic identifies lost_tribe (only food, no other rewards)
-        civ.population += 1;
-        EventLog.log('birth', `A lost tribe joined ${civ.name}! (+1 population)`, 0);
-      }
-    }
-    this._pendingRewards.length = 0;
   }
 
   private checkCivDiscovery(fogData: CivFogData, civManager: CivManager, civId: number, tick: number): void {
@@ -329,13 +299,4 @@ export class FogOfWarSystem {
     }
   }
 
-  /** Remove fog data for a destroyed civilization */
-  removeCiv(civId: number): void {
-    this.civFogMap.delete(civId);
-    this.discoveredCivs.delete(civId);
-    // Clean up references in other civs' discovered sets
-    for (const [, set] of this.discoveredCivs) {
-      set.delete(civId);
-    }
-  }
 }

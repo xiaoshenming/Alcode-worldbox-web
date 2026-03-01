@@ -102,19 +102,6 @@ export class ProphecySystem {
 
   getHistory(): readonly Prophecy[] { return this.history }
 
-  /** 手动添加预言（上帝之力） */
-  addProphecy(type: ProphecyType, text: string, probability: number, durationTicks: number, tick: number, civId = -1): void {
-    if (this.prophecies.length >= MAX_ACTIVE) return
-    this.prophecies.push({
-      id: nextProphecyId++, type, text, state: ProphecyState.Active,
-      createdTick: tick, deadlineTick: tick + durationTicks,
-      probability, probabilityStr: (probability * 100).toFixed(0),
-      quotedText: `"${text}"`,
-      statusLine: `概率: ${(probability * 100).toFixed(0)}%  剩余: ${durationTicks} ticks`,
-      civId, notified: false,
-    })
-  }
-
   /* ── 更新 ── */
 
   update(tick: number, civCount: number): void {
@@ -168,37 +155,6 @@ export class ProphecySystem {
     if (e.shiftKey && e.key.toUpperCase() === 'O') {
       this.visible = !this.visible
       this.scrollY = 0
-      return true
-    }
-    return false
-  }
-
-  handleMouseDown(mx: number, my: number): boolean {
-    if (!this.visible) return false
-    if (mx >= this.panelX && mx <= this.panelX + PANEL_W && my >= this.panelY && my <= this.panelY + HEADER_H) {
-      this.dragging = true
-      this.dragOX = mx - this.panelX
-      this.dragOY = my - this.panelY
-      return true
-    }
-    return mx >= this.panelX && mx <= this.panelX + PANEL_W && my >= this.panelY && my <= this.panelY + PANEL_H
-  }
-
-  handleMouseMove(mx: number, my: number): boolean {
-    if (this.dragging) { this.panelX = mx - this.dragOX; this.panelY = my - this.dragOY; return true }
-    return false
-  }
-
-  handleMouseUp(): boolean {
-    if (this.dragging) { this.dragging = false; return true }
-    return false
-  }
-
-  handleWheel(mx: number, my: number, dy: number): boolean {
-    if (!this.visible) return false
-    if (mx >= this.panelX && mx <= this.panelX + PANEL_W && my >= this.panelY + HEADER_H && my <= this.panelY + PANEL_H) {
-      const maxScroll = Math.max(0, (this.prophecies.length + this.history.length) * ROW_H - (PANEL_H - HEADER_H))
-      this.scrollY = clamp(this.scrollY + dy * 0.5, 0, maxScroll)
       return true
     }
     return false

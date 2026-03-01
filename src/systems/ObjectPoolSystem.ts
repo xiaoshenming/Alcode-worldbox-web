@@ -47,44 +47,6 @@ export class ObjectPool<T> {
     }
   }
 
-  acquire(): T {
-    this.acquireCount++
-    let obj: T
-    if (this.free.length > 0) {
-      obj = this.free.pop()!
-      this.hitCount++
-    } else {
-      obj = this.factory()
-      this.totalCreated++
-    }
-    this.active.add(obj)
-    if (this.active.size > this.peakUsage) {
-      this.peakUsage = this.active.size
-      this.lastPeakTime = Date.now()
-      this.lastPeakValue = this.peakUsage
-    }
-    return obj
-  }
-
-  release(obj: T): void {
-    if (!this.active.has(obj)) return
-    this.active.delete(obj)
-    this.resetFn(obj)
-    if (this.free.length < this.maxSize) {
-      this.free.push(obj)
-    }
-  }
-
-  releaseAll(): void {
-    for (const obj of this.active) {
-      this.resetFn(obj)
-      if (this.free.length < this.maxSize) {
-        this.free.push(obj)
-      }
-    }
-    this.active.clear()
-  }
-
   /** Shrink free list if pool has been oversized for too long. */
   autoShrink(): void {
     const now = Date.now()
@@ -171,14 +133,6 @@ export class ObjectPoolSystem {
     }
     this.arrayActiveCount++
     return [] as T[]
-  }
-
-  releaseArray(arr: unknown[]): void {
-    arr.length = 0
-    if (this.arrayPool.length < this.ARRAY_MAX) {
-      this.arrayPool.push(arr)
-    }
-    this.arrayActiveCount = Math.max(0, this.arrayActiveCount - 1)
   }
 
   // ---- Lifecycle ----

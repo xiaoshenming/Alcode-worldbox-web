@@ -39,36 +39,6 @@ export class MapMarkerSystem {
     this.load()
   }
 
-  /** Place a new marker, returns its ID or -1 if pool is full */
-  addMarker(worldX: number, worldY: number, type: string, label: string): number {
-    if (this.count >= MAX_MARKERS) return -1
-    const slot = this.findFreeSlot()
-    if (slot === -1) return -1
-    const id = this.nextId++
-    this.pool[slot] = { id, x: worldX, y: worldY, type, label, created: Date.now() }
-    this.count++
-    this.save()
-    return id
-  }
-
-  removeMarker(id: number): void {
-    const idx = this.findSlot(id)
-    if (idx === -1) return
-    this.pool[idx] = null
-    this.count--
-    this.save()
-  }
-
-  updateMarkerLabel(id: number, label: string): void {
-    const m = this.getById(id)
-    if (m) { m.label = label; this.save() }
-  }
-
-  moveMarker(id: number, worldX: number, worldY: number): void {
-    const m = this.getById(id)
-    if (m) { m.x = worldX; m.y = worldY; this.save() }
-  }
-
   getMarkers(): MarkerData[] {
     const out: MarkerData[] = []
     for (let i = 0; i < MAX_MARKERS; i++) {
