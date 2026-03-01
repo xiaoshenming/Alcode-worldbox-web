@@ -68,14 +68,6 @@ export class EcosystemSystem {
     }
   }
 
-  getEcosystemHealth(): number {
-    return this.ecosystemHealth;
-  }
-
-  getWildlifeCounts(): Map<string, number> {
-    return this.wildlifeCounts;
-  }
-
   private refreshCounts(em: EntityManager): void {
     this.wildlifeCounts.clear();
     const entities = em.getEntitiesWithComponents('creature', 'position');

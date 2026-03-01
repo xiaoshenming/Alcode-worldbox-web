@@ -52,11 +52,7 @@ export class AllianceSystem {
     this.applyFederationBonuses(civManager)
   }
 
-  getAlliances(): Alliance[] {
-    return this.alliances
-  }
-
-  getAllianceForCiv(civId: number): Alliance | null {
+  private getAllianceForCiv(civId: number): Alliance | null {
     return this.alliances.find(a => a.members.has(civId)) ?? null
   }
 

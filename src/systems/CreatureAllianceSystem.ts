@@ -103,18 +103,4 @@ export class CreatureAllianceSystem {
     )
   }
 
-  getAlliances(): PersonalAlliance[] {
-    return this.alliances
-  }
-
-  private _alliancesForBuf: PersonalAlliance[] = []
-  getAlliancesFor(id: EntityId): PersonalAlliance[] {
-    this._alliancesForBuf.length = 0
-    for (const a of this.alliances) { if (a.memberA === id || a.memberB === id) this._alliancesForBuf.push(a) }
-    return this._alliancesForBuf
-  }
-
-  getAllianceCount(): number {
-    return this.alliances.length
-  }
 }

@@ -63,14 +63,13 @@ export class CreatureGuildSystem {
   private _unguildedBuf: EntityId[] = []
   private _prevActiveCount = -1
   private _headerStr = 'Guilds (0)'
-  getGuilds(): Guild[] { return this.guilds }
-  getActiveGuilds(): Guild[] {
+  private getActiveGuilds(): Guild[] {
     this._activeGuildsBuf.length = 0
     for (const g of this.guilds) { if (g.members.length > 0) this._activeGuildsBuf.push(g) }
     return this._activeGuildsBuf
   }
 
-  getGuildForEntity(eid: EntityId): Guild | undefined {
+  private getGuildForEntity(eid: EntityId): Guild | undefined {
     return this.guilds.find(g => g.members.includes(eid))
   }
 

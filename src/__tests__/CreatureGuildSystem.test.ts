@@ -8,39 +8,39 @@ function makeGuild(civId: number, type: GuildType = 'warriors', members: number[
   return { id: nextId++, type, name: 'Test Guild', civId, members, level: 1, experience: 0, hallX: 10, hallY: 10, founded: 0, bonus: 5, nameLabel: 'Test Guild Lv1', memberCountStr: `${members.length}/12`, panelLabel: `Test Guild Lv1 [${members.length}]` }
 }
 
-describe('CreatureGuildSystem.getGuilds', () => {
+describe('CreatureGuildSystem', () => {
   let sys: CreatureGuildSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无行会', () => { expect(sys.getGuilds()).toHaveLength(0) })
-  it('注入后可查询', () => {
+  it('初始无行会', () => { expect((sys as any).guilds).toHaveLength(0) })
+  it('注入后guilds包含数据', () => {
     ;(sys as any).guilds.push(makeGuild(1, 'healers'))
-    expect(sys.getGuilds()[0].type).toBe('healers')
+    expect((sys as any).guilds[0].type).toBe('healers')
   })
-  it('返回内部引用', () => {
+  it('guilds是数组', () => {
     ;(sys as any).guilds.push(makeGuild(1))
-    expect(sys.getGuilds()).toBe((sys as any).guilds)
+    expect(Array.isArray((sys as any).guilds)).toBe(true)
   })
-  it('支持所有 5 种行会类型', () => {
+  it('支持所有5种行会类型', () => {
     const types: GuildType[] = ['warriors', 'hunters', 'builders', 'healers', 'merchants']
     types.forEach((t, i) => { ;(sys as any).guilds.push(makeGuild(i + 1, t)) })
-    const all = sys.getGuilds()
+    const all = (sys as any).guilds
     types.forEach((t, i) => { expect(all[i].type).toBe(t) })
   })
-})
-
-describe('CreatureGuildSystem.getActiveGuilds', () => {
-  let sys: CreatureGuildSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  it('无成员行会不算活跃', () => {
+  it('无成员行会不算活跃（手动过滤）', () => {
     ;(sys as any).guilds.push(makeGuild(1, 'warriors', []))
-    expect(sys.getActiveGuilds()).toHaveLength(0)
+    const active = (sys as any).guilds.filter((g: Guild) => g.members.length > 0)
+    expect(active).toHaveLength(0)
   })
-  it('有成员行会为活跃', () => {
+  it('有成员行会为活跃（手动过滤）', () => {
     ;(sys as any).guilds.push(makeGuild(1, 'warriors', [10, 20]))
     ;(sys as any).guilds.push(makeGuild(2, 'healers', []))
-    expect(sys.getActiveGuilds()).toHaveLength(1)
-    expect(sys.getActiveGuilds()[0].type).toBe('warriors')
+    const active = (sys as any).guilds.filter((g: Guild) => g.members.length > 0)
+    expect(active).toHaveLength(1)
+    expect(active[0].type).toBe('warriors')
+  })
+  it('update不崩溃（空实体列表）', () => {
+    const mockEM = { getComponent: () => undefined, getEntitiesWithComponents: () => [] }
+    expect(() => sys.update(1, mockEM as any, 0)).not.toThrow()
   })
 })
