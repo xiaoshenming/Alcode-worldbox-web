@@ -130,14 +130,4 @@ export class WorldBeaconSystem {
   getBeaconAt(x: number, y: number): Beacon | null {
     return this.beacons.find(b => b.x === x && b.y === y) ?? null
   }
-
-  isInBeaconRange(x: number, y: number): boolean {
-    for (const b of this.beacons) {
-      if (!b.lit) continue
-      const dx = b.x - x
-      const dy = b.y - y
-      if (dx * dx + dy * dy <= b.range * b.range) return true
-    }
-    return false
-  }
 }

@@ -161,19 +161,9 @@ export class WorldAgeSystem {
     return EPOCH_CONFIGS[this.currentEpochIndex].disasterFrequency
   }
 
-  /** Returns a resource regeneration multiplier (>1 = faster). */
-  getResourceRegenModifier(): number {
-    return EPOCH_CONFIGS[this.currentEpochIndex].resourceRegen
-  }
-
   /** Returns the per-tile terrain drift probability for the current epoch. */
   getTerrainDriftChance(): number {
     return EPOCH_CONFIGS[this.currentEpochIndex].terrainDriftChance
-  }
-
-  /** Returns a creature spawn rate multiplier for the current epoch. */
-  getCreatureSpawnRateModifier(): number {
-    return EPOCH_CONFIGS[this.currentEpochIndex].creatureSpawnRate
   }
 
   /** Returns the total world age in ticks. */

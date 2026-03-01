@@ -19,7 +19,6 @@ export interface AuroraStorm {
 const CHECK_INTERVAL = 600
 const MAX_STORMS = 3
 const FORM_CHANCE = 0.01
-const MAGIC_BOOST = 1.5
 
 export class WorldAuroraStormSystem {
   private storms: AuroraStorm[] = []
@@ -82,10 +81,6 @@ export class WorldAuroraStormSystem {
         this.storms.splice(i, 1)
       }
     }
-  }
-
-  getMagicBoost(): number {
-    return this.storms.length > 0 ? MAGIC_BOOST : 1.0
   }
 
   private _activeStormsBuf: AuroraStorm[] = []

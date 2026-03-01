@@ -76,6 +76,4 @@ export class WorldRainbowSystem {
       }
     }
   }
-
-  isRainbowVisible(): boolean { return this.rainbows.length > 0 }
 }

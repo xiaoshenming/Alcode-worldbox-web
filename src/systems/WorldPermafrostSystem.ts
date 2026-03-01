@@ -84,12 +84,4 @@ export class WorldPermafrostSystem {
       }
     }
   }
-
-  isPermafrost(x: number, y: number): boolean {
-    return this.zones.some(z => {
-      const dx = x - z.x
-      const dy = y - z.y
-      return dx * dx + dy * dy < z.radius * z.radius
-    })
-  }
 }

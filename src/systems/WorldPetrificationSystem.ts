@@ -182,8 +182,4 @@ export class WorldPetrificationSystem {
       }
     }
   }
-
-  isPetrified(creatureId: number): boolean {
-    return this.petrified.some(p => p.creatureId === creatureId)
-  }
 }

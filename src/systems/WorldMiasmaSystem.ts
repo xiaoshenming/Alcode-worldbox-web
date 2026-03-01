@@ -103,27 +103,6 @@ export class WorldMiasmaSystem {
     }
   }
 
-  isInMiasma(x: number, y: number): boolean {
-    for (const zone of this.zones) {
-      const dx = zone.x - x, dy = zone.y - y
-      if (dx * dx + dy * dy <= zone.radius * zone.radius) return true
-    }
-    return false
-  }
-
-  getMiasmaIntensity(x: number, y: number): number {
-    let maxIntensity = 0
-    for (const zone of this.zones) {
-      const dx = zone.x - x, dy = zone.y - y
-      const dist = Math.sqrt(dx * dx + dy * dy)
-      if (dist <= zone.radius) {
-        const falloff = 1 - dist / zone.radius
-        maxIntensity = Math.max(maxIntensity, zone.intensity * falloff)
-      }
-    }
-    return maxIntensity
-  }
-
   private _toxicZonesBuf: MiasmaZone[] = []
   getToxicZones(): MiasmaZone[] {
     this._toxicZonesBuf.length = 0

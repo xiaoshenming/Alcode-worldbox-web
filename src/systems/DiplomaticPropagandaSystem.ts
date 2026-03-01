@@ -84,7 +84,4 @@ export class DiplomaticPropagandaSystem {
   private hasPropaganda(source: number, target: number): boolean {
     return this.propaganda.some(p => p.sourceCivId === source && p.targetCivId === target)
   }
-
-  private _propagandaBuf: Propaganda[] = []
-  getPropagandaCount(): number { return this.propaganda.length }
 }

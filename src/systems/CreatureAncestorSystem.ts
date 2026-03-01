@@ -65,13 +65,6 @@ export class CreatureAncestorSystem {
     return this._civAncestorsBuf
   }
 
-  /** Called when a hero dies - candidate for ancestor worship */
-  notifyHeroDeath(name: string, species: string, civId: number, x: number, y: number, level: number): void {
-    if (level >= 3) {
-      this.deadHeroes.push({ name, species, civId, x, y, power: Math.min(1.0, level * 0.15) })
-    }
-  }
-
   update(dt: number, em: EntityManager, civManager: CivManagerLike, tick: number): void {
     // Process dead heroes into ancestors
     if (tick >= this.nextCheckTick) {

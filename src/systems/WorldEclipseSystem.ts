@@ -109,6 +109,4 @@ export class WorldEclipseSystem {
       }
     }
   }
-
-  isEclipseActive(): boolean { return this.eclipses.length > 0 }
 }

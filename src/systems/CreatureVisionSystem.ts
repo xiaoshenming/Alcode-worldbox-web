@@ -27,7 +27,6 @@ const TERRAIN_VISION_MOD: Partial<Record<TileType, number>> = {
 
 export class CreatureVisionSystem {
   private visionMap = new Map<number, VisionData>()
-  private _allVisionBuf: VisionData[] = []
   private lastCheck = 0
 
   update(dt: number, world: World, em: EntityManager, tick: number): void {
@@ -93,15 +92,5 @@ export class CreatureVisionSystem {
 
   getVision(entityId: number): VisionData | undefined {
     return this.visionMap.get(entityId)
-  }
-
-  getVisibleEntities(entityId: number): number[] {
-    return this.visionMap.get(entityId)?.visibleEntities ?? []
-  }
-
-  getAllVisionData(): VisionData[] {
-    const buf = this._allVisionBuf; buf.length = 0
-    for (const v of this.visionMap.values()) buf.push(v)
-    return buf
   }
 }

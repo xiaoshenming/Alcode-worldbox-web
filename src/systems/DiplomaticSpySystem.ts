@@ -40,10 +40,6 @@ export class DiplomaticSpySystem {
   private incidents: SpyIncident[] = []
   private nextCheckTick = CHECK_INTERVAL
 
-  private _civSpiesBuf: Spy[] = []
-  private _activeSpiesBuf2: Spy[] = []
-  getSpyCount(): number { return this.spies.length }
-
   private countActiveSpies(): number {
     let n = 0
     for (const s of this.spies) { if (s.status === 'active') n++ }

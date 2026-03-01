@@ -101,12 +101,4 @@ export class WorldDustStormSystem {
       }
     }
   }
-
-  isInStorm(x: number, y: number): boolean {
-    return this.storms.some(s => {
-      const dx = x - s.x
-      const dy = y - s.y
-      return dx * dx + dy * dy < s.radius * s.radius
-    })
-  }
 }

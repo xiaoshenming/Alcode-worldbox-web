@@ -124,14 +124,4 @@ export class WorldTidalWaveSystem {
       }
     }
   }
-
-  isWaveActive(): boolean { return this.waves.length > 0 }
-  getStrongestWave(): TidalWave | undefined {
-    if (this.waves.length === 0) return undefined
-    let best = this.waves[0]
-    for (let i = 1; i < this.waves.length; i++) {
-      if (DAMAGE_MAP[this.waves[i].intensity] > DAMAGE_MAP[best.intensity]) best = this.waves[i]
-    }
-    return best
-  }
 }
