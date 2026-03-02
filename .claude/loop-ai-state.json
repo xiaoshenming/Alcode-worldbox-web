@@ -1,11 +1,11 @@
 {
-  "notes": "迭代146（循环53/100）。本轮主要成就：收集并提交III3/JJJ3/KKK3三批Agent结果，测试从17114增至17527，+413个测试。\n\n本轮处理的系统（3批Agent并行）：\nIII3组(+154): WorldRutheniumSpringSystem(50) WorldSaltFlatSystem(52) WorldSaltMarshSystem(52)\nJJJ3组(+151): WorldSamariumSpringSystem(50) WorldSandDuneSystem(51) WorldSandstoneArchSystem(50)\nKKK3组(+153): WorldSandstormSystem(50) WorldScandiumSpringSystem(51) WorldSeaCaveSystem(52)\n\n关键发现：\n- WorldRutheniumSpringSystem: CHECK_INTERVAL=2830, FORM_CHANCE=0.003(random>FC则continue), MAX_ZONES=32, 3次attempt, 静态字段, cutoff=54000\n- WorldSaltFlatSystem: CHECK_INTERVAL=2800, FORM_CHANCE=0.002(random<FC才spawn), MAX_FLATS=20, tile须SAND(2)/GRASS(3), cutoff=92000, update含5个字段\n- WorldSaltMarshSystem: CHECK_INTERVAL=2600, FORM_CHANCE=0.003(random<FC才spawn), MAX_MARSHES=24, tile须SAND(2)/SHALLOW_WATER(1), cutoff=90000\n- WorldSamariumSpringSystem: CHECK_INTERVAL=2940, FORM_CHANCE=0.003(random>FC则continue), MAX_ZONES=32, 3次attempt, 静态字段, cutoff=54000\n- WorldSandDuneSystem: CHECK_INTERVAL=4500(最长!), SPAWN_CHANCE=0.003(random>SC则return), MAX_DUNES=10, 20次attempt, tile须SAND(2)且5x5区sandCount>=8, cleanup依active=false字段\n- WorldSandstoneArchSystem: CHECK_INTERVAL=2800, FORM_CHANCE=0.003(random>FC则continue), MAX_ZONES=35, 3次attempt, tile须SAND(2)/MOUNTAIN(5), cutoff=55000, 双cleanup条件(tick<cutoff OR stability<=0)\n- WorldSandstormSystem: CHECK_INTERVAL=1600, STORM_CHANCE=0.005(random<SC才spawn), MAX_STORMS=15, tile===GRASS(3)而非SAND！(源码注释有误), cutoff=12000\n- WorldScandiumSpringSystem: CHECK_INTERVAL=2920, FORM_CHANCE=0.003(random>FC则continue), MAX_ZONES=32, 3次attempt, 静态字段, cutoff=54000\n- WorldSeaCaveSystem: CHECK_INTERVAL=2630, FORM_CHANCE=0.0012(random<FC才spawn), MAX_CAVES=13, tile须SHALLOW_WATER(1)/MOUNTAIN(5), cutoff=93000\n\n关键陷阱新发现：\n- WorldSandstormSystem tile条件：源码注释写\"sand\"但实际是tile===3(GRASS)！必须从源码验证\n- WorldSandDuneSystem cleanup条件：基于active=false字段，不是tick年龄\n- WorldSandstoneArchSystem双cleanup：tick<cutoff OR stability<=0，两个触发条件\n- WorldSandDuneSystem CHECK_INTERVAL=4500是迄今最长的\n- Spring族（Ruthenium/Samarium/Scandium）均使用random>FORM_CHANCE则continue\n- SaltFlat/SaltMarsh/SeaCave使用random<FORM_CHANCE才spawn（方向相反）\n\n当前已派发下一批（LLL3/MMM3/NNN3）���\n- LLL3组(a005a2264a984e9b0): WorldSeaStackSystem WorldSeleniumSpringSystem WorldSiliceousSinterSystem\n- MMM3组(a78477f9a712403d4): WorldSinkhole2System WorldSinkholePlainSystem WorldSinkholePrevSystem\n- NNN3组(a2738cee628883ac1): WorldSinterSystem WorldSodaSpringSystem WorldSolfataraSystem\n\n下轮优先方向：\n1. 等待LLL3/MMM3/NNN3 Agent完成，收集结果\n2. 运行全量测试验证，修复flaky测试\n3. 继续处理WorldS/T系列后续（Spire/Stalactite/SteamVent/StoneArch等）",
+  "notes": "迭代147（循环54/100）。本轮主要成就：收集并提交LLL3/MMM3/NNN3三批Agent结果，测试从17527增至18008，+481个测试。\n\n本轮处理的系统（3批Agent并行）：\nLLL3组(+167): WorldSeaStackSystem(59) WorldSeleniumSpringSystem(50) WorldSiliceousSinterSystem(58)\nMMM3组(+188): WorldSinkhole2System(63) WorldSinkholePlainSystem(61) WorldSinkholePrevSystem(64)\nNNN3组(+171): WorldSinterSystem(58) WorldSodaSpringSystem(56) WorldSolfataraSystem(57)\n\n关键发现：\n- WorldSeaStackSystem: CHECK_INTERVAL=2600, FORM_CHANCE=0.003(random<FC才spawn), MAX_STACKS=32, tile须SHALLOW_WATER(1)/MOUNTAIN(5), cleanup: tick<cutoff(95000)或height<1\n- WorldSeleniumSpringSystem: CHECK_INTERVAL=2720, FORM_CHANCE=0.003(random>FC则跳过), MAX_ZONES=32, 邻近水/山才spawn, 3次attempt, cutoff=54000\n- WorldSiliceousSinterSystem: CHECK_INTERVAL=2790, FORM_CHANCE=0.0007(random<FC才spawn), MAX_DEPOSITS=5, 无tile条件, age>=97时cleanup\n- WorldSinkhole2System: CHECK_INTERVAL=2660, FORM_CHANCE=0.0011(random<FC才spawn), MAX_SINKHOLES=12, tile须GRASS(3)/SAND(2), cutoff=94000\n- WorldSinkholePlainSystem: CHECK_INTERVAL=2700, FORM_CHANCE=0.002(random<FC才spawn), MAX_PLAINS=22, tile须GRASS(3)/FOREST(4), cutoff=90000\n- WorldSinkholePrevSystem: CHECK_INTERVAL=4000, SPAWN_CHANCE=0.003(random<SC才spawn), MAX_RISKS=12, tile>2(不含水/沙), cleanup依active=false, mitigation时random<0.01触发\n- WorldSinterSystem: CHECK_INTERVAL=2750, FORM_CHANCE=0.0008(random<FC才spawn), MAX_FORMATIONS=7, age>=94时cleanup\n- WorldSodaSpringSystem: CHECK_INTERVAL=3020, FORM_CHANCE=0.0011(random<FC才spawn), MAX_SPRINGS=12, tick-born>84000时cleanup\n- WorldSolfataraSystem: CHECK_INTERVAL=2680, FORM_CHANCE=0.0011(random<FC才spawn), MAX_SOLFATARAS=9, sulfurOutput>=100时cleanup(达上限即删)\n\n关键陷阱新发现：\n- WorldSinkholePrevSystem: random=0.002既<0.003(spawn)又<0.01(mitigation)，导致spawn后立即mitigation，riskLevel降至<5变inactive被删——必须用mockReturnValueOnce序列化mock\n- WorldSinkhole2System/SinkholePlainSystem: makeWorld未加as any导致大量TS类型错误，已用sed批量修复\n- WorldSolfataraSystem cleanup是基于sulfurOutput字段>=100（非tick年龄），是极少数基于值上限的cleanup\n\n当前已派发下一批（OOO3/PPP3/QQQ3）：\n- OOO3组(af6fad39951eb2fe7): WorldSpireSystem WorldStalactiteSystem WorldSteamVentSystem\n- PPP3组(ad7c7230c43171c2e): WorldStoneArchSystem WorldStoneWindowSystem WorldStrontiumSpringSystem\n- QQQ3组(aa1b58ab4277c9116): WorldSulfurSpringSystem WorldSundialSystem WorldTafoniSystem\n\n下轮优先方向：\n1. 等待OOO3/PPP3/QQQ3 Agent完成，收集结果\n2. 运行全量测试验证，修复flaky测试\n3. 继续处理WorldT系列（Tantalum/Tellurium/Tepui/Terbium/Terracing等）",
   "priorities": [
-    "1. 【持续目标】继续处理World系统（剩余约73个文件），用并行Agent批量处理",
-    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前17527/17527通过）",
-    "3. 【里程碑】已完成216个World系统测试改善（+5872测试），继续下一批",
-    "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+413测试",
-    "5. 【下一批系统】WorldS/T系列（Spire/Stalactite/SteamVent/StoneArch/StoneWindow/Strontium等）"
+    "1. 【持续目标】继续处理World系统（剩余约60个文件），用并行Agent批量处理",
+    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前18008/18008通过）",
+    "3. 【里程碑】已完成225个World系统测试改善（+6353测试），继续下一批",
+    "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+450测试",
+    "5. 【下一批系统】WorldT系列（Tantalum/Tellurium/Tepui/Terbium/Terracing/Thallium/Thermal等）"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -53,8 +53,8 @@
     "【迭代140新增】WeatherSystem.test.ts的mock world需包含getSeason方法——WeatherSystem.update()在startRandomWeather时调用this.world.getSeason()",
     "【迭代140新增】Flaky概率测试：5%概率100次循环失败概率0.95^100≈0.6%偶尔失败，改为500次（0.95^500≈7e-12）消除flakiness",
     "【迭代141新增】WorldMudslideSystem预填充泥石流：默认startTick=0,duration=800在tick=1400时progress=175>100被cleanup删除——需用startTick=1000,duration=800确保progress=50<100保留",
-    "【迭代141新增】WorldOasisSystem的spawn判断是Math.random()>FORM_CHANCE（大于，与其他系统<不同！），需特别注意判���方向",
-    "【迭代142新增】WorldObsidianFieldSystem tradeValue=deposit*1.5*(sharpness/100)中，sharpness用的是更新前的旧值——因为源码先计算tradeValue，再更新sharpness",
+    "【迭代141新增】WorldOasisSystem的spawn判断是Math.random()>FORM_CHANCE（大于，与其他系统<不同！），需特别注意判断方向",
+    "【迭代142新增】WorldObsidianFieldSystem tradeValue=deposit*1.5*(sharpness/100)中���sharpness用的是更新前的旧值——因为源码先计算tradeValue，再更新sharpness",
     "【迭代142新增】WorldPermafrostSystem的applyEffects在节流外执行——不受CHECK_INTERVAL约束，即使tick<CHECK_INTERVAL也会对范围内生物造成COLD_DAMAGE",
     "【迭代143新增】WorldPetrificationSystem邻近距离排斥：预填充zones坐标需离新spawn点>20单位（dx²+dy²<400时拒绝），测试预填充用(50+i*10,50)而非(i,i)",
     "【迭代143新增】WorldQuicksandSystem cleanup依据active=false字段（不是tick年龄），与大多数系统不同——需检查源码确认cleanup触发条件类型",
@@ -66,7 +66,10 @@
     "【迭代146新增】WorldSandDuneSystem cleanup依据active=false字段（与QuicksandSystem相同），不是tick年龄——需检查源码确认cleanup触发条件类型",
     "【迭代146新增】WorldSandstoneArchSystem双cleanup条件：tick<cutoff OR stability<=0，两个条件任一满足即删除",
     "【迭代146新增】WorldSandDuneSystem CHECK_INTERVAL=4500是迄今最长的，spawn需要20次attempt且tile须SAND(2)且5x5区sandCount>=8（复杂条件）",
-    "【迭代146新增】Spring系统FORM_CHANCE方向规律：Ruthenium/Samarium/Scandium用random>FC则continue；SaltFlat/SaltMarsh/SeaCave用random<FC才spawn——同族不一定同向！"
+    "【迭代146新增】Spring系统FORM_CHANCE方向规律：Ruthenium/Samarium/Scandium用random>FC则continue；SaltFlat/SaltMarsh/SeaCave用random<FC才spawn——同族不一定同向！",
+    "【迭代147新增】WorldSinkholePrevSystem random序列冲突：spawn用random=0.002时，同时满足mitigation条件(random<0.01)，导致spawn后立即被mitigated且riskLevel<5→active=false→cleanup删除——必须用mockReturnValueOnce(0.002).mockReturnValue(0.5)序列化",
+    "【迭代147新增】测试文件makeWorld缺as any导致大量TS错误——可用sed批量修复：sed -i 's/return { width.*getTile.*} $/& as any/' file.ts",
+    "【迭代147新增】WorldSolfataraSystem cleanup基于sulfurOutput>=100（非tick年龄）——是极少数基于字段值达上限触发cleanup的系统，不同于常见的tick cutoff"
   ],
-  "last_updated": "2026-03-03T04:00:00+08:00"
+  "last_updated": "2026-03-03T11:30:00+08:00"
 }
