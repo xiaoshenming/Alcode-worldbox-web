@@ -35,6 +35,8 @@ export class AllianceSystem {
   private _enemyScoresBuf: Map<number, number> = new Map()
   // Reusable buffer for checkMemberLeave per-alliance removal list
   private _toRemoveBuf: number[] = []
+  // Reverse index: civId → Alliance (O(1) lookup)
+  private _civToAlliance: Map<number, Alliance> = new Map()
 
   update(civManager: CivManager, em: EntityManager, world: World, particles: ParticleSystem, tick: number): void {
     if (tick % this.TICK_INTERVAL !== 0) return
@@ -45,15 +47,21 @@ export class AllianceSystem {
 
     this.cleanupDeadMembers(civManager)
     this.tryFormAlliances(civs, tick)
-    this.checkMemberLeave(civs)
+    this.checkMemberLeave(civManager)
     this.applyJointDefense(civs, civManager)
     this.tryAllianceWar(civs, civManager, tick)
     this.tryFederationUpgrade(tick)
     this.applyFederationBonuses(civManager)
+
+    // Rebuild reverse index after all mutations this tick
+    this._civToAlliance.clear()
+    for (const alliance of this.alliances) {
+      for (const id of alliance.members) this._civToAlliance.set(id, alliance)
+    }
   }
 
   private getAllianceForCiv(civId: number): Alliance | null {
-    return this.alliances.find(a => a.members.has(civId)) ?? null
+    return this._civToAlliance.get(civId) ?? null
   }
 
   /** Remove members whose civ no longer exists, disband empty alliances */
@@ -116,12 +124,12 @@ export class AllianceSystem {
   }
 
   /** Members with relation < 0 toward any other member leave */
-  private checkMemberLeave(civs: Civilization[]): void {
+  private checkMemberLeave(civManager: CivManager): void {
     const toRemove = this._toRemoveBuf
     for (const alliance of this.alliances) {
       toRemove.length = 0
       for (const memberId of alliance.members) {
-        const civ = civs.find(c => c.id === memberId)
+        const civ = civManager.civilizations.get(memberId)
         if (!civ) continue
         for (const otherId of alliance.members) {
           if (otherId === memberId) continue
@@ -134,7 +142,7 @@ export class AllianceSystem {
       }
       for (const id of toRemove) {
         alliance.members.delete(id)
-        const civName = civs.find(c => c.id === id)?.name ?? `Civ#${id}`
+        const civName = civManager.civilizations.get(id)?.name ?? `Civ#${id}`
         EventLog.log('diplomacy', `${civName} left ${alliance.name}`, 0)
       }
     }
