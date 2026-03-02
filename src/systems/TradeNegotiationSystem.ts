@@ -65,6 +65,7 @@ let nextDealId = 1
 export class TradeNegotiationSystem {
   private _civsBuf: Civilization[] = []
   private negotiations: Negotiation[] = []
+  private _pendingKeySet = new Set<number>()    // key: min(initiator,receiver)*1000+max, for pending only
   private deals: TradeDeal[] = []
   private _activeDealsBuf: TradeDeal[] = []
   private _civDealsBuf: TradeDeal[] = []
@@ -88,6 +89,7 @@ export class TradeNegotiationSystem {
       // Timeout check
       if (tick - neg.startTick > neg.timeoutTicks) {
         neg.status = 'expired'
+        this._pendingKeySet.delete(Math.min(neg.initiatorId, neg.receiverId) * 1000 + Math.max(neg.initiatorId, neg.receiverId))
         continue
       }
 
@@ -95,10 +97,12 @@ export class TradeNegotiationSystem {
       const roll = Math.random() * 100
       if (roll < neg.acceptanceScore) {
         neg.status = 'accepted'
+        this._pendingKeySet.delete(Math.min(neg.initiatorId, neg.receiverId) * 1000 + Math.max(neg.initiatorId, neg.receiverId))
         this.createDeal(neg, civManager, tick)
       } else if (roll > 95) {
         // Small chance of outright rejection each tick
         neg.status = 'rejected'
+        this._pendingKeySet.delete(Math.min(neg.initiatorId, neg.receiverId) * 1000 + Math.max(neg.initiatorId, neg.receiverId))
         this.onRejected(neg, civManager, tick)
       }
     }
@@ -206,6 +210,7 @@ export class TradeNegotiationSystem {
           timeoutTicks: NEGOTIATION_TIMEOUT,
           acceptanceScore: score,
         })
+        this._pendingKeySet.add(Math.min(a.id, b.id) * 1000 + Math.max(a.id, b.id))
 
         EventLog.log('diplomacy', `${a.name} proposed a ${formatProposalType(proposalType)} to ${b.name}`, tick)
       }
@@ -347,11 +352,7 @@ export class TradeNegotiationSystem {
   }
 
   private hasActiveNegotiation(civA: number, civB: number): boolean {
-    return this.negotiations.some(
-      n => n.status === 'pending' &&
-        ((n.initiatorId === civA && n.receiverId === civB) ||
-         (n.initiatorId === civB && n.receiverId === civA))
-    )
+    return this._pendingKeySet.has(Math.min(civA, civB) * 1000 + Math.max(civA, civB))
   }
 
   private stanceMultiplier(civ: Civilization): number {
