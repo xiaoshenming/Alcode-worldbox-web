@@ -40,6 +40,8 @@ export class CreatureBountySystem {
   private bounties: Bounty[] = []
   private nextCheckTick = BOUNTY_CHECK_INTERVAL
   private showPanel = false
+  // O(1) lookup: active (unclaimed) bounties by targetId
+  private _activeBountyByTarget: Map<EntityId, Bounty> = new Map()
 
   private _activeBountiesBuf: Bounty[] = []
   /** Get all active (unclaimed) bounties. */
@@ -57,6 +59,9 @@ export class CreatureBountySystem {
 
   /** Get bounty on a specific creature. */
   getBountyOn(targetId: EntityId): Bounty | null {
+    const b = this._activeBountyByTarget.get(targetId)
+    if (b) return b
+    // Lazy sync fallback: tests may push directly to bounties array
     return this.bounties.find(b => b.targetId === targetId && !b.claimed) ?? null
   }
 
@@ -65,6 +70,7 @@ export class CreatureBountySystem {
     for (let i = this.bounties.length - 1; i >= 0; i--) {
       const b = this.bounties[i]
       if (!b.claimed && tick >= b.expiresAt) {
+        this._activeBountyByTarget.delete(b.targetId)
         this.bounties.splice(i, 1)
       }
     }
@@ -124,6 +130,7 @@ export class CreatureBountySystem {
       displayStr: `#${bountyId} - ${reward}g - ${reason}`,
     }
     this.bounties.push(bounty)
+    this._activeBountyByTarget.set(target, bounty)
     EventLog.log('diplomacy', `${poster.name} posted a bounty of ${reward}g for ${reason}`, tick)
   }
 
@@ -149,6 +156,7 @@ export class CreatureBountySystem {
         }
         bounty.claimed = true
         bounty.claimedBy = bestHunter
+        this._activeBountyByTarget.delete(bounty.targetId)
         const civ = civManager.civilizations.get(bounty.posterId)
         if (civ) {
           EventLog.log('diplomacy', `Bounty claimed! ${civ.name} pays ${bounty.reward}g reward`, tick)
