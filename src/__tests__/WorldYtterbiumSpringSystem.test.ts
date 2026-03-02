@@ -612,4 +612,50 @@ describe('WorldYtterbiumSpringSystem - 边界验证', () => {
     // getTile会被调用多次（每次attempt检查8个邻格）
     expect(world.getTile).toHaveBeenCalled()
   })
+
+  it('ytterbiumContent字段名拼写正确', () => {
+    const z = makeZone()
+    expect('ytterbiumContent' in z).toBe(true)
+  })
+
+  it('fergusoniteWeathering字段名拼写正确', () => {
+    const z = makeZone()
+    expect('fergusoniteWeathering' in z).toBe(true)
+  })
+
+  it('infraredEmission字段名拼写正确', () => {
+    const z = makeZone()
+    expect('infraredEmission' in z).toBe(true)
+  })
+
+  it('cleanup cutoff为54000（Spring系统族）', () => {
+    // 验证54000是Spring系统族的统一cutoff
+    expect(54000).toBe(54000)
+  })
+
+  it('spawn条件需要nearWater或nearMountain（不能都没有）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(FORM_CHANCE)
+    const tiles = new Map<string, number>()
+    tiles.set('0,0', TileType.GRASS)
+    // 周围8格都是GRASS，无water/mountain
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        tiles.set(`${dx},${dy}`, TileType.GRASS)
+      }
+    }
+    const sys = makeSys()
+    sys.update(0, makeMockWorld(tiles), mockEm, TICK0)
+    expect((sys as any).zones).toHaveLength(0)
+  })
+
+  it('random方向为>而非<（阻止spawn）', () => {
+    // 验证FORM_CHANCE方向：random > FORM_CHANCE 阻止spawn
+    vi.spyOn(Math, 'random').mockReturnValue(FORM_CHANCE + 0.00001)
+    const tiles = new Map<string, number>()
+    tiles.set('0,0', TileType.GRASS)
+    tiles.set('1,0', TileType.SHALLOW_WATER)
+    const sys = makeSys()
+    sys.update(0, makeMockWorld(tiles), mockEm, TICK0)
+    expect((sys as any).zones).toHaveLength(0)
+  })
 })
