@@ -287,26 +287,4 @@ export class CreatureSkillSystem {
       }
     }
   }
-
-  private handleSkillClick(mx: number, my: number): void {
-    const d = this.data.get(this.selectedEntity)
-    if (!d) return
-    const branchSkills = this._branchSkillCache.length > 0 && this._lastBranch === this.activeBranch
-      ? this._branchSkillCache
-      : SKILL_DEFS.filter(s => s.branch === this.activeBranch)
-    const startY = this.panelY + HEADER_H + TAB_H + 20
-    const nodeW = 120, nodeH = 70, gapY = 16
-    const nx = this.panelX + PANEL_W / 2 - nodeW / 2
-
-    for (let i = 0; i < branchSkills.length; i++) {
-      const ny = startY + i * (nodeH + gapY)
-      if (mx >= nx && mx <= nx + nodeW && my >= ny && my <= ny + nodeH) {
-        const sk = branchSkills[i]
-        if (!d.skills.has(sk.id) && d.level >= sk.levelReq && (sk.prereq === null || d.skills.has(sk.prereq))) {
-          d.skills.add(sk.id)
-        }
-        break
-      }
-    }
-  }
 }

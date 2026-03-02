@@ -123,12 +123,4 @@ export class MapMarkerSystem {
     }
   }
 
-  // -- internal helpers --
-
-  private findSlot(id: number): number {
-    for (let i = 0; i < MAX_MARKERS; i++) {
-      if (this.pool[i]?.id === id) return i
-    }
-    return -1
-  }
 }

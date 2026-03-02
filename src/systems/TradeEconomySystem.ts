@@ -16,8 +16,6 @@ const MIN_PRICE_MULT = 0.5
 const MAX_PRICE_MULT = 3.0
 const TRADE_INTERVAL = 120
 
-/** Pre-computed local price thresholds — avoids per-civ object literal in updateLocalPrices */
-const _LOCAL_PRICE_THRESHOLDS: Record<string, number> = { food: 30, wood: 25, stone: 15, gold: 10 }
 /** Pre-computed surplus thresholds — avoids per-civ object literal in findSurplus */
 const _SURPLUS_THRESHOLDS: Record<string, number> = { food: 40, wood: 35, stone: 20, gold: 15 }
 
@@ -83,21 +81,6 @@ export class TradeEconomySystem {
     this.globalPrices.wood = this.clampPrice(25 / Math.max(1, avg(totalWood)))
     this.globalPrices.stone = this.clampPrice(15 / Math.max(1, avg(totalStone)))
     this.globalPrices.gold = this.clampPrice(10 / Math.max(1, avg(totalGold)))
-  }
-
-  private updateLocalPrices(civ: Civilization): void {
-    const local: MarketPrices = { food: 1, wood: 1, stone: 1, gold: 1 }
-    const keys = RESOURCE_KEYS
-    const thresholds = _LOCAL_PRICE_THRESHOLDS
-
-    for (const k of keys) {
-      const supply = civ.resources[k]
-      const demand = thresholds[k]
-      const localMult = this.clampPrice(demand / Math.max(1, supply))
-      // Blend 60% local, 40% global
-      local[k] = this.clampPrice(localMult * 0.6 + this.globalPrices[k] * 0.4)
-    }
-    this.localPrices.set(civ.id, local)
   }
 
   private evaluateTrade(a: Civilization, b: Civilization, civManager: CivManager, em: EntityManager, particles: ParticleSystem, tick: number): void {

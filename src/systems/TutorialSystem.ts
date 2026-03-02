@@ -202,10 +202,6 @@ export class TutorialSystem {
     } catch { return null; }
   }
 
-  private hitTest(x: number, y: number, r: HighlightRect): boolean {
-    return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
-  }
-
   private drawButton(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, label: string, color: string, bg: string): void {
     ctx.fillStyle = bg;
     ctx.strokeStyle = color;
@@ -217,11 +213,6 @@ export class TutorialSystem {
     ctx.font = 'bold 13px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(label, x + w / 2, y + h / 2 + 4.5);
-  }
-
-  private wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxW: number, lineH: number): void {
-    const lines = this.computeWrappedLines(ctx, text, maxW);
-    for (let i = 0; i < lines.length; i++) ctx.fillText(lines[i], x, y + i * lineH);
   }
 
   /** Compute word-wrapped lines for text within maxW pixels. Used for caching. */

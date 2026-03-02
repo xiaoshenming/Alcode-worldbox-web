@@ -182,18 +182,6 @@ export class KeybindSystem {
       .join('+');
   }
 
-  private eventToCombo(e: KeyboardEvent): string {
-    const parts: string[] = [];
-    if (e.ctrlKey || e.metaKey) parts.push('Ctrl');
-    if (e.shiftKey) parts.push('Shift');
-    if (e.altKey) parts.push('Alt');
-    let k = e.key;
-    if (k === ' ') k = 'Space';
-    if (k.length === 1) k = k.toUpperCase();
-    if (!MODIFIER_KEYS.has(k)) parts.push(k);
-    return parts.join('+');
-  }
-
   private saveToStorage(): void {
     const data: Record<string, string> = {};
     for (const b of this.bindings.values()) {
