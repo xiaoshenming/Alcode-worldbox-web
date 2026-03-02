@@ -49,7 +49,6 @@ export class BattleReplaySystem {
   private replayPlaying = false;
   private replayAccum = 0;
   private showStats = false;
-  private _dmgMap: Map<number, number> = new Map();
   private _sideColorMap: Map<number, string> = new Map();
   /** Cached frame display string and speed string — rebuild when values change */
   private _frameStr = '0/0';
@@ -283,32 +282,6 @@ export class BattleReplaySystem {
     ctx.font = '11px monospace';
     ctx.fillText('Click to close', x + STATS_W / 2, y + STATS_H - 12);
     ctx.textAlign = 'left';
-  }
-
-  private findMVP(rec: BattleRecord): {id: number; dmg: number} | null {
-    const dmg = this._dmgMap; dmg.clear();
-    for (let i = 1; i < rec.frames.length; i++) {
-      const prev = rec.frames[i - 1], curr = rec.frames[i];
-      for (const cu of curr.units) {
-        const pu = prev.units.find(u => u.id === cu.id);
-        if (!pu || pu.hp <= cu.hp) continue;
-        const loss = pu.hp - cu.hp;
-        for (const atk of curr.attacks) {
-          if ((atk.toX - cu.x) ** 2 + (atk.toY - cu.y) ** 2 >= 9) continue;
-          for (const au of curr.units) {
-            if (au.side === cu.side) continue;
-            if ((atk.fromX - au.x) ** 2 + (atk.fromY - au.y) ** 2 < 9) {
-              dmg.set(au.id, (dmg.get(au.id) || 0) + loss);
-              break;
-            }
-          }
-          break;
-        }
-      }
-    }
-    let bestId = -1, bestDmg = 0;
-    for (const [id, d] of dmg) { if (d > bestDmg) { bestId = id; bestDmg = d; } }
-    return bestId >= 0 ? { id: bestId, dmg: bestDmg } : null;
   }
 
   // ── 查询 ──
