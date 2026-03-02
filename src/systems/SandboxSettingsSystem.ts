@@ -254,12 +254,4 @@ export class SandboxSettingsSystem {
 
   /** Call on mouseup to end slider drag. */
   endDrag(): void { this.draggingKey = null; }
-
-  private applySlider(mx: number, sx: number, sw: number, key: string): void {
-    const d = PARAM_DEFS[key];
-    const ratio = Math.max(0, Math.min(1, (mx - sx) / sw));
-    const raw = d.min + ratio * (d.max - d.min);
-    this.values[key] = Math.round(raw / d.step) * d.step;
-    this.save();
-  }
 }

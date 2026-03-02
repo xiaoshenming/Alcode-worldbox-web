@@ -110,20 +110,6 @@ export class PowerFavoriteSystem {
     ctx.restore();
   }
 
-  /** 命中测试，返回槽位索引，未命中返回 -1 */
-  private hitTest(x: number, y: number, screenW: number, screenH: number): number {
-    const barW = this.getBarWidth();
-    const barX = (screenW - barW) / 2;
-    const barY = screenH - BAR_HEIGHT - BAR_BOTTOM_MARGIN;
-    if (x < barX || x > barX + barW || y < barY || y > barY + BAR_HEIGHT) return -1;
-    const localX = x - barX - BAR_PADDING;
-    const idx = Math.floor(localX / (SLOT_SIZE + SLOT_GAP));
-    if (idx < 0 || idx >= MAX_SLOTS) return -1;
-    const slotStart = idx * (SLOT_SIZE + SLOT_GAP);
-    if (localX < slotStart || localX > slotStart + SLOT_SIZE) return -1;
-    return idx;
-  }
-
   /** 渲染单个槽位 */
   private renderSlot(ctx: CanvasRenderingContext2D, x: number, y: number, index: number): void {
     const isSelected = index === this.selectedIndex;
