@@ -49,6 +49,8 @@ export class CreatureMutationSystem {
   private mutations: Map<EntityId, Mutation[]> = new Map()
   private nextCheckTick = CHECK_INTERVAL
   private recentMutations: { entityId: EntityId; mutation: Mutation; fadeTick: number }[] = []
+  // O(1) mutation type lookup per entity
+  private _mutationTypes: Map<EntityId, Set<MutationType>> = new Map()
 
   /** Get all mutations for an entity. */
   getMutations(entityId: EntityId): Mutation[] {
@@ -57,6 +59,9 @@ export class CreatureMutationSystem {
 
   /** Check if entity has a specific mutation type. */
   hasMutation(entityId: EntityId, type: MutationType): boolean {
+    const types = this._mutationTypes.get(entityId)
+    if (types) return types.has(type)
+    // Lazy sync fallback (tests may push directly to mutations map)
     return this.getMutations(entityId).some(m => m.type === type)
   }
 
@@ -101,6 +106,11 @@ export class CreatureMutationSystem {
         this.mutations.set(eid, muts)
       }
       muts.push(mutation)
+
+      // Sync O(1) type index
+      let typeSet = this._mutationTypes.get(eid)
+      if (!typeSet) { typeSet = new Set(); this._mutationTypes.set(eid, typeSet) }
+      typeSet.add(type)
 
       // Apply stat effects
       this.applyMutation(em, eid, mutation)
