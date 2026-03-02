@@ -24,6 +24,7 @@ const MESSAGES: PropagandaMessage[] = ['glory', 'fear', 'prosperity', 'liberatio
 
 export class DiplomaticPropagandaSystem {
   private propaganda: Propaganda[] = []
+  private _propagandaKeySet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -77,6 +78,7 @@ export class DiplomaticPropagandaSystem {
     // Remove ineffective propaganda
     for (let _i = this.propaganda.length - 1; _i >= 0; _i--) {
       const e = this.propaganda[_i]
+      this._propagandaKeySet.delete(e.sourceCivId * 1000 + e.targetCivId)
       if (e.effectiveness <= 1) this.propaganda.splice(_i, 1)
     }
     if (this.propaganda.length > MAX_PROPAGANDA) {
@@ -86,6 +88,6 @@ export class DiplomaticPropagandaSystem {
   }
 
   private hasPropaganda(source: number, target: number): boolean {
-    return this.propaganda.some(p => p.sourceCivId === source && p.targetCivId === target)
+    return this._propagandaKeySet.has(source * 1000 + target)
   }
 }

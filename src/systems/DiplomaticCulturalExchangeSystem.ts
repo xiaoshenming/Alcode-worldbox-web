@@ -37,6 +37,7 @@ const RELATION_BOOST: Record<ExchangeType, number> = {
 export class DiplomaticCulturalExchangeSystem {
   private _civsBuf: Civilization[] = []
   private exchanges: CulturalExchange[] = []
+  private _exchangeKeySet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -79,6 +80,7 @@ export class DiplomaticCulturalExchangeSystem {
         startTick: tick,
         duration: 3000 + Math.floor(Math.random() * 3000),
       })
+      this._exchangeKeySet.add(civ.id * 1000 + partner.id)
     }
   }
 
@@ -91,6 +93,7 @@ export class DiplomaticCulturalExchangeSystem {
   private expireExchanges(tick: number): void {
     for (let _i = this.exchanges.length - 1; _i >= 0; _i--) {
       const e = this.exchanges[_i]
+      this._exchangeKeySet.delete(e.senderCivId * 1000 + e.receiverCivId)
       if (!(tick - e.startTick < e.duration)) this.exchanges.splice(_i, 1)
     }
   }
@@ -99,11 +102,15 @@ export class DiplomaticCulturalExchangeSystem {
     if (this.exchanges.length > MAX_EXCHANGES) {
       this.exchanges.sort((a, b) => b.influence - a.influence)
       this.exchanges.length = MAX_EXCHANGES
+    
+      // Rebuild set after truncation
+      this._exchangeKeySet.clear()
+      for (const e of this.exchanges) this._exchangeKeySet.add(e.senderCivId * 1000 + e.receiverCivId)
     }
   }
 
   private hasActiveExchange(senderId: number, receiverId: number): boolean {
-    return this.exchanges.some(e => e.senderCivId === senderId && e.receiverCivId === receiverId)
+    return this._exchangeKeySet.has(senderId * 1000 + receiverId)
   }
 
   private _civExchangesBuf: CulturalExchange[] = []

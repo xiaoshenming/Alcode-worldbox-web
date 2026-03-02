@@ -26,6 +26,7 @@ const REASONS: AsylumReason[] = ['persecution', 'war', 'famine', 'political']
 
 export class DiplomaticAsylumSystem {
   private requests: AsylumRequest[] = []
+  private _requestKeySet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -39,7 +40,7 @@ export class DiplomaticAsylumSystem {
         const seeker = pickRandom(entities)
         const host = pickRandom(entities)
         if (seeker !== host) {
-          if (!this.requests.some(r => r.seekerCivId === seeker && r.hostCivId === host)) {
+          if (!this._requestKeySet.has(seeker * 1000 + host)) {
             const reason = pickRandom(REASONS)
             this.requests.push({
               id: this.nextId++,
@@ -51,6 +52,7 @@ export class DiplomaticAsylumSystem {
               diplomaticImpact: 10 + Math.random() * 25,
               tick,
             })
+            this._requestKeySet.add(seeker * 1000 + host)
           }
         }
       }
@@ -68,6 +70,7 @@ export class DiplomaticAsylumSystem {
     for (let i = this.requests.length - 1; i >= 0; i--) {
       const r = this.requests[i]
       if (r.approval >= 95 || r.approval <= 2 || tick - r.tick > 55000) {
+        this._requestKeySet.delete(r.seekerCivId * 1000 + r.hostCivId)
         this.requests.splice(i, 1)
       }
     }
