@@ -83,8 +83,17 @@ export class CreatureApprenticeSystem {
   }
 
   private formApprenticeships(em: EntityManager, tick: number): void {
+    // Build active Sets for O(1) duplicate lookup
+    const activeMasters = new Set<EntityId>()
+    const activeApprentices = new Set<EntityId>()
     let activeCount = 0
-    for (const a of this.apprenticeships) { if (!a.graduated) activeCount++ }
+    for (const a of this.apprenticeships) {
+      if (!a.graduated) {
+        activeCount++
+        activeMasters.add(a.masterId)
+        activeApprentices.add(a.apprenticeId)
+      }
+    }
     if (activeCount >= MAX_APPRENTICESHIPS) return
 
     const entities = em.getEntitiesWithComponents('position', 'creature', 'civMember')
@@ -111,12 +120,12 @@ export class CreatureApprenticeSystem {
     for (const master of masters) {
       if (activeCount >= MAX_APPRENTICESHIPS) break
       // Already mentoring?
-      if (this.apprenticeships.some(a => a.masterId === master.id && !a.graduated)) continue
+      if (activeMasters.has(master.id)) continue
 
       // Find nearby young from same civ
       for (const apprentice of young) {
         if (apprentice.civId !== master.civId) continue
-        if (this.apprenticeships.some(a => a.apprenticeId === apprentice.id && !a.graduated)) continue
+        if (activeApprentices.has(apprentice.id)) continue
 
         const dx = master.x - apprentice.x, dy = master.y - apprentice.y
         if (dx * dx + dy * dy > MENTOR_RANGE * MENTOR_RANGE) continue
@@ -133,6 +142,8 @@ export class CreatureApprenticeSystem {
           graduated: false,
         }
         this.apprenticeships.push(app)
+        activeMasters.add(master.id)
+        activeApprentices.add(apprentice.id)
         activeCount++
 
         const mc = em.getComponent<CreatureComponent>(master.id, 'creature')
