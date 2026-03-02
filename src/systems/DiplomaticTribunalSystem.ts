@@ -26,6 +26,7 @@ const CASE_TYPES: TribunalCase[] = ['territorial', 'war_crimes', 'trade_violatio
 
 export class DiplomaticTribunalSystem {
   private proceedings: TribunalProceeding[] = []
+  private _proceedingKeySet = new Set<string>()  // key: `${prosecutorCivId}_${defendantCivId}`
   private nextId = 1
   private lastCheck = 0
 
@@ -39,9 +40,8 @@ export class DiplomaticTribunalSystem {
         const prosecutor = pickRandom(entities)
         const defendant = pickRandom(entities)
         if (prosecutor !== defendant) {
-          if (!this.proceedings.some(p =>
-            p.prosecutorCivId === prosecutor && p.defendantCivId === defendant
-          )) {
+          const tKey = `${prosecutor}_${defendant}`
+          if (!this._proceedingKeySet.has(tKey)) {
             const caseType = pickRandom(CASE_TYPES)
             this.proceedings.push({
               id: this.nextId++,
@@ -53,6 +53,7 @@ export class DiplomaticTribunalSystem {
               compliance: 30 + Math.random() * 30,
               tick,
             })
+            this._proceedingKeySet.add(tKey)
           }
         }
       }
@@ -72,6 +73,7 @@ export class DiplomaticTribunalSystem {
     for (let i = this.proceedings.length - 1; i >= 0; i--) {
       const p = this.proceedings[i]
       if (p.verdict >= 95 || p.verdict <= 5 || tick - p.tick > 65000) {
+        this._proceedingKeySet.delete(`${p.prosecutorCivId}_${p.defendantCivId}`)
         this.proceedings.splice(i, 1)
       }
     }

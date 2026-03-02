@@ -32,6 +32,7 @@ let nextRivalryId = 1
 
 export class CreatureRivalrySystem {
   private rivalries: Rivalry[] = []
+  private _rivalryKeySet = new Set<string>()    // key: `${min(a,b)}_${max(a,b)}`
   private lastCheck = 0
   private lastUpdate = 0
   private resolvedCount = 0
@@ -59,7 +60,8 @@ export class CreatureRivalrySystem {
       // Find nearby creature to become rival
       for (const b of arr) {
         if (a === b) continue
-        if (this.rivalries.some(r => (r.entityA === a && r.entityB === b) || (r.entityA === b && r.entityB === a))) continue
+        const rKey = `${Math.min(a, b)}_${Math.max(a, b)}`
+        if (this._rivalryKeySet.has(rKey)) continue
         const posB = em.getComponent<PositionComponent>(b, 'position')
         if (!posB) continue
         const dx = posA.x - posB.x, dy = posA.y - posB.y
@@ -75,6 +77,7 @@ export class CreatureRivalrySystem {
           encounters: 0,
           cause: pickRandom(CAUSES),
         })
+        this._rivalryKeySet.add(rKey)
         break
       }
     }
@@ -83,12 +86,20 @@ export class CreatureRivalrySystem {
   private updateRivalries(em: EntityManager, tick: number): void {
     for (let i = this.rivalries.length - 1; i >= 0; i--) {
       const rivalry = this.rivalries[i]
-      if (rivalry.stage === 'resolved') { this.rivalries.splice(i, 1); continue }
+      if (rivalry.stage === 'resolved') {
+        this._rivalryKeySet.delete(`${Math.min(rivalry.entityA, rivalry.entityB)}_${Math.max(rivalry.entityA, rivalry.entityB)}`)
+        this.rivalries.splice(i, 1)
+        continue
+      }
 
       // Check both entities alive
       const cA = em.getComponent<CreatureComponent>(rivalry.entityA, 'creature')
       const cB = em.getComponent<CreatureComponent>(rivalry.entityB, 'creature')
-      if (!cA || !cB) { this.rivalries.splice(i, 1); continue }
+      if (!cA || !cB) {
+        this._rivalryKeySet.delete(`${Math.min(rivalry.entityA, rivalry.entityB)}_${Math.max(rivalry.entityA, rivalry.entityB)}`)
+        this.rivalries.splice(i, 1)
+        continue
+      }
 
       // Chance to resolve
       if (Math.random() < RESOLUTION_CHANCE) {

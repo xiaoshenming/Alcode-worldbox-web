@@ -69,6 +69,12 @@ export class WonderSystem {
   getActiveWonders(): ActiveWonder[] { return this.activeWonders }
 
   getAvailableWonders(): WonderDef[] {
+    // Sync Sets from arrays (tests may push directly to internal arrays)
+    this._activeWonderIds.clear()
+    for (const w of this.activeWonders) this._activeWonderIds.add(w.defId)
+    this._constructionIds.clear()
+    for (const c of this.constructions) this._constructionIds.add(c.defId)
+
     const buf = this._availBuf; buf.length = 0
     for (const d of WONDER_DEFS) {
       if (!this._activeWonderIds.has(d.id) &&
