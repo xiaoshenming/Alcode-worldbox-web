@@ -95,7 +95,14 @@ const SKILL_DEFS: SkillDef[] = [
 ]
 
 const SKILL_MAP = new Map<string, SkillDef>()
-for (const s of SKILL_DEFS) { SKILL_MAP.set(s.id, s); s.levelDescStr = `Lv.${s.levelReq} ${s.desc}` }
+/** Pre-grouped by branch — avoids SKILL_DEFS.filter() at render time */
+const SKILLS_BY_BRANCH = new Map<SkillBranch, SkillDef[]>()
+for (const s of SKILL_DEFS) {
+  SKILL_MAP.set(s.id, s); s.levelDescStr = `Lv.${s.levelReq} ${s.desc}`
+  let arr = SKILLS_BY_BRANCH.get(s.branch)
+  if (!arr) { arr = []; SKILLS_BY_BRANCH.set(s.branch, arr) }
+  arr.push(s)
+}
 
 const PANEL_W = 460, PANEL_H = 420, HEADER_H = 36, TAB_H = 30
 
@@ -109,8 +116,6 @@ export class CreatureSkillSystem {
   private dragging = false
   private dragOX = 0
   private dragOY = 0
-  private _lastBranch: SkillBranch = '' as SkillBranch
-  private _branchSkillCache: SkillDef[] = []
   /** Pre-computed panel header — rebuilt when entity or level changes */
   private _prevSkillEid = -2
   private _prevSkillLvl = -1
@@ -219,12 +224,8 @@ export class CreatureSkillSystem {
       ctx.fillText(BRANCH_TAB_LABELS[b], tx + tabW / 2, py + HEADER_H + 20)
     }
 
-    // 技能节点
-    if (this.activeBranch !== this._lastBranch) {
-      this._lastBranch = this.activeBranch
-      this._branchSkillCache = SKILL_DEFS.filter(s => s.branch === this.activeBranch)
-    }
-    const branchSkills = this._branchSkillCache
+    // 技能节点：直接从预建Map获取，无需filter
+    const branchSkills = SKILLS_BY_BRANCH.get(this.activeBranch) ?? []
     const startY = py + HEADER_H + TAB_H + 20
     const nodeW = 120, nodeH = 70, gapY = 16
     ctx.textAlign = 'center'
