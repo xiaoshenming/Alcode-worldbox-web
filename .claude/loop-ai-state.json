@@ -1,18 +1,18 @@
 {
-  "notes": "迭代109。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.52MB；(2)CityLayoutSystem.renderWalls热路径——将gates.some()闭包替换为预建_gateKeySet(O(1))，消除每帧渲染的GC；(3)CalligraphySystem手写skillMap清理替换为pruneDeadEntities；(4)17处单行hasComponent清理扩展为多行+const alias；(5)15+18=33处for循环多次访问arr[i]无alias——批量添加const别名；(6)TechSystem/AchievementProgressSystem——用Map替换find()线性查找，O(n)→O(1)；(7)WorldPetrificationSystem——用Set替换嵌套some()查找(O(zones*entities*petrified)→O(1))；共8次提交全部推送。",
+  "notes": "迭代110。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.53MB；(2)NavalSystem——缓存ships列表(_shipsBuf)并传给所有6个子方法，消除每tick内6次重复getEntitiesWithComponents调用；(3)QuestSystem——legends Map内存泄漏修复：在generateBallads中收集dead hero ID后批量delete；(4)NavalSystem.portShipCount——内存泄漏修复：spawnShips开始时清理已摧毁port的Map条目；(5)CreatureAmbidextritySystem(MAX=150)+CreatureHomesicknessSystem(MAX=120)——用Map<entityId, Profile/State>替换some()+find()的O(n)扫描，getByEntity改为O(1)+fallback；共5次提交全部推送。\n注意：测试首次失败（3个测试）——因为测试通过getProfiles().push()直接操控内部数组，绕过了Map的更新，修复方案是在getByEntity中添加lazy sync fallback scan。",
   "priorities": [
     "1. 【持续监控】tsc+vitest+build三重验证保持全绿",
-    "2. 【可探索】NavalSystem有11次getEntitiesWithComponents调用——分析是否在同一update周期内，可预缓存",
-    "3. 【可探索】其他系统中有.some(x=>x.entityId===eid)且数组较大的情况——用Set优化",
-    "4. 【可探索】WorldLeyLineSystem/DisasterWarningSystem等有多次push({})的系统——看是否在热路径",
-    "5. 【可探索】QuestSystem/ArmySystem等核心系统有无内存泄漏（Map无delete清理）"
+    "2. 【可探索】其他MAX>=30的系统：CreatureExileSystem(60)/CreatureSleepwalkSystem(30)有some()——但ExileSystem用splice(0,n)截断不适合Set，Sleepwalk规模小",
+    "3. 【可探索】ArmySystem.recruitSoldiers中civ.buildings.some()检查barracks/castle——每300tick对每个文明建筑遍历，可在civ对象上预缓存buildingTypeSet",
+    "4. 【可探索】BiomeEvolutionSystem的neighbors.includes()——neighbors是8元素数组，换Set后get()有开销但避免closure，综合评估不一定值得",
+    "5. 【可探索】CivManager.hasBuildingAt()中的buildings.some()——建筑placement时调用，非热路径但可预建<x*10000+y, boolean> Map"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
     "子代理并行修复大批量文件极高效：4组并行代理可在几分钟内修复160+文件",
     "manualChunks按文件名前缀分组是最安全的代码分割方案 — 不改源码，只改vite配置",
     "Iterable<T>替代T[]可消除spread分配，但检查消费侧是否用了.length/.includes等数组方法",
-    "getAllEntities()返回Array.from()���照 — removeEntity-during-iteration是安全的",
+    "getAllEntities()返回Array.from()快照 — removeEntity-during-iteration是安全的",
     "queue.shift()在BFS中是O(n²)陷阱 — 用索引指针head++替代",
     "Camera.getVisibleBounds()等热路径方法应返回缓存对象而非每次new — 每帧调用4次累积显著GC压力",
     "渲染路径中的闭包/对象字面量/getBoundingClientRect()都是隐性GC源 — 预分配+脏标记是标准修复模式",
@@ -52,7 +52,10 @@
     "【迭代109新增】渲染热路径中Array.some()是隐性GC源——render每帧调用时，gates.some(g=>g.x===w.x&&g.y===w.y)每次创建闭包。解法：提前建_gateKeySet = new Set<number>()，用x*10000+y做数值键，O(1)查找。",
     "【迭代109新增】静态常量数组的find()查找可预建Map优化：TechSystem的TECHNOLOGIES.find()/AchievementProgressSystem的achievements.find()——用模块级或实例级Map<key,T>替换，初始化一次，后续O(1)",
     "【迭代109新增】嵌套循环中的.some()在O(n³)路径中危险：for(zone of zones){for(eid of entities){if(arr.some(...))}} — 用Set<number>追踪活跃ID可降为O(1)，对petrified/poisoned等状态集合特别有效",
-    "【迭代109新增】Python批量替换for循环中多次访问arr[i]的安全方法：逐行扫描找循环头→收集循环体→检查arr[i].field次数→在循环体第一行插入const alias = arr[i]→替换body中的arr[i].field为alias.field。注意替换时只替换.field形式避免影响.splice(i,1)"
+    "【迭代110新增】单个update()内多次调用getEntitiesWithComponents()是常见的性能问题——应在update()开头缓存一次到_shipsBuf数组，所有子方法共享该缓存，避免重复遍历ECS索引",
+    "【迭代110新增】Map内存泄漏的两种典型模式：(1)以heroId/entityId为key但不cleanup dead entities（QuestSystem.legends）；(2)以portId为key但不cleanup destroyed ports（NavalSystem.portShipCount）。修复：分别在周期性检查方法和spawn方法开头扫描清理",
+    "【迭代110新增】用Map优化some()/find()时，若代码暴露了返回内部数组的getXxx()方法，测试可能直接push到数组绕过Map更新——应在查询方法(getByEntity)中添加lazy sync fallback: if(!cached){found=arr.find(); if(found)map.set(id,found)}",
+    "【迭代110新增】Map优化some()查找的标准模式：add: this.arr.push(obj); this._map.set(eid, obj); / remove: this._map.delete(eid); arr.splice(i,1); / query: return this._map.get(eid) ?? fallback。三个操作必须配套实现"
   ],
-  "last_updated": "2026-03-02T08:00:00+08:00"
+  "last_updated": "2026-03-02T08:21:00+08:00"
 }
