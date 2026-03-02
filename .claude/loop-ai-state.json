@@ -1,11 +1,11 @@
 {
-  "notes": "迭代118（循环20/100）。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.53MB；(2)持续优化find()/some()——5个新Map优化；(3)大规模死代码清理——删除8个未调用私有方法。\n\n具体优化：\n- CreatureSleepwalkSystem：之前未提交的_sleepMap优化正式提交——getSleepwalker从find()→Map.get()\n- CreatureNicknameSystem：_nicknameSet升级为_nicknameMap——getNickname两处find()→O(1)\n- BattleReplaySystem：删除死代码findMVP()+_dmgMap字段\n- DiplomaticSpySystem：update()构建临时civById Map传入resolveMission，替换civs.find()\n- CreatureLineageSystem：渲染路径预建nodeById Map——家谱树连线中的嵌套nodes.find()→O(1)\n- CreatureMigrationMemorySystem：添加_routeByRace Map——updateRoutes中routes.find()→O(1)\n- ArmySystem：for+break替换buildings.some()——BARRACKS/CASTLE检查消除隐性闭包分配\n- TradeEconomySystem：删除死代码updateGuild()+_GUILD_LEVEL_THRESHOLDS\n- NaturalDisasterRecoverySystem：删除死代码scanDamagedTiles()+scanDestroyedBuildings()\n- WorldLawSystem：删除死代码resetDefaults()\n- CultureSystem：删除死代码pickLanguage()+generateNameFromLang()+_phonemeCache字段\n- DisasterWarningSystem：删除死代码getDefaultRadius()（estimateTotalDuration被调用，保留）\n- MapMarkerSystem：删除死代码findFreeSlot()+getById()",
+  "notes": "迭代119（循环21/100）。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建成功；(2)大规模死代码清理——删除16个未调用私有方法/字段+整段死代码链；(3)2个新Map/预建查找优化。\n\n具体工作：\n- LODRenderSystem: 删除renderFull/renderMedium/renderLow/renderIcon及相关font缓存字段——4个方法+5个字段，从未被调用\n- CityLayoutSystem: 删除getOrCreate/calcLevel/rebuildLayout/assignZones/generateRoads/generateWalls/findPath/convexHull/cross/dist2整条死代码链及cities/_roadSet/_closedSet/_roadEndsSet字段——文件从427行→160行\n- EspionageSystem: 添加_tributeMap替换processTributes中的tributes.find()——key=fromCivId*1000+toCivId\n- MinimapSystem: 删除drawTerrain/drawPolitical/drawPopulation/drawResources/drawMilitary五个从未调用的渲染方法，及关联导入AIComponent/CivMemberComponent和HEATMAP_COLORS\n- TutorialSystem: 删除hitTest/wrapText\n- CreatureSkillSystem: 删除handleSkillClick；并预建SKILLS_BY_BRANCH模块级Map替换渲染路径中的filter()缓存\n- MapMarkerSystem: 删除findSlot\n- TradeEconomySystem: 删除updateLocalPrices+_LOCAL_PRICE_THRESHOLDS\n- KeybindSystem: ��除eventToCombo\n- PowerFavoriteSystem: 删除hitTest\n- SandboxSettingsSystem: 删除applySlider\n- NaturalDisasterRecoverySystem: 添加_zoneById Map替换getRecoveryProgress中的recoveryZones.find()——lazy sync fallback\n- MiniGameSystem: 删除wrapText\n- CityLayoutSystem测试: 同步更新——移除对已删除cities字段的注入",
   "priorities": [
     "1. 【持续监控】tsc+vitest+build三重验证保持全绿",
-    "2. 【可探索】继续扫描死代码——LODRenderSystem.renderFull/renderMedium/renderLow/renderIcon、CityLayoutSystem.getOrCreate/calcLevel等（需确认是否被间接调用）",
-    "3. 【可探索】EspionageSystem.tributes.find()——双字段查找，每1200tick，可用fromCivId*1000+toCivId键优化",
-    "4. 【可探索】EspionageSystem.warJustifications.some(j => j.attackerId && j.defenderId)——可用字符串键Set优化",
-    "5. 【可探索】NaturalDisasterRecoverySystem.getRecoveryProgress()中的recoveryZones.find()——暴露内部数组，需lazy sync fallback"
+    "2. 【可探索】扫描game/和civilization/目录中的死代码——本轮只扫了systems/",
+    "3. 【可探��】AnimalMigrationSystem.hotspots.find()——在循环内，检查是否可用Map优化",
+    "4. 【可探索】BattleReplaySystem.rec.sides.find()——局部数组单次查找，优先级低",
+    "5. 【可探索】扫描powers/目录是否有可删除的死代码"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -45,10 +45,12 @@
     "【迭代117新增】暴露内部数组引用(getRuins()返回this.ruins)的系统无法用Map优化——测试直接push绕过所有维护逻辑，这类系统保持原有find()即可",
     "【迭代117新增】嵌套循环中的find()：先在外层循环开始前构建临时Map<name,T>，内层循环用Map.get()——EvolutionSystem auto-inherit场景",
     "【迭代117新增】updateXxxData()等数据更新入口是建立Map的最佳时机——DiplomacyVisualSystem在updateCivData时同时维护_civById Map，渲染路径零开销",
-    "【迭代118新增】Python脚本扫描私有方法死代码：正则匹配`private (\\w+)\\s*\\(`后统计文件内出现次数，只出现一次(仅声明)即为死代码候选。但注意：this.method()只算一次，需要用更精准的regex排除`this.method(`形式",
+    "【迭代118新增】Python脚本扫描私有方法死代码：正则匹配`private (\\w+)\\s*\\(`后统计`this.name(`出现次数，只出现零次即为死代码候选",
     "【迭代118新增】Set<number>升级为Map<number,T>：不仅能O(1)判断存在性，还能直接返回对象——CreatureNicknameSystem的升级模式",
-    "【迭代118新增】渲染路径中临时构建的节点数组(如家谱树nodes)：每次渲染后构建nodeById Map，嵌套循环的find()→Map.get()——CreatureLineageSystem",
-    "【迭代118新增】buildings.some(id=>getComponent().type===X)是隐性闭包分配——for+break替代可消除闭包且提前退出——ArmySystem.BARRACKS/CASTLE检查"
+    "【迭代119新增】整条私有方法死代码链：当rebuildLayout/assignZones等内部辅助方法构成一条调用链，且链的入口(rebuildLayout)从未被外部/公共方法调用时，整条链都是死代码——CityLayoutSystem从427行→160行",
+    "【迭代119新增】静态分类数组预建为Map：SKILL_DEFS.filter(s=>s.branch===xxx)改为模块级SKILLS_BY_BRANCH=Map<Branch,SkillDef[]>——零运行时filter开销，还可删除缓存字段_lastBranch和_branchSkillCache",
+    "【迭代119新增】Python死代码扫描精度：用`this.name(`计数（比`name`计数更准确），找到零次调用的私有方法——本轮从14候选准确筛选出真正死代码",
+    "【迭代119新增】私有方法不被`this.name(`调用≠死代码——需同时验证无反射调用(eval/dynamic)，对于渲染/输入UI类方法要格外仔细"
   ],
-  "last_updated": "2026-03-02T11:55:00+08:00"
+  "last_updated": "2026-03-02T12:22:00+08:00"
 }
