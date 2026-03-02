@@ -49,6 +49,7 @@ export class WorldQuicksandSystem {
       }
     }
 
+    const nearby = em.getEntitiesWithComponent('position')
     for (const p of this.pits) {
       // Depth fluctuates over time
       if (Math.random() < 0.015) {
@@ -59,7 +60,6 @@ export class WorldQuicksandSystem {
         p.radius = Math.min(8, p.radius + 1)
       }
       // Trap nearby creatures
-      const nearby = em.getEntitiesWithComponent('position')
       for (const eid of nearby) {
         const pos = em.getComponent(eid, 'position') as unknown as { x: number; y: number } | null
         if (pos && Math.abs(pos.x - p.x) <= p.radius && Math.abs(pos.y - p.y) <= p.radius) {
