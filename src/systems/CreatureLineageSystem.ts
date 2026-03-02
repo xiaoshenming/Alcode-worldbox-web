@@ -88,6 +88,9 @@ export class CreatureLineageSystem {
     const b = this.treeBounds();
     const ox = (p.w - b.w) / 2 - b.minX + PAD, oy = PAD;
     for (const n of this.nodes) { n.x += ox; n.y += oy; }
+    // Build O(1) lookup for child nodes (used in edge drawing below)
+    const nodeById = new Map<number, NodeLayout>();
+    for (const n of this.nodes) nodeById.set(n.id, n);
     this.drawPanel(ctx, p);
     ctx.fillStyle = '#ddd'; ctx.font = 'bold 16px monospace'; ctx.textAlign = 'center';
     ctx.fillText('Family Tree', p.x + p.w / 2, p.y + 20);
@@ -97,7 +100,7 @@ export class CreatureLineageSystem {
       const rec = this.records.get(node.id);
       if (!rec) continue;
       for (const cid of rec.children) {
-        const ch = this.nodes.find(n => n.id === cid);
+        const ch = nodeById.get(cid);
         if (ch) {
           ctx.beginPath();
           ctx.moveTo(p.x + node.x + node.w / 2, p.y + node.y + node.h);
