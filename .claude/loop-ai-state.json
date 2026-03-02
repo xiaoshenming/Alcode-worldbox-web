@@ -1,11 +1,11 @@
 {
-  "notes": "迭代124（循环26/100）。本轮主要成就：大规模系统性提升测试质量——从5502增至6406，+904个测试。\n\n本轮测试质量改进详情（按批次）：\n批A/B/C（18个系统）：Bridlemaker(5→14), Broacher(5→14), BroomMakers(5→14), BuckleMakers(5→18), Burnisher(5→17), BurnOuter(5→17), Calderers(5→14), CardingMakers(5→10), Chainmaker(5→10), Chandlers(5→21), CharcoalBurners(5→21), CheeseAger(5→17), Chiseller(5→13), Chronicler(5→12), ClaspMakers(5→15), Claustrophobia(5→15), Cobbler(5→15), Coiner(5→13) → +180测试\n批D/E/F（9个系统）：CombMakers(5→28), Constellation(5→22), Coopers(5→28), Cooper(5→13), Countersinker(5→13), Courier(5→13), CrochetMakers(5→13), Curiers(5→13), Dance(5→13) → +111测试\n批G/H/I（9个系统）：Dowser(5→15), Drawer(5→13), Drifter(5→13), DyeingMakers(5→21), Dyers(5→21), EmbroideryMakers(5→21), Emotion(5→16), Enamelors(5→21), Engravers(5→21) → +117测试\n批J/K/L（9个系统）：Engraver单数(5→12), Exile(5→12), Falconry(5→12), Fame(5→15), Felters(5→14), FeltingMakers(5→14), FeltingMakers2(5→19), FeltingMakersSystem2(5→16), FerruleMakers(5→26) → +95测试\n批M/N/O（9个系统）：Firewalker(5→13), Flatter(5→15), Fletchers复数(5→19), Fletcher单数(5→14), Forger(5→15), FringeMakers(5→16), Fuller(5→11), FullingMakers(5→11), Furbisher(5→11) → +80测试\n批P/Q/R（9个系统）：Furriers(5→33), Gambler(5→27), Gilders(5→33), Girdler(5→15), Gladiator(5→16), Glassblowers(5→18), Glazers(5→13), GlazierMaster(5→12), Glazier(5→13) → +135测试\n批S/T/U（9个系统）：Gondolier(5→14), GrommetMakers(5→16), Hammerman(5→15), Handicraft(5→16), HarnessMakers(5→15), Harnessmaker(5→15), Herald(5→13), Herbalist(5→14), Honer(5→13) → +86测试\n批V/W/X（9个系统）：Horners(5→23), Hornworker(5→16), Illuminators(5→23), Jester(5→13), KnittingMakers(5→12), Knurler(5→13), LaceMakers(5→18), Lamplighter(5→13), Lapidary(5→14) → +100测试\n\n关键发现：\n- 并行Agent策略极高效：3个Agent同时处理9个文件，每批约2-3分钟完成+100-180个测试\n- 工匠系统分两类：(a)纯数组+技能递增+cleanup（用3.98边界）；(b)skillMap+time-based cleanup（用tick-offset计算cutoff）\n- cleanup边界规则：先递增后cleanup，cleanup条件<=4，初始值4.0会在+0.02后变4.02>4不删除，需用3.98确保4.00<=4触发删除\n- 还有约113个5测试文件可以改进\n\n下轮优先方向：\n1. 继续用并行Agent批量改进剩余工匠系统（还有~113个5测试文件）\n2. 保持tsc+vitest+build三重验证全绿（当前6406/6406通过）",
+  "notes": "迭代125（循环27/100）。本轮主要成就：完成全部Creature工匠系统测试质量提升——从6406增至8312，+1906个测试。\n\n本轮处理的系统（按批次）：\nBB/CC/DD组：Lapper/Limeburners/Locksmith/LoomMakers/MacrameMakers/Masonry/Memory/Mosaic/MushroomForager → +162测试\nEE/FF/GG组：Mutation/NailSmiths/Nailers/Nailsmith/Needler/NeedleworkMakers/NettingMakers/Nomad/Oath → +196测试（+修复NomadSystem并发bug）\nHH/II/JJ组：OmenBelief/Oracle/Origami/ParchmentMakers/Peener/Perfumer/Perfumers/Personality/Pewterer → +200测试\nKK/LL/MM组：Pilgrimage/PinMakers/PlanisherMaster/Planisher/Plasterers/Plowright/Potter/Potters/Pottery → +195测试\nNN/OO/PP组：Profession/Puddler/Puppeteer/Quarrymen/QuiltingMakers/QuiverMaker/Ranger/Reamer/ReedCutters → +244测试\nQQ/RR/SS组：Reputation/Rivalry/RivetMakers/Riveter/Roller/RopeMaker/RopeMakers/RopeWalker/Rugmaker → +194测试\nTT/UU/VV组：Rumor/Runecrafting/Runner/Saddler/Sawyer/ScabbardMaker/Scribe/Scriber/Scriveners → +198测试\nWW/XX/YY组：Sentinel/Shapeshifting/Shipwright/ShuttleMakers/SieveMakers/SilkWeaver/Smelter/SmockingMakers/SoapMaker → +202测试\nZZ/AA2/BB2组：SoapMakers/Somniloquy/SpindleMakers/Spinner/SpinningMakers/Spotfacer/Staker/Stamper/StringMaker → +214测试\nCC2/DD2/EE2组：SwageBlocker/Swager/Swedger/Taming/Tanner/Tapper/TasselMakers/TatamiMakers/TattingMakers → +188测试\nFF2/GG2/HH2组：Tattooist/Thatchers/ThimbleMakers/Tinker/Tinplater/Tinsmiths/Toolsmith/Trapper/Upholsterers → +181测试\nII2/JJ2/KK2组：Upsetter/Ventriloquism/VinegarMakers/Vintner/Wainwrights/WarpingMakers/Weaver/WeavingMakers/Welder → +174测试\nLL2组：Wheelers/Wheelwright/Wheelwrights/Wiredrawer/Yokemaker → +87测试\n\n��键发现：\n- 全部113个Creature工匠系统<=5测试文件已全部改善完毕（从125轮开始的目标已达成）\n- 偶发并发失败（如NomadSystem）：update()含招募逻辑时测试cleanup需让getEntitiesWithComponent返回[]避免干扰\n- GeneticDisplaySystem的5%概率测试是既存的不稳定测试，并非本次引入\n- 后续还有大量Diplomatic系统（~160+个）和World系统（~200+个）各有5个trivial测试\n\n下轮优先方向：\n1. 开始改善Diplomatic系统的5测试文件（约160个文件）\n2. 用相同的并行Agent策略（3 Agent × 3文件 = 9/批）\n3. 保持tsc+vitest+build三重验证全绿（当前8312/8312通过）",
   "priorities": [
-    "1. 【持续监控】tsc+vitest+build三重验证保持全绿（当前6406/6406通过）",
-    "2. 【进行中】继续用并行Agent批量改进剩余工匠系统测试（还有~113个5测试文件）",
-    "3. 【重要经验】工匠系统cleanup边界：先递增后cleanup，用3.98而非4.0触发<=4删除",
-    "4. 【重要经验】time-based cleanup用tick-offset确定cutoff，创建测试时注入满足条件的老tick记录",
-    "5. 【新发现】并行3个Agent批处理9个系统，每轮可+100-180个测试"
+    "1. 【持续监控】tsc+vitest+build三重验证保持全绿（当前8312/8312通过）",
+    "2. 【新目标】开始改善Diplomatic系统测试（约160个5测试文件）——用并行Agent批量处理",
+    "3. 【新目标】后续改善World系统测试（约200+个5测试文件）",
+    "4. 【经验】测试cleanup时让getEntitiesWithComponent返回[]避免招募逻辑干扰数量断言",
+    "5. 【经验】Creature系统全部完成，总计从6406→8312，+1906个有意义测试"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -30,25 +30,19 @@
     "【重要安全规则】严禁用Write工具创建src/__tests__/目录内的文件！Write工具会将__转义为\\_\\_导致创建错误目录，必须用Bash cat heredoc方式创建测试文件",
     "【迭代89新增】死代码方法扫描策略：用Python脚本找public方法→grep '.methodName('验证无外部调用→并行派发子代理批量删除，效率极高",
     "【迭代96新增】整系统文件死代码的识别方法：检查'类名是否出现在Game.ts'而非'实例字段是否有.update()调用'，因为很多系统通过_batchXXY数组批量调度",
-    "【迭代100新增-最重要】非空断言扫描必须同时用两种正则：① [^a-zA-Z]!\\\\. 匹配 x!.y 形式；② \\\\)!(?=[.\\\\[;,\\\\)\\\\s]|$) 匹配 func()! 形式。只用其中一种必然漏报！",
+    "【迭代100新增-最重要】非空断言扫描必须同时用两种正则：① [^a-zA-Z]!\\. 匹配 x!.y 形式；② \\)!(?=[.\\[;,\\)\\s]|$) 匹配 func()! 形式。只用其中一种必然漏报！",
     "【迭代112新增】some(item => item.entityId === eid)在for(entities)循环内是O(n*list)陷阱——标准修复：添加private _xxxSet = new Set<number>()，push时.add(eid)，splice时.delete(eid)，查询时.has(eid)",
     "【迭代112新增】添加Set优化后，public查询方法(getXxx)需要加lazy sync fallback——因为测试会直接push内部数组绕过Set",
     "【迭代120新增】项目进入「稳定维护」阶段：systems/game/civilization/entities/ui/utils所有目录的私有方法死代码已全部清除，find()/some()优化已穷举",
     "【迭代121新增】测试路径规范：src/__tests__/目录内的测试文件import路径是'../systems/'（单级上溯），不是'../../systems/'（双级）",
     "【迭代121新增】数据模块（仅含常量/接口/纯函数的文件）是最易测的模块——无需mock、无Canvas、无DOM",
-    "【迭代121新增】Math.random()替换为确定性伪随机虽可提升可测试性，但751个文件受影响——此方向不适合",
     "【迭代122新增】addComponent API需要带type字段的对象：{ type: 'position', x, y }不能缺type字段，否则getEntitiesWithComponents找不到实体",
     "【迭代122新增】performance.now()在短生命周期测试进程中可能<3000ms——需用vi.spyOn(performance, 'now').mockReturnValue(大数)来mock超时测试",
-    "【迭代122新增】ESM模块不能用require()——在测试中用import或直接通过系统内部状态(sys as any).field验证常量，不要用require()",
-    "【迭代122新增】测试质量提升模式：(1)找CHECK_INTERVAL节流验证(2)找pruneXxx截断逻辑(3)找applyXxxEffect纯计算(4)找getWisdom等派生值计算——这4类最易写出有意义的测试",
-    "【迭代122新增】WeatherDisasterSystem(706行)等大文件分析：职责单一（4种灾难的trigger/ongoing/render各有独立私有方法），共享activeDisasters状态——不适合拆分",
-    "【迭代122新增】computeSimilarities等纯算法函数是最高价值的测试目标——直接注入数据验证输出，无需mock任何外部依赖",
     "【迭代123新增】工匠系统cleanup边界规则：先递增后cleanup，cleanup条件<=4，初始值4.0会在+0.02后变4.02>4不删除，需用3.98确保4.00<=4触发删除",
     "【迭代123新增】工匠系统分两类：(a)纯数组+固定技能递增+技能值cleanup（用3.98边界）；(b)skillMap+time-based过期cleanup（用tick-offset计算cutoff）",
-    "【迭代123新增】getRecent(n)用slice(-n)实现，slice(-0)等于slice(0)返回全部，不要用0测试getRecent",
-    "【迭代123新增】并行Agent策略：3个Agent同时处理9个文件，每轮约2-3分钟完成+150个测试，效率极高",
-    "【迭代123新增】LODRenderSystem测试：zoom>=full=20→'full'，zoom>=medium=10→'medium'，zoom>=low=4→'low'，else→'icon'",
-    "【迭代124新增】并行Agent批处理效率极高：每批9个系统，3个Agent并行，2-3分钟完成+100-180个测试，本轮共处理81个系统，+904个测试"
+    "【迭代124新增】并行Agent批处理效率极高：每批9个系统，3个Agent并行，2-3分钟完成+100-180个测试，本轮共处理81个系统，+904个测试",
+    "【迭代125新增】测试含招募逻辑的cleanup时：getEntitiesWithComponent必须返回空数组[]，否则招募新实体会干扰cleanup后数量断言（NomadSystem是典型案例）",
+    "【迭代125新增】全部113个Creature工匠系统测试已改善完毕（6406→8312，+1906）。下一目标：Diplomatic系统（~160个）和World系统（~200个）各有5测试文件"
   ],
-  "last_updated": "2026-03-02T14:22:00+08:00"
+  "last_updated": "2026-03-02T16:15:00+08:00"
 }
