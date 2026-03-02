@@ -1,11 +1,11 @@
 {
-  "notes": "迭代125（循环27/100）。本轮主要成就：完成全部Creature工匠系统测试质量提升——从6406增至8312，+1906个测试。\n\n本轮处理的系统（按批次）：\nBB/CC/DD组：Lapper/Limeburners/Locksmith/LoomMakers/MacrameMakers/Masonry/Memory/Mosaic/MushroomForager → +162测试\nEE/FF/GG组：Mutation/NailSmiths/Nailers/Nailsmith/Needler/NeedleworkMakers/NettingMakers/Nomad/Oath → +196测试（+修复NomadSystem并发bug）\nHH/II/JJ组：OmenBelief/Oracle/Origami/ParchmentMakers/Peener/Perfumer/Perfumers/Personality/Pewterer → +200测试\nKK/LL/MM组：Pilgrimage/PinMakers/PlanisherMaster/Planisher/Plasterers/Plowright/Potter/Potters/Pottery → +195测试\nNN/OO/PP组：Profession/Puddler/Puppeteer/Quarrymen/QuiltingMakers/QuiverMaker/Ranger/Reamer/ReedCutters → +244测试\nQQ/RR/SS组：Reputation/Rivalry/RivetMakers/Riveter/Roller/RopeMaker/RopeMakers/RopeWalker/Rugmaker → +194测试\nTT/UU/VV组：Rumor/Runecrafting/Runner/Saddler/Sawyer/ScabbardMaker/Scribe/Scriber/Scriveners → +198测试\nWW/XX/YY组：Sentinel/Shapeshifting/Shipwright/ShuttleMakers/SieveMakers/SilkWeaver/Smelter/SmockingMakers/SoapMaker → +202测试\nZZ/AA2/BB2组：SoapMakers/Somniloquy/SpindleMakers/Spinner/SpinningMakers/Spotfacer/Staker/Stamper/StringMaker → +214测试\nCC2/DD2/EE2组：SwageBlocker/Swager/Swedger/Taming/Tanner/Tapper/TasselMakers/TatamiMakers/TattingMakers → +188测试\nFF2/GG2/HH2组：Tattooist/Thatchers/ThimbleMakers/Tinker/Tinplater/Tinsmiths/Toolsmith/Trapper/Upholsterers → +181测试\nII2/JJ2/KK2组：Upsetter/Ventriloquism/VinegarMakers/Vintner/Wainwrights/WarpingMakers/Weaver/WeavingMakers/Welder → +174测试\nLL2组：Wheelers/Wheelwright/Wheelwrights/Wiredrawer/Yokemaker → +87测试\n\n��键发现：\n- 全部113个Creature工匠系统<=5测试文件已全部改善完毕（从125轮开始的目标已达成）\n- 偶发并发失败（如NomadSystem）：update()含招募逻辑时测试cleanup需让getEntitiesWithComponent返回[]避免干扰\n- GeneticDisplaySystem的5%概率测试是既存的不稳定测试，并非本次引入\n- 后续还有大量Diplomatic系统（~160+个）和World系统（~200+个）各有5个trivial测试\n\n下轮优先方向：\n1. 开始改善Diplomatic系统的5测试文件（约160个文件）\n2. 用相同的并行Agent策略（3 Agent × 3文件 = 9/批）\n3. 保持tsc+vitest+build三重验证全绿（当前8312/8312通过）",
+  "notes": "迭代126（循环29/100）。本轮主要成就：开始并完成45个Diplomatic系统测试质量提升——从8312增至9381，+1069个测试。\n\n本轮处理的系统（按批次）：\nAA/BB/CC组：Absolution/Accommodation/Accord/Acquittal/Adjudication/Agister/Aletaster/Almoner/Amnesty2 → +201测试\nDD/EE/FF组：Amnesty/Annexation/Appeasement/Arbitration/ArbitrationTreaty/Arbitrement/Armistic/Asylum → +195测试\nGG/HH/II组：Atonement/Autonomy/Bailiffry/Beadle/Benevolence/Blockade/Borsholder/Breadweigher/Castellany → +229测试\nJJ/KK/LL组：Absolution2/Ceasefire/Census/Ceremony/Chatelaincy/Clavigers/Clemency/Coexistence → +218测试（仅8个）\nMM/NN/OO组：Commonwealth/Commutation/Compromise/Conciliation/Concordat/Accord/Condonation/Confederation/Conservatorship → +210测试\n\n关键发现：\n- Diplomatic系统还剩114个（共159个）未改善，全部是<=5测试文件\n- Diplomatic系统有几种变体：(a)标准4参数update(dt,world,em,tick)——最常见；(b)3参数civManager版本(dt,civManager,tick)——如CeremonySystem；(c)duration-based清理（如BlockadeSystem）而非tick-based\n- DiplomaticBlockadeSystem有do/while死循环风险：pickRandom在civA===civB时无限循环，mock random=0时必须设高于CHANCE值（如0.5）避免spawn逻辑\n- 过期测试中cutoff边界：record.tick===cutoff时不删除（条件是 < cutoff），所以混合测试中新记录tick要远大于cutoff\n- 并发偶发失败（Math.random共享状态）：偶尔出现CreatureSaddler/CreatureTapper/CreatureFlatter等老测试失败，重跑即过，不是新问题\n- 测试数量从8312→9381，+1069\n\n下轮优先方向：\n1. 继续改善��余114个Diplomatic系统（从Conservatorship之后开始）\n2. 保持同样的并行Agent策略（3 Agent × 3文件 = 9/批）\n3. tsc+vitest+build三重验证保持全绿（当前9381/9381通过）",
   "priorities": [
-    "1. 【持续监控】tsc+vitest+build三重验证保持全绿（当前8312/8312通过）",
-    "2. 【新目标】开始改善Diplomatic系统测试（约160个5测试文件）——用并行Agent批量处理",
-    "3. 【新目标】后续改善World系统测试（约200+个5测试文件）",
-    "4. 【经验】测试cleanup时让getEntitiesWithComponent返回[]避免招募逻辑干扰数量断言",
-    "5. 【经验】Creature系统全部完成，总计从6406→8312，+1906个有意义测试"
+    "1. 【持续进行】继续改善剩余114个Diplomatic系统测试（从DiplomaticConsolidation开始）——用并行Agent批量处理",
+    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前9381/9381通过）",
+    "3. 【后续目标】Diplomatic系统全部完成后处理World系统（~200个）",
+    "4. 【经验】Diplomatic系统有3种update签名，必须先读源码确认",
+    "5. 【经验】do/while死循环风险：mock random高于CHANCE值（如0.5）可跳过spawn逻辑"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -42,7 +42,10 @@
     "【迭代123新增】工匠系统分两类：(a)纯数组+固定技能递增+技能值cleanup（用3.98边界）；(b)skillMap+time-based过期cleanup（用tick-offset计算cutoff）",
     "【迭代124新增】并行Agent批处理效率极高：每批9个系统，3个Agent并行，2-3分钟完成+100-180个测试，本轮共处理81个系统，+904个测试",
     "【迭代125新增】测试含招募逻辑的cleanup时：getEntitiesWithComponent必须返回空数组[]，否则招募新实体会干扰cleanup后数量断言（NomadSystem是典型案例）",
-    "【迭代125新增】全部113个Creature工匠系统测试已改善完毕（6406→8312，+1906）。下一目标：Diplomatic系统（~160个）和World系统（~200个）各有5测试文件"
+    "【迭代125新增】全部113个Creature工匠系统测试已改善完毕（6406→8312，+1906）。下一目标：Diplomatic系统（~160个）和World系统（~200个）各有5测试文件",
+    "【迭代126新增】Diplomatic系统有3种update签名变体：(a)标准4参数(dt,world,em,tick)；(b)3参数(dt,civManager,tick)；(c)含civs数组的特殊签名。必须先读源码确认",
+    "【迭代126新增】do/while死循环风险：pickRandom在civA===civB时无限循环——mock random时设高于CHANCE值（如mockReturnValue(0.5)）确保spawn条件不满足，跳过整个spawn逻辑",
+    "【迭代126新增】Diplomatic系统过期测试cutoff边界：record.tick===cutoff时不删除（条件是<cutoff），混合测试中「新」记录tick必须远大于cutoff（如bigTick本身）"
   ],
-  "last_updated": "2026-03-02T16:15:00+08:00"
+  "last_updated": "2026-03-02T17:25:00+08:00"
 }
