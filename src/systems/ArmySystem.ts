@@ -64,10 +64,11 @@ export class ArmySystem {
   private recruitSoldiers(em: EntityManager, civManager: CivManager): void {
     for (const [civId, civ] of civManager.civilizations) {
       // Need barracks to recruit
-      const hasBarracks = civ.buildings.some(id => {
+      let hasBarracks = false
+      for (const id of civ.buildings) {
         const b = em.getComponent<BuildingComponent>(id, 'building')
-        return b && b.buildingType === BuildingType.BARRACKS
-      })
+        if (b && b.buildingType === BuildingType.BARRACKS) { hasBarracks = true; break }
+      }
       if (!hasBarracks) continue
 
       // Count current soldiers
@@ -240,11 +241,12 @@ export class ArmySystem {
       const targetCiv = civManager.civilizations.get(army.targetCivId)
       if (!targetCiv) { army.state = 'idle'; continue }
 
-      // Check for CASTLE defense bonus
-      const hasCastle = targetCiv.buildings.some(id => {
+      // Check for CASTLE defense bonus (inline with building loop below to avoid redundant scan)
+      let hasCastle = false
+      for (const id of targetCiv.buildings) {
         const b = em.getComponent<BuildingComponent>(id, 'building')
-        return b && b.buildingType === BuildingType.CASTLE
-      })
+        if (b && b.buildingType === BuildingType.CASTLE) { hasCastle = true; break }
+      }
       const defenseMultiplier = hasCastle ? (1 - CASTLE_DEFENSE_BONUS) : 1
 
       // Attack buildings in range
