@@ -1,11 +1,11 @@
 {
-  "notes": "迭代115（循环16/100）。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.52MB；(2)批量优化6个系统的some()/find()/includes()——4次提交；(3)具体系统：HeroLegendSystem(_deedTypeSets Map<entityId,Set<string>>——per-hero deed type O(1)去重)/EvolutionSystem(_traitNamesBuf Set<string>临时集合替代result.some())/DiplomacySystem(tryFormTreaty用for循环+3个bool变量替代3次some；tryBetrayal用for循环替代some；tryBuildEmbassy用_embassySet Map<builderId,Set<hostCivId>>)/AllianceSystem(_civToAlliance Map<civId,Alliance>反向索引+checkMemberLeave改用civManager.get())/WonderSystem(_activeWonderCivSet Set<string> civId_defId键给hasWonder())/CreatureGuildSystem(_entityToGuild Map<entityId,Guild>反向索引替换find+includes双重查找)。\n注意事项：(1)HeroLegendSystem._deedTypeSets在recordDeed中有lazy sync fallback——当_deedTypeSets.get(entityId)为undefined时(极少发生)退回到deeds.some()；(2)AllianceSystem在update末尾整体rebuild _civToAlliance（每180tick执行一次，开销可接受）；(3)_embassySet用lazy init模式——首次访问时从builder.embassies同步；(4)CreatureGuildSystem._entityToGuild在3处维护：清理死亡成员时delete、tryFormGuild时批量set、recruitMembers时set。",
+  "notes": "迭代116（循环17/100）。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.53MB；(2)批量优化9个系统的some()/find()——9次提交；(3)具体系统：BiomeEvolutionSystem(_neighborSet Set<TileType>与_neighborsBuf同步填充，naturalEvolution的includes/some→Set.has)/DiplomaticPledgeSystem(_activePairSet Set<'from_to'>替换pledges.find去重)/ArtifactSystem(缓存getEntitiesWithComponent('artifact')于update()入口，节省每tick2次全量扫描)/CreatureMutationSystem(_mutationTypes Map<entityId,Set<MutationType>>替换hasMutation的some)/CreatureMigrationMemorySystem(_creatureMemMap Map<creatureId,memories[]>替换两处全量some)/DisasterChainSystem(_chainRuleMap Map<'src_tgt',ChainEvent>+_ecoCrisisMap Map<type,EcoCrisis>替换find/findIndex)/CreatureBountySystem(_activeBountyByTarget Map<targetId,Bounty>替换getBountyOn的find)/MiningSystem(_undiscoveredMap Map<x*10000+y,OreDeposit>替换tryDiscoverOre的坐标find)/CreatureMentorSystem(_entityBondMap Map<entityId,Bond>替换getEntityBond的mentor||apprentice find)/WorldBeaconSystem(_beaconCoordMap Map<x*10000+y,Beacon>替换getBeaconAt的坐标find)。\n注意事项：(1)每次添加Map优化后public查询方法必须加lazy sync fallback(if cached) else fallback to array scan——测试直接push内部数组会绕过Map；(2)CreatureMigrationMemorySystem的_creatureMemMap在decayMemories和pruneDeadCreatures中需要同步delete+splice；(3)DisasterChainSystem的_chainRuleMap是静态预构建（构造时一次），_ecoCrisisMap随upsertCrisis/fadeCrisis增删；(4)BiomeEvolutionSystem的_neighborSet在getNeighborTypes中与数组同步填充，naturalEvolution签名增加ns参数。",
   "priorities": [
     "1. 【持续监控】tsc+vitest+build三重验证保持全绿",
-    "2. 【可探索】坐标范围some() — WorldAtollSystem/DewFormation/IceSheet/Tide/Volcanic等用距离判断的some()，需要空间索引才能真正O(1)，值得专门研究",
-    "3. 【可探索】DiplomaticPledgeSystem.ts — pledges.find(p => fromCivId && toCivId && strength>0)可用Map<'from_to',Pledge>优化，MAX_PLEDGES=40",
-    "4. 【可探索】BiomeEvolutionSystem.ts — neighbors.some(n => n === TileType.GRASS || ...)可用Set<TileType>替代，neighbors是长度固定的小数组",
-    "5. 【可探索】ArtifactSystem.ts — 多次调用getEntitiesWithComponent('artifact')，可在update开始时缓存一次"
+    "2. 【可探索】坐标范围some() — WorldAtollSystem/DewFormation/IceSheet/Tide/Volcanic等用Math.abs距离判断的some()，需要bucket grid空间索引，每系统约15-30个对象，bucket化后O(constant)",
+    "3. 【可探索】CreatureTotemSystem.getTotemAt(x,y) — totems.find(t => t.x===x && t.y===y)，同WorldBeaconSystem模式，可用Map<x*10000+y,Totem>",
+    "4. 【可探索】WorldLawSystem.getLaw() — categories.find(c => c.key===k)双重find，categories是静态构建的小数组，可预建Map<key,Category>",
+    "5. 【可探索】RuinsSystem.getRuinAt(x,y) — ruins.find(r => r.x===x && r.y===y)，可用坐标Map，但需确认addRuin的入口"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -17,7 +17,7 @@
     "Camera.getVisibleBounds()等热路径方法应返回缓存对象而非每次new — 每帧调用4次累积显著GC压力",
     "渲染路径中的闭包/对象字面量/getBoundingClientRect()都是隐性GC源 — 预分配+脏标记是标准修复模式",
     "数据驱动批量调度：703个系统调用按签名分类为6种类型(A-F)，用数组+for循环替代逐个调用，净减1147行",
-    "预分配缓冲区模式：_xxxBuf数组只增长不收缩，_xxx.length=0重置视图，避免每次new对象",
+    "预分配缓冲区模式：_xxxBuf数组只增长不收缩，_xxx.length=0���置视图，避免每次new对象",
     "IIFE闭包在tick路径中是隐性GC源 — 改为外部循环+持久化Set/变量",
     "find()/filter()/slice()链在嵌套循环中产生O(N²)闭包+数组 — 手动for循环+早退出是标准替代",
     "渲染管线不适合简单的数据驱动替换 — render调用间穿插条件逻辑和特殊参数，z-order顺序重要",
@@ -43,9 +43,10 @@
     "【迭代114新增】EspionageSystem双Set方案：_justificationFullSet('reason_a_b')用于去重检查；_justificationPairSet('a_b')用于hasJustification查询，适用于同一pair多条记录场景",
     "【迭代115新增】per-entity Set方案：HeroLegendSystem用Map<entityId,Set<deedType>>而不是在公共数组上some()——适用于每个实体有自己的小集合需要O(1)去重",
     "【迭代115新增】Array.find(g => g.members.includes(eid))是双重线性查找O(guilds*members)——用Map<entityId,Container>反向索引是标准修复",
-    "【迭代115新增】checkMemberLeave签名改用civManager替代civs数组——civs.find(c => c.id === id)完全可以用civManager.civilizations.get(id)替代，更简洁且O(1)",
-    "【迭代115新增】AllanceSystem用rebuild反向Map而不是增量维护——每180tick一次，在update末尾clear+rebuild整个Map，简单可靠不易出错",
-    "【迭代115新增】Embassy-Set用lazy init模式（首次访问时从embassies数组同步）而不是在Civilization接口中增加字段——降低改动范围"
+    "【迭代116新增】per-creature memory map：CreatureMigrationMemorySystem用Map<creatureId,HabitatMemory[]>替换memories.some(creatureId&&coords)——O(n)→O(n_per_creature)；在decayMemories和pruneDeadCreatures splice前需同步delete",
+    "【迭代116新增】静态CHAIN_RULES可在类构造时一次性预建Map<'src_tgt',Rule>——O(1)代替O(n)find；ecoCrisis用Map<type,Crisis>需在upsertCrisis/fadeCrisis中维护",
+    "【迭代116新增】BiomeEvolutionSystem的neighbors是4元素数组——用Set<TileType>替换includes/some，Set在getNeighborTypes中与数组同步填充，naturalEvolution签名新增ns参数",
+    "【迭代116新增】getEntityBond(mentorId||apprenticeId)用Map同时存储两个key→同一bond对象——removeBond时delete两个key"
   ],
-  "last_updated": "2026-03-02T10:22:00+08:00"
+  "last_updated": "2026-03-02T10:55:00+08:00"
 }
