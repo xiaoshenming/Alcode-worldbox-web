@@ -452,16 +452,20 @@ export class QuestSystem {
   }
 
   private generateBallads(em: EntityManager, civManager: CivManager, tick: number): void {
+    const deadHeroes: number[] = []
     for (const [heroId, legend] of this.legends) {
+      // Hero must still be alive — remove dead heroes' legends to prevent memory leak
+      if (!em.hasComponent(heroId, 'position')) {
+        deadHeroes.push(heroId)
+        continue
+      }
+
       // Need at least 50 fame for a ballad
       if (legend.fame < 50) continue
 
       // One ballad per 100 fame
       const maxBallads = Math.floor(legend.fame / 100)
       if (legend.ballads >= maxBallads) continue
-
-      // Hero must still be alive
-      if (!em.hasComponent(heroId, 'position')) continue
 
       const hero = em.getComponent<HeroComponent>(heroId, 'hero')
       const creature = em.getComponent<CreatureComponent>(heroId, 'creature')
@@ -483,5 +487,7 @@ export class QuestSystem {
 
       EventLog.log('hero', `A bard composed: "${balladName}" (${legend.civId ? civ?.name : 'unknown'} +3 happiness)`, tick)
     }
+    // Clean up dead heroes from legends map to prevent memory leak
+    for (const heroId of deadHeroes) this.legends.delete(heroId)
   }
 }
