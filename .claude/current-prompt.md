@@ -1,43 +1,40 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代137（循环44/100）。本轮主要成就：收集并提交HHH2/III2/JJJ2三批Agent结果，测试从13958增至14253，+295个测试。
+🧠 AI 上轮笔记：迭代138（循环45/100）。本轮主要成就：收集并提交KKK2/LLL2/MMM2三批Agent结果，测试从14253增至14552，+299个测试。
 
 本轮处理的系统（3批Agent并行）：
-HHH2组(+97): WorldIceShelfSystem(36) WorldIndiumSpringSystem(28) WorldInlierSystem(33)
-III2组(+121): WorldInselbergSystem(45) WorldIridiumSpringSystem(39) WorldIrrigationSystem(37)
-JJJ2组(+122): WorldKarstSpringSystem(40) WorldKarstTowerSystem(40) WorldKelpForestSystem(42)
+KKK2组(+118): WorldKettleHoleSystem(39) WorldLabyrinthSystem(39) WorldLaharSystem(40)
+LLL2组(+112): WorldLanthanumSpringSystem(30) WorldLavaTubeSystem(39) WorldLawSystem(43)
+MMM2组(+115): WorldLeyLineSystem(33) WorldLighthouseSystem(40) WorldLithiumSpringSystem(42)
 
 关键发现：
-- WorldIceShelfSystem: CHECK_INTERVAL=3000, MAX_SHELVES=22, spawn:SNOW(6)||DEEP_WATER(0), cleanup: tick<cutoff-100000||thickness<10, 但update先clamp thickness>=10，所以thickness<10路径实际不触发
-- WorldIndiumSpringSystem: CHECK_INTERVAL=2880, 3次attempt, nearWater||nearMountain, cleanup: tick-54000
-- WorldInlierSystem: CHECK_INTERVAL=2590, MAX=14, spawn:MOUNTAIN(5)||GRASS(3), cleanup: tick-93000, exposureDepth/geologicalValue动态增长
-- WorldInselbergSystem: CHECK_INTERVAL=2610, MAX=15, spawn:GRASS(3)||SAND(2), cleanup: tick-92000, height/baseRadius/vegetationCover/spectacle动态更新
-- WorldIridiumSpringSystem: CHECK_INTERVAL=2810, 3次attempt, nearWater||nearMountain, cleanup: tick-54000
-- WorldIrrigationSystem: CHECK_INTERVAL=3000, MAX=25, spawn:GRASS(3)+adjacent water, 4状态机(planned→digging→flowing→silted), cleanup: tick-200000
-- WorldKarstSpringSystem: CHECK_INTERVAL=2570, MAX=14, spawn:MOUNTAIN/GRASS, cleanup: tick-92000, 多字段动态更新
-- WorldKarstTowerSystem: CHECK_INTERVAL=2800, MAX=22, spawn:GRASS/MOUNTAIN, cleanup: tick-95000, height侵蚀/vegetationCover/stability动态更新
-- WorldKelpForestSystem: CHECK_INTERVAL=1700, MAX=22, spawn:DEEP/SHALLOW_WATER, cleanup双条件=超时(tick-90000)AND密度<10
+- WorldKettleHoleSystem: CHECK_INTERVAL=2650, MAX=20, spawn:GRASS(3)||SNOW(6), cleanup: tick-93000, 字段sedimentLayer/vegetationRing/wildlifeValue有上下限钳制
+- WorldLabyrinthSystem: CHECK_INTERVAL=2950, MAX=18, spawn: tile>=4(FOREST/MOUNTAIN/SNOW/LAVA), cleanup双条件=explored>=100 AND tick<cutoff, type映射:tile=4→hedge/tile=5→cave/tile=6→ice/tile=7→cave
+- WorldLaharSystem: CHECK_INTERVAL=2350, MAX=15, spawn无tile限制, cleanup条件velocity<=1（含等于！非严格小于）, update先减velocity再算destructionPath
+- WorldLanthanumSpringSystem: CHECK_INTERVAL=2940, MAX=32, spawn:SHALLOW_WATER, cleanup: tick-54000
+- WorldLavaTubeSystem: CHECK_INTERVAL=2680, MAX=12, spawn:MOUNTAIN||LAVA, cleanup: tick-58000, internalTemp减少但不低于15, crustThickness增加但不超10
+- WorldLawSystem: 非地形系统，UI面板，有4个categories(physics/biology/civilization/elements), getLaw返回默认1.0, handleKey处理'w'切换visible/Escape关闭
+- WorldLeyLineSystem: 无CHECK_INTERVAL，首次update初始化(3-6条地脉线+nexuses), energy在[0,1]正弦脉动, clear()重置所有
+- WorldLighthouseSystem: CHECK_INTERVAL=2500, MAX=15, spawn:SAND+adjacent water(SHALLOW或DEEP), 4状态机:building→active(tick-lh.tick>5000严格大于)→damaged(<30)→ruined(<5), random<0.01修复ruined
+- WorldLithiumSpringSystem: CHECK_INTERVAL=3240, MAX=32, 3次attempt, spawn:nearWater||nearMountain, cleanup: tick-54000
 
-本轮关键修复（III2 Agent发现）：
-1. afterEach未在import中引入→ReferenceError：InselbergSystem和IridiumSpringSystem文件漏import afterEach
-2. tick==CHECK_INTERVAL边界理解错误：条件tick-lastCheck<CHECK_INTERVAL，等于时不满足严格小于，会执行（而非不执行）
-3. cleanup cutoff严格小于：恰好等于cutoff时不清除（<而非<=）
+本轮无需额外修复（三批Agent均全部通过）。
 
-当前已派发下一批（KKK2/LLL2/MMM2）：
-- KKK2组: WorldKettleHoleSystem WorldLabyrinthSystem WorldLaharSystem
-- LLL2组: WorldLanthanumSpringSystem WorldLavaTubeSystem WorldLawSystem
-- MMM2组: WorldLeyLineSystem WorldLighthouseSystem WorldLithiumSpringSystem
+当前已派发下一批（NNN2/OOO2/PPP2）：
+- NNN2组: WorldLutetiumSpringSystem WorldMaaSystem WorldMaelstromSystem
+- OOO2组: WorldMagicStormSystem WorldMagnesiumSpringSystem WorldMagneticFieldSystem
+- PPP2组: WorldManganeseSpringSystem WorldMangroveDeltaSystem WorldMangroveSwampSystem
 
 下轮优先方向：
-1. 等待KKK2/LLL2/MMM2 Agent完成，收集结果
+1. 等待NNN2/OOO2/PPP2 Agent完成，收集结果
 2. 运行全量测试验证，修复flaky测试
-3. 继续处理WorldL/M系列剩余
+3. 继续处理WorldMangrove/WorldM/WorldN系列剩余
 🎯 AI 自定优先级：[
-  "1. 【持续目标】继续处理World系统（剩余约130个文件），用并行Agent批量处理",
-  "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前14253/14253通过）",
-  "3. 【里程碑】已完成108个World系统测试改善（+2598测试），继续下一批",
-  "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+200-300测试",
-  "5. 【下一批系统】WorldLutetiumSpringSystem及后续L/M系列"
+  "1. 【持续目标】继续处理World系统（剩余约120个文件），用并行Agent批量处理",
+  "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前14552/14552通过）",
+  "3. 【里程碑】已完成117个World系统测试改善（+2897测试），继续下一批",
+  "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+250-350测试",
+  "5. 【下一批系统】WorldMangroveSystem及后续M/N系列"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
@@ -97,10 +94,14 @@ JJJ2组(+122): WorldKarstSpringSystem(40) WorldKarstTowerSystem(40) WorldKelpFor
   "【迭代136新增】IceShelfSystem特殊cleanup: sh.tick < cutoff-100000 || sh.thickness < 10，spawn后thickness初始>=20但update后立即减少calvingRate*0.05",
   "【迭代137新增】tick==CHECK_INTERVAL边界：条件tick-lastCheck<CHECK_INTERVAL，等于时3000-0=3000不<3000，会执行（而非不执行）——之前测试写错了！",
   "【迭代137新增】WorldIrrigationSystem有4状态机(planned→digging→flowing→silted)：planned以0.1概率转digging，digging以0.05概率转flowing，silted以0.02概率恢复+siltLevel重置为10",
-  "【迭代137新增】afterEach必须在import中显式引入，否则ReferenceError——import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'"
+  "【迭代137新增】afterEach必须在import中显式引入，否则ReferenceError——import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'",
+  "【迭代138新增】WorldLabyrinthSystem cleanup双条件：explored>=100 AND tick<cutoff，两个条件都满足才删除；spawn后同次update explored立即变0.1",
+  "【迭代138新增】WorldLaharSystem cleanup条件为velocity<=1（含等于），是<=不是<——与大多数系统的严格小于不同！",
+  "【迭代138新增】WorldLighthouseSystem building→active条件：tick-lh.tick>5000（严格大于），测试需用5001而非5000才能触发状态转换",
+  "【迭代138新增】WorldLeyLineSystem无CHECK_INTERVAL，首次update初始化地脉线，energy正弦脉动范围[0,1]（非[0.5,1]）"
 ]
 
-迭代轮次: 45/100
+迭代轮次: 46/100
 
 
 🔄 自我进化（每轮必做）：
@@ -109,6 +110,6 @@ JJJ2组(+122): WorldKarstSpringSystem(40) WorldKarstTowerSystem(40) WorldKelpFor
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-03-03T01:17:19+08:00"
+  "last_updated": "2026-03-03T01:25:49+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。
