@@ -1,11 +1,11 @@
 {
-  "notes": "迭代138（循环45/100）。本轮主要成就：收集并提交KKK2/LLL2/MMM2三批Agent结果，测试从14253增至14552，+299个测试。\n\n本轮处理的系统（3批Agent并行）：\nKKK2组(+118): WorldKettleHoleSystem(39) WorldLabyrinthSystem(39) WorldLaharSystem(40)\nLLL2组(+112): WorldLanthanumSpringSystem(30) WorldLavaTubeSystem(39) WorldLawSystem(43)\nMMM2组(+115): WorldLeyLineSystem(33) WorldLighthouseSystem(40) WorldLithiumSpringSystem(42)\n\n关键发现：\n- WorldKettleHoleSystem: CHECK_INTERVAL=2650, MAX=20, spawn:GRASS(3)||SNOW(6), cleanup: tick-93000, 字段sedimentLayer/vegetationRing/wildlifeValue有上下限钳制\n- WorldLabyrinthSystem: CHECK_INTERVAL=2950, MAX=18, spawn: tile>=4(FOREST/MOUNTAIN/SNOW/LAVA), cleanup双条件=explored>=100 AND tick<cutoff, type映射:tile=4→hedge/tile=5→cave/tile=6→ice/tile=7→cave\n- WorldLaharSystem: CHECK_INTERVAL=2350, MAX=15, spawn无tile限制, cleanup条件velocity<=1（含等于！非严格小于）, update先减velocity再算destructionPath\n- WorldLanthanumSpringSystem: CHECK_INTERVAL=2940, MAX=32, spawn:SHALLOW_WATER, cleanup: tick-54000\n- WorldLavaTubeSystem: CHECK_INTERVAL=2680, MAX=12, spawn:MOUNTAIN||LAVA, cleanup: tick-58000, internalTemp减少但不低于15, crustThickness增加但不超10\n- WorldLawSystem: 非地形系统，UI面板，有4个categories(physics/biology/civilization/elements), getLaw返回默认1.0, handleKey处理'w'切换visible/Escape关闭\n- WorldLeyLineSystem: 无CHECK_INTERVAL，首次update初始化(3-6条地脉线+nexuses), energy在[0,1]正弦脉动, clear()重置所有\n- WorldLighthouseSystem: CHECK_INTERVAL=2500, MAX=15, spawn:SAND+adjacent water(SHALLOW或DEEP), 4状态机:building→active(tick-lh.tick>5000严格大于)→damaged(<30)→ruined(<5), random<0.01修复ruined\n- WorldLithiumSpringSystem: CHECK_INTERVAL=3240, MAX=32, 3次attempt, spawn:nearWater||nearMountain, cleanup: tick-54000\n\n本轮无需额外修复（三批Agent均全部通过）。\n\n当前已派发下一批（NNN2/OOO2/PPP2）：\n- NNN2组: WorldLutetiumSpringSystem WorldMaaSystem WorldMaelstromSystem\n- OOO2组: WorldMagicStormSystem WorldMagnesiumSpringSystem WorldMagneticFieldSystem\n- PPP2组: WorldManganeseSpringSystem WorldMangroveDeltaSystem WorldMangroveSwampSystem\n\n下轮优先方向：\n1. 等待NNN2/OOO2/PPP2 Agent完成，收集结果\n2. 运行全量测试验证，修复flaky测试\n3. 继续处理WorldMangrove/WorldM/WorldN系列剩余",
+  "notes": "迭代139（循环46/100）。本轮主要成就：收集并提交NNN2/OOO2/PPP2三批Agent结果，测试从14552增至14829，+277个测试。\n\n本轮处理的系统（3批Agent并行）：\nNNN2组(+101): WorldLutetiumSpringSystem(30) WorldMaaSystem(34) WorldMaelstromSystem(37)\nOOO2组(+109): WorldMagicStormSystem(44) WorldMagnesiumSpringSystem(31) WorldMagneticFieldSystem(34)\nPPP2组(+115): WorldManganeseSpringSystem(31) WorldMangroveDeltaSystem(42) WorldMangroveSwampSystem(42)\n\n关键发现：\n- WorldMaaSystem: CHECK_INTERVAL=2710, MAX=9, spawn无tile限制, age从0+0.01开始递增, waterDepth+0.02上限50, tephraRing-0.005下限0, cleanup: age>=100\n- WorldMaelstromSystem: CHECK_INTERVAL=600, MAX=6, spawn:DEEP_WATER, age++每次update, phase%1取模, radius基于sin计算, age>MAX_AGE(8000)后active=false并被cleanup删除\n- WorldMagicStormSystem: SPAWN_INTERVAL=3000+MOVE_INTERVAL=150双重节流, spawn后同tick触发moveStorms导致age从0→1, zone在age%50==0时产生, cleanupZones用tick>=decayAt（含等于）\n- WorldMagnesiumSpringSystem: hasAdjacentTile驱动spawn, FORM_CHANCE=0.003, cleanup严格<cutoff\n- WorldMagneticFieldSystem: getTile=null时不spawn, strength波动公式BASE*[0.6+0.4*sin(...)], anomaly衰减条件tick-a.tick>60000 AND random<0.01\n- WorldMangroveDeltaSystem: CHECK_INTERVAL=2700, FORM_CHANCE=0.002, MAX=20, cutoff=90000, tidalRange/salinity字段有clamp范围\n- WorldMangroveSwampSystem: CHECK_INTERVAL=1600, SPAWN_CHANCE=0.004, MAX=20, 双条件cleanup: 时间>80000 AND density<15\n\n当前已派发下一批（QQQ2/RRR2/SSS2）：\n- QQQ2组: WorldMangroveSystem WorldMemorialSystem WorldMesaSystem\n- RRR2组: WorldMigrationWaveSystem WorldMineralSpringSystem WorldMirageSystem\n- SSS2组: WorldMoraineSystem WorldMossGrowthSystem WorldMudFlatSystem\n\n下轮优先方向：\n1. 等待QQQ2/RRR2/SSS2 Agent完成，收集结果\n2. 运行全量测试验证，修复flaky测试\n3. 继续处理WorldMud/WorldN系列剩余",
   "priorities": [
-    "1. 【持续目标】继续处理World系统（剩余约120个文件），用并行Agent批量处理",
-    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前14552/14552通过）",
-    "3. 【里程碑】已完成117个World系统测试改善（+2897测试），继续下一批",
+    "1. 【持续目标】继续处理World系统（剩余约90个文件），用并行Agent批量处理",
+    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前14829/14829通过）",
+    "3. 【里程碑】已完成126个World系统测试改善（+3174测试），继续下一批",
     "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+250-350测试",
-    "5. 【下一批系统】WorldMangroveSystem及后续M/N系列"
+    "5. 【下一批系统】WorldMud/WorldN系列"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -39,37 +39,19 @@
     "【迭代122新增】addComponent API需要带type字段的对象：{ type: 'position', x, y }不能缺type字段，否则getEntitiesWithComponents找不到实体",
     "【迭代122新增】performance.now()在短生命周期测试进程中可能<3000ms——需用vi.spyOn(performance, 'now').mockReturnValue(大数)来mock超时测试",
     "【迭代123新增】工匠系统cleanup边界规则：先递增后cleanup，cleanup条件<=4，初始值4.0会在+0.02后变4.02>4不删除，需用3.98确保4.00<=4触发删除",
-    "【迭代124新增】并行Agent批处理效率极高：每批9个系统，3个Agent并行，2-3分钟完成+100-180个测试，本轮共处理81个系统，+904个测试",
-    "【迭代125新增】测试含招募逻辑的cleanup时：getEntitiesWithComponent必须返回空数组[]，否则招募新实体会干扰cleanup后数量断言（NomadSystem是典型案例）",
-    "【迭代126新增】Diplomatic系统有3种update签名变体：(a)标准4参数(dt,world,em,tick)；(b)3参数(dt,em,civManager,tick)；(c)含civs数组的特殊签名。必须先读源码确认",
-    "【迭代127新增】random=0导致civA===civB早返回问题：duration/cleanup测试必须用mockReturnValue(1)跳过spawn块",
-    "【迭代129新增】spawn后同次update立刻执行duration+=1——新spawn的arrangement.duration=1不是0，测试时注意边界",
     "【迭代130新增】Flaky测试根本原因：cleanup/state测试中未mock Math.random，spawn逻辑有小概率触发导致length断言失败或TypeError",
     "【迭代130新增】Flaky修复策略：在有sys.update()且有确定性toHaveLength(N)断言的测试中，在update前加vi.spyOn(Math,'random').mockReturnValue(0.9)",
     "【迭代131新增】TileType枚举正确值：DEEP_WATER=0, SHALLOW_WATER=1, SAND=2, GRASS=3, FOREST=4, MOUNTAIN=5, SNOW=6, LAVA=7——MOUNTAIN=5不是4！",
-    "【迭代131新增】hasAdjacentTile安全mock：用getTile:()=>2(SAND)，因为SAND既不匹配SHALLOW_WATER也不匹配DEEP_WATER也不匹配MOUNTAIN，可靠阻断Spring系统spawn",
-    "【迭代133新增】WorldFrostbiteSystem severity升级：mild→moderate@60000→severe@120000→extreme@200000，age>300000时active=false并删除",
-    "【迭代134新增】WorldFumaroleSystem cleanup特殊性：temperature=50时会先Math.max(50,50-0.01)=50，然后判断<=50触发删除——边界测试需注意",
-    "【迭代134新增】WorldFungalNetworkSystem有Set去重结构_networkKeySet：key=x*10000+y，cleanup时需同步清除keySet",
-    "【迭代134新增】WorldGeoglyphSystem非时间cleanup：visibility<=10（侵蚀阈值），age>100000才触发-0.03递减——需要tick差值>100000才能观察到侵蚀",
-    "【迭代134新增】温泉/地热系统（GeothermalPool/GeothermalSpring）无特殊spawn tile要求，任意地形均可，字段temperature有随机浮动+Math.max/min钳制",
     "【迭代135新增】spawn后立即update的off-by-one陷阱：同一次update()内先spawn再update所有记录，导致spawn初始值立即偏移（-0.01,-0.02,-0.004等）——修复方案：断言下界用Math.max保底值而非spawn初始值",
-    "【迭代135新增】GeothermalVentSystem的eruption陷阱：ERUPTION_CHANCE=0.008，random=0时0<0.008会触发eruption，使heatOutput+40/cooldown=2000+random*3000/activity='erupting'——需用mockReturnValueOnce(0).mockReturnValue(0.9)分别控制spawn和后续update",
-    "【迭代135新增】GeyserFieldSystem的eruptionInterval干扰cleanup：lastEruption=0+小tick时会触发喷发+5温度，阻止cleanup；测试cleanup时设eruptionInterval:999999",
-    "【迭代135新增】GeyserSystem cleanup测试必须用nullTileWorld（getTile:()=>null）：nullTile阻断spawn，确保cleanup后无新记录干扰length断言",
-    "【迭代135新增】WorldGeothermalSystem spawn需tile>=6(SNOW=6或LAVA=7)，不是MOUNTAIN=5；safeWorld用getTile:()=>2(SAND)阻断spawn",
-    "【迭代136新增】WorldHeatmapSystem的update()只有1个参数_tick，不是标准4参数(dt,world,em,tick)——调用时必须用sys.update(tick)单参数形式",
-    "【迭代136新增】WorldHotSpringSystem visitors off-by-one: spawn时random=0使visitors在spawn帧立即变1（0<0.02）——测试初始visitors必须直接注入对象而非通过update spawn",
-    "【迭代136新增】WorldHotSpringSystem2 waterTemp钳位触发cleanup: waterTemp=30.001经update→Math.max(30,29.996)=30→30<=30被cleanup删除——需验证toHaveLength(0)而非读取waterTemp",
-    "【迭代136新增】3次attempt系统(IceCaveSystem等): random=0时3次都spawn→length=3，spawn验证改用toBeGreaterThanOrEqual(1)而非toHaveLength(1)",
-    "【迭代136新增】IceShelfSystem特殊cleanup: sh.tick < cutoff-100000 || sh.thickness < 10，spawn后thickness初始>=20但update后立即减少calvingRate*0.05",
-    "【迭代137新增】tick==CHECK_INTERVAL边界：条件tick-lastCheck<CHECK_INTERVAL，等于时3000-0=3000不<3000，会执行（而非不执行）——之前测试写错了！",
-    "【迭代137新增】WorldIrrigationSystem有4状态机(planned→digging→flowing→silted)：planned以0.1概率转digging，digging以0.05概率转flowing，silted以0.02概率恢复+siltLevel重置为10",
-    "【迭代137新增】afterEach必须在import中显式引入，否则ReferenceError——import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'",
-    "【迭代138新增】WorldLabyrinthSystem cleanup双条件：explored>=100 AND tick<cutoff，两个条件都满足才删除；spawn后同次update explored立即变0.1",
+    "【迭代137新增】tick==CHECK_INTERVAL边界：条件tick-lastCheck<CHECK_INTERVAL，等于时3000-0=3000不<3000，会执行（而非不执行）",
+    "【迭代138新增】WorldLabyrinthSystem cleanup双条件：explored>=100 AND tick<cutoff，两个条件都满足才删除",
     "【迭代138新增】WorldLaharSystem cleanup条件为velocity<=1（含等于），是<=不是<——与大多数系统的严格小于不同！",
     "【迭代138新增】WorldLighthouseSystem building→active条件：tick-lh.tick>5000（严格大于），测试需用5001而非5000才能触发状态转换",
-    "【迭代138新增】WorldLeyLineSystem无CHECK_INTERVAL，首次update初始化地脉线，energy正弦脉动范围[0,1]（非[0.5,1]）"
+    "【迭代139新增】WorldMaelstromSystem age超MAX_AGE后active=false并立刻被cleanup删除——不能断言active字段，应断言toHaveLength(0)",
+    "【迭代139新增】WorldMagicStormSystem的spawn后同tick触发moveStorms：age从0→1（非0），spawn字段测试必须考虑同帧update偏移",
+    "【迭代139新增】WorldMagicStormSystem的cleanupZones：tick>=decayAt（含等于）时删除，与常见严格<相反！",
+    "【迭代139新增】WorldMangroveSwampSystem双条件cleanup：时间>80000 AND density<15，两个条件都满足才删除",
+    "【迭代139新增】WorldMangroveDeltaSystem的tidalRange/salinity字段有clamp范围，测试断言需用clamp后的范围而非spawn初始范围"
   ],
-  "last_updated": "2026-03-03T01:45:00+08:00"
+  "last_updated": "2026-03-03T02:00:00+08:00"
 }
