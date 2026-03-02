@@ -26,6 +26,7 @@ const KNOWLEDGE_PER_FIND = 0.8
 
 export class CreatureMushroomForagerSystem {
   private foragers: MushroomForager[] = []
+  private _foragersSet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -38,7 +39,7 @@ export class CreatureMushroomForagerSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = pickRandom(entities)
-        const already = this.foragers.some(f => f.entityId === eid)
+        const already = this._foragersSet.has(eid)
         if (!already) {
           this.foragers.push({
             id: this.nextId++,
@@ -49,6 +50,7 @@ export class CreatureMushroomForagerSystem {
             antidotes: 0,
             tick,
           })
+          this._foragersSet.add(eid)
         }
       }
     }
@@ -89,6 +91,7 @@ export class CreatureMushroomForagerSystem {
     // Remove foragers whose creatures no longer exist
     for (let i = this.foragers.length - 1; i >= 0; i--) {
       const f = this.foragers[i]
+      this._foragersSet.delete(f.entityId)
       if (!em.hasComponent(f.entityId, 'creature')) this.foragers.splice(i, 1)
 
     }

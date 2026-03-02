@@ -29,6 +29,7 @@ const BOAT_CAPACITY: Record<BoatType, number> = {
 
 export class CreatureGondolierSystem {
   private gondoliers: Gondolier[] = []
+  private _gondoliersSet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -41,7 +42,7 @@ export class CreatureGondolierSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = pickRandom(entities)
-        if (!this.gondoliers.some(g => g.entityId === eid)) {
+        if (!this._gondoliersSet.has(eid)) {
           const boat = pickRandom(BOAT_TYPES)
           this.gondoliers.push({
             id: this.nextId++, entityId: eid,
@@ -51,6 +52,7 @@ export class CreatureGondolierSystem {
             routeLength: 2 + Math.floor(Math.random() * 6),
             earnings: 0, tick,
           })
+          this._gondoliersSet.add(eid)
         }
       }
     }
@@ -87,6 +89,7 @@ export class CreatureGondolierSystem {
     // Remove gondoliers whose creatures no longer exist
     for (let i = this.gondoliers.length - 1; i >= 0; i--) {
       const g = this.gondoliers[i]
+      this._gondoliersSet.delete(g.entityId)
       if (!em.hasComponent(g.entityId, 'creature')) this.gondoliers.splice(i, 1)
 
     }

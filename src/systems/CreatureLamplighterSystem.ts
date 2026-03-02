@@ -30,6 +30,7 @@ const FUEL_BRIGHTNESS: Record<FuelType, number> = {
 
 export class CreatureLamplighterSystem {
   private lamplighters: Lamplighter[] = []
+  private _lamplightersSet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -42,7 +43,7 @@ export class CreatureLamplighterSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = pickRandom(entities)
-        if (!this.lamplighters.some(l => l.entityId === eid)) {
+        if (!this._lamplightersSet.has(eid)) {
           const fuel = pickRandom(FUEL_TYPES)
           this.lamplighters.push({
             id: this.nextId++, entityId: eid,
@@ -53,6 +54,7 @@ export class CreatureLamplighterSystem {
             efficiency: 0.3 + Math.random() * 0.3,
             nightsWorked: 0, tick,
           })
+          this._lamplightersSet.add(eid)
         }
       }
     }
@@ -89,6 +91,7 @@ export class CreatureLamplighterSystem {
     // Remove lamplighters whose creatures no longer exist
     for (let i = this.lamplighters.length - 1; i >= 0; i--) {
       const l = this.lamplighters[i]
+      this._lamplightersSet.delete(l.entityId)
       if (!em.hasComponent(l.entityId, 'creature')) this.lamplighters.splice(i, 1)
 
     }

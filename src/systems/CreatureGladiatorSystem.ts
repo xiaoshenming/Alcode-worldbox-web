@@ -28,6 +28,7 @@ const WEAPON_POWER: Record<WeaponSkill, number> = {
 
 export class CreatureGladiatorSystem {
   private gladiators: Gladiator[] = []
+  private _gladiatorsSet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
   private _byArena: Map<number, Gladiator[]> = new Map()
@@ -41,7 +42,7 @@ export class CreatureGladiatorSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = pickRandom(entities)
-        const already = this.gladiators.some(g => g.entityId === eid)
+        const already = this._gladiatorsSet.has(eid)
         if (!already) {
           const weapon = pickRandom(WEAPONS)
           this.gladiators.push({
@@ -54,6 +55,7 @@ export class CreatureGladiatorSystem {
             arenaId: Math.floor(Math.random() * 5),
             tick,
           })
+          this._gladiatorsSet.add(eid)
         }
       }
     }
@@ -93,6 +95,7 @@ export class CreatureGladiatorSystem {
     // Remove gladiators whose creatures no longer exist
     for (let i = this.gladiators.length - 1; i >= 0; i--) {
       const g = this.gladiators[i]
+      this._gladiatorsSet.delete(g.entityId)
       if (!em.hasComponent(g.entityId, 'creature')) this.gladiators.splice(i, 1)
 
     }

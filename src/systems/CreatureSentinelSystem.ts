@@ -30,6 +30,7 @@ const ROUTE_VISION: Record<PatrolRoute, number> = {
 
 export class CreatureSentinelSystem {
   private sentinels: Sentinel[] = []
+  private _sentinelsSet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -42,7 +43,7 @@ export class CreatureSentinelSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = pickRandom(entities)
-        if (!this.sentinels.some(s => s.entityId === eid)) {
+        if (!this._sentinelsSet.has(eid)) {
           const route = pickRandom(PATROL_ROUTES)
           this.sentinels.push({
             id: this.nextId++,
@@ -56,6 +57,7 @@ export class CreatureSentinelSystem {
             fatigue: 0,
             tick,
           })
+          this._sentinelsSet.add(eid)
         }
       }
     }
@@ -92,6 +94,7 @@ export class CreatureSentinelSystem {
     // Remove sentinels whose creatures no longer exist
     for (let i = this.sentinels.length - 1; i >= 0; i--) {
       const s = this.sentinels[i]
+      this._sentinelsSet.delete(s.entityId)
       if (!em.hasComponent(s.entityId, 'creature')) this.sentinels.splice(i, 1)
 
     }

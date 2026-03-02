@@ -26,6 +26,7 @@ const MASTERY_RESISTANCE: Record<FirewalkerMastery, number> = {
 
 export class CreatureFirewalkerSystem {
   private firewalkers: FirewalkerData[] = []
+  private _firewalkersSet = new Set<number>()
   private lastCheck = 0
 
   update(dt: number, em: EntityManager, tick: number): void {
@@ -36,7 +37,7 @@ export class CreatureFirewalkerSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = pickRandom(entities)
-        const already = this.firewalkers.some(f => f.entityId === eid)
+        const already = this._firewalkersSet.has(eid)
         if (!already) {
           this.firewalkers.push({
             entityId: eid,
@@ -47,6 +48,7 @@ export class CreatureFirewalkerSystem {
             active: true,
             tick,
           })
+          this._firewalkersSet.add(eid)
         }
       }
     }
@@ -72,6 +74,7 @@ export class CreatureFirewalkerSystem {
 
     for (let i = this.firewalkers.length - 1; i >= 0; i--) {
       const f = this.firewalkers[i]
+      this._firewalkersSet.delete(f.entityId)
       if (!em.hasComponent(f.entityId, 'creature')) this.firewalkers.splice(i, 1)
 
     }

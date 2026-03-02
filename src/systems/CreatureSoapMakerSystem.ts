@@ -28,6 +28,7 @@ const RECIPE_DIFFICULTY: Record<SoapRecipe, number> = {
 
 export class CreatureSoapMakerSystem {
   private makers: SoapMaker[] = []
+  private _makersSet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -40,7 +41,7 @@ export class CreatureSoapMakerSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = pickRandom(entities)
-        const already = this.makers.some(m => m.entityId === eid)
+        const already = this._makersSet.has(eid)
         if (!already) {
           const recipe = pickRandom(RECIPES)
           this.makers.push({
@@ -53,6 +54,7 @@ export class CreatureSoapMakerSystem {
             recipe,
             tick,
           })
+          this._makersSet.add(eid)
         }
       }
     }
@@ -81,6 +83,7 @@ export class CreatureSoapMakerSystem {
     // Remove makers whose creatures no longer exist
     for (let i = this.makers.length - 1; i >= 0; i--) {
       const m = this.makers[i]
+      this._makersSet.delete(m.entityId)
       if (!em.hasComponent(m.entityId, 'creature')) this.makers.splice(i, 1)
 
     }

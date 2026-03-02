@@ -28,6 +28,7 @@ const FRAGRANCE_VALUE: Record<FragranceType, number> = {
 
 export class CreaturePerfumerSystem {
   private perfumers: Perfumer[] = []
+  private _perfumersSet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -40,7 +41,7 @@ export class CreaturePerfumerSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = pickRandom(entities)
-        if (!this.perfumers.some(p => p.entityId === eid)) {
+        if (!this._perfumersSet.has(eid)) {
           const frag = pickRandom(FRAGRANCE_TYPES)
           this.perfumers.push({
             id: this.nextId++, entityId: eid,
@@ -49,6 +50,7 @@ export class CreaturePerfumerSystem {
             fragranceType: frag,
             reputation: 0, tick,
           })
+          this._perfumersSet.add(eid)
         }
       }
     }
@@ -84,6 +86,7 @@ export class CreaturePerfumerSystem {
     // Remove perfumers whose creatures no longer exist
     for (let i = this.perfumers.length - 1; i >= 0; i--) {
       const p = this.perfumers[i]
+      this._perfumersSet.delete(p.entityId)
       if (!em.hasComponent(p.entityId, 'creature')) this.perfumers.splice(i, 1)
 
     }

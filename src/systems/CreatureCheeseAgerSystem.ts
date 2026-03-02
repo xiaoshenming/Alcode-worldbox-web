@@ -27,6 +27,7 @@ const VARIETY_AGING_RATE: Record<CheeseVariety, number> = {
 
 export class CreatureCheeseAgerSystem {
   private agers: CheeseAgerData[] = []
+  private _agersSet = new Set<number>()
   private lastCheck = 0
 
   update(dt: number, em: EntityManager, tick: number): void {
@@ -38,7 +39,7 @@ export class CreatureCheeseAgerSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = pickRandom(entities)
-        const already = this.agers.some(a => a.entityId === eid)
+        const already = this._agersSet.has(eid)
         if (!already) {
           const variety = pickRandom(VARIETIES)
           this.agers.push({
@@ -50,6 +51,7 @@ export class CreatureCheeseAgerSystem {
             active: true,
             tick,
           })
+          this._agersSet.add(eid)
         }
       }
     }
@@ -75,6 +77,7 @@ export class CreatureCheeseAgerSystem {
     // Remove agers whose creatures no longer exist
     for (let i = this.agers.length - 1; i >= 0; i--) {
       const a = this.agers[i]
+      this._agersSet.delete(a.entityId)
       if (!em.hasComponent(a.entityId, 'creature')) this.agers.splice(i, 1)
 
     }

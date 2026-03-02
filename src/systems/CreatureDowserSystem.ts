@@ -27,6 +27,7 @@ const TOOL_BASE_ACCURACY: Record<DowserTool, number> = {
 
 export class CreatureDowserSystem {
   private dowsers: DowserData[] = []
+  private _dowsersSet = new Set<number>()
   private lastCheck = 0
 
   update(dt: number, em: EntityManager, tick: number): void {
@@ -38,7 +39,7 @@ export class CreatureDowserSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = pickRandom(entities)
-        const already = this.dowsers.some(d => d.entityId === eid)
+        const already = this._dowsersSet.has(eid)
         if (!already) {
           const tool = pickRandom(TOOLS)
           this.dowsers.push({
@@ -50,6 +51,7 @@ export class CreatureDowserSystem {
             active: true,
             tick,
           })
+          this._dowsersSet.add(eid)
         }
       }
     }
@@ -72,6 +74,7 @@ export class CreatureDowserSystem {
     // Remove dowsers whose creatures no longer exist
     for (let i = this.dowsers.length - 1; i >= 0; i--) {
       const d = this.dowsers[i]
+      this._dowsersSet.delete(d.entityId)
       if (!em.hasComponent(d.entityId, 'creature')) this.dowsers.splice(i, 1)
 
     }

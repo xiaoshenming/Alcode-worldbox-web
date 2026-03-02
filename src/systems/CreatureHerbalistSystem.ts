@@ -28,6 +28,7 @@ const POTION_DIFFICULTY: Record<HerbSpecialty, number> = {
 
 export class CreatureHerbalistSystem {
   private herbalists: Herbalist[] = []
+  private _herbalistsSet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -40,7 +41,7 @@ export class CreatureHerbalistSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = pickRandom(entities)
-        const already = this.herbalists.some(h => h.entityId === eid)
+        const already = this._herbalistsSet.has(eid)
         if (!already) {
           const spec = pickRandom(SPECIALTIES)
           this.herbalists.push({
@@ -53,6 +54,7 @@ export class CreatureHerbalistSystem {
             specialty: spec,
             tick,
           })
+          this._herbalistsSet.add(eid)
         }
       }
     }
@@ -89,6 +91,7 @@ export class CreatureHerbalistSystem {
     // Remove herbalists whose creatures no longer exist
     for (let i = this.herbalists.length - 1; i >= 0; i--) {
       const h = this.herbalists[i]
+      this._herbalistsSet.delete(h.entityId)
       if (!em.hasComponent(h.entityId, 'creature')) this.herbalists.splice(i, 1)
 
     }

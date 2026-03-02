@@ -28,6 +28,7 @@ const BAIT_EFFECTIVENESS: Record<BaitType, number> = {
 
 export class CreatureTrapperSystem {
   private trappers: Trapper[] = []
+  private _trappersSet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -40,7 +41,7 @@ export class CreatureTrapperSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = pickRandom(entities)
-        const already = this.trappers.some(t => t.entityId === eid)
+        const already = this._trappersSet.has(eid)
         if (!already) {
           const bait = pickRandom(BAIT_TYPES)
           this.trappers.push({
@@ -53,6 +54,7 @@ export class CreatureTrapperSystem {
             territory: 3 + Math.floor(Math.random() * 5),
             tick,
           })
+          this._trappersSet.add(eid)
         }
       }
     }
@@ -83,6 +85,7 @@ export class CreatureTrapperSystem {
     // Remove trappers whose creatures no longer exist
     for (let i = this.trappers.length - 1; i >= 0; i--) {
       const t = this.trappers[i]
+      this._trappersSet.delete(t.entityId)
       if (!em.hasComponent(t.entityId, 'creature')) this.trappers.splice(i, 1)
 
     }

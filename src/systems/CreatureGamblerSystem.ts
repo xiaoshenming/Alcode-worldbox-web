@@ -24,6 +24,7 @@ const MAX_STREAK_BONUS = 0.15
 
 export class CreatureGamblerSystem {
   private gamblers: Gambler[] = []
+  private _gamblersSet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -36,7 +37,7 @@ export class CreatureGamblerSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = pickRandom(entities)
-        const already = this.gamblers.some(g => g.entityId === eid)
+        const already = this._gamblersSet.has(eid)
         if (!already) {
           this.gamblers.push({
             id: this.nextId++,
@@ -47,6 +48,7 @@ export class CreatureGamblerSystem {
             winStreak: 0,
             tick,
           })
+          this._gamblersSet.add(eid)
         }
       }
     }
@@ -75,6 +77,7 @@ export class CreatureGamblerSystem {
     for (let i = this.gamblers.length - 1; i >= 0; i--) {
       const g = this.gamblers[i]
       if (!em.hasComponent(g.entityId, 'creature') || (g.wealth <= 0 && g.gamesPlayed > 10)) {
+        this._gamblersSet.delete(g.entityId)
         this.gamblers.splice(i, 1)
       }
     }

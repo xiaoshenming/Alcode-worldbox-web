@@ -29,6 +29,7 @@ const HIVE_YIELD: Record<HiveType, number> = {
 
 export class CreatureBeekeeperSystem {
   private beekeepers: Beekeeper[] = []
+  private _beekeepersSet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -41,7 +42,7 @@ export class CreatureBeekeeperSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = pickRandom(entities)
-        if (!this.beekeepers.some(b => b.entityId === eid)) {
+        if (!this._beekeepersSet.has(eid)) {
           const hive = pickRandom(HIVE_TYPES)
           this.beekeepers.push({
             id: this.nextId++, entityId: eid,
@@ -52,6 +53,7 @@ export class CreatureBeekeeperSystem {
             beeHealth: 60 + Math.random() * 30,
             tick,
           })
+          this._beekeepersSet.add(eid)
         }
       }
     }
@@ -87,6 +89,7 @@ export class CreatureBeekeeperSystem {
     // Remove beekeepers whose creatures no longer exist
     for (let i = this.beekeepers.length - 1; i >= 0; i--) {
       const b = this.beekeepers[i]
+      this._beekeepersSet.delete(b.entityId)
       if (!em.hasComponent(b.entityId, 'creature')) this.beekeepers.splice(i, 1)
 
     }

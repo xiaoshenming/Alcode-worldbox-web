@@ -27,6 +27,7 @@ const TELESCOPE_POWER: Record<TelescopeType, number> = {
 
 export class CreatureAstronomerSystem {
   private astronomers: Astronomer[] = []
+  private _astronomersSet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -39,7 +40,7 @@ export class CreatureAstronomerSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = pickRandom(entities)
-        const already = this.astronomers.some(a => a.entityId === eid)
+        const already = this._astronomersSet.has(eid)
         if (!already) {
           const telescope = pickRandom(TELESCOPES)
           this.astronomers.push({
@@ -51,6 +52,7 @@ export class CreatureAstronomerSystem {
             telescope,
             tick,
           })
+          this._astronomersSet.add(eid)
         }
       }
     }
@@ -85,6 +87,7 @@ export class CreatureAstronomerSystem {
     // Remove astronomers whose creatures no longer exist
     for (let i = this.astronomers.length - 1; i >= 0; i--) {
       const a = this.astronomers[i]
+      this._astronomersSet.delete(a.entityId)
       if (!em.hasComponent(a.entityId, 'creature')) this.astronomers.splice(i, 1)
 
     }

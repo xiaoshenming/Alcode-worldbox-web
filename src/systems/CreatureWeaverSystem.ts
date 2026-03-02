@@ -28,6 +28,7 @@ const FIBER_QUALITY: Record<FiberType, number> = {
 
 export class CreatureWeaverSystem {
   private weavers: Weaver[] = []
+  private _weaversSet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -40,7 +41,7 @@ export class CreatureWeaverSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = pickRandom(entities)
-        const already = this.weavers.some(w => w.entityId === eid)
+        const already = this._weaversSet.has(eid)
         if (!already) {
           const spec = pickRandom(FIBER_TYPES)
           this.weavers.push({
@@ -53,6 +54,7 @@ export class CreatureWeaverSystem {
             specialization: spec,
             tick,
           })
+          this._weaversSet.add(eid)
         }
       }
     }
@@ -87,6 +89,7 @@ export class CreatureWeaverSystem {
     // Remove weavers whose creatures no longer exist
     for (let i = this.weavers.length - 1; i >= 0; i--) {
       const w = this.weavers[i]
+      this._weaversSet.delete(w.entityId)
       if (!em.hasComponent(w.entityId, 'creature')) this.weavers.splice(i, 1)
 
     }

@@ -26,6 +26,7 @@ const RECORD_RATE: Record<ChroniclerSpecialty, number> = {
 
 export class CreatureChroniclerSystem {
   private chroniclers: ChroniclerData[] = []
+  private _chroniclersSet = new Set<number>()
   private lastCheck = 0
 
   update(dt: number, em: EntityManager, tick: number): void {
@@ -36,7 +37,7 @@ export class CreatureChroniclerSystem {
       const entities = em.getEntitiesWithComponent('creature')
       if (entities.length > 0) {
         const eid = pickRandom(entities)
-        const already = this.chroniclers.some(c => c.entityId === eid)
+        const already = this._chroniclersSet.has(eid)
         if (!already) {
           const spec = pickRandom(SPECIALTIES)
           this.chroniclers.push({
@@ -47,6 +48,7 @@ export class CreatureChroniclerSystem {
             active: true,
             tick,
           })
+          this._chroniclersSet.add(eid)
         }
       }
     }
@@ -65,6 +67,7 @@ export class CreatureChroniclerSystem {
 
     for (let i = this.chroniclers.length - 1; i >= 0; i--) {
       const c = this.chroniclers[i]
+      this._chroniclersSet.delete(c.entityId)
       if (!em.hasComponent(c.entityId, 'creature')) this.chroniclers.splice(i, 1)
 
     }
