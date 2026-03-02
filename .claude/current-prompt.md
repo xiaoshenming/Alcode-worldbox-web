@@ -1,39 +1,37 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代122（循环24/100）。本轮主要成就：系统性提升测试质量——将10个只有2-3个trivial测试的文件改写为覆盖真实业务逻辑的有意义测试。
+🧠 AI 上轮笔记：迭代123（循环25/100）。本轮主要成就：大规模系统性提升测试质量——从5190增至5502，+312个测试。
 
-测试质量改进详情（5044→5190，+146）：
-1. CreatureSkillSystem: 5→21个测试（XP升级、autoUnlock、MAX_LEVEL封顶）
-2. WeatherDisasterSystem: 5→14个测试（expireDisaster tile恢复、isInArea、setTileWithRecord）
-3. MiniGameSystem: 5→18个测试（triggerRandomEvent、update超时关闭、computeWrappedLines）
-4. CreatureVisionSystem: 2→12个测试（地形视野修正：森林-3、山地+4、沙地+2）
-5. CreatureCollectionSystem: 2→13个测试（getOrCreate、CHECK_INTERVAL节流）
-6. CreatureAmbitionSystem: 3→13个测试（updateProgress逻辑、两个节流验证）
-7. CreatureDreamSystem: 3→13个测试（pruneLog截断保留最新、DREAM_CONFIGS范围）
-8. CreatureHobbySystem: 3→13个测试（skill递增clamp、无creature时删除、pickHobby有效性）
-9. CreatureLanguageSystem: 3→15个测试（computeSimilarities算法：同family+50、复杂度/词汇量影响）
-10. CreatureLegacySystem: 3→12个测试（pruneLegacies、CHECK_INTERVAL节流）
-11. CreatureIntuitionSystem: 3→15个测试（getWisdom、applyIntuitionEffect按sense类型给bonus）
-12. CreatureSuperstitionSystem: 3→14个测试（decaySuperstitions believerFactor计算、cleanup MIN_STRENGTH过滤）
-13. CreaturePremonitionSystem: 3→16个测试（urgency计算规则：disaster/death×1.5 vs 其他×0.6、visions过期清理）
+本轮测试质量改进详情：
+1. CreatureDivinationSystem: 3→11个测试（pruneOld截断、CHECK_INTERVAL节流、6种DivinationType）
+2. CreatureNightWatchSystem: 3→12个测试（pruneOld保留最新、getRecent、processThreats vigilance上限）
+3. CreaturePetSystem: 3→12个测试（updateBonds bond递增clamp100、无creature删除、双间隔节流）
+4. CreatureRivalryDuelSystem: 3→12个测试（endDuel victory/defeat/draw、history截断50、duelingIds清理）
+5. CreatureTradeSkillSystem: 3→15个测试（trainSkills增量clamp、getAverageSkill纯计算、双间隔节流）
+6. CreatureApprenticeSystem: 3→14个测试（getActiveCount只计非graduated、applyGraduation 5种技能效果）
+7. LODRenderSystem: 3→16个测试（4种LOD阈值边界、setThresholds自定义、连续切换）
+8. RenderCullingSystem: 4→17个测试（getLODLevel距离计算、isVisible边界/margin/zoom、getVisibleTileBounds缓存对象）
+9. CreatureAnvilsmithSystem: 5→10个测试（CHECK_INTERVAL节流、技能递增0.02/上限100、cleanup先增后删边界3.98）
+10. CreatureAnnealerSystem: 5→10个测试（同上模式）
+11. CreatureBlacksmithSystem: 5→9个测试（cleanup无creature删除、CHECK_INTERVAL节流）
+12-21. 9个工匠系统（Beekeeper/Beveller/BobbinWinder/AppliqueMakers/AssayerSystem/AwlMakers/BasketWeaver/Bellfounder/Borer）：各5→15-20个测试
+22-30. 9个工匠系统（Assayers/BasketWeavers/BellFounders/BellMakers/BobbinLaceMakers/Bookbinders/BraidMakers/BobbinLace2Makers/BobbinMakers）：各5→16-18个测试
 
 关键发现：
-- 大文件（>400行）分析：WeatherDisasterSystem(706行)等职责单一、内部方法边界清晰，不���合拆分
-- 仍有大量3-测试文件（CreatureDivination/Apprentice/Pet等）可继续改进
-- performance.now()在短生命周期测试进程中可能返回<3000，需用vi.spyOn mock
-- addComponent API需要带type字段的对象，测试中用as any绕过类型检查
-- ESM模块不能用require()，需要import或直接用系统内部逻辑验证
+- 两类主要cleanup模式：(1)技能<=4删除，先递增后cleanup，需用3.98触发；(2)!em.hasComponent删除，用mock em实现
+- 工匠系统有两类结构：(a)纯数组+技能递增+cleanup，(b)skillMap+过期time-based cleanup+公式计算
+- 还有约200个5测试文件可以改进
+- 并行Agent方式极高效：3个Agent同时处理3批共9个文件，每批约2分钟完成
 
 下轮优先方向：
-1. 继续改进剩余3-测试文件（CreatureDivinationSystem、CreatureApprenticeSystem、CreaturePetSystem等）
-2. 大文件重构评估已完成（不适合拆分），转向其他维度
-3. LODRenderSystem测试（3个）可以改进
+1. 继续用并行Agent批量改进剩余工匠系统（还有~200个5测试文件）
+2. 保持tsc+vitest+build三重验证全绿（当前5502/5502通过）
 🎯 AI 自定优先级：[
-  "1. 【持续监控】tsc+vitest+build三重验证保持全绿（当前5190/5190通过）",
-  "2. 【进行中】继续提升测试质量：仍有多个3测试文件（CreatureDivination/Apprentice/Pet/NightWatch/TradeSkill/RivalryDuel等）",
-  "3. 【已完成】大文件（>400行）分析：WeatherDisasterSystem等职责单一，不适合拆分",
-  "4. 【新方向】LODRenderSystem测试（3个trivial）——检查是否有可测的LOD计算逻辑",
-  "5. 【新方向】扫描CreatureTradeSkillSystem/CreatureRivalryDuelSystem等剩余低质量测试"
+  "1. 【持续监控】tsc+vitest+build三重验证保持全绿（当前5502/5502通过）",
+  "2. 【进行中】继续用并行Agent批量改进剩余工匠系统测试（还有~190个5测试文件）",
+  "3. 【重要经验】工匠系统cleanup边界：先递增后cleanup，用3.98而非4.0触发<=4删除",
+  "4. 【重要经验】time-based cleanup用tick-offset确定cutoff，创建测试时注入满足条件的老tick记录",
+  "5. 【新发现】并行3个Agent批处理9个系统，每轮可+150个测试"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
@@ -70,10 +68,15 @@
   "【迭代122新增】ESM模块不能用require()——在测试中用import或直接通过系统内部状态(sys as any).field验证常量，不要用require()",
   "【迭代122新增】测试质量提升模式：(1)找CHECK_INTERVAL节流验证(2)找pruneXxx截断逻辑(3)找applyXxxEffect纯计算(4)找getWisdom等派生值计算——这4类最易写出有意义的测试",
   "【迭代122新增】WeatherDisasterSystem(706行)等大文件分析：职责单一（4种灾难的trigger/ongoing/render各有独立私有方法），共享activeDisasters状态——不适合拆分",
-  "【迭代122新增】computeSimilarities等纯算法函数是最高价值的测试目标——直接注入数据验证输出，无需mock任何外部依赖"
+  "【迭代122新增】computeSimilarities等纯算法函数是最高价值的测试目标——直接注入数据验证输出，无需mock任何外部依赖",
+  "【迭代123新增】工匠系统cleanup边界规则：先递增后cleanup，cleanup条件<=4，初始值4.0会在+0.02后变4.02>4不删除，需用3.98确保4.00<=4触发删除",
+  "【迭代123新增】工匠系统分两类：(a)纯数组+固定技能递增+技能值cleanup（用3.98边界）；(b)skillMap+time-based过期cleanup（用tick-offset计算cutoff）",
+  "【迭代123新增】getRecent(n)用slice(-n)实现，slice(-0)等于slice(0)返回全部，不要用0测试getRecent",
+  "【迭代123新增】并行Agent策略：3个Agent同时处理9个文件，每轮约2-3分钟完成+150个测试，效率极高",
+  "【迭代123新增】LODRenderSystem测试：zoom>=full=20→'full'，zoom>=medium=10→'medium'，zoom>=low=4→'low'，else→'icon'"
 ]
 
-迭代轮次: 25/100
+迭代轮次: 26/100
 
 
 🔄 自我进化（每轮必做）：
@@ -82,6 +85,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-03-02T13:02:47+08:00"
+  "last_updated": "2026-03-02T13:33:07+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。
