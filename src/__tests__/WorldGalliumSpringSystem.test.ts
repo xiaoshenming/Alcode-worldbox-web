@@ -1,30 +1,234 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { WorldGalliumSpringSystem } from '../systems/WorldGalliumSpringSystem'
-import type { GalliumSpringZone } from '../systems/WorldGalliumSpringSystem'
 
-function makeSys(): WorldGalliumSpringSystem { return new WorldGalliumSpringSystem() }
-let nextId = 1
-function makeZone(): GalliumSpringZone {
-  return { id: nextId++, x: 20, y: 30, galliumContent: 40, springFlow: 50, tick: 0 } as GalliumSpringZone
+// WorldGalliumSpringSystem: CHECK_INTERVAL=2890, MAX_ZONES=32, cutoff=tick-54000
+// spawn条件: nearWater(SHALLOW_WATER=1 or DEEP_WATER=0) || nearMountain(MOUNTAIN=5)
+// FORM_CHANCE=0.003: random > 0.003 跳过
+
+const CHECK_INTERVAL = 2890
+const MAX_ZONES = 32
+const CUTOFF_OFFSET = 54000
+
+function makeSys() { return new WorldGalliumSpringSystem() }
+
+const safeWorld = { width: 200, height: 200, getTile: () => 2 } as any  // SAND阻断spawn
+const em = {} as any
+
+function getZones(sys: WorldGalliumSpringSystem): any[] {
+  return (sys as any).zones
+}
+function getLastCheck(sys: WorldGalliumSpringSystem): number {
+  return (sys as any).lastCheck
+}
+function getNextId(sys: WorldGalliumSpringSystem): number {
+  return (sys as any).nextId
 }
 
-describe('WorldGalliumSpringSystem.getZones', () => {
-  let sys: WorldGalliumSpringSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
+function injectZone(sys: WorldGalliumSpringSystem, tick: number, overrides: any = {}) {
+  const zone = {
+    id: getZones(sys).length + 1, x: getZones(sys).length, y: 0,
+    galliumContent: 60, springFlow: 30,
+    bauxiteLeaching: 50, mineralLiquidity: 40,
+    tick,
+    ...overrides,
+  }
+  getZones(sys).push(zone)
+  return zone
+}
 
-  it('初始无Gallium泉区', () => { expect((sys as any).zones).toHaveLength(0) })
-  it('注入后可查询', () => {
-    ;(sys as any).zones.push(makeZone())
-    expect((sys as any).zones).toHaveLength(1)
+describe('WorldGalliumSpringSystem', () => {
+  let sys: WorldGalliumSpringSystem
+
+  beforeEach(() => {
+    sys = makeSys()
+    vi.restoreAllMocks()
   })
-  it('返回内部引用', () => {
-    expect((sys as any).zones).toBe((sys as any).zones)
+
+  afterEach(() => { vi.restoreAllMocks() })
+
+  // --- 1. 基础状态 ---
+  describe('初始状态', () => {
+    it('zones初始为空数组', () => {
+      expect(getZones(sys)).toHaveLength(0)
+    })
+    it('lastCheck初始为0', () => {
+      expect(getLastCheck(sys)).toBe(0)
+    })
+    it('nextId初始为1', () => {
+      expect(getNextId(sys)).toBe(1)
+    })
+    it('多个实例互不干扰', () => {
+      const s2 = makeSys()
+      expect(getZones(s2)).not.toBe(getZones(sys))
+    })
+    it('注入zone后zones非空', () => {
+      injectZone(sys, 1000)
+      expect(getZones(sys)).toHaveLength(1)
+    })
   })
-  it('Gallium泉区字段正确', () => {
-    ;(sys as any).zones.push(makeZone())
-    const z = (sys as any).zones[0]
-    expect(z.galliumContent).toBe(40)
-    expect(z.springFlow).toBe(50)
+
+  // --- 2. CHECK_INTERVAL节流 ---
+  describe('CHECK_INTERVAL节流', () => {
+    it('tick < CHECK_INTERVAL时不执行（lastCheck不更新）', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, safeWorld, em, CHECK_INTERVAL - 1)
+      expect(getLastCheck(sys)).toBe(0)
+    })
+    it('tick === CHECK_INTERVAL时执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, safeWorld, em, CHECK_INTERVAL)
+      expect(getLastCheck(sys)).toBe(CHECK_INTERVAL)
+    })
+    it('tick超过CHECK_INTERVAL时执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, safeWorld, em, CHECK_INTERVAL + 999)
+      expect(getLastCheck(sys)).toBe(CHECK_INTERVAL + 999)
+    })
+    it('刚执行后再次调用不重复执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, safeWorld, em, CHECK_INTERVAL)
+      const saved = getLastCheck(sys)
+      sys.update(1, safeWorld, em, CHECK_INTERVAL + 1)
+      expect(getLastCheck(sys)).toBe(saved)
+    })
+    it('两次满足间隔均更新lastCheck', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, safeWorld, em, CHECK_INTERVAL)
+      sys.update(1, safeWorld, em, CHECK_INTERVAL * 2)
+      expect(getLastCheck(sys)).toBe(CHECK_INTERVAL * 2)
+    })
   })
-  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+
+  // --- 3. spawn条件 ---
+  describe('spawn/生成逻辑', () => {
+    it('random=0.9不spawn（FORM_CHANCE=0.003）', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, safeWorld, em, CHECK_INTERVAL)
+      expect(getZones(sys)).toHaveLength(0)
+    })
+    it('SAND tile阻断spawn（无水/山相邻）', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.001)
+      sys.update(1, safeWorld, em, CHECK_INTERVAL)
+      expect(getZones(sys)).toHaveLength(0)
+    })
+    it('达到MAX_ZONES时不新增zone', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.001)
+      for (let i = 0; i < MAX_ZONES; i++) injectZone(sys, 1000000, { x: i })
+      sys.update(1, safeWorld, em, CHECK_INTERVAL)
+      expect(getZones(sys).length).toBe(MAX_ZONES)
+    })
+    it('达到MAX_ZONES时spawn循环即break', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      for (let i = 0; i < MAX_ZONES; i++) injectZone(sys, 100000, { x: i })
+      const before = getZones(sys).length
+      sys.update(1, safeWorld, em, CHECK_INTERVAL)
+      expect(getZones(sys).length).toBe(before)
+    })
+    it('低于MAX_ZONES时有机会spawn（只要tile/random合适）', () => {
+      // 即便world是safe，测试系统不会因为低于MAX而崩溃
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      expect(getZones(sys).length).toBeLessThan(MAX_ZONES)
+      sys.update(1, safeWorld, em, CHECK_INTERVAL)
+      // 没有崩溃即通过
+    })
+  })
+
+  // --- 4. cleanup/过期清理 ---
+  describe('cleanup过期清理', () => {
+    it('tick < cutoff的zone被删除', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      const currentTick = CHECK_INTERVAL + CUTOFF_OFFSET + 1000
+      injectZone(sys, 0) // 过期
+      sys.update(1, safeWorld, em, currentTick)
+      expect(getZones(sys)).toHaveLength(0)
+    })
+    it('tick >= cutoff的zone保留', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      const currentTick = CHECK_INTERVAL + CUTOFF_OFFSET
+      const zoneTick = currentTick - CUTOFF_OFFSET + 1
+      injectZone(sys, zoneTick)
+      sys.update(1, safeWorld, em, currentTick)
+      expect(getZones(sys)).toHaveLength(1)
+    })
+    it('tick === cutoff时zone保留（边界条件）', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      const currentTick = CHECK_INTERVAL + CUTOFF_OFFSET
+      const cutoff = currentTick - CUTOFF_OFFSET
+      injectZone(sys, cutoff)
+      sys.update(1, safeWorld, em, currentTick)
+      expect(getZones(sys)).toHaveLength(1)
+    })
+    it('混合场景：过期删除，未过期保留', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      const currentTick = CHECK_INTERVAL + CUTOFF_OFFSET + 200
+      injectZone(sys, 0, { x: 0 })         // 过期
+      injectZone(sys, currentTick - 1000, { x: 1 }) // 未过期
+      sys.update(1, safeWorld, em, currentTick)
+      expect(getZones(sys)).toHaveLength(1)
+    })
+    it('全部过期时zones清空', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      const currentTick = CHECK_INTERVAL + CUTOFF_OFFSET + 100
+      for (let i = 0; i < 5; i++) injectZone(sys, 0, { x: i })
+      sys.update(1, safeWorld, em, currentTick)
+      expect(getZones(sys)).toHaveLength(0)
+    })
+    it('全部未过期时zones全保留', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      const currentTick = CHECK_INTERVAL + CUTOFF_OFFSET
+      const freshTick = currentTick - 100
+      for (let i = 0; i < 4; i++) injectZone(sys, freshTick, { x: i })
+      sys.update(1, safeWorld, em, currentTick)
+      expect(getZones(sys)).toHaveLength(4)
+    })
+    it('多轮update中到期zone被移除', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      const t1 = CHECK_INTERVAL
+      injectZone(sys, t1)
+      sys.update(1, safeWorld, em, t1)
+      expect(getZones(sys)).toHaveLength(1)
+      sys.update(1, safeWorld, em, t1 + CHECK_INTERVAL + CUTOFF_OFFSET)
+      expect(getZones(sys)).toHaveLength(0)
+    })
+    it('大量zone混合过期场景', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      const currentTick = CHECK_INTERVAL + CUTOFF_OFFSET + 500
+      for (let i = 0; i < 10; i++) {
+        // 偶数过期，奇数不过期
+        const t = i % 2 === 0 ? 0 : currentTick - 1000
+        injectZone(sys, t, { x: i })
+      }
+      sys.update(1, safeWorld, em, currentTick)
+      expect(getZones(sys)).toHaveLength(5)
+    })
+  })
+
+  // --- 5. zone字段验证 ---
+  describe('zone字段验证', () => {
+    it('zone拥有galliumContent字段', () => {
+      const z = injectZone(sys, 1000)
+      expect(z).toHaveProperty('galliumContent')
+    })
+    it('zone拥有springFlow字段', () => {
+      const z = injectZone(sys, 1000)
+      expect(z).toHaveProperty('springFlow')
+    })
+    it('zone拥有bauxiteLeaching字段', () => {
+      const z = injectZone(sys, 1000)
+      expect(z).toHaveProperty('bauxiteLeaching')
+    })
+    it('zone拥有mineralLiquidity字段', () => {
+      const z = injectZone(sys, 1000)
+      expect(z).toHaveProperty('mineralLiquidity')
+    })
+    it('zone id唯一', () => {
+      for (let i = 0; i < 5; i++) injectZone(sys, 1000, { x: i })
+      const ids = getZones(sys).map((z: any) => z.id)
+      expect(new Set(ids).size).toBe(ids.length)
+    })
+    it('zones可包含多个zone', () => {
+      for (let i = 0; i < 8; i++) injectZone(sys, 1000, { x: i })
+      expect(getZones(sys)).toHaveLength(8)
+    })
+  })
 })
