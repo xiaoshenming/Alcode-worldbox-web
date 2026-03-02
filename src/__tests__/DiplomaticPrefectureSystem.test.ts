@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { DiplomaticPrefectureSystem, PrefectureForm } from '../systems/DiplomaticPrefectureSystem'
 
 const CHECK_INTERVAL = 2590
@@ -24,7 +24,7 @@ function inject(sys: DiplomaticPrefectureSystem, overrides: Record<string, any> 
 describe('DiplomaticPrefectureSystem', () => {
   let sys: DiplomaticPrefectureSystem
 
-  beforeEach(() => { sys = makeSys() })
+  beforeEach(() => { sys = makeSys(); vi.restoreAllMocks() })
 
   // ── 1. 基础数据结构 ──────────────────────────────────────────────────────
   describe('基础数据结构', () => {
@@ -118,6 +118,7 @@ describe('DiplomaticPrefectureSystem', () => {
     it('tick < cutoff 的 arrangement 被删除', () => {
       const tick = 100000
       inject(sys, { tick: tick - 88001 }) // 早于 cutoff
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(0, makeWorld(), makeEm(), tick)
       expect((sys as any).arrangements).toHaveLength(0)
     })
@@ -125,6 +126,7 @@ describe('DiplomaticPrefectureSystem', () => {
     it('tick === cutoff 边界时被删除', () => {
       const tick = 100000
       inject(sys, { tick: tick - 88000 }) // 恰好等于 cutoff，不满足 < cutoff
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(0, makeWorld(), makeEm(), tick)
       // tick < cutoff 为 false，不删除
       expect((sys as any).arrangements).toHaveLength(1)
@@ -133,6 +135,7 @@ describe('DiplomaticPrefectureSystem', () => {
     it('新鲜 arrangement 不被 cleanup 删除', () => {
       const tick = CHECK_INTERVAL
       inject(sys, { tick })
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(0, makeWorld(), makeEm(), tick)
       expect((sys as any).arrangements).toHaveLength(1)
     })
@@ -141,6 +144,7 @@ describe('DiplomaticPrefectureSystem', () => {
       const tick = 100000
       inject(sys, { id: 1, tick: 0 })          // 旧：tick=0 < cutoff=12000
       inject(sys, { id: 2, tick: tick - 100 }) // 新：tick 接近当前
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(0, makeWorld(), makeEm(), tick)
       const remaining = (sys as any).arrangements
       expect(remaining).toHaveLength(1)
@@ -173,6 +177,7 @@ describe('DiplomaticPrefectureSystem', () => {
       const tick = 100000
       inject(sys, { id: 1, tick: 0 })
       inject(sys, { id: 2, tick: tick - 100 })
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(0, makeWorld(), makeEm(), tick)
       expect((sys as any).arrangements).toHaveLength(1)
     })
