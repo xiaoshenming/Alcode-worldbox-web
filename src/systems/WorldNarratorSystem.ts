@@ -82,6 +82,10 @@ const TYPE_COLORS: Record<NarrativeType, string> = {
   hero: '#44aaff', discovery: '#dddd44', peace: '#88ddaa',
   birth: '#ffaacc', death: '#888888', wonder: '#ddaa44',
 }
+// Pre-built O(1) lookup: NarrativeType → template
+const TEMPLATE_MAP: Map<NarrativeType, NarrativeTemplate> = new Map(
+  TEMPLATES.map(t => [t.type, t])
+)
 
 const PANEL_W = 480, PANEL_H = 440, HEADER_H = 36
 const MAX_ENTRIES = 100
@@ -121,7 +125,7 @@ export class WorldNarratorSystem {
 
   /** 使用模板生成叙事 */
   generate(type: NarrativeType, vars: Record<string, string>, tick: number, importance = 3): void {
-    const tmpl = TEMPLATES.find(t => t.type === type)
+    const tmpl = TEMPLATE_MAP.get(type)
     if (!tmpl) return
     let text = tmpl.patterns[Math.floor(Math.random() * tmpl.patterns.length)]
     for (const [k, v] of Object.entries(vars)) {
