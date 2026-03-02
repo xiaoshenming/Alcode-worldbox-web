@@ -228,14 +228,4 @@ export class WorldLawSystem {
 
     ctx.restore()
   }
-
-  /** 重置所有参数为默认值 */
-  private resetDefaults(): void {
-    for (const cat of this.categories) {
-      for (const p of cat.params) {
-        p.value = p.defaultValue
-        p.valueStr = p.defaultValue.toFixed(2)
-      }
-    }
-  }
 }
