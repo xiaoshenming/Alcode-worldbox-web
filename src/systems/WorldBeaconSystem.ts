@@ -46,6 +46,8 @@ export class WorldBeaconSystem {
   private beacons: Beacon[] = []
   private nextId = 1
   private lastCheck = 0
+  // O(1) beacon lookup by exact coordinate: key = x * 10000 + y
+  private _beaconCoordMap: Map<number, Beacon> = new Map()
 
   update(dt: number, world: World, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -78,7 +80,7 @@ export class WorldBeaconSystem {
       const type = pickRandom(allowed)
       const [minR, maxR] = BEACON_RANGES[type]
 
-      this.beacons.push({
+      const beacon: Beacon = {
         id: this.nextId++,
         x, y,
         type,
@@ -87,7 +89,9 @@ export class WorldBeaconSystem {
         fuel: 40 + Math.floor(Math.random() * 60),
         builtTick: tick,
         lastLitTick: 0,
-      })
+      }
+      this.beacons.push(beacon)
+      this._beaconCoordMap.set(x * 10000 + y, beacon)
     }
   }
 
@@ -129,6 +133,9 @@ export class WorldBeaconSystem {
   }
 
   getBeaconAt(x: number, y: number): Beacon | null {
+    const cached = this._beaconCoordMap.get(x * 10000 + y)
+    if (cached !== undefined) return cached
+    // Lazy sync fallback: tests may push directly to beacons array
     return this.beacons.find(b => b.x === x && b.y === y) ?? null
   }
 }
