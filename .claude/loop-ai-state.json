@@ -1,11 +1,11 @@
 {
-  "notes": "迭代141（循环48/100）。本轮主要成就：收集并提交TTT2/UUU2/VVV2三批Agent结果，测试从15159增至15499，+340个测试。\n\n本轮处理的系统（3批Agent并行）：\nTTT2组(+128): WorldMudPotSystem(43) WorldMudslideSystem(43) WorldMudVolcanoSystem(42)\nUUU2组(+119): WorldNaturalTunnelSystem(44) WorldNeodymiumSpringSystem(37) WorldNiobiumSpringSystem(38)\nVVV2组(+141): WorldNorthernLightsSystem(44) WorldNunatakSystem(45) WorldOasisSystem(52)\n\n关键发现：\n- WorldMudPotSystem: CHECK_INTERVAL=2680, FORM_CHANCE=0.0009, MAX=8, age+0.005, temperature-0.006(floor30), cleanup:age>=90删除\n- WorldMudslideSystem: CHECK_INTERVAL=1400, MUDSLIDE_CHANCE=0.004, MAX=4, progress=elapsed/duration*100, cleanup:progress>=100删除\n- WorldMudVolcanoSystem: CHECK_INTERVAL=2650, FORM_CHANCE=0.0013, MAX=10, dormancy+0.01, cleanup:dormancy>=100删除\n- WorldNaturalTunnelSystem: CHECK_INTERVAL=2650, FORM_CHANCE=0.0011, MAX=12, LIFETIME=95000, tile=MOUNTAIN\n- WorldNeodymiumSpringSystem: CHECK_INTERVAL=2930, MAX=32, LIFETIME=54000, nearWater/nearMountain双条件\n- WorldNiobiumSpringSystem: CHECK_INTERVAL=2840, MAX=32, LIFETIME=54000\n- WorldNorthernLightsSystem: CHECK_INTERVAL=3000, MAX=8, FORM_CHANCE=0.005, aurora有4种intensity, evolve按progress调整\n- WorldNunatakSystem: CHECK_INTERVAL=2700, MAX=13, FORM_CHANCE=0.0015, LIFETIME=97000, tile=SNOW/MOUNTAIN\n- WorldOasisSystem: CHECK_INTERVAL=1100, MAX=12, spawn判断是Math.random()>FORM_CHANCE（与其他系统相反！），waterLevel<0且drying才cleanup\n\n当前已派发下一批（WWW2/XXX2/YYY2）：\n- WWW2组: WorldObsidianFieldSystem WorldObsidianFlowSystem WorldObsidianPillarSystem\n- XXX2组: WorldPeninsulaSystem WorldPermafrostSystem WorldPetrifiedForestSystem\n- YYY2组: WorldPhosphoriteSystem WorldPlateauSystem WorldPollenSystem\n\n下轮优先方向：\n1. 等待WWW2/XXX2/YYY2 Agent完成，收集结果\n2. 运行全量测试验证，修复flaky测试\n3. 继续处理WorldP/WorldQ/WorldR系列",
+  "notes": "迭代142（循环49/100）。本轮主要成就：收集并提交WWW2/XXX2/YYY2三批Agent结果，测试从15499增至15879，+380个测试。\n\n本轮处理的系统（3批Agent并行）：\nWWW2组(+129): WorldObsidianFieldSystem(47) WorldObsidianFlowSystem(50) WorldObsidianSystem(47)\nXXX2组(+145): WorldPeneplainSystem(49) WorldPermafrostSystem(46) WorldPetrifiedForestSystem(50)\nYYY2组(+136): WorldPhreaticExplosionSystem(47) WorldPlainsSystem(44) WorldPoloniumSpringSystem(45)\n\n关键发现：\n- WorldObsidianFieldSystem: CHECK_INTERVAL=3000, FORM_CHANCE=0.003, MAX=12, tradeValue用旧sharpness计算\n- WorldObsidianFlowSystem: CHECK_INTERVAL=2700, FORM_CHANCE=0.002, MAX=20, CUTOFF_AGE=88000, tile=MOUNTAIN/SAND\n- WorldObsidianSystem: CHECK_INTERVAL=2700, FORM_CHANCE=0.002, mining判断random<0.005\n- WorldPeneplainSystem: CHECK_INTERVAL=2640, FORM_CHANCE=0.0014, MAX=15, cutoff=93000, tile=GRASS/FOREST\n- WorldPermafrostSystem: CHECK_INTERVAL=1200, SPAWN_CHANCE=0.004, MAX=12, Snow=7, applyEffects在节流外执行\n- WorldPetrifiedForestSystem: CHECK_INTERVAL=5000, SPAWN_CHANCE=0.001, MAX=6, tile=5/3, 4种PetrifiedAge枚举\n- WorldPhreaticExplosionSystem: CHECK_INTERVAL=2700, MAX=7, FORM_CHANCE=0.0009, cleanup:age>=80\n- WorldPlainsSystem: CHECK_INTERVAL=2600, MAX=18, FORM_CHANCE=0.002, tile=GRASS, 寿命90000\n- WorldPoloniumSpringSystem: CHECK_INTERVAL=3090, MAX=32, FORM_CHANCE=0.003, nearWater/nearMountain, 寿命54000, 无per-record update\n\n当前已派发下一批（ZZZ2/AAA3/BBB3）：\n- ZZZ2组: WorldPeatBogSystem WorldPedimentSystem WorldPermafrostThawSystem\n- AAA3组: WorldPetrificationSystem WorldPinnacleSystem WorldPlayaSystem\n- BBB3组: WorldPotassiumSpringSystem WorldPraseodymiumSpringSystem WorldQuicksandSystem\n\n下轮优先方向：\n1. 等待ZZZ2/AAA3/BBB3 Agent完成，收集结果\n2. 运行全量测试验证，修复flaky测试\n3. 继续处理WorldR系列",
   "priorities": [
-    "1. 【持续目标】继续处理World系统（剩余约70个文件），用并行Agent批量处理",
-    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前15499/15499通过）",
-    "3. 【里程碑】已完成144个World系统测试改善（+3844测试），继续下一批",
+    "1. 【持续目标】继续处理World系统（剩余约60个文件），用并行Agent批量处理",
+    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前15879/15879通过）",
+    "3. 【里程碑】已完成153个World系统测试改善（+4224测试），继续下一批",
     "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+300-400测试",
-    "5. 【下一批系统】WorldObsidian/WorldP/WorldQ/WorldR系列"
+    "5. 【下一批系统】WorldR系列（Rainbow/Ravine/Relic/Rift/Rock系列）"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -29,7 +29,7 @@
     "Vitest在vite.config.ts中添加test.environment='node'配置即可支持纯逻辑测试",
     "【重要安全规则】严禁用Write工具创建src/__tests__/目录内的文件！Write工具会将__转义为\\_\\_导致创建错误目录，必须用Bash cat heredoc方式创建测试文件",
     "【迭代89新增】死代码方法扫描策略：用Python脚本找public方法→grep '.methodName('验证无外部调用→并行派发子代理批量删除，效率极高",
-    "【迭代96新增】整系统文件死代码的识别方法：检查'类名是否出现在Game.ts'而非'实例字段是否有.update()调用'，因为很多系统通过_batchXXY数组批量调度",
+    "【迭代96新增】整系统文件死代码的识别方法��检查'类名是否出现在Game.ts'而非'实例字段是否有.update()调用'，因为很多系统通过_batchXXY数组批量调度",
     "【迭代100新增-最重要】非空断言扫描必须同时用两种正则：① [^a-zA-Z]!\\. 匹配 x!.y 形式；② \\)!(?=[.\\[;,\\)\\s]|$) 匹配 func()! 形式。只用其中一种必然漏报！",
     "【迭代112新增】some(item => item.entityId === eid)在for(entities)循环内是O(n*list)陷阱——标准修复：添加private _xxxSet = new Set<number>()，push时.add(eid)，splice时.delete(eid)，查询时.has(eid)",
     "【迭代112新增】添加Set优化后，public查询方法(getXxx)需要加lazy sync fallback——因为测试会直接push内部数组绕过Set",
@@ -55,7 +55,11 @@
     "【迭代141新增】WorldMudslideSystem预填充泥石流：默认startTick=0,duration=800在tick=1400时progress=175>100被cleanup删除——需用startTick=1000,duration=800确保progress=50<100保留",
     "【迭代141新增】WorldNorthernLightsSystem spawn后evolve立即修改age=0的极光intensity为faint——spawn后的intensity断言应改为测试progress在[0.3,0.7]区间时intensity保持不变",
     "【迭代141新增】WorldOasisSystem的spawn判断是Math.random()>FORM_CHANCE（大于，与其他系统<不同！），需特别注意判断方向",
-    "【迭代141新增】WorldNunatakSystem的spawn后update立即修改字段：weathering+0.002、exposedRock+=(random-0.48)*0.1等，断言需用toBeCloseTo而非toBe"
+    "【迭代141新增】WorldNunatakSystem的spawn后update立即修改字段：weathering+0.002、exposedRock+=(random-0.48)*0.1等，断言需用toBeCloseTo而非toBe",
+    "【迭代142新增】WorldObsidianFieldSystem tradeValue=deposit*1.5*(sharpness/100)中，sharpness用的是更新前的旧值——因为源码先计算tradeValue，再更新sharpness",
+    "【迭代142新增】WorldPermafrostSystem的applyEffects在节流外执行——不受CHECK_INTERVAL约束，即使tick<CHECK_INTERVAL也会对范围内生物造成COLD_DAMAGE",
+    "【迭代142新增】WorldPermafrostSystem多个zone同时thaw测试：depth=10,thawRate=2只减一次（10-2=8>0不删除），需用depth=0.5,thawRate=2才能触发删除（0.5-2<0）",
+    "【迭代142新增】WorldPhreaticExplosionSystem的steamPressure下限测试：max(5, 5.02-0.03)=max(5,4.99)=5，不能用toBeCloseTo(4.99)断言中间值，只能断言最终值toBe(5)"
   ],
-  "last_updated": "2026-03-03T10:15:00+08:00"
+  "last_updated": "2026-03-03T10:30:00+08:00"
 }
