@@ -68,6 +68,7 @@ describe('CHECK_INTERVAL节流', () => {
   })
   it('节流期间treaties不变', () => {
     const sys = make()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, w, em, 1000)
     addTreaty(sys, 1000)
     sys.update(1, w, em, 2000)

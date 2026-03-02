@@ -166,6 +166,7 @@ describe('DiplomaticCeasefireSystem', () => {
       ;(sys as any).ceasefires.push(makeCeasefire({ remaining: 1, stability: 80, tick: 0 }))
       ;(sys as any)._ceasefireKeySet.add('1_2')
       const em = makeEM([])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, em as any, CHECK_INTERVAL)
       // remaining 变为 0，应被移除
       expect((sys as any).ceasefires).toHaveLength(0)
@@ -195,6 +196,7 @@ describe('DiplomaticCeasefireSystem', () => {
       ;(sys as any).ceasefires.push(makeCeasefire({ id: 1, remaining: 1, stability: 90, tick: 0 }))
       ;(sys as any)._ceasefireKeySet.add('1_2')
       const em = makeEM([])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, em as any, CHECK_INTERVAL)
       expect((sys as any).ceasefires).toHaveLength(0)
     })

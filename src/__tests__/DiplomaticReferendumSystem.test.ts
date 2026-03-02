@@ -50,6 +50,7 @@ describe('DiplomaticReferendumSystem', () => {
   })
   it('spawn条件满足时创建referendum', () => {
     const spy = mockSpawn()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, W, EM, 2200)
     expect((sys as any).referendums).toHaveLength(1)
     spy.mockRestore()
@@ -83,6 +84,7 @@ describe('DiplomaticReferendumSystem', () => {
   it('referendums达到30时不再spawn', () => {
     const spy = mockSpawn()
     for (let i = 0; i < 30; i++) (sys as any).referendums.push(makeRef({ id: i }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, W, EM, 2200)
     expect((sys as any).referendums).toHaveLength(30)
     spy.mockRestore()

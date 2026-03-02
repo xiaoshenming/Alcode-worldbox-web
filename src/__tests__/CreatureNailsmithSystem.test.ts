@@ -148,6 +148,7 @@ describe('CreatureNailsmithSystem - cleanup边界', () => {
 
   it('ironDrawing=3.98（<=4），更新后=4.00仍<=4，被删除', () => {
     ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 3.98 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 3.98 + 0.02 = 4.00，但cleanup检查在增量之后，4.00 <= 4 → 删除
     expect((sys as any).nailsmiths).toHaveLength(0)
@@ -155,6 +156,7 @@ describe('CreatureNailsmithSystem - cleanup边界', () => {
 
   it('ironDrawing=4.01（>4），保留', () => {
     ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 4.01 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).nailsmiths).toHaveLength(1)
   })
@@ -162,12 +164,14 @@ describe('CreatureNailsmithSystem - cleanup边界', () => {
   it('ironDrawing=4，更新+0.02变成4.02，但cleanup是在增量后检查，4.00原始值<=4时…实际已增量过，4.02 > 4保留', () => {
     // ironDrawing初始=4，增量后=4.02 > 4，保留
     ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 4 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).nailsmiths).toHaveLength(1)
   })
 
   it('ironDrawing=1（远低于4），被cleanup删除', () => {
     ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 1 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).nailsmiths).toHaveLength(0)
   })
@@ -176,6 +180,7 @@ describe('CreatureNailsmithSystem - cleanup边界', () => {
     ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 2 })
     ;(sys as any).nailsmiths.push({ ...makeNailsmith(2), ironDrawing: 50 })
     ;(sys as any).nailsmiths.push({ ...makeNailsmith(3), ironDrawing: 3 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).nailsmiths).toHaveLength(1)
     expect((sys as any).nailsmiths[0].entityId).toBe(2)
@@ -183,6 +188,7 @@ describe('CreatureNailsmithSystem - cleanup边界', () => {
 
   it('cleanup不依赖headForming，headForming极低时不影响保留', () => {
     ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 50, headForming: 0 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).nailsmiths).toHaveLength(1)
   })

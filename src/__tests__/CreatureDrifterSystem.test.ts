@@ -96,6 +96,7 @@ describe('CreatureDrifterSystem', () => {
     ;(sys as any).drifters.push(d1, d2)
     const em = makeEM()
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em as any, 3040)
     const remaining = (sys as any).drifters
     expect(remaining).toHaveLength(1)
@@ -119,6 +120,7 @@ describe('CreatureDrifterSystem', () => {
     ;(sys as any).drifters.push(d)
     const em = makeEM()
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em as any, 3040)
     expect((sys as any).drifters).toHaveLength(1)
   })

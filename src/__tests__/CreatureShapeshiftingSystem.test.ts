@@ -169,6 +169,7 @@ describe('CreatureShapeshiftingSystem time-based cleanup', () => {
     // 注入一条旧记录 tick=0
     ;(sys as any).shifts.push(makeShift(1, 'wolf', 0))
     // 当tick=20001时 cutoff=20001-20000=1 > 0, 应被清理
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 20001)
     expect((sys as any).shifts).toHaveLength(0)
   })
@@ -177,6 +178,7 @@ describe('CreatureShapeshiftingSystem time-based cleanup', () => {
     const em = new EntityManager()
     ;(sys as any).shifts.push(makeShift(1, 'wolf', 1000))
     // tick=21000 => cutoff=1000, shift.tick=1000, 1000 < 1000 为false => 不删
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 21000)
     expect((sys as any).shifts).toHaveLength(1)
   })
@@ -185,6 +187,7 @@ describe('CreatureShapeshiftingSystem time-based cleanup', () => {
     const em = new EntityManager()
     ;(sys as any).shifts.push(makeShift(1, 'wolf', 1000))
     // tick=21001 => cutoff=1001, shift.tick=1000 < 1001 => 删除
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 21001)
     expect((sys as any).shifts).toHaveLength(0)
   })
@@ -193,6 +196,7 @@ describe('CreatureShapeshiftingSystem time-based cleanup', () => {
     const em = new EntityManager()
     ;(sys as any).shifts.push(makeShift(1, 'wolf', 0))      // 旧
     ;(sys as any).shifts.push(makeShift(2, 'eagle', 15000)) // 新
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 21000)
     // cutoff=1000, tick=0 < 1000 => 删; tick=15000 >= 1000 => 保留
     expect((sys as any).shifts).toHaveLength(1)

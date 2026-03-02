@@ -166,6 +166,7 @@ describe('CreatureQuiltingMakersSystem - tick-based cleanup (cutoff = tick - 510
     ;(sys as any).makers.push(makeMaker(1, 'patchwork', 0))
     const em = makeEmptyEM()
     ;(sys as any).lastCheck = -2000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 55000)
     expect((sys as any).makers).toHaveLength(0)
   })
@@ -175,6 +176,7 @@ describe('CreatureQuiltingMakersSystem - tick-based cleanup (cutoff = tick - 510
     ;(sys as any).makers.push(makeMaker(1, 'patchwork', 5000))
     const em = makeEmptyEM()
     ;(sys as any).lastCheck = -2000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 55000)
     expect((sys as any).makers).toHaveLength(1)
   })
@@ -184,6 +186,7 @@ describe('CreatureQuiltingMakersSystem - tick-based cleanup (cutoff = tick - 510
     ;(sys as any).makers.push(makeMaker(1, 'patchwork', 4000))
     const em = makeEmptyEM()
     ;(sys as any).lastCheck = -2000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 55000)
     expect((sys as any).makers).toHaveLength(1)
   })
@@ -194,6 +197,7 @@ describe('CreatureQuiltingMakersSystem - tick-based cleanup (cutoff = tick - 510
     ;(sys as any).makers.push(makeMaker(3, 'trapunto', 500))     // old
     const em = makeEmptyEM()
     ;(sys as any).lastCheck = -2000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 55000)
     expect((sys as any).makers).toHaveLength(1)
     expect((sys as any).makers[0].entityId).toBe(2)

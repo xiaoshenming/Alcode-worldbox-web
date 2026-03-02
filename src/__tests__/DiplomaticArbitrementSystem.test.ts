@@ -214,6 +214,7 @@ describe('DiplomaticArbitrementSystem', () => {
       const c = makeCase({ phase: 'ruling', duration: 99, tick: 0 })
       ;(sys as any).cases.push(c)
 
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       // duration变为100，满足 !(phase!=='ruling'||duration<100) => splice
       expect((sys as any).cases).toHaveLength(0)
@@ -223,6 +224,7 @@ describe('DiplomaticArbitrementSystem', () => {
       const c = makeCase({ phase: 'ruling', duration: 50, tick: 0 })
       ;(sys as any).cases.push(c)
 
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).cases).toHaveLength(1)
     })
@@ -231,6 +233,7 @@ describe('DiplomaticArbitrementSystem', () => {
       const c = makeCase({ phase: 'deliberation', duration: 200, tick: 0 })
       ;(sys as any).cases.push(c)
 
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       // deliberation duration>70 -> ruling, duration变201>100 -> 被删
       // 实际流程：先推进phase到ruling，再判定duration>100 -> 删除

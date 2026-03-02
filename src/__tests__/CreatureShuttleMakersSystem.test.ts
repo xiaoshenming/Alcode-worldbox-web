@@ -162,6 +162,7 @@ describe('CreatureShuttleMakersSystem - time-based cleanup', () => {
     // 注入 tick=0 的记录
     ;(sys as any).makers.push(makeMaker(1, 'fly', 70, 0))
     // 第一次update: cutoff = CHECK_INTERVAL - 52000 < 0，记录不过期，保留
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, CHECK_INTERVAL)
     expect((sys as any).makers).toHaveLength(1)
     // 第二次update: cutoff = CHECK_INTERVAL+EXPIRE_AFTER+1 - 52000 > 0 > tick=0，记录过期被清除
@@ -173,6 +174,7 @@ describe('CreatureShuttleMakersSystem - time-based cleanup', () => {
     const em = makeEM([])
     const currentTick = CHECK_INTERVAL * 2
     ;(sys as any).makers.push(makeMaker(1, 'fly', 70, currentTick - 100))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, currentTick)
     expect((sys as any).makers).toHaveLength(1)
   })
@@ -185,6 +187,7 @@ describe('CreatureShuttleMakersSystem - time-based cleanup', () => {
     expect((sys as any).makers).toHaveLength(35)
     // makers本身不自动限制注入，但update里break在>=MAX_MAKERS
     const em = makeEM([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, CHECK_INTERVAL)
     // 没有新增，但超额注入的也不会被删（只有time-based cleanup）
     expect((sys as any).makers.length).toBeGreaterThanOrEqual(30)

@@ -122,6 +122,7 @@ describe('CreatureVintnerSystem — vintner 记录 cleanup (cutoff = tick - 4500
 
   it('tick 恰好等于 cutoff 边界时不删除（cutoff = tick-45000，条件 < cutoff）', () => {
     ;(sys as any).vintners.push(makeVintner(1, 'red', 5000))  // tick=5000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 50000)  // cutoff=5000，vintner.tick=5000，不满足 < 5000 → 保留
     expect((sys as any).vintners).toHaveLength(1)
   })
@@ -131,6 +132,7 @@ describe('CreatureVintnerSystem — vintner 记录 cleanup (cutoff = tick - 4500
       ;(sys as any).vintners.push(makeVintner(i + 1, 'red', i * 1000)) // tick=0,1000,...4000
     }
     ;(sys as any).vintners.push(makeVintner(10, 'white', 100000))  // 未过期
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 100000)  // cutoff=55000；tick=0~4000全部 < 55000 → 删除
     const remaining = (sys as any).vintners as Vintner[]
     expect(remaining).toHaveLength(1)

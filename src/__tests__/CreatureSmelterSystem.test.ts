@@ -157,6 +157,7 @@ describe('CreatureSmelterSystem — cleanup 边界', () => {
     const em = makeEm()
     ;(sys as any).smelters.push(makeSmelter(1, { smeltingSkill: 5 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, 2770)
     expect((sys as any).smelters).toHaveLength(1)
   })
@@ -166,6 +167,7 @@ describe('CreatureSmelterSystem — cleanup 边界', () => {
     // 注入一个smeltingSkill=3.98的冶炼工，update+0.02=4.00，恰好<=4被移除
     ;(sys as any).smelters.push(makeSmelter(1, { smeltingSkill: 3.98 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, 2770)
     // 3.98 + 0.02 = 4.00 => <= 4 => 移除
     expect((sys as any).smelters).toHaveLength(0)
@@ -176,6 +178,7 @@ describe('CreatureSmelterSystem — cleanup 边界', () => {
     // 注入smeltingSkill=3.99, +0.02=4.01, > 4 保留
     ;(sys as any).smelters.push(makeSmelter(1, { smeltingSkill: 3.99 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, 2770)
     // 3.99 + 0.02 = 4.01 > 4 => 保留
     expect((sys as any).smelters).toHaveLength(1)
@@ -186,6 +189,7 @@ describe('CreatureSmelterSystem — cleanup 边界', () => {
     ;(sys as any).smelters.push(makeSmelter(1, { smeltingSkill: 2 }))  // 移除
     ;(sys as any).smelters.push(makeSmelter(2, { smeltingSkill: 50 })) // 保留
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, 2770)
     expect((sys as any).smelters).toHaveLength(1)
     expect((sys as any).smelters[0].entityId).toBe(2)

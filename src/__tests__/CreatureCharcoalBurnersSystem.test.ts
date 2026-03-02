@@ -144,6 +144,7 @@ describe('CreatureCharcoalBurnersSystem - time-based cleanup', () => {
   it('tick=0 的记录在 currentTick=60000 时被清除（0 < 6000）', () => {
     ;(sys as any).burners.push(makeBurner(1, 'soft', 30, 0))
     const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 60000)
     expect((sys as any).burners).toHaveLength(0)
   })
@@ -151,6 +152,7 @@ describe('CreatureCharcoalBurnersSystem - time-based cleanup', () => {
   it('tick=56000 的记录在 currentTick=60000 时被保留（56000 >= 6000）', () => {
     ;(sys as any).burners.push(makeBurner(1, 'soft', 30, 56000))
     const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 60000)
     expect((sys as any).burners).toHaveLength(1)
   })
@@ -159,6 +161,7 @@ describe('CreatureCharcoalBurnersSystem - time-based cleanup', () => {
     // cutoff = 60000 - 54000 = 6000
     ;(sys as any).burners.push(makeBurner(1, 'soft', 30, 5999))
     const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 60000)
     expect((sys as any).burners).toHaveLength(0)
   })
@@ -167,6 +170,7 @@ describe('CreatureCharcoalBurnersSystem - time-based cleanup', () => {
     ;(sys as any).burners.push(makeBurner(1, 'soft', 30, 0))       // 旧，应删
     ;(sys as any).burners.push(makeBurner(2, 'hard', 30, 56000))   // 新，应留
     const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 60000)
     expect((sys as any).burners).toHaveLength(1)
     expect((sys as any).burners[0].entityId).toBe(2)

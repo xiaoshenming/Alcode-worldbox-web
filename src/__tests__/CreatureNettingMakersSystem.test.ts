@@ -192,6 +192,7 @@ describe('CreatureNettingMakersSystem — time-based cleanup（cutoff = tick - 5
     const cutoff = currentTick - 52000 // = 8000
     ;(sys as any).makers.push(makeMaker(1, 'fishing', 60, cutoff - 1)) // tick=7999 < 8000，应删除
     const em = makeEM([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, currentTick)
     expect((sys as any).makers).toHaveLength(0)
   })
@@ -201,6 +202,7 @@ describe('CreatureNettingMakersSystem — time-based cleanup（cutoff = tick - 5
     const cutoff = currentTick - 52000 // = 8000
     ;(sys as any).makers.push(makeMaker(1, 'fishing', 60, cutoff)) // tick=8000，应保留
     const em = makeEM([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, currentTick)
     expect((sys as any).makers).toHaveLength(1)
   })
@@ -211,6 +213,7 @@ describe('CreatureNettingMakersSystem — time-based cleanup（cutoff = tick - 5
     ;(sys as any).makers.push(makeMaker(1, 'fishing', 60, cutoff - 1)) // 旧，删除
     ;(sys as any).makers.push(makeMaker(2, 'cargo', 60, cutoff + 100)) // 新，保留
     const em = makeEM([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, currentTick)
     expect((sys as any).makers).toHaveLength(1)
     expect((sys as any).makers[0].entityId).toBe(2)

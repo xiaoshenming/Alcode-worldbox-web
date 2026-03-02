@@ -46,18 +46,21 @@ describe('DiplomaticMandateSystem', () => {
     it('过期agreement被删除', () => {
       ;(sys as any).agreements = [makeAgreement({ tick: 0 })]
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 91560)
       expect((sys as any).agreements).toHaveLength(0)
     })
     it('未过期agreement保留', () => {
       ;(sys as any).agreements = [makeAgreement({ tick: 10000 })]
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2560)
       expect((sys as any).agreements).toHaveLength(1)
     })
     it('混合过期和未过期只删过期', () => {
       ;(sys as any).agreements = [makeAgreement({ id: 1, tick: 0 }), makeAgreement({ id: 2, tick: 95000 })]
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 91560)
       expect((sys as any).agreements).toHaveLength(1)
       expect((sys as any).agreements[0].id).toBe(2)
@@ -65,6 +68,7 @@ describe('DiplomaticMandateSystem', () => {
     it('cutoff边界：恰好过期被删', () => {
       ;(sys as any).agreements = [makeAgreement({ tick: 1 })]
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 91561)
       expect((sys as any).agreements).toHaveLength(0)
     })

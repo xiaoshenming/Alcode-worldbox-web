@@ -131,6 +131,7 @@ describe('CreatureWarpingMakersSystem — cleanup（tensionControl <= 4 时移�
   it('tensionControl <= 4 的 maker 被移除', () => {
     ;(sys as any).makers.push(makeMaker(1, 3))   // tensionControl=3，update后3.02仍>4?不，先增长后检测
     // 先增长：3+0.02=3.02，仍然 <= 4 → 删除
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 2500)
     // 3.02 <= 4 → 删除
     expect((sys as any).makers).toHaveLength(0)
@@ -139,6 +140,7 @@ describe('CreatureWarpingMakersSystem — cleanup（tensionControl <= 4 时移�
   it('tensionControl = 4.00 时满足 <= 4 条件，被移除（增长后变 4.02）', () => {
     // 增长前 4.00+0.02=4.02 > 4，所以不会被删除
     ;(sys as any).makers.push(makeMaker(1, 4.0))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 2500)
     // 4.0+0.02=4.02 > 4 → 保留
     expect((sys as any).makers).toHaveLength(1)
@@ -146,6 +148,7 @@ describe('CreatureWarpingMakersSystem — cleanup（tensionControl <= 4 时移�
 
   it('tensionControl = 3.98 时，增长后 3.98+0.02=4.00，满足 <=4，被移除', () => {
     ;(sys as any).makers.push(makeMaker(1, 3.98))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 2500)
     // 3.98+0.02=4.00 <= 4 → 删除
     expect((sys as any).makers).toHaveLength(0)
@@ -153,6 +156,7 @@ describe('CreatureWarpingMakersSystem — cleanup（tensionControl <= 4 时移�
 
   it('正常 tensionControl > 4 的 maker 被保留', () => {
     ;(sys as any).makers.push(makeMaker(1, 50))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 2500)
     expect((sys as any).makers).toHaveLength(1)
   })
@@ -161,6 +165,7 @@ describe('CreatureWarpingMakersSystem — cleanup（tensionControl <= 4 时移�
     ;(sys as any).makers.push(makeMaker(1, 2))   // 2+0.02=2.02 <= 4 → 删除
     ;(sys as any).makers.push(makeMaker(2, 60))  // 保留
     ;(sys as any).makers.push(makeMaker(3, 1))   // 1+0.02=1.02 <= 4 → 删除
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 2500)
     expect((sys as any).makers).toHaveLength(1)
     expect((sys as any).makers[0].entityId).toBe(2)

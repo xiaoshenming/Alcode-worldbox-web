@@ -173,6 +173,7 @@ describe('CreatureHornersSystem — time-based cleanup', () => {
     ;(sys as any).horners.push(makeHorner(2, 'comb', 60, 10000))
     ;(sys as any).lastCheck = 0   // 让 update 进入执行分支
     const em = { getEntitiesWithComponents: () => [], getComponent: () => null } as any
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 60000)
     expect((sys as any).horners).toHaveLength(1)
     expect((sys as any).horners[0].entityId).toBe(2)
@@ -183,6 +184,7 @@ describe('CreatureHornersSystem — time-based cleanup', () => {
     ;(sys as any).horners.push(makeHorner(2, 'comb', 60, 55000))
     ;(sys as any).lastCheck = 0
     const em = { getEntitiesWithComponents: () => [], getComponent: () => null } as any
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 60000)
     expect((sys as any).horners).toHaveLength(2)
   })

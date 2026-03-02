@@ -141,6 +141,7 @@ describe('CreatureStakerSystem — cleanup 边界', () => {
 
   it('stakingSkill > 4 时保留', () => {
     ;(sys as any).stakers.push(makeStaker(1, { stakingSkill: 5 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 5 + 0.02 = 5.02 > 4，保留
     expect((sys as any).stakers).toHaveLength(1)
@@ -148,6 +149,7 @@ describe('CreatureStakerSystem — cleanup 边界', () => {
 
   it('stakingSkill == 4 时移除（<= 4）', () => {
     ;(sys as any).stakers.push(makeStaker(1, { stakingSkill: 4 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 4 + 0.02 = 4.02，但原始值在递增前不会触发移除；
     // 递增后 4.02 > 4，保留；重置为精确 4 后再测
@@ -157,6 +159,7 @@ describe('CreatureStakerSystem — cleanup 边界', () => {
 
   it('stakingSkill <= 4 且递增后仍 <= 4 时需人工置为 <= 4 后验证清除', () => {
     ;(sys as any).stakers.push(makeStaker(1, { stakingSkill: 70 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)  // 70 -> 70.02
     // 手动将 stakingSkill 设为 3（< 4），下次 update 触发 cleanup
     ;(sys as any).stakers[0].stakingSkill = 3
@@ -166,6 +169,7 @@ describe('CreatureStakerSystem — cleanup 边界', () => {
 
   it('先递增再 cleanup：3.98 + 0.02 = 4.00 恰好 <= 4，应移除', () => {
     ;(sys as any).stakers.push(makeStaker(1, { stakingSkill: 3.98 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 3.98 + 0.02 = 4.00，条件 <= 4 为真，移除
     expect((sys as any).stakers).toHaveLength(0)
@@ -174,6 +178,7 @@ describe('CreatureStakerSystem — cleanup 边界', () => {
   it('混合：一个保留一个移除', () => {
     ;(sys as any).stakers.push(makeStaker(1, { stakingSkill: 50 }))
     ;(sys as any).stakers.push(makeStaker(2, { stakingSkill: 3.98 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).stakers).toHaveLength(1)
     expect((sys as any).stakers[0].entityId).toBe(1)

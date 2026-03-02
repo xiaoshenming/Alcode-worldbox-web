@@ -204,6 +204,7 @@ describe('DiplomaticAbsolutionSystem — time-based 过期清理（cutoff=tick-8
 
   it('tick=0 的记录在 tick=90000 时被清除（cutoff=6000）', () => {
     ;(sys as any).declarations.push(makeDeclaration({ tick: 0, id: 1 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000)
     expect((sys as any).declarations).toHaveLength(0)
   })
@@ -211,12 +212,14 @@ describe('DiplomaticAbsolutionSystem — time-based 过期清理（cutoff=tick-8
   it('tick 恰好等于 cutoff 时记录不被清除', () => {
     // cutoff = 90000 - 84000 = 6000，tick=6000 不满足 < cutoff 条件
     ;(sys as any).declarations.push(makeDeclaration({ tick: 6000, id: 1 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000)
     expect((sys as any).declarations).toHaveLength(1)
   })
 
   it('tick > cutoff 的记录保留', () => {
     ;(sys as any).declarations.push(makeDeclaration({ tick: 10000, id: 1 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000) // cutoff=6000, 10000>6000 保留
     expect((sys as any).declarations).toHaveLength(1)
   })
@@ -237,6 +240,7 @@ describe('DiplomaticAbsolutionSystem — time-based 过期清理（cutoff=tick-8
   it('所有记录都新鲜，无过期清理', () => {
     ;(sys as any).declarations.push(makeDeclaration({ tick: 88000, id: 1 }))
     ;(sys as any).declarations.push(makeDeclaration({ tick: 89000, id: 2 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000) // cutoff=6000
     expect((sys as any).declarations).toHaveLength(2)
   })
@@ -245,6 +249,7 @@ describe('DiplomaticAbsolutionSystem — time-based 过期清理（cutoff=tick-8
     for (let i = 0; i < 5; i++) {
       ;(sys as any).declarations.push(makeDeclaration({ tick: i * 100, id: i + 1 }))
     }
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000) // cutoff=6000，全部 tick < 6000
     expect((sys as any).declarations).toHaveLength(0)
   })

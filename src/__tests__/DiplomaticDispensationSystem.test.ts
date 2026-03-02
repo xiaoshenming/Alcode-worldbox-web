@@ -119,6 +119,7 @@ describe('DiplomaticDispensationSystem', () => {
       const bigTick = 200000
       ;(sys as any).grants.push(makeGrant({ tick: 0 }))
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).grants).toHaveLength(0)
     })
@@ -126,6 +127,7 @@ describe('DiplomaticDispensationSystem', () => {
       const bigTick = 200000
       ;(sys as any).grants.push(makeGrant({ tick: bigTick }))
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).grants).toHaveLength(1)
     })
@@ -134,6 +136,7 @@ describe('DiplomaticDispensationSystem', () => {
       ;(sys as any).grants.push(makeGrant({ id: 1, tick: 0 }))
       ;(sys as any).grants.push(makeGrant({ id: 2, tick: bigTick }))
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).grants).toHaveLength(1)
       expect((sys as any).grants[0].id).toBe(2)
@@ -143,6 +146,7 @@ describe('DiplomaticDispensationSystem', () => {
       const cutoff = bigTick - 85000
       ;(sys as any).grants.push(makeGrant({ tick: cutoff }))
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).grants).toHaveLength(1)
     })

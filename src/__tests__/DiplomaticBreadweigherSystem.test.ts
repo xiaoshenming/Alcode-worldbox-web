@@ -230,6 +230,7 @@ describe('DiplomaticBreadweigherSystem', () => {
         weightStandards: 40, qualityInspection: 40, priceAssize: 25, flourRegulation: 30,
         duration: 100, tick: 0
       })
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, W, EM, 100000)
       expect((sys as any).arrangements).toHaveLength(0)
     })
@@ -241,6 +242,7 @@ describe('DiplomaticBreadweigherSystem', () => {
         weightStandards: 40, qualityInspection: 40, priceAssize: 25, flourRegulation: 30,
         duration: 0, tick: currentTick - 5000
       })
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, W, EM, currentTick)
       expect((sys as any).arrangements).toHaveLength(1)
     })
@@ -253,6 +255,7 @@ describe('DiplomaticBreadweigherSystem', () => {
         weightStandards: 40, qualityInspection: 40, priceAssize: 25, flourRegulation: 30,
         duration: 0, tick: cutoff
       })
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, W, EM, currentTick)
       expect((sys as any).arrangements).toHaveLength(1)
     })
@@ -271,6 +274,7 @@ describe('DiplomaticBreadweigherSystem', () => {
           duration: 0, tick: currentTick - 10000
         }
       )
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, W, EM, currentTick)
       const arr: BreadweigherArrangement[] = (sys as any).arrangements
       expect(arr).toHaveLength(1)
@@ -285,6 +289,7 @@ describe('DiplomaticBreadweigherSystem', () => {
           duration: 0, tick: 0
         })
       }
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, W, EM, 200000)
       expect((sys as any).arrangements).toHaveLength(0)
     })

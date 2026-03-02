@@ -54,6 +54,7 @@ describe('CreaturePilgrimageSystem - CHECK_INTERVAL节流', () => {
     // Actually tick - lastCheck = 0 >= 900 is false, so won't trigger
     const em = makeEM([1])
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, { width: 200, height: 200 }, 0)
     // tick=0, lastCheck=0, 0-0=0 which is NOT >= 900, so no new pilgrimages
     expect((sys as any).pilgrimages).toHaveLength(0)

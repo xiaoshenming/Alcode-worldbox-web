@@ -151,6 +151,7 @@ describe('DiplomaticDetenteSystem', () => {
       const bigTick = 200000
       ;(sys as any).treaties.push(makeTreaty({ tick: 0 })) // 0 < 200000-83000=117000，过期
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).treaties).toHaveLength(0)
     })
@@ -159,6 +160,7 @@ describe('DiplomaticDetenteSystem', () => {
       const bigTick = 200000
       ;(sys as any).treaties.push(makeTreaty({ tick: bigTick }))
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).treaties).toHaveLength(1)
     })
@@ -168,6 +170,7 @@ describe('DiplomaticDetenteSystem', () => {
       ;(sys as any).treaties.push(makeTreaty({ id: 1, tick: 0 }))       // 过期
       ;(sys as any).treaties.push(makeTreaty({ id: 2, tick: bigTick })) // 保留
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).treaties).toHaveLength(1)
       expect((sys as any).treaties[0].id).toBe(2)
@@ -178,6 +181,7 @@ describe('DiplomaticDetenteSystem', () => {
       const cutoff = bigTick - 83000 // 117000
       ;(sys as any).treaties.push(makeTreaty({ tick: cutoff }))
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).treaties).toHaveLength(1)
     })

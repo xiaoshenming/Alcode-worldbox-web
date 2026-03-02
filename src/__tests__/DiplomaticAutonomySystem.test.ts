@@ -226,6 +226,7 @@ describe('DiplomaticAutonomySystem', () => {
     it('超期记录被删除（tick=0，bigTick>EXPIRE_OFFSET）', () => {
       ;(sys as any).agreements.push(makeAgreement({ id: 1, tick: 0 }))
       const bigTick = EXPIRE_OFFSET + CHECK_INTERVAL + 1
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).agreements).toHaveLength(0)
     })
@@ -237,6 +238,7 @@ describe('DiplomaticAutonomySystem', () => {
       // record.tick = cutoff（边界值：不满足 < cutoff，保留）
       const cutoff = executeTick - EXPIRE_OFFSET
       ;(sys as any).agreements.push(makeAgreement({ id: 1, tick: cutoff }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, executeTick)
       expect((sys as any).agreements).toHaveLength(1)
     })
@@ -245,6 +247,7 @@ describe('DiplomaticAutonomySystem', () => {
       const bigTick = EXPIRE_OFFSET + CHECK_INTERVAL + 10000
       ;(sys as any).agreements.push(makeAgreement({ id: 1, tick: 0 }))           // 过期
       ;(sys as any).agreements.push(makeAgreement({ id: 2, tick: bigTick - 100 })) // 未过期
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       const remaining = (sys as any).agreements
       expect(remaining).toHaveLength(1)
@@ -256,6 +259,7 @@ describe('DiplomaticAutonomySystem', () => {
       for (let i = 0; i < 5; i++) {
         ;(sys as any).agreements.push(makeAgreement({ id: i + 1, tick: 0 }))
       }
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).agreements).toHaveLength(0)
     })
@@ -264,6 +268,7 @@ describe('DiplomaticAutonomySystem', () => {
       const updateTick = EXPIRE_OFFSET + CHECK_INTERVAL + 1
       const cutoff = updateTick - EXPIRE_OFFSET
       ;(sys as any).agreements.push(makeAgreement({ id: 1, tick: cutoff }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, updateTick)
       expect((sys as any).agreements).toHaveLength(1)
     })

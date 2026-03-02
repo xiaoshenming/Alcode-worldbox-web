@@ -125,24 +125,28 @@ describe('CreatureWiredrawerSystem metalDrawing<=4 清理', () => {
 
   it('metalDrawing=5 时保留', () => {
     ;(sys as any).wiredrawers.push(makeWiredrawer(1, 5))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEM() as any, 2650)
     expect((sys as any).wiredrawers).toHaveLength(1)
   })
 
   it('metalDrawing=3.98 先增 +0.02 = 4.00 → <= 4 → 删除', () => {
     ;(sys as any).wiredrawers.push(makeWiredrawer(1, 3.98))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEM() as any, 2650)
     expect((sys as any).wiredrawers).toHaveLength(0)
   })
 
   it('metalDrawing=4.01 → 增后 4.03 > 4，保留', () => {
     ;(sys as any).wiredrawers.push(makeWiredrawer(1, 4.01))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEM() as any, 2650)
     expect((sys as any).wiredrawers).toHaveLength(1)
   })
 
   it('metalDrawing=2 → cleanup 删除', () => {
     ;(sys as any).wiredrawers.push(makeWiredrawer(1, 2))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEM() as any, 2650)
     expect((sys as any).wiredrawers).toHaveLength(0)
   })
@@ -150,6 +154,7 @@ describe('CreatureWiredrawerSystem metalDrawing<=4 清理', () => {
   it('混合：低metalDrawing删除，高的保留', () => {
     ;(sys as any).wiredrawers.push(makeWiredrawer(1, 1))   // 删
     ;(sys as any).wiredrawers.push(makeWiredrawer(2, 50))  // 留
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEM() as any, 2650)
     expect((sys as any).wiredrawers).toHaveLength(1)
     expect((sys as any).wiredrawers[0].entityId).toBe(2)

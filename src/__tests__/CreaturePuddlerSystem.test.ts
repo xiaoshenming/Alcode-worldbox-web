@@ -125,6 +125,7 @@ describe('CreaturePuddlerSystem', () => {
     ;(sys as any).puddlers.push(makePuddler(1, { puddlingSkill: 4 }))
     ;(sys as any).puddlers.push(makePuddler(2, { puddlingSkill: 3 }))
     const em = makeEm([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 0)
     sys.update(0, em, CHECK_INTERVAL)
     // 上面两条在技能递增后仍<=4（4+0.02=4.02 > 4，所以skill=4时不被删除——需要是<=4才删，故精确边界是4）
@@ -140,6 +141,7 @@ describe('CreaturePuddlerSystem', () => {
   it('cleanup: puddlingSkill>4 时精炼工保留', () => {
     ;(sys as any).puddlers.push(makePuddler(1, { puddlingSkill: 5 }))
     const em = makeEm([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 0)
     sys.update(0, em, CHECK_INTERVAL)
     expect((sys as any).puddlers).toHaveLength(1)
@@ -152,6 +154,7 @@ describe('CreaturePuddlerSystem', () => {
     const origRandom = Math.random
     Math.random = () => 0.0001 // 必然通过 RECRUIT_CHANCE 检查
     const em = makeEm([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 0)
     sys.update(0, em, CHECK_INTERVAL)
     Math.random = origRandom

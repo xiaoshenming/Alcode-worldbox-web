@@ -51,6 +51,7 @@ describe('CreatureRunnerSystem', () => {
   describe('CHECK_INTERVAL 节流', () => {
     it('tick不足CHECK_INTERVAL时不触发任何逻辑', () => {
       const em = makeEm([1, 2])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(0, em as any, CHECK_INTERVAL - 1)
       // 没有调用任何em方法
       expect(em.getEntitiesWithComponent).not.toHaveBeenCalled()

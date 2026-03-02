@@ -165,6 +165,7 @@ describe('CreatureUpholsterersSystem', () => {
       ;(sys as any).makers.push(maker)
       // em 返回空避免招募干扰
       const em = makeEm([])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, em, tick)
       expect((sys as any).makers).toHaveLength(1)
     })
@@ -175,6 +176,7 @@ describe('CreatureUpholsterersSystem', () => {
       const maker = makeMaker(1, { tick: cutoff - 1 })   // 超期
       ;(sys as any).makers.push(maker)
       const em = makeEm([])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, em, tick)
       expect((sys as any).makers).toHaveLength(0)
     })
@@ -185,6 +187,7 @@ describe('CreatureUpholsterersSystem', () => {
       const maker = makeMaker(1, { tick: cutoff })       // 正好等于 cutoff，条件 < cutoff 为 false → 保留
       ;(sys as any).makers.push(maker)
       const em = makeEm([])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, em, tick)
       expect((sys as any).makers).toHaveLength(1)
     })
@@ -195,6 +198,7 @@ describe('CreatureUpholsterersSystem', () => {
       ;(sys as any).makers.push(makeMaker(1, { tick: cutoff - 1 }))  // 过期
       ;(sys as any).makers.push(makeMaker(2, { tick: cutoff + 1 }))  // 未过期
       const em = makeEm([])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, em, tick)
       expect((sys as any).makers).toHaveLength(1)
       expect((sys as any).makers[0].entityId).toBe(2)

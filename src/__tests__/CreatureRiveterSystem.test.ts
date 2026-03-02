@@ -139,18 +139,21 @@ describe('CreatureRiveterSystem - cleanup', () => {
 
   it('holeAlignment 增长后仍 <= 4 时被移除（holeAlignment=3，增长后 3.02 <= 4）', () => {
     ;(sys as any).riveters.push(makeRiveter(1, { holeAlignment: 3 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, fakeEm, 2640)
     expect((sys as any).riveters).toHaveLength(0)
   })
 
   it('holeAlignment = 0 也被移除', () => {
     ;(sys as any).riveters.push(makeRiveter(1, { holeAlignment: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, fakeEm, 2640)
     expect((sys as any).riveters).toHaveLength(0)
   })
 
   it('holeAlignment 刚好在清除边界 3.98 处：update 后 3.98+0.02=4.00 仍被清除', () => {
     ;(sys as any).riveters.push(makeRiveter(1, { holeAlignment: 3.98 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, fakeEm, 2640)
     // 3.98 + 0.02 = 4.00, 条件 <= 4，仍触发
     expect((sys as any).riveters).toHaveLength(0)
@@ -158,6 +161,7 @@ describe('CreatureRiveterSystem - cleanup', () => {
 
   it('holeAlignment > 4 的铆接工被保留', () => {
     ;(sys as any).riveters.push(makeRiveter(1, { holeAlignment: 5 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, fakeEm, 2640)
     expect((sys as any).riveters).toHaveLength(1)
   })
@@ -166,6 +170,7 @@ describe('CreatureRiveterSystem - cleanup', () => {
     ;(sys as any).riveters.push(makeRiveter(1, { holeAlignment: 3 }))
     ;(sys as any).riveters.push(makeRiveter(2, { holeAlignment: 50 }))
     ;(sys as any).riveters.push(makeRiveter(3, { holeAlignment: 1 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, fakeEm, 2640)
     expect((sys as any).riveters).toHaveLength(1)
     expect((sys as any).riveters[0].entityId).toBe(2)

@@ -97,6 +97,7 @@ describe('CreatureBridlemakerSystem', () => {
     ;(sys as any).bridlemakers.push(makeBridlemaker(1, { leatherBraiding: 3.98 }))
     ;(sys as any).bridlemakers.push(makeBridlemaker(2, { leatherBraiding: 50 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, noopEm, 2600)
     const remaining = (sys as any).bridlemakers
     expect(remaining).toHaveLength(1)
@@ -106,6 +107,7 @@ describe('CreatureBridlemakerSystem', () => {
   it('leatherBraiding > 4 时不被删除（5.0 + 0.02 = 5.02 > 4）', () => {
     ;(sys as any).bridlemakers.push(makeBridlemaker(1, { leatherBraiding: 5.0 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, noopEm, 2600)
     expect((sys as any).bridlemakers).toHaveLength(1)
   })
@@ -113,6 +115,7 @@ describe('CreatureBridlemakerSystem', () => {
   it('leatherBraiding 远低于 4 时也被删除（3.0 + 0.02 = 3.02 <= 4）', () => {
     ;(sys as any).bridlemakers.push(makeBridlemaker(1, { leatherBraiding: 3.0 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, noopEm, 2600)
     expect((sys as any).bridlemakers).toHaveLength(0)
   })

@@ -178,6 +178,7 @@ describe('DiplomaticAppeasementSystem', () => {
   describe('time-based 过期清理', () => {
     it('tick=0 的记录在 bigTick=90000 时被删除', () => {
       ;(sys as any).policies.push(makePolicy({ id: 1, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 90000)
       expect((sys as any).policies).toHaveLength(0)
     })
@@ -186,6 +187,7 @@ describe('DiplomaticAppeasementSystem', () => {
       const bigTick = 100000
       const cutoff = bigTick - EXPIRE_OFFSET  // 20000
       ;(sys as any).policies.push(makePolicy({ id: 1, tick: cutoff }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       // cutoff = 20000, policy.tick = 20000 => 20000 < 20000 为 false，不删除
       expect((sys as any).policies).toHaveLength(1)
@@ -195,12 +197,14 @@ describe('DiplomaticAppeasementSystem', () => {
       const bigTick = 100000
       const cutoff = bigTick - EXPIRE_OFFSET  // 20000
       ;(sys as any).policies.push(makePolicy({ id: 1, tick: cutoff - 1 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).policies).toHaveLength(0)
     })
 
     it('较新的记录在相同 update 中不被删除', () => {
       ;(sys as any).policies.push(makePolicy({ id: 1, tick: 50000 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 90000)
       // cutoff = 90000 - 80000 = 10000，50000 >= 10000 不删
       expect((sys as any).policies).toHaveLength(1)
@@ -210,6 +214,7 @@ describe('DiplomaticAppeasementSystem', () => {
       ;(sys as any).policies.push(makePolicy({ id: 1, tick: 0 }))
       ;(sys as any).policies.push(makePolicy({ id: 2, tick: 50000 }))
       ;(sys as any).policies.push(makePolicy({ id: 3, tick: 500 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 90000)
       const remaining = (sys as any).policies
       expect(remaining).toHaveLength(1)
@@ -219,6 +224,7 @@ describe('DiplomaticAppeasementSystem', () => {
     it('所有记录都未过期时全部保留', () => {
       ;(sys as any).policies.push(makePolicy({ id: 1, tick: 80000 }))
       ;(sys as any).policies.push(makePolicy({ id: 2, tick: 85000 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 90000)
       expect((sys as any).policies).toHaveLength(2)
     })

@@ -104,6 +104,7 @@ describe('DiplomaticSummitSystem', () => {
       id: 1, participants: [1, 2], topic: 'trade',
       startTick: 1000, duration: 120, resolved: false, outcome: '',
     }
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, cm, 1120) // 1120-1000=120 >= 120
     expect((sys as any).activeSummit).toBeNull()
     expect((sys as any).summits).toHaveLength(1)
@@ -129,6 +130,7 @@ describe('DiplomaticSummitSystem', () => {
       id: 1, participants: [1, 2], topic: 'alliance',
       startTick: 1000, duration: 120, resolved: false, outcome: '',
     }
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, cm, 1050) // 50 < 120
     expect((sys as any).activeSummit).not.toBeNull()
     expect((sys as any).summits).toHaveLength(0)
@@ -147,6 +149,7 @@ describe('DiplomaticSummitSystem', () => {
       id: 99, participants: [1, 2], topic: 'peace',
       startTick: 0, duration: 120, resolved: false, outcome: '',
     }
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, cm, 120)
     expect((sys as any).summits).toHaveLength(30)
   })

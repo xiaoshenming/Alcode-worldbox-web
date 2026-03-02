@@ -148,6 +148,7 @@ describe('CreatureReamerSystem — cleanup（reamingSkill <= 4 移除）', () =>
     const r = makeReamer(1, { reamingSkill: 3.98 })
     ;(sys as any).reamers.push(r)
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 3.98 + 0.02 = 4.00，边界条件：<= 4 被移除
     expect((sys as any).reamers).toHaveLength(0)
@@ -157,6 +158,7 @@ describe('CreatureReamerSystem — cleanup（reamingSkill <= 4 移除）', () =>
     const r = makeReamer(1, { reamingSkill: 3.99 })
     ;(sys as any).reamers.push(r)
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 3.99 + 0.02 = 4.01 > 4，保留
     expect((sys as any).reamers).toHaveLength(1)
@@ -167,6 +169,7 @@ describe('CreatureReamerSystem — cleanup（reamingSkill <= 4 移除）', () =>
     const high = makeReamer(2, { reamingSkill: 50 })
     ;(sys as any).reamers.push(low, high)
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     const reamers = (sys as any).reamers as Reamer[]
     expect(reamers).toHaveLength(1)
@@ -177,6 +180,7 @@ describe('CreatureReamerSystem — cleanup（reamingSkill <= 4 移除）', () =>
     ;(sys as any).reamers.push(makeReamer(1, { reamingSkill: 50 }))
     ;(sys as any).reamers.push(makeReamer(2, { reamingSkill: 80 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).reamers).toHaveLength(2)
   })

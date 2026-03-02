@@ -157,6 +157,7 @@ describe('CreatureCheeseAgerSystem - 老化逻辑', () => {
   it('死亡实体（hasComponent=false）的 ager 被删除', () => {
     const em = makeEmptyEM() // hasComponent returns false
     ;(sys as any).agers.push(makeAger(1, 'cheddar', 50, 0, 0))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 5000)
     expect((sys as any).agers).toHaveLength(0)
   })

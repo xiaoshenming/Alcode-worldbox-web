@@ -140,11 +140,13 @@ describe('DiplomaticMarriageSystem', () => {
     })
     it('空civManager不spawn新marriage', () => {
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, makeCivManager(0), 2500)
       expect((sys as any).marriages).toHaveLength(0)
     })
     it('单个文明不spawn新marriage', () => {
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, makeCivManager(1), 2500)
       expect((sys as any).marriages).toHaveLength(0)
     })

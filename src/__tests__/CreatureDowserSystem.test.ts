@@ -116,6 +116,7 @@ describe('CreatureDowserSystem', () => {
     // em.hasComponent返回false → 实体不存在
     const em = makeEM([], false)
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em as any, 3000)
     expect((sys as any).dowsers).toHaveLength(0)
   })

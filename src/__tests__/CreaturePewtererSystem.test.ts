@@ -132,12 +132,14 @@ describe('CreaturePewtererSystem — alloyCasting<=4时cleanup', () => {
   it('alloyCasting成长后仍<=4时被删除（初始3.97→成长后3.99<=4）', () => {
     // 成长逻辑在cleanup之前：3.97+0.02=3.99 <= 4，满足删除条件
     ;(sys as any).pewterers.push(makePewterer(1, 3.97, 50, 50, 0))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, emStub, CHECK_INTERVAL + 1)
     expect((sys as any).pewterers).toHaveLength(0)
   })
 
   it('alloyCasting=3.98时被删除（<=4）', () => {
     ;(sys as any).pewterers.push(makePewterer(1, 3.98, 50, 50, 0))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, emStub, CHECK_INTERVAL + 1)
     expect((sys as any).pewterers).toHaveLength(0)
   })
@@ -145,6 +147,7 @@ describe('CreaturePewtererSystem — alloyCasting<=4时cleanup', () => {
   it('alloyCasting=4.01时不被删除', () => {
     // 注意成长后 alloyCasting = 4.01+0.02=4.03，仍>4
     ;(sys as any).pewterers.push(makePewterer(1, 4.01, 50, 50, 0))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, emStub, CHECK_INTERVAL + 1)
     expect((sys as any).pewterers).toHaveLength(1)
   })
@@ -152,6 +155,7 @@ describe('CreaturePewtererSystem — alloyCasting<=4时cleanup', () => {
   it('混合高低 alloyCasting 只删低的', () => {
     ;(sys as any).pewterers.push(makePewterer(1, 3, 50, 50, 0))  // 会被删
     ;(sys as any).pewterers.push(makePewterer(2, 60, 50, 50, 0)) // 不被删
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, emStub, CHECK_INTERVAL + 1)
     expect((sys as any).pewterers).toHaveLength(1)
     expect((sys as any).pewterers[0].entityId).toBe(2)

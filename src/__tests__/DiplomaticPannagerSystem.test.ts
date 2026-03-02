@@ -120,12 +120,14 @@ describe('DiplomaticPannagerSystem — 过期cleanup（cutoff=tick-88000）', ()
 
   it('tick=0的arrangement在tick=90000时被清理（0 < 2000）', () => {
     ;(sys as any).arrangements.push(makeArr({ id: 1, tick: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000)
     expect((sys as any).arrangements).toHaveLength(0)
   })
 
   it('tick=3000的arrangement在tick=90000时不被清理（3000 >= 2000）', () => {
     ;(sys as any).arrangements.push(makeArr({ id: 1, tick: 3000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000)
     expect((sys as any).arrangements).toHaveLength(1)
   })
@@ -133,6 +135,7 @@ describe('DiplomaticPannagerSystem — 过期cleanup（cutoff=tick-88000）', ()
   it('arrangement.tick恰好等于cutoff时不被清理', () => {
     // cutoff = 90000 - 88000 = 2000; 2000 < 2000 为false
     ;(sys as any).arrangements.push(makeArr({ id: 1, tick: 2000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000)
     expect((sys as any).arrangements).toHaveLength(1)
   })
@@ -141,6 +144,7 @@ describe('DiplomaticPannagerSystem — 过期cleanup（cutoff=tick-88000）', ()
     ;(sys as any).arrangements.push(makeArr({ id: 1, tick: 0 }))
     ;(sys as any).arrangements.push(makeArr({ id: 2, tick: 5000 }))
     ;(sys as any).arrangements.push(makeArr({ id: 3, tick: 1500 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000)
     expect((sys as any).arrangements).toHaveLength(1)
     expect((sys as any).arrangements[0].id).toBe(2)

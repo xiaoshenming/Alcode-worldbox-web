@@ -170,6 +170,7 @@ describe('CreatureVinegarMakersSystem.update — cleanup (cutoff = tick - 49000)
   it('tick=0 的 maker 在 tick=49001 时被清除', () => {
     ;(sys as any).makers.push(makeMaker(1, 'apple', { tick: 0 }))
     const em = makeMockEM([])   // 无生物，避免招募干扰
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, EXPIRE_AFTER + 1)
     expect((sys as any).makers).toHaveLength(0)
   })
@@ -177,6 +178,7 @@ describe('CreatureVinegarMakersSystem.update — cleanup (cutoff = tick - 49000)
   it('tick 未超出 cutoff 的 maker 不被清除', () => {
     ;(sys as any).makers.push(makeMaker(1, 'grape', { tick: 30000 }))
     const em = makeMockEM([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, EXPIRE_AFTER + 1)
     // cutoff = 49001 - 49000 = 1, maker.tick=30000 > 1 → 保留
     expect((sys as any).makers).toHaveLength(1)
@@ -186,6 +188,7 @@ describe('CreatureVinegarMakersSystem.update — cleanup (cutoff = tick - 49000)
     ;(sys as any).makers.push(makeMaker(1, 'apple', { tick: 0 }))      // 过期
     ;(sys as any).makers.push(makeMaker(2, 'honey', { tick: 60000 }))  // 新鲜
     const em = makeMockEM([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, 60000 + EXPIRE_AFTER - 1)
     // cutoff = 60000+49000-1 - 49000 = 59999, maker2.tick=60000 > 59999 → 保留
     // maker1.tick=0 < 59999 → 删除

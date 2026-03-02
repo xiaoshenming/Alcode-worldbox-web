@@ -182,6 +182,7 @@ describe('CreatureSentinelSystem cleanup 清理', () => {
 
     // 移除creature组件后，getEntitiesWithComponent返回[]，不招募；cleanup删除此哨兵
     em.removeComponent(eid, 'creature')
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 3000)
     expect((sys as any).sentinels).toHaveLength(0)
   })
@@ -211,6 +212,7 @@ describe('CreatureSentinelSystem cleanup 清理', () => {
     ;(sys as any)._sentinelsSet.add(eid)
 
     // eid 有 creature，不被清理
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 3000)
     expect((sys as any).sentinels).toHaveLength(1)
   })

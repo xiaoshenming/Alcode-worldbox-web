@@ -142,6 +142,7 @@ describe('CreatureNomadSystem — leader 死亡后部落被清除', () => {
     ;(sys as any).tribes.push(makeTribe(99)) // leader=99，但 EM 里没有
     // getEntitiesWithComponent 返回空数组，避免触发招募新部落
     const em = { getEntitiesWithComponent: () => [] as number[], hasComponent: (eid: number) => [1, 2].includes(eid) } as any
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 3400)
     expect((sys as any).tribes).toHaveLength(0)
   })
@@ -149,6 +150,7 @@ describe('CreatureNomadSystem — leader 死亡后部落被清除', () => {
   it('leader 存在时部落保留', () => {
     ;(sys as any).tribes.push(makeTribe(1))
     const em = makeEM([1]) // 1 存在
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 3400)
     expect((sys as any).tribes).toHaveLength(1)
   })
@@ -157,6 +159,7 @@ describe('CreatureNomadSystem — leader 死亡后部落被清除', () => {
     ;(sys as any).tribes.push(makeTribe(1)) // leader=1，存在
     ;(sys as any).tribes.push(makeTribe(99)) // leader=99，不存在
     const em = makeEM([1]) // 只有 1 存在
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 3400)
     expect((sys as any).tribes).toHaveLength(1)
     expect((sys as any).tribes[0].leaderId).toBe(1)

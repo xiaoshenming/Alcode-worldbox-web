@@ -203,6 +203,7 @@ describe('CreatureSoapMakerSystem — cleanup 实体清理', () => {
     ;(sys as any)._makersSet.add(1)
     ;(sys as any)._makersSet.add(2)
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, 3200)
     expect((sys as any).makers).toHaveLength(1)
     expect((sys as any).makers[0].entityId).toBe(2)

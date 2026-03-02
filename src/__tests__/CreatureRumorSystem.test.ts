@@ -45,6 +45,7 @@ describe('CreatureRumorSystem', () => {
   describe('CHECK_INTERVAL 节流', () => {
     it('tick不足CHECK_INTERVAL时update不执行生成', () => {
       const em = makeEm([1, 2])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(0, em as any, CHECK_INTERVAL - 1)
       expect((sys as any).rumors).toHaveLength(0)
       expect(em.getEntitiesWithComponents).not.toHaveBeenCalled()

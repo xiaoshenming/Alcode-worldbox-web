@@ -138,6 +138,7 @@ describe('CreatureSpotfacerSystem - cleanup边界', () => {
 
   it('spotfacingSkill=3.98增长后=4被清除', () => {
     ;(sys as any).spotfacers.push(makeSpotfacer(1, { spotfacingSkill: 3.98 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 3.98 + 0.02 = 4.00 -> <= 4 => 清除
     expect((sys as any).spotfacers).toHaveLength(0)
@@ -145,6 +146,7 @@ describe('CreatureSpotfacerSystem - cleanup边界', () => {
 
   it('spotfacingSkill=4.01增长后>4保留', () => {
     ;(sys as any).spotfacers.push(makeSpotfacer(1, { spotfacingSkill: 4.01 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 4.01 + 0.02 = 4.03 > 4 => 保留
     expect((sys as any).spotfacers).toHaveLength(1)
@@ -152,6 +154,7 @@ describe('CreatureSpotfacerSystem - cleanup边界', () => {
 
   it('spotfacingSkill=4增长后4.02>4保留', () => {
     ;(sys as any).spotfacers.push(makeSpotfacer(1, { spotfacingSkill: 4 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 4 + 0.02 = 4.02 > 4 => 保留
     expect((sys as any).spotfacers).toHaveLength(1)
@@ -160,6 +163,7 @@ describe('CreatureSpotfacerSystem - cleanup边界', () => {
   it('混合端面工：低技能被清除，高技能保留', () => {
     ;(sys as any).spotfacers.push(makeSpotfacer(1, { spotfacingSkill: 3 }))
     ;(sys as any).spotfacers.push(makeSpotfacer(2, { spotfacingSkill: 50 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).spotfacers).toHaveLength(1)
     expect((sys as any).spotfacers[0].entityId).toBe(2)

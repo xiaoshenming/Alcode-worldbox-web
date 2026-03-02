@@ -164,6 +164,7 @@ describe('CreatureTasselMakersSystem — 过期清理 (cutoff = tick - 52000)', 
     ;(sys as any).lastCheck = 0
     // tick = EXPIRE*2, cutoff = 2*EXPIRE - EXPIRE = EXPIRE = 52000
     // maker.tick == cutoff, 不满足 < 故保留
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, EXPIRE * 2)
     expect((sys as any).makers).toHaveLength(1)
   })
@@ -173,6 +174,7 @@ describe('CreatureTasselMakersSystem — 过期清理 (cutoff = tick - 52000)', 
     ;(sys as any).makers.push(makeMaker(1, 'wool', 0))
     ;(sys as any).makers.push(makeMaker(2, 'metallic', 100))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, EXPIRE + CHECK_INTERVAL)
     expect((sys as any).makers).toHaveLength(0)
   })

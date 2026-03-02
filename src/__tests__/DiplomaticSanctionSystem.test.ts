@@ -42,6 +42,7 @@ describe('DiplomaticSanctionSystem', () => {
       { id: 1, name: 'A', resources: { gold: 100, food: 100 }, relations: new Map([[2, -90]]) },
       { id: 2, name: 'B', resources: { gold: 100, food: 100 }, relations: new Map() },
     ])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, cm, 500) // 500 < 1000
     expect((sys as any).sanctions).toHaveLength(0)
   })
@@ -64,6 +65,7 @@ describe('DiplomaticSanctionSystem', () => {
     const cm = makeCivManager([
       { id: 1, name: 'A', resources: { gold: 100, food: 100 }, relations: new Map([[2, -90]]) },
     ])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, cm, 1000)
     expect((sys as any).sanctions).toHaveLength(0)
   })
@@ -73,6 +75,7 @@ describe('DiplomaticSanctionSystem', () => {
       { id: 1, name: 'A', resources: { gold: 100, food: 100 }, relations: new Map([[2, 10]]) },
       { id: 2, name: 'B', resources: { gold: 100, food: 100 }, relations: new Map() },
     ])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, cm, 1000)
     expect((sys as any).sanctions).toHaveLength(0)
   })

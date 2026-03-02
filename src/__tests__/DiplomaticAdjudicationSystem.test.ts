@@ -186,12 +186,14 @@ describe('DiplomaticAdjudicationSystem — 结案清理逻辑', () => {
 
   it('verdict=pending的case不被清理（无论duration多大）', () => {
     ;(sys as any).cases.push(makeCase({ verdict: 'pending', duration: 200, tick: 999999 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).cases).toHaveLength(1)
   })
 
   it('verdict=favor_a且duration>=80的case被清理', () => {
     ;(sys as any).cases.push(makeCase({ verdict: 'favor_a', duration: 79, tick: 999999 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     // update后duration变为80，满足 !(pending || duration<80) => 被清理
     expect((sys as any).cases).toHaveLength(0)
@@ -199,6 +201,7 @@ describe('DiplomaticAdjudicationSystem — 结案清理逻辑', () => {
 
   it('verdict=dismissed且duration=79时update后被清理（80>=80）', () => {
     ;(sys as any).cases.push(makeCase({ verdict: 'dismissed', duration: 79, tick: 999999 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     // duration 79+1=80，!( 'dismissed'==='pending' || 80<80) = !(false || false) = true => 删除
     expect((sys as any).cases).toHaveLength(0)
@@ -206,6 +209,7 @@ describe('DiplomaticAdjudicationSystem — 结案清理逻辑', () => {
 
   it('verdict=split且duration<79时不被清理', () => {
     ;(sys as any).cases.push(makeCase({ verdict: 'split', duration: 50, tick: 999999 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     // duration 50+1=51 < 80 => 保留
     expect((sys as any).cases).toHaveLength(1)

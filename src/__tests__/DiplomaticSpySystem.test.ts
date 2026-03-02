@@ -34,6 +34,7 @@ describe('DiplomaticSpySystem', () => {
   })
   it('civs不足2个时不spawn', () => {
     const cm = makeCivManager([{ id: 1, name: 'A', population: 10 }])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, cm, 800)
     expect((sys as any).spies).toHaveLength(0)
   })

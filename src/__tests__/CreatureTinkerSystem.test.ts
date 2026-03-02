@@ -146,6 +146,7 @@ describe('CreatureTinkerSystem cleanup（metalRepair<=4）', () => {
     // 4 + 0.02 = 4.02 > 4，不被清除
     ;(sys as any).tinkers.push(makeTinker(1, { metalRepair: 4 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).tinkers).toHaveLength(1)
   })
@@ -153,6 +154,7 @@ describe('CreatureTinkerSystem cleanup（metalRepair<=4）', () => {
   it('metalRepair=3时被清除', () => {
     ;(sys as any).tinkers.push(makeTinker(1, { metalRepair: 3 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).tinkers).toHaveLength(0)
   })
@@ -162,6 +164,7 @@ describe('CreatureTinkerSystem cleanup（metalRepair<=4）', () => {
     // 设4.01，update后4.03>4，不清除
     ;(sys as any).tinkers.push(makeTinker(1, { metalRepair: 4.01 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 4.01+0.02=4.03 > 4，不清除
     expect((sys as any).tinkers).toHaveLength(1)
@@ -170,6 +173,7 @@ describe('CreatureTinkerSystem cleanup（metalRepair<=4）', () => {
   it('metalRepair=3.98，增长后=4.00，仍被清除（<=4）', () => {
     ;(sys as any).tinkers.push(makeTinker(1, { metalRepair: 3.98 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 3.98+0.02=4.00 <= 4，被清除
     expect((sys as any).tinkers).toHaveLength(0)
@@ -179,6 +183,7 @@ describe('CreatureTinkerSystem cleanup（metalRepair<=4）', () => {
     ;(sys as any).tinkers.push(makeTinker(1, { metalRepair: 2 }))
     ;(sys as any).tinkers.push(makeTinker(2, { metalRepair: 50 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).tinkers).toHaveLength(1)
     expect((sys as any).tinkers[0].entityId).toBe(2)

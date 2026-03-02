@@ -90,6 +90,7 @@ describe('DiplomaticCensusSystem', () => {
     it('tick 差值小于 CHECK_INTERVAL 时跳过更新', () => {
       const em = {} as any
       const civ = makeCivManager([{ id: 1, population: 100 }])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, em, civ as any, CHECK_INTERVAL - 1)
       expect((sys as any).lastCheck).toBe(0)
       expect((sys as any).records).toHaveLength(0)

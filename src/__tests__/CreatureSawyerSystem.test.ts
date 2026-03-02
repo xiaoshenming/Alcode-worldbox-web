@@ -126,6 +126,7 @@ describe('CreatureSawyerSystem - cleanup边界', () => {
 
   it('sawingSkill 恰好为3.98时（+0.02=4.0），等于4仍被移除', () => {
     ;(sys as any).sawyers.push(makeSawyer(1, { sawingSkill: 3.98 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 3.98 + 0.02 = 4.0, cleanup条件 <= 4, 所以被移除
     expect((sys as any).sawyers).toHaveLength(0)
@@ -133,6 +134,7 @@ describe('CreatureSawyerSystem - cleanup边界', () => {
 
   it('sawingSkill 为4.01时不被移除', () => {
     ;(sys as any).sawyers.push(makeSawyer(1, { sawingSkill: 4.01 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 4.01 + 0.02 = 4.03 > 4, 不移除
     expect((sys as any).sawyers).toHaveLength(1)
@@ -140,6 +142,7 @@ describe('CreatureSawyerSystem - cleanup边界', () => {
 
   it('sawingSkill <= 4 时从列表移除（低值测试）', () => {
     ;(sys as any).sawyers.push(makeSawyer(1, { sawingSkill: 1.0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 1.0 + 0.02 = 1.02 <= 4, 被移除
     expect((sys as any).sawyers).toHaveLength(0)
@@ -149,6 +152,7 @@ describe('CreatureSawyerSystem - cleanup边界', () => {
     ;(sys as any).sawyers.push(makeSawyer(1, { sawingSkill: 3.0 }))
     ;(sys as any).sawyers.push(makeSawyer(2, { sawingSkill: 50 }))
     ;(sys as any).sawyers.push(makeSawyer(3, { sawingSkill: 2.0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).sawyers).toHaveLength(1)
     expect((sys as any).sawyers[0].entityId).toBe(2)

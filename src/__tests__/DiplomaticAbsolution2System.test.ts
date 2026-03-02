@@ -190,6 +190,7 @@ describe('DiplomaticAbsolution2System', () => {
     it('tick=0 的记录在大 tick 时被清理', () => {
       ;(sys as any).decrees.push(makeDecree({ id: 1, tick: 0 }))
       const bigTick = EXPIRY_WINDOW + CHECK_INTERVAL + 1
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).decrees).toHaveLength(0)
     })
@@ -199,6 +200,7 @@ describe('DiplomaticAbsolution2System', () => {
       ;(sys as any).decrees.push(makeDecree({ id: 1, tick: baseTick }))
       // 下一个检查点恰好是 baseTick + CHECK_INTERVAL，cutoff = baseTick + CHECK_INTERVAL - EXPIRY_WINDOW
       // 记录 tick = baseTick，大于 cutoff，不应被清理
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, baseTick + CHECK_INTERVAL)
       expect((sys as any).decrees).toHaveLength(1)
     })
@@ -208,6 +210,7 @@ describe('DiplomaticAbsolution2System', () => {
       // cutoff = bigTick - EXPIRY_WINDOW = CHECK_INTERVAL + 1
       // 令 decree.tick = CHECK_INTERVAL（< cutoff），应被清理
       ;(sys as any).decrees.push(makeDecree({ tick: CHECK_INTERVAL }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).decrees).toHaveLength(0)
     })
@@ -216,6 +219,7 @@ describe('DiplomaticAbsolution2System', () => {
       const bigTick = EXPIRY_WINDOW + CHECK_INTERVAL + 1
       ;(sys as any).decrees.push(makeDecree({ id: 1, tick: 0 }))       // 过期
       ;(sys as any).decrees.push(makeDecree({ id: 2, tick: bigTick }))  // 新记录
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).decrees).toHaveLength(1)
       expect((sys as any).decrees[0].id).toBe(2)
@@ -226,6 +230,7 @@ describe('DiplomaticAbsolution2System', () => {
       for (let i = 1; i <= 5; i++) {
         ;(sys as any).decrees.push(makeDecree({ id: i, tick: 0 }))
       }
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).decrees).toHaveLength(0)
     })

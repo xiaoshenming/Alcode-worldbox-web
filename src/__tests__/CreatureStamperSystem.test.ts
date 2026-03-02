@@ -141,6 +141,7 @@ describe('CreatureStamperSystem — cleanup 边界', () => {
 
   it('stampingSkill > 4 时保留', () => {
     ;(sys as any).stampers.push(makeStamper(1, { stampingSkill: 5 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 5 + 0.02 = 5.02 > 4，保留
     expect((sys as any).stampers).toHaveLength(1)
@@ -148,6 +149,7 @@ describe('CreatureStamperSystem — cleanup 边界', () => {
 
   it('先递增再 cleanup：3.98 + 0.02 = 4.00 恰好 <= 4，应移除', () => {
     ;(sys as any).stampers.push(makeStamper(1, { stampingSkill: 3.98 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 3.98 + 0.02 = 4.00，条件 <= 4 为真，移除
     expect((sys as any).stampers).toHaveLength(0)
@@ -155,6 +157,7 @@ describe('CreatureStamperSystem — cleanup 边界', () => {
 
   it('stakingSkill <= 4 且递增后仍 <= 4 时验证清除', () => {
     ;(sys as any).stampers.push(makeStamper(1, { stampingSkill: 70 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)  // 70 -> 70.02
     ;(sys as any).stampers[0].stampingSkill = 3
     sys.update(1, em, CHECK_INTERVAL * 2)  // 3 + 0.02 = 3.02 <= 4，移除
@@ -164,6 +167,7 @@ describe('CreatureStamperSystem — cleanup 边界', () => {
   it('混合：一个保留一个移除', () => {
     ;(sys as any).stampers.push(makeStamper(1, { stampingSkill: 50 }))
     ;(sys as any).stampers.push(makeStamper(2, { stampingSkill: 3.98 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).stampers).toHaveLength(1)
     expect((sys as any).stampers[0].entityId).toBe(1)
@@ -172,6 +176,7 @@ describe('CreatureStamperSystem — cleanup 边界', () => {
   it('多个均低于阈值时全部移除', () => {
     ;(sys as any).stampers.push(makeStamper(1, { stampingSkill: 3.98 }))
     ;(sys as any).stampers.push(makeStamper(2, { stampingSkill: 1 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).stampers).toHaveLength(0)
   })

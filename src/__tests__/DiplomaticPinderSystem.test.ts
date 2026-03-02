@@ -153,12 +153,14 @@ describe('DiplomaticPinderSystem', () => {
   it('arrangement.tick < cutoff时删除', () => {
     ;(sys as any).arrangements.push({ id: 1, poundCivId: 1, livestockCivId: 2, form: 'village_pinder', poundJurisdiction: 50, impoundmentRights: 50, fineCollection: 20, animalWelfare: 20, duration: 0, tick: 0 })
     // cutoff = 90000 - 88000 = 2000, arrangement.tick=0 < 2000 → 删除
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, world, em, 90000)
     expect((sys as any).arrangements).toHaveLength(0)
   })
   it('arrangement.tick >= cutoff时保留', () => {
     ;(sys as any).arrangements.push({ id: 1, poundCivId: 1, livestockCivId: 2, form: 'common_pinder', poundJurisdiction: 50, impoundmentRights: 50, fineCollection: 20, animalWelfare: 20, duration: 0, tick: 5000 })
     // cutoff = 90000 - 88000 = 2000, arrangement.tick=5000 >= 2000 → 保留
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, world, em, 90000)
     expect((sys as any).arrangements).toHaveLength(1)
   })

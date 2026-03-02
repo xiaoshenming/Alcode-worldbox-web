@@ -98,6 +98,7 @@ describe('状态转换', () => {
     const sys = makeSys()
     // elapsed=1401, duration=2000 => 1401>1400(0.7*2000) => weakening, 1401<2000 => 保留
     ;(sys as any).embargoes.push(makeEmbargo({ duration: 2000, startTick: -1, status: 'active' }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, makeCivMgr(), 1400)
     expect((sys as any).embargoes[0].status).toBe('weakening')
     expect((sys as any).embargoes).toHaveLength(1)
@@ -105,18 +106,21 @@ describe('状态转换', () => {
   it('elapsed>duration时删除', () => {
     const sys = makeSys()
     ;(sys as any).embargoes.push(makeEmbargo({ duration: 500, startTick: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, makeCivMgr(), 1400)
     expect((sys as any).embargoes).toHaveLength(0)
   })
   it('selfDamage>60时删除', () => {
     const sys = makeSys()
     ;(sys as any).embargoes.push(makeEmbargo({ selfDamage: 61, duration: 99999, startTick: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, makeCivMgr(), 1400)
     expect((sys as any).embargoes).toHaveLength(0)
   })
   it('elapsed<duration且selfDamage<60时保留', () => {
     const sys = makeSys()
     ;(sys as any).embargoes.push(makeEmbargo({ duration: 99999, startTick: 0, selfDamage: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, makeCivMgr(), 1400)
     expect((sys as any).embargoes).toHaveLength(1)
   })

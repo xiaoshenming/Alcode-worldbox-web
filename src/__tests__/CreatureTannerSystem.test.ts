@@ -112,6 +112,7 @@ describe('CreatureTannerSystem.getTanners', () => {
     ;(sys as any).lastCheck = 0
     // 插入一个tick=0的记录，cutoff=50000-44000=6000，0<6000 => 被移除
     ;(sys as any).tanners.push(makeTanner(1, 'tanned', 0))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEmEmpty(), 50000)
     expect((sys as any).tanners).toHaveLength(0)
   })
@@ -120,6 +121,7 @@ describe('CreatureTannerSystem.getTanners', () => {
     ;(sys as any).lastCheck = 0
     // 插入tick=10000，cutoff=50000-44000=6000，10000>6000 => 保留
     ;(sys as any).tanners.push(makeTanner(1, 'tanned', 10000))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEmEmpty(), 50000)
     expect((sys as any).tanners).toHaveLength(1)
   })
@@ -128,6 +130,7 @@ describe('CreatureTannerSystem.getTanners', () => {
     ;(sys as any).lastCheck = 0
     // tick=6000, cutoff=50000-44000=6000, 6000 < 6000 => false => 保留? 边界：<, 不移除
     ;(sys as any).tanners.push(makeTanner(1, 'tanned', 6000))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEmEmpty(), 50000)
     // 6000 < 6000 is false => 记录保留
     expect((sys as any).tanners).toHaveLength(1)
@@ -137,6 +140,7 @@ describe('CreatureTannerSystem.getTanners', () => {
     ;(sys as any).lastCheck = 0
     ;(sys as any).tanners.push(makeTanner(1, 'tanned', 0))      // 过期
     ;(sys as any).tanners.push(makeTanner(2, 'cured', 45000))    // 保留
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEmEmpty(), 50000)
     expect((sys as any).tanners).toHaveLength(1)
     expect((sys as any).tanners[0].entityId).toBe(2)

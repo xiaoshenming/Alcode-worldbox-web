@@ -106,6 +106,7 @@ describe('过期清理cutoff=tick-80000', () => {
     const bigTick = 200000
     ;(sys as any).agreements.push(makeAgreement({ tick: 0 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, bigTick)
     expect((sys as any).agreements).toHaveLength(0)
   })
@@ -113,6 +114,7 @@ describe('过期清理cutoff=tick-80000', () => {
     const bigTick = 200000
     ;(sys as any).agreements.push(makeAgreement({ tick: bigTick - 1000 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, bigTick)
     expect((sys as any).agreements).toHaveLength(1)
   })
@@ -121,6 +123,7 @@ describe('过期清理cutoff=tick-80000', () => {
     const cutoff = bigTick - 80000 // 120000
     ;(sys as any).agreements.push(makeAgreement({ tick: cutoff }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, bigTick)
     expect((sys as any).agreements).toHaveLength(1)
   })
@@ -129,6 +132,7 @@ describe('过期清理cutoff=tick-80000', () => {
     ;(sys as any).agreements.push(makeAgreement({ id: 1, tick: 0 }))
     ;(sys as any).agreements.push(makeAgreement({ id: 2, tick: bigTick - 1000 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, bigTick)
     expect((sys as any).agreements).toHaveLength(1)
     expect((sys as any).agreements[0].id).toBe(2)

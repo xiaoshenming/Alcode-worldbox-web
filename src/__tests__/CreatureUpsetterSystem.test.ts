@@ -151,6 +151,7 @@ describe('CreatureUpsetterSystem.update — cleanup (upsettingSkill <= 4)', () =
   it('upsettingSkill 恰好为 4 时被清除', () => {
     ;(sys as any).upsetters.push(makeUpsetter(1, { upsettingSkill: 4 }))
     const em = makeMockEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, CHECK_INTERVAL)
     // upsettingSkill becomes 4.02 after growth, NOT <= 4, so NOT removed
     // start at exactly 4: after +0.02 => 4.02 > 4, stays
@@ -172,6 +173,7 @@ describe('CreatureUpsetterSystem.update — cleanup (upsettingSkill <= 4)', () =
     const em = makeMockEM()
     // reset lastCheck so update triggers
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, CHECK_INTERVAL)
     // 3.98 + 0.02 = 4.00, cleanup condition: <= 4, so removed
     expect((sys as any).upsetters).toHaveLength(0)
@@ -180,6 +182,7 @@ describe('CreatureUpsetterSystem.update — cleanup (upsettingSkill <= 4)', () =
   it('upsettingSkill 高于 4 的工匠不被清除', () => {
     ;(sys as any).upsetters.push(makeUpsetter(1, { upsettingSkill: 5 }))
     const em = makeMockEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, CHECK_INTERVAL)
     expect((sys as any).upsetters).toHaveLength(1)
   })
@@ -188,6 +191,7 @@ describe('CreatureUpsetterSystem.update — cleanup (upsettingSkill <= 4)', () =
     ;(sys as any).upsetters.push(makeUpsetter(1, { upsettingSkill: 3.5 }))  // 3.5+0.02=3.52 <=4 → removed
     ;(sys as any).upsetters.push(makeUpsetter(2, { upsettingSkill: 50 }))   // stays
     const em = makeMockEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, CHECK_INTERVAL)
     expect((sys as any).upsetters).toHaveLength(1)
     expect((sys as any).upsetters[0].entityId).toBe(2)

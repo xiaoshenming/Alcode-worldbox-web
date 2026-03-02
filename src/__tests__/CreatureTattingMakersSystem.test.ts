@@ -162,6 +162,7 @@ describe('CreatureTattingMakersSystem — 过期清理 (cutoff = tick - 52000)',
     ;(sys as any).makers.push(makeMaker(1, 'needle', EXPIRE))
     ;(sys as any).lastCheck = 0
     // cutoff = 2*EXPIRE - EXPIRE = EXPIRE，maker.tick==EXPIRE，不满足 < 故保留
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, EXPIRE * 2)
     expect((sys as any).makers).toHaveLength(1)
   })
@@ -171,6 +172,7 @@ describe('CreatureTattingMakersSystem — 过期清理 (cutoff = tick - 52000)',
     ;(sys as any).makers.push(makeMaker(1, 'cro', 0))
     ;(sys as any).makers.push(makeMaker(2, 'needle', 100))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, EXPIRE + CHECK_INTERVAL)
     expect((sys as any).makers).toHaveLength(0)
   })

@@ -168,6 +168,7 @@ describe('CreatureRugmakerSystem time-based cleanup', () => {
   it('tick=50000时清除tick<4000的记录（cutoff=50000-46000=4000）', () => {
     ;(sys as any).rugmakers.push(makeRugmaker(1, 'floral', { tick: 3999 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 50000)
     expect((sys as any).rugmakers).toHaveLength(0)
   })
@@ -175,6 +176,7 @@ describe('CreatureRugmakerSystem time-based cleanup', () => {
   it('tick=50000时保留tick=4001的记录', () => {
     ;(sys as any).rugmakers.push(makeRugmaker(1, 'floral', { tick: 4001 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 50000)
     expect((sys as any).rugmakers).toHaveLength(1)
   })
@@ -183,6 +185,7 @@ describe('CreatureRugmakerSystem time-based cleanup', () => {
     // cutoff = 50000 - 46000 = 4000，tick < cutoff才删，tick=4000不删
     ;(sys as any).rugmakers.push(makeRugmaker(1, 'medallion', { tick: 4000 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 50000)
     // tick < cutoff → 4000 < 4000 → false → 保留
     expect((sys as any).rugmakers).toHaveLength(1)
@@ -192,6 +195,7 @@ describe('CreatureRugmakerSystem time-based cleanup', () => {
     ;(sys as any).rugmakers.push(makeRugmaker(1, 'geometric', { tick: 100 }))
     ;(sys as any).rugmakers.push(makeRugmaker(2, 'tribal', { tick: 10000 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 56000)  // cutoff = 56000-46000 = 10000
     // tick=100 < 10000 → 删除; tick=10000 < 10000 → false → 保留
     expect((sys as any).rugmakers).toHaveLength(1)
@@ -201,6 +205,7 @@ describe('CreatureRugmakerSystem time-based cleanup', () => {
   it('节流期内不执行cleanup', () => {
     ;(sys as any).rugmakers.push(makeRugmaker(1, 'geometric', { tick: 0 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 100)  // tick不足CHECK_INTERVAL=1350
     expect((sys as any).rugmakers).toHaveLength(1)
   })

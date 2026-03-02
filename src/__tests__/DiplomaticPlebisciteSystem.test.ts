@@ -139,12 +139,14 @@ describe('DiplomaticPlebisciteSystem', () => {
   it('expired且p.tick < cutoff时删除', () => {
     ;(sys as any).pacts.push({ id: 1, nationA: 0, nationB: 1, status: 'expired', strength: 30, voterTurnout: 50, approvalRate: 50, legitimacy: 30, contestedBy: 0, tick: 0 })
     // cutoff = 55000 - 51000 = 4000, p.tick=0 < 4000 → 删除
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, world, em6, 55000)
     expect((sys as any).pacts).toHaveLength(0)
   })
   it('expired但p.tick >= cutoff时保留', () => {
     ;(sys as any).pacts.push({ id: 1, nationA: 0, nationB: 1, status: 'expired', strength: 30, voterTurnout: 50, approvalRate: 50, legitimacy: 30, contestedBy: 0, tick: 10000 })
     // cutoff = 55000 - 51000 = 4000, p.tick=10000 >= 4000 → 保留
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, world, em6, 55000)
     expect((sys as any).pacts).toHaveLength(1)
   })
@@ -156,6 +158,7 @@ describe('DiplomaticPlebisciteSystem', () => {
   })
   it('rejected状态不被cleanup删除', () => {
     ;(sys as any).pacts.push({ id: 1, nationA: 0, nationB: 1, status: 'rejected', strength: 30, voterTurnout: 50, approvalRate: 50, legitimacy: 30, contestedBy: 0, tick: 0 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, world, em6, 55000)
     expect((sys as any).pacts).toHaveLength(1)
   })

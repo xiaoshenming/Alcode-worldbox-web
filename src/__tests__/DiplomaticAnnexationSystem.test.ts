@@ -170,6 +170,7 @@ describe('DiplomaticAnnexationSystem', () => {
   describe('time-based 过期清理', () => {
     it('tick=0 的记录在 bigTick=90000 时被删除', () => {
       ;(sys as any).treaties.push(makeTreaty({ id: 1, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 90000)
       expect((sys as any).treaties).toHaveLength(0)
     })
@@ -178,6 +179,7 @@ describe('DiplomaticAnnexationSystem', () => {
       const bigTick = 100000
       const cutoff = bigTick - EXPIRE_OFFSET  // 15000
       ;(sys as any).treaties.push(makeTreaty({ id: 1, tick: cutoff }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).treaties).toHaveLength(1)
     })
@@ -186,12 +188,14 @@ describe('DiplomaticAnnexationSystem', () => {
       const bigTick = 100000
       const cutoff = bigTick - EXPIRE_OFFSET  // 15000
       ;(sys as any).treaties.push(makeTreaty({ id: 1, tick: cutoff - 1 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).treaties).toHaveLength(0)
     })
 
     it('较新的记录在相同 update 中不被删除', () => {
       ;(sys as any).treaties.push(makeTreaty({ id: 1, tick: 60000 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 90000)
       // cutoff = 90000 - 85000 = 5000，60000 >= 5000 不删
       expect((sys as any).treaties).toHaveLength(1)
@@ -201,6 +205,7 @@ describe('DiplomaticAnnexationSystem', () => {
       ;(sys as any).treaties.push(makeTreaty({ id: 1, tick: 0 }))
       ;(sys as any).treaties.push(makeTreaty({ id: 2, tick: 60000 }))
       ;(sys as any).treaties.push(makeTreaty({ id: 3, tick: 1000 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 90000)
       const remaining = (sys as any).treaties
       expect(remaining).toHaveLength(1)
@@ -210,6 +215,7 @@ describe('DiplomaticAnnexationSystem', () => {
     it('所有记录都未过期时全部保留', () => {
       ;(sys as any).treaties.push(makeTreaty({ id: 1, tick: 80000 }))
       ;(sys as any).treaties.push(makeTreaty({ id: 2, tick: 85000 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 90000)
       expect((sys as any).treaties).toHaveLength(2)
     })

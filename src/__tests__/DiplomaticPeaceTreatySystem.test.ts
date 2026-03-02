@@ -43,6 +43,7 @@ describe('DiplomaticPeaceTreatySystem', () => {
   })
   it('civs.length < 2时不spawn', () => {
     makeSpawnMock()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, makeCivManager([1]), 1500)
     expect((sys as any).treaties).toHaveLength(0)
   })
@@ -50,6 +51,7 @@ describe('DiplomaticPeaceTreatySystem', () => {
     expect(() => sys.update(1, em, {} as any, 1500)).not.toThrow()
   })
   it('civManager为空时不spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, makeCivManager([]), 1500)
     expect((sys as any).treaties).toHaveLength(0)
   })

@@ -151,6 +151,7 @@ describe('CreatureRangerSystem — cleanup（生物消失后移除）', () => {
     ;(sys as any).rangers.push(makeRanger(99, 'scout'))
     // hasComponent 返回 false，表示该生物已死
     const em = makeEm([], () => false)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).rangers).toHaveLength(0)
   })
@@ -159,6 +160,7 @@ describe('CreatureRangerSystem — cleanup（生物消失后移除）', () => {
     ;(sys as any).rangers.push(makeRanger(1, 'scout'))
     ;(sys as any).rangers.push(makeRanger(2, 'tracker'))
     const em = makeEm([], (id: number) => id === 2) // 只有 id=2 存活
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     const rangers = (sys as any).rangers as Ranger[]
     expect(rangers).toHaveLength(1)
@@ -169,6 +171,7 @@ describe('CreatureRangerSystem — cleanup（生物消失后移除）', () => {
     ;(sys as any).rangers.push(makeRanger(1, 'warden'))
     ;(sys as any).rangers.push(makeRanger(2, 'sentinel'))
     const em = makeEm([], () => true) // 全部存活
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).rangers).toHaveLength(2)
   })

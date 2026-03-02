@@ -89,6 +89,7 @@ describe('CreatureTrapperSystem', () => {
       const em = makeEm([1])
       ;(sys as any).trappers.push(makeTrapper(1))
       ;(sys as any)._trappersSet.add(1)
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, em, CHECK_INTERVAL)
       expect((sys as any).trappers).toHaveLength(1)
     })
@@ -98,6 +99,7 @@ describe('CreatureTrapperSystem', () => {
       const em = makeEm([])
       ;(sys as any).trappers.push(makeTrapper(1))
       ;(sys as any)._trappersSet.add(1)
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, em, CHECK_INTERVAL)
       expect((sys as any).trappers).toHaveLength(0)
     })
@@ -108,6 +110,7 @@ describe('CreatureTrapperSystem', () => {
       ;(sys as any).trappers.push(makeTrapper(2))  // entity 2 存活
       ;(sys as any)._trappersSet.add(1)
       ;(sys as any)._trappersSet.add(2)
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, em, CHECK_INTERVAL)
       expect((sys as any).trappers).toHaveLength(1)
       expect((sys as any).trappers[0].entityId).toBe(2)

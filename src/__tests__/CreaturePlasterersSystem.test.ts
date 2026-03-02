@@ -156,6 +156,7 @@ describe('CreaturePlasterersSystem - time-based cleanupï¼ˆcutoff = tick - 55000ï
     const tick = 100000
     ;(sys as any).plasterers.push(makePlasterer(1, 'lime', { tick: tick - EXPIRE_AFTER + 1 }))
     const em = makeEm([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, tick)
     expect((sys as any).plasterers).toHaveLength(1)
   })
@@ -165,6 +166,7 @@ describe('CreaturePlasterersSystem - time-based cleanupï¼ˆcutoff = tick - 55000ï
     const cutoff = tick - EXPIRE_AFTER
     ;(sys as any).plasterers.push(makePlasterer(1, 'lime', { tick: cutoff - 1 }))
     const em = makeEm([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, tick)
     expect((sys as any).plasterers).toHaveLength(0)
   })
@@ -175,6 +177,7 @@ describe('CreaturePlasterersSystem - time-based cleanupï¼ˆcutoff = tick - 55000ï
     ;(sys as any).plasterers.push(makePlasterer(1, 'lime', { tick: cutoff - 100 }))
     ;(sys as any).plasterers.push(makePlasterer(2, 'gypsum', { tick: cutoff + 100 }))
     const em = makeEm([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, tick)
     expect((sys as any).plasterers).toHaveLength(1)
     expect((sys as any).plasterers[0].entityId).toBe(2)

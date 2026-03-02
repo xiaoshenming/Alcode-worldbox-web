@@ -137,6 +137,7 @@ describe('CreatureSilkWeaverSystem - cleanup边界(threadFineness<=4)', () => {
   it('threadFineness=4的织工update后4.02>4不被清除', () => {
     const em = makeEM()
     ;(sys as any).weavers.push(makeWeaver(1, 4, 50, 50, 50))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, CHECK_INTERVAL)
     // 增长后 4 + 0.02 = 4.02 > 4，不被清除
     expect((sys as any).weavers).toHaveLength(1)
@@ -145,6 +146,7 @@ describe('CreatureSilkWeaverSystem - cleanup边界(threadFineness<=4)', () => {
   it('threadFineness=3的织工被清除(3+0.02=3.02<=4)', () => {
     const em = makeEM()
     ;(sys as any).weavers.push(makeWeaver(1, 3, 50, 50, 50))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, CHECK_INTERVAL)
     // 3 + 0.02 = 3.02 <= 4, 被清除
     expect((sys as any).weavers).toHaveLength(0)
@@ -153,6 +155,7 @@ describe('CreatureSilkWeaverSystem - cleanup边界(threadFineness<=4)', () => {
   it('threadFineness=4.01(>4)不被清除', () => {
     const em = makeEM()
     ;(sys as any).weavers.push(makeWeaver(1, 4.01, 50, 50, 50))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, CHECK_INTERVAL)
     // 4.01 + 0.02 = 4.03 > 4, 不清除
     expect((sys as any).weavers).toHaveLength(1)
@@ -161,6 +164,7 @@ describe('CreatureSilkWeaverSystem - cleanup边界(threadFineness<=4)', () => {
   it('边界值3.98: +0.02后=4.0, 仍<=4，被清除', () => {
     const em = makeEM()
     ;(sys as any).weavers.push(makeWeaver(1, 3.98, 50, 50, 50))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, CHECK_INTERVAL)
     // 3.98 + 0.02 = 4.0 <= 4, 应被清除
     expect((sys as any).weavers).toHaveLength(0)
@@ -170,6 +174,7 @@ describe('CreatureSilkWeaverSystem - cleanup边界(threadFineness<=4)', () => {
     const em = makeEM()
     ;(sys as any).weavers.push(makeWeaver(1, 2, 50, 50, 50))   // 被清除
     ;(sys as any).weavers.push(makeWeaver(2, 50, 50, 50, 50))  // 保留
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, CHECK_INTERVAL)
     expect((sys as any).weavers).toHaveLength(1)
     expect((sys as any).weavers[0].entityId).toBe(2)

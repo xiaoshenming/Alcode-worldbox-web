@@ -153,6 +153,7 @@ describe('CreaturePinMakersSystem - time-based cleanup (cutoff=tick-50500)', () 
     ;(sys as any).makers.push(makeMaker(1, 'brass', { tick: 0 }))
     const em = makeEM()
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 50501)
     // cutoff = 50501 - 50500 = 1, maker.tick=0 < 1 => 删除
     expect((sys as any).makers).toHaveLength(0)
@@ -162,6 +163,7 @@ describe('CreaturePinMakersSystem - time-based cleanup (cutoff=tick-50500)', () 
     ;(sys as any).makers.push(makeMaker(1, 'steel', { tick: 0 }))
     const em = makeEM()
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 50500)
     // cutoff = 50500 - 50500 = 0, maker.tick=0 >= 0 => 保留
     expect((sys as any).makers).toHaveLength(1)
@@ -171,6 +173,7 @@ describe('CreaturePinMakersSystem - time-based cleanup (cutoff=tick-50500)', () 
     ;(sys as any).makers.push(makeMaker(1, 'bone', { tick: 40000 }))
     const em = makeEM()
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 50500)
     // cutoff=0, maker.tick=40000 >= 0 => 保留
     expect((sys as any).makers).toHaveLength(1)

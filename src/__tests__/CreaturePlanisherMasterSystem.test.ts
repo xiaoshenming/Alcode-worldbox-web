@@ -136,6 +136,7 @@ describe('CreaturePlanisherMasterSystem - cleanup：masterPlanishSkill<=4时删�
     const em = makeEM()
     ;(sys as any).masters.push(makeMaster(1, { masterPlanishSkill: 4 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 3110)
     // After skill += 0.02 => 4.02, which is NOT <= 4, so NOT deleted
     // Actually the loop runs AFTER growth, so 4 + 0.02 = 4.02 > 4 => NOT deleted
@@ -149,6 +150,7 @@ describe('CreaturePlanisherMasterSystem - cleanup：masterPlanishSkill<=4时删�
     const em = makeEM()
     ;(sys as any).masters.push(makeMaster(1, { masterPlanishSkill: 3.97 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 3110)
     // 3.97 + 0.02 = 3.99 <= 4 => deleted
     expect((sys as any).masters).toHaveLength(0)
@@ -158,6 +160,7 @@ describe('CreaturePlanisherMasterSystem - cleanup：masterPlanishSkill<=4时删�
     const em = makeEM()
     ;(sys as any).masters.push(makeMaster(1, { masterPlanishSkill: 4.01 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 3110)
     // 4.01 + 0.02 = 4.03 > 4 => kept
     expect((sys as any).masters).toHaveLength(1)
@@ -167,6 +170,7 @@ describe('CreaturePlanisherMasterSystem - cleanup：masterPlanishSkill<=4时删�
     const em = makeEM()
     ;(sys as any).masters.push(makeMaster(1, { masterPlanishSkill: 50 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 3110)
     expect((sys as any).masters).toHaveLength(1)
   })

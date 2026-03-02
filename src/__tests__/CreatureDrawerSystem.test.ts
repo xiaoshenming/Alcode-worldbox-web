@@ -108,6 +108,7 @@ describe('CreatureDrawerSystem', () => {
     ;(sys as any).drawers.push(d1, d2)
     const em = makeEM()
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em as any, 2820)
     const remaining = (sys as any).drawers
     expect(remaining).toHaveLength(1)
@@ -120,6 +121,7 @@ describe('CreatureDrawerSystem', () => {
     ;(sys as any).drawers.push(d)
     const em = makeEM()
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em as any, 2820)
     expect((sys as any).drawers).toHaveLength(1)
   })

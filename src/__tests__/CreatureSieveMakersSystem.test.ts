@@ -158,6 +158,7 @@ describe('CreatureSieveMakersSystem - time-based cleanup', () => {
   it('过期记录在update时被清除', () => {
     const em = makeEM([]) // 空实体列表避免招募干扰
     ;(sys as any).makers.push(makeMaker(1, 'grain', 70, 0))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, CHECK_INTERVAL)
     // tick=0 不会过期 (cutoff = CHECK_INTERVAL - 52000 < 0)
     expect((sys as any).makers).toHaveLength(1)
@@ -170,6 +171,7 @@ describe('CreatureSieveMakersSystem - time-based cleanup', () => {
     const em = makeEM([])
     const currentTick = CHECK_INTERVAL * 2
     ;(sys as any).makers.push(makeMaker(1, 'grain', 70, currentTick - 100))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, currentTick)
     expect((sys as any).makers).toHaveLength(1)
   })

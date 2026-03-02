@@ -135,6 +135,7 @@ describe('CreaturePotterSystem - cleanup 边界', () => {
 
   it('wheelControl > 4 的陶匠不被清���', () => {
     ;(sys as any).potters.push(makePotter(1, { wheelControl: 4.01 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, mockEm, CHECK_INTERVAL)
     expect((sys as any).potters).toHaveLength(1)
   })
@@ -142,6 +143,7 @@ describe('CreaturePotterSystem - cleanup 边界', () => {
   it('wheelControl 加增后恰好等于 4 的陶匠被清除（3.98+0.02=4.0 <=4）', () => {
     // update 先加技能：3.98 + 0.02 = 4.0，然后 cleanup 条件 <=4 成立 → 清除
     ;(sys as any).potters.push(makePotter(1, { wheelControl: 3.98 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, mockEm, CHECK_INTERVAL)
     expect((sys as any).potters).toHaveLength(0)
   })
@@ -149,12 +151,14 @@ describe('CreaturePotterSystem - cleanup 边界', () => {
   it('wheelControl=4.0 加增后=4.02 不被清除（4.02 > 4）', () => {
     // update 先加技能：4.0 + 0.02 = 4.02，cleanup 条件 <=4 不成立 → 保留
     ;(sys as any).potters.push(makePotter(1, { wheelControl: 4.0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, mockEm, CHECK_INTERVAL)
     expect((sys as any).potters).toHaveLength(1)
   })
 
   it('wheelControl=3.97 加增后=3.99 被清除（3.99 <=4）', () => {
     ;(sys as any).potters.push(makePotter(1, { wheelControl: 3.97 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, mockEm, CHECK_INTERVAL)
     expect((sys as any).potters).toHaveLength(0)
   })
@@ -163,6 +167,7 @@ describe('CreaturePotterSystem - cleanup 边界', () => {
     ;(sys as any).potters.push(makePotter(1, { wheelControl: 3.5 }))   // 3.5+0.02=3.52 <=4 → 清除
     ;(sys as any).potters.push(makePotter(2, { wheelControl: 50 }))    // 50+0.02=50.02 >4  → 保留
     ;(sys as any).potters.push(makePotter(3, { wheelControl: 4.0 }))   // 4.0+0.02=4.02 >4  → 保留
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, mockEm, CHECK_INTERVAL)
     expect((sys as any).potters).toHaveLength(2)
     expect((sys as any).potters.map((p: any) => p.entityId)).toContain(2)

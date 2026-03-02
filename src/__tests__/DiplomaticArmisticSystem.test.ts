@@ -125,6 +125,7 @@ describe('DiplomaticArmisticSystem', () => {
     })
 
     it('civManager为null时，满足interval也直接return', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, null as any, CHECK_INTERVAL)
       // lastCheck已更新，但civs判断为null直接return
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
@@ -134,6 +135,7 @@ describe('DiplomaticArmisticSystem', () => {
 
     it('civs少于2个时不新增armistice', () => {
       const oneCiv = makeCivManager([1])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, oneCiv as any, CHECK_INTERVAL)
       expect((sys as any).armistices).toHaveLength(0)
     })

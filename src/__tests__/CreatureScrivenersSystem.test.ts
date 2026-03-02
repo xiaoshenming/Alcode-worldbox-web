@@ -77,6 +77,7 @@ describe('CreatureScrivenersSystem — time-based cleanup (cutoff = tick - 51000
   it('tick早于cutoff的maker被移除', () => {
     const em = makeEm([]) // 空实体，避免招募干扰
     ;(sys as any).makers.push(makeMaker(1, 'uncial', 0))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 0)
     sys.update(1, em, 52000) // cutoff = 52000 - 51000 = 1000，maker.tick=0 < 1000 → 移除
     expect((sys as any).makers).toHaveLength(0)
@@ -85,6 +86,7 @@ describe('CreatureScrivenersSystem — time-based cleanup (cutoff = tick - 51000
   it('tick等于cutoff的maker被移除（tick < cutoff为false，不删）', () => {
     const em = makeEm([])
     ;(sys as any).makers.push(makeMaker(1, 'uncial', 1000))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 0)
     sys.update(1, em, 52000) // cutoff = 1000，maker.tick=1000，1000 < 1000为false → 保留
     expect((sys as any).makers).toHaveLength(1)
@@ -93,6 +95,7 @@ describe('CreatureScrivenersSystem — time-based cleanup (cutoff = tick - 51000
   it('tick晚于cutoff的maker被保留', () => {
     const em = makeEm([])
     ;(sys as any).makers.push(makeMaker(1, 'uncial', 5000))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 0)
     sys.update(1, em, 52000) // cutoff = 1000，maker.tick=5000 > 1000 → 保留
     expect((sys as any).makers).toHaveLength(1)
@@ -103,6 +106,7 @@ describe('CreatureScrivenersSystem — time-based cleanup (cutoff = tick - 51000
     ;(sys as any).makers.push(makeMaker(1, 'uncial', 0))      // 过期
     ;(sys as any).makers.push(makeMaker(2, 'gothic', 5000))   // 保留
     ;(sys as any).makers.push(makeMaker(3, 'italic', 500))    // 过期
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 0)
     sys.update(1, em, 52000) // cutoff = 1000
     expect((sys as any).makers).toHaveLength(1)
@@ -112,6 +116,7 @@ describe('CreatureScrivenersSystem — time-based cleanup (cutoff = tick - 51000
   it('未达到51000 tick时不清除任何maker', () => {
     const em = makeEm([])
     ;(sys as any).makers.push(makeMaker(1, 'uncial', 0))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 0)
     sys.update(1, em, 1370) // cutoff = 1370 - 51000 = -49630，maker.tick=0 > -49630 → 保留
     expect((sys as any).makers).toHaveLength(1)

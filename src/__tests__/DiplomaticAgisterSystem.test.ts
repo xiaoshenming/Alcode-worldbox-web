@@ -162,12 +162,14 @@ describe('DiplomaticAgisterSystem — time-based过期清理（cutoff=tick-88000
 
   it('tick=0的arrangement在tick=90000时被清理（0 < 90000-88000=2000）', () => {
     ;(sys as any).arrangements.push(makeArrangement({ id: 1, tick: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000)
     expect((sys as any).arrangements).toHaveLength(0)
   })
 
   it('tick=3000的arrangement在tick=90000时不被清理（3000 >= 2000）', () => {
     ;(sys as any).arrangements.push(makeArrangement({ id: 1, tick: 3000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000)
     expect((sys as any).arrangements).toHaveLength(1)
   })
@@ -175,6 +177,7 @@ describe('DiplomaticAgisterSystem — time-based过期清理（cutoff=tick-88000
   it('arrangement.tick恰好等于cutoff时不被清理（< cutoff才清理）', () => {
     // cutoff = 90000 - 88000 = 2000; tick=2000，2000 < 2000 为false，不清理
     ;(sys as any).arrangements.push(makeArrangement({ id: 1, tick: 2000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000)
     expect((sys as any).arrangements).toHaveLength(1)
   })
@@ -183,6 +186,7 @@ describe('DiplomaticAgisterSystem — time-based过期清理（cutoff=tick-88000
     ;(sys as any).arrangements.push(makeArrangement({ id: 1, tick: 0 }))    // 过期：0 < 2000
     ;(sys as any).arrangements.push(makeArrangement({ id: 2, tick: 5000 })) // 存活：5000 >= 2000
     ;(sys as any).arrangements.push(makeArrangement({ id: 3, tick: 1500 })) // 过期：1500 < 2000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000)
     expect((sys as any).arrangements).toHaveLength(1)
     expect((sys as any).arrangements[0].id).toBe(2)
@@ -191,6 +195,7 @@ describe('DiplomaticAgisterSystem — time-based过期清理（cutoff=tick-88000
   it('无过期记录时arrangements长度不变', () => {
     ;(sys as any).arrangements.push(makeArrangement({ id: 1, tick: 50000 }))
     ;(sys as any).arrangements.push(makeArrangement({ id: 2, tick: 60000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000)
     // cutoff=2000；两条tick均>2000，不被清理
     expect((sys as any).arrangements).toHaveLength(2)

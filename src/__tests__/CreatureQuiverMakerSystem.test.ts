@@ -147,6 +147,7 @@ describe('CreatureQuiverMakerSystem - cleanup (leatherStitching <= 4, 在增长�
     ;(sys as any).makers.push(makeMaker(1, 3.98, 50, 50, 50))
     const em = makeEmptyEM()
     ;(sys as any).lastCheck = -3000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 0)
     expect((sys as any).makers).toHaveLength(0)
   })
@@ -155,6 +156,7 @@ describe('CreatureQuiverMakerSystem - cleanup (leatherStitching <= 4, 在增长�
     ;(sys as any).makers.push(makeMaker(1, 2, 50, 50, 50))
     const em = makeEmptyEM()
     ;(sys as any).lastCheck = -3000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 0)
     expect((sys as any).makers).toHaveLength(0)
   })
@@ -164,6 +166,7 @@ describe('CreatureQuiverMakerSystem - cleanup (leatherStitching <= 4, 在增长�
     ;(sys as any).makers.push(makeMaker(1, 3.99, 50, 50, 50))
     const em = makeEmptyEM()
     ;(sys as any).lastCheck = -3000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 0)
     expect((sys as any).makers).toHaveLength(1)
   })
@@ -172,6 +175,7 @@ describe('CreatureQuiverMakerSystem - cleanup (leatherStitching <= 4, 在增长�
     ;(sys as any).makers.push(makeMaker(1, 10, 50, 50, 50))
     const em = makeEmptyEM()
     ;(sys as any).lastCheck = -3000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 0)
     expect((sys as any).makers).toHaveLength(1)
   })
@@ -182,6 +186,7 @@ describe('CreatureQuiverMakerSystem - cleanup (leatherStitching <= 4, 在增长�
     ;(sys as any).makers.push(makeMaker(3, 1, 50, 50, 50))   // 1+0.02=1.02 <= 4, deleted
     const em = makeEmptyEM()
     ;(sys as any).lastCheck = -3000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 0)
     expect((sys as any).makers).toHaveLength(1)
     expect((sys as any).makers[0].entityId).toBe(2)

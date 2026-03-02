@@ -126,6 +126,7 @@ describe('CreatureScribeSystem — 记录上限 MAX_RECORDS=80', () => {
       ;(sys as any).records.push(makeRecord(i + 1, 'battle', 0, i, 80))
     }
     const em = makeEm([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 0)
     sys.update(1, em, 2500)
     expect((sys as any).records).toHaveLength(80)
@@ -147,6 +148,7 @@ describe('CreatureScribeSystem — 记录上限 MAX_RECORDS=80', () => {
       ;(sys as any).records.push(makeRecord(i + 1, 'battle', 0, i, 80))
     }
     const em = makeEm([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 0)
     sys.update(1, em, 2500)
     expect((sys as any).records).toHaveLength(50)

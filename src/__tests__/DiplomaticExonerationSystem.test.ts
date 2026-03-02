@@ -120,6 +120,7 @@ describe('过期清理cutoff=tick-85000', () => {
     const bigTick = 200000
     ;(sys as any).proceedings.push(makeProceeding({ tick: 0 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, bigTick)
     expect((sys as any).proceedings).toHaveLength(0)
   })
@@ -127,6 +128,7 @@ describe('过期清理cutoff=tick-85000', () => {
     const bigTick = 200000
     ;(sys as any).proceedings.push(makeProceeding({ tick: bigTick - 1000 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, bigTick)
     expect((sys as any).proceedings).toHaveLength(1)
   })
@@ -135,6 +137,7 @@ describe('过期清理cutoff=tick-85000', () => {
     const cutoff = bigTick - 85000 // 115000
     ;(sys as any).proceedings.push(makeProceeding({ tick: cutoff }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, bigTick)
     expect((sys as any).proceedings).toHaveLength(1)
   })
@@ -143,6 +146,7 @@ describe('过期清理cutoff=tick-85000', () => {
     ;(sys as any).proceedings.push(makeProceeding({ id: 1, tick: 0 }))       // 过期
     ;(sys as any).proceedings.push(makeProceeding({ id: 2, tick: bigTick - 1000 })) // 新鲜
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, bigTick)
     expect((sys as any).proceedings).toHaveLength(1)
     expect((sys as any).proceedings[0].id).toBe(2)

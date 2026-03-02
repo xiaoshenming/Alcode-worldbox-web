@@ -87,6 +87,7 @@ describe('CreatureOathSystem — pruneOld：MAX_OATHS=80 上限裁剪', () => {
       ;(sys as any).oaths.push(makeOath(i))
     }
     const em = makeEM([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 900)
     expect((sys as any).oaths).toHaveLength(80)
   })
@@ -98,6 +99,7 @@ describe('CreatureOathSystem — pruneOld：MAX_OATHS=80 上限裁剪', () => {
     // 确保第 1 个 id=1，81 个 id=81
     const firstId = (sys as any).oaths[0].id
     const em = makeEM([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 900)
     expect((sys as any).oaths).toHaveLength(80)
     // 最旧的（索引 0）被删除，现在第一个是原来第 2 个
@@ -109,6 +111,7 @@ describe('CreatureOathSystem — pruneOld：MAX_OATHS=80 上限裁剪', () => {
       ;(sys as any).oaths.push(makeOath(i))
     }
     const em = makeEM([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 900)
     // splice(0, 85-80=5)：删除前 5 个
     expect((sys as any).oaths).toHaveLength(80)

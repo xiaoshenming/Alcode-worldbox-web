@@ -167,6 +167,7 @@ describe('DiplomaticAcquittalSystem — time-based过期清理（cutoff=tick-860
 
   it('tick=0的verdict在tick=90000时被清理（0 < 90000-86000=4000）', () => {
     ;(sys as any).verdicts.push(makeVerdict({ id: 1, tick: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000)
     expect((sys as any).verdicts).toHaveLength(0)
   })
@@ -174,6 +175,7 @@ describe('DiplomaticAcquittalSystem — time-based过期清理（cutoff=tick-860
   it('tick=5000的verdict在tick=90000时被清理（5000 < 4000为false，但5000<cutoff=4000也为false，verdict存活）', () => {
     // cutoff = 90000 - 86000 = 4000; verdict.tick=5000 >= 4000, 不被清理
     ;(sys as any).verdicts.push(makeVerdict({ id: 1, tick: 5000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000)
     expect((sys as any).verdicts).toHaveLength(1)
   })
@@ -181,6 +183,7 @@ describe('DiplomaticAcquittalSystem — time-based过期清理（cutoff=tick-860
   it('verdict.tick恰好等于cutoff时不被清理（< cutoff才清理）', () => {
     // cutoff = 90000 - 86000 = 4000; verdict.tick=4000，不满足 < cutoff
     ;(sys as any).verdicts.push(makeVerdict({ id: 1, tick: 4000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000)
     expect((sys as any).verdicts).toHaveLength(1)
   })
@@ -189,6 +192,7 @@ describe('DiplomaticAcquittalSystem — time-based过期清理（cutoff=tick-860
     ;(sys as any).verdicts.push(makeVerdict({ id: 1, tick: 0 }))   // 过期：0 < 90000-86000=4000
     ;(sys as any).verdicts.push(makeVerdict({ id: 2, tick: 5000 })) // 存活：5000 >= 4000
     ;(sys as any).verdicts.push(makeVerdict({ id: 3, tick: 1000 })) // 过期：1000 < 4000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000)
     expect((sys as any).verdicts).toHaveLength(1)
     expect((sys as any).verdicts[0].id).toBe(2)

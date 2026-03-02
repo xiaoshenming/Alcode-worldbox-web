@@ -125,6 +125,7 @@ describe('CreatureVentriloquismSystem.update — cleanup (cutoff = tick - 5000)'
   it('tick 为 0 的 act 在 tick=5001 时被清除', () => {
     ;(sys as any).acts.push(makeAct(1, 'comedy', 0))
     const em = makeMockEM([])   // 无生物，避免招募干扰
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, EXPIRE_AFTER + 1)
     expect((sys as any).acts).toHaveLength(0)
   })
@@ -134,6 +135,7 @@ describe('CreatureVentriloquismSystem.update — cleanup (cutoff = tick - 5000)'
     ;(sys as any).acts.push(makeAct(1, 'lure', baseTick - EXPIRE_AFTER + 1))
     // act.tick = 1 > cutoff(=1), 不删除
     const em = makeMockEM([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, baseTick)
     // cutoff = baseTick - EXPIRE_AFTER = CHECK_INTERVAL - 5000 < 0, 所有正 tick act 都不被删
     expect((sys as any).acts).toHaveLength(1)
@@ -142,6 +144,7 @@ describe('CreatureVentriloquismSystem.update — cleanup (cutoff = tick - 5000)'
   it('新鲜 act 不被清除', () => {
     ;(sys as any).acts.push(makeAct(1, 'warning', CHECK_INTERVAL))
     const em = makeMockEM([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, CHECK_INTERVAL * 2)
     // cutoff = 2200 - 5000 < 0, act.tick=1100 > cutoff
     expect((sys as any).acts).toHaveLength(1)
@@ -153,6 +156,7 @@ describe('CreatureVentriloquismSystem.update — cleanup (cutoff = tick - 5000)'
     // 新鲜 act: tick=5500，5500>1000 → 保留
     ;(sys as any).acts.push(makeAct(2, 'mimicry', 5500))
     const em = makeMockEM([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, 6000)
     expect((sys as any).acts).toHaveLength(1)
     expect((sys as any).acts[0].performerId).toBe(2)

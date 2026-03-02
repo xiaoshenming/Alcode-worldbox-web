@@ -128,6 +128,7 @@ describe('CreatureWheelersSystem 时间过期清理', () => {
   it('tick 在 cutoff(tick-55000) 内的记录保留', () => {
     ;(sys as any).wheelers.push(makeWheeler(1, 'cart', 5000))
     const em = makeEM([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em as any, 1400) // cutoff = 1400-55000 = 负数，5000 > 负数 → 保留
     expect((sys as any).wheelers).toHaveLength(1)
   })
@@ -138,6 +139,7 @@ describe('CreatureWheelersSystem 时间过期清理', () => {
     const em = makeEM([])
     // 第一次触发 update(lastCheck=0)，tick=56400
     // cutoff=56400-55000=1400, wheeler[0].tick=1000 < 1400 → 删除
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em as any, 56400)
     const wheelers = (sys as any).wheelers
     expect(wheelers).toHaveLength(1)
@@ -150,6 +152,7 @@ describe('CreatureWheelersSystem 时间过期清理', () => {
     }
     ;(sys as any).wheelers.push(makeWheeler(99, 'gear', 100000))
     const em = makeEM([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em as any, 56400)
     expect((sys as any).wheelers).toHaveLength(1)
     expect((sys as any).wheelers[0].entityId).toBe(99)

@@ -107,6 +107,7 @@ describe('CreatureDanceSystem', () => {
     ;(sys as any).dances.push(makeDance('celebration', 'morale', 0, 100, 60))
     // lastCheck 初始为 0，tick = CHECK_INTERVAL 时触发，elapsed = CHECK_INTERVAL >= 100 → 删除
     const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, CHECK_INTERVAL)
     expect((sys as any).dances).toHaveLength(0)
   })
@@ -127,6 +128,7 @@ describe('CreatureDanceSystem', () => {
     }
     const em = makeEmptyEM()
     // 第一次触发，em 返回空，不会新增舞蹈；15 个舞蹈 elapsed=0 < 999999，不被删除
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, CHECK_INTERVAL)
     expect((sys as any).dances).toHaveLength(15)
   })
@@ -153,6 +155,7 @@ describe('CreatureDanceSystem', () => {
     // 改用 startTick=CHECK_INTERVAL, duration=999999，elapsed=0 < 999999，intensity=50，participants=5>=3 保留
     ;(sys as any).dances.push(makeDance('war', 'combat', CHECK_INTERVAL, 999999, 50))
     const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, CHECK_INTERVAL)
     const remaining = (sys as any).dances as DanceEvent[]
     expect(remaining).toHaveLength(1)

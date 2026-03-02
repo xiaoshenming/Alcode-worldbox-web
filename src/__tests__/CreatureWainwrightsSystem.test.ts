@@ -136,6 +136,7 @@ describe('CreatureWainwrightsSystem — wainwright 记录 cleanup (cutoff = tick
 
   it('tick 恰等于 cutoff 时不删除（条件严格 <）', () => {
     ;(sys as any).wainwrights.push(makeMaker(1, 'oxcart', 4000))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 60000)  // cutoff=4000，tick=4000，不满足 < 4000
     expect((sys as any).wainwrights).toHaveLength(1)
   })
@@ -145,6 +146,7 @@ describe('CreatureWainwrightsSystem — wainwright 记录 cleanup (cutoff = tick
       ;(sys as any).wainwrights.push(makeMaker(i + 1, 'oxcart', i * 1000))  // tick=0,1000,2000,3000
     }
     ;(sys as any).wainwrights.push(makeMaker(10, 'chariot', 200000))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 200000)  // cutoff=144000；tick=0~3000全 < 144000 → 删除
     const remaining = (sys as any).wainwrights as Wainwright[]
     expect(remaining).toHaveLength(1)

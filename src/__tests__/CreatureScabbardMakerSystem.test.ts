@@ -126,6 +126,7 @@ describe('CreatureScabbardMakerSystem - cleanup边界', () => {
 
   it('leatherWorking 恰好为3.98时（+0.02=4.0），等于4仍被移除', () => {
     ;(sys as any).makers.push(makeMaker(1, { leatherWorking: 3.98 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 3.98 + 0.02 = 4.0, cleanup条件 <= 4, 所以被移除
     expect((sys as any).makers).toHaveLength(0)
@@ -133,6 +134,7 @@ describe('CreatureScabbardMakerSystem - cleanup边界', () => {
 
   it('leatherWorking 为4.01时不被移除', () => {
     ;(sys as any).makers.push(makeMaker(1, { leatherWorking: 4.01 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 4.01 + 0.02 = 4.03 > 4, 不移除
     expect((sys as any).makers).toHaveLength(1)
@@ -140,6 +142,7 @@ describe('CreatureScabbardMakerSystem - cleanup边界', () => {
 
   it('leatherWorking <= 4 时从列表移除（低值测试）', () => {
     ;(sys as any).makers.push(makeMaker(1, { leatherWorking: 1.0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 1.0 + 0.02 = 1.02 <= 4, 被移除
     expect((sys as any).makers).toHaveLength(0)
@@ -149,6 +152,7 @@ describe('CreatureScabbardMakerSystem - cleanup边界', () => {
     ;(sys as any).makers.push(makeMaker(1, { leatherWorking: 3.0 }))
     ;(sys as any).makers.push(makeMaker(2, { leatherWorking: 50 }))
     ;(sys as any).makers.push(makeMaker(3, { leatherWorking: 2.0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).makers).toHaveLength(1)
     expect((sys as any).makers[0].entityId).toBe(2)

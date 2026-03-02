@@ -245,6 +245,7 @@ describe('DiplomaticBorsholderSystem', () => {
         duration: 100, tick: 0
       })
       // 传入大tick使得 0 < (bigTick - 88000)
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, W, EM, 100000)
       expect((sys as any).arrangements).toHaveLength(0)
     })
@@ -256,6 +257,7 @@ describe('DiplomaticBorsholderSystem', () => {
         frankpledgeAuthority: 40, localOrder: 40, suretyObligation: 30, courtAttendance: 30,
         duration: 0, tick: currentTick - 1000  // 只有1000差值，远小于88000
       })
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, W, EM, currentTick)
       expect((sys as any).arrangements).toHaveLength(1)
     })
@@ -268,6 +270,7 @@ describe('DiplomaticBorsholderSystem', () => {
         frankpledgeAuthority: 40, localOrder: 40, suretyObligation: 30, courtAttendance: 30,
         duration: 0, tick: cutoff  // 等于cutoff，条件是 < cutoff 才删
       })
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, W, EM, currentTick)
       expect((sys as any).arrangements).toHaveLength(1)
     })
@@ -286,6 +289,7 @@ describe('DiplomaticBorsholderSystem', () => {
           duration: 0, tick: currentTick - 50000  // 新鲜
         }
       )
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, W, EM, currentTick)
       const arr: BorsholderArrangement[] = (sys as any).arrangements
       expect(arr).toHaveLength(1)
@@ -300,6 +304,7 @@ describe('DiplomaticBorsholderSystem', () => {
           duration: 0, tick: 0
         })
       }
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, W, EM, 200000)
       expect((sys as any).arrangements).toHaveLength(0)
     })

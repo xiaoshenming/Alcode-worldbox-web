@@ -133,6 +133,7 @@ describe('CreatureRopeMakersSystem cleanup（twistStrength<=4剔除）', () => {
   it('twistStrength增长后恰好=4时被移除（初始3.98+0.02=4.00<=4）', () => {
     ;(sys as any).makers.push(makeMaker(1, { twistStrength: 3.98 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 2510)
     expect((sys as any).makers).toHaveLength(0)
   })
@@ -140,6 +141,7 @@ describe('CreatureRopeMakersSystem cleanup（twistStrength<=4剔除）', () => {
   it('twistStrength=2时也被移除（增长后仍<=4）', () => {
     ;(sys as any).makers.push(makeMaker(1, { twistStrength: 2 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 2510)
     expect((sys as any).makers).toHaveLength(0)
   })
@@ -147,6 +149,7 @@ describe('CreatureRopeMakersSystem cleanup（twistStrength<=4剔除）', () => {
   it('twistStrength>4的maker保留', () => {
     ;(sys as any).makers.push(makeMaker(1, { twistStrength: 4.01 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 2510)
     // 增长0.02后为4.03，仍>4，保留
     expect((sys as any).makers).toHaveLength(1)
@@ -157,6 +160,7 @@ describe('CreatureRopeMakersSystem cleanup（twistStrength<=4剔除）', () => {
     ;(sys as any).makers.push(makeMaker(2, { twistStrength: 50 }))
     ;(sys as any).makers.push(makeMaker(3, { twistStrength: 2 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 2510)
     expect((sys as any).makers).toHaveLength(1)
     expect((sys as any).makers[0].entityId).toBe(2)
@@ -165,6 +169,7 @@ describe('CreatureRopeMakersSystem cleanup（twistStrength<=4剔除）', () => {
   it('节流期内不执行cleanup（低twistStrength仍保留）', () => {
     ;(sys as any).makers.push(makeMaker(1, { twistStrength: 1 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 100)  // tick不足CHECK_INTERVAL
     expect((sys as any).makers).toHaveLength(1)
   })

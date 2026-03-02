@@ -126,6 +126,7 @@ describe('CreatureToolsmithSystem', () => {
       // 3.98 + 0.02 = 4.00，条件 <= 4 成立 → 删除
       const t = makeToolsmith(1, { metalWorking: 3.98 })
       ;(sys as any).toolsmiths.push(t)
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, em, CHECK_INTERVAL)
       expect((sys as any).toolsmiths).toHaveLength(0)
     })
@@ -133,6 +134,7 @@ describe('CreatureToolsmithSystem', () => {
     it('metalWorking=4.01 先递增再检查，递增后 4.03 不被删除', () => {
       const t = makeToolsmith(1, { metalWorking: 4.01 })
       ;(sys as any).toolsmiths.push(t)
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, em, CHECK_INTERVAL)
       expect((sys as any).toolsmiths).toHaveLength(1)
     })
@@ -140,6 +142,7 @@ describe('CreatureToolsmithSystem', () => {
     it('高 metalWorking 工具匠不被删除', () => {
       const t = makeToolsmith(1, { metalWorking: 70 })
       ;(sys as any).toolsmiths.push(t)
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, em, CHECK_INTERVAL)
       expect((sys as any).toolsmiths).toHaveLength(1)
     })
@@ -147,6 +150,7 @@ describe('CreatureToolsmithSystem', () => {
     it('只删低 metalWorking，不影响正常工具匠', () => {
       ;(sys as any).toolsmiths.push(makeToolsmith(1, { metalWorking: 3.98 }))
       ;(sys as any).toolsmiths.push(makeToolsmith(2, { metalWorking: 50 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, em, CHECK_INTERVAL)
       expect((sys as any).toolsmiths).toHaveLength(1)
       expect((sys as any).toolsmiths[0].entityId).toBe(2)

@@ -130,12 +130,14 @@ describe('CreatureWheelwrightSystem woodBending<=4 清理', () => {
 
   it('woodBending=5 时保留', () => {
     ;(sys as any).wheelwrights.push(makeMaker(1, 5))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEM() as any, 2620)
     expect((sys as any).wheelwrights).toHaveLength(1)
   })
 
   it('woodBending 恰好到 3.98 → cleanup 先增 +0.02 → 4.0 > 4，保留', () => {
     ;(sys as any).wheelwrights.push(makeMaker(1, 3.98))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEM() as any, 2620)
     // 增后 3.98+0.02=4.00，cleanup 条件 <= 4 → 4.00 <= 4 → 删除
     expect((sys as any).wheelwrights).toHaveLength(0)
@@ -143,12 +145,14 @@ describe('CreatureWheelwrightSystem woodBending<=4 清理', () => {
 
   it('woodBending=4.01 → 增后 4.03 > 4，保留', () => {
     ;(sys as any).wheelwrights.push(makeMaker(1, 4.01))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEM() as any, 2620)
     expect((sys as any).wheelwrights).toHaveLength(1)
   })
 
   it('woodBending=2 → cleanup 删除', () => {
     ;(sys as any).wheelwrights.push(makeMaker(1, 2))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEM() as any, 2620)
     expect((sys as any).wheelwrights).toHaveLength(0)
   })
@@ -156,6 +160,7 @@ describe('CreatureWheelwrightSystem woodBending<=4 清理', () => {
   it('混合：一个低一个正常，只删低的', () => {
     ;(sys as any).wheelwrights.push(makeMaker(1, 1))  // 会被删
     ;(sys as any).wheelwrights.push(makeMaker(2, 50)) // 保留
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEM() as any, 2620)
     expect((sys as any).wheelwrights).toHaveLength(1)
     expect((sys as any).wheelwrights[0].entityId).toBe(2)

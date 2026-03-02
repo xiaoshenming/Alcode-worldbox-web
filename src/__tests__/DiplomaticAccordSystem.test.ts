@@ -203,6 +203,7 @@ describe('DiplomaticAccordSystem — time-based 过期清理（cutoff=tick-83000
 
   it('tick=0 的记录在 update(tick=90000) 时被清除', () => {
     ;(sys as any).accords.push(makeAccord({ tick: 0, id: 1 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000) // cutoff=7000, 0 < 7000 删除
     expect((sys as any).accords).toHaveLength(0)
   })
@@ -210,12 +211,14 @@ describe('DiplomaticAccordSystem — time-based 过期清理（cutoff=tick-83000
   it('tick 恰好等于 cutoff 时记录不被清除', () => {
     // cutoff = 90000 - 83000 = 7000，tick=7000 不满足 < 7000
     ;(sys as any).accords.push(makeAccord({ tick: 7000, id: 1 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000)
     expect((sys as any).accords).toHaveLength(1)
   })
 
   it('tick > cutoff 的记录保留', () => {
     ;(sys as any).accords.push(makeAccord({ tick: 12000, id: 1 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000) // cutoff=7000, 12000>7000 保留
     expect((sys as any).accords).toHaveLength(1)
   })
@@ -236,6 +239,7 @@ describe('DiplomaticAccordSystem — time-based 过期清理（cutoff=tick-83000
   it('所有记录都新鲜，无过期清理', () => {
     ;(sys as any).accords.push(makeAccord({ tick: 85000, id: 1 }))
     ;(sys as any).accords.push(makeAccord({ tick: 88000, id: 2 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000) // cutoff=7000
     expect((sys as any).accords).toHaveLength(2)
   })
@@ -244,6 +248,7 @@ describe('DiplomaticAccordSystem — time-based 过期清理（cutoff=tick-83000
     for (let i = 0; i < 5; i++) {
       ;(sys as any).accords.push(makeAccord({ tick: i * 100, id: i + 1 }))
     }
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000) // cutoff=7000，全部 tick < 7000
     expect((sys as any).accords).toHaveLength(0)
   })

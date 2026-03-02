@@ -125,24 +125,28 @@ describe('CreatureYokemakerSystem woodCarving<=4 清理', () => {
 
   it('woodCarving=5 时保留', () => {
     ;(sys as any).yokemakers.push(makeMaker(1, 5))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEM() as any, 2640)
     expect((sys as any).yokemakers).toHaveLength(1)
   })
 
   it('woodCarving=3.98 先增 +0.02 = 4.00 → <= 4 → 删除', () => {
     ;(sys as any).yokemakers.push(makeMaker(1, 3.98))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEM() as any, 2640)
     expect((sys as any).yokemakers).toHaveLength(0)
   })
 
   it('woodCarving=4.01 → 增后 4.03 > 4，保留', () => {
     ;(sys as any).yokemakers.push(makeMaker(1, 4.01))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEM() as any, 2640)
     expect((sys as any).yokemakers).toHaveLength(1)
   })
 
   it('woodCarving=2 → cleanup 删除', () => {
     ;(sys as any).yokemakers.push(makeMaker(1, 2))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEM() as any, 2640)
     expect((sys as any).yokemakers).toHaveLength(0)
   })
@@ -150,6 +154,7 @@ describe('CreatureYokemakerSystem woodCarving<=4 清理', () => {
   it('混合：低woodCarving删除，高的保留', () => {
     ;(sys as any).yokemakers.push(makeMaker(1, 1))   // 删
     ;(sys as any).yokemakers.push(makeMaker(2, 50))  // 留
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEM() as any, 2640)
     expect((sys as any).yokemakers).toHaveLength(1)
     expect((sys as any).yokemakers[0].entityId).toBe(2)

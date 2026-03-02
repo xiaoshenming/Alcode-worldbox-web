@@ -145,6 +145,7 @@ describe('CreatureChandlersSystem - time-based cleanup', () => {
   it('tick=0 的记录在 currentTick=60000 时被清除（0 < 7000）', () => {
     ;(sys as any).makers.push(makeMaker(1, 'tallow', 30, 0))
     const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 60000)
     expect((sys as any).makers).toHaveLength(0)
   })
@@ -152,6 +153,7 @@ describe('CreatureChandlersSystem - time-based cleanup', () => {
   it('tick=55000 的记录在 currentTick=60000 时被保留（55000 >= 7000）', () => {
     ;(sys as any).makers.push(makeMaker(1, 'tallow', 30, 55000))
     const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 60000)
     expect((sys as any).makers).toHaveLength(1)
   })
@@ -161,6 +163,7 @@ describe('CreatureChandlersSystem - time-based cleanup', () => {
     // tick=6999 → 6999 < 7000 → 删除
     ;(sys as any).makers.push(makeMaker(1, 'tallow', 30, 6999))
     const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 60000)
     expect((sys as any).makers).toHaveLength(0)
   })
@@ -169,6 +172,7 @@ describe('CreatureChandlersSystem - time-based cleanup', () => {
     ;(sys as any).makers.push(makeMaker(1, 'tallow', 30, 0))      // 旧，应删
     ;(sys as any).makers.push(makeMaker(2, 'beeswax', 30, 55000)) // 新，应留
     const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 60000)
     expect((sys as any).makers).toHaveLength(1)
     expect((sys as any).makers[0].entityId).toBe(2)

@@ -123,6 +123,7 @@ describe('CreatureLapidarySystem - cleanup 边界', () => {
     const l = makeLap(1, 4)
     ;(sys as any).lapidaries.push(l)
     const em = {} as any
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 0)
     sys.update(0, em, 2690)
     // 触发后：skill+0.02=4.02，但原始值=4，cleanup 检查的是更新后的值
@@ -136,6 +137,7 @@ describe('CreatureLapidarySystem - cleanup 边界', () => {
     const l = makeLap(1, 3.98)
     ;(sys as any).lapidaries.push(l)
     const em = {} as any
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 0)
     sys.update(0, em, 2690)
     expect((sys as any).lapidaries).toHaveLength(0)
@@ -145,6 +147,7 @@ describe('CreatureLapidarySystem - cleanup 边界', () => {
     const l = makeLap(1, 5)
     ;(sys as any).lapidaries.push(l)
     const em = {} as any
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 0)
     sys.update(0, em, 2690)
     // 5 + 0.02 = 5.02 > 4 → 保留

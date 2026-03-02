@@ -152,6 +152,7 @@ describe('CreatureShipwrightSystem time-based cleanup (44000 tick)', () => {
     const em = new EntityManager()
     ;(sys as any).shipwrights.push(makeShipwright(1, 'canoe', 0))
     // tick=44001 => cutoff=44001-44000=1 > 0 => 删
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 44001)
     expect((sys as any).shipwrights).toHaveLength(0)
   })
@@ -160,6 +161,7 @@ describe('CreatureShipwrightSystem time-based cleanup (44000 tick)', () => {
     const em = new EntityManager()
     ;(sys as any).shipwrights.push(makeShipwright(1, 'canoe', 1000))
     // tick=45000 => cutoff=1000, shipwright.tick=1000, 1000 < 1000 false => 不删
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 45000)
     expect((sys as any).shipwrights).toHaveLength(1)
   })
@@ -168,6 +170,7 @@ describe('CreatureShipwrightSystem time-based cleanup (44000 tick)', () => {
     const em = new EntityManager()
     ;(sys as any).shipwrights.push(makeShipwright(1, 'canoe', 1000))
     // tick=45001 => cutoff=1001, 1000 < 1001 => 删
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 45001)
     expect((sys as any).shipwrights).toHaveLength(0)
   })
@@ -176,6 +179,7 @@ describe('CreatureShipwrightSystem time-based cleanup (44000 tick)', () => {
     const em = new EntityManager()
     ;(sys as any).shipwrights.push(makeShipwright(1, 'canoe', 0))       // 旧
     ;(sys as any).shipwrights.push(makeShipwright(2, 'warship', 30000)) // 新
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 44001)
     // cutoff=1, tick=0 < 1 => 删; tick=30000 >= 1 => 保留
     expect((sys as any).shipwrights).toHaveLength(1)

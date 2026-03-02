@@ -126,6 +126,7 @@ describe('CreatureSaddlerSystem - cleanup边界', () => {
 
   it('leatherShaping <= 4 时从列表移除', () => {
     ;(sys as any).saddlers.push(makeSaddler(1, { leatherShaping: 4 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 先+0.02再检测，4.02 > 4，不移除；需要初始值恰好<=4且update后仍<=4
     // 实际逻辑：先技能递增，再cleanup => 4+0.02=4.02>4 不删
@@ -138,6 +139,7 @@ describe('CreatureSaddlerSystem - cleanup边界', () => {
 
   it('leatherShaping 恰好为3.98时（+0.02=4.0），等于4仍被移除', () => {
     ;(sys as any).saddlers.push(makeSaddler(1, { leatherShaping: 3.98 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 3.98 + 0.02 = 4.0, cleanup条件 <= 4, 所以被移除
     expect((sys as any).saddlers).toHaveLength(0)
@@ -145,6 +147,7 @@ describe('CreatureSaddlerSystem - cleanup边界', () => {
 
   it('leatherShaping 为4.01时不被移除', () => {
     ;(sys as any).saddlers.push(makeSaddler(1, { leatherShaping: 4.01 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     // 4.01 + 0.02 = 4.03 > 4, 不移除
     expect((sys as any).saddlers).toHaveLength(1)
@@ -154,6 +157,7 @@ describe('CreatureSaddlerSystem - cleanup边界', () => {
     ;(sys as any).saddlers.push(makeSaddler(1, { leatherShaping: 3.0 }))
     ;(sys as any).saddlers.push(makeSaddler(2, { leatherShaping: 50 }))
     ;(sys as any).saddlers.push(makeSaddler(3, { leatherShaping: 2.0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, CHECK_INTERVAL)
     expect((sys as any).saddlers).toHaveLength(1)
     expect((sys as any).saddlers[0].entityId).toBe(2)

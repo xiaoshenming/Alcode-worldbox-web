@@ -112,6 +112,7 @@ describe('CreatureTapperSystem.getTappers', () => {
     const t = makeTapper(10, 3.98)
     ;(sys as any).tappers.push(t)
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEm(), 3010)
     // 3.98 + 0.02 = 4.00, 4.00 <= 4 => 移除
     expect((sys as any).tappers).toHaveLength(0)
@@ -121,6 +122,7 @@ describe('CreatureTapperSystem.getTappers', () => {
   it('tappingSkill <= 4的记录被cleanup移除', () => {
     ;(sys as any).tappers.push(makeTapper(1, 4))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEm(), 3010)
     // 4 + 0.02 = 4.02, 4.02 <= 4 false => 不移除
     // 等等，cleanup在技能增长之后执行: 4 -> 4.02, cleanup: 4.02 > 4 => 不移除
@@ -130,6 +132,7 @@ describe('CreatureTapperSystem.getTappers', () => {
   it('tappingSkill起始为3时增长后仍<=4被移除', () => {
     ;(sys as any).tappers.push(makeTapper(2, 3))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEm(), 3010)
     // 3 + 0.02 = 3.02, 3.02 <= 4 => 移除
     expect((sys as any).tappers).toHaveLength(0)
@@ -138,6 +141,7 @@ describe('CreatureTapperSystem.getTappers', () => {
   it('tappingSkill正常值不被cleanup', () => {
     ;(sys as any).tappers.push(makeTapper(3, 50))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, makeEm(), 3010)
     expect((sys as any).tappers).toHaveLength(1)
   })

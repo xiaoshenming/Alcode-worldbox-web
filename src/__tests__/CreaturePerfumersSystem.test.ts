@@ -59,6 +59,7 @@ describe('CreaturePerfumersSystem — CHECK_INTERVAL 节流', () => {
     // 第一次调用设置 lastCheck=0
     ;(sys as any).lastCheck = 0
     // tick=100，差值100 < 1400，应当跳过
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, 100)
     expect((sys as any).perfumers).toHaveLength(0)
   })
@@ -185,6 +186,7 @@ describe('CreaturePerfumersSystem — time-based cleanup', () => {
     const em = makeEM([])
     const bigTick = 100 + EXPIRE_AFTER + CHECK_INTERVAL + 1
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, bigTick)
     expect((sys as any).perfumers).toHaveLength(0)
   })
@@ -194,6 +196,7 @@ describe('CreaturePerfumersSystem — time-based cleanup', () => {
     ;(sys as any).perfumers.push(makePerfumer(99, 'floral', 50, currentTick - 1000))
     const em = makeEM([])
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, currentTick)
     // cutoff = currentTick - 55000，perfumer.tick = currentTick-1000 >> cutoff，应保留
     expect((sys as any).perfumers).toHaveLength(1)
@@ -207,6 +210,7 @@ describe('CreaturePerfumersSystem — time-based cleanup', () => {
     ;(sys as any).perfumers.push(makePerfumer(2, 'herbal', 60, baseTick - 100))
     ;(sys as any).lastCheck = 0
     const em = makeEM([])
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em as any, baseTick)
     expect((sys as any).perfumers).toHaveLength(1)
     expect((sys as any).perfumers[0].entityId).toBe(2)

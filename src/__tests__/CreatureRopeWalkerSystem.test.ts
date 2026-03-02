@@ -140,6 +140,7 @@ describe('CreatureRopeWalkerSystem cleanup（fiberBraiding<=4剔除）', () => {
   it('fiberBraiding增长后恰好=4时被移除（初始3.98+0.02=4.00<=4）', () => {
     ;(sys as any).ropeWalkers.push(makeWalker(1, { fiberBraiding: 3.98 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 2590)
     expect((sys as any).ropeWalkers).toHaveLength(0)
   })
@@ -147,6 +148,7 @@ describe('CreatureRopeWalkerSystem cleanup（fiberBraiding<=4剔除）', () => {
   it('fiberBraiding=2时也被移除（增长后仍<=4）', () => {
     ;(sys as any).ropeWalkers.push(makeWalker(1, { fiberBraiding: 2 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 2590)
     expect((sys as any).ropeWalkers).toHaveLength(0)
   })
@@ -154,6 +156,7 @@ describe('CreatureRopeWalkerSystem cleanup（fiberBraiding<=4剔除）', () => {
   it('fiberBraiding>4的walker保留', () => {
     ;(sys as any).ropeWalkers.push(makeWalker(1, { fiberBraiding: 4.01 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 2590)
     // 增长0.02后为4.03，仍>4，保留
     expect((sys as any).ropeWalkers).toHaveLength(1)
@@ -164,6 +167,7 @@ describe('CreatureRopeWalkerSystem cleanup（fiberBraiding<=4剔除）', () => {
     ;(sys as any).ropeWalkers.push(makeWalker(2, { fiberBraiding: 55 }))
     ;(sys as any).ropeWalkers.push(makeWalker(3, { fiberBraiding: 1 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 2590)
     expect((sys as any).ropeWalkers).toHaveLength(1)
     expect((sys as any).ropeWalkers[0].entityId).toBe(2)
@@ -172,6 +176,7 @@ describe('CreatureRopeWalkerSystem cleanup（fiberBraiding<=4剔除）', () => {
   it('节流期内不执行cleanup（低fiberBraiding仍保留）', () => {
     ;(sys as any).ropeWalkers.push(makeWalker(1, { fiberBraiding: 1 }))
     const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, em, 100)  // tick不足CHECK_INTERVAL
     expect((sys as any).ropeWalkers).toHaveLength(1)
   })

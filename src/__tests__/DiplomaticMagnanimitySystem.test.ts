@@ -46,18 +46,21 @@ describe('DiplomaticMagnanimitySystem', () => {
     it('过期gesture被删除', () => {
       ;(sys as any).gestures = [makeGesture({ tick: 0 })]
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 88360)
       expect((sys as any).gestures).toHaveLength(0)
     })
     it('未过期gesture保留', () => {
       ;(sys as any).gestures = [makeGesture({ tick: 10000 })]
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2360)
       expect((sys as any).gestures).toHaveLength(1)
     })
     it('混合过期和未过期只删过期', () => {
       ;(sys as any).gestures = [makeGesture({ id: 1, tick: 0 }), makeGesture({ id: 2, tick: 90000 })]
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 88360)
       expect((sys as any).gestures).toHaveLength(1)
       expect((sys as any).gestures[0].id).toBe(2)
@@ -65,6 +68,7 @@ describe('DiplomaticMagnanimitySystem', () => {
     it('cutoff边界：tick恰好过期被删', () => {
       ;(sys as any).gestures = [makeGesture({ tick: 1 })]
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 88361)
       expect((sys as any).gestures).toHaveLength(0)
     })

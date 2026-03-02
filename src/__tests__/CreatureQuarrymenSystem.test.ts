@@ -162,6 +162,7 @@ describe('CreatureQuarrymenSystem - tick-based cleanup (cutoff = tick - 55000)',
     ;(sys as any).quarrymen.push(makeQuarryman(1, 'limestone', 0))
     const em = makeEmptyEM()
     ;(sys as any).lastCheck = -2000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 60000)
     expect((sys as any).quarrymen).toHaveLength(0)
   })
@@ -171,6 +172,7 @@ describe('CreatureQuarrymenSystem - tick-based cleanup (cutoff = tick - 55000)',
     ;(sys as any).quarrymen.push(makeQuarryman(1, 'limestone', 10000))
     const em = makeEmptyEM()
     ;(sys as any).lastCheck = -2000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 60000)
     expect((sys as any).quarrymen).toHaveLength(1)
   })
@@ -180,6 +182,7 @@ describe('CreatureQuarrymenSystem - tick-based cleanup (cutoff = tick - 55000)',
     ;(sys as any).quarrymen.push(makeQuarryman(1, 'limestone', 5000))
     const em = makeEmptyEM()
     ;(sys as any).lastCheck = -2000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 60000)
     expect((sys as any).quarrymen).toHaveLength(1)
   })
@@ -190,6 +193,7 @@ describe('CreatureQuarrymenSystem - tick-based cleanup (cutoff = tick - 55000)',
     ;(sys as any).quarrymen.push(makeQuarryman(3, 'marble', 1000))    // old: < 5000
     const em = makeEmptyEM()
     ;(sys as any).lastCheck = -2000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, 60000)
     expect((sys as any).quarrymen).toHaveLength(1)
     expect((sys as any).quarrymen[0].entityId).toBe(2)

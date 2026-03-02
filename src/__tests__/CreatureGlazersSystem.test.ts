@@ -106,6 +106,7 @@ describe('CreatureGlazersSystem', () => {
     ;(sys as any).glazers.push(makeGlazer(3, { tick: cutoff + 1 }))  // 大于 cutoff → 保留
     ;(sys as any).lastCheck = 0
     const em = { getEntitiesWithComponents: vi.fn(() => []) } as any
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(0, em, currentTick)
     const remaining = (sys as any).glazers as Glazer[]
     expect(remaining).toHaveLength(2)

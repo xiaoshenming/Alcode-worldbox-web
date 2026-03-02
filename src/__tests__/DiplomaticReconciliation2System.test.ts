@@ -45,6 +45,7 @@ describe('DiplomaticReconciliation2System', () => {
   })
   it('spawn条件满足时创建process', () => {
     const spy = mockSpawn()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, W, EM, 2600)
     expect((sys as any).processes).toHaveLength(1)
     spy.mockRestore()
@@ -71,6 +72,7 @@ describe('DiplomaticReconciliation2System', () => {
   it('processes达到14时不再spawn', () => {
     const spy = mockSpawn()
     for (let i = 0; i < 14; i++) (sys as any).processes.push(makeProc({ id: i }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, W, EM, 2600)
     expect((sys as any).processes).toHaveLength(14)
     spy.mockRestore()

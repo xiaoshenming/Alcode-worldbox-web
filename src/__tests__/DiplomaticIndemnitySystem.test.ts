@@ -13,6 +13,7 @@ describe('DiplomaticIndemnitySystem', () => {
   it('update返回void', () => { expect(sys.update(1, {} as any, {} as any, 0)).toBeUndefined() })
   it('CHECK_INTERVAL=2500时节流生效', () => {
     ;(sys as any).lastCheck = 1000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 1100)
     expect((sys as any).agreements).toHaveLength(0)
   })
