@@ -21,12 +21,20 @@ export class ArtifactSystem {
   private maxArtifacts: number = 6
   private lastSpawnTick: number = 0
   private _existingTypesSet: Set<string> = new Set()
+  // Cached artifact entity list for current tick (refreshed once per update)
+  private _artifactEntitiesBuf: EntityId[] = []
   // Reusable buffers for updateHeroQuesting (every tick)
   private _unclaimedIdBuf: EntityId[] = []
   private _unclaimedXBuf: number[] = []
   private _unclaimedYBuf: number[] = []
 
   update(em: EntityManager, world: World, particles: ParticleSystem, tick: number): void {
+    // Cache artifact entities once per tick
+    const artifactEntities = em.getEntitiesWithComponent('artifact')
+    // Copy into reusable buffer (getEntitiesWithComponent returns a snapshot array)
+    this._artifactEntitiesBuf.length = 0
+    for (const id of artifactEntities) this._artifactEntitiesBuf.push(id)
+
     // Spawn new artifacts periodically
     if (tick - this.lastSpawnTick >= 3000) {
       this.lastSpawnTick = tick
@@ -41,8 +49,8 @@ export class ArtifactSystem {
   }
 
   private trySpawnArtifact(em: EntityManager, world: World, particles: ParticleSystem, tick: number): void {
-    // Count unclaimed artifacts
-    const artifactEntities = em.getEntitiesWithComponent('artifact')
+    // Count unclaimed artifacts (use cached list from update())
+    const artifactEntities = this._artifactEntitiesBuf
     let unclaimedCount = 0
     const existingTypes = this._existingTypesSet
     existingTypes.clear()
@@ -100,7 +108,7 @@ export class ArtifactSystem {
 
   private updateHeroQuesting(em: EntityManager): void {
     const heroes = em.getEntitiesWithComponents('position', 'hero', 'ai', 'creature')
-    const artifactEntities = em.getEntitiesWithComponent('artifact')
+    const artifactEntities = this._artifactEntitiesBuf
 
     // Collect unclaimed artifact positions into flat buffers (zero object alloc)
     const unclaimedId = this._unclaimedIdBuf
@@ -221,7 +229,7 @@ export class ArtifactSystem {
   }
 
   private applyBuffs(em: EntityManager, tick: number): void {
-    const artifactEntities = em.getEntitiesWithComponent('artifact')
+    const artifactEntities = this._artifactEntitiesBuf
 
     for (const artId of artifactEntities) {
       const art = em.getComponent<ArtifactComponent>(artId, 'artifact')
