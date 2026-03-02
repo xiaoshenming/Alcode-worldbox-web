@@ -1,11 +1,11 @@
 {
-  "notes": "迭代117（循环18/100）。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.53MB；(2)批量优化9个系统的find()——消除各类O(n)查找；(3)具体系统：CreatureTotemSystem(_totemCoordMap Map<x*10000+y,Totem>替换getTotemAt的find，decayTotems同步delete)/WorldLawSystem(预建嵌套Map<key,Map<name,LawParam>>替换getLaw()双重find，categories静态数据)/BuildingUpgradeSystem(预建UPGRADE_PATH_MAP<BuildingType,UpgradePath>替换UPGRADE_PATHS.find)/PlagueMutationSystem(_strainById Map<id,strain>替换recordDeath的find，lazy fallback)/WorldNarratorSystem(预建TEMPLATE_MAP<NarrativeType,Template>替换TEMPLATES.find)/BuildingVarietySystem(预建BUILDING_TYPE_MAP<Era,Map<name,BuildingType>>替换渲染路径中每帧每建筑的BUILDING_CATALOG.find——关键渲染热路径)/WonderSystem+WorldEventSystem(预建WONDER_DEF_MAP+EVENT_DEF_MAP替换静态WONDER_DEFS.find/EVENT_DEFINITIONS.find)/WorldPetrificationSystem(_zoneById Map<id,zone>替换freeCreatures的zones.find，cleanupExpired同步delete)/EvolutionSystem(临时traitByName Map在auto-inherit循环开始前构建，替换嵌套循环中traits.find——O(n*m)→O(n+m))/DiplomacyVisualSystem(在updateCivData时预建_civById Map替换渲染路径中civs.find——每帧hover渲染热路径)。\n注意事项：(1)渲染路径的find()优化是最高优先级——BuildingVarietySystem和DiplomacyVisualSystem每帧都会调用，收益最大；(2)静态数组(TEMPLATES/WONDER_DEFS/EVENT_DEFINITIONS/UPGRADE_PATHS)的find()可以在模块级别预建Map——零运行时开销；(3)RuinsSystem的getRuins()暴露内部数组直接引用，测试通过push修改——不适合Map优化，除非改接口；(4)WorldPetrificationSystem的cleanupExpired同时需要delete _petrifiedIds——之前版本漏了，本次补上。",
+  "notes": "迭代118（循环20/100）。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.53MB；(2)持续优化find()/some()——5个新Map优化；(3)大规模死代码清理——删除8个未调用私有方法。\n\n具体优化：\n- CreatureSleepwalkSystem：之前未提交的_sleepMap优化正式提交——getSleepwalker从find()→Map.get()\n- CreatureNicknameSystem：_nicknameSet升级为_nicknameMap——getNickname两处find()→O(1)\n- BattleReplaySystem：删除死代码findMVP()+_dmgMap字段\n- DiplomaticSpySystem：update()构建临时civById Map传入resolveMission，替换civs.find()\n- CreatureLineageSystem：渲染路径预建nodeById Map——家谱树连线中的嵌套nodes.find()→O(1)\n- CreatureMigrationMemorySystem：添加_routeByRace Map——updateRoutes中routes.find()→O(1)\n- ArmySystem：for+break替换buildings.some()——BARRACKS/CASTLE检查消除隐性闭包分配\n- TradeEconomySystem：删除死代码updateGuild()+_GUILD_LEVEL_THRESHOLDS\n- NaturalDisasterRecoverySystem：删除死代码scanDamagedTiles()+scanDestroyedBuildings()\n- WorldLawSystem：删除死代码resetDefaults()\n- CultureSystem：删除死代码pickLanguage()+generateNameFromLang()+_phonemeCache字段\n- DisasterWarningSystem：删除死代码getDefaultRadius()（estimateTotalDuration被调用，保留）\n- MapMarkerSystem：删除死代码findFreeSlot()+getById()",
   "priorities": [
     "1. 【持续监控】tsc+vitest+build三重验证保持全绿",
-    "2. 【可探索】坐标范围some() — WorldAtollSystem/IceSheet/Miasma/Underground等用Math.abs距离判断的some()，每系统15-30个对象，bucket化后O(constant)",
-    "3. 【可探索】DiplomaticSpySystem.civs.find(c => c.id === spy.targetCivId)——civs通过civManager.civs获取，可在resolveMission开头构建临时Map",
-    "4. 【可探索】CreatureLullabySystem.creatures.find(tid => ...)——需看调用频率",
-    "5. 【可探索】BattleReplaySystem.prev.units.find(u => u.id === cu.id)——在findMVP中被调用，但findMVP似乎是死代码，先确认"
+    "2. 【可探索】继续扫描死代码——LODRenderSystem.renderFull/renderMedium/renderLow/renderIcon、CityLayoutSystem.getOrCreate/calcLevel等（需确认是否被间接调用）",
+    "3. 【可探索】EspionageSystem.tributes.find()——双字段查找，每1200tick，可用fromCivId*1000+toCivId键优化",
+    "4. 【可探索】EspionageSystem.warJustifications.some(j => j.attackerId && j.defenderId)——可用字符串键Set优化",
+    "5. 【可探索】NaturalDisasterRecoverySystem.getRecoveryProgress()中的recoveryZones.find()——暴露内部数组，需lazy sync fallback"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -44,7 +44,11 @@
     "【迭代117新增】静态模块级数组(TEMPLATES/WONDER_DEFS/EVENT_DEFINITIONS/UPGRADE_PATHS)的find()应在模块级预建Map——零运行时开销，最简单的优化",
     "【迭代117新增】暴露内部数组引用(getRuins()返回this.ruins)的系统无法用Map优化——测试直接push绕过所有维护逻辑，这类系统保持原有find()即可",
     "【迭代117新增】嵌套循环中的find()：先在外层循环开始前构建临时Map<name,T>，内层循环用Map.get()——EvolutionSystem auto-inherit场景",
-    "【迭代117新增】updateXxxData()等数据更新入口是建立Map的最佳时机——DiplomacyVisualSystem在updateCivData时同时维护_civById Map，渲染路径零开销"
+    "【迭代117新增】updateXxxData()等数据更新入口是建立Map的最佳时机——DiplomacyVisualSystem在updateCivData时同时维护_civById Map，渲染路径零开销",
+    "【迭代118新增】Python脚本扫描私有方法死代码：正则匹配`private (\\w+)\\s*\\(`后统计文件内出现次数，只出现一次(仅声明)即为死代码候选。但注意：this.method()只算一次，需要用更精准的regex排除`this.method(`形式",
+    "【迭代118新增】Set<number>升级为Map<number,T>：不仅能O(1)判断存在性，还能直接返回对象——CreatureNicknameSystem的升级模式",
+    "【迭代118新增】渲染路径中临时构建的节点数组(如家谱树nodes)：每次渲染后构建nodeById Map，嵌套循环的find()→Map.get()——CreatureLineageSystem",
+    "【迭代118新增】buildings.some(id=>getComponent().type===X)是隐性闭包分配——for+break替代可消除闭包且提前退出——ArmySystem.BARRACKS/CASTLE检查"
   ],
-  "last_updated": "2026-03-02T11:20:00+08:00"
+  "last_updated": "2026-03-02T11:55:00+08:00"
 }
