@@ -17,6 +17,9 @@ import {
   EVENT_DEFINITIONS,
 } from './WorldEventDefinitions'
 
+// Pre-built O(1) lookup: event id → WorldEventDef
+const EVENT_DEF_MAP: Map<string, WorldEventDef> = new Map(EVENT_DEFINITIONS.map(d => [d.id, d]))
+
 // --- Main System ---
 
 export class WorldEventSystem {
@@ -127,7 +130,7 @@ export class WorldEventSystem {
     em: EntityManager, world: World, civManager: CivManager,
     particles: ParticleSystem, timeline: TimelineSystem, tick: number
   ): boolean {
-    const def = EVENT_DEFINITIONS.find(d => d.id === eventId)
+    const def = EVENT_DEF_MAP.get(eventId)
     if (!def) return false
 
     const ctx: EventContext = { em, world, civManager, particles, timeline, tick }

@@ -48,6 +48,8 @@ const WONDER_DEFS: WonderDef[] = [
 const BUILD_DURATION = 1000
 const CHECK_INTERVAL = 300
 const PARTICLE_INTERVAL = 60
+// Pre-built O(1) lookup: wonder def id → WonderDef
+const WONDER_DEF_MAP: Map<string, WonderDef> = new Map(WONDER_DEFS.map(d => [d.id, d]))
 
 export class WonderSystem {
   private activeWonders: ActiveWonder[] = []
@@ -123,7 +125,7 @@ export class WonderSystem {
       if (!civ) { this._constructionIds.delete(con.defId); this.constructions.splice(i, 1); continue }
       if (tick - con.startedAt < BUILD_DURATION) continue
 
-      const def = WONDER_DEFS.find(d => d.id === con.defId)
+      const def = WONDER_DEF_MAP.get(con.defId)
       if (!def) continue
       this.deductResources(civ.resources, def.resourceCost)
       const center = this.findTerritoryCenter(civ.territory)
@@ -155,7 +157,7 @@ export class WonderSystem {
 
   private emitWonderParticles(particles: ParticleSystem): void {
     for (const w of this.activeWonders) {
-      const def = WONDER_DEFS.find(d => d.id === w.defId)
+      const def = WONDER_DEF_MAP.get(w.defId)
       if (def) particles.spawnAura(w.x, w.y, def.color, 3)
     }
   }

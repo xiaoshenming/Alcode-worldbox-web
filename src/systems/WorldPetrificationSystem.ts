@@ -40,6 +40,8 @@ export class WorldPetrificationSystem {
   private petrified: PetrifiedCreature[] = []
   /** O(1) lookup set for petrified creature IDs — avoids O(n) some() in nested loop */
   private _petrifiedIds = new Set<number>()
+  // O(1) lookup: zone id → zone
+  private _zoneById: Map<number, PetrificationZone> = new Map()
   private nextId = 1
   private lastCheck = 0
 
@@ -77,7 +79,7 @@ export class WorldPetrificationSystem {
       })
       if (tooClose) continue
 
-      this.zones.push({
+      const zone: PetrificationZone = {
         id: this.nextId++,
         x, y,
         radius: 2,
@@ -87,7 +89,9 @@ export class WorldPetrificationSystem {
         age: 0,
         expanding: true,
         petrifiedCount: 0,
-      })
+      }
+      this.zones.push(zone)
+      this._zoneById.set(zone.id, zone)
       break
     }
   }
@@ -163,7 +167,7 @@ export class WorldPetrificationSystem {
         }
 
         // Decrement zone count
-        const zone = this.zones.find(z => z.id === p.zoneId)
+        const zone = this._zoneById.get(p.zoneId) ?? this.zones.find(z => z.id === p.zoneId)
         if (zone) zone.petrifiedCount = Math.max(0, zone.petrifiedCount - 1)
 
         this._petrifiedIds.delete(p.creatureId)
@@ -179,9 +183,11 @@ export class WorldPetrificationSystem {
         const zoneId = this.zones[i].id
         for (let j = this.petrified.length - 1; j >= 0; j--) {
           if (this.petrified[j].zoneId === zoneId) {
+            this._petrifiedIds.delete(this.petrified[j].creatureId)
             this.petrified.splice(j, 1)
           }
         }
+        this._zoneById.delete(zoneId)
         this.zones.splice(i, 1)
       }
     }
