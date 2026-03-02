@@ -84,12 +84,18 @@ export class DiplomacyVisualSystem {
   private _labelFont = '';
   /** Cached color+'33' strings per civ id — rebuilt in updateCivData */
   private _civColorAlpha = new Map<number, string>();
+  /** O(1) lookup: civ id → CivRelationData — rebuilt in updateCivData */
+  private _civById = new Map<number, CivRelationData>();
 
   /** 更新文明数据快照 */
   updateCivData(civs: CivRelationData[]): void {
     this.civs = civs;
     this._civColorAlpha.clear();
-    for (const c of civs) this._civColorAlpha.set(c.id, c.color + '33');
+    this._civById.clear();
+    for (const c of civs) {
+      this._civColorAlpha.set(c.id, c.color + '33');
+      this._civById.set(c.id, c);
+    }
   }
 
   /** 添加外交事件气泡 */
@@ -321,7 +327,7 @@ export class DiplomacyVisualSystem {
 
   private renderTerritoryHighlight(ctx: CanvasRenderingContext2D, camX: number, camY: number, zoom: number): void {
     if (this.hoveredCivId === null) return;
-    const civ = this.civs.find(c => c.id === this.hoveredCivId);
+    const civ = this._civById.get(this.hoveredCivId) ?? this.civs.find(c => c.id === this.hoveredCivId);
     if (!civ) return;
     const tileSize = 16 * zoom;
     const radius = 5;
