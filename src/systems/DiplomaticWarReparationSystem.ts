@@ -26,6 +26,7 @@ const PAYMENT_RATE = 0.5
 export class DiplomaticWarReparationSystem {
   private _civsBuf: Civilization[] = []
   private reparations: WarReparation[] = []
+  private _activeReparationSet = new Set<number>()  // key: loserCivId*1000+victorCivId
   private nextId = 1
   private lastCheck = 0
   private _activeBuf: WarReparation[] = []
@@ -68,6 +69,7 @@ export class DiplomaticWarReparationSystem {
         startTick: tick,
         deadline: tick + 5000 + Math.floor(Math.random() * 5000),
       })
+      this._activeReparationSet.add(civ.id * 1000 + victor.id)
     }
   }
 
@@ -77,6 +79,7 @@ export class DiplomaticWarReparationSystem {
       r.paidAmount = Math.min(r.totalAmount, r.paidAmount + PAYMENT_RATE)
       if (r.paidAmount >= r.totalAmount) {
         r.status = 'completed'
+        this._activeReparationSet.delete(r.loserCivId * 1000 + r.victorCivId)
       }
     }
   }
@@ -86,6 +89,7 @@ export class DiplomaticWarReparationSystem {
       if (r.status !== 'active') continue
       if (tick > r.deadline && r.paidAmount < r.totalAmount) {
         r.status = 'defaulted'
+        this._activeReparationSet.delete(r.loserCivId * 1000 + r.victorCivId)
       }
     }
   }
@@ -106,12 +110,16 @@ export class DiplomaticWarReparationSystem {
     for (let _i = this.reparations.length - 1; _i >= 0; _i--) {
       if (this.reparations[_i].status !== 'active') {
         finishedSeen++
-        if (finishedSeen > maxFinished) this.reparations.splice(_i, 1)
+        if (finishedSeen > maxFinished) {
+          const r = this.reparations[_i]
+          this._activeReparationSet.delete(r.loserCivId * 1000 + r.victorCivId)
+          this.reparations.splice(_i, 1)
+        }
       }
     }
   }
 
   private hasActiveReparation(loserId: number, victorId: number): boolean {
-    return this.reparations.some(r => r.loserCivId === loserId && r.victorCivId === victorId && r.status === 'active')
+    return this._activeReparationSet.has(loserId * 1000 + victorId)
   }
 }
