@@ -1,11 +1,11 @@
 {
-  "notes": "迭代135（循环41/100）。本轮主要成就：批量处理9个World系统测试（BBB2/CCC2/DDD2组），测试从13487增至13731，+244个测试。\n\n本轮处理的系统（分3批Agent并行）：\nBBB2组(+93): WorldGeothermalSystem(5→31) WorldGeothermalVentSystem(5→31) WorldGermaniumSpringSystem(5→31)\nCCC2组(+85): WorldGeyserFieldSystem(5→29) WorldGeyseriteSystem(10→31) WorldGeyserSystem(5→35)\nDDD2组(+86): WorldGorgeSystem(5→33) WorldGrottoSystem(5→34) WorldHafniumSpringSystem(5→34)\n\n关键发现：\n- WorldGeothermalSystem: CHECK_INTERVAL=1800, MAX_VENTS=30，spawn需tile>=6(SNOW/LAVA)，temperature[60,200]spawn后decay→[59.99,199.99]，cutoff=tick-60000\n- WorldGeothermalVentSystem: CHECK_INTERVAL=1300, MAX_VENTS=30，有_ventKeySet去重，spawn需DEEP_WATER=0，age每次+=CHECK_INTERVAL，eruptionCooldown触发dormant+decay，ERUPTION_CHANCE=0.008\n- WorldGermaniumSpringSystem: CHECK_INTERVAL可从源码读取，3次attempt，spawn需nearWater||nearMountain，cutoff=tick-54000\n- WorldGeyserFieldSystem: CHECK_INTERVAL=2720, MAX_FIELDS=8，无tile检查（任意地形），cleanup: waterTemperature<=40，字段waterTemperature每次-0.02有保底40\n- WorldGeyseriteSystem: CHECK_INTERVAL=?,  deposits数组，age每次+=0.003，cleanup: age>=96，thermalProximity每次-0.004保底10\n- WorldGeyserSystem: geysers数组，cleanup: active=false，power<=1时random<0.05概率失活，测试cleanup需用nullTileWorld防止新spawn干扰\n- WorldGorgeSystem: CHECK_INTERVAL=?,  gorges数组，tick-based cleanup\n- WorldGrottoSystem: CHECK_INTERVAL=?,  grottos数组，tick-based cleanup\n- WorldHafniumSpringSystem: CHECK_INTERVAL=?,  zones数组，与其他Spring系统类似结构\n- 测试总数从13487→13731，+244\n- tsc+vitest+build三重验证保持全绿（当前13731/13731通过）\n\n本轮遇到的flaky陷阱（首次全量测试有14个失败）：\n1. spawn后立即update的off-by-one：temperature=60→59.99，thermalProximity=30→29.996，age=0→0.003；修复：调整期望范围下界\n2. GeothermalVentSystem eruption随机触发：ERUPTION_CHANCE=0.008，random=0时会触发eruption，使spawn后activity/heatOutput/cooldown全部偏离；修复：用mockReturnValueOnce(0).mockReturnValue(0.9)分别控制spawn和update\n3. GeyserFieldSystem cleanup被eruptionInterval干扰：lastEruption=0，tick=2720时2720-0>eruptionInterval触发喷发+5温度，使本应被cleanup的记录温度升高而保留；修复：注入makeField时设eruptionInterval:999999\n4. GeyserSystem cleanup时spawn干扰：nullTileWorld（getTile:()=>null）可防止新spawn\n\n下轮优先方向：\n1. 继续处理World系统（剩余160个文件，全部<=10测试待改善）\n2. 使用同样的并行Agent策略（3 Agent × 3文件/批）\n3. tsc+vitest+build三重验证保持全绿",
+  "notes": "迭代136（循环43/100）。本轮主要成就：批量处理9个World系统测试（EEE2/FFF2/GGG2组），测试从13731增至13958，+227个测试。\n\n本轮处理的系统（分3批Agent并行）：\nEEE2组(+70): WorldHeatmapSystem(5→30) WorldHogbackSystem(5→28) WorldHolmiumSpringSystem(5→27)\nFFF2组(+87): WorldHoodooSystem(5→30) WorldHotPoolSystem(5→29) WorldHotSpringSystem(5→33)\nGGG2组(+80): WorldHotSpringSystem2(5→29) WorldIceCaveSystem(5→30) WorldIceSheetSystem(5→36)\n\n关键发现：\n- WorldHeatmapSystem: update(_tick)只有1个参数（不是标准4参数），handleKey('m')循环5种模式，grids是Map<string,Float32Array>\n- WorldHogbackSystem: CHECK_INTERVAL=2620, MAX_HOGBACKS=15, spawn需MOUNTAIN(5)/FOREST(4), cleanup: tick-91000\n- WorldHolmiumSpringSystem: CHECK_INTERVAL=2990, 3次attempt, nearWater||nearMountain, cleanup: tick-54000, 无动态字段更新\n- WorldHoodooSystem: CHECK_INTERVAL=2800, MAX_HOODOOS=16, spawn需SAND(2)/MOUNTAIN(5), 侵蚀update(height-=erosionRate*0.0003), cleanup: tick-90000\n- WorldHotPoolSystem: CHECK_INTERVAL=2730, MAX_POOLS=7, 无tile限制, age+=0.004, cleanup: age>=93\n- WorldHotSpringSystem: CHECK_INTERVAL=3800, MAX_SPRINGS=10, spawn需MOUNTAIN/FOREST, TTL=300000, visitors有0.02概率++\n- WorldHotSpringSystem2: CHECK_INTERVAL=2640, MAX_SPRINGS=10, waterTemp衰减至<=30触发cleanup, 无tile限制\n- WorldIceCaveSystem: CHECK_INTERVAL=2900, 3次attempt, 需SNOW(6)/MOUNTAIN(5), cleanup: tick-58000\n- WorldIceSheetSystem: CHECK_INTERVAL=4000, MAX_ICE_SHEETS=8, 需SNOW(6), expanding逻辑+thickness/area<=0 cleanup\n\n本轮flaky陷阱：\n1. WorldHotSpringSystem visitors off-by-one: spawn时random=0触发0<0.02使visitors在spawn帧立即变1，修复：直接注入对象测初始值\n2. WorldHotSpringSystem2 waterTemp=30.001钳位后被cleanup删除: 30.001-0.005=29.996→Math.max(30,29.996)=30→30<=30删除，修复：改为验证toHaveLength(0)\n3. WorldIceCaveSystem 3次attempt都spawn: random=0时3次都满足→spawn3个，修复：改为toBeGreaterThanOrEqual(1)\n\n当前已派发下一批（HHH2/III2/JJJ2）：\n- HHH2组: WorldIceShelfSystem WorldIndiumSpringSystem WorldInlierSystem\n- III2组: WorldInselbergSystem WorldIridiumSpringSystem WorldIrrigationSystem\n- JJJ2组: WorldKarstSpringSystem WorldKarstTowerSystem WorldKelpForestSystem\n\n下轮优先方向：\n1. 等待HHH2/III2/JJJ2 Agent完成，收集结果\n2. 运行全量测试验证，修复flaky测试\n3. 继续处理WorldK/L/M系列",
   "priorities": [
-    "1. 【持续目标】继续处理World系统（剩余约160个文件），用并行Agent批量处理",
-    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前13731/13731通过）",
-    "3. 【里程碑】已完成81+9=90个World系统测试改善（+1832+244=2076测试），继续下一批",
+    "1. 【持续目标】继续处理World系统（剩余约150个文件），用并行Agent批量处理",
+    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前13958/13958通过）",
+    "3. 【里程碑】已完成90+9=99个World系统测试改善（+2076+227=2303测试），继续下一批",
     "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+150-250测试",
-    "5. 【下一批系统】WorldHeatmapSystem WorldHogbackSystem WorldHolmiumSpringSystem及后续H/I/J系列"
+    "5. 【下一批系统】WorldKettleHoleSystem及后续K/L/M系列"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -57,7 +57,12 @@
     "【迭代135新增】GeothermalVentSystem的eruption陷阱：ERUPTION_CHANCE=0.008，random=0时0<0.008会触发eruption，使heatOutput+40/cooldown=2000+random*3000/activity='erupting'——需用mockReturnValueOnce(0).mockReturnValue(0.9)分别控制spawn和后续update",
     "【迭代135新增】GeyserFieldSystem的eruptionInterval干扰cleanup：lastEruption=0+小tick时会触发喷发+5温度，阻止cleanup；测试cleanup时设eruptionInterval:999999",
     "【迭代135新增】GeyserSystem cleanup测试必须用nullTileWorld（getTile:()=>null）：nullTile阻断spawn，确保cleanup后无新记录干扰length断言",
-    "【迭代135新增】WorldGeothermalSystem spawn需tile>=6(SNOW=6或LAVA=7)，不是MOUNTAIN=5；safeWorld用getTile:()=>2(SAND)阻断spawn"
+    "【迭代135新增】WorldGeothermalSystem spawn需tile>=6(SNOW=6或LAVA=7)，不是MOUNTAIN=5；safeWorld用getTile:()=>2(SAND)阻断spawn",
+    "【迭代136新增】WorldHeatmapSystem的update()只有1个参数_tick，不是标准4参数(dt,world,em,tick)——调用时必须用sys.update(tick)单参数形式",
+    "【迭代136新增】WorldHotSpringSystem visitors off-by-one: spawn时random=0使visitors在spawn帧立即变1（0<0.02）——测试初始visitors必须直接注入对象而非通过update spawn",
+    "【迭代136新增】WorldHotSpringSystem2 waterTemp钳位触发cleanup: waterTemp=30.001经update→Math.max(30,29.996)=30→30<=30被cleanup删除——需验证toHaveLength(0)而非读取waterTemp",
+    "【迭代136新增】3次attempt系统(IceCaveSystem等): random=0时3次都spawn→length=3，spawn验证改用toBeGreaterThanOrEqual(1)而非toHaveLength(1)",
+    "【迭代136新增】IceShelfSystem特殊cleanup: sh.tick < cutoff-100000 || sh.thickness < 10，spawn后thickness初始>=20但update后立即减少calvingRate*0.05"
   ],
-  "last_updated": "2026-03-03T01:00:00+08:00"
+  "last_updated": "2026-03-03T01:05:00+08:00"
 }
