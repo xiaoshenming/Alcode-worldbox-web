@@ -1,11 +1,11 @@
 {
-  "notes": "迭代128（循环32/100）。本轮主要成就：继续并完成54个Diplomatic系统测试质量提升——从10389增至11424，+1035个测试。\n\n本轮处理的系统（按批次）：\nEEE/FFF/GGG组：Muragers/MutualAid/NavalBlockade/Neutrality/Neutralization/NonAggression/NonIntervention/Pannager/Pardon → +180测试\nHHH/III/JJJ组：Parkward/Patronage/Pavior/PeaceTreaty/Pinder/Plebiscite/Pledge/Prefecture/Procuratorship → +228测试\nKKK/LLL/MMM组：Propaganda/Protectorate/Purveyor/Ranger/Ransom/Rapprochement/Ratification/Receivership/Reciprocity → +215测试\nNNN/OOO/PPP组：Reconciliation2/Reconciliation/Referendum/Regency/Rehabilitation/Remission/Reparation/Reprieve/Restitution → +220测试\nQQQ/RRR/SSS组：Reunification/Sanction/Secession/Seneschalry/Sheriffalty/Solidarity/Sovereignty/Spy/StewardshipPact → +217测试\nTTT/UUU/VVV组：Stewardship/Succession/Summit/Suzerainty/Tariff/Tithingman/Tollbooth/TradeAgreement/TradeGuild → +200测试\n\n关键发现：\n- Diplomatic系统还剩15个（共159个）未改善，全部是<=5测试文件\n- 本轮处理了54个系统（6批次，每批9个文件），用并行Agent策略（3 Agent × 3文件 = 9/批）\n- 发现多种特殊update签名：(a)2参数(dt,em,tick)无world；(b)2参数(dt,civManager,tick)无world无em；(c)3参数(dt,em,civManager,tick)；(d)5参数(dt,world,em,tick,civManager?)可选civManager\n- 特殊cleanup模式：Propaganda(effectiveness<=1)、Pledge(strength<=0)、Spy(status!=='active'&&age>9000)、Sanction(active-based)、Rapprochement(stage==='renewed'&&duration>=100)\n- 测试数量从10389→11424，+1035\n- tsc+vitest+build三重验证保持全绿（当前11424/11424通过，偶尔1-2个并发flaky）\n\n下轮优先方向：\n1. 继续改善剩余15个Diplomatic系统（最后2批）\n2. 保持同样的并行Agent策略（3 Agent × 3文件 = 9/批）\n3. tsc+vitest+build三重验证保持全绿（当前11424/11424通过）",
+  "notes": "迭代129（循环34/100）。本轮主要成就：完成全部159个Diplomatic系统测试改善——最后15个系统完成，测试从11424增至11676，+252个测试。\n\n本轮处理的系统（最后一批，分3个Agent并行）：\nWWW组（5个Agent）：TradeSanction/Tribunal/Tribute/Trusteeship/Vassalage → +101测试\nXXX组（5个Agent）：Verderer/Vicarage/Vindication/Wainage/Warraner → +121测试\nYYY组（5个Agent）：WarReparations/WarReparation/Waynward/Woodreve/Woodward → +105测试\n\n关键发现：\n- Diplomatic系统全部159个完成！共4159个测试（从原来约800个）\n- TradeSanction: 3参数(dt,em,civManager,tick)，cleanup=elapsed>duration||status==='lifted'\n- Tribunal: 标准4参数，cleanup=verdict>=95||verdict<=5||tick-p.tick>65000，有_proceedingKeySet\n- TributeSystem/Trusteeship/Vassalage: 标准4参数，cleanup=tick<cutoff(tick-88000/91000不同)\n- WarReparations(复数): 5参数(dt,world,em,civManager,tick)，phase=negotiating→paying→completed/defaulted\n- WarReparation(单数): 3参数(dt,em,civManager,tick)，cleanup按maxFinished计数\n- Verderer/Vicarage/Vindication/Wainage/Warraner/Waynward/Woodreve/Woodward: 标准4参数，duration+=1，cleanup=tick<cutoff(88000)\n- spawn后同次update执行duration+=1，所以新spawn的duration=1而非0\n- 测试数量从11424→11676，+252\n- tsc+vitest+build三重验证保持全绿（当前11676/11676通过）\n\n下轮优先方向：\n1. 开始处理World系统（242个文件，全部5测试待改善）\n2. 使用同样的并行Agent策略（3 Agent × N文件/批）\n3. tsc+vitest+build三重验证保持全绿",
   "priorities": [
-    "1. 【持续进行】继续改善剩余15个Diplomatic系统测试（用并行Agent批量处理）",
-    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前11424/11424通过）",
-    "3. 【后续目标】Diplomatic系统全部完成后处理World系统（~200个）",
-    "4. 【经验】Diplomatic系统有多种update签名变体，必须先读源码确认",
-    "5. 【经验】random=0会导致civA===civB早返回，duration/cleanup测试必须用mockReturnValue(1)"
+    "1. 【新目标】开始处理World系统（242个文件，全部只有5测试），用并行Agent批量处理",
+    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前11676/11676通过）",
+    "3. 【里程碑】Diplomatic系统全部159个完成（4159个测试），下一个大目标是World系统",
+    "4. 【策略】每批3 Agent × 5文件 = 15个系统，每批约+200-300测试",
+    "5. 【经验】spawn后同次update执行duration递增，新spawn的duration=1不是0"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -30,7 +30,7 @@
     "【重要安全规则】严禁用Write工具创建src/__tests__/目录内的文件！Write工具会将__转义为\\_\\_导致创建错误目录，必须用Bash cat heredoc方式创建测试文件",
     "【迭代89新增】死代码方法扫描策略：用Python脚本找public方法→grep '.methodName('验证无外部调用→并行派发子代理批量删除，效率极高",
     "【迭代96新增】整系统文件死代码的识别方法：检查'类名是否出现在Game.ts'而非'实例字段是否有.update()调用'，因为很多系统通过_batchXXY数组批量调度",
-    "【迭代100新增-最重要】非空断言扫描必须同时用两种正则：① [^a-zA-Z]!\\\\. 匹配 x!.y 形式；② \\\\)!(?=[.\\\\[;,\\\\)\\\\s]|$) 匹配 func()! 形式。只用其中一种必然漏报！",
+    "【迭代100新增-最重要】非空断言扫描必须同时用两种正则：① [^a-zA-Z]!\\. 匹配 x!.y 形式；② \\)!(?=[.\\[;,\\)\\s]|$) 匹配 func()! 形式。只用其中一种必然漏报！",
     "【迭代112新增】some(item => item.entityId === eid)在for(entities)循环内是O(n*list)陷阱——标准修复：添加private _xxxSet = new Set<number>()，push时.add(eid)，splice时.delete(eid)，查询时.has(eid)",
     "【迭代112新增】添加Set优化后，public查询方法(getXxx)需要加lazy sync fallback——因为测试会直接push内部数组绕过Set",
     "【迭代120新增】项目进入「稳定维护」阶段：systems/game/civilization/entities/ui/utils所有目录的私有方法死代码已全部清除，find()/some()优化已穷举",
@@ -39,16 +39,13 @@
     "【迭代122新增】addComponent API需要带type字段的对象：{ type: 'position', x, y }不能缺type字段，否则getEntitiesWithComponents找不到实体",
     "【迭代122新增】performance.now()在短生命周期测试进程中可能<3000ms——需用vi.spyOn(performance, 'now').mockReturnValue(大数)来mock超时测试",
     "【迭代123新增】工匠系统cleanup边界规则：先递增后cleanup，cleanup条件<=4，初始值4.0会在+0.02后变4.02>4不删除，需用3.98确保4.00<=4触发删除",
-    "【迭代123新增】工匠系统分两类：(a)纯数组+固定技能递增+技能值cleanup（用3.98边界）；(b)skillMap+time-based过期cleanup（用tick-offset计算cutoff）",
     "【迭代124新增】并行Agent批处理效率极高：每批9个系统，3个Agent并行，2-3分钟完成+100-180个测试，本轮共处理81个系统，+904个测试",
     "【迭代125新增】测试含招募逻辑的cleanup时：getEntitiesWithComponent必须返回空数组[]，否则招募新实体会干扰cleanup后数量断言（NomadSystem是典型案例）",
-    "【迭代125新增】全部113个Creature工匠系统测试已改善完毕（6406→8312，+1906）。下一目标：Diplomatic系统（~160个）和World系统（~200个）各有5测试文件",
     "【迭代126新增】Diplomatic系统有3种update签名变体：(a)标准4参数(dt,world,em,tick)；(b)3参数(dt,em,civManager,tick)；(c)含civs数组的特殊签名。必须先读源码确认",
-    "【迭代126新增】do/while死循环风险：pickRandom在civA===civB时无限循环——mock random时设高于CHANCE值（如mockReturnValue(0.5)）确保spawn条件不满足，跳过整个spawn逻辑",
-    "【迭代126新增】Diplomatic系统过期测试cutoff边界：record.tick===cutoff时不删除（条件是<cutoff），混合测试中「新」记录tick必须远大于cutoff（如bigTick本身）",
-    "【迭代127新增】random=0导致civA===civB早返回问题：当random=0 < PROCEED_CHANCE时进入spawn块，但civA=1+floor(0*8)=1、civB=1+floor(0*8)=1，civA===civB触发return退出整个update函数（而非只退出spawn块），导致duration更新和cleanup都不运行。修复：duration/cleanup测试必须用mockReturnValue(1)跳过spawn块",
-    "【迭代127新增】Diplomatic系统有5种update签名变体：(a)标准4参数(dt,world,em,tick)；(b)3参数(dt,em,civManager,tick)；(c)5参数(dt,world,em,civManager,tick)；(d)特殊清理逻辑（result-based、outcome-based、stability-based）",
-    "【迭代127新增】部分Diplomatic系统无时间cutoff，用状态清理：Intercession(result!=='active')、Mediation(!(pending||duration<50))、Marriage(stability<=0)、HostageExchange((completed||broken)&&age>duration+3000)、Hostage((exchanged||executed||escaped)&&age>3000)"
+    "【迭代127新增】random=0导致civA===civB早返回问题：duration/cleanup测试必须用mockReturnValue(1)跳过spawn块",
+    "【迭代129新增】spawn后同次update立刻执行duration+=1——新spawn的arrangement.duration=1不是0，测试时注意边界",
+    "【迭代129新增】WarReparations(复数)是5参数(dt,world,em,civManager,tick)；WarReparation(单数)是3参数(dt,em,civManager,tick)——两个系统名字相近但签名不同",
+    "【迭代129新增】World系统有242个待改善文件（全部5测试），是下一个大目标"
   ],
-  "last_updated": "2026-03-02T19:25:00+08:00"
+  "last_updated": "2026-03-02T19:55:00+08:00"
 }
