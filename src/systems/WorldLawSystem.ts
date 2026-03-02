@@ -72,9 +72,17 @@ export class WorldLawSystem {
   private visible = false
   private categories: LawCategory[]
   private activeTab = 0
+  // O(1) lookup index: category key → (param name → LawParam)
+  private _lawIndex: Map<string, Map<string, LawParam>>
 
   constructor() {
     this.categories = buildCategories()
+    this._lawIndex = new Map()
+    for (const cat of this.categories) {
+      const paramMap = new Map<string, LawParam>()
+      for (const p of cat.params) paramMap.set(p.name, p)
+      this._lawIndex.set(cat.key, paramMap)
+    }
   }
 
   /**
@@ -84,9 +92,9 @@ export class WorldLawSystem {
    * @returns 当前倍率值，未找到返回 1.0
    */
   getLaw(category: string, name: string): number {
-    const cat = this.categories.find(c => c.key === category)
-    if (!cat) return 1.0
-    const p = cat.params.find(pp => pp.name === name)
+    const paramMap = this._lawIndex.get(category)
+    if (!paramMap) return 1.0
+    const p = paramMap.get(name)
     return p ? p.value : 1.0
   }
 
