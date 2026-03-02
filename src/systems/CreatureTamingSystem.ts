@@ -54,6 +54,7 @@ function clamp(v: number, lo: number, hi: number): number { return v < lo ? lo :
 
 export class CreatureTamingSystem {
   private records: TameRecord[] = []
+  private _tamedSet = new Set<number>()          // animalIds in Tamed state
   private visible = false
   private selectedOwner = -1
   private panelX = 100
@@ -79,7 +80,11 @@ export class CreatureTamingSystem {
 
   /** 检查动物是否已被驯化 */
   isTamed(animalId: number): boolean {
-    return this.records.some(r => r.animalId === animalId && r.state === TameState.Tamed)
+    if (this._tamedSet.has(animalId)) return true
+    // Lazy sync: tests may push directly to records
+    const found = this.records.some(r => r.animalId === animalId && r.state === TameState.Tamed)
+    if (found) this._tamedSet.add(animalId)
+    return found
   }
 
   /** 获取驯化加成 */
@@ -101,6 +106,8 @@ export class CreatureTamingSystem {
     for (let i = this.records.length - 1; i >= 0; i--) {
       const r = this.records[i]
       if (r.animalId === entityId || r.ownerId === entityId) {
+        if (r.animalId === entityId && r.state === TameState.Tamed) this._tamedSet.delete(entityId)
+        else if (r.ownerId === entityId && r.state === TameState.Tamed) this._tamedSet.delete(r.animalId)
         this.records[i] = this.records[this.records.length - 1]
         this.records.pop()
       }
@@ -121,6 +128,7 @@ export class CreatureTamingSystem {
         if (r.progress >= 1) {
           r.state = TameState.Tamed
           r.loyalty = 0.6 + Math.random() * 0.3
+          this._tamedSet.add(r.animalId)
         }
       } else if (r.state === TameState.Tamed) {
         // 忠诚度缓慢衰减
@@ -128,6 +136,7 @@ export class CreatureTamingSystem {
         // 极低忠诚度时可能逃跑
         if (r.loyalty < 0.15 && Math.random() < 0.01) {
           r.state = TameState.Wild
+          this._tamedSet.delete(r.animalId)
           this.records[i] = this.records[this.records.length - 1]
           this.records.pop()
         }

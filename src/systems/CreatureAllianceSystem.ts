@@ -29,6 +29,7 @@ let nextAllianceId = 1
 
 export class CreatureAllianceSystem {
   private alliances: PersonalAlliance[] = []
+  private _allianceKeySet = new Set<string>()   // key: `${min(a,b)}_${max(a,b)}`
   private lastCheck = 0
   private lastDecay = 0
 
@@ -71,6 +72,7 @@ export class CreatureAllianceSystem {
         lastInteraction: tick,
         type,
       })
+      this._allianceKeySet.add(`${Math.min(idA, idB)}_${Math.max(idA, idB)}`)
     }
   }
 
@@ -79,6 +81,7 @@ export class CreatureAllianceSystem {
       const a = this.alliances[_i]
       // Remove if either member is dead
       if (!em.getComponent(a.memberA, 'creature') || !em.getComponent(a.memberB, 'creature')) {
+        this._allianceKeySet.delete(`${Math.min(a.memberA, a.memberB)}_${Math.max(a.memberA, a.memberB)}`)
         this.alliances.splice(_i, 1); continue
       }
       // Strengthen if nearby
@@ -94,14 +97,15 @@ export class CreatureAllianceSystem {
       }
       // Decay if apart
       a.strength -= BOND_DECAY
-      if (a.strength < MIN_BOND) this.alliances.splice(_i, 1)
+      if (a.strength < MIN_BOND) {
+        this._allianceKeySet.delete(`${Math.min(a.memberA, a.memberB)}_${Math.max(a.memberA, a.memberB)}`)
+        this.alliances.splice(_i, 1)
+      }
     }
   }
 
   private hasAlliance(a: EntityId, b: EntityId): boolean {
-    return this.alliances.some(al =>
-      (al.memberA === a && al.memberB === b) || (al.memberA === b && al.memberB === a)
-    )
+    return this._allianceKeySet.has(`${Math.min(a, b)}_${Math.max(a, b)}`)
   }
 
 }
