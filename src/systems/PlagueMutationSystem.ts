@@ -95,6 +95,8 @@ export class PlagueMutationSystem {
   private scrollY = 0
   private tickCounter = 0
   private _activeStrainsBuf: PlagueStrain[] = []
+  // O(1) lookup by strain id
+  private _strainById: Map<number, PlagueStrain> = new Map()
   /** Cached active strain count and header string — rebuilt when strains change */
   private _activeCount = 0
   private _headerStr = '\u{1F9A0} 瘟疫毒株 (0 活跃 / 0 总计)'
@@ -118,7 +120,7 @@ export class PlagueMutationSystem {
 
   /** 记录死亡 */
   recordDeath(strainId: number): void {
-    const s = this.strains.find(s => s.id === strainId)
+    const s = this._strainById.get(strainId) ?? this.strains.find(s => s.id === strainId)
     if (s) { s.deaths++; s.statsStr = `感染:${s.infected} 死亡:${s.deaths}` }
   }
 
@@ -167,6 +169,7 @@ export class PlagueMutationSystem {
     child.lethalStr = `致死${(child.lethality * 100).toFixed(1)}%`
     child.nameStr = `\u{1F9A0} ${child.name}`
     this.strains.push(child)
+    this._strainById.set(child.id, child)
     this._rebuildHeaderCache()
   }
 
