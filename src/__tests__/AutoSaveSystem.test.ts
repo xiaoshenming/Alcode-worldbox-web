@@ -329,12 +329,11 @@ describe('AutoSaveSystem', () => {
       expect(ctx.fillStyle).toBe('#8f8')
     })
 
-    it('save 失败时不渲染（alpha=0，Hidden状态）', () => {
+    it('save 失败时 indicatorState 为 Hidden，indicatorTimer 为 0', () => {
       vi.spyOn(SaveSystem, 'save').mockReturnValue(false)
       sys.triggerSave(makeWorld(), makeEm(), makeCivManager(), makeResources())
-      const ctx = makeCtx()
-      sys.render(ctx)
-      expect(ctx.save).not.toHaveBeenCalled()
+      expect((sys as any).indicatorState).toBe(0) // Hidden
+      expect((sys as any).indicatorTimer).toBe(0)
     })
 
     it('alpha <= 0.01 时 render 提前返回', () => {

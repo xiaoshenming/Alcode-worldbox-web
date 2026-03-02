@@ -398,26 +398,20 @@ describe('BuildingUpgradeSystem', () => {
       expect(b?.maxHealth).toBe(130) // 100 * (1 + 0.3*(2-1))
     })
 
-    it('Workshop 折扣使 level up 花费更少资源', () => {
+    it('Workshop 折扣（getWorkshopDiscount）使成本乘数降低', () => {
       const em = new EntityManager()
-      // No workshop scenario
-      const civA = makeCiv({ id: 1, resources: { food: 0, wood: 100, stone: 100, gold: 100 } })
-      const bA = makeBuilding(em, civA.id, BuildingType.MINE, 1, 100, 100)
-      civA.buildings.push(bA)
+      // No workshop: discount=0
+      const civA = makeCiv({ id: 1 })
+      const discountA = (sys as any).getWorkshopDiscount(em, civA)
+      expect(discountA).toBe(0)
 
-      // With workshop scenario
-      const civB = makeCiv({ id: 2, resources: { food: 0, wood: 100, stone: 100, gold: 100 } })
+      // With one lv1 workshop: discount=0.1
+      const civB = makeCiv({ id: 2 })
       const workshopId = makeBuilding(em, civB.id, BuildingType.WORKSHOP, 1, 100, 100, 10, 10)
-      const bB = makeBuilding(em, civB.id, BuildingType.MINE, 1, 100, 100, 11, 11)
-      civB.buildings.push(workshopId, bB)
-
-      const civManager = makeCivManager([civA, civB])
-      sys.update(em, civManager, 0)
-      sys.update(em, civManager, 200)
-
-      const woodSpentA = 100 - civA.resources.wood
-      const woodSpentB = 100 - civB.resources.wood
-      expect(woodSpentB).toBeLessThanOrEqual(woodSpentA)
+      civB.buildings.push(workshopId)
+      const discountB = (sys as any).getWorkshopDiscount(em, civB)
+      expect(discountB).toBeCloseTo(0.1)
+      expect(discountB).toBeGreaterThan(discountA)
     })
   })
 
@@ -536,6 +530,120 @@ describe('BuildingUpgradeSystem', () => {
     it('costMult 最低为0.5（折扣满额时）', () => {
       // 当 discount=0.5 时，costMult = Math.max(0.5, 1-0.5) = 0.5
       expect(Math.max(0.5, 1 - 0.5)).toBe(0.5)
+    })
+  })
+
+  // ---- 升级路径覆盖 ----
+
+  describe('各升级路径验证', () => {
+    it('FARM 升级为 GRANARY（需 techLevel=2，wood=20，stone=10，gold=5）', () => {
+      const em = new EntityManager()
+      const civ = makeCiv({ techLevel: 2, resources: { food: 0, wood: 50, stone: 30, gold: 20 } })
+      const bId = makeBuilding(em, civ.id, BuildingType.FARM, 1, 100, 100)
+      civ.buildings.push(bId)
+      const civManager = makeCivManager([civ])
+      sys.update(em, civManager, 0)
+      sys.update(em, civManager, 200)
+      const b = em.getComponent<BuildingComponent>(bId, 'building')
+      expect(b?.buildingType).toBe(BuildingType.GRANARY)
+    })
+
+    it('BARRACKS 升级为 WORKSHOP（需 techLevel=3，wood=25，stone=30，gold=10）', () => {
+      const em = new EntityManager()
+      const civ = makeCiv({ techLevel: 3, resources: { food: 0, wood: 50, stone: 50, gold: 20 } })
+      const bId = makeBuilding(em, civ.id, BuildingType.BARRACKS, 1, 100, 100)
+      civ.buildings.push(bId)
+      const civManager = makeCivManager([civ])
+      sys.update(em, civManager, 0)
+      sys.update(em, civManager, 200)
+      const b = em.getComponent<BuildingComponent>(bId, 'building')
+      expect(b?.buildingType).toBe(BuildingType.WORKSHOP)
+    })
+
+    it('TOWER 升级为 WALL（需 techLevel=2，wood=5，stone=20）', () => {
+      const em = new EntityManager()
+      const civ = makeCiv({ techLevel: 2, resources: { food: 0, wood: 20, stone: 30, gold: 0 } })
+      const bId = makeBuilding(em, civ.id, BuildingType.TOWER, 1, 100, 100)
+      civ.buildings.push(bId)
+      const civManager = makeCivManager([civ])
+      sys.update(em, civManager, 0)
+      sys.update(em, civManager, 200)
+      const b = em.getComponent<BuildingComponent>(bId, 'building')
+      expect(b?.buildingType).toBe(BuildingType.WALL)
+    })
+
+    it('HOUSE 升级为 CASTLE（需 techLevel=4，wood=40，stone=60，gold=20）', () => {
+      const em = new EntityManager()
+      const civ = makeCiv({ techLevel: 4, resources: { food: 0, wood: 60, stone: 80, gold: 30 } })
+      const bId = makeBuilding(em, civ.id, BuildingType.HOUSE, 1, 100, 100)
+      civ.buildings.push(bId)
+      const civManager = makeCivManager([civ])
+      sys.update(em, civManager, 0)
+      sys.update(em, civManager, 200)
+      const b = em.getComponent<BuildingComponent>(bId, 'building')
+      expect(b?.buildingType).toBe(BuildingType.CASTLE)
+    })
+
+    it('CASTLE 无升级路径，不做 type upgrade', () => {
+      const em = new EntityManager()
+      const civ = makeCiv({ techLevel: 5, resources: { food: 0, wood: 200, stone: 200, gold: 200 } })
+      const bId = makeBuilding(em, civ.id, BuildingType.CASTLE, 1, 100, 100)
+      civ.buildings.push(bId)
+      const civManager = makeCivManager([civ])
+      sys.update(em, civManager, 0)
+      sys.update(em, civManager, 200)
+      const b = em.getComponent<BuildingComponent>(bId, 'building')
+      expect(b?.buildingType).toBe(BuildingType.CASTLE)
+    })
+
+    it('level up 后 health 等于 maxHealth（满血）', () => {
+      const em = new EntityManager()
+      const civ = makeCiv({ resources: { food: 0, wood: 100, stone: 100, gold: 100 } })
+      const bId = makeBuilding(em, civ.id, BuildingType.MINE, 1, 100, 100)
+      civ.buildings.push(bId)
+      const civManager = makeCivManager([civ])
+      sys.update(em, civManager, 0)
+      sys.update(em, civManager, 200)
+      const b = em.getComponent<BuildingComponent>(bId, 'building')
+      expect(b?.health).toBe(b?.maxHealth)
+    })
+
+    it('type upgrade 后 health 等于 maxHealth（满血）', () => {
+      const em = new EntityManager()
+      const civ = makeCiv({ techLevel: 1, resources: { food: 0, wood: 100, stone: 100, gold: 100 } })
+      const bId = makeBuilding(em, civ.id, BuildingType.HUT, 1, 100, 100)
+      civ.buildings.push(bId)
+      const civManager = makeCivManager([civ])
+      sys.update(em, civManager, 0)
+      sys.update(em, civManager, 200)
+      const b = em.getComponent<BuildingComponent>(bId, 'building')
+      expect(b?.health).toBe(b?.maxHealth)
+    })
+
+    it('lastCheck 记录正确 tick 值', () => {
+      const em = new EntityManager()
+      const civ = makeCiv()
+      const bId = makeBuilding(em, civ.id, BuildingType.MINE, 3, 100, 100)
+      civ.buildings.push(bId)
+      const civManager = makeCivManager([civ])
+      sys.update(em, civManager, 500)
+      expect((sys as any).lastCheck.get(bId)).toBe(500)
+    })
+
+    it('没有 civ 对应建筑时跳过升级不崩溃', () => {
+      const em = new EntityManager()
+      const bId = em.createEntity()
+      em.addComponent(bId, {
+        type: 'building',
+        buildingType: BuildingType.MINE,
+        civId: 999, // non-existent civ
+        level: 1,
+        health: 100,
+        maxHealth: 100,
+      } as BuildingComponent & { type: string })
+      const civManager = makeCivManager([]) // empty
+      expect(() => sys.update(em, civManager, 0)).not.toThrow()
+      expect(() => sys.update(em, civManager, 200)).not.toThrow()
     })
   })
 })

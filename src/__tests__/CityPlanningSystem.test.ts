@@ -189,9 +189,10 @@ describe('CityPlanningSystem', () => {
   // ---- produceResources（通过 update 在 tick%60===0 时触发）----
 
   describe('produceResources', () => {
-    it('FARM 在 tick=60 时增加 food', () => {
+    it('FARM 在 tick=60 时增加 food（population=0, 无消耗）', () => {
       const em = new EntityManager()
-      const civ = makeCiv({ resources: { food: 0, wood: 50, stone: 50, gold: 50 } })
+      // population=0 means no food consumption (0*0.5=0), farm produces 3*1.0=3
+      const civ = makeCiv({ population: 0, resources: { food: 0, wood: 50, stone: 50, gold: 50 } })
       addBuilding(em, civ, BuildingType.FARM)
       const civManager = makeCivManager([civ])
       sys.update(civManager, em, makeWorld(), makeParticles(), 60)
@@ -263,28 +264,34 @@ describe('CityPlanningSystem', () => {
       expect(civ.resources.stone).toBe(0)
     })
 
-    it('Metropolis（multiplier=2）产出是 Village 的两倍', () => {
+    it('Metropolis（multiplier=2）产出的 stone 是 Village 的两倍', () => {
+      // Use MINE which produces stone+gold, no food consumption complication
+      // Village: multiplier=1.0, Metropolis: multiplier=2.0
       const em1 = new EntityManager()
-      const civV = makeCiv({ id: 1, population: 1, resources: { food: 0, wood: 0, stone: 0, gold: 0 } })
-      addBuilding(em1, civV, BuildingType.FARM)
+      const civV = makeCiv({ id: 1, population: 0, resources: { food: 0, wood: 0, stone: 0, gold: 0 } })
+      addBuilding(em1, civV, BuildingType.MINE)
+      // Village level: pop=0, buildings=1 → Village (multiplier=1.0)
 
       const em2 = new EntityManager()
-      const civM = makeCiv({ id: 2, population: 1, resources: { food: 0, wood: 0, stone: 0, gold: 0 } })
-      civM.buildings = new Array(25).fill(0) as any
-      civM.population = 60
-      // We need a real building for resource calc
-      civM.buildings = []
-      addBuilding(em2, civM, BuildingType.FARM)
+      const civM = makeCiv({ id: 2, population: 0, resources: { food: 0, wood: 0, stone: 0, gold: 0 } })
+      // Set up Metropolis: need pop>=50, buildings>=25
+      civM.population = 50
+      const fakeBuildingIds = new Array(25).fill(0).map((_, i) => {
+        const id = em2.createEntity()
+        em2.addComponent(id, { type: 'building', buildingType: BuildingType.HUT, civId: civM.id, level: 1, health: 100, maxHealth: 100 })
+        return id
+      })
+      civM.buildings = fakeBuildingIds
+      addBuilding(em2, civM, BuildingType.MINE, 1, 100, 100, 99, 99)
 
       sys.update(makeCivManager([civV]), em1, makeWorld(), makeParticles(), 60)
-      const foodV = civV.resources.food
+      const stoneV = civV.resources.stone
 
       sys.update(makeCivManager([civM]), em2, makeWorld(), makeParticles(), 60)
-      const foodM = civM.resources.food
+      const stoneM = civM.resources.stone
 
-      // Metropolis multiplier=2.0 vs Village multiplier=1.0
-      // foodM should be higher (though population also consumes more)
-      expect(foodM).toBeGreaterThan(foodV)
+      // Metropolis multiplier=2.0, Village multiplier=1.0
+      expect(stoneM).toBeGreaterThan(stoneV)
     })
   })
 
