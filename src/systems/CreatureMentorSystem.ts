@@ -41,6 +41,8 @@ export class CreatureMentorSystem {
   private lastCheck = 0
   private _mentorsBuf: number[] = []
   private _apprenticesBuf: number[] = []
+  // O(1) lookup: entityId (mentor or apprentice) → bond
+  private _entityBondMap: Map<number, MentorBond> = new Map()
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -86,7 +88,7 @@ export class CreatureMentorSystem {
         const mentorAge = em.getComponent<CreatureComponent>(mentorId, 'creature')?.age ?? MENTOR_MIN_AGE
         const quality = Math.min(100, 30 + Math.floor((mentorAge / MENTOR_MIN_AGE) * 40) + Math.floor(Math.random() * 20))
 
-        this.bonds.push({
+        const bond: MentorBond = {
           id: this.nextId++,
           mentorId,
           apprenticeId: appId,
@@ -94,7 +96,10 @@ export class CreatureMentorSystem {
           progress: 0,
           quality,
           formedTick: tick,
-        })
+        }
+        this.bonds.push(bond)
+        this._entityBondMap.set(mentorId, bond)
+        this._entityBondMap.set(appId, bond)
         this.mentorIds.add(mentorId)
         this.apprenticeIds.add(appId)
         break
@@ -136,11 +141,16 @@ export class CreatureMentorSystem {
     const bond = this.bonds[index]
     this.mentorIds.delete(bond.mentorId)
     this.apprenticeIds.delete(bond.apprenticeId)
+    this._entityBondMap.delete(bond.mentorId)
+    this._entityBondMap.delete(bond.apprenticeId)
     this.bonds.splice(index, 1)
   }
 
 
   getEntityBond(entityId: number): MentorBond | null {
+    const cached = this._entityBondMap.get(entityId)
+    if (cached !== undefined) return cached
+    // Lazy sync fallback: tests may push directly to bonds array
     return this.bonds.find(b => b.mentorId === entityId || b.apprenticeId === entityId) ?? null
   }
 }
