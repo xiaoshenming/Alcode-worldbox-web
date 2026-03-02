@@ -1,11 +1,11 @@
 {
-  "notes": "迭代116（循环17/100）。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.53MB；(2)批量优化9个系统的some()/find()——9次提交；(3)具体系统：BiomeEvolutionSystem(_neighborSet Set<TileType>与_neighborsBuf同步填充，naturalEvolution的includes/some→Set.has)/DiplomaticPledgeSystem(_activePairSet Set<'from_to'>替换pledges.find去重)/ArtifactSystem(缓存getEntitiesWithComponent('artifact')于update()入口，节省每tick2次全量扫描)/CreatureMutationSystem(_mutationTypes Map<entityId,Set<MutationType>>替换hasMutation的some)/CreatureMigrationMemorySystem(_creatureMemMap Map<creatureId,memories[]>替换两处全量some)/DisasterChainSystem(_chainRuleMap Map<'src_tgt',ChainEvent>+_ecoCrisisMap Map<type,EcoCrisis>替换find/findIndex)/CreatureBountySystem(_activeBountyByTarget Map<targetId,Bounty>替换getBountyOn的find)/MiningSystem(_undiscoveredMap Map<x*10000+y,OreDeposit>替换tryDiscoverOre的坐标find)/CreatureMentorSystem(_entityBondMap Map<entityId,Bond>替换getEntityBond的mentor||apprentice find)/WorldBeaconSystem(_beaconCoordMap Map<x*10000+y,Beacon>替换getBeaconAt的坐标find)。\n注意事项：(1)每次添加Map优化后public查询方法必须加lazy sync fallback(if cached) else fallback to array scan——测试直接push内部数组会绕过Map；(2)CreatureMigrationMemorySystem的_creatureMemMap在decayMemories和pruneDeadCreatures中需要同步delete+splice；(3)DisasterChainSystem的_chainRuleMap是静态预构建（构造时一次），_ecoCrisisMap随upsertCrisis/fadeCrisis增删；(4)BiomeEvolutionSystem的_neighborSet在getNeighborTypes中与数组同步填充，naturalEvolution签名增加ns参数。",
+  "notes": "迭代117（循环18/100）。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.53MB；(2)批量优化9个系统的find()——消除各类O(n)查找；(3)具体系统：CreatureTotemSystem(_totemCoordMap Map<x*10000+y,Totem>替换getTotemAt的find，decayTotems同步delete)/WorldLawSystem(预建嵌套Map<key,Map<name,LawParam>>替换getLaw()双重find，categories静态数据)/BuildingUpgradeSystem(预建UPGRADE_PATH_MAP<BuildingType,UpgradePath>替换UPGRADE_PATHS.find)/PlagueMutationSystem(_strainById Map<id,strain>替换recordDeath的find，lazy fallback)/WorldNarratorSystem(预建TEMPLATE_MAP<NarrativeType,Template>替换TEMPLATES.find)/BuildingVarietySystem(预建BUILDING_TYPE_MAP<Era,Map<name,BuildingType>>替换渲染路径中每帧每建筑的BUILDING_CATALOG.find——关键渲染热路径)/WonderSystem+WorldEventSystem(预建WONDER_DEF_MAP+EVENT_DEF_MAP替换静态WONDER_DEFS.find/EVENT_DEFINITIONS.find)/WorldPetrificationSystem(_zoneById Map<id,zone>替换freeCreatures的zones.find，cleanupExpired同步delete)/EvolutionSystem(临时traitByName Map在auto-inherit循环开始前构建，替换嵌套循环中traits.find——O(n*m)→O(n+m))/DiplomacyVisualSystem(在updateCivData时预建_civById Map替换渲染路径中civs.find——每帧hover渲染热路径)。\n注意事项：(1)渲染路径的find()优化是最高优先级——BuildingVarietySystem和DiplomacyVisualSystem每帧都会调用，收益最大；(2)静态数组(TEMPLATES/WONDER_DEFS/EVENT_DEFINITIONS/UPGRADE_PATHS)的find()可以在模块级别预建Map——零运行时开销；(3)RuinsSystem的getRuins()暴露内部数组直接引用，测试通过push修改——不适合Map优化，除非改接口；(4)WorldPetrificationSystem的cleanupExpired同时需要delete _petrifiedIds——之前版本漏了，本次补上。",
   "priorities": [
     "1. 【持续监控】tsc+vitest+build三重验证保持全绿",
-    "2. 【可探索】坐标范围some() — WorldAtollSystem/DewFormation/IceSheet/Tide/Volcanic等用Math.abs距离判断的some()，需要bucket grid空间索引，每系统约15-30个对象，bucket化后O(constant)",
-    "3. 【可探索】CreatureTotemSystem.getTotemAt(x,y) — totems.find(t => t.x===x && t.y===y)，同WorldBeaconSystem模式，可用Map<x*10000+y,Totem>",
-    "4. 【可探索】WorldLawSystem.getLaw() — categories.find(c => c.key===k)双重find，categories是静态构建的小数组，可预建Map<key,Category>",
-    "5. 【可探索】RuinsSystem.getRuinAt(x,y) — ruins.find(r => r.x===x && r.y===y)，可用坐标Map，但需确认addRuin的入口"
+    "2. 【可探索】坐标范围some() — WorldAtollSystem/IceSheet/Miasma/Underground等用Math.abs距离判断的some()，每系统15-30个对象，bucket化后O(constant)",
+    "3. 【可探索】DiplomaticSpySystem.civs.find(c => c.id === spy.targetCivId)——civs通过civManager.civs获取，可在resolveMission开头构建临时Map",
+    "4. 【可探索】CreatureLullabySystem.creatures.find(tid => ...)——需看调用频率",
+    "5. 【可探索】BattleReplaySystem.prev.units.find(u => u.id === cu.id)——在findMVP中被调用，但findMVP似乎是死代码，先确认"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -17,7 +17,7 @@
     "Camera.getVisibleBounds()等热路径方法应返回缓存对象而非每次new — 每帧调用4次累积显著GC压力",
     "渲染路径中的闭包/对象字面量/getBoundingClientRect()都是隐性GC源 — 预分配+脏标记是标准修复模式",
     "数据驱动批量调度：703个系统调用按签名分类为6种类型(A-F)，用数组+for循环替代逐个调用，净减1147行",
-    "预分配缓冲区模式：_xxxBuf数组只增长不收缩，_xxx.length=0���置视图，避免每次new对象",
+    "预分配缓冲区模式：_xxxBuf数组只增长不收缩，_xxx.length=0重置视图，避免每次new对象",
     "IIFE闭包在tick路径中是隐性GC源 — 改为外部循环+持久化Set/变量",
     "find()/filter()/slice()链在嵌套循环中产生O(N²)闭包+数组 — 手动for循环+早退出是标准替代",
     "渲染管线不适合简单的数据驱动替换 — render调用间穿插条件逻辑和特殊参数，z-order顺序重要",
@@ -38,15 +38,13 @@
     "【迭代113新增】临时Set方案适合generateQuests等一次性扫描场景——在方法开头构建Set，避免持久化Set的复杂同步问题",
     "【迭代113新增】坐标系统的Set键：世界坐标<200用x*10000+y安全；civId系统用civId*1000+targetId(civId<1000安全)；如需三字段用字符串键'reason_a_b'",
     "【迭代114新增】WonderSystem等公共API暴露内部数组时，Set不能保证同步——在查询方法开头重建Set(clear+for)更安全，代价是每次O(n)但n很小",
-    "【迭代114新增】triple-field+status变化的some()：用Set只追踪'活跃'状态，在processPayments/checkDefaults/removeEntity中status变更时同步delete，cleanup逐个splice前delete",
-    "【迭代114新增】不查重的多条push(如spy_caught/tribute_refused)会使同一pair有多条记录——splice时不能简单delete pair，需要spliced后批量clear()+rebuild",
-    "【迭代114新增】EspionageSystem双Set方案：_justificationFullSet('reason_a_b')用于去重检查；_justificationPairSet('a_b')用于hasJustification查询，适用于同一pair多条记录场景",
-    "【迭代115新增】per-entity Set方案：HeroLegendSystem用Map<entityId,Set<deedType>>而不是在公共数组上some()——适用于每个实体有自己的小集合需要O(1)去重",
-    "【迭代115新增】Array.find(g => g.members.includes(eid))是双重线性查找O(guilds*members)——用Map<entityId,Container>反向索引是标准修复",
-    "【迭代116新增】per-creature memory map：CreatureMigrationMemorySystem用Map<creatureId,HabitatMemory[]>替换memories.some(creatureId&&coords)——O(n)→O(n_per_creature)；在decayMemories和pruneDeadCreatures splice前需同步delete",
-    "【迭代116新增】静态CHAIN_RULES可在类构造时一次性预建Map<'src_tgt',Rule>——O(1)代替O(n)find；ecoCrisis用Map<type,Crisis>需在upsertCrisis/fadeCrisis中维护",
-    "【迭代116新增】BiomeEvolutionSystem的neighbors是4元素数组——用Set<TileType>替换includes/some，Set在getNeighborTypes中与数组同步填充，naturalEvolution签名新增ns参数",
-    "【迭代116新增】getEntityBond(mentorId||apprenticeId)用Map同时存储两个key→同一bond对象——removeBond时delete两个key"
+    "【迭代116新增】per-creature memory map：CreatureMigrationMemorySystem用Map<creatureId,HabitatMemory[]>替换memories.some(creatureId&&coords)",
+    "【迭代116新增】静态CHAIN_RULES可在类构造时一次性预建Map<'src_tgt',Rule>——O(1)代替O(n)find",
+    "【迭代117新增】渲染路径的find()是最高优先级——BuildingVarietySystem每帧每建筑、DiplomacyVisualSystem每帧hover检测，比update路径更值得优化",
+    "【迭代117新增】静态模块级数组(TEMPLATES/WONDER_DEFS/EVENT_DEFINITIONS/UPGRADE_PATHS)的find()应在模块级预建Map——零运行时开销，最简单的优化",
+    "【迭代117新增】暴露内部数组引用(getRuins()返回this.ruins)的系统无法用Map优化——测试直接push绕过所有维护逻辑，这类系统保持原有find()即可",
+    "【迭代117新增】嵌套循环中的find()：先在外层循环开始前构建临时Map<name,T>，内层循环用Map.get()——EvolutionSystem auto-inherit场景",
+    "【迭代117新增】updateXxxData()等数据更新入口是建立Map的最佳时机——DiplomacyVisualSystem在updateCivData时同时维护_civById Map，渲染路径零开销"
   ],
-  "last_updated": "2026-03-02T10:55:00+08:00"
+  "last_updated": "2026-03-02T11:20:00+08:00"
 }
