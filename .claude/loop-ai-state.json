@@ -1,43 +1,34 @@
 {
-  "notes": "迭代151（循环58/100）。本轮主要成就：收集并提交XXX3/YYY3/ZZZ3三批Agent结果，测试从19475增至20029，+554个测试。",
+  "notes": "迭代152（循环59/100）。本轮主要成就：收集AAA3/BBB3/CCC3组Agent结果并修复WorldWeatherFrontSystem边界条件测试（x/y<-20非<=），测试从20029增至22456（+2427）。共完成15批次并行Agent，扩展了45个World系统测试文件。WorldUtils.test.ts（5个测试）是目前唯一剩余<20个测试的World系统文件。",
 
   "batch_results": {
-    "XXX3": "+170 (WorldTravertineTerrace:63, WorldTufa:62, WorldUndergroundRiver:60)",
-    "YYY3": "+186 (WorldUraniumSpring:68, WorldVentifact:64, WorldVolcanicAshPlain:69)",
-    "ZZZ3": "+198 (WorldVolcanicIsland:70, WorldWadi:72, WorldWaterspout:71)"
+    "AAA3": "WorldWhirlwind(71) + WorldXenonSpring(68) + WorldYardang(77) = 216",
+    "BBB3": "WorldYtterbiumSpring(54) + WorldYttriumSpring(54) + WorldZeugen(72) = 180",
+    "CCC3": "WorldZincSpring(60) + WorldZirconiumSpring(60) + WorldWeatherFront(63) = 183",
+    "DDD3": "WorldAncientRuin(61) + WorldAnomaly(52) + WorldComet(56) = 169",
+    "EEE3": "WorldCrystalFormation(60) + WorldEcho(58) + WorldFertility(68) = 186",
+    "FFF3": "WorldFossil(62) + WorldMeteorShower(51) + WorldMigrationRoute(63) = 176",
+    "GGG3": "WorldNarrator(60) + WorldNaturalWonder(61) + WorldSinkhole(62) = 183",
+    "HHH3": "WorldWhirlpool(76) + WorldAge(67) + WorldCoralReef(75) = 218",
+    "III3": "WorldEclipse(61) + WorldSeasonalDisaster(73) + WorldGlacier(73) = 207",
+    "JJJ3": "WorldMiasma(64) + WorldMythicBeast(62) + WorldRelic(67) = 193",
+    "KKK3": "WorldSacredGrove(60) + WorldSeed(62) + WorldTidal(63) = 185",
+    "LLL3": "WorldUnderground(60) + WorldVolcanic(60) + WorldChronicle(62) = 182",
+    "MMM3": "WorldStatsOverview(61) + WorldBeacon(55) + WorldTectonic(58) = 174",
+    "NNN3": "WorldBorateSpring(65) + WorldActiniumSpring(65) + WorldAstatineSpring(65) = 195"
   },
 
-  "active_agents": {
-    "AAA3": "ae4afceeaba3092fa",
-    "BBB3": "a641b4b0c7ea06e5b",
-    "CCC3": "a8c002e9d328ca1d5"
-  },
+  "test_count": "20029→22456 (+2427)",
 
-  "agent_targets": {
-    "AAA3": "WorldWhirlwind, WorldXenonSpring, WorldYardang",
-    "BBB3": "WorldYtterbiumSpring, WorldYttriumSpring, WorldZeugen",
-    "CCC3": "WorldZincSpring, WorldZirconiumSpring, WorldWeatherFront"
-  },
-
-  "test_count": "19475→20029 (+554)",
-
-  "key_findings": {
-    "WorldTravertineTerraceSystem": "CHECK_INTERVAL=2700, FORM_CHANCE=0.003(random>FC→continue), MAX_ZONES=32, 3次attempt, tile须nearWater/nearMountain(邻格), cutoff=54000",
-    "WorldTufaSystem": "CHECK_INTERVAL=2770, FORM_CHANCE=0.0007(random<FC→spawn), MAX_TOWERS=6, 单次attempt, cleanup age>=97(相对年龄), width=0时使用200fallback",
-    "WorldUndergroundRiverSystem": "CHECK_INTERVAL=2500, FORM_CHANCE=0.002(random<FC→spawn), MAX_RIVERS=25, spawn在cleanup前, segments=5+floor(random*10), cutoff=90000",
-    "WorldUraniumSpringSystem": "CHECK_INTERVAL=3070, FORM_CHANCE=0.003(random>FC→continue), MAX_ZONES=32, 3次attempt, 加入54000族！nearWater/nearMountain条件",
-    "WorldVentifactSystem": "CHECK_INTERVAL=2560, FORM_CHANCE=0.0015(random<FC→spawn), MAX=18, tile=SAND||MOUNTAIN(直接比较), cutoff=90000, facets上限6",
-    "WorldVolcanicAshPlainSystem": "CHECK_INTERVAL=2800, FORM_CHANCE=0.002(random<FC→spawn), MAX_PLAINS=24, tile=MOUNTAIN||GRASS, CUTOFF=88000, revegetation依赖fertility",
-    "WorldVolcanicIslandSystem": "EMERGE_CHANCE=0.002(random<FC→spawn), tile<=1(DEEP/SHALLOW), stage=floor(age/8000), cleanup<80000",
-    "WorldWadiSystem": "FORM_CHANCE=0.0015, tile=SAND||GRASS, depth缓慢上升+0.00003, cutoff=87000, spawn后同帧update字段漂移须用clamp范围",
-    "WorldWaterspoutSystem": "SPAWN_CHANCE=0.004, tile=SHALLOW||DEEP水, direction同帧漂移, lifetime过期条件>lifetime(严格), 陆地lifetime*=0.4"
-  },
+  "remaining_small_files": [
+    "WorldUtils.test.ts（5个测试）"
+  ],
 
   "priorities": [
-    "1. 等待AAA3/BBB3/CCC3 Agent完成，收集结果(~9个系统：Whirlwind/Xenon/Yardang/Ytterbium/Yttrium/Zeugna/Zinc/Zirconium/WeatherFront)",
-    "2. 检查其他<50行的测试文件（Fossil/Anomaly/Echo/MeteorShower/Narrator等），再派发一批",
-    "3. tsc+vitest三重验证保持全绿（当前20029/20029）",
-    "4. 修复YYY3组TS类型错误（worldAllWater/worldNoAdj/worldDeepWater/worldMountain内联对象需as any）"
+    "1. 扩展WorldUtils.test.ts（5个测试→60+），这是最后一个<20测试的World文件",
+    "2. 检查非World系统测试文件（Creature/Civ/Building等）是否还有<20个测试的",
+    "3. tsc+vitest验证保持全绿（当前22456/22456）",
+    "4. 继续寻找其他可优化的测试文件（非World类系统）"
   ],
 
   "lessons": [
@@ -51,16 +42,17 @@
     "【迭代135新增】spawn后立即update的off-by-one陷阱：同一次update()内先spawn再update所有记录，字段立即偏移",
     "【迭代144新增】hasAdjacentTile：getTile必须返回number，不能返回{type: tileType}对象",
     "【迭代150新增】Tidal系列FORM_CHANCE方向分裂：Lagoon/Marsh用random<FC；TidalWave用random>FC——每个系统必须独立验证",
-    "【迭代150新增】WorldTidePoolSystem cleanup机制独特：按biodiversity降序排序后截断保留高价值，非删除而是裁剪",
-    "【迭代150新增】WorldTravertineSystem cleanup用age>=98（相对年龄），与WorldRiftSystem(age>=maxAge)同类",
     "【迭代151新增】WorldTufaSystem cleanup用age>=97（相对年龄，另一个按age的系统），width=0时使用200 fallback",
-    "【迭代151新增】Spring 54000族新增Uranium成员(cutoff=54000)，已知8个：Tantalum/Tellurium/Terbium/Thallium/Thorium/Thulium/Tin/Uranium",
-    "【迭代151新增】WorldUndergroundRiverSystem spawn顺序在cleanup之前——预填满过期rivers时本帧不spawn，cleanup后下帧才能spawn",
+    "【迭代151新增】Spring 54000族扩展：Tantalum/Tellurium/Terbium/Thallium/Thorium/Thulium/Tin/Uranium/Zinc/Zirconium共10个",
     "【迭代151新增】内联对象字面量（非通过makeWorld函数创建）传给sys.update()参数时需要as any类型断言",
-    "【迭代151新增】YYY3组TS错误修复：sed替换worldAllWater/worldDeepWater/worldMountain等内联对象传参时加as any"
+    "【迭代152新增】WorldWeatherFrontSystem cleanup条件是严格小于：x<-20（非x<=-20），age>=maxAge才删除",
+    "【迭代152新增】spawn后同帧执行moveFronts/evolve/update，age会递增1，坐标/字段立即偏移——WeatherFront/Whirlpool/CoralReef等系统共同规律",
+    "【迭代152新增】BorateSpring/ActiniumSpring/AstatineSpring属于54000族（nearWater||nearMountain条件）",
+    "【迭代152新增】WorldStatsOverview的lastSampleTick初始为-SAMPLE_INTERVAL(-60)，所以tick=0时已满足节流",
+    "【迭代152新增】并行Agent大批量扩展测试极其高效：单轮15批次×3文件=45个系统测试文件扩展，+2427测试"
   ],
 
-  "last_updated": "2026-03-03T04:10:00+08:00",
-  "iteration": 151,
-  "loop": "58/100"
+  "last_updated": "2026-03-03T05:42:00+08:00",
+  "iteration": 152,
+  "loop": "59/100"
 }
