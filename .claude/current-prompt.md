@@ -1,38 +1,44 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代143（循环50/100）。本轮主要成就：收集并提交ZZZ2/AAA3/BBB3三批Agent结果，测试从15879增至16307，+428个测试。
+🧠 AI 上轮笔记：迭代144（循环51/100）。本轮主要成就：收集并提交CCC3/DDD3/EEE3三批Agent结果，测试从16307增至16709，+402个测试。
 
 本轮处理的系统（3批Agent并行）：
-ZZZ2组(+142): WorldPeatBogSystem(52) WorldPedimentSystem(53) WorldPermafrostThawSystem(52)
-AAA3组(+144): WorldPetrificationSystem(53) WorldPinnacleSystem(52) WorldPlayaSystem(54)
-BBB3组(+142): WorldPotassiumSpringSystem(52) WorldPraseodymiumSpringSystem(52) WorldQuicksandSystem(53)
+CCC3组(+150): WorldOsmiumSpringSystem(50) WorldOutlierSystem(50) WorldProtactiniumSpringSystem(50)
+DDD3组(+150): WorldPumiceFieldSystem(50) WorldPurificationSystem(50) WorldPyroclasticFlowSystem(50)
+EEE3组(+147): WorldRadiumSpringSystem(49) WorldRadonSpringSystem(49) WorldRainbowSystem(49)
 
 关键发现：
-- WorldPeatBogSystem: CHECK_INTERVAL=?, FORM_CHANCE=?, cutoff=95000, spawn后waterTable同帧偏移（spawn=60+rand*30，update±0.25）
-- WorldPedimentSystem: CHECK_INTERVAL=?, cutoff=90000, spawn后slope(-0.00002)和spectacle(+(rand-0.47)*0.09)同帧偏移
-- WorldPermafrostThawSystem: CHECK_INTERVAL=?, cutoff=85000, spawn后groundStability(-0.03)同帧偏移
-- WorldPetrificationSystem: spawn后age=1(非0)、radius已增加spreadRate——spawn+update同帧，邻近距离排斥dx²+dy²<400
-- WorldPinnacleSystem: cutoff=93000, cleanup用严格<（tick===cutoff时保留）
-- WorldPlayaSystem: cutoff=88000, cleanup用严格<
-- WorldPotassiumSpringSystem: cutoff=57000, 字段spawn后静态不变（无per-record update）
-- WorldPraseodymiumSpringSystem: cutoff=54000, 与Potassium结构对称，仅常量不同
-- WorldQuicksandSystem: tile=SAND(2)或GRASS(3)，cleanup依据active=false字段而非tick年龄，depth波动/radius扩张/实体陷阱在update阶段执行
+- WorldOsmiumSpringSystem: CHECK_INTERVAL=2820, FORM_CHANCE=0.003, cutoff=54000, nearWater||nearMountain, 字段静态不变
+- WorldOutlierSystem: CHECK_INTERVAL=2600, FORM_CHANCE=0.0013(Math.random()<0.0013才继续), cutoff=92000, tile须MOUNTAIN(5)或GRASS(3), update修改erosionVulnerability/isolationDegree/spectacle
+- WorldProtactiniumSpringSystem: CHECK_INTERVAL=3060, FORM_CHANCE=0.003, cutoff=54000, 结构对称OsmiumSpring
+- WorldPumiceFieldSystem: CHECK_INTERVAL=1900, SPAWN_CHANCE=0.003, MAX_FIELDS=16, tile须0或1（水域）, update: age++/buoyancy-=0.03/size-=0.01/mineralContent-=0.005/xy漂移
+- WorldPurificationSystem: CHECK_INTERVAL=1000, FORM_CHANCE=0.01(random>0.01跳过), MAX_SITES=8, 非DEEP_WATER即可spawn, cleanup: active=false时删除
+- WorldPyroclasticFlowSystem: CHECK_INTERVAL=2700, FORM_CHANCE=0.0007, MAX_FLOWS=6, 无tile检查, speed<=1时cleanup
+- WorldRadiumSpringSystem: CHECK_INTERVAL=3080, FORM_CHANCE=0.003, cutoff=54000, nearWater||nearMountain, 字段静态不变
+- WorldRadonSpringSystem: CHECK_INTERVAL=3110, 结构对称Radium
+- WorldRainbowSystem: CHECK_INTERVAL=1000, RAINBOW_CHANCE=0.005, MAX_RAINBOWS=4, 节流条件用>=（与Spring系统<相反）, cleanup: tick-startTick>=duration时删除
 
-当前已派发下一批（CCC3/DDD3/EEE3）：
-- CCC3组(a5a1194adc833e296): WorldOsmiumSpringSystem WorldOutlierSystem WorldProtactiniumSpringSystem
-- DDD3组(ac18d809395d54e23): WorldPumiceFieldSystem WorldPurificationSystem WorldPyroclasticFlowSystem
-- EEE3组(a747b3bf50e2d7edf): WorldRadiumSpringSystem WorldRadonSpringSystem WorldRainbowSystem
+关键陷阱新发现���
+- hasAdjacentTile比较world.getTile()===tileType（数值），mock必须返回number而非对象{type: tileType}
+- WorldPurificationSystem FORM_CHANCE方向：random>FORM_CHANCE时跳过（其他系统多用<）
+- WorldOutlierSystem spawn路径：random<FORM_CHANCE才继续（方向与Spring相反）
+- Rainbow spawn/expire顺序：先trySpawn再expire，满员时无法通过'先expire再spawn'验证
+
+当前已派发下一批（FFF3/GGG3/HHH3）：
+- FFF3组(a49e1f361223a9c74): WorldRavineSystem WorldRiftSystem WorldRiftValleySystem
+- GGG3组(a4387f0ffdd90840a): WorldRockArch2System WorldRockBridgeSystem WorldRockPedestalSystem
+- HHH3组(a9e74643a1a6cc2c9): WorldRockPillarSystem WorldRockShelterSystem WorldRubidiumSpringSystem
 
 下轮优先方向：
-1. 等待CCC3/DDD3/EEE3 Agent完成，收集结果
+1. 等待FFF3/GGG3/HHH3 Agent完成，收集结果
 2. 运行全量测试验证，修复flaky测试
-3. 继续处理WorldR系列（Ravine/Rift/RiftValley/Rock系列）
+3. 继续处理WorldS系列（SaltFlat/SaltMarsh/Samarium等）
 🎯 AI 自定优先级：[
-  "1. 【持续目标】继续处理World系统（剩余约50个文件），用并行Agent批量处理",
-  "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前16307/16307通过）",
-  "3. 【里程碑】已完成162个World系统测试改善（+4652测试），继续下一批",
-  "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+400-500测试",
-  "5. 【下一批系统】WorldR系列（Ravine/Rift/RiftValley/Rock系列）"
+  "1. 【持续目标】继续处理World系统（剩余约91个文件），用并行Agent批量处理",
+  "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前16709/16709通过）",
+  "3. 【里程碑】已完成180个World系统测试改善（+5054测试），继续下一批",
+  "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+400-450测试",
+  "5. 【下一批系统】WorldS系列（SaltFlat/SaltMarsh/Samarium/Sandstone等）"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
@@ -89,10 +95,13 @@ BBB3组(+142): WorldPotassiumSpringSystem(52) WorldPraseodymiumSpringSystem(52) 
   "【迭代142新增】WorldPhreaticExplosionSystem的steamPressure下限测试：max(5, 5.02-0.03)=max(5,4.99)=5，不能用toBeCloseTo(4.99)断言中间值，只能断言最终值toBe(5)",
   "【迭代143新增】WorldPetrificationSystem邻近距离排斥：预填充zones坐标需离新spawn点>20单位（dx²+dy²<400时拒绝），测试预填充用(50+i*10,50)而非(i,i)",
   "【迭代143新增】WorldQuicksandSystem cleanup依据active=false字段（不是tick年龄），与大多数系统不同——需检查源码确认cleanup触发条件类型",
-  "【迭代143新增】Spring系统静态字段确认：WorldPotassiumSpring/WorldPraseodymiumSpring字段spawn后不被update修改——与WorldHotSpring2等动态Spring不同"
+  "【迭代143新增】Spring系统静态字段确认：WorldPotassiumSpring/WorldPraseodymiumSpring字段spawn后不被update修改——与WorldHotSpring2等动态Spring不同",
+  "【迭代144新增】hasAdjacentTile工具函数比较world.getTile()===tileType（直接数值比较），mock的getTile必须返回number，不能返回{type: tileType}对象——否则nearWater/nearMountain判断全部失败",
+  "【迭代144新增】WorldPurificationSystem FORM_CHANCE方向：random>FORM_CHANCE时跳过spawn（random=0.01>0.01为false不跳过会spawn），与PumiceField的random<SPAWN_CHANCE方向相反，每个系统必须独立验证",
+  "【迭代144新增】WorldRainbowSystem节流条件用>=（tick-lastCheck>=CHECK_INTERVAL时执行），与大多数Spring系统用<相反——Rainbow是少数几个用>=的系统"
 ]
 
-迭代轮次: 51/100
+迭代轮次: 52/100
 
 
 🔄 自我进化（每轮必做）：
@@ -101,6 +110,6 @@ BBB3组(+142): WorldPotassiumSpringSystem(52) WorldPraseodymiumSpringSystem(52) 
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-03-03T02:22:11+08:00"
+  "last_updated": "2026-03-03T02:36:30+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。
