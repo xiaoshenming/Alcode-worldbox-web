@@ -61,6 +61,13 @@ const BUILDING_CATALOG: Record<Era, BuildingType[]> = {
 }
 
 const ERA_ORDER: Era[] = ['primitive', 'bronze', 'iron', 'medieval', 'renaissance']
+// Pre-built O(1) lookup: era → (building name → BuildingType)
+const BUILDING_TYPE_MAP: Record<Era, Map<string, BuildingType>> = {} as Record<Era, Map<string, BuildingType>>
+for (const era of ERA_ORDER) {
+  const m = new Map<string, BuildingType>()
+  for (const b of BUILDING_CATALOG[era]) m.set(b.name, b)
+  BUILDING_TYPE_MAP[era] = m
+}
 
 export class BuildingVarietySystem {
   private buildings: Map<EntityId, BuildingComponent> = new Map()
@@ -128,8 +135,8 @@ export class BuildingVarietySystem {
       const pos = em.getComponent<PositionComponent>(eid, 'position')
       if (!pos) continue
 
-      const catalog = BUILDING_CATALOG[building.era]
-      const bType = catalog?.find(b => b.name === building.buildingType)
+      const catalog = BUILDING_TYPE_MAP[building.era]
+      const bType = catalog?.get(building.buildingType)
       if (!bType) continue
 
       const sx = (pos.x - camX) * zoom
