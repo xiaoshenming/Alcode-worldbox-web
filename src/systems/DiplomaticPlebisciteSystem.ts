@@ -26,6 +26,7 @@ const MAX_PACTS = 25
 
 export class DiplomaticPlebisciteSystem {
   private pacts: PlebiscitePact[] = []
+  private _pactKeySet = new Set<number>()        // key: min(nA,nB)*10+max(nA,nB) (nation 0-5)
   private nextId = 1
   private lastCheck = 0
   private _nationsSet = new Set<number>()
@@ -42,10 +43,8 @@ export class DiplomaticPlebisciteSystem {
         if (this.pacts.length >= MAX_PACTS) break
         if (Math.random() > FORM_CHANCE) continue
 
-        if (!this.pacts.some(p =>
-          (p.nationA === nations[i] && p.nationB === nations[j]) ||
-          (p.nationA === nations[j] && p.nationB === nations[i])
-        )) {
+        const pKey = Math.min(nations[i], nations[j]) * 10 + Math.max(nations[i], nations[j])
+        if (!this._pactKeySet.has(pKey)) {
           this.pacts.push({
             id: this.nextId++,
             nationA: nations[i],
@@ -58,6 +57,7 @@ export class DiplomaticPlebisciteSystem {
             contestedBy: Math.random() < 0.3 ? pickRandom(nations) : 0,
             tick,
           })
+          this._pactKeySet.add(pKey)
         }
       }
     }
@@ -79,6 +79,7 @@ export class DiplomaticPlebisciteSystem {
     for (let i = this.pacts.length - 1; i >= 0; i--) {
       const p = this.pacts[i]
       if (p.status === 'expired' && p.tick < cutoff) {
+        this._pactKeySet.delete(Math.min(p.nationA, p.nationB) * 10 + Math.max(p.nationA, p.nationB))
         this.pacts.splice(i, 1)
       }
     }

@@ -28,6 +28,7 @@ let nextExileId = 1
 
 export class DiplomaticExileSystem {
   private exiles: Exile[] = []
+  private _wanderingSet = new Set<number>()      // entityIds with status 'wandering'
   private lastCheck = 0
   private lastFate = 0
 
@@ -65,6 +66,7 @@ export class DiplomaticExileSystem {
           exiledAt: tick,
           status: 'wandering',
         })
+        this._wanderingSet.add(id)
         break
       }
     }
@@ -75,6 +77,7 @@ export class DiplomaticExileSystem {
       if (exile.status !== 'wandering') continue
       if (!em.getComponent(exile.entityId, 'creature')) {
         exile.status = 'dead'
+        this._wanderingSet.delete(exile.entityId)
         continue
       }
       const roll = Math.random()
@@ -96,17 +99,20 @@ export class DiplomaticExileSystem {
         if (newCivId >= 0) {
           exile.status = 'joined_other'
           exile.newCivId = newCivId
+          this._wanderingSet.delete(exile.entityId)
         }
       } else if (roll < 0.08) {
         exile.status = 'bandit'
+        this._wanderingSet.delete(exile.entityId)
       } else if (roll < 0.09) {
         exile.status = 'pardoned'
+        this._wanderingSet.delete(exile.entityId)
       }
     }
   }
 
   private isExiled(id: EntityId): boolean {
-    return this.exiles.some(e => e.entityId === id && e.status === 'wandering')
+    return this._wanderingSet.has(id)
   }
 
 }
