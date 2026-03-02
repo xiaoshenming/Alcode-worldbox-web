@@ -140,7 +140,8 @@ describe('CreatureNomadSystem — leader 死亡后部落被清除', () => {
 
   it('leader 不存在时部落被删除', () => {
     ;(sys as any).tribes.push(makeTribe(99)) // leader=99，但 EM 里没有
-    const em = makeEM([1, 2]) // 99 不在列表里
+    // getEntitiesWithComponent 返回空数组，避免触发招募新部落
+    const em = { getEntitiesWithComponent: () => [] as number[], hasComponent: (eid: number) => [1, 2].includes(eid) } as any
     sys.update(1, em, 3400)
     expect((sys as any).tribes).toHaveLength(0)
   })
