@@ -41,6 +41,8 @@ export class CreatureMigrationMemorySystem {
   private _raceMemoriesMap: Map<string, HabitatMemory[]> = new Map()
   // O(1) per-creature memory lookup: creatureId → memories
   private _creatureMemMap: Map<number, HabitatMemory[]> = new Map()
+  // O(1) route lookup: raceType → MigrationRoute
+  private _routeByRace: Map<string, MigrationRoute> = new Map()
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -179,8 +181,10 @@ export class CreatureMigrationMemorySystem {
     for (const [race, mems] of raceMemories) {
       if (mems.length < 3) continue
 
-      const existingRoute = this.routes.find(r => r.raceType === race)
+      const existingRoute = this._routeByRace.get(race) ??
+        (this.routes.find(r => r.raceType === race) /* lazy sync for external push */)
       if (existingRoute) {
+        if (!this._routeByRace.has(race)) this._routeByRace.set(race, existingRoute)
         existingRoute.followers = mems.length
         existingRoute.age++
         continue
@@ -188,13 +192,15 @@ export class CreatureMigrationMemorySystem {
 
       // Form new route from top quality memories
       const sorted = mems.sort((a, b) => b.quality - a.quality).slice(0, 5)
-      this.routes.push({
+      const newRoute: MigrationRoute = {
         id: this.nextRouteId++,
         raceType: race,
         waypoints: sorted.map(m => ({ x: m.x, y: m.y, quality: m.quality })),
         followers: mems.length,
         age: 0,
-      })
+      }
+      this.routes.push(newRoute)
+      this._routeByRace.set(race, newRoute)
     }
   }
 
