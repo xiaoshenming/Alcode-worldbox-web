@@ -273,6 +273,9 @@ export class EvolutionSystem {
     if (!applied) return
 
     const traits = this.getSpeciesTraits(creature.species)
+    // Pre-build O(1) lookup for the auto-inherit loop below
+    const traitByName = new Map<string, typeof traits[0]>()
+    for (const t of traits) traitByName.set(t.name, t)
     const needs = em.getComponent<NeedsComponent>(entityId, 'needs')
 
     for (const trait of traits) {
@@ -328,7 +331,7 @@ export class EvolutionSystem {
       if (stat.total > 0 && stat.count / stat.total >= INHERITANCE_RATIO) {
         applied.add(traitName)
         // Apply inherited trait effects same as above
-        const matchingTrait = traits.find(t => t.name === traitName)
+        const matchingTrait = traitByName.get(traitName)
         if (matchingTrait && matchingTrait.effect === 'health_boost' && needs) {
           needs.health = Math.min(100, needs.health + 100 * matchingTrait.magnitude)
         }
