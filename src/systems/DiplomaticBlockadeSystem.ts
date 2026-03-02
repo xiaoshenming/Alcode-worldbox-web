@@ -42,6 +42,7 @@ const TYPE_DURATION: Record<BlockadeType, [number, number]> = {
 export class DiplomaticBlockadeSystem {
   private _civsBuf: Civilization[] = []
   private blockades: Blockade[] = []
+  private _blockadeKeySet = new Set<number>()    // key: blockaderId*1000+targetId (civId<1000)
   private nextId = 1
   private lastCheck = 0
   private totalImposed = 0
@@ -69,7 +70,7 @@ export class DiplomaticBlockadeSystem {
       do {
         target = pickRandom(civs)
       } while (target.id === civ.id)
-      if (this.blockades.some(b => b.blockaderId === civ.id && b.targetId === target.id)) continue
+      if (this._blockadeKeySet.has(civ.id * 1000 + target.id)) continue
 
       const types = BLOCKADE_TYPES
       const type = pickRandom(types)
@@ -85,6 +86,7 @@ export class DiplomaticBlockadeSystem {
         startedAt: tick,
         duration: minDur + Math.floor(Math.random() * (maxDur - minDur)),
       })
+      this._blockadeKeySet.add(civ.id * 1000 + target.id)
       this.totalImposed++
       if (this.blockades.length >= MAX_BLOCKADES) break
     }
@@ -96,6 +98,7 @@ export class DiplomaticBlockadeSystem {
       // Blockades weaken over time
       b.strength -= 0.5
       if (tick - b.startedAt > b.duration || b.strength <= 0) {
+        this._blockadeKeySet.delete(b.blockaderId * 1000 + b.targetId)
         this.blockades.splice(i, 1)
         this.totalBroken++
       }

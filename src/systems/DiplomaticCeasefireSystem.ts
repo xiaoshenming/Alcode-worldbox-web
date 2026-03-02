@@ -23,6 +23,7 @@ const MAX_CEASEFIRES = 8
 
 export class DiplomaticCeasefireSystem {
   private ceasefires: Ceasefire[] = []
+  private _ceasefireKeySet = new Set<string>()   // key: `${min}_${max}` for faction pair
   private nextId = 1
   private lastCheck = 0
 
@@ -38,10 +39,8 @@ export class DiplomaticCeasefireSystem {
         const fB = pickRandom(entities)
         const med = pickRandom(entities)
         if (fA !== fB && fA !== med && fB !== med) {
-          if (!this.ceasefires.some(c =>
-            (c.factionA === fA && c.factionB === fB) ||
-            (c.factionA === fB && c.factionB === fA)
-          )) {
+          const cfKey = `${Math.min(fA, fB)}_${Math.max(fA, fB)}`
+          if (!this._ceasefireKeySet.has(cfKey)) {
             const dur = 20 + Math.floor(Math.random() * 40)
             this.ceasefires.push({
               id: this.nextId++,
@@ -51,6 +50,7 @@ export class DiplomaticCeasefireSystem {
               violations: 0,
               mediatorId: med, tick,
             })
+            this._ceasefireKeySet.add(cfKey)
           }
         }
       }
@@ -78,6 +78,7 @@ export class DiplomaticCeasefireSystem {
     for (let i = this.ceasefires.length - 1; i >= 0; i--) {
       const cf = this.ceasefires[i]
       if (cf.remaining <= 0 || cf.stability <= 5) {
+        this._ceasefireKeySet.delete(`${Math.min(cf.factionA, cf.factionB)}_${Math.max(cf.factionA, cf.factionB)}`)
         this.ceasefires.splice(i, 1)
       }
     }

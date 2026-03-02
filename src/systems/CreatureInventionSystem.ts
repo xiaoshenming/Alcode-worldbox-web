@@ -40,6 +40,7 @@ const INVENTION_NAMES: Record<InventionCategory, string[]> = {
 export class CreatureInventionSystem {
   private _civsBuf: Civilization[] = []
   private inventions: Invention[] = []
+  private _inventionKeySet = new Set<string>()   // key: `${name}_${category}`
   private nextId = 1
   private lastCheck = 0
   private lastSpread = 0
@@ -71,7 +72,7 @@ export class CreatureInventionSystem {
       const name = pickRandom(names)
 
       // Avoid duplicate inventions
-      if (this.inventions.some(inv => inv.name === name && inv.category === category)) continue
+      if (this._inventionKeySet.has(`${name}_${category}`)) continue
 
       const power = 20 + Math.floor(Math.random() * 80)
       const isBreakthrough = power > 80
@@ -96,6 +97,7 @@ export class CreatureInventionSystem {
         createdAt: tick,
         civId,
       })
+      this._inventionKeySet.add(`${name}_${category}`)
       this.totalInvented++
       if (this.inventions.length >= MAX_INVENTIONS) break
     }

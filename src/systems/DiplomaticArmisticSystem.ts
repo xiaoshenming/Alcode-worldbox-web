@@ -26,6 +26,7 @@ const MAX_ARMISTICES = 10
 export class DiplomaticArmisticSystem {
   private _civsBuf: Civilization[] = []
   private armistices: Armistice[] = []
+  private _armisticeKeySet = new Set<number>()   // key: min(cidA,cidB)*10000+max(cidA,cidB)
   private nextId = 1
   private lastCheck = 0
 
@@ -48,11 +49,8 @@ export class DiplomaticArmisticSystem {
       const cidB = civs[iB].id
 
       // Avoid duplicate armistices between same pair
-      const exists = this.armistices.some(
-        a => (a.civIdA === cidA && a.civIdB === cidB) ||
-             (a.civIdA === cidB && a.civIdB === cidA)
-      )
-      if (!exists) {
+      const key = Math.min(cidA, cidB) * 10000 + Math.max(cidA, cidB)
+      if (!this._armisticeKeySet.has(key)) {
         const dur = 3000 + Math.floor(Math.random() * 7000)
         this.armistices.push({
           id: this.nextId++,
@@ -64,6 +62,7 @@ export class DiplomaticArmisticSystem {
           stability: 50 + Math.random() * 40,
           tick,
         })
+        this._armisticeKeySet.add(key)
       }
     }
 
@@ -87,6 +86,7 @@ export class DiplomaticArmisticSystem {
     for (let i = this.armistices.length - 1; i >= 0; i--) {
       const a = this.armistices[i]
       if (a.remaining <= 0 || a.stability <= 0) {
+        this._armisticeKeySet.delete(Math.min(a.civIdA, a.civIdB) * 10000 + Math.max(a.civIdA, a.civIdB))
         this.armistices.splice(i, 1)
       }
     }

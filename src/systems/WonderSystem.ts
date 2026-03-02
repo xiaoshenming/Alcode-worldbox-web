@@ -52,6 +52,8 @@ const PARTICLE_INTERVAL = 60
 export class WonderSystem {
   private activeWonders: ActiveWonder[] = []
   private constructions: WonderConstruction[] = []
+  private _activeWonderIds = new Set<string>()    // defId
+  private _constructionIds = new Set<string>()    // defId
   private _availBuf: WonderDef[] = []
   private lastCheckTick = 0
 
@@ -69,8 +71,8 @@ export class WonderSystem {
   getAvailableWonders(): WonderDef[] {
     const buf = this._availBuf; buf.length = 0
     for (const d of WONDER_DEFS) {
-      if (!this.activeWonders.some(w => w.defId === d.id) &&
-          !this.constructions.some(c => c.defId === d.id)) {
+      if (!this._activeWonderIds.has(d.id) &&
+          !this._constructionIds.has(d.id)) {
         buf.push(d)
       }
     }
@@ -88,13 +90,14 @@ export class WonderSystem {
     if (available.length === 0) return
 
     for (const def of available) {
-      if (this.constructions.some(c => c.defId === def.id)) continue
+      if (this._constructionIds.has(def.id)) continue
       for (const [civId, civ] of civManager.civilizations) {
         if (civ.techLevel < def.techRequired) continue
         if (!this.canAfford(civ.resources, def.resourceCost)) continue
         const chance = civ.culture.trait === def.preferredCulture ? 0.15 : 0.03
         if (Math.random() < chance) {
           this.constructions.push({ defId: def.id, civId, startedAt: tick })
+          this._constructionIds.add(def.id)
           EventLog.log('building', `${civ.name} began constructing ${def.name}!`, tick)
           break
         }
@@ -106,7 +109,7 @@ export class WonderSystem {
     for (let i = this.constructions.length - 1; i >= 0; i--) {
       const con = this.constructions[i]
       const civ = civManager.civilizations.get(con.civId)
-      if (!civ) { this.constructions.splice(i, 1); continue }
+      if (!civ) { this._constructionIds.delete(con.defId); this.constructions.splice(i, 1); continue }
       if (tick - con.startedAt < BUILD_DURATION) continue
 
       const def = WONDER_DEFS.find(d => d.id === con.defId)
@@ -128,6 +131,8 @@ export class WonderSystem {
         defId: def.id, civId: con.civId, entityId,
         x: center.x, y: center.y, completedAt: tick
       })
+      this._activeWonderIds.add(def.id)
+      this._constructionIds.delete(def.id)
       this.constructions.splice(i, 1)
 
       particles.spawnFirework(center.x, center.y, def.color)
