@@ -228,7 +228,7 @@ describe('CreatureWelderSystem — 技能递增', () => {
 
 describe('CreatureWelderSystem — cleanup: weldingSkill<=4时删除', () => {
   let sys: CreatureWelderSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
   afterEach(() => vi.restoreAllMocks())
 
   it('weldingSkill递增后<=4时被删除（3.98+0.02=4.00<=4）', () => {
