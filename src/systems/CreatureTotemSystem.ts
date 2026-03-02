@@ -41,6 +41,8 @@ export class CreatureTotemSystem {
   private totems: Totem[] = []
   private nextId = 1
   private lastCheck = 0
+  // O(1) exact coordinate lookup: key = x * 10000 + y
+  private _totemCoordMap: Map<number, Totem> = new Map()
 
   update(dt: number, em: EntityManager, world: World, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -84,14 +86,16 @@ export class CreatureTotemSystem {
       if (nearby < 3) continue
 
       const type = pickRandom(TOTEM_TYPES)
-      this.totems.push({
+      const totem: Totem = {
         id: this.nextId++,
         x, y, type,
         power: 30 + Math.floor(Math.random() * 30),
         creatorRace: creature.species,
         createdTick: tick,
         worshipCount: 0,
-      })
+      }
+      this.totems.push(totem)
+      this._totemCoordMap.set(x * 10000 + y, totem)
     }
   }
 
@@ -119,12 +123,16 @@ export class CreatureTotemSystem {
       const t = this.totems[i]
       t.power -= POWER_DECAY
       if (t.power <= 0) {
+        this._totemCoordMap.delete(t.x * 10000 + t.y)
         this.totems.splice(i, 1)
       }
     }
   }
 
   getTotemAt(x: number, y: number): Totem | undefined {
+    const cached = this._totemCoordMap.get(x * 10000 + y)
+    if (cached !== undefined) return cached
+    // Lazy sync fallback: tests may push directly to totems array
     return this.totems.find(t => t.x === x && t.y === y)
   }
 
