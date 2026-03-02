@@ -1,16 +1,291 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { DiplomaticArbitrationSystem } from '../systems/DiplomaticArbitrationSystem'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { DiplomaticArbitrationSystem, ArbitrationCase } from '../systems/DiplomaticArbitrationSystem'
+
+// Constants mirrored from source
+const CHECK_INTERVAL = 2380
+const MAX_CASES = 20
+const EXPIRE_OFFSET = 80000
+
 function makeSys() { return new DiplomaticArbitrationSystem() }
+
+function makeCase(id: number, tick = 0): ArbitrationCase {
+  return {
+    id,
+    civIdA: 1,
+    civIdB: 2,
+    arbitrationType: 'territorial',
+    fairnessRating: 60,
+    bindingStrength: 50,
+    complianceRate: 60,
+    disputeResolution: 25,
+    duration: 0,
+    tick,
+  }
+}
+
 describe('DiplomaticArbitrationSystem', () => {
   let sys: DiplomaticArbitrationSystem
-  beforeEach(() => { sys = makeSys() })
-  it('初始getCases为空', () => { expect((sys as any).cases).toHaveLength(0) })
-  it('注入后getCases返回数据', () => {
-    ;(sys as any).cases.push({ id: 1, civIdA: 1, civIdB: 2, arbitrationType: 'territorial', fairnessRating: 70, bindingStrength: 60, complianceRate: 80, disputeResolution: 50 })
-    expect((sys as any).cases).toHaveLength(1)
-    expect((sys as any).cases[0].id).toBe(1)
+
+  beforeEach(() => {
+    sys = makeSys()
+    vi.restoreAllMocks()
   })
-  it('getCases返回数组', () => { expect(Array.isArray((sys as any).cases)).toBe(true) })
-  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
-  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  // ------------------------------------------------------------------ //
+  // 1. 基础数据结构
+  // ------------------------------------------------------------------ //
+  describe('基础数据结构', () => {
+    it('初始cases为空数组', () => {
+      expect((sys as any).cases).toHaveLength(0)
+      expect(Array.isArray((sys as any).cases)).toBe(true)
+    })
+
+    it('nextId初始为1', () => {
+      expect((sys as any).nextId).toBe(1)
+    })
+
+    it('lastCheck初始为0', () => {
+      expect((sys as any).lastCheck).toBe(0)
+    })
+
+    it('注入单条case后可读取', () => {
+      ;(sys as any).cases.push(makeCase(1))
+      expect((sys as any).cases).toHaveLength(1)
+      expect((sys as any).cases[0].id).toBe(1)
+    })
+
+    it('注入多条case后长度正确', () => {
+      ;(sys as any).cases.push(makeCase(1), makeCase(2), makeCase(3))
+      expect((sys as any).cases).toHaveLength(3)
+    })
+
+    it('支持arbitrationType: territorial', () => {
+      const c = makeCase(1)
+      c.arbitrationType = 'territorial'
+      ;(sys as any).cases.push(c)
+      expect((sys as any).cases[0].arbitrationType).toBe('territorial')
+    })
+
+    it('支持arbitrationType: commercial', () => {
+      const c = makeCase(1)
+      c.arbitrationType = 'commercial'
+      ;(sys as any).cases.push(c)
+      expect((sys as any).cases[0].arbitrationType).toBe('commercial')
+    })
+
+    it('支持arbitrationType: military', () => {
+      const c = makeCase(1)
+      c.arbitrationType = 'military'
+      ;(sys as any).cases.push(c)
+      expect((sys as any).cases[0].arbitrationType).toBe('military')
+    })
+
+    it('支持arbitrationType: cultural', () => {
+      const c = makeCase(1)
+      c.arbitrationType = 'cultural'
+      ;(sys as any).cases.push(c)
+      expect((sys as any).cases[0].arbitrationType).toBe('cultural')
+    })
+  })
+
+  // ------------------------------------------------------------------ //
+  // 2. CHECK_INTERVAL 节流
+  // ------------------------------------------------------------------ //
+  describe('CHECK_INTERVAL节流', () => {
+    it('tick < CHECK_INTERVAL 时不更新lastCheck', () => {
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL - 1)
+      expect((sys as any).lastCheck).toBe(0)
+    })
+
+    it('tick === CHECK_INTERVAL 时触发更新', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
+      expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+    })
+
+    it('tick > CHECK_INTERVAL 时触发更新', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL + 500)
+      expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 500)
+    })
+
+    it('第二次tick未超过间隔时不更新lastCheck', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL + CHECK_INTERVAL - 1)
+      expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+    })
+
+    it('连续两次有效tick均更新lastCheck', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 2)
+      expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+    })
+  })
+
+  // ------------------------------------------------------------------ //
+  // 3. 数值字段动态更新
+  // ------------------------------------------------------------------ //
+  describe('数值字段动态更新', () => {
+    it('有效update后duration增加1', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      ;(sys as any).cases.push(makeCase(1, 0))
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
+      expect((sys as any).cases[0].duration).toBe(1)
+    })
+
+    it('多次有效update后duration累加', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      ;(sys as any).cases.push(makeCase(1, 0))
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 2)
+      expect((sys as any).cases[0].duration).toBe(2)
+    })
+
+    it('fairnessRating始终在[10,90]范围内', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      const c = makeCase(1, 0)
+      c.fairnessRating = 89
+      ;(sys as any).cases.push(c)
+      for (let i = 1; i <= 5; i++) {
+        sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
+      }
+      const val = (sys as any).cases[0].fairnessRating
+      expect(val).toBeGreaterThanOrEqual(10)
+      expect(val).toBeLessThanOrEqual(90)
+    })
+
+    it('bindingStrength始终在[10,85]范围内', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      const c = makeCase(1, 0)
+      c.bindingStrength = 11
+      ;(sys as any).cases.push(c)
+      for (let i = 1; i <= 5; i++) {
+        sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
+      }
+      const val = (sys as any).cases[0].bindingStrength
+      expect(val).toBeGreaterThanOrEqual(10)
+      expect(val).toBeLessThanOrEqual(85)
+    })
+
+    it('complianceRate始终在[15,95]范围内', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      const c = makeCase(1, 0)
+      c.complianceRate = 94
+      ;(sys as any).cases.push(c)
+      for (let i = 1; i <= 5; i++) {
+        sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
+      }
+      const val = (sys as any).cases[0].complianceRate
+      expect(val).toBeGreaterThanOrEqual(15)
+      expect(val).toBeLessThanOrEqual(95)
+    })
+
+    it('disputeResolution始终在[5,75]范围内', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      const c = makeCase(1, 0)
+      c.disputeResolution = 6
+      ;(sys as any).cases.push(c)
+      for (let i = 1; i <= 5; i++) {
+        sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
+      }
+      const val = (sys as any).cases[0].disputeResolution
+      expect(val).toBeGreaterThanOrEqual(5)
+      expect(val).toBeLessThanOrEqual(75)
+    })
+  })
+
+  // ------------------------------------------------------------------ //
+  // 4. time-based 过期清理
+  // ------------------------------------------------------------------ //
+  describe('time-based过期清理', () => {
+    it('超期case被删除（tick=0，大tick触发清理）', () => {
+      ;(sys as any).cases.push(makeCase(1, 0))
+      const bigTick = EXPIRE_OFFSET + CHECK_INTERVAL + 1
+      // mock > TREATY_CHANCE(0.0027) 跳过新增分支，保证过期清理执行
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, bigTick)
+      expect((sys as any).cases).toHaveLength(0)
+    })
+
+    it('未超期case被保留', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      const baseTick = CHECK_INTERVAL
+      ;(sys as any).cases.push(makeCase(99, baseTick))
+      sys.update(1, {} as any, {} as any, baseTick + CHECK_INTERVAL)
+      const remaining = (sys as any).cases.filter((c: ArbitrationCase) => c.id === 99)
+      expect(remaining).toHaveLength(1)
+    })
+
+    it('混合case：超期删除、未超期保留', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      const bigTick = EXPIRE_OFFSET + CHECK_INTERVAL + 1
+      ;(sys as any).cases.push(makeCase(1, 0))       // 超期
+      ;(sys as any).cases.push(makeCase(2, bigTick - 1)) // 未超期
+      sys.update(1, {} as any, {} as any, bigTick)
+      const ids = (sys as any).cases.map((c: ArbitrationCase) => c.id)
+      expect(ids).not.toContain(1)
+      expect(ids).toContain(2)
+    })
+
+    it('多条超期case全部被删除', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      const bigTick = EXPIRE_OFFSET + CHECK_INTERVAL + 1
+      ;(sys as any).cases.push(makeCase(1, 0), makeCase(2, 0), makeCase(3, 0))
+      sys.update(1, {} as any, {} as any, bigTick)
+      expect((sys as any).cases).toHaveLength(0)
+    })
+
+    it('cutoff边界：tick === cutoff 时不删除', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      const bigTick = EXPIRE_OFFSET + CHECK_INTERVAL + 1
+      const cutoff = bigTick - EXPIRE_OFFSET
+      ;(sys as any).cases.push(makeCase(5, cutoff))
+      sys.update(1, {} as any, {} as any, bigTick)
+      expect((sys as any).cases).toHaveLength(1)
+    })
+  })
+
+  // ------------------------------------------------------------------ //
+  // 5. MAX_CASES 上限
+  // ------------------------------------------------------------------ //
+  describe('MAX_CASES上限', () => {
+    it('cases已满时不新增', () => {
+      for (let i = 0; i < MAX_CASES; i++) {
+        ;(sys as any).cases.push(makeCase(i + 1, CHECK_INTERVAL))
+      }
+      vi.spyOn(Math, 'random').mockReturnValue(0.001) // < TREATY_CHANCE 0.0027
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
+      expect((sys as any).cases.length).toBeLessThanOrEqual(MAX_CASES)
+    })
+
+    it('达到MAX_CASES后不超上限', () => {
+      for (let i = 0; i < MAX_CASES; i++) {
+        ;(sys as any).cases.push(makeCase(i + 1, CHECK_INTERVAL))
+      }
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      for (let t = 1; t <= 5; t++) {
+        sys.update(1, {} as any, {} as any, CHECK_INTERVAL * t)
+      }
+      expect((sys as any).cases.length).toBeLessThanOrEqual(MAX_CASES)
+    })
+
+    it('nextId在成功新增case后递增', () => {
+      let callCount = 0
+      vi.spyOn(Math, 'random').mockImplementation(() => {
+        callCount++
+        if (callCount === 1) return 0.001  // < TREATY_CHANCE
+        if (callCount === 2) return 0.1    // civA=1
+        if (callCount === 3) return 0.9    // civB=8
+        return 0.5
+      })
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
+      expect((sys as any).nextId).toBeGreaterThanOrEqual(1)
+    })
+  })
 })
