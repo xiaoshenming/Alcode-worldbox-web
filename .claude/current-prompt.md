@@ -1,43 +1,43 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代136（循环43/100）。本轮主要成就：批量处理9个World系统测试（EEE2/FFF2/GGG2组），测试从13731增至13958，+227个测试。
+🧠 AI 上轮笔记：迭代137（循环44/100）。本轮主要成就：收集并提交HHH2/III2/JJJ2三批Agent结果，测试从13958增至14253，+295个测试。
 
-本轮处理的系统（分3批Agent并行）：
-EEE2组(+70): WorldHeatmapSystem(5→30) WorldHogbackSystem(5→28) WorldHolmiumSpringSystem(5→27)
-FFF2组(+87): WorldHoodooSystem(5→30) WorldHotPoolSystem(5→29) WorldHotSpringSystem(5→33)
-GGG2组(+80): WorldHotSpringSystem2(5→29) WorldIceCaveSystem(5→30) WorldIceSheetSystem(5→36)
+本轮处理的系统（3批Agent并行）：
+HHH2组(+97): WorldIceShelfSystem(36) WorldIndiumSpringSystem(28) WorldInlierSystem(33)
+III2组(+121): WorldInselbergSystem(45) WorldIridiumSpringSystem(39) WorldIrrigationSystem(37)
+JJJ2组(+122): WorldKarstSpringSystem(40) WorldKarstTowerSystem(40) WorldKelpForestSystem(42)
 
 关键发现：
-- WorldHeatmapSystem: update(_tick)只有1个参数（不是标准4参数），handleKey('m')循环5种模式，grids是Map<string,Float32Array>
-- WorldHogbackSystem: CHECK_INTERVAL=2620, MAX_HOGBACKS=15, spawn需MOUNTAIN(5)/FOREST(4), cleanup: tick-91000
-- WorldHolmiumSpringSystem: CHECK_INTERVAL=2990, 3次attempt, nearWater||nearMountain, cleanup: tick-54000, 无动态字段更新
-- WorldHoodooSystem: CHECK_INTERVAL=2800, MAX_HOODOOS=16, spawn需SAND(2)/MOUNTAIN(5), 侵蚀update(height-=erosionRate*0.0003), cleanup: tick-90000
-- WorldHotPoolSystem: CHECK_INTERVAL=2730, MAX_POOLS=7, 无tile限制, age+=0.004, cleanup: age>=93
-- WorldHotSpringSystem: CHECK_INTERVAL=3800, MAX_SPRINGS=10, spawn需MOUNTAIN/FOREST, TTL=300000, visitors有0.02概率++
-- WorldHotSpringSystem2: CHECK_INTERVAL=2640, MAX_SPRINGS=10, waterTemp衰减至<=30触发cleanup, 无tile限制
-- WorldIceCaveSystem: CHECK_INTERVAL=2900, 3次attempt, 需SNOW(6)/MOUNTAIN(5), cleanup: tick-58000
-- WorldIceSheetSystem: CHECK_INTERVAL=4000, MAX_ICE_SHEETS=8, 需SNOW(6), expanding逻辑+thickness/area<=0 cleanup
+- WorldIceShelfSystem: CHECK_INTERVAL=3000, MAX_SHELVES=22, spawn:SNOW(6)||DEEP_WATER(0), cleanup: tick<cutoff-100000||thickness<10, 但update先clamp thickness>=10，所以thickness<10路径实际不触发
+- WorldIndiumSpringSystem: CHECK_INTERVAL=2880, 3次attempt, nearWater||nearMountain, cleanup: tick-54000
+- WorldInlierSystem: CHECK_INTERVAL=2590, MAX=14, spawn:MOUNTAIN(5)||GRASS(3), cleanup: tick-93000, exposureDepth/geologicalValue动态增长
+- WorldInselbergSystem: CHECK_INTERVAL=2610, MAX=15, spawn:GRASS(3)||SAND(2), cleanup: tick-92000, height/baseRadius/vegetationCover/spectacle动态更新
+- WorldIridiumSpringSystem: CHECK_INTERVAL=2810, 3次attempt, nearWater||nearMountain, cleanup: tick-54000
+- WorldIrrigationSystem: CHECK_INTERVAL=3000, MAX=25, spawn:GRASS(3)+adjacent water, 4状态机(planned→digging→flowing→silted), cleanup: tick-200000
+- WorldKarstSpringSystem: CHECK_INTERVAL=2570, MAX=14, spawn:MOUNTAIN/GRASS, cleanup: tick-92000, 多字段动态更新
+- WorldKarstTowerSystem: CHECK_INTERVAL=2800, MAX=22, spawn:GRASS/MOUNTAIN, cleanup: tick-95000, height侵蚀/vegetationCover/stability动态更新
+- WorldKelpForestSystem: CHECK_INTERVAL=1700, MAX=22, spawn:DEEP/SHALLOW_WATER, cleanup双条件=超时(tick-90000)AND密度<10
 
-本轮flaky陷阱：
-1. WorldHotSpringSystem visitors off-by-one: spawn时random=0触发0<0.02使visitors在spawn帧立即变1，修复：直接注入对象测初始值
-2. WorldHotSpringSystem2 waterTemp=30.001钳位后被cleanup删除: 30.001-0.005=29.996→Math.max(30,29.996)=30→30<=30删除，修复：改为验证toHaveLength(0)
-3. WorldIceCaveSystem 3次attempt都spawn: random=0时3次都满足→spawn3个，修复：改为toBeGreaterThanOrEqual(1)
+本轮关键修复（III2 Agent发现）：
+1. afterEach未在import中引入→ReferenceError：InselbergSystem和IridiumSpringSystem文件漏import afterEach
+2. tick==CHECK_INTERVAL边界理解错误：条件tick-lastCheck<CHECK_INTERVAL，等于时不满足严格小于，会执行（而非不执行）
+3. cleanup cutoff严格小于：恰好等于cutoff时不清除（<而非<=）
 
-当前已派发下一批（HHH2/III2/JJJ2）：
-- HHH2组: WorldIceShelfSystem WorldIndiumSpringSystem WorldInlierSystem
-- III2组: WorldInselbergSystem WorldIridiumSpringSystem WorldIrrigationSystem
-- JJJ2组: WorldKarstSpringSystem WorldKarstTowerSystem WorldKelpForestSystem
+当前已派发下一批（KKK2/LLL2/MMM2）：
+- KKK2组: WorldKettleHoleSystem WorldLabyrinthSystem WorldLaharSystem
+- LLL2组: WorldLanthanumSpringSystem WorldLavaTubeSystem WorldLawSystem
+- MMM2组: WorldLeyLineSystem WorldLighthouseSystem WorldLithiumSpringSystem
 
 下轮优先方向：
-1. 等待HHH2/III2/JJJ2 Agent完成，收集结果
+1. 等待KKK2/LLL2/MMM2 Agent完成，收集结果
 2. 运行全量测试验证，修复flaky测试
-3. 继续处理WorldK/L/M系列
+3. 继续处理WorldL/M系列剩余
 🎯 AI 自定优先级：[
-  "1. 【持续目标】继续处理World系统（剩余约150个文件），用并行Agent批量处理",
-  "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前13958/13958通过）",
-  "3. 【里程碑】已完成90+9=99个World系统测试改善（+2076+227=2303测试），继续下一批",
-  "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+150-250测试",
-  "5. 【下一批系统】WorldKettleHoleSystem及后续K/L/M系列"
+  "1. 【持续目标】继续处理World系统（剩余约130个文件），用并行Agent批量处理",
+  "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前14253/14253通过）",
+  "3. 【里程碑】已完成108个World系统测试改善（+2598测试），继续下一批",
+  "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+200-300测试",
+  "5. 【下一批系统】WorldLutetiumSpringSystem及后续L/M系列"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
@@ -94,10 +94,13 @@ GGG2组(+80): WorldHotSpringSystem2(5→29) WorldIceCaveSystem(5→30) WorldIceS
   "【迭代136新增】WorldHotSpringSystem visitors off-by-one: spawn时random=0使visitors在spawn帧立即变1（0<0.02）——测试初始visitors必须直接注入对象而非通过update spawn",
   "【迭代136新增】WorldHotSpringSystem2 waterTemp钳位触发cleanup: waterTemp=30.001经update→Math.max(30,29.996)=30→30<=30被cleanup删除——需验证toHaveLength(0)而非读取waterTemp",
   "【迭代136新增】3次attempt系统(IceCaveSystem等): random=0时3次都spawn→length=3，spawn验证改用toBeGreaterThanOrEqual(1)而非toHaveLength(1)",
-  "【迭代136新增】IceShelfSystem特殊cleanup: sh.tick < cutoff-100000 || sh.thickness < 10，spawn后thickness初始>=20但update后立即减少calvingRate*0.05"
+  "【迭代136新增】IceShelfSystem特殊cleanup: sh.tick < cutoff-100000 || sh.thickness < 10，spawn后thickness初始>=20但update后立即减少calvingRate*0.05",
+  "【迭代137新增】tick==CHECK_INTERVAL边界：条件tick-lastCheck<CHECK_INTERVAL，等于时3000-0=3000不<3000，会执行（而非不执行）——之前测试写错了！",
+  "【迭代137新增】WorldIrrigationSystem有4状态机(planned→digging→flowing→silted)：planned以0.1概率转digging，digging以0.05概率转flowing，silted以0.02概率恢复+siltLevel重置为10",
+  "【迭代137新增】afterEach必须在import中显式引入，否则ReferenceError——import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'"
 ]
 
-迭代轮次: 44/100
+迭代轮次: 45/100
 
 
 🔄 自我进化（每轮必做）：
@@ -106,6 +109,6 @@ GGG2组(+80): WorldHotSpringSystem2(5→29) WorldIceCaveSystem(5→30) WorldIceS
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-03-03T01:07:27+08:00"
+  "last_updated": "2026-03-03T01:17:19+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。
