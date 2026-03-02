@@ -54,6 +54,10 @@ export class DiplomaticSpySystem {
     const civs = civManager?.civs
     if (!civs || civs.length < 2) return
 
+    // Build temporary O(1) lookup map for this tick
+    const civById = new Map<number, any>()
+    for (const c of civs) civById.set(c.id, c)
+
     // Recruit new spies
     if (this.countActiveSpies() < MAX_SPIES) {
       this.tryRecruitSpy(civs, tick)
@@ -65,7 +69,7 @@ export class DiplomaticSpySystem {
       if (spy.status !== 'active') continue
       if (tick - spy.deployedTick < MISSION_DURATION) continue
 
-      this.resolveMission(spy, civs, tick)
+      this.resolveMission(spy, civById, tick)
     }
 
     // Prune old non-active spies
@@ -132,7 +136,7 @@ export class DiplomaticSpySystem {
     this.spies.push(spy)
   }
 
-  private resolveMission(spy: Spy, civs: any[], tick: number): void {
+  private resolveMission(spy: Spy, civById: Map<number, any>, tick: number): void {
     const success = Math.random() < spy.successChance
 
     const addIncident = (type: SpyIncident['type']) => {
@@ -146,7 +150,7 @@ export class DiplomaticSpySystem {
       if (roll < 0.4) {
         spy.status = 'captured'
         addIncident('captured')
-        const targetCiv = civs.find((c: any) => c.id === spy.targetCivId)
+        const targetCiv = civById.get(spy.targetCivId)
         if (targetCiv?.relations) {
           const rel = targetCiv.relations[spy.originCivId]
           if (typeof rel === 'number') targetCiv.relations[spy.originCivId] = rel - CAPTURE_RELATION_PENALTY
