@@ -1,11 +1,11 @@
 {
-  "notes": "迭代113（循环14/100）。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.53MB；(2)批量优化32个系统的some()→Set/Map O(n)→O(1)——涵盖单字段entityId(17个职业系统+5个功能系统)、双字段civId/entityId(外交系统4个+世界系统3个)、坐标x/y(Fossil/FungalNetwork/GeothermalVent 3个)；(3)具体系统：Exile/Nickname/Claustrophobia/Grudge(Map<holderId,Set<targetId>>)/CropSystem(_activeFieldKeys)/Astronomer/Beekeeper/CheeseAger/Chronicler/Dowser/Firewalker/Gambler/Gladiator/Gondolier/Herbalist/Lamplighter/MushroomForager/Perfumer/Sentinel/SoapMaker/Trapper/Weaver/DiplomaticEspionage/SeasonFestival/WorldEvent/QuestSystem(临时Set)/DiplomaticCulturalExchange/DiplomaticPropaganda/DiplomaticAsylum/WorldFossil/WorldFungalNetwork/WorldGeothermalVent；共7次提交全部推送。\n注意：cleanup用sort()+length=MAX截断时需要重建Set（clear()+for循环）；用临时Set方案适合generateQuests这种一次性扫描场景；坐标Set键用x*10000+y(世界<200x200安全)；civId系统用civId*1000+targetId(civId<1000安全)。",
+  "notes": "迭代114（循环15/100）。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.54MB；(2)批量优化13个系统的some()→Set O(n)→O(1)——7次提交；(3)具体系统：WonderSystem(_activeWonderIds/_constructionIds)/CreatureInventionSystem(_inventionKeySet 'name_category'键)/DiplomaticArmisticSystem(_armisticeKeySet min*10000+max)/DiplomaticCeasefireSystem(_ceasefireKeySet 'min_max'字符串)/DiplomaticBlockadeSystem(_blockadeKeySet civId*1000+target)/CreatureRivalrySystem(_rivalryKeySet)/DiplomaticTribunalSystem(_proceedingKeySet)/DiplomaticPlebisciteSystem(_pactKeySet nation*10+nation)/DiplomaticExileSystem(_wanderingSet)/DiplomaticWarReparationSystem(_activeReparationSet+status同步)/CreatureAllianceSystem(_allianceKeySet)/CreatureTamingSystem(_tamedSet)/TradeNegotiationSystem(_pendingKeySet)/EspionageSystem(双Set)。\n注意事项：(1)lazy sync fallback规则：当public方法被测试直接push内部数组绕过Set时，需加fallback(if Set.has return true; else find in array; if found, Set.add)；(2)triple-field+status变化：processPayments/checkDefaults中delete Set，cleanup splice前delete；(3)cleanup重建Set策略：spy_caught等不查重的多条记录场景，spliced后批量clear()+for循环重建；(4)对称对键：entityId大数用字符串'min_max'；civId小(<1000)用min*1000+max数字；(5)WonderSystem::getAvailableWonders()因公共API getActiveWonders()暴露内部数组，需要每次调用时重新sync Set再查。",
   "priorities": [
     "1. 【持续监控】tsc+vitest+build三重验证保持全绿",
-    "2. 【可探索】EspionageSystem.ts——hasJustification双字段+addBorderConflict/addReligiousTension三字段some()，可用Set<string>键'reason_a_b'优化",
-    "3. 【可探索】WonderSystem.ts:72/73/81/91——activeWonders/constructions的defId和civId some()，数量有限(<10)但可用Set优化",
-    "4. 【可探索】CreatureInventionSystem.ts:74——name+category双字段some()，可用'name_category'字符串键Set优化",
-    "5. 【可探��】DiplomaticArmisticSystem/DiplomaticCeasefireSystem/DiplomaticBlockadeSystem——双字段some()，civId数量少可用Set<number>键优化"
+    "2. 【可探索】HeroLegendSystem.ts — deeds.some(d => d.type===type)可用Set<string>优化，但deeds数组本身很��，收益有限",
+    "3. 【可探索】坐标范围some() — WorldAtollSystem/DewFormation/IceSheet/Tide/Volcanic等用距离判断的some()，需要空间索引才能真正O(1)，值得专门研究",
+    "4. 【可探索】DiplomacySystem.ts — embassies.some(e=>e.civId===host.id)是Civilization内部结构，可在Civilization类中维护Set",
+    "5. 【可探索】EvolutionSystem.ts — result.some(t=>t.name===traitName)在局部临时数组中，可用本地Set<string>优化"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -23,7 +23,7 @@
     "渲染管线不适合简单的数据驱动替换 — render调用间穿插条件逻辑和特殊参数，z-order顺序重要",
     "A*寻路用二叉堆替代线性数组是最高收益的算法优化 — pop从O(n)降到O(logn)",
     "SpatialHash字符串键每次insert/query都产生GC — 改为数值编码零分配",
-    "per-tick生物位置缓存模式：在系统update开始一次性收集所有生物位置���平坦数组",
+    "per-tick生物位置缓存模式：在系统update开始一次性收集所有生物位置到平坦数组",
     "接口注入模式：提取模块时定义只包含所需字段的接口，Game通过`this as unknown as Interface`传入，避免循环依赖",
     "vite循环chunk警告不影响构建成功和应用运行",
     "Vitest在vite.config.ts中添加test.environment='node'配置即可支持纯逻辑测试",
@@ -36,7 +36,11 @@
     "【迭代113新增】批量优化技巧：Python脚本正则匹配→文件信息字典→批量修改(字段声明+some→has+push后add+splice前delete)，注意push变量可能是对象需要.id",
     "【迭代113新增】cleanup用sort()+length=MAX截断时，Set需要clear()+for循环重建，而不是尝试增量删除被截断的项（截断后已无法知道哪些被删除）",
     "【迭代113新增】临时Set方案适合generateQuests等一次性扫描场景——在方法开头构建Set，避免持久化Set的复杂同步问题",
-    "【迭代113新增】坐标系统的Set键：世界坐标<200用x*10000+y安全；civId系统用civId*1000+targetId(civId<1000安全)；如需三字段用字符串键'reason_a_b'"
+    "【迭代113新增】坐标系统的Set键：世界坐标<200用x*10000+y安全；civId系统用civId*1000+targetId(civId<1000安全)；如需三字段用字符串键'reason_a_b'",
+    "【迭代114新增】WonderSystem等公共API暴露内部数组时，Set不能保证同步——在查询方法开头重建Set(clear+for)更安全，代价是每次O(n)但n很小",
+    "【迭代114新增】triple-field+status变化的some()：用Set只追踪'活跃'状态，在processPayments/checkDefaults/removeEntity中status变更时同步delete，cleanup逐个splice前delete",
+    "【迭代114新增】不查重的多条push(如spy_caught/tribute_refused)会使同一pair有多条记录——splice时不能简单delete pair，需要spliced后批量clear()+rebuild",
+    "【迭代114新增】EspionageSystem双Set方案：_justificationFullSet('reason_a_b')用于去重检查；_justificationPairSet('a_b')用于hasJustification查询，适用于同一pair多条记录场景"
   ],
-  "last_updated": "2026-03-02T09:35:00+08:00"
+  "last_updated": "2026-03-02T10:02:00+08:00"
 }
