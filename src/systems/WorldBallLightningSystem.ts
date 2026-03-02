@@ -54,6 +54,7 @@ export class WorldBallLightningSystem {
 
     const w = world.width
     const h = world.height
+    const creatures = em.getEntitiesWithComponents('creature', 'position')
 
     // Spawn ball lightning
     if (this.balls.length < MAX_BALLS && Math.random() < SPAWN_CHANCE) {
@@ -89,7 +90,6 @@ export class WorldBallLightningSystem {
       b.energy = Math.max(0, b.energy - ENERGY_DECAY)
 
       // Terrify nearby creatures
-      const creatures = em.getEntitiesWithComponents('creature', 'position')
       for (const eid of creatures) {
         const pos = em.getComponent<PositionComponent>(eid, 'position')
         if (!pos) continue

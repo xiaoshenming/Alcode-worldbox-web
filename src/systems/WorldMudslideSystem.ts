@@ -77,6 +77,7 @@ export class WorldMudslideSystem {
     }
 
     // Progress active mudslides
+    const creatures = em.getEntitiesWithComponents('position', 'needs')
     for (const slide of this.mudslides) {
       const elapsed = tick - slide.startTick
       slide.progress = Math.min(100, (elapsed / slide.duration) * 100)
@@ -87,7 +88,6 @@ export class WorldMudslideSystem {
       const cy = Math.round(slide.startY + slide.dirY * currentDist)
       const damage = DAMAGE_MAP[slide.scale]
 
-      const creatures = em.getEntitiesWithComponents('position', 'needs')
       for (const eid of creatures) {
         const pos = em.getComponent<PositionComponent>(eid, 'position')
         if (!pos) continue

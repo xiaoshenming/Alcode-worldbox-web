@@ -47,6 +47,7 @@ export class WorldWaterspoutSystem {
 
     const w = world.width
     const h = world.height
+    const creatures = em.getEntitiesWithComponents('creature', 'position')
 
     // Spawn over water
     if (this.spouts.length < MAX_SPOUTS && Math.random() < SPAWN_CHANCE) {
@@ -88,7 +89,6 @@ export class WorldWaterspoutSystem {
       }
 
       // Scatter nearby creatures
-      const creatures = em.getEntitiesWithComponents('creature', 'position')
       for (const eid of creatures) {
         const pos = em.getComponent<PositionComponent>(eid, 'position')
         if (!pos) continue

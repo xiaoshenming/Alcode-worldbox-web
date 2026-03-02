@@ -47,6 +47,7 @@ export class WorldCrystalCaveSystem {
 
     const w = world.width
     const h = world.height
+    const creatures = em.getEntitiesWithComponents('creature', 'position')
 
     // Form caves in mountain regions
     if (this.caves.length < MAX_CAVES && Math.random() < FORM_CHANCE) {
@@ -78,7 +79,6 @@ export class WorldCrystalCaveSystem {
       c.magicEmission = VALUE_MAP[c.crystalType] * (c.richness / 100) * 0.5
 
       // Check if creatures explore
-      const creatures = em.getEntitiesWithComponents('creature', 'position')
       for (const eid of creatures) {
         const pos = em.getComponent<PositionComponent>(eid, 'position')
         if (!pos) continue

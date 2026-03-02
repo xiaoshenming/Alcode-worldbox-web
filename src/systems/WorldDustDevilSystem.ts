@@ -50,6 +50,7 @@ export class WorldDustDevilSystem {
 
     const w = world.width
     const h = world.height
+    const creatures = em.getEntitiesWithComponents('creature', 'position')
 
     // Spawn in arid regions
     if (this.devils.length < MAX_DEVILS && Math.random() < SPAWN_CHANCE) {
@@ -91,7 +92,6 @@ export class WorldDustDevilSystem {
       }
 
       // Disorient nearby creatures
-      const creatures = em.getEntitiesWithComponents('creature', 'position')
       for (const eid of creatures) {
         const pos = em.getComponent<PositionComponent>(eid, 'position')
         if (!pos) continue
