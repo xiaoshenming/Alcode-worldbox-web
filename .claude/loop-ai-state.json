@@ -1,11 +1,11 @@
 {
-  "notes": "迭代143（循环50/100）。本轮主要成就：收集并提交ZZZ2/AAA3/BBB3三批Agent结果，测试从15879增至16307，+428个测试。\n\n本轮处理的系统（3批Agent并行）：\nZZZ2组(+142): WorldPeatBogSystem(52) WorldPedimentSystem(53) WorldPermafrostThawSystem(52)\nAAA3组(+144): WorldPetrificationSystem(53) WorldPinnacleSystem(52) WorldPlayaSystem(54)\nBBB3组(+142): WorldPotassiumSpringSystem(52) WorldPraseodymiumSpringSystem(52) WorldQuicksandSystem(53)\n\n关键发现：\n- WorldPeatBogSystem: CHECK_INTERVAL=?, FORM_CHANCE=?, cutoff=95000, spawn后waterTable同帧偏移（spawn=60+rand*30，update±0.25）\n- WorldPedimentSystem: CHECK_INTERVAL=?, cutoff=90000, spawn后slope(-0.00002)和spectacle(+(rand-0.47)*0.09)同帧偏移\n- WorldPermafrostThawSystem: CHECK_INTERVAL=?, cutoff=85000, spawn后groundStability(-0.03)同帧偏移\n- WorldPetrificationSystem: spawn后age=1(非0)、radius已增加spreadRate——spawn+update同帧，邻近距离排斥dx²+dy²<400\n- WorldPinnacleSystem: cutoff=93000, cleanup用严格<（tick===cutoff时保留）\n- WorldPlayaSystem: cutoff=88000, cleanup用严格<\n- WorldPotassiumSpringSystem: cutoff=57000, 字段spawn后静态不变（无per-record update）\n- WorldPraseodymiumSpringSystem: cutoff=54000, 与Potassium结构对称，仅常量不同\n- WorldQuicksandSystem: tile=SAND(2)或GRASS(3)，cleanup依据active=false字段而非tick年龄，depth波动/radius扩张/实体陷阱在update阶段执行\n\n当前已派发下一批（CCC3/DDD3/EEE3）：\n- CCC3组(a5a1194adc833e296): WorldOsmiumSpringSystem WorldOutlierSystem WorldProtactiniumSpringSystem\n- DDD3组(ac18d809395d54e23): WorldPumiceFieldSystem WorldPurificationSystem WorldPyroclasticFlowSystem\n- EEE3组(a747b3bf50e2d7edf): WorldRadiumSpringSystem WorldRadonSpringSystem WorldRainbowSystem\n\n下轮优先方向：\n1. 等待CCC3/DDD3/EEE3 Agent完成，收集结果\n2. 运行全量测试验证，修复flaky测试\n3. 继续处理WorldR系列（Ravine/Rift/RiftValley/Rock系列）",
+  "notes": "迭代144（循环51/100）。本轮主要成就：收集并提交CCC3/DDD3/EEE3三批Agent结果，测试从16307增至16709，+402个测试。\n\n本轮处理的系统（3批Agent并行）：\nCCC3组(+150): WorldOsmiumSpringSystem(50) WorldOutlierSystem(50) WorldProtactiniumSpringSystem(50)\nDDD3组(+150): WorldPumiceFieldSystem(50) WorldPurificationSystem(50) WorldPyroclasticFlowSystem(50)\nEEE3组(+147): WorldRadiumSpringSystem(49) WorldRadonSpringSystem(49) WorldRainbowSystem(49)\n\n关键发现：\n- WorldOsmiumSpringSystem: CHECK_INTERVAL=2820, FORM_CHANCE=0.003, cutoff=54000, nearWater||nearMountain, 字段静态不变\n- WorldOutlierSystem: CHECK_INTERVAL=2600, FORM_CHANCE=0.0013(Math.random()<0.0013才继续), cutoff=92000, tile须MOUNTAIN(5)或GRASS(3), update修改erosionVulnerability/isolationDegree/spectacle\n- WorldProtactiniumSpringSystem: CHECK_INTERVAL=3060, FORM_CHANCE=0.003, cutoff=54000, 结构对称OsmiumSpring\n- WorldPumiceFieldSystem: CHECK_INTERVAL=1900, SPAWN_CHANCE=0.003, MAX_FIELDS=16, tile须0或1（水域）, update: age++/buoyancy-=0.03/size-=0.01/mineralContent-=0.005/xy漂移\n- WorldPurificationSystem: CHECK_INTERVAL=1000, FORM_CHANCE=0.01(random>0.01跳过), MAX_SITES=8, 非DEEP_WATER即可spawn, cleanup: active=false时删除\n- WorldPyroclasticFlowSystem: CHECK_INTERVAL=2700, FORM_CHANCE=0.0007, MAX_FLOWS=6, 无tile检查, speed<=1时cleanup\n- WorldRadiumSpringSystem: CHECK_INTERVAL=3080, FORM_CHANCE=0.003, cutoff=54000, nearWater||nearMountain, 字段静态不变\n- WorldRadonSpringSystem: CHECK_INTERVAL=3110, 结构对称Radium\n- WorldRainbowSystem: CHECK_INTERVAL=1000, RAINBOW_CHANCE=0.005, MAX_RAINBOWS=4, 节流条件用>=（与Spring系统<相反）, cleanup: tick-startTick>=duration时删除\n\n关键陷阱新发现���\n- hasAdjacentTile比较world.getTile()===tileType（数值），mock必须返回number而非对象{type: tileType}\n- WorldPurificationSystem FORM_CHANCE方向：random>FORM_CHANCE时跳过（其他系统多用<）\n- WorldOutlierSystem spawn路径：random<FORM_CHANCE才继续（方向与Spring相反）\n- Rainbow spawn/expire顺序：先trySpawn再expire，满员时无法通过'先expire再spawn'验证\n\n当前已派发下一批（FFF3/GGG3/HHH3）：\n- FFF3组(a49e1f361223a9c74): WorldRavineSystem WorldRiftSystem WorldRiftValleySystem\n- GGG3组(a4387f0ffdd90840a): WorldRockArch2System WorldRockBridgeSystem WorldRockPedestalSystem\n- HHH3组(a9e74643a1a6cc2c9): WorldRockPillarSystem WorldRockShelterSystem WorldRubidiumSpringSystem\n\n下轮优先方向：\n1. 等待FFF3/GGG3/HHH3 Agent完成，收集结果\n2. 运行全量测试验证，修复flaky测试\n3. 继续处理WorldS系列（SaltFlat/SaltMarsh/Samarium等）",
   "priorities": [
-    "1. 【持续目标】继续处理World系统（剩余约50个文件），用并行Agent批量处理",
-    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前16307/16307通过）",
-    "3. 【里程碑】已完成162个World系统测试改善（+4652测试），继续下一批",
-    "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+400-500测试",
-    "5. 【下一批系统】WorldR系列（Ravine/Rift/RiftValley/Rock系列）"
+    "1. 【持续目标】继续处理World系统（剩余约91个文件），用并行Agent批量处理",
+    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前16709/16709通过）",
+    "3. 【里程碑】已完成180个World系统测试改善（+5054测试），继续下一批",
+    "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+400-450测试",
+    "5. 【下一批系统】WorldS系列（SaltFlat/SaltMarsh/Samarium/Sandstone等）"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -62,7 +62,10 @@
     "【迭代142新增】WorldPhreaticExplosionSystem的steamPressure下限测试：max(5, 5.02-0.03)=max(5,4.99)=5，不能用toBeCloseTo(4.99)断言中间值，只能断言最终值toBe(5)",
     "【迭代143新增】WorldPetrificationSystem邻近距离排斥：预填充zones坐标需离新spawn点>20单位（dx²+dy²<400时拒绝），测试预填充用(50+i*10,50)而非(i,i)",
     "【迭代143新增】WorldQuicksandSystem cleanup依据active=false字段（不是tick年龄），与大多数系统不同——需检查源码确认cleanup触发条件类型",
-    "【迭代143新增】Spring系统静态字段确认：WorldPotassiumSpring/WorldPraseodymiumSpring字段spawn后不被update修改——与WorldHotSpring2等动态Spring不同"
+    "【迭代143新增】Spring系统静态字段确认：WorldPotassiumSpring/WorldPraseodymiumSpring字段spawn后不被update修改——与WorldHotSpring2等动态Spring不同",
+    "【迭代144新增】hasAdjacentTile工具函数比较world.getTile()===tileType（直接数值比较），mock的getTile必须返回number，不能返回{type: tileType}对象——否则nearWater/nearMountain判断全部失败",
+    "【迭代144新增】WorldPurificationSystem FORM_CHANCE方向：random>FORM_CHANCE时跳过spawn（random=0.01>0.01为false不跳过会spawn），与PumiceField的random<SPAWN_CHANCE方向相反，每个系统必须独立验证",
+    "【迭代144新增】WorldRainbowSystem节流条件用>=（tick-lastCheck>=CHECK_INTERVAL时执行），与大多数Spring系统用<相反——Rainbow是少数几个用>=的系统"
   ],
-  "last_updated": "2026-03-03T02:30:00+08:00"
+  "last_updated": "2026-03-03T02:45:00+08:00"
 }
