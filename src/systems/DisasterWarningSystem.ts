@@ -148,17 +148,6 @@ export class DisasterWarningSystem {
     return this.warnings.length
   }
 
-  private getDefaultRadius(type: WarningType): number {
-    switch (type) {
-      case 'EARTHQUAKE_TREMOR': return 25
-      case 'VOLCANO_RUMBLE': return 20
-      case 'TSUNAMI_WAVE': return 30
-      case 'METEOR_STREAK': return 15
-      case 'TORNADO_WIND': return 18
-      case 'PLAGUE_OMEN': return 22
-    }
-  }
-
   private estimateTotalDuration(_w: DisasterWarning): number {
     return MAX_LEAD_TICKS
   }

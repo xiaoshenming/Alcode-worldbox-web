@@ -125,22 +125,10 @@ export class MapMarkerSystem {
 
   // -- internal helpers --
 
-  private findFreeSlot(): number {
-    for (let i = 0; i < MAX_MARKERS; i++) {
-      if (!this.pool[i]) return i
-    }
-    return -1
-  }
-
   private findSlot(id: number): number {
     for (let i = 0; i < MAX_MARKERS; i++) {
       if (this.pool[i]?.id === id) return i
     }
     return -1
-  }
-
-  private getById(id: number): MarkerData | null {
-    const idx = this.findSlot(id)
-    return idx === -1 ? null : this.pool[idx]
   }
 }
