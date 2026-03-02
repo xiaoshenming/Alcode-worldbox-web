@@ -1,11 +1,11 @@
 {
-  "notes": "迭代142（循环49/100）。本轮主要成就：收集并提交WWW2/XXX2/YYY2三批Agent结果，测试从15499增至15879，+380个测试。\n\n本轮处理的系统（3批Agent并行）：\nWWW2组(+129): WorldObsidianFieldSystem(47) WorldObsidianFlowSystem(50) WorldObsidianSystem(47)\nXXX2组(+145): WorldPeneplainSystem(49) WorldPermafrostSystem(46) WorldPetrifiedForestSystem(50)\nYYY2组(+136): WorldPhreaticExplosionSystem(47) WorldPlainsSystem(44) WorldPoloniumSpringSystem(45)\n\n关键发现：\n- WorldObsidianFieldSystem: CHECK_INTERVAL=3000, FORM_CHANCE=0.003, MAX=12, tradeValue用旧sharpness计算\n- WorldObsidianFlowSystem: CHECK_INTERVAL=2700, FORM_CHANCE=0.002, MAX=20, CUTOFF_AGE=88000, tile=MOUNTAIN/SAND\n- WorldObsidianSystem: CHECK_INTERVAL=2700, FORM_CHANCE=0.002, mining判断random<0.005\n- WorldPeneplainSystem: CHECK_INTERVAL=2640, FORM_CHANCE=0.0014, MAX=15, cutoff=93000, tile=GRASS/FOREST\n- WorldPermafrostSystem: CHECK_INTERVAL=1200, SPAWN_CHANCE=0.004, MAX=12, Snow=7, applyEffects在节流外执行\n- WorldPetrifiedForestSystem: CHECK_INTERVAL=5000, SPAWN_CHANCE=0.001, MAX=6, tile=5/3, 4种PetrifiedAge枚举\n- WorldPhreaticExplosionSystem: CHECK_INTERVAL=2700, MAX=7, FORM_CHANCE=0.0009, cleanup:age>=80\n- WorldPlainsSystem: CHECK_INTERVAL=2600, MAX=18, FORM_CHANCE=0.002, tile=GRASS, 寿命90000\n- WorldPoloniumSpringSystem: CHECK_INTERVAL=3090, MAX=32, FORM_CHANCE=0.003, nearWater/nearMountain, 寿命54000, 无per-record update\n\n当前已派发下一批（ZZZ2/AAA3/BBB3）：\n- ZZZ2组: WorldPeatBogSystem WorldPedimentSystem WorldPermafrostThawSystem\n- AAA3组: WorldPetrificationSystem WorldPinnacleSystem WorldPlayaSystem\n- BBB3组: WorldPotassiumSpringSystem WorldPraseodymiumSpringSystem WorldQuicksandSystem\n\n下轮优先方向：\n1. 等待ZZZ2/AAA3/BBB3 Agent完成，收集结果\n2. 运行全量测试验证，修复flaky测试\n3. 继续处理WorldR系列",
+  "notes": "迭代143（循环50/100）。本轮主要成就：收集并提交ZZZ2/AAA3/BBB3三批Agent结果，测试从15879增至16307，+428个测试。\n\n本轮处理的系统（3批Agent并行）：\nZZZ2组(+142): WorldPeatBogSystem(52) WorldPedimentSystem(53) WorldPermafrostThawSystem(52)\nAAA3组(+144): WorldPetrificationSystem(53) WorldPinnacleSystem(52) WorldPlayaSystem(54)\nBBB3组(+142): WorldPotassiumSpringSystem(52) WorldPraseodymiumSpringSystem(52) WorldQuicksandSystem(53)\n\n关键发现：\n- WorldPeatBogSystem: CHECK_INTERVAL=?, FORM_CHANCE=?, cutoff=95000, spawn后waterTable同帧偏移（spawn=60+rand*30，update±0.25）\n- WorldPedimentSystem: CHECK_INTERVAL=?, cutoff=90000, spawn后slope(-0.00002)和spectacle(+(rand-0.47)*0.09)同帧偏移\n- WorldPermafrostThawSystem: CHECK_INTERVAL=?, cutoff=85000, spawn后groundStability(-0.03)同帧偏移\n- WorldPetrificationSystem: spawn后age=1(非0)、radius已增加spreadRate——spawn+update同帧，邻近距离排斥dx²+dy²<400\n- WorldPinnacleSystem: cutoff=93000, cleanup用严格<（tick===cutoff时保留）\n- WorldPlayaSystem: cutoff=88000, cleanup用严格<\n- WorldPotassiumSpringSystem: cutoff=57000, 字段spawn后静态不变（无per-record update）\n- WorldPraseodymiumSpringSystem: cutoff=54000, 与Potassium结构对称，仅常量不同\n- WorldQuicksandSystem: tile=SAND(2)或GRASS(3)，cleanup依据active=false字段而非tick年龄，depth波动/radius扩张/实体陷阱在update阶段执行\n\n当前已派发下一批（CCC3/DDD3/EEE3）：\n- CCC3组(a5a1194adc833e296): WorldOsmiumSpringSystem WorldOutlierSystem WorldProtactiniumSpringSystem\n- DDD3组(ac18d809395d54e23): WorldPumiceFieldSystem WorldPurificationSystem WorldPyroclasticFlowSystem\n- EEE3组(a747b3bf50e2d7edf): WorldRadiumSpringSystem WorldRadonSpringSystem WorldRainbowSystem\n\n下轮优先方向：\n1. 等待CCC3/DDD3/EEE3 Agent完成，收集结果\n2. 运行全量测试验证，修复flaky测试\n3. 继续处理WorldR系列（Ravine/Rift/RiftValley/Rock系列）",
   "priorities": [
-    "1. 【持续目标】继续处理World系统（剩余约60个文件），用并行Agent批量处理",
-    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前15879/15879通过）",
-    "3. 【里程碑】已完成153个World系统测试改善（+4224测试），继续下一批",
-    "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+300-400测试",
-    "5. 【下一批系统】WorldR系列（Rainbow/Ravine/Relic/Rift/Rock系列）"
+    "1. 【持续目标】继续处理World系统（剩余约50个文件），用并行Agent批量处理",
+    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前16307/16307通过）",
+    "3. 【里程碑】已完成162个World系统测试改善（+4652测试），继续下一批",
+    "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+400-500测试",
+    "5. 【下一批系统】WorldR系列（Ravine/Rift/RiftValley/Rock系列）"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -29,7 +29,7 @@
     "Vitest在vite.config.ts中添加test.environment='node'配置即可支持纯逻辑测试",
     "【重要安全规则】严禁用Write工具创建src/__tests__/目录内的文件！Write工具会将__转义为\\_\\_导致创建错误目录，必须用Bash cat heredoc方式创建测试文件",
     "【迭代89新增】死代码方法扫描策略：用Python脚本找public方法→grep '.methodName('验证无外部调用→并行派发子代理批量删除，效率极高",
-    "【迭代96新增】整系统文件死代码的识别方法��检查'类名是否出现在Game.ts'而非'实例字段是否有.update()调用'，因为很多系统通过_batchXXY数组批量调度",
+    "【迭代96新增】整系统文件死代码的识别方法：检查'类名是否出现在Game.ts'而非'实例字段是否有.update()调用'，因为很多系统通过_batchXXY数组批量调度",
     "【迭代100新增-最重要】非空断言扫描必须同时用两种正则：① [^a-zA-Z]!\\. 匹配 x!.y 形式；② \\)!(?=[.\\[;,\\)\\s]|$) 匹配 func()! 形式。只用其中一种必然漏报！",
     "【迭代112新增】some(item => item.entityId === eid)在for(entities)循环内是O(n*list)陷阱——标准修复：添加private _xxxSet = new Set<number>()，push时.add(eid)，splice时.delete(eid)，查询时.has(eid)",
     "【迭代112新增】添加Set优化后，public查询方法(getXxx)需要加lazy sync fallback——因为测试会直接push内部数组绕过Set",
@@ -59,7 +59,10 @@
     "【迭代142新增】WorldObsidianFieldSystem tradeValue=deposit*1.5*(sharpness/100)中，sharpness用的是更新前的旧值——因为源码先计算tradeValue，再更新sharpness",
     "【迭代142新增】WorldPermafrostSystem的applyEffects在节流外执行——不受CHECK_INTERVAL约束，即使tick<CHECK_INTERVAL也会对范围内生物造成COLD_DAMAGE",
     "【迭代142新增】WorldPermafrostSystem多个zone同时thaw测试：depth=10,thawRate=2只减一次（10-2=8>0不删除），需用depth=0.5,thawRate=2才能触发删除（0.5-2<0）",
-    "【迭代142新增】WorldPhreaticExplosionSystem的steamPressure下限测试：max(5, 5.02-0.03)=max(5,4.99)=5，不能用toBeCloseTo(4.99)断言中间值，只能断言最终值toBe(5)"
+    "【迭代142新增】WorldPhreaticExplosionSystem的steamPressure下限测试：max(5, 5.02-0.03)=max(5,4.99)=5，不能用toBeCloseTo(4.99)断言中间值，只能断言最终值toBe(5)",
+    "【迭代143新增】WorldPetrificationSystem邻近距离排斥：预填充zones坐标需离新spawn点>20单位（dx²+dy²<400时拒绝），测试预填充用(50+i*10,50)而非(i,i)",
+    "【迭代143新增】WorldQuicksandSystem cleanup依据active=false字段（不是tick年龄），与大多数系统不同——需检查源码确认cleanup触发条件类型",
+    "【迭代143新增】Spring系统静态字段确认：WorldPotassiumSpring/WorldPraseodymiumSpring字段spawn后不被update修改——与WorldHotSpring2等动态Spring不同"
   ],
-  "last_updated": "2026-03-03T10:30:00+08:00"
+  "last_updated": "2026-03-03T02:30:00+08:00"
 }
