@@ -22,6 +22,10 @@ const UPGRADE_PATHS: UpgradePath[] = [
 const LEVEL_UP_COST = { wood: 10, stone: 8, gold: 3 };
 const MAX_LEVEL = 3;
 const UPGRADE_CHECK_INTERVAL = 200;
+// Pre-built O(1) lookup: from building type → upgrade path
+const UPGRADE_PATH_MAP: Map<BuildingType, UpgradePath> = new Map(
+  UPGRADE_PATHS.map(p => [p.from, p])
+)
 
 export class BuildingUpgradeSystem {
   private lastCheck: Map<EntityId, number> = new Map();
@@ -54,7 +58,7 @@ export class BuildingUpgradeSystem {
   }
 
   private tryTypeUpgrade(em: EntityManager, id: EntityId, building: BuildingComponent, civ: Civilization, tick: number): boolean {
-    const path = UPGRADE_PATHS.find(p => p.from === building.buildingType);
+    const path = UPGRADE_PATH_MAP.get(building.buildingType);
     if (!path) return false;
     if (civ.techLevel < path.techLevel) return false;
     if (civ.resources.wood < path.cost.wood || civ.resources.stone < path.cost.stone || civ.resources.gold < path.cost.gold) return false;
