@@ -58,12 +58,14 @@ describe('DiplomaticDetenteSystem', () => {
   describe('CHECK_INTERVAL=2420节流', () => {
     it('tick < CHECK_INTERVAL时不执行更新', () => {
       ;(sys as any).treaties.push(makeTreaty({ duration: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2419)
       expect((sys as any).treaties[0].duration).toBe(0)
     })
 
     it('tick === CHECK_INTERVAL时执行更新', () => {
       ;(sys as any).treaties.push(makeTreaty({ duration: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2420)
       expect((sys as any).treaties[0].duration).toBe(1)
     })
@@ -71,12 +73,14 @@ describe('DiplomaticDetenteSystem', () => {
     it('tick = CHECK_INTERVAL-1=2419时不执行', () => {
       ;(sys as any).lastCheck = 0
       ;(sys as any).treaties.push(makeTreaty({ duration: 5 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2419)
       expect((sys as any).treaties[0].duration).toBe(5)
     })
 
     it('连续两次满足间隔时执行两次更新', () => {
       ;(sys as any).treaties.push(makeTreaty({ duration: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2420)
       expect((sys as any).treaties[0].duration).toBe(1)
       sys.update(1, {} as any, {} as any, 4840)
@@ -85,6 +89,7 @@ describe('DiplomaticDetenteSystem', () => {
 
     it('第二次不满足间隔时不执行', () => {
       ;(sys as any).treaties.push(makeTreaty({ duration: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2420)
       const d = (sys as any).treaties[0].duration
       sys.update(1, {} as any, {} as any, 2421)
@@ -96,6 +101,7 @@ describe('DiplomaticDetenteSystem', () => {
   describe('数值字段动态更新', () => {
     it('每次update duration+1', () => {
       ;(sys as any).treaties.push(makeTreaty({ duration: 7 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2420)
       expect((sys as any).treaties[0].duration).toBe(8)
     })
@@ -103,6 +109,7 @@ describe('DiplomaticDetenteSystem', () => {
     it('tensionReduction保持在[5,80]范围内', () => {
       ;(sys as any).treaties.push(makeTreaty({ tensionReduction: 40 }))
       for (let tick = 2420; tick < 2420 * 100; tick += 2420) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, tick)
         const v = (sys as any).treaties[0]?.tensionReduction
         if (v !== undefined) {
@@ -115,6 +122,7 @@ describe('DiplomaticDetenteSystem', () => {
     it('tradeOpening保持在[3,70]范围内', () => {
       ;(sys as any).treaties.push(makeTreaty({ tradeOpening: 30 }))
       for (let tick = 2420; tick < 2420 * 100; tick += 2420) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, tick)
         const v = (sys as any).treaties[0]?.tradeOpening
         if (v !== undefined) {
@@ -127,6 +135,7 @@ describe('DiplomaticDetenteSystem', () => {
     it('culturalExchange保持在[3,60]范围内', () => {
       ;(sys as any).treaties.push(makeTreaty({ culturalExchange: 20 }))
       for (let tick = 2420; tick < 2420 * 100; tick += 2420) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, tick)
         const v = (sys as any).treaties[0]?.culturalExchange
         if (v !== undefined) {
@@ -139,6 +148,7 @@ describe('DiplomaticDetenteSystem', () => {
     it('多条treaty各自独立更新duration', () => {
       ;(sys as any).treaties.push(makeTreaty({ id: 1, duration: 3 }))
       ;(sys as any).treaties.push(makeTreaty({ id: 2, duration: 7 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2420)
       expect((sys as any).treaties[0].duration).toBe(4)
       expect((sys as any).treaties[1].duration).toBe(8)
@@ -188,6 +198,7 @@ describe('DiplomaticDetenteSystem', () => {
 
     it('空数组时过期清理不报错', () => {
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       expect(() => sys.update(1, {} as any, {} as any, 200000)).not.toThrow()
     })
   })

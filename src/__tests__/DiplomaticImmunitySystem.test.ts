@@ -36,15 +36,18 @@ describe('DiplomaticImmunitySystem', () => {
 
   describe('CHECK_INTERVAL=2360节流', () => {
     it('tick未达到CHECK_INTERVAL时不处理', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       const s = sys(); s.update(1, {} as any, makeEM(), 2359)
       expect((s as any).lastCheck).toBe(0)
     })
     it('tick达到CHECK_INTERVAL时更新lastCheck', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       const s = sys(); s.update(1, {} as any, makeEM(), 2360)
       expect((s as any).lastCheck).toBe(2360)
     })
     it('多次调��按CHECK_INTERVAL节流', () => {
       const s = sys()
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       s.update(1, {} as any, makeEM(), 2360)
       s.update(1, {} as any, makeEM(), 4719)
       expect((s as any).lastCheck).toBe(2360)
@@ -53,12 +56,14 @@ describe('DiplomaticImmunitySystem', () => {
     })
     it('lastCheck跟随tick递增', () => {
       const s = sys()
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       s.update(1, {} as any, makeEM(), 2360)
       expect((s as any).lastCheck).toBe(2360)
       s.update(1, {} as any, makeEM(), 4720)
       expect((s as any).lastCheck).toBe(4720)
     })
     it('tick=0时不触发', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       const s = sys(); s.update(1, {} as any, makeEM(), 0)
       expect((s as any).lastCheck).toBe(0)
     })

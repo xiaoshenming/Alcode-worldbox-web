@@ -42,14 +42,17 @@ describe('CHECK_INTERVAL=2440节流', () => {
   beforeEach(() => { sys = new DiplomaticExonerationSystem() })
 
   it('tick<2440时lastCheck不更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2439)
     expect((sys as any).lastCheck).toBe(0)
   })
   it('tick>=2440时lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2440)
     expect((sys as any).lastCheck).toBe(2440)
   })
   it('已更新后再次调用需等待新一轮间隔', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2440)
     ;(sys as any).lastCheck = 2440
     sys.update(1, {} as any, {} as any, 4000)
@@ -57,11 +60,13 @@ describe('CHECK_INTERVAL=2440节流', () => {
   })
   it('恰好差值=2440时更新', () => {
     ;(sys as any).lastCheck = 1000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 3440)
     expect((sys as any).lastCheck).toBe(3440)
   })
   it('tick差值恰好是2439时不更新', () => {
     ;(sys as any).lastCheck = 1000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 3439)
     expect((sys as any).lastCheck).toBe(1000)
   })
@@ -74,6 +79,7 @@ describe('数值字段动态更新', () => {
   it('duration每次update+1', () => {
     ;(sys as any).proceedings.push(makeProceeding({ duration: 0, tick: 0 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2440)
     expect((sys as any).proceedings[0].duration).toBe(1)
   })
@@ -81,6 +87,7 @@ describe('数值字段动态更新', () => {
     const bigTick = 500000
     ;(sys as any).proceedings.push(makeProceeding({ evidence: 50, tick: bigTick }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, bigTick + 2440)
     const ev = (sys as any).proceedings[0].evidence
     expect(ev).toBeGreaterThanOrEqual(15)
@@ -89,6 +96,7 @@ describe('数值字段动态更新', () => {
   it('justiceServed在[10,85]范围内', () => {
     ;(sys as any).proceedings.push(makeProceeding({ justiceServed: 40, tick: 0 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2440)
     const val = (sys as any).proceedings[0].justiceServed
     expect(val).toBeGreaterThanOrEqual(10)
@@ -97,6 +105,7 @@ describe('数值字段动态更新', () => {
   it('reputationRecovery在[5,75]范围内', () => {
     ;(sys as any).proceedings.push(makeProceeding({ reputationRecovery: 30, tick: 0 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2440)
     const val = (sys as any).proceedings[0].reputationRecovery
     expect(val).toBeGreaterThanOrEqual(5)
@@ -105,6 +114,7 @@ describe('数值字段动态更新', () => {
   it('diplomaticReset在[5,65]范围内', () => {
     ;(sys as any).proceedings.push(makeProceeding({ diplomaticReset: 20, tick: 0 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2440)
     const val = (sys as any).proceedings[0].diplomaticReset
     expect(val).toBeGreaterThanOrEqual(5)
@@ -153,6 +163,7 @@ describe('过期清理cutoff=tick-85000', () => {
   })
   it('空数组时过期清理不崩溃', () => {
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     expect(() => sys.update(1, {} as any, {} as any, 200000)).not.toThrow()
   })
 })

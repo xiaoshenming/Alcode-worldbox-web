@@ -24,24 +24,29 @@ describe('DiplomaticMarriageSystem', () => {
 
   describe('CHECK_INTERVAL=2500节流', () => {
     it('tick未到间隔不执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, makeCivManager(), 100)
       expect((sys as any).lastCheck).toBe(0)
     })
     it('tick到达间隔执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, makeCivManager(), 2500)
       expect((sys as any).lastCheck).toBe(2500)
     })
     it('两次间隔都执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, makeCivManager(), 2500)
       sys.update(1, {} as any, makeCivManager(), 5000)
       expect((sys as any).lastCheck).toBe(5000)
     })
     it('间隔内多次调用只更新一次', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, makeCivManager(), 2500)
       sys.update(1, {} as any, makeCivManager(), 2600)
       expect((sys as any).lastCheck).toBe(2500)
     })
     it('tick=0不执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, makeCivManager(), 0)
       expect((sys as any).lastCheck).toBe(0)
     })

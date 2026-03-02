@@ -44,22 +44,26 @@ describe('DiplomaticDispensationSystem', () => {
   describe('CHECK_INTERVAL=2400节流', () => {
     it('tick < 2400时不执行更新', () => {
       ;(sys as any).grants.push(makeGrant({ duration: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2399)
       expect((sys as any).grants[0].duration).toBe(0)
     })
     it('tick === 2400时执行更新', () => {
       ;(sys as any).grants.push(makeGrant({ duration: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2400)
       expect((sys as any).grants[0].duration).toBe(1)
     })
     it('tick = 2399时不执行', () => {
       ;(sys as any).lastCheck = 0
       ;(sys as any).grants.push(makeGrant({ duration: 5 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2399)
       expect((sys as any).grants[0].duration).toBe(5)
     })
     it('连续两次满足间隔时执行两次更新', () => {
       ;(sys as any).grants.push(makeGrant({ duration: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2400)
       expect((sys as any).grants[0].duration).toBe(1)
       sys.update(1, {} as any, {} as any, 4800)
@@ -67,6 +71,7 @@ describe('DiplomaticDispensationSystem', () => {
     })
     it('第二次不满足间隔时不执行', () => {
       ;(sys as any).grants.push(makeGrant({ duration: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2400)
       const d = (sys as any).grants[0].duration
       sys.update(1, {} as any, {} as any, 2401)
@@ -77,12 +82,14 @@ describe('DiplomaticDispensationSystem', () => {
   describe('数值字段动态更新', () => {
     it('每次update duration+1', () => {
       ;(sys as any).grants.push(makeGrant({ duration: 7 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2400)
       expect((sys as any).grants[0].duration).toBe(8)
     })
     it('exemptionScope保持在[10,80]范围内', () => {
       ;(sys as any).grants.push(makeGrant({ exemptionScope: 40 }))
       for (let tick = 2400; tick < 2400 * 100; tick += 2400) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, tick)
         const v = (sys as any).grants[0]?.exemptionScope
         if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(10); expect(v).toBeLessThanOrEqual(80) }
@@ -91,6 +98,7 @@ describe('DiplomaticDispensationSystem', () => {
     it('politicalCost保持在[5,70]范围内', () => {
       ;(sys as any).grants.push(makeGrant({ politicalCost: 30 }))
       for (let tick = 2400; tick < 2400 * 100; tick += 2400) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, tick)
         const v = (sys as any).grants[0]?.politicalCost
         if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(5); expect(v).toBeLessThanOrEqual(70) }
@@ -99,6 +107,7 @@ describe('DiplomaticDispensationSystem', () => {
     it('benefitValue保持在[10,85]范围内', () => {
       ;(sys as any).grants.push(makeGrant({ benefitValue: 45 }))
       for (let tick = 2400; tick < 2400 * 100; tick += 2400) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, tick)
         const v = (sys as any).grants[0]?.benefitValue
         if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(10); expect(v).toBeLessThanOrEqual(85) }
@@ -107,6 +116,7 @@ describe('DiplomaticDispensationSystem', () => {
     it('precedentRisk保持在[5,60]范围内', () => {
       ;(sys as any).grants.push(makeGrant({ precedentRisk: 20 }))
       for (let tick = 2400; tick < 2400 * 100; tick += 2400) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, tick)
         const v = (sys as any).grants[0]?.precedentRisk
         if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(5); expect(v).toBeLessThanOrEqual(60) }
@@ -152,6 +162,7 @@ describe('DiplomaticDispensationSystem', () => {
     })
     it('空数组时过期清理不报错', () => {
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       expect(() => sys.update(1, {} as any, {} as any, 200000)).not.toThrow()
     })
   })

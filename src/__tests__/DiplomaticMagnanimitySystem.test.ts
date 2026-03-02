@@ -19,24 +19,29 @@ describe('DiplomaticMagnanimitySystem', () => {
 
   describe('CHECK_INTERVAL=2360节流', () => {
     it('tick未到间隔不执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 100)
       expect((sys as any).lastCheck).toBe(0)
     })
     it('tick到达间隔执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2360)
       expect((sys as any).lastCheck).toBe(2360)
     })
     it('两次间隔都执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2360)
       sys.update(1, {} as any, {} as any, 4720)
       expect((sys as any).lastCheck).toBe(4720)
     })
     it('间隔内多次调用只更新一次', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2360)
       sys.update(1, {} as any, {} as any, 2400)
       expect((sys as any).lastCheck).toBe(2360)
     })
     it('tick=0不执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 0)
       expect((sys as any).lastCheck).toBe(0)
     })
@@ -114,6 +119,7 @@ describe('DiplomaticMagnanimitySystem', () => {
       ;(sys as any).gestures = Array.from({ length: 20 }, (_, i) => makeGesture({ id: i + 1, tick: 999999 }))
       ;(sys as any).lastCheck = 0
       const before = (sys as any).gestures.length
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2360)
       expect((sys as any).gestures.length).toBeLessThanOrEqual(before)
     })
@@ -121,6 +127,7 @@ describe('DiplomaticMagnanimitySystem', () => {
       ;(sys as any).gestures = Array.from({ length: 20 }, (_, i) => makeGesture({ id: i + 1, tick: 999999 }))
       const before = (sys as any).gestures.length
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2360)
       expect((sys as any).gestures.length).toBeLessThanOrEqual(before)
     })

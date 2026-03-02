@@ -97,6 +97,7 @@ describe('DiplomaticArbitration2System', () => {
   // ------------------------------------------------------------------ //
   describe('CHECK_INTERVAL节流', () => {
     it('tick < CHECK_INTERVAL 时不更新lastCheck', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL - 1)
       expect((sys as any).lastCheck).toBe(0)
     })

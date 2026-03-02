@@ -80,21 +80,25 @@ describe('DiplomaticAbsolution2System', () => {
   // ---- 2. CHECK_INTERVAL 节流 ----
   describe('CHECK_INTERVAL 节流', () => {
     it('tick 差值小于 CHECK_INTERVAL 时不更新 lastCheck', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL - 1)
       expect((sys as any).lastCheck).toBe(0)
     })
 
     it('tick 差值等于 CHECK_INTERVAL 时执行更新并更新 lastCheck', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
     })
 
     it('tick 差值大于 CHECK_INTERVAL 时执行更新', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL + 100)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 100)
     })
 
     it('连续两次 update 在 CHECK_INTERVAL 内，第二次不触发再次更新', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       const lastCheckAfterFirst = (sys as any).lastCheck
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL + 100)
@@ -103,6 +107,7 @@ describe('DiplomaticAbsolution2System', () => {
     })
 
     it('第二个完整周期触发时 lastCheck 更新到新 tick', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 2)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
@@ -114,6 +119,7 @@ describe('DiplomaticAbsolution2System', () => {
     it('每次 update 后 duration +1', () => {
       const d = makeDecree({ duration: 0, tick: 0 })
       ;(sys as any).decrees.push(d)
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).decrees[0].duration).toBe(1)
     })
@@ -122,6 +128,7 @@ describe('DiplomaticAbsolution2System', () => {
       const d = makeDecree({ duration: 0, tick: 0 })
       ;(sys as any).decrees.push(d)
       for (let i = 1; i <= 3; i++) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       expect((sys as any).decrees[0].duration).toBe(3)
@@ -130,6 +137,7 @@ describe('DiplomaticAbsolution2System', () => {
     it('releaseCompleteness 不超出 [10, 90] 范围', () => {
       ;(sys as any).decrees.push(makeDecree({ releaseCompleteness: 50, tick: 0 }))
       for (let i = 1; i <= 20; i++) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       const val = (sys as any).decrees[0].releaseCompleteness
@@ -140,6 +148,7 @@ describe('DiplomaticAbsolution2System', () => {
     it('publicAcceptance 不超出 [5, 80] 范围', () => {
       ;(sys as any).decrees.push(makeDecree({ publicAcceptance: 40, tick: 0 }))
       for (let i = 1; i <= 20; i++) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       const val = (sys as any).decrees[0].publicAcceptance
@@ -150,6 +159,7 @@ describe('DiplomaticAbsolution2System', () => {
     it('moralAuthority 不超出 [10, 85] 范围', () => {
       ;(sys as any).decrees.push(makeDecree({ moralAuthority: 50, tick: 0 }))
       for (let i = 1; i <= 20; i++) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       const val = (sys as any).decrees[0].moralAuthority
@@ -160,6 +170,7 @@ describe('DiplomaticAbsolution2System', () => {
     it('precedentValue 不超出 [5, 65] 范围', () => {
       ;(sys as any).decrees.push(makeDecree({ precedentValue: 30, tick: 0 }))
       for (let i = 1; i <= 20; i++) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       const val = (sys as any).decrees[0].precedentValue

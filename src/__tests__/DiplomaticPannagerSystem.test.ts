@@ -51,26 +51,31 @@ describe('DiplomaticPannagerSystem — CHECK_INTERVAL=2840 节流', () => {
   afterEach(() => { vi.restoreAllMocks() })
 
   it('tick=0时不执行，lastCheck依然为0', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 0)
     expect((sys as any).lastCheck).toBe(0)
   })
 
   it('tick < CHECK_INTERVAL时被节流，lastCheck不变', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL - 1)
     expect((sys as any).lastCheck).toBe(0)
   })
 
   it('tick === CHECK_INTERVAL时通过节流，lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
 
   it('tick > CHECK_INTERVAL时通过节流，lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL + 500)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 500)
   })
 
   it('第一次通过后同tick再调用被节流，lastCheck不变', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
@@ -83,6 +88,7 @@ describe('DiplomaticPannagerSystem — 字段动态更新', () => {
 
   it('每次update通过节流后duration递增1', () => {
     ;(sys as any).arrangements.push(makeArr({ duration: 0, tick: 999999 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).arrangements[0].duration).toBe(1)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 2)
@@ -91,6 +97,7 @@ describe('DiplomaticPannagerSystem — 字段动态更新', () => {
 
   it('grazingRights被约束在[5, 85]范围内', () => {
     ;(sys as any).arrangements.push(makeArr({ grazingRights: 40, tick: CHECK_INTERVAL }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     for (let i = 1; i <= 200; i++) sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
     const v = (sys as any).arrangements[0]?.grazingRights
     if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(5); expect(v).toBeLessThanOrEqual(85) }
@@ -98,6 +105,7 @@ describe('DiplomaticPannagerSystem — 字段动态更新', () => {
 
   it('mastAllocation被约束在[10, 90]范围内', () => {
     ;(sys as any).arrangements.push(makeArr({ mastAllocation: 45, tick: CHECK_INTERVAL }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     for (let i = 1; i <= 200; i++) sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
     const v = (sys as any).arrangements[0]?.mastAllocation
     if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(10); expect(v).toBeLessThanOrEqual(90) }
@@ -105,6 +113,7 @@ describe('DiplomaticPannagerSystem — 字段动态更新', () => {
 
   it('seasonalControl在[5,80]，livestockManagement在[5,65]', () => {
     ;(sys as any).arrangements.push(makeArr({ seasonalControl: 25, livestockManagement: 30, tick: CHECK_INTERVAL }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     for (let i = 1; i <= 200; i++) sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
     const a = (sys as any).arrangements[0]
     if (a) {

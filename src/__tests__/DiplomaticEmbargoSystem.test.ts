@@ -32,24 +32,28 @@ describe('CHECK_INTERVAL=1400节流', () => {
   it('tick=0时不执行', () => {
     const sys = makeSys()
     ;(sys as any).embargoes.push(makeEmbargo({ startTick: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, makeCivMgr(), 0)
     expect((sys as any).embargoes[0].economicDamage).toBe(0)
   })
   it('tick=1399时不执行', () => {
     const sys = makeSys()
     ;(sys as any).embargoes.push(makeEmbargo({ startTick: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, makeCivMgr(), 1399)
     expect((sys as any).embargoes[0].economicDamage).toBe(0)
   })
   it('tick=1400时执行（economicDamage增加）', () => {
     const sys = makeSys()
     ;(sys as any).embargoes.push(makeEmbargo({ startTick: 0, duration: 10000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, makeCivMgr(), 1400)
     expect((sys as any).embargoes[0].economicDamage).toBeGreaterThan(0)
   })
   it('第二次调用需再等1400', () => {
     const sys = makeSys()
     ;(sys as any).embargoes.push(makeEmbargo({ startTick: 0, duration: 10000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, makeCivMgr(), 1400)
     const d1 = (sys as any).embargoes[0].economicDamage
     sys.update(1, {} as any, makeCivMgr(), 1401)
@@ -58,6 +62,7 @@ describe('CHECK_INTERVAL=1400节流', () => {
   it('tick=2800时第二次执行', () => {
     const sys = makeSys()
     ;(sys as any).embargoes.push(makeEmbargo({ startTick: 0, duration: 10000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, makeCivMgr(), 1400)
     const d1 = (sys as any).embargoes[0].economicDamage
     sys.update(1, {} as any, makeCivMgr(), 2800)
@@ -69,24 +74,28 @@ describe('economicDamage和selfDamage递增', () => {
   it('partial每tick economicDamage+=0.02', () => {
     const sys = makeSys()
     ;(sys as any).embargoes.push(makeEmbargo({ severity: 'partial', startTick: 0, duration: 10000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, makeCivMgr(), 1400)
     expect((sys as any).embargoes[0].economicDamage).toBeCloseTo(0.02)
   })
   it('full每tick economicDamage+=0.04', () => {
     const sys = makeSys()
     ;(sys as any).embargoes.push(makeEmbargo({ severity: 'full', startTick: 0, duration: 10000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, makeCivMgr(), 1400)
     expect((sys as any).embargoes[0].economicDamage).toBeCloseTo(0.04)
   })
   it('blockade每tick economicDamage+=0.06', () => {
     const sys = makeSys()
     ;(sys as any).embargoes.push(makeEmbargo({ severity: 'blockade', startTick: 0, duration: 10000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, makeCivMgr(), 1400)
     expect((sys as any).embargoes[0].economicDamage).toBeCloseTo(0.06)
   })
   it('selfDamage是economicDamage的0.3倍', () => {
     const sys = makeSys()
     ;(sys as any).embargoes.push(makeEmbargo({ severity: 'full', startTick: 0, duration: 10000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, makeCivMgr(), 1400)
     const e = (sys as any).embargoes[0]
     expect(e.selfDamage).toBeCloseTo(e.economicDamage * 0.3)

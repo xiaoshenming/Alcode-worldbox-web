@@ -10,6 +10,7 @@ describe('DiplomaticIndemnitySystem', () => {
   it('初始agreements为空', () => { expect((sys as any).agreements).toHaveLength(0) })
   it('初始nextId=1', () => { expect((sys as any).nextId).toBe(1) })
   it('初始lastCheck=0', () => { expect((sys as any).lastCheck).toBe(0) })
+  vi.spyOn(Math, 'random').mockReturnValue(0.9)
   it('update返回void', () => { expect(sys.update(1, {} as any, {} as any, 0)).toBeUndefined() })
   it('CHECK_INTERVAL=2500时节流生效', () => {
     ;(sys as any).lastCheck = 1000
@@ -26,11 +27,13 @@ describe('DiplomaticIndemnitySystem', () => {
     vi.restoreAllMocks()
   })
   it('lastCheck在update后更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 5000)
     expect((sys as any).lastCheck).toBe(5000)
   })
   it('未到CHECK_INTERVAL不更新lastCheck', () => {
     ;(sys as any).lastCheck = 5000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 5100)
     expect((sys as any).lastCheck).toBe(5000)
   })

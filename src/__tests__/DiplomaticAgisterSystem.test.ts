@@ -69,26 +69,31 @@ describe('DiplomaticAgisterSystem — CHECK_INTERVAL=2850 节流', () => {
   afterEach(() => { vi.restoreAllMocks() })
 
   it('tick=0时不执行（lastCheck依然为0）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 0)
     expect((sys as any).lastCheck).toBe(0)
   })
 
   it('tick < CHECK_INTERVAL时被节流，lastCheck不变', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL - 1)
     expect((sys as any).lastCheck).toBe(0)
   })
 
   it('tick === CHECK_INTERVAL时通过节流，lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
 
   it('tick > CHECK_INTERVAL时通过节流，lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL + 1000)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 1000)
   })
 
   it('第一次通过后同tick再调用被节流', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
@@ -101,6 +106,7 @@ describe('DiplomaticAgisterSystem — 数值字段动态更新', () => {
 
   it('每次update通过节流后duration递增1', () => {
     ;(sys as any).arrangements.push(makeArrangement({ duration: 0, tick: 999999 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).arrangements[0].duration).toBe(1)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 2)
@@ -110,6 +116,7 @@ describe('DiplomaticAgisterSystem — 数值字段动态更新', () => {
   it('pastureAllocation被约束在[5, 85]范围内', () => {
     ;(sys as any).arrangements.push(makeArrangement({ pastureAllocation: 40, tick: CHECK_INTERVAL }))
     for (let i = 1; i <= 200; i++) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
     }
     const pa = (sys as any).arrangements[0]?.pastureAllocation
@@ -122,6 +129,7 @@ describe('DiplomaticAgisterSystem — 数值字段动态更新', () => {
   it('livestockCapacity被约束在[10, 90]范围内', () => {
     ;(sys as any).arrangements.push(makeArrangement({ livestockCapacity: 45, tick: CHECK_INTERVAL }))
     for (let i = 1; i <= 200; i++) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
     }
     const lc = (sys as any).arrangements[0]?.livestockCapacity
@@ -134,6 +142,7 @@ describe('DiplomaticAgisterSystem — 数值字段动态更新', () => {
   it('rentalRevenue被约束在[5, 80]范围内', () => {
     ;(sys as any).arrangements.push(makeArrangement({ rentalRevenue: 30, tick: CHECK_INTERVAL }))
     for (let i = 1; i <= 200; i++) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
     }
     const rr = (sys as any).arrangements[0]?.rentalRevenue
@@ -146,6 +155,7 @@ describe('DiplomaticAgisterSystem — 数值字段动态更新', () => {
   it('grazingQuality被约束在[5, 65]范围内', () => {
     ;(sys as any).arrangements.push(makeArrangement({ grazingQuality: 30, tick: CHECK_INTERVAL }))
     for (let i = 1; i <= 200; i++) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
     }
     const gq = (sys as any).arrangements[0]?.grazingQuality
@@ -245,6 +255,7 @@ describe('DiplomaticAgisterSystem — MAX_ARRANGEMENTS=16 上限', () => {
   })
 
   it('多次update后lastCheck始终追踪最新tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 2)

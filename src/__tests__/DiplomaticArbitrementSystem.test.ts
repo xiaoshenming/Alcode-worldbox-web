@@ -95,23 +95,27 @@ describe('DiplomaticArbitrementSystem', () => {
   // ─────────────────────────────────────────────
   describe('CHECK_INTERVAL节流', () => {
     it('tick < CHECK_INTERVAL 时update跳过，lastCheck不变', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL - 1)
       expect((sys as any).lastCheck).toBe(0)
     })
 
     it('tick === CHECK_INTERVAL 时update执行，lastCheck更新', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
     })
 
     it('tick > CHECK_INTERVAL 时update执行，lastCheck更新为当前tick', () => {
       const tick = CHECK_INTERVAL + 100
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, tick)
       expect((sys as any).lastCheck).toBe(tick)
     })
 
     it('第一次update后，第二次tick未超过阈值则跳过', () => {
       const tick1 = CHECK_INTERVAL
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, tick1)
       expect((sys as any).lastCheck).toBe(tick1)
 
@@ -124,6 +128,7 @@ describe('DiplomaticArbitrementSystem', () => {
 
     it('连续两次update均满足间隔，lastCheck连续更新', () => {
       const tick1 = CHECK_INTERVAL
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, tick1)
       expect((sys as any).lastCheck).toBe(tick1)
 
@@ -141,6 +146,7 @@ describe('DiplomaticArbitrementSystem', () => {
       const c = makeCase({ duration: 0, tick: 0 })
       ;(sys as any).cases.push(c)
 
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).cases[0].duration).toBe(1)
     })
@@ -149,6 +155,7 @@ describe('DiplomaticArbitrementSystem', () => {
       const c = makeCase({ duration: 0, tick: 0 })
       ;(sys as any).cases.push(c)
 
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 2)
       expect((sys as any).cases[0].duration).toBe(2)
@@ -158,6 +165,7 @@ describe('DiplomaticArbitrementSystem', () => {
       const c = makeCase({ caseStrength: 50, duration: 0, tick: 0 })
       ;(sys as any).cases.push(c)
 
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).cases[0].caseStrength).toBeCloseTo(50.02, 5)
     })
@@ -166,6 +174,7 @@ describe('DiplomaticArbitrementSystem', () => {
       const c = makeCase({ caseStrength: 99.99, duration: 0, tick: 0 })
       ;(sys as any).cases.push(c)
 
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).cases[0].caseStrength).toBeLessThanOrEqual(100)
     })
@@ -174,6 +183,7 @@ describe('DiplomaticArbitrementSystem', () => {
       const c = makeCase({ phase: 'filing', duration: 20, tick: 0 })
       ;(sys as any).cases.push(c)
 
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       // duration变为21，应触发 phase -> hearing
       expect((sys as any).cases[0].phase).toBe('hearing')
@@ -183,6 +193,7 @@ describe('DiplomaticArbitrementSystem', () => {
       const c = makeCase({ phase: 'hearing', duration: 50, tick: 0 })
       ;(sys as any).cases.push(c)
 
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).cases[0].phase).toBe('deliberation')
     })
@@ -192,6 +203,7 @@ describe('DiplomaticArbitrementSystem', () => {
       const c = makeCase({ phase: 'deliberation', duration: 70, bindingForce, compliance: 0, tick: 0 })
       ;(sys as any).cases.push(c)
 
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).cases[0].phase).toBe('ruling')
       expect((sys as any).cases[0].compliance).toBeCloseTo(bindingForce * 0.8, 5)
@@ -201,6 +213,7 @@ describe('DiplomaticArbitrementSystem', () => {
       const c = makeCase({ phase: 'filing', duration: 10, tick: 0 })
       ;(sys as any).cases.push(c)
 
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).cases[0].phase).toBe('filing')
     })
@@ -246,6 +259,7 @@ describe('DiplomaticArbitrementSystem', () => {
       ;(sys as any).cases.push(makeCase({ id: 2, phase: 'filing', duration: 5, tick: 0 }))
       ;(sys as any).cases.push(makeCase({ id: 3, phase: 'ruling', duration: 50, tick: 0 }))
 
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
 
       const ids = (sys as any).cases.map((c: ArbitrementCase) => c.id)

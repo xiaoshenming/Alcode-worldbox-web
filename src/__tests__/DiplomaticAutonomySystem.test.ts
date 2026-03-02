@@ -116,18 +116,21 @@ describe('DiplomaticAutonomySystem', () => {
 
     it('tick差值等于CHECK_INTERVAL时执行update（lastCheck更新）', () => {
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
     })
 
     it('tick差值超过CHECK_INTERVAL时lastCheck被更新', () => {
       const bigTick = CHECK_INTERVAL * 2
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).lastCheck).toBe(bigTick)
     })
 
     it('连续调用第一次通过第二次节流', () => {
       const tick1 = CHECK_INTERVAL + 10
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, tick1)
       const lastCheck1 = (sys as any).lastCheck
       sys.update(1, {} as any, {} as any, tick1 + 1)
@@ -137,6 +140,7 @@ describe('DiplomaticAutonomySystem', () => {
     it('节流期间不对现有agreements执行duration更新', () => {
       ;(sys as any).agreements.push(makeAgreement({ id: 1, duration: 3 }))
       const tick1 = CHECK_INTERVAL + 1
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, tick1)
       const dur1 = (sys as any).agreements[0].duration
       sys.update(1, {} as any, {} as any, tick1 + CHECK_INTERVAL - 1)
@@ -151,12 +155,14 @@ describe('DiplomaticAutonomySystem', () => {
   describe('数值字段动态更新', () => {
     it('每次update后duration递增1', () => {
       ;(sys as any).agreements.push(makeAgreement({ id: 1, duration: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL + 1)
       expect((sys as any).agreements[0].duration).toBe(1)
     })
 
     it('多次update后duration累计递增', () => {
       ;(sys as any).agreements.push(makeAgreement({ id: 1, duration: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL + 1)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 2 + 2)
       expect((sys as any).agreements[0].duration).toBe(2)

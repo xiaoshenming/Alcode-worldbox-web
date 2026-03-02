@@ -19,24 +19,29 @@ describe('DiplomaticMandateSystem', () => {
 
   describe('CHECK_INTERVAL=2560节流', () => {
     it('tick未到间隔不执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 100)
       expect((sys as any).lastCheck).toBe(0)
     })
     it('tick到达间隔执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2560)
       expect((sys as any).lastCheck).toBe(2560)
     })
     it('两次间隔都执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2560)
       sys.update(1, {} as any, {} as any, 5120)
       expect((sys as any).lastCheck).toBe(5120)
     })
     it('间隔内多次调用只更新一次', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2560)
       sys.update(1, {} as any, {} as any, 2600)
       expect((sys as any).lastCheck).toBe(2560)
     })
     it('tick=0不执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 0)
       expect((sys as any).lastCheck).toBe(0)
     })
@@ -114,6 +119,7 @@ describe('DiplomaticMandateSystem', () => {
       ;(sys as any).agreements = Array.from({ length: 16 }, (_, i) => makeAgreement({ id: i + 1, tick: 999999 }))
       ;(sys as any).lastCheck = 0
       const before = (sys as any).agreements.length
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2560)
       expect((sys as any).agreements.length).toBeLessThanOrEqual(before)
     })
@@ -121,6 +127,7 @@ describe('DiplomaticMandateSystem', () => {
       ;(sys as any).agreements = Array.from({ length: 16 }, (_, i) => makeAgreement({ id: i + 1, tick: 999999 }))
       const before = (sys as any).agreements.length
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2560)
       expect((sys as any).agreements.length).toBeLessThanOrEqual(before)
     })

@@ -84,24 +84,28 @@ describe('DiplomaticCeasefireSystem', () => {
   describe('CHECK_INTERVAL 节流', () => {
     it('tick 差值小于 CHECK_INTERVAL 时不更新 lastCheck', () => {
       const em = makeEM([1, 2, 3])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, em as any, CHECK_INTERVAL - 1)
       expect((sys as any).lastCheck).toBe(0)
     })
 
     it('tick 恰好等于 CHECK_INTERVAL 时执行更新', () => {
       const em = makeEM([1, 2, 3])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, em as any, CHECK_INTERVAL)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
     })
 
     it('tick 超过 CHECK_INTERVAL 时执行更新', () => {
       const em = makeEM([1, 2, 3])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, em as any, CHECK_INTERVAL + 999)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 999)
     })
 
     it('第一次 update 后，间隔不足时第二次不触发更新', () => {
       const em = makeEM([1, 2, 3])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, em as any, CHECK_INTERVAL)
       const checkAfterFirst = (sys as any).lastCheck
       sys.update(1, {} as any, em as any, CHECK_INTERVAL + 100)
@@ -110,6 +114,7 @@ describe('DiplomaticCeasefireSystem', () => {
 
     it('两个完整周期都会触发更新', () => {
       const em = makeEM([1, 2, 3])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, em as any, CHECK_INTERVAL)
       sys.update(1, {} as any, em as any, CHECK_INTERVAL * 2)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
@@ -121,6 +126,7 @@ describe('DiplomaticCeasefireSystem', () => {
     it('每次 update 后 remaining -1', () => {
       ;(sys as any).ceasefires.push(makeCeasefire({ remaining: 20, tick: 0 }))
       const em = makeEM([])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, em as any, CHECK_INTERVAL)
       expect((sys as any).ceasefires[0]?.remaining).toBe(19)
     })
@@ -138,6 +144,7 @@ describe('DiplomaticCeasefireSystem', () => {
       ;(sys as any).ceasefires.push(makeCeasefire({ stability: 50, remaining: 100, tick: 0 }))
       const em = makeEM([])
       for (let i = 1; i <= 20; i++) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, em as any, CHECK_INTERVAL * i)
       }
       const cf = (sys as any).ceasefires[0]
@@ -185,6 +192,7 @@ describe('DiplomaticCeasefireSystem', () => {
       ;(sys as any).ceasefires.push(makeCeasefire({ factionA: 1, factionB: 2, remaining: 1, stability: 80, tick: 0 }))
       ;(sys as any)._ceasefireKeySet.add('1_2')
       const em = makeEM([])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, em as any, CHECK_INTERVAL)
       expect((sys as any)._ceasefireKeySet.has('1_2')).toBe(false)
     })
@@ -225,6 +233,7 @@ describe('DiplomaticCeasefireSystem', () => {
       ;(sys as any).ceasefires.push(makeCeasefire({ factionA: 10, factionB: 20, remaining: 1, stability: 90, tick: 0 }))
       ;(sys as any)._ceasefireKeySet.add('10_20')
       const em = makeEM([])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, em as any, CHECK_INTERVAL)
       expect((sys as any)._ceasefireKeySet.has('10_20')).toBe(false)
     })

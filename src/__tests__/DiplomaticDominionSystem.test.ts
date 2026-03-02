@@ -41,12 +41,14 @@ describe('CHECK_INTERVAL=2550节流', () => {
   it('tick=0时不执行', () => {
     const sys = makeSys()
     ;(sys as any).relations.push(makeRel({ duration: 5 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 0)
     expect((sys as any).relations[0].duration).toBe(5)
   })
   it('tick=2549时不执行', () => {
     const sys = makeSys()
     ;(sys as any).relations.push(makeRel({ duration: 5 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2549)
     expect((sys as any).relations[0].duration).toBe(5)
   })
@@ -162,6 +164,7 @@ describe('过期清理cutoff=tick-96000', () => {
   })
   it('空数组时不崩溃', () => {
     const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     expect(() => sys.update(1, {} as any, {} as any, 100000)).not.toThrow()
   })
 })

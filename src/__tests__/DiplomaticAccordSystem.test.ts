@@ -86,28 +86,33 @@ describe('DiplomaticAccordSystem — CHECK_INTERVAL=2360 节流', () => {
   afterEach(() => { vi.restoreAllMocks() })
 
   it('tick=100 < CHECK_INTERVAL=2360 时不更新 lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 100)
     expect((sys as any).lastCheck).toBe(0)
   })
 
   it('tick=2360 = CHECK_INTERVAL 时更新 lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2360)
     expect((sys as any).lastCheck).toBe(2360)
   })
 
   it('tick=2359 < CHECK_INTERVAL 时跳过，accords 中 duration 不变', () => {
     ;(sys as any).accords.push(makeAccord({ tick: 0, duration: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2359)
     expect((sys as any).accords[0].duration).toBe(0)
   })
 
   it('tick=2360 时 duration 被更新（+1）', () => {
     ;(sys as any).accords.push(makeAccord({ tick: 2360, duration: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2360)
     expect((sys as any).accords[0].duration).toBe(1)
   })
 
   it('第二次调用间隔不足时不更新 lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2360)
     expect((sys as any).lastCheck).toBe(2360)
     sys.update(1, {} as any, {} as any, 3000) // 3000-2360=640 < 2360
@@ -115,12 +120,14 @@ describe('DiplomaticAccordSystem — CHECK_INTERVAL=2360 节流', () => {
   })
 
   it('第二次调用满足间隔时更新 lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2360)
     sys.update(1, {} as any, {} as any, 4720) // 4720-2360=2360 >= 2360
     expect((sys as any).lastCheck).toBe(4720)
   })
 
   it('连续三次满足间隔，lastCheck 递增更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2360)
     sys.update(1, {} as any, {} as any, 4720)
     sys.update(1, {} as any, {} as any, 7080)
@@ -135,6 +142,7 @@ describe('DiplomaticAccordSystem — 数值字段动态更新', () => {
 
   it('update 后 duration 递增 +1', () => {
     ;(sys as any).accords.push(makeAccord({ tick: 2360, duration: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2360)
     expect((sys as any).accords[0].duration).toBe(1)
   })
@@ -142,6 +150,7 @@ describe('DiplomaticAccordSystem — 数值字段动态更新', () => {
   it('bindingForce 在 [10, 90] 范围内', () => {
     ;(sys as any).accords.push(makeAccord({ tick: 2360, bindingForce: 50 }))
     for (let t = 2360; t <= 2360 * 100; t += 2360) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, t)
       const val = (sys as any).accords[0]?.bindingForce
       if (val !== undefined) {
@@ -154,6 +163,7 @@ describe('DiplomaticAccordSystem — 数值字段动态更新', () => {
   it('mutualSatisfaction 在 [15, 90] 范围内', () => {
     ;(sys as any).accords.push(makeAccord({ tick: 2360, mutualSatisfaction: 45 }))
     for (let t = 2360; t <= 2360 * 50; t += 2360) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, t)
       const val = (sys as any).accords[0]?.mutualSatisfaction
       if (val !== undefined) {
@@ -166,6 +176,7 @@ describe('DiplomaticAccordSystem — 数值字段动态更新', () => {
   it('implementationRate 在 [5, 80] 范围内', () => {
     ;(sys as any).accords.push(makeAccord({ tick: 2360, implementationRate: 30 }))
     for (let t = 2360; t <= 2360 * 50; t += 2360) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, t)
       const val = (sys as any).accords[0]?.implementationRate
       if (val !== undefined) {
@@ -178,6 +189,7 @@ describe('DiplomaticAccordSystem — 数值字段动态更新', () => {
   it('longevity 在 [5, 70] 范围内', () => {
     ;(sys as any).accords.push(makeAccord({ tick: 2360, longevity: 20 }))
     for (let t = 2360; t <= 2360 * 50; t += 2360) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, t)
       const val = (sys as any).accords[0]?.longevity
       if (val !== undefined) {
@@ -190,6 +202,7 @@ describe('DiplomaticAccordSystem — 数值字段动态更新', () => {
   it('多条记录各自独立更新 duration', () => {
     ;(sys as any).accords.push(makeAccord({ id: 1, tick: 2360, duration: 0 }))
     ;(sys as any).accords.push(makeAccord({ id: 2, tick: 2360, duration: 10 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2360)
     expect((sys as any).accords[0].duration).toBe(1)
     expect((sys as any).accords[1].duration).toBe(11)
@@ -228,6 +241,7 @@ describe('DiplomaticAccordSystem — time-based 过期清理（cutoff=tick-83000
     ;(sys as any).accords.push(makeAccord({ tick: 6999,  id: 2 })) // 过期
     ;(sys as any).accords.push(makeAccord({ tick: 7000,  id: 3 })) // 边界，保留
     ;(sys as any).accords.push(makeAccord({ tick: 15000, id: 4 })) // 保留
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000) // cutoff=7000
     const ids = (sys as any).accords.map((a: any) => a.id)
     expect(ids).not.toContain(1)

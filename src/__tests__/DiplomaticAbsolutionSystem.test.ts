@@ -86,17 +86,20 @@ describe('DiplomaticAbsolutionSystem — CHECK_INTERVAL=2420 节流', () => {
   afterEach(() => { vi.restoreAllMocks() })
 
   it('tick=100 < CHECK_INTERVAL=2420 时不更新 lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 100)
     expect((sys as any).lastCheck).toBe(0)
   })
 
   it('tick=2420 = CHECK_INTERVAL 时更新 lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2420)
     expect((sys as any).lastCheck).toBe(2420)
   })
 
   it('tick=2419 < CHECK_INTERVAL 时跳过，declarations 不变', () => {
     ;(sys as any).declarations.push(makeDeclaration({ tick: 0, duration: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2419)
     // duration 未被更新
     expect((sys as any).declarations[0].duration).toBe(0)
@@ -104,11 +107,13 @@ describe('DiplomaticAbsolutionSystem — CHECK_INTERVAL=2420 节流', () => {
 
   it('tick=2420 时 duration 被更新（+1）', () => {
     ;(sys as any).declarations.push(makeDeclaration({ tick: 2420, duration: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2420)
     expect((sys as any).declarations[0].duration).toBe(1)
   })
 
   it('第二次调用间隔不足时不更新 lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2420)
     expect((sys as any).lastCheck).toBe(2420)
     sys.update(1, {} as any, {} as any, 3000) // 3000-2420=580 < 2420
@@ -116,12 +121,14 @@ describe('DiplomaticAbsolutionSystem — CHECK_INTERVAL=2420 节流', () => {
   })
 
   it('第二次调用满足间隔时更新 lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2420)
     sys.update(1, {} as any, {} as any, 4840) // 4840-2420=2420 >= 2420
     expect((sys as any).lastCheck).toBe(4840)
   })
 
   it('连续两次满足间隔，lastCheck 递增更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2420)
     sys.update(1, {} as any, {} as any, 4840)
     sys.update(1, {} as any, {} as any, 7260)
@@ -136,6 +143,7 @@ describe('DiplomaticAbsolutionSystem — 数值字段动态更新', () => {
 
   it('update 后 duration 递增 +1', () => {
     ;(sys as any).declarations.push(makeDeclaration({ tick: 2420, duration: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2420)
     expect((sys as any).declarations[0].duration).toBe(1)
   })
@@ -143,6 +151,7 @@ describe('DiplomaticAbsolutionSystem — 数值字段动态更新', () => {
   it('sincerity 在 [10, 85] 范围内', () => {
     ;(sys as any).declarations.push(makeDeclaration({ tick: 2420, sincerity: 50 }))
     for (let t = 2420; t <= 2420 * 100; t += 2420) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, t)
       const val = (sys as any).declarations[0]?.sincerity
       if (val !== undefined) {
@@ -155,6 +164,7 @@ describe('DiplomaticAbsolutionSystem — 数值字段动态更新', () => {
   it('healingEffect 在 [10, 80] 范围内', () => {
     ;(sys as any).declarations.push(makeDeclaration({ tick: 2420, healingEffect: 40 }))
     for (let t = 2420; t <= 2420 * 50; t += 2420) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, t)
       const val = (sys as any).declarations[0]?.healingEffect
       if (val !== undefined) {
@@ -167,6 +177,7 @@ describe('DiplomaticAbsolutionSystem — 数值字段动态更新', () => {
   it('politicalCost 在 [5, 70] 范围内', () => {
     ;(sys as any).declarations.push(makeDeclaration({ tick: 2420, politicalCost: 25 }))
     for (let t = 2420; t <= 2420 * 50; t += 2420) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, t)
       const val = (sys as any).declarations[0]?.politicalCost
       if (val !== undefined) {
@@ -179,6 +190,7 @@ describe('DiplomaticAbsolutionSystem — 数值字段动态更新', () => {
   it('moralAuthority 在 [5, 65] 范围内', () => {
     ;(sys as any).declarations.push(makeDeclaration({ tick: 2420, moralAuthority: 30 }))
     for (let t = 2420; t <= 2420 * 50; t += 2420) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, t)
       const val = (sys as any).declarations[0]?.moralAuthority
       if (val !== undefined) {
@@ -191,6 +203,7 @@ describe('DiplomaticAbsolutionSystem — 数值字段动态更新', () => {
   it('多条记录各自独立更新 duration', () => {
     ;(sys as any).declarations.push(makeDeclaration({ id: 1, tick: 2420, duration: 0 }))
     ;(sys as any).declarations.push(makeDeclaration({ id: 2, tick: 2420, duration: 5 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2420)
     expect((sys as any).declarations[0].duration).toBe(1)
     expect((sys as any).declarations[1].duration).toBe(6)
@@ -229,6 +242,7 @@ describe('DiplomaticAbsolutionSystem — time-based 过期清理（cutoff=tick-8
     ;(sys as any).declarations.push(makeDeclaration({ tick: 5999,  id: 2 })) // 过期
     ;(sys as any).declarations.push(makeDeclaration({ tick: 6000,  id: 3 })) // 边界，保留
     ;(sys as any).declarations.push(makeDeclaration({ tick: 10000, id: 4 })) // 保留
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 90000) // cutoff=6000
     const ids = (sys as any).declarations.map((d: any) => d.id)
     expect(ids).not.toContain(1)

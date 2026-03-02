@@ -86,28 +86,33 @@ describe('DiplomaticAccommodationSystem — CHECK_INTERVAL=2480 节流', () => {
   afterEach(() => { vi.restoreAllMocks() })
 
   it('tick=100 < CHECK_INTERVAL=2480 时不更新 lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 100)
     expect((sys as any).lastCheck).toBe(0)
   })
 
   it('tick=2480 = CHECK_INTERVAL 时更新 lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2480)
     expect((sys as any).lastCheck).toBe(2480)
   })
 
   it('tick=2479 < CHECK_INTERVAL 时跳过，proceedings 中 duration 不变', () => {
     ;(sys as any).proceedings.push(makeProceeding({ tick: 0, duration: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2479)
     expect((sys as any).proceedings[0].duration).toBe(0)
   })
 
   it('tick=2480 时 duration 被更新（+1）', () => {
     ;(sys as any).proceedings.push(makeProceeding({ tick: 2480, duration: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2480)
     expect((sys as any).proceedings[0].duration).toBe(1)
   })
 
   it('第二次调用间隔不足时不更新 lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2480)
     expect((sys as any).lastCheck).toBe(2480)
     sys.update(1, {} as any, {} as any, 3000) // 3000-2480=520 < 2480
@@ -115,12 +120,14 @@ describe('DiplomaticAccommodationSystem — CHECK_INTERVAL=2480 节流', () => {
   })
 
   it('第二次调用满足间隔时更新 lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2480)
     sys.update(1, {} as any, {} as any, 4960) // 4960-2480=2480 >= 2480
     expect((sys as any).lastCheck).toBe(4960)
   })
 
   it('连续三次满足间隔，lastCheck 递增更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2480)
     sys.update(1, {} as any, {} as any, 4960)
     sys.update(1, {} as any, {} as any, 7440)
@@ -135,6 +142,7 @@ describe('DiplomaticAccommodationSystem — 数值字段动态更新', () => {
 
   it('update 后 duration 递增 +1', () => {
     ;(sys as any).proceedings.push(makeProceeding({ tick: 2480, duration: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2480)
     expect((sys as any).proceedings[0].duration).toBe(1)
   })
@@ -142,6 +150,7 @@ describe('DiplomaticAccommodationSystem — 数值字段动态更新', () => {
   it('flexibility 在 [10, 90] 范围内', () => {
     ;(sys as any).proceedings.push(makeProceeding({ tick: 2480, flexibility: 50 }))
     for (let t = 2480; t <= 2480 * 100; t += 2480) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, t)
       const val = (sys as any).proceedings[0]?.flexibility
       if (val !== undefined) {
@@ -154,6 +163,7 @@ describe('DiplomaticAccommodationSystem — 数值字段动态更新', () => {
   it('mutualBenefit 在 [10, 85] 范围内', () => {
     ;(sys as any).proceedings.push(makeProceeding({ tick: 2480, mutualBenefit: 40 }))
     for (let t = 2480; t <= 2480 * 50; t += 2480) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, t)
       const val = (sys as any).proceedings[0]?.mutualBenefit
       if (val !== undefined) {
@@ -166,6 +176,7 @@ describe('DiplomaticAccommodationSystem — 数值字段动态更新', () => {
   it('adjustmentDepth 在 [5, 75] 范围内', () => {
     ;(sys as any).proceedings.push(makeProceeding({ tick: 2480, adjustmentDepth: 30 }))
     for (let t = 2480; t <= 2480 * 50; t += 2480) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, t)
       const val = (sys as any).proceedings[0]?.adjustmentDepth
       if (val !== undefined) {
@@ -178,6 +189,7 @@ describe('DiplomaticAccommodationSystem — 数值字段动态更新', () => {
   it('stabilityGain 在 [5, 65] 范围内', () => {
     ;(sys as any).proceedings.push(makeProceeding({ tick: 2480, stabilityGain: 20 }))
     for (let t = 2480; t <= 2480 * 50; t += 2480) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, t)
       const val = (sys as any).proceedings[0]?.stabilityGain
       if (val !== undefined) {
@@ -190,6 +202,7 @@ describe('DiplomaticAccommodationSystem — 数值字段动态更新', () => {
   it('多条记录各自独立更新 duration', () => {
     ;(sys as any).proceedings.push(makeProceeding({ id: 1, tick: 2480, duration: 0 }))
     ;(sys as any).proceedings.push(makeProceeding({ id: 2, tick: 2480, duration: 7 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2480)
     expect((sys as any).proceedings[0].duration).toBe(1)
     expect((sys as any).proceedings[1].duration).toBe(8)
@@ -228,6 +241,7 @@ describe('DiplomaticAccommodationSystem — time-based 过期清理（cutoff=tic
     ;(sys as any).proceedings.push(makeProceeding({ tick: 6999,  id: 2 })) // 过期
     ;(sys as any).proceedings.push(makeProceeding({ tick: 7000,  id: 3 })) // 边界，保留
     ;(sys as any).proceedings.push(makeProceeding({ tick: 20000, id: 4 })) // 保留
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 95000) // cutoff=7000
     const ids = (sys as any).proceedings.map((p: any) => p.id)
     expect(ids).not.toContain(1)

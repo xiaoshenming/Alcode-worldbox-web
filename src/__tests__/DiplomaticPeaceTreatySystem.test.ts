@@ -48,6 +48,7 @@ describe('DiplomaticPeaceTreatySystem', () => {
     expect((sys as any).treaties).toHaveLength(0)
   })
   it('civManager无civilizations属性时不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     expect(() => sys.update(1, em, {} as any, 1500)).not.toThrow()
   })
   it('civManager为空时不spawn', () => {

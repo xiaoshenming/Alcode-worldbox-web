@@ -91,22 +91,26 @@ describe('DiplomaticAmnestySystem', () => {
   // ─── 2. CHECK_INTERVAL 节流 ─────────────────────────────────────────────────
   describe('CHECK_INTERVAL 节流', () => {
     it('tick < CHECK_INTERVAL 时 update 直接返回，lastCheck 不变', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL - 1)
       expect((sys as any).lastCheck).toBe(0)
     })
 
     it('tick === CHECK_INTERVAL 时 update 执行，lastCheck 更新', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
     })
 
     it('tick > CHECK_INTERVAL 时 update 执行，lastCheck 更新为当前 tick', () => {
       const tick = CHECK_INTERVAL + 100
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, tick)
       expect((sys as any).lastCheck).toBe(tick)
     })
 
     it('第一次触发后，第二次 tick 差值不足时不重复执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       const prevCheck = (sys as any).lastCheck
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL + 1)
@@ -114,6 +118,7 @@ describe('DiplomaticAmnestySystem', () => {
     })
 
     it('第一次触发后，第二次 tick 差值足够时再次执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       const secondTick = CHECK_INTERVAL * 2
       sys.update(1, {} as any, {} as any, secondTick)
@@ -125,12 +130,14 @@ describe('DiplomaticAmnestySystem', () => {
   describe('数值字段动态更新', () => {
     it('每次 update 后 duration +1', () => {
       ;(sys as any).treaties.push(makeTreaty({ tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).treaties[0].duration).toBe(1)
     })
 
     it('多次 update 后 duration 累加', () => {
       ;(sys as any).treaties.push(makeTreaty({ tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 2)
       expect((sys as any).treaties[0].duration).toBe(2)
@@ -139,6 +146,7 @@ describe('DiplomaticAmnestySystem', () => {
     it('pardonLevel 保持在 [5, 85] 范围内', () => {
       ;(sys as any).treaties.push(makeTreaty({ pardonLevel: 50, tick: 0 }))
       for (let i = 1; i <= 10; i++) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       const val = (sys as any).treaties[0].pardonLevel
@@ -149,6 +157,7 @@ describe('DiplomaticAmnestySystem', () => {
     it('trustRestoration 保持在 [5, 80] 范围内', () => {
       ;(sys as any).treaties.push(makeTreaty({ trustRestoration: 40, tick: 0 }))
       for (let i = 1; i <= 10; i++) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       const val = (sys as any).treaties[0].trustRestoration
@@ -159,6 +168,7 @@ describe('DiplomaticAmnestySystem', () => {
     it('publicSupport 保持在 [10, 95] 范围内', () => {
       ;(sys as any).treaties.push(makeTreaty({ publicSupport: 60, tick: 0 }))
       for (let i = 1; i <= 10; i++) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       const val = (sys as any).treaties[0].publicSupport
@@ -169,6 +179,7 @@ describe('DiplomaticAmnestySystem', () => {
     it('reconciliationProgress 保持在 [2, 70] 范围内', () => {
       ;(sys as any).treaties.push(makeTreaty({ reconciliationProgress: 15, tick: 0 }))
       for (let i = 1; i <= 10; i++) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       const val = (sys as any).treaties[0].reconciliationProgress

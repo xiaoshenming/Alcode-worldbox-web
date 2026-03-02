@@ -107,22 +107,26 @@ describe('DiplomaticAsylumSystem', () => {
   // ─────────────────────────────────────────────
   describe('CHECK_INTERVAL节流', () => {
     it('tick < CHECK_INTERVAL 时update跳过，lastCheck不变', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL - 1)
       expect((sys as any).lastCheck).toBe(0)
     })
 
     it('tick === CHECK_INTERVAL 时update执行，lastCheck更新', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
     })
 
     it('tick > CHECK_INTERVAL 时update执行，lastCheck更新为当前tick', () => {
       const tick = CHECK_INTERVAL + 999
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, tick)
       expect((sys as any).lastCheck).toBe(tick)
     })
 
     it('第一次update后，第二次tick不满足间隔则跳过', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
 
@@ -131,6 +135,7 @@ describe('DiplomaticAsylumSystem', () => {
     })
 
     it('连续两次update均满足间隔，lastCheck连续更新', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
 
@@ -147,6 +152,7 @@ describe('DiplomaticAsylumSystem', () => {
       const r = makeRequest({ approval: 50, tick: 0 })
       ;(sys as any).requests.push(r)
 
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       const approval = (sys as any).requests[0]?.approval
       if (approval !== undefined) {

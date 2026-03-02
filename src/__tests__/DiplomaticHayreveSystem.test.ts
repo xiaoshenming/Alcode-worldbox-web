@@ -59,26 +59,31 @@ describe('DiplomaticHayreveSystem — CHECK_INTERVAL=2910 节流', () => {
   afterEach(() => { vi.restoreAllMocks() })
 
   it('tick=0时不执行（lastCheck依然为0）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 0)
     expect((sys as any).lastCheck).toBe(0)
   })
 
   it('tick < CHECK_INTERVAL时被节流，lastCheck不变', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL - 1)
     expect((sys as any).lastCheck).toBe(0)
   })
 
   it('tick === CHECK_INTERVAL时通过节流，lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
 
   it('tick > CHECK_INTERVAL时通过节流，lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL + 1000)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 1000)
   })
 
   it('第一次通过后同tick再调用被节流', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
@@ -213,6 +218,7 @@ describe('DiplomaticHayreveSystem — MAX_ARRANGEMENTS=16 上限', () => {
   })
 
   it('多次update后lastCheck始终追踪最新tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 2)

@@ -69,26 +69,31 @@ describe('DiplomaticAcquittalSystem — CHECK_INTERVAL=2440 节流', () => {
   afterEach(() => { vi.restoreAllMocks() })
 
   it('tick=0时不执行update（lastCheck依然为0）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 0)
     expect((sys as any).lastCheck).toBe(0)
   })
 
   it('tick < CHECK_INTERVAL时被节流，不更新lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL - 1)
     expect((sys as any).lastCheck).toBe(0)
   })
 
   it('tick === CHECK_INTERVAL时通过节流，lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
 
   it('tick > CHECK_INTERVAL时通过节流，lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL + 100)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 100)
   })
 
   it('第一次update通过后，再以相同tick调用，被节流', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
     // 同一tick再次调用，差值为0 < CHECK_INTERVAL，被节流
@@ -105,6 +110,7 @@ describe('DiplomaticAcquittalSystem — 数值字段动态更新', () => {
 
   it('每次update通过节流后，已有verdict的duration递增', () => {
     ;(sys as any).verdicts.push(makeVerdict({ tick: CHECK_INTERVAL }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).verdicts[0].duration).toBe(1)
     // 推进第二个区间
@@ -115,6 +121,7 @@ describe('DiplomaticAcquittalSystem — 数值字段动态更新', () => {
   it('evidenceStrength被约束在[15, 90]范围内', () => {
     ;(sys as any).verdicts.push(makeVerdict({ evidenceStrength: 50, tick: CHECK_INTERVAL }))
     for (let i = 1; i <= 200; i++) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
     }
     const es = (sys as any).verdicts[0]?.evidenceStrength
@@ -127,6 +134,7 @@ describe('DiplomaticAcquittalSystem — 数值字段动态更新', () => {
   it('legitimacy被约束在[10, 85]范围内', () => {
     ;(sys as any).verdicts.push(makeVerdict({ legitimacy: 50, tick: CHECK_INTERVAL }))
     for (let i = 1; i <= 200; i++) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
     }
     const leg = (sys as any).verdicts[0]?.legitimacy
@@ -139,6 +147,7 @@ describe('DiplomaticAcquittalSystem — 数值字段动态更新', () => {
   it('relationRepair被约束在[5, 75]范围内', () => {
     ;(sys as any).verdicts.push(makeVerdict({ relationRepair: 40, tick: CHECK_INTERVAL }))
     for (let i = 1; i <= 200; i++) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
     }
     const rr = (sys as any).verdicts[0]?.relationRepair
@@ -151,6 +160,7 @@ describe('DiplomaticAcquittalSystem — 数值字段动态更新', () => {
   it('precedentValue被约束在[5, 65]范围内', () => {
     ;(sys as any).verdicts.push(makeVerdict({ precedentValue: 30, tick: CHECK_INTERVAL }))
     for (let i = 1; i <= 200; i++) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
     }
     const pv = (sys as any).verdicts[0]?.precedentValue
@@ -257,6 +267,7 @@ describe('DiplomaticAcquittalSystem — nextId递增', () => {
   })
 
   it('新建系统多次调用update，lastCheck被正确更新为最新tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 2)

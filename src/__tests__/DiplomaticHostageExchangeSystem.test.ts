@@ -38,15 +38,18 @@ describe('DiplomaticHostageExchangeSystem', () => {
 
   describe('CHECK_INTERVAL=3600节流', () => {
     it('tick未达到CHECK_INTERVAL时不处理', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       const s = sys(); s.update(1, {} as any, makeEM(), makeCivManager(2), 3599)
       expect((s as any).lastCheck).toBe(0)
     })
     it('tick达到CHECK_INTERVAL时更新lastCheck', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       const s = sys(); s.update(1, {} as any, makeEM(), makeCivManager(2), 3600)
       expect((s as any).lastCheck).toBe(3600)
     })
     it('多次调用按CHECK_INTERVAL节流', () => {
       const s = sys()
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       s.update(1, {} as any, makeEM(), makeCivManager(2), 3600)
       s.update(1, {} as any, makeEM(), makeCivManager(2), 7199)
       expect((s as any).lastCheck).toBe(3600)

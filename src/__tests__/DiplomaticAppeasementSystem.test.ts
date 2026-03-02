@@ -88,22 +88,26 @@ describe('DiplomaticAppeasementSystem', () => {
   // ─── 2. CHECK_INTERVAL 节流 ─────────────────────────────────────────────────
   describe('CHECK_INTERVAL 节流', () => {
     it('tick < CHECK_INTERVAL 时 update 直接返回，lastCheck 不变', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL - 1)
       expect((sys as any).lastCheck).toBe(0)
     })
 
     it('tick === CHECK_INTERVAL 时 update 执行，lastCheck 更新', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
     })
 
     it('tick > CHECK_INTERVAL 时 lastCheck 更新为当前 tick', () => {
       const tick = CHECK_INTERVAL + 200
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, tick)
       expect((sys as any).lastCheck).toBe(tick)
     })
 
     it('第一次触发后，差值不足时不重复执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       const prevCheck = (sys as any).lastCheck
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL + 1)
@@ -111,6 +115,7 @@ describe('DiplomaticAppeasementSystem', () => {
     })
 
     it('第一次触发后，差值足够时再次执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       const secondTick = CHECK_INTERVAL * 2
       sys.update(1, {} as any, {} as any, secondTick)
@@ -122,12 +127,14 @@ describe('DiplomaticAppeasementSystem', () => {
   describe('数值字段动态更新', () => {
     it('每次 update 后 duration +1', () => {
       ;(sys as any).policies.push(makePolicy({ tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).policies[0].duration).toBe(1)
     })
 
     it('多次 update 后 duration 累加', () => {
       ;(sys as any).policies.push(makePolicy({ tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 2)
       expect((sys as any).policies[0].duration).toBe(2)
@@ -136,6 +143,7 @@ describe('DiplomaticAppeasementSystem', () => {
     it('concessionLevel 保持在 [5, 80] 范围内', () => {
       ;(sys as any).policies.push(makePolicy({ concessionLevel: 40, tick: 0 }))
       for (let i = 1; i <= 10; i++) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       const val = (sys as any).policies[0].concessionLevel
@@ -146,6 +154,7 @@ describe('DiplomaticAppeasementSystem', () => {
     it('peaceStability 保持在 [10, 85] 范围内', () => {
       ;(sys as any).policies.push(makePolicy({ peaceStability: 50, tick: 0 }))
       for (let i = 1; i <= 10; i++) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       const val = (sys as any).policies[0].peaceStability
@@ -156,6 +165,7 @@ describe('DiplomaticAppeasementSystem', () => {
     it('publicOpinion 保持在 [10, 90] 范围内', () => {
       ;(sys as any).policies.push(makePolicy({ publicOpinion: 55, tick: 0 }))
       for (let i = 1; i <= 10; i++) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       const val = (sys as any).policies[0].publicOpinion
@@ -166,6 +176,7 @@ describe('DiplomaticAppeasementSystem', () => {
     it('longTermRisk 保持在 [5, 70] 范围内', () => {
       ;(sys as any).policies.push(makePolicy({ longTermRisk: 25, tick: 0 }))
       for (let i = 1; i <= 10; i++) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       const val = (sys as any).policies[0].longTermRisk

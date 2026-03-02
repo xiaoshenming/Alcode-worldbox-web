@@ -51,26 +51,31 @@ describe('DiplomaticNonInterventionSystem — CHECK_INTERVAL=2450 节流', () =>
   afterEach(() => { vi.restoreAllMocks() })
 
   it('tick=0时不执行，lastCheck依然为0', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 0)
     expect((sys as any).lastCheck).toBe(0)
   })
 
   it('tick < CHECK_INTERVAL时被节流，lastCheck不变', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL - 1)
     expect((sys as any).lastCheck).toBe(0)
   })
 
   it('tick === CHECK_INTERVAL时通过节流，lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
 
   it('tick > CHECK_INTERVAL时通过节流，lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL + 500)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 500)
   })
 
   it('第一次通过后同tick再调用被节流，lastCheck不变', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
@@ -83,6 +88,7 @@ describe('DiplomaticNonInterventionSystem — 字段动态更新', () => {
 
   it('每次update通过节流后duration递增1', () => {
     ;(sys as any).pacts.push(makePact({ duration: 0, tick: 999999 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).pacts[0].duration).toBe(1)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 2)
@@ -91,6 +97,7 @@ describe('DiplomaticNonInterventionSystem — 字段动态更新', () => {
 
   it('sovereignty被约束在[10, 100]范围内', () => {
     ;(sys as any).pacts.push(makePact({ sovereignty: 50, tick: CHECK_INTERVAL }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     for (let i = 1; i <= 200; i++) sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
     const v = (sys as any).pacts[0]?.sovereignty
     if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(10); expect(v).toBeLessThanOrEqual(100) }
@@ -98,6 +105,7 @@ describe('DiplomaticNonInterventionSystem — 字段动态更新', () => {
 
   it('compliance被约束在[10, 95]范围内', () => {
     ;(sys as any).pacts.push(makePact({ compliance: 55, tick: CHECK_INTERVAL }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     for (let i = 1; i <= 200; i++) sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
     const v = (sys as any).pacts[0]?.compliance
     if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(10); expect(v).toBeLessThanOrEqual(95) }
@@ -105,6 +113,7 @@ describe('DiplomaticNonInterventionSystem — 字段动态更新', () => {
 
   it('mutualTrust被约束在[5, 90]，diplomaticStability在[8, 85]', () => {
     ;(sys as any).pacts.push(makePact({ mutualTrust: 40, diplomaticStability: 45, tick: CHECK_INTERVAL }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     for (let i = 1; i <= 200; i++) sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
     const p = (sys as any).pacts[0]
     if (p) {

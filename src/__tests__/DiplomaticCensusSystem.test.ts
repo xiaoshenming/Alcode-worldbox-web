@@ -108,6 +108,7 @@ describe('DiplomaticCensusSystem', () => {
     it('tick 超过 CHECK_INTERVAL 时执行更新并更新 lastCheck', () => {
       const em = {} as any
       const civ = makeCivManager([])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, em, civ as any, CHECK_INTERVAL + 500)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 500)
     })
@@ -115,6 +116,7 @@ describe('DiplomaticCensusSystem', () => {
     it('第一次 update 后间隔不足时第二次不触发', () => {
       const em = {} as any
       const civ = makeCivManager([])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, em, civ as any, CHECK_INTERVAL)
       const checkAfterFirst = (sys as any).lastCheck
       sys.update(1, em, civ as any, CHECK_INTERVAL + 100)
@@ -124,6 +126,7 @@ describe('DiplomaticCensusSystem', () => {
     it('两个完整周期都触发更新', () => {
       const em = {} as any
       const civ = makeCivManager([])
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, em, civ as any, CHECK_INTERVAL)
       sys.update(1, em, civ as any, CHECK_INTERVAL * 2)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
@@ -235,6 +238,7 @@ describe('DiplomaticCensusSystem', () => {
     it('civManager 为 null 时不崩溃', () => {
       const em = {} as any
       expect(() => {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, em, null as any, CHECK_INTERVAL)
       }).not.toThrow()
     })
@@ -242,6 +246,7 @@ describe('DiplomaticCensusSystem', () => {
     it('civManager.civilizations 缺失时不崩溃', () => {
       const em = {} as any
       expect(() => {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, em, {} as any, CHECK_INTERVAL)
       }).not.toThrow()
     })

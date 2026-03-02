@@ -44,22 +44,26 @@ describe('DiplomaticDisarmamentSystem', () => {
   describe('CHECK_INTERVAL=2350节流', () => {
     it('tick < 2350时不执行更新', () => {
       ;(sys as any).treaties.push(makeTreaty({ duration: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2349)
       expect((sys as any).treaties[0].duration).toBe(0)
     })
     it('tick === 2350时执行更新', () => {
       ;(sys as any).treaties.push(makeTreaty({ duration: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2350)
       expect((sys as any).treaties[0].duration).toBe(1)
     })
     it('tick = 2349时不执行', () => {
       ;(sys as any).lastCheck = 0
       ;(sys as any).treaties.push(makeTreaty({ duration: 5 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2349)
       expect((sys as any).treaties[0].duration).toBe(5)
     })
     it('连续两次满足间隔时执行两次更新', () => {
       ;(sys as any).treaties.push(makeTreaty({ duration: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2350)
       expect((sys as any).treaties[0].duration).toBe(1)
       sys.update(1, {} as any, {} as any, 4700)
@@ -67,6 +71,7 @@ describe('DiplomaticDisarmamentSystem', () => {
     })
     it('第二次不满足间隔时不执行', () => {
       ;(sys as any).treaties.push(makeTreaty({ duration: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2350)
       const d = (sys as any).treaties[0].duration
       sys.update(1, {} as any, {} as any, 2351)
@@ -77,12 +82,14 @@ describe('DiplomaticDisarmamentSystem', () => {
   describe('数值字段动态更新', () => {
     it('每次update duration+1', () => {
       ;(sys as any).treaties.push(makeTreaty({ duration: 7 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, 2350)
       expect((sys as any).treaties[0].duration).toBe(8)
     })
     it('armsReduction保持在[5,80]范围内', () => {
       ;(sys as any).treaties.push(makeTreaty({ armsReduction: 40 }))
       for (let tick = 2350; tick < 2350 * 100; tick += 2350) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, tick)
         const v = (sys as any).treaties[0]?.armsReduction
         if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(5); expect(v).toBeLessThanOrEqual(80) }
@@ -91,6 +98,7 @@ describe('DiplomaticDisarmamentSystem', () => {
     it('verificationLevel保持在[10,90]范围内', () => {
       ;(sys as any).treaties.push(makeTreaty({ verificationLevel: 50 }))
       for (let tick = 2350; tick < 2350 * 100; tick += 2350) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, tick)
         const v = (sys as any).treaties[0]?.verificationLevel
         if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(10); expect(v).toBeLessThanOrEqual(90) }
@@ -99,6 +107,7 @@ describe('DiplomaticDisarmamentSystem', () => {
     it('complianceRate保持在[15,100]范围内', () => {
       ;(sys as any).treaties.push(makeTreaty({ complianceRate: 60 }))
       for (let tick = 2350; tick < 2350 * 100; tick += 2350) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, tick)
         const v = (sys as any).treaties[0]?.complianceRate
         if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(15); expect(v).toBeLessThanOrEqual(100) }
@@ -107,6 +116,7 @@ describe('DiplomaticDisarmamentSystem', () => {
     it('peaceDividend保持在[3,60]范围内', () => {
       ;(sys as any).treaties.push(makeTreaty({ peaceDividend: 20 }))
       for (let tick = 2350; tick < 2350 * 100; tick += 2350) {
+        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, tick)
         const v = (sys as any).treaties[0]?.peaceDividend
         if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(3); expect(v).toBeLessThanOrEqual(60) }
@@ -152,6 +162,7 @@ describe('DiplomaticDisarmamentSystem', () => {
     })
     it('空数组时过期清理不报错', () => {
       ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       expect(() => sys.update(1, {} as any, {} as any, 200000)).not.toThrow()
     })
   })

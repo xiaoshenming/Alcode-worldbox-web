@@ -69,26 +69,31 @@ describe('DiplomaticAdjudicationSystem — CHECK_INTERVAL=2580 节流', () => {
   afterEach(() => { vi.restoreAllMocks() })
 
   it('tick=0时不执行（lastCheck依然为0）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 0)
     expect((sys as any).lastCheck).toBe(0)
   })
 
   it('tick < CHECK_INTERVAL时被节流', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL - 1)
     expect((sys as any).lastCheck).toBe(0)
   })
 
   it('tick === CHECK_INTERVAL时通过，lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
 
   it('tick > CHECK_INTERVAL时通过，lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL + 500)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 500)
   })
 
   it('第一次通过后同一tick再次调用被节流，lastCheck不变', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
@@ -101,6 +106,7 @@ describe('DiplomaticAdjudicationSystem — hearingProgress与数值更新', () =
 
   it('每次update通过节流后hearingProgress按+0.5递增', () => {
     ;(sys as any).cases.push(makeCase({ hearingProgress: 0, tick: 999999 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).cases[0].hearingProgress).toBeCloseTo(0.5)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 2)
@@ -109,12 +115,14 @@ describe('DiplomaticAdjudicationSystem — hearingProgress与数值更新', () =
 
   it('hearingProgress上限为100，不超过100', () => {
     ;(sys as any).cases.push(makeCase({ hearingProgress: 99.8, tick: 999999 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).cases[0].hearingProgress).toBeLessThanOrEqual(100)
   })
 
   it('duration每次update递增1', () => {
     ;(sys as any).cases.push(makeCase({ duration: 0, tick: 999999 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     expect((sys as any).cases[0].duration).toBe(1)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 2)
@@ -124,6 +132,7 @@ describe('DiplomaticAdjudicationSystem — hearingProgress与数值更新', () =
   it('evidenceStrength随update小幅递增（+0.02/次）', () => {
     ;(sys as any).cases.push(makeCase({ evidenceStrength: 30, tick: 999999 }))
     const before = (sys as any).cases[0].evidenceStrength
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
     const after = (sys as any).cases[0].evidenceStrength
     expect(after).toBeGreaterThanOrEqual(before)

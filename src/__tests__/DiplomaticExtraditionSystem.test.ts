@@ -38,24 +38,29 @@ describe('CHECK_INTERVAL=2500节流', () => {
   beforeEach(() => { sys = new DiplomaticExtraditionSystem() })
 
   it('tick<2500时lastCheck不更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2499)
     expect((sys as any).lastCheck).toBe(0)
   })
   it('tick>=2500时lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2500)
     expect((sys as any).lastCheck).toBe(2500)
   })
   it('恰好差值=2500时更新', () => {
     ;(sys as any).lastCheck = 1000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 3500)
     expect((sys as any).lastCheck).toBe(3500)
   })
   it('差值=2499时不更新', () => {
     ;(sys as any).lastCheck = 1000
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 3499)
     expect((sys as any).lastCheck).toBe(1000)
   })
   it('已更新后需等待新一轮间隔', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2500)
     sys.update(1, {} as any, {} as any, 4000) // 4000-2500=1500 < 2500
     expect((sys as any).lastCheck).toBe(2500)
@@ -69,12 +74,14 @@ describe('数值字段动态更新', () => {
   it('duration每次update+1', () => {
     ;(sys as any).agreements.push(makeAgreement({ duration: 0, tick: 0 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2500)
     expect((sys as any).agreements[0].duration).toBe(1)
   })
   it('compliance在[15,100]范围内', () => {
     ;(sys as any).agreements.push(makeAgreement({ compliance: 60, tick: 0 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2500)
     const val = (sys as any).agreements[0].compliance
     expect(val).toBeGreaterThanOrEqual(15)
@@ -83,6 +90,7 @@ describe('数值字段动态更新', () => {
   it('trustLevel在[10,100]范围内', () => {
     ;(sys as any).agreements.push(makeAgreement({ trustLevel: 50, tick: 0 }))
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, {} as any, {} as any, 2500)
     const val = (sys as any).agreements[0].trustLevel
     expect(val).toBeGreaterThanOrEqual(10)
@@ -139,6 +147,7 @@ describe('过期清理cutoff=tick-80000', () => {
   })
   it('空数组时不崩溃', () => {
     ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     expect(() => sys.update(1, {} as any, {} as any, 200000)).not.toThrow()
   })
 })

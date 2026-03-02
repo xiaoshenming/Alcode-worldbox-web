@@ -101,22 +101,26 @@ describe('DiplomaticArmisticSystem', () => {
     const civManager = makeCivManager([1, 2, 3])
 
     it('tick < CHECK_INTERVAL 时update跳过，lastCheck不变', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, civManager as any, CHECK_INTERVAL - 1)
       expect((sys as any).lastCheck).toBe(0)
     })
 
     it('tick === CHECK_INTERVAL 时update执行，lastCheck更新', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, civManager as any, CHECK_INTERVAL)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
     })
 
     it('tick > CHECK_INTERVAL 时update执行，lastCheck更新为当前tick', () => {
       const tick = CHECK_INTERVAL + 500
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, civManager as any, tick)
       expect((sys as any).lastCheck).toBe(tick)
     })
 
     it('第一次update后，第二次tick不满足间隔则跳过', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, civManager as any, CHECK_INTERVAL)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
 
@@ -151,6 +155,7 @@ describe('DiplomaticArmisticSystem', () => {
       const a = makeArmistice({ remaining: 8000, tick: 0 })
       ;(sys as any).armistices.push(a)
 
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, civManager as any, CHECK_INTERVAL)
       expect((sys as any).armistices[0].remaining).toBe(8000 - CHECK_INTERVAL)
     })
@@ -159,6 +164,7 @@ describe('DiplomaticArmisticSystem', () => {
       const a = makeArmistice({ remaining: 10000, tick: 0 })
       ;(sys as any).armistices.push(a)
 
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, civManager as any, CHECK_INTERVAL)
       sys.update(1, {} as any, {} as any, civManager as any, CHECK_INTERVAL * 2)
       expect((sys as any).armistices[0].remaining).toBe(10000 - CHECK_INTERVAL * 2)
