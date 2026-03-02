@@ -25,6 +25,8 @@ export class CreatureHomesicknessSystem {
   private states: HomesicknessState[] = []
   private nextId = 1
   private lastCheck = 0
+  /** O(1) lookup for registered entity IDs — avoids O(n) some()/find() scans */
+  private _entityIds = new Map<number, HomesicknessState>()
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -35,7 +37,7 @@ export class CreatureHomesicknessSystem {
     // Develop homesickness
     for (const eid of creatures) {
       if (this.states.length >= MAX_STATES) break
-      if (this.states.some(s => s.entityId === eid)) continue
+      if (this._entityIds.has(eid)) continue
       if (Math.random() > DEVELOP_CHANCE) continue
 
       const pos = em.getComponent<PositionComponent>(eid, 'position')
@@ -51,6 +53,7 @@ export class CreatureHomesicknessSystem {
         returnAttempts: 0,
         tick,
       })
+      this._entityIds.set(eid, this.states[this.states.length - 1])
     }
 
     // Update states
@@ -85,7 +88,7 @@ export class CreatureHomesicknessSystem {
     // Remove for dead creatures
     for (let _i = this.states.length - 1; _i >= 0; _i--) {
       const s = this.states[_i]
-      if (!em.hasComponent(s.entityId, 'creature')) this.states.splice(_i, 1)
+      if (!em.hasComponent(s.entityId, 'creature')) { this._entityIds.delete(s.entityId); this.states.splice(_i, 1) }
     }
   }
 
@@ -94,6 +97,6 @@ export class CreatureHomesicknessSystem {
   }
 
   getByEntity(entityId: number): HomesicknessState | undefined {
-    return this.states.find(s => s.entityId === entityId)
+    return this._entityIds.get(entityId)
   }
 }

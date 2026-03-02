@@ -26,6 +26,8 @@ export class CreatureAmbidextritySystem {
   private profiles: AmbidextrityProfile[] = []
   private nextId = 1
   private lastCheck = 0
+  /** O(1) lookup for registered entity IDs — avoids O(n) some()/find() scans */
+  private _entityIds = new Map<number, AmbidextrityProfile>()
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -36,7 +38,7 @@ export class CreatureAmbidextritySystem {
     // Develop hand profiles for new creatures
     for (const eid of creatures) {
       if (this.profiles.length >= MAX_PROFILES) break
-      if (this.profiles.some(p => p.entityId === eid)) continue
+      if (this._entityIds.has(eid)) continue
       if (Math.random() > DEVELOP_CHANCE) continue
 
       const leftSkill = 20 + Math.random() * 30
@@ -53,6 +55,7 @@ export class CreatureAmbidextritySystem {
         combatBonus: 1.0,
         craftBonus: 1.0,
       })
+      this._entityIds.set(eid, this.profiles[this.profiles.length - 1])
     }
 
     // Train and update profiles
@@ -81,7 +84,7 @@ export class CreatureAmbidextritySystem {
     // Remove profiles for dead creatures
     for (let _i = this.profiles.length - 1; _i >= 0; _i--) {
       const p = this.profiles[_i]
-      if (!em.hasComponent(p.entityId, 'creature')) this.profiles.splice(_i, 1)
+      if (!em.hasComponent(p.entityId, 'creature')) { this._entityIds.delete(p.entityId); this.profiles.splice(_i, 1) }
     }
   }
 
@@ -90,6 +93,6 @@ export class CreatureAmbidextritySystem {
   }
 
   getByEntity(entityId: number): AmbidextrityProfile | undefined {
-    return this.profiles.find(p => p.entityId === entityId)
+    return this._entityIds.get(entityId)
   }
 }
