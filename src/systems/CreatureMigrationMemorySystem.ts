@@ -39,6 +39,8 @@ export class CreatureMigrationMemorySystem {
   private nextRouteId = 1
   private lastCheck = 0
   private _raceMemoriesMap: Map<string, HabitatMemory[]> = new Map()
+  // O(1) per-creature memory lookup: creatureId → memories
+  private _creatureMemMap: Map<number, HabitatMemory[]> = new Map()
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -61,9 +63,9 @@ export class CreatureMigrationMemorySystem {
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (!pos) continue
 
-      // Check if already memorized this area
-      const alreadyKnown = this.memories.some(m =>
-        m.creatureId === id &&
+      // Check if already memorized this area (use per-creature map for O(n_per_creature) instead of O(n_all))
+      const creatMems = this._creatureMemMap.get(id)
+      const alreadyKnown = creatMems !== undefined && creatMems.some(m =>
         Math.abs(m.x - pos.x) < 5 &&
         Math.abs(m.y - pos.y) < 5
       )
@@ -75,7 +77,7 @@ export class CreatureMigrationMemorySystem {
       // Quality based on random assessment of location
       const quality = 40 + Math.random() * 60
 
-      this.memories.push({
+      const newMem: HabitatMemory = {
         id: this.nextMemId++,
         creatureId: id,
         x: Math.round(pos.x),
@@ -85,7 +87,12 @@ export class CreatureMigrationMemorySystem {
         visits: 1,
         lastVisitTick: tick,
         inherited: false,
-      })
+      }
+      this.memories.push(newMem)
+      // Sync per-creature map
+      let cm = this._creatureMemMap.get(id)
+      if (!cm) { cm = []; this._creatureMemMap.set(id, cm) }
+      cm.push(newMem)
     }
   }
 
@@ -108,31 +115,30 @@ export class CreatureMigrationMemorySystem {
         const dy = pos.y - opos.y
         if (dx * dx + dy * dy > PROXIMITY_RANGE * PROXIMITY_RANGE) continue
 
-        // Find memories of elder with quality > 40, pick one randomly
+        // Find memories of elder with quality > 40, pick one randomly (use per-creature map)
+        const oidMems = this._creatureMemMap.get(oid)
         let eligibleCount = 0
-        for (let _mi = 0; _mi < this.memories.length; _mi++) {
-          const m = this.memories[_mi]
-          if (m.creatureId === oid && m.quality > 40) eligibleCount++
-        }
+        if (oidMems) { for (const m of oidMems) { if (m.quality > 40) eligibleCount++ } }
         if (eligibleCount === 0) continue
 
         // Sample one eligible memory
         let targetIdx = Math.floor(Math.random() * eligibleCount)
         let mem = this.memories[0]
-        for (let _mi = 0; _mi < this.memories.length; _mi++) {
-          const m = this.memories[_mi]
-          if (m.creatureId === oid && m.quality > 40) {
-            if (targetIdx-- === 0) { mem = m; break }
+        if (oidMems) {
+          for (const m of oidMems) {
+            if (m.quality > 40) {
+              if (targetIdx-- === 0) { mem = m; break }
+            }
           }
         }
-        const alreadyHas = this.memories.some(m =>
-          m.creatureId === id &&
+        const idMems = this._creatureMemMap.get(id)
+        const alreadyHas = idMems !== undefined && idMems.some(m =>
           Math.abs(m.x - mem.x) < 5 &&
           Math.abs(m.y - mem.y) < 5
         )
         if (alreadyHas) continue
 
-        this.memories.push({
+        const inheritedMem: HabitatMemory = {
           id: this.nextMemId++,
           creatureId: id,
           x: mem.x,
@@ -142,7 +148,11 @@ export class CreatureMigrationMemorySystem {
           visits: 0,
           lastVisitTick: tick,
           inherited: true,
-        })
+        }
+        this.memories.push(inheritedMem)
+        let cm2 = this._creatureMemMap.get(id)
+        if (!cm2) { cm2 = []; this._creatureMemMap.set(id, cm2) }
+        cm2.push(inheritedMem)
         break
       }
     }
@@ -193,6 +203,13 @@ export class CreatureMigrationMemorySystem {
       const m = this.memories[i]
       m.quality -= QUALITY_DECAY
       if (m.quality < MIN_QUALITY) {
+        // Sync per-creature map
+        const cm = this._creatureMemMap.get(m.creatureId)
+        if (cm) {
+          const idx = cm.indexOf(m)
+          if (idx >= 0) cm.splice(idx, 1)
+          if (cm.length === 0) this._creatureMemMap.delete(m.creatureId)
+        }
         this.memories.splice(i, 1)
       }
     }
@@ -202,6 +219,13 @@ export class CreatureMigrationMemorySystem {
     for (let i = this.memories.length - 1; i >= 0; i--) {
       const m = this.memories[i]
       if (!em.hasComponent(m.creatureId, 'creature')) {
+        // Sync per-creature map
+        const cm = this._creatureMemMap.get(m.creatureId)
+        if (cm) {
+          const idx = cm.indexOf(m)
+          if (idx >= 0) cm.splice(idx, 1)
+          if (cm.length === 0) this._creatureMemMap.delete(m.creatureId)
+        }
         this.memories.splice(i, 1)
       }
     }
@@ -209,6 +233,9 @@ export class CreatureMigrationMemorySystem {
 
   private _creatureMemsBuf: HabitatMemory[] = []
   getCreatureMemories(creatureId: number): HabitatMemory[] {
+    const cached = this._creatureMemMap.get(creatureId)
+    if (cached !== undefined) return cached
+    // Lazy sync fallback: tests may push directly to memories array
     this._creatureMemsBuf.length = 0
     for (const m of this.memories) { if (m.creatureId === creatureId) this._creatureMemsBuf.push(m) }
     return this._creatureMemsBuf
