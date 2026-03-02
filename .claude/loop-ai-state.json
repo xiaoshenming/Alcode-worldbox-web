@@ -1,11 +1,11 @@
 {
-  "notes": "迭代121（循环23/100）。本轮主要成就：(1)全量验证通过：tsc零错误、5044/5044测试全过（+47新增）、构建成功；(2)发现并补充3个缺少测试的数据模块：EcosystemData.test.ts（17个测试）、QuestData.test.ts（9个测试）、WorldEventDefinitions.test.ts（21个测试）；(3)验证Game.ts批量调度数组完整性：20个batch数组全部有对应for循环调用，无遗漏系统；(4)扫描Math.random()分布：751个文件含update()中的Math.random()调用，替换为确定性伪随机工程量巨大且超出「仅修复/优化」铁律范围，不适合当前阶段。\n\n测试覆盖结论：\n- src/__tests__/ 目录现在有861个测试文件覆盖847个系统文件——测试覆盖率达到100%\n- 所有数据模块（EcosystemData/QuestData/WorldEventDefinitions）现已有测试\n- 测试总数从4997增加到5044（+47）\n\nGame.ts批量调度验证结论：\n- 20个batch数组（_batch11A-F至_batch6B）均已有对应for循环调用\n- 675个系统通过batch调度，其余核心系统（aiSystem/combatSystem等）因特殊签名而单独调用\n- 系统注册完整，无遗漏\n\n项目状态：进入「全覆盖维护」阶段——所有系统均有测试、批量调度完整、类型检查零错误。",
+  "notes": "迭代122（循环24/100）。本轮主要成就：系统性提升测试质量——将10个只有2-3个trivial测试的文件改写为覆盖真实业务逻辑的有意义测试。\n\n测试质量改进详情（5044→5190，+146）：\n1. CreatureSkillSystem: 5→21个测试（XP升级、autoUnlock、MAX_LEVEL封顶）\n2. WeatherDisasterSystem: 5→14个测试（expireDisaster tile恢复、isInArea、setTileWithRecord）\n3. MiniGameSystem: 5→18个测试（triggerRandomEvent、update超时关闭、computeWrappedLines）\n4. CreatureVisionSystem: 2→12个测试（地形视野修正：森林-3、山地+4、沙地+2）\n5. CreatureCollectionSystem: 2→13个测试（getOrCreate、CHECK_INTERVAL节流）\n6. CreatureAmbitionSystem: 3→13个测试（updateProgress逻辑、两个节流验证）\n7. CreatureDreamSystem: 3→13个测试（pruneLog截断保留最新、DREAM_CONFIGS范围）\n8. CreatureHobbySystem: 3→13个测试（skill递增clamp、无creature时删除、pickHobby有效性）\n9. CreatureLanguageSystem: 3→15个测试（computeSimilarities算法：同family+50、复杂度/词汇量影响）\n10. CreatureLegacySystem: 3→12个测试（pruneLegacies、CHECK_INTERVAL节流）\n11. CreatureIntuitionSystem: 3→15个测试（getWisdom、applyIntuitionEffect按sense类型给bonus）\n12. CreatureSuperstitionSystem: 3→14个测试（decaySuperstitions believerFactor计算、cleanup MIN_STRENGTH过滤）\n13. CreaturePremonitionSystem: 3→16个测试（urgency计算规则：disaster/death×1.5 vs 其他×0.6、visions过期清理）\n\n关键发现：\n- 大文件（>400行）分析：WeatherDisasterSystem(706行)等职责单一、内部方法边界清晰，不���合拆分\n- 仍有大量3-测试文件（CreatureDivination/Apprentice/Pet等）可继续改进\n- performance.now()在短生命周期测试进程中可能返回<3000，需用vi.spyOn mock\n- addComponent API需要带type字段的对象，测试中用as any绕过类型检查\n- ESM模块不能用require()，需要import或直接用系统内部逻辑验证\n\n下轮优先方向：\n1. 继续改进剩余3-测试文件（CreatureDivinationSystem、CreatureApprenticeSystem、CreaturePetSystem等）\n2. 大文件重构评估已完成（不适合拆分），转向其他维度\n3. LODRenderSystem测试（3个）可以改进",
   "priorities": [
-    "1. 【持续监控】tsc+vitest+build三重验证保持全绿",
-    "2. 【已完成】测试覆盖率：3个缺少测试的数据模块已补充，现已达到100%覆盖",
-    "3. 【已完成】Game.ts批量调度数组验证：20个batch数组全部正确注册",
-    "4. 【新方向】检查测试质量：现有测试是否有意义——是否测试了真实逻辑还是只是trivial检查",
-    "5. 【新方向】扫描 src/systems/ 中最大的文件（>400行）——检查是否有拆分机会"
+    "1. 【持续监控】tsc+vitest+build三重验证保持全绿（当前5190/5190通过）",
+    "2. 【进行中】继续提升测试质量：仍有多个3测试文件（CreatureDivination/Apprentice/Pet/NightWatch/TradeSkill/RivalryDuel等）",
+    "3. 【已完成】大文件（>400行）分析：WeatherDisasterSystem等职责单一，不适合拆分",
+    "4. 【新方向】LODRenderSystem测试（3个trivial）——检查是否有可测的LOD计算逻辑",
+    "5. 【新方向】扫描CreatureTradeSkillSystem/CreatureRivalryDuelSystem等剩余低质量测试"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -33,27 +33,16 @@
     "【迭代100新增-最重要】非空断言扫描必须同时用两种正则：① [^a-zA-Z]!\\. 匹配 x!.y 形式；② \\)!(?=[.\\[;,\\)\\s]|$) 匹配 func()! 形式。只用其中一种必然漏报！",
     "【迭代112新增】some(item => item.entityId === eid)在for(entities)循环内是O(n*list)陷阱——标准修复：添加private _xxxSet = new Set<number>()，push时.add(eid)，splice时.delete(eid)，查询时.has(eid)",
     "【迭代112新增】添加Set优化后，public查询方法(getXxx)需要加lazy sync fallback——因为测试会直接push内部数组绕过Set",
-    "【迭代113新增】批量优化技巧：Python脚本正则匹配→文件信息字典→批量修改(字段声明+some→has+push后add+splice前delete)，注意push变量可能是对象需要.id",
-    "【迭代113新增】cleanup用sort()+length=MAX截断时，Set需要clear()+for循环重建，而不是尝试增量删除被截断的项（截断后已无法知道哪些被删除）",
-    "【迭代113新增】临时Set方案适合generateQuests等一次性扫描场景——在方法开头构建Set，避免持久化Set的复杂同步问题",
-    "【迭代113新增】坐标系统的Set键：世界坐标<200用x*10000+y安全；civId系统用civId*1000+targetId(civId<1000安全)；如需三字段用字符串键'reason_a_b'",
-    "【迭代114新增】WonderSystem等公共API暴露内部数组时，Set不能保证同步——在查询方法开头重建Set(clear+for)更安全，代价是每次O(n)但n很小",
-    "【迭代116新增】per-creature memory map：CreatureMigrationMemorySystem用Map<creatureId,HabitatMemory[]>替换memories.some(creatureId&&coords)",
-    "【迭代116新增】静态CHAIN_RULES可在类构造时一次性预建Map<'src_tgt',Rule>——O(1)代替O(n)find",
-    "【迭代117新增】渲染路径的find()是最高优先级——BuildingVarietySystem每帧每建筑、DiplomacyVisualSystem每帧hover检测，比update路径更值得优化",
-    "【迭代117新增】静态模块级数组(TEMPLATES/WONDER_DEFS/EVENT_DEFINITIONS/UPGRADE_PATHS)的find()应在模块级预建Map——零运行时开销，最简单的优化",
-    "【迭代117新增】暴露内部数组引用(getRuins()返回this.ruins)的系统无法用Map优化——测试直接push绕过所有维护逻辑，这类系统保持原有find()即可",
-    "【迭代117新增】嵌套循环中的find()：先在外层循环开始前构建临时Map<name,T>，内层循环用Map.get()——EvolutionSystem auto-inherit场景",
-    "【迭代117新增】updateXxxData()等数据更新入口是建立Map的最佳时机——DiplomacyVisualSystem在updateCivData时同时维护_civById Map，渲染路径零开销",
-    "【迭代118新增】Python脚本扫描私有方法死代码：正则匹配`private (\\w+)\\s*\\(`后统计`this.name(`出现次数，只出现零次即为死代码候选",
-    "【迭代118新增】Set<number>升级为Map<number,T>：不仅能O(1)判断存在性，还能直接返回对象——CreatureNicknameSystem的升级模式",
-    "【迭代119新增】整条私有方法死代码链：当rebuildLayout/assignZones等内部辅助方法构成一条调用链，且链的入口(rebuildLayout)从未被外部/公共方法调用时，整条链都是死代码——CityLayoutSystem从427行→160行",
-    "【迭代119新增】静态分类数组预建为Map：SKILL_DEFS.filter(s=>s.branch===xxx)改为模块级SKILLS_BY_BRANCH=Map<Branch,SkillDef[]>——零运行时filter开销，还可删除缓存字段_lastBranch和_branchSkillCache",
-    "【迭代120新增】项目进入「稳定维护」阶段：systems/game/civilization/entities/ui/utils所有目录的私有方法死代码已全部清除，find()/some()优化已穷举——下一步应转向测试覆盖率提升或其他维度",
-    "【迭代121新增】测试路径规范：src/__tests__/目录内的测试文件import路径是'../systems/'（单级上溯），不是'../../systems/'（双级），要区分__tests__是src下的一级子目录",
-    "【迭代121新增】数据模块（仅含常量/接口/纯函数的文件）是最易测的模块——无需mock、无Canvas、无DOM，直接import即可验证数据结构完整性和纯函数正确性",
-    "【迭代121新增】Game.ts批量调度验证方法：grep '_batchXXX'找所有定义→grep '_batchXXX.*for\\|for.*_batchXXX'找for循环调用→确认每个定义都有对应调用",
-    "【迭代121新增】Math.random()替换为确定性伪随机虽可提升可测试性，但751个文件受影响、工程量巨大，且超出「仅修复/优化」铁律——此方向在当前阶段不适合"
+    "【迭代120新增】项目进入「稳定维护」阶段：systems/game/civilization/entities/ui/utils所有目录的私有方法死代码已全部清除，find()/some()优化已穷举",
+    "【迭代121新增】测试路径规范：src/__tests__/目录内的测试文件import路径是'../systems/'（单级上溯），不是'../../systems/'（双级）",
+    "【迭代121新增】数据模块（仅含常量/接口/纯函数的文件）是最易测的模块——无需mock、无Canvas、无DOM",
+    "【迭代121新增】Math.random()替换为确定性伪随机虽可提升可测试性，但751个文件受影响——此方向不适合",
+    "【迭代122新增】addComponent API需要带type字段的对象：{ type: 'position', x, y }不能缺type字段，否则getEntitiesWithComponents找不到实体",
+    "【迭代122新增】performance.now()在短生命周期测试进程中可能<3000ms——需用vi.spyOn(performance, 'now').mockReturnValue(大数)来mock超时测试",
+    "【迭代122新增】ESM模块不能用require()——在测试中用import或直接通过系统内部状态(sys as any).field验证常量，不要用require()",
+    "【迭代122新增】测试质量提升模式：(1)找CHECK_INTERVAL节流验证(2)找pruneXxx截断逻辑(3)找applyXxxEffect纯计算(4)找getWisdom等派生值计算——这4类最易写出有意义的测试",
+    "【迭代122新增】WeatherDisasterSystem(706行)等大文件分析：职责单一（4种灾难的trigger/ongoing/render各有独立私有方法），共享activeDisasters状态——不适合拆分",
+    "【迭代122新增】computeSimilarities等纯算法函数是最高价值的测试目标——直接注入数据验证输出，无需mock任何外部依赖"
   ],
-  "last_updated": "2026-03-02T12:45:00+08:00"
+  "last_updated": "2026-03-02T13:10:00+08:00"
 }
