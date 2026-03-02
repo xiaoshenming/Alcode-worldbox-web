@@ -54,6 +54,7 @@ export class WonderSystem {
   private constructions: WonderConstruction[] = []
   private _activeWonderIds = new Set<string>()    // defId
   private _constructionIds = new Set<string>()    // defId
+  private _activeWonderCivSet = new Set<string>() // key: `${civId}_${defId}`
   private _availBuf: WonderDef[] = []
   private lastCheckTick = 0
 
@@ -86,7 +87,11 @@ export class WonderSystem {
   }
 
   hasWonder(civId: number, wonderId: string): boolean {
-    return this.activeWonders.some(w => w.civId === civId && w.defId === wonderId)
+    if (this._activeWonderCivSet.has(`${civId}_${wonderId}`)) return true
+    // Lazy sync: tests may push directly to activeWonders
+    const found = this.activeWonders.some(w => w.civId === civId && w.defId === wonderId)
+    if (found) this._activeWonderCivSet.add(`${civId}_${wonderId}`)
+    return found
   }
 
   // --- Wonder effect bonuses ---
@@ -138,6 +143,7 @@ export class WonderSystem {
         x: center.x, y: center.y, completedAt: tick
       })
       this._activeWonderIds.add(def.id)
+      this._activeWonderCivSet.add(`${con.civId}_${def.id}`)
       this._constructionIds.delete(def.id)
       this.constructions.splice(i, 1)
 
