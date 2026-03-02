@@ -37,6 +37,19 @@ export class CreatureOmenBeliefSystem {
   private beliefs: OmenBelief[] = []
   private nextId = 1
   private lastCheck = 0
+  // Set<"entityId_type"> for O(1) duplicate detection
+  private _beliefKeySet = new Set<string>()
+
+  private _addBelief(b: OmenBelief): void {
+    this.beliefs.push(b)
+    this._beliefKeySet.add(`${b.entityId}_${b.type}`)
+  }
+
+  private _removeBelief(index: number): void {
+    const b = this.beliefs[index]
+    this._beliefKeySet.delete(`${b.entityId}_${b.type}`)
+    this.beliefs.splice(index, 1)
+  }
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -50,7 +63,7 @@ export class CreatureOmenBeliefSystem {
       if (Math.random() > OMEN_CHANCE) continue
 
       const type = pickRandom(TYPES)
-      this.beliefs.push({
+      this._addBelief({
         id: this.nextId++,
         entityId: eid,
         type,
@@ -67,11 +80,11 @@ export class CreatureOmenBeliefSystem {
       for (const nid of creatures) {
         if (nid === belief.entityId) continue
         if (this.beliefs.length >= MAX_BELIEFS) break
-        if (this.beliefs.some(b => b.entityId === nid && b.type === belief.type)) continue
+        if (this._beliefKeySet.has(`${nid}_${belief.type}`)) continue
         if (Math.random() > 0.3) continue
 
         belief.spreadCount++
-        this.beliefs.push({
+        this._addBelief({
           id: this.nextId++,
           entityId: nid,
           type: belief.type,
@@ -89,8 +102,7 @@ export class CreatureOmenBeliefSystem {
       b.conviction -= DECAY_RATE * CHECK_INTERVAL
     }
     for (let _i = this.beliefs.length - 1; _i >= 0; _i--) {
-      const e = this.beliefs[_i]
-      if (e.conviction <= 5) this.beliefs.splice(_i, 1)
+      if (this.beliefs[_i].conviction <= 5) this._removeBelief(_i)
     }
   }
 

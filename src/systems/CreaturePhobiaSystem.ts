@@ -28,6 +28,8 @@ export class CreaturePhobiaSystem {
   private phobias: Phobia[] = []
   private nextId = 1
   private lastCheck = 0
+  // Set<"entityId_fear"> for O(1) duplicate detection
+  private _phobiaKeySet = new Set<string>()
 
   update(dt: number, em: EntityManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -46,8 +48,7 @@ export class CreaturePhobiaSystem {
       if (Math.random() > PHOBIA_CHANCE) continue
       // Avoid duplicate phobias for same entity+fear
       const fear = pickWeighted(FEARS, FEAR_WEIGHTS, 'darkness')
-      const exists = this.phobias.some(p => p.entityId === eid && p.fear === fear)
-      if (exists) continue
+      if (this._phobiaKeySet.has(`${eid}_${fear}`)) continue
 
       this.phobias.push({
         id: this.nextId++,
@@ -56,6 +57,7 @@ export class CreaturePhobiaSystem {
         severity: 1 + Math.floor(Math.random() * 5),
         tick,
       })
+      this._phobiaKeySet.add(`${eid}_${fear}`)
     }
   }
 
@@ -73,9 +75,16 @@ export class CreaturePhobiaSystem {
     // Remove phobias that have faded (severity near minimum)
     for (let _i = this.phobias.length - 1; _i >= 0; _i--) {
       const p = this.phobias[_i]
-      if (!(p.severity > 1.1)) this.phobias.splice(_i, 1)
+      if (!(p.severity > 1.1)) {
+        this._phobiaKeySet.delete(`${p.entityId}_${p.fear}`)
+        this.phobias.splice(_i, 1)
+      }
     }
     if (this.phobias.length > MAX_PHOBIAS) {
+      for (let _i = 0; _i < this.phobias.length - MAX_PHOBIAS; _i++) {
+        const p = this.phobias[_i]
+        this._phobiaKeySet.delete(`${p.entityId}_${p.fear}`)
+      }
       this.phobias.splice(0, this.phobias.length - MAX_PHOBIAS)
     }
   }

@@ -21,6 +21,7 @@ const HOME_RADIUS = 8
 
 export class CreatureNostalgiaSystem {
   private states: NostalgiaState[] = []
+  private _trackedSet = new Set<EntityId>()
   private lastCheck = 0
   private totalHomesick = 0
   private totalReturned = 0
@@ -38,7 +39,7 @@ export class CreatureNostalgiaSystem {
     const creatures = em.getEntitiesWithComponents('creature', 'position')
     for (const id of creatures) {
       if (Math.random() > NOSTALGIA_CHANCE) continue
-      if (this.states.some(s => s.entityId === id)) continue
+      if (this._trackedSet.has(id)) continue
 
       const pos = em.getComponent<PositionComponent>(id, 'position')
       if (!pos) continue
@@ -52,6 +53,7 @@ export class CreatureNostalgiaSystem {
         moodEffect: 0,
         lastVisitHome: tick,
       })
+      this._trackedSet.add(id)
       if (this.states.length >= MAX_TRACKED) break
     }
   }
@@ -60,7 +62,7 @@ export class CreatureNostalgiaSystem {
     for (let i = this.states.length - 1; i >= 0; i--) {
       const state = this.states[i]
       const pos = em.getComponent<PositionComponent>(state.entityId, 'position')
-      if (!pos) { this.states.splice(i, 1); continue }
+      if (!pos) { this._trackedSet.delete(state.entityId); this.states.splice(i, 1); continue }
 
       const dx = pos.x - state.birthX
       const dy = pos.y - state.birthY
