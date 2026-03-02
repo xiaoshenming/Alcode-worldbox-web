@@ -16,8 +16,6 @@ const MIN_PRICE_MULT = 0.5
 const MAX_PRICE_MULT = 3.0
 const TRADE_INTERVAL = 120
 
-/** Pre-computed guild level thresholds — avoids per-civ literal array in updateGuild */
-const _GUILD_LEVEL_THRESHOLDS = [0, 50, 150, 400, 800] as const
 /** Pre-computed local price thresholds — avoids per-civ object literal in updateLocalPrices */
 const _LOCAL_PRICE_THRESHOLDS: Record<string, number> = { food: 30, wood: 25, stone: 15, gold: 10 }
 /** Pre-computed surplus thresholds — avoids per-civ object literal in findSurplus */
@@ -100,32 +98,6 @@ export class TradeEconomySystem {
       local[k] = this.clampPrice(localMult * 0.6 + this.globalPrices[k] * 0.4)
     }
     this.localPrices.set(civ.id, local)
-  }
-
-  private updateGuild(civ: Civilization, em: EntityManager, tick: number): void {
-    if (civ.techLevel < 3) return
-    const hasMarket = civ.buildings.some(id => {
-      const b = em.getComponent<BuildingComponent>(id, 'building')
-      return b && b.buildingType === BuildingType.MARKET
-    })
-    if (!hasMarket) return
-
-    if (!this.guilds.has(civ.id)) {
-      this.guilds.set(civ.id, { level: 1, totalVolume: 0 })
-      EventLog.log('trade', `${civ.name} founded a Merchant Guild`, tick)
-    }
-
-    const guild = this.guilds.get(civ.id)
-    if (!guild) return
-    // Level up thresholds: 50, 150, 400, 800
-    const thresholds = _GUILD_LEVEL_THRESHOLDS
-    for (let lvl = 4; lvl >= 1; lvl--) {
-      if (guild.totalVolume >= thresholds[lvl] && guild.level < lvl + 1) {
-        guild.level = lvl + 1
-        EventLog.log('trade', `${civ.name}'s Merchant Guild reached level ${guild.level}`, tick)
-        break
-      }
-    }
   }
 
   private evaluateTrade(a: Civilization, b: Civilization, civManager: CivManager, em: EntityManager, particles: ParticleSystem, tick: number): void {
