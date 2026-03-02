@@ -194,6 +194,7 @@ describe('DiplomaticCommonwealthSystem', () => {
     it('tick 晚于 cutoff 的记录保留', () => {
       const bigTick = EXPIRE_TTL + CHECK_INTERVAL
       ;(sys as any).unions.push(makeUnion({ tick: bigTick - 1000 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)  // 阻断spawn
       callUpdate(sys, bigTick)
       expect((sys as any).unions).toHaveLength(1)
     })

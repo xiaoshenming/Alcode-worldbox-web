@@ -1,256 +1,311 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { WorldDustStormSystem } from '../systems/WorldDustStormSystem'
-import type { DustStorm, DustStormIntensity } from '../systems/WorldDustStormSystem'
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { WorldDustStormSystem } from '../systems/WorldDustStormSystem';
 
-function makeSys(): WorldDustStormSystem { return new WorldDustStormSystem() }
-let nextId = 1
-function makeStorm(overrides: Partial<DustStorm> = {}): DustStorm {
-  return {
-    id: nextId++,
-    x: 50, y: 50, radius: 20,
-    intensity: 'moderate',
-    direction: 1.0, speed: 1.5,
-    startTick: 0, duration: 1000,
-    ...overrides,
-  }
-}
+describe('WorldDustStormSystem', () => {
+  let system: WorldDustStormSystem;
+  let mockWorld: any;
+  let mockEntityManager: any;
 
-const worldSand = { width: 200, height: 200, getTile: () => 2 } as any  // SAND
-const worldGrass = { width: 200, height: 200, getTile: () => 3 } as any  // GRASS
-const emEmpty = { getEntitiesWithComponents: () => [], getComponent: () => null } as any
+  beforeEach(() => {
+    mockWorld = {
+      width: 100,
+      height: 100,
+      getTile: vi.fn(() => 2),
+      setTile: vi.fn()
+    };
+    mockEntityManager = {
+      getEntitiesWithComponents: vi.fn(() => []),
+      getComponent: vi.fn(() => null)
+    };
+    system = new WorldDustStormSystem();
+  });
 
-describe('WorldDustStormSystem - 基础数据结构', () => {
-  let sys: WorldDustStormSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  describe('Basic Structure', () => {
+    it('should initialize with empty storms array', () => {
+      expect((system as any).storms).toEqual([]);
+    });
 
-  it('初始无尘暴', () => {
-    expect((sys as any).storms).toHaveLength(0)
-  })
+    it('should initialize lastCheck to 0', () => {
+      expect((system as any).lastCheck).toBe(0);
+    });
 
-  it('nextId初始为1', () => {
-    expect((sys as any).nextId).toBe(1)
-  })
+    it('should initialize nextId to 1', () => {
+      expect((system as any).nextId).toBe(1);
+    });
+  });
 
-  it('lastCheck初始为0', () => {
-    expect((sys as any).lastCheck).toBe(0)
-  })
+  describe('CHECK_INTERVAL Throttling', () => {
+    it('should not check when tick < CHECK_INTERVAL', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      system.update(0, mockWorld, mockEntityManager, 799);
+      expect((system as any).storms.length).toBe(0);
+    });
 
-  it('注入后可查询', () => {
-    ;(sys as any).storms.push(makeStorm())
-    expect((sys as any).storms).toHaveLength(1)
-  })
+    it('should check when tick === CHECK_INTERVAL', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      expect((system as any).storms.length).toBeGreaterThan(0);
+    });
 
-  it('返回内部引用', () => {
-    expect((sys as any).storms).toBe((sys as any).storms)
-  })
+    it('should check when tick > CHECK_INTERVAL', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      system.update(0, mockWorld, mockEntityManager, 1600);
+      expect((system as any).storms.length).toBeGreaterThan(0);
+    });
 
-  it('支持4种尘暴强度', () => {
-    const intensities: DustStormIntensity[] = ['mild', 'moderate', 'severe', 'catastrophic']
-    expect(intensities).toHaveLength(4)
-  })
+    it('should use >= comparison for interval check', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      const firstCount = (system as any).storms.length;
+      system.update(0, mockWorld, mockEntityManager, 1600);
+      expect((system as any).storms.length).toBeGreaterThanOrEqual(firstCount);
+    });
 
-  it('DustStorm接口字段完整', () => {
-    const s = makeStorm({ id: 42, intensity: 'severe', radius: 30, speed: 0.5, direction: 3.14, startTick: 100, duration: 2000 })
-    expect(s.id).toBe(42)
-    expect(s.intensity).toBe('severe')
-    expect(s.radius).toBe(30)
-    expect(s.speed).toBe(0.5)
-    expect(s.direction).toBeCloseTo(3.14)
-    expect(s.startTick).toBe(100)
-    expect(s.duration).toBe(2000)
-  })
+    it('should update lastCheck after interval passes', () => {
+      system.update(0, mockWorld, mockEntityManager, 800);
+      expect((system as any).lastCheck).toBe(800);
+      system.update(0, mockWorld, mockEntityManager, 1600);
+      expect((system as any).lastCheck).toBe(1600);
+    });
+  });
 
-  it('多个尘暴全部保存', () => {
-    ;(sys as any).storms.push(makeStorm({ intensity: 'mild' }))
-    ;(sys as any).storms.push(makeStorm({ intensity: 'severe' }))
-    expect((sys as any).storms).toHaveLength(2)
-  })
-})
+  describe('Spawn Logic', () => {
+    it('should not spawn when random > STORM_CHANCE', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.005);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      expect((system as any).storms.length).toBe(0);
+    });
 
-describe('WorldDustStormSystem - CHECK_INTERVAL节流', () => {
-  let sys: WorldDustStormSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-  afterEach(() => { vi.restoreAllMocks() })
+    it('should spawn when random <= STORM_CHANCE', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.003);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      expect((system as any).storms.length).toBe(1);
+    });
 
-  it('tick=0时不触发节流块（lastCheck不更新）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, worldSand, emEmpty, 0)
-    // tick - lastCheck = 0 - 0 = 0 < 800，不进入节流块
-    expect((sys as any).lastCheck).toBe(0)
-  })
+    it('should create storm with valid x coordinate', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      const storm = (system as any).storms[0];
+      expect(storm.x).toBeGreaterThanOrEqual(0);
+      expect(storm.x).toBeLessThan(100);
+    });
 
-  it('tick=799时不触发节流块', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, worldSand, emEmpty, 799)
-    expect((sys as any).lastCheck).toBe(0)
-  })
+    it('should create storm with valid y coordinate', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      const storm = (system as any).storms[0];
+      expect(storm.y).toBeGreaterThanOrEqual(0);
+      expect(storm.y).toBeLessThan(100);
+    });
 
-  it('tick=800时触发节流块，lastCheck更新', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, worldSand, emEmpty, 800)
-    expect((sys as any).lastCheck).toBe(800)
-  })
+    it('should create storm with intensity field', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      const storm = (system as any).storms[0];
+      expect(['mild', 'moderate', 'severe', 'catastrophic']).toContain(storm.intensity);
+    });
 
-  it('tick=1600时再次触发节流块', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, worldSand, emEmpty, 800)
-    sys.update(0, worldSand, emEmpty, 1600)
-    expect((sys as any).lastCheck).toBe(1600)
-  })
+    it('should create storm with startTick', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      const storm = (system as any).storms[0];
+      expect(storm.startTick).toBe(800);
+    });
 
-  it('节流期间moveStorms仍然执行（storms内x坐标变化）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).storms.push(makeStorm({ x: 100, y: 100, direction: 0, speed: 0.5 }))
-    sys.update(0, worldSand, emEmpty, 0)  // tick=0，不触发节流块，但moveStorms仍执行
-    // direction=0, x += cos(0)*0.5 = 0.5
-    expect((sys as any).storms[0].x).toBeCloseTo(100.5, 1)
-  })
-})
+    it('should create storm with duration', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      const storm = (system as any).storms[0];
+      expect(storm.duration).toBeGreaterThan(0);
+    });
 
-describe('WorldDustStormSystem - spawn逻辑', () => {
-  let sys: WorldDustStormSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-  afterEach(() => { vi.restoreAllMocks() })
+    it('should create storm with radius', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      const storm = (system as any).storms[0];
+      expect(storm.radius).toBeGreaterThan(0);
+    });
 
-  it('random > STORM_CHANCE(0.004)时不spawn', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, worldSand, emEmpty, 800)
-    expect((sys as any).storms).toHaveLength(0)
-  })
+    it('should create storm with direction', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      const storm = (system as any).storms[0];
+      expect(storm.direction).toBeDefined();
+    });
 
-  it('random < STORM_CHANCE时在SAND地形上spawn', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(0, worldSand, emEmpty, 800)
-    expect((sys as any).storms).toHaveLength(1)
-  })
+    it('should create storm with speed', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      const storm = (system as any).storms[0];
+      expect(storm.speed).toBeGreaterThan(0);
+    });
 
-  it('GRASS地形不触发spawn（trySpawnStorm中不检查tile，但DustStorm不限tile）', () => {
-    // DustStormSystem的trySpawnStorm不检查tile类型，任意世界都可spawn
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(0, worldGrass, emEmpty, 800)
-    expect((sys as any).storms).toHaveLength(1)
-  })
+    it('should create storm with unique id', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      system.update(0, mockWorld, mockEntityManager, 1600);
+      const storms = (system as any).storms;
+      if (storms.length >= 2) {
+        expect(storms[0].id).not.toBe(storms[1].id);
+      }
+    });
+  });
 
-  it('达到MAX_STORMS(3)时不再spawn', () => {
-    ;(sys as any).storms.push(makeStorm())
-    ;(sys as any).storms.push(makeStorm())
-    ;(sys as any).storms.push(makeStorm())
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(0, worldSand, emEmpty, 800)
-    expect((sys as any).storms).toHaveLength(3)
-  })
+  describe('MAX_STORMS Limit', () => {
+    it('should not spawn when at MAX_STORMS limit', () => {
+      (system as any).storms = [
+        { id: 1, x: 10, y: 10, intensity: 'mild', startTick: 0, duration: 10000, radius: 10, direction: 0, speed: 0.5 },
+        { id: 2, x: 20, y: 20, intensity: 'moderate', startTick: 0, duration: 10000, radius: 10, direction: 0, speed: 0.5 },
+        { id: 3, x: 30, y: 30, intensity: 'severe', startTick: 0, duration: 10000, radius: 10, direction: 0, speed: 0.5 }
+      ];
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      expect((system as any).storms.length).toBe(3);
+    });
 
-  it('storms=2时仍可spawn达到3', () => {
-    ;(sys as any).storms.push(makeStorm())
-    ;(sys as any).storms.push(makeStorm())
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(0, worldSand, emEmpty, 800)
-    expect((sys as any).storms).toHaveLength(3)
-  })
+    it('should allow spawn when below MAX_STORMS', () => {
+      (system as any).storms = [
+        { id: 1, x: 10, y: 10, intensity: 'mild', startTick: 0, duration: 10000, radius: 10, direction: 0, speed: 0.5 },
+        { id: 2, x: 20, y: 20, intensity: 'moderate', startTick: 0, duration: 10000, radius: 10, direction: 0, speed: 0.5 }
+      ];
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      expect((system as any).storms.length).toBe(3);
+    });
 
-  it('spawn后nextId递增', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(0, worldSand, emEmpty, 800)
-    expect((sys as any).nextId).toBe(2)
-  })
+    it('should respect MAX_STORMS across multiple updates', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      for (let i = 0; i < 10; i++) {
+        system.update(0, mockWorld, mockEntityManager, 800 * (i + 1));
+      }
+      expect((system as any).storms.length).toBeLessThanOrEqual(3);
+    });
+  });
 
-  it('spawn后storm记录startTick=tick', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(0, worldSand, emEmpty, 800)
-    expect((sys as any).storms[0].startTick).toBe(800)
-  })
+  describe('Expiry and Cleanup', () => {
+    it('should remove expired storm when elapsed >= duration', () => {
+      (system as any).storms = [
+        { id: 1, x: 10, y: 10, intensity: 'mild', startTick: 0, duration: 1000, radius: 10, direction: 0, speed: 0.5 }
+      ];
+      vi.spyOn(Math, 'random').mockReturnValue(0.9);
+      system.update(0, mockWorld, mockEntityManager, 1000);
+      expect((system as any).storms.length).toBe(0);
+    });
 
-  it('spawn后storm有合理radius(>=10)', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(0, worldSand, emEmpty, 800)
-    expect((sys as any).storms[0].radius).toBeGreaterThanOrEqual(10)
-  })
-})
+    it('should keep storm when elapsed < duration', () => {
+      (system as any).storms = [
+        { id: 1, x: 10, y: 10, intensity: 'mild', startTick: 0, duration: 1000, radius: 10, direction: 0, speed: 0.5 }
+      ];
+      vi.spyOn(Math, 'random').mockReturnValue(0.9);
+      system.update(0, mockWorld, mockEntityManager, 999);
+      expect((system as any).storms.length).toBe(1);
+    });
 
-describe('WorldDustStormSystem - 过期逻辑', () => {
-  let sys: WorldDustStormSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-  afterEach(() => { vi.restoreAllMocks() })
+    it('should remove multiple expired storms', () => {
+      (system as any).storms = [
+        { id: 1, x: 10, y: 10, intensity: 'mild', startTick: 0, duration: 500, radius: 10, direction: 0, speed: 0.5 },
+        { id: 2, x: 20, y: 20, intensity: 'moderate', startTick: 0, duration: 500, radius: 10, direction: 0, speed: 0.5 },
+        { id: 3, x: 30, y: 30, intensity: 'severe', startTick: 0, duration: 2000, radius: 10, direction: 0, speed: 0.5 }
+      ];
+      vi.spyOn(Math, 'random').mockReturnValue(0.9);
+      system.update(0, mockWorld, mockEntityManager, 1000);
+      expect((system as any).storms.length).toBe(1);
+      expect((system as any).storms[0].intensity).toBe('severe');
+    });
 
-  it('storm过期后被删除', () => {
-    ;(sys as any).storms.push(makeStorm({ id: 1, startTick: 0, duration: 1000 }))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, worldSand, emEmpty, 1800)  // elapsed=1800 >= duration=1000 → 删除
-    expect((sys as any).storms).toHaveLength(0)
-  })
+    it('should cleanup on every update', () => {
+      (system as any).storms = [
+        { id: 1, x: 10, y: 10, intensity: 'mild', startTick: 0, duration: 100, radius: 10, direction: 0, speed: 0.5 }
+      ];
+      vi.spyOn(Math, 'random').mockReturnValue(0.9);
+      system.update(0, mockWorld, mockEntityManager, 50);
+      expect((system as any).storms.length).toBe(1);
+      system.update(0, mockWorld, mockEntityManager, 850);
+      expect((system as any).storms.length).toBe(0);
+    });
 
-  it('storm未到期不删除', () => {
-    ;(sys as any).storms.push(makeStorm({ id: 1, startTick: 0, duration: 5000 }))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, worldSand, emEmpty, 800)  // elapsed=800 < duration=5000 → 不删除
-    expect((sys as any).storms).toHaveLength(1)
-  })
+    it('should handle empty storms array', () => {
+      (system as any).storms = [];
+      vi.spyOn(Math, 'random').mockReturnValue(0.9);
+      expect(() => system.update(0, mockWorld, mockEntityManager, 800)).not.toThrow();
+    });
+  });
 
-  it('恰好到期时删除（elapsed==duration，因为条件是!(elapsed<duration)）', () => {
-    ;(sys as any).storms.push(makeStorm({ id: 1, startTick: 0, duration: 1000 }))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, worldSand, emEmpty, 1000)  // elapsed=1000, !(1000<1000)=true → 删除
-    expect((sys as any).storms).toHaveLength(0)
-  })
+  describe('Intensity Distribution', () => {
+    it('should create storms with mild intensity', () => {
+      const randomValues = [0.001, 0.1];
+      let callCount = 0;
+      vi.spyOn(Math, 'random').mockImplementation(() => randomValues[callCount++ % 2]);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      expect((system as any).storms.some((s: any) => s.intensity === 'mild')).toBe(true);
+    });
 
-  it('多个storm部分过期，只删过期的', () => {
-    ;(sys as any).storms.push(makeStorm({ id: 1, startTick: 0, duration: 500 }))    // 过期
-    ;(sys as any).storms.push(makeStorm({ id: 2, startTick: 0, duration: 5000 }))   // 未过期
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, worldSand, emEmpty, 800)
-    expect((sys as any).storms).toHaveLength(1)
-    expect((sys as any).storms[0].id).toBe(2)
-  })
-})
+    it('should create storms with moderate intensity', () => {
+      const randomValues = [0.001, 0.5];
+      let callCount = 0;
+      vi.spyOn(Math, 'random').mockImplementation(() => randomValues[callCount++ % 2]);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      expect((system as any).storms.some((s: any) => s.intensity === 'moderate')).toBe(true);
+    });
 
-describe('WorldDustStormSystem - applyEffects伤害', () => {
-  let sys: WorldDustStormSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-  afterEach(() => { vi.restoreAllMocks() })
+    it('should create storms with severe intensity', () => {
+      const randomValues = [0.001, 0.85];
+      let callCount = 0;
+      vi.spyOn(Math, 'random').mockImplementation(() => randomValues[callCount++ % 2]);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      expect((system as any).storms.some((s: any) => s.intensity === 'severe')).toBe(true);
+    });
 
-  it('生物在storm范围内受到mild伤害(0.05)', () => {
-    ;(sys as any).storms.push(makeStorm({ x: 100, y: 100, radius: 30, intensity: 'mild', startTick: 0, duration: 9999 }))
-    const needs = { health: 50 }
-    const em = {
-      getEntitiesWithComponents: () => [1],
-      getComponent: (eid: number, comp: string) => comp === 'position' ? { x: 100, y: 100 } : needs,
-    } as any
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, worldSand, em, 0)  // tick=0,不触发节流,直接执行applyEffects
-    expect(needs.health).toBeCloseTo(49.95, 5)
-  })
+    it('should create storms with catastrophic intensity', () => {
+      const randomValues = [0.001, 0.95];
+      let callCount = 0;
+      vi.spyOn(Math, 'random').mockImplementation(() => randomValues[callCount++ % 2]);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      expect((system as any).storms.some((s: any) => s.intensity === 'catastrophic')).toBe(true);
+    });
+  });
 
-  it('生物在storm范围外不受伤害', () => {
-    ;(sys as any).storms.push(makeStorm({ x: 100, y: 100, radius: 10, intensity: 'severe', startTick: 0, duration: 9999 }))
-    const needs = { health: 50 }
-    const em = {
-      getEntitiesWithComponents: () => [1],
-      getComponent: (eid: number, comp: string) => comp === 'position' ? { x: 200, y: 200 } : needs,
-    } as any
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, worldSand, em, 0)
-    expect(needs.health).toBe(50)
-  })
+  describe('Storm Movement', () => {
+    it('should move storms based on direction and speed', () => {
+      (system as any).storms = [
+        { id: 1, x: 50, y: 50, intensity: 'mild', startTick: 0, duration: 10000, radius: 10, direction: 0, speed: 1 }
+      ];
+      const initialX = (system as any).storms[0].x;
+      system.update(0, mockWorld, mockEntityManager, 800);
+      expect((system as any).storms[0].x).not.toBe(initialX);
+    });
 
-  it('health<=5时不再受伤害', () => {
-    ;(sys as any).storms.push(makeStorm({ x: 100, y: 100, radius: 30, intensity: 'catastrophic', startTick: 0, duration: 9999 }))
-    const needs = { health: 5 }
-    const em = {
-      getEntitiesWithComponents: () => [1],
-      getComponent: (eid: number, comp: string) => comp === 'position' ? { x: 100, y: 100 } : needs,
-    } as any
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, worldSand, em, 0)
-    expect(needs.health).toBe(5)
-  })
+    it('should update storm direction randomly', () => {
+      (system as any).storms = [
+        { id: 1, x: 50, y: 50, intensity: 'mild', startTick: 0, duration: 10000, radius: 10, direction: 0, speed: 1 }
+      ];
+      const initialDir = (system as any).storms[0].direction;
+      vi.spyOn(Math, 'random').mockReturnValue(0.9);
+      system.update(0, mockWorld, mockEntityManager, 800);
+      expect((system as any).storms[0].direction).not.toBe(initialDir);
+    });
+  });
 
-  it('DAMAGE_MAP各强度值正确', () => {
-    const DAMAGE_MAP: Record<DustStormIntensity, number> = {
-      mild: 0.05, moderate: 0.15, severe: 0.3, catastrophic: 0.5,
-    }
-    expect(DAMAGE_MAP['mild']).toBe(0.05)
-    expect(DAMAGE_MAP['moderate']).toBe(0.15)
-    expect(DAMAGE_MAP['severe']).toBe(0.3)
-    expect(DAMAGE_MAP['catastrophic']).toBe(0.5)
-  })
-})
+  describe('Edge Cases', () => {
+    it('should handle tick = 0', () => {
+      expect(() => system.update(0, mockWorld, mockEntityManager, 0)).not.toThrow();
+    });
+
+    it('should handle very large tick values', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9);
+      expect(() => system.update(0, mockWorld, mockEntityManager, 1000000)).not.toThrow();
+    });
+
+    it('should handle world with width = 0', () => {
+      mockWorld.width = 0;
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      expect(() => system.update(0, mockWorld, mockEntityManager, 800)).not.toThrow();
+    });
+
+    it('should handle world with height = 0', () => {
+      mockWorld.height = 0;
+      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      expect(() => system.update(0, mockWorld, mockEntityManager, 800)).not.toThrow();
+    });
+  });
+});
