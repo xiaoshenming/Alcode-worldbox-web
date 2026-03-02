@@ -30,6 +30,8 @@ export class BiomeEvolutionSystem {
   private _popDensity: Map<number, number> = new Map()
   private _buildingMap: Map<number, BuildingType> = new Map()
   private _neighborsBuf: TileType[] = []
+  // Reusable Set for O(1) neighbor type lookup (populated alongside _neighborsBuf)
+  private _neighborSet: Set<TileType> = new Set()
 
   constructor() {
     this.sampleCount = Math.floor(WORLD_WIDTH * WORLD_HEIGHT * SAMPLE_RATIO)
@@ -53,6 +55,7 @@ export class BiomeEvolutionSystem {
       if (tile === null) continue
 
       const neighbors = this.getNeighborTypes(world, x, y)
+      const ns = this._neighborSet
 
       let newTile: TileType | null = null
 
@@ -63,7 +66,7 @@ export class BiomeEvolutionSystem {
 
       // --- Natural evolution ---
       if (newTile === null) {
-        newTile = this.naturalEvolution(tile, neighbors)
+        newTile = this.naturalEvolution(tile, neighbors, ns)
       }
 
       // --- Civilization influence ---
@@ -86,30 +89,30 @@ export class BiomeEvolutionSystem {
 
   // --- Natural terrain transitions ---
 
-  private naturalEvolution(tile: TileType, neighbors: TileType[]): TileType | null {
+  private naturalEvolution(tile: TileType, neighbors: TileType[], ns: Set<TileType>): TileType | null {
     switch (tile) {
       case TileType.SAND: {
         // Greening: sand near grass can become grass
-        if (neighbors.includes(TileType.GRASS) && Math.random() < 0.08) {
+        if (ns.has(TileType.GRASS) && Math.random() < 0.08) {
           return TileType.GRASS
         }
         break
       }
       case TileType.GRASS: {
         // Forest expansion: grass near forest can become forest
-        if (neighbors.includes(TileType.FOREST) && Math.random() < 0.05) {
+        if (ns.has(TileType.FOREST) && Math.random() < 0.05) {
           return TileType.FOREST
         }
         // Desertification: grass with no nearby water dries out
-        const hasWater = neighbors.includes(TileType.SHALLOW_WATER) || neighbors.includes(TileType.DEEP_WATER)
-        if (!hasWater && !neighbors.includes(TileType.FOREST) && Math.random() < 0.03) {
+        const hasWater = ns.has(TileType.SHALLOW_WATER) || ns.has(TileType.DEEP_WATER)
+        if (!hasWater && !ns.has(TileType.FOREST) && Math.random() < 0.03) {
           return TileType.SAND
         }
         break
       }
       case TileType.SHALLOW_WATER: {
         // Beach formation at water edges
-        const hasLand = neighbors.some(n => n === TileType.GRASS || n === TileType.FOREST || n === TileType.MOUNTAIN)
+        const hasLand = ns.has(TileType.GRASS) || ns.has(TileType.FOREST) || ns.has(TileType.MOUNTAIN)
         if (hasLand && Math.random() < 0.02) {
           return TileType.SAND
         }
@@ -179,9 +182,10 @@ export class BiomeEvolutionSystem {
 
   private getNeighborTypes(world: World, x: number, y: number): TileType[] {
     const result = this._neighborsBuf; result.length = 0
+    const ns = this._neighborSet; ns.clear()
     for (const [dx, dy] of DIRS) {
       const t = world.getTile(x + dx, y + dy)
-      if (t !== null) result.push(t)
+      if (t !== null) { result.push(t); ns.add(t) }
     }
     return result
   }
