@@ -202,6 +202,7 @@ describe('DiplomaticCommutationSystem', () => {
       const bigTick = EXPIRE_TTL + CHECK_INTERVAL + 1
       ;(sys as any).acts.push(makeAct({ id: 1, tick: 0 }))              // 过期
       ;(sys as any).acts.push(makeAct({ id: 2, tick: bigTick - 1000 })) // 未过期
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)  // 阻断spawn
       callUpdate(sys, bigTick)
       const remaining = (sys as any).acts as CommutationAct[]
       expect(remaining).toHaveLength(1)
