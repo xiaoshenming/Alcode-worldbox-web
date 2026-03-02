@@ -1,11 +1,11 @@
 {
-  "notes": "迭代110。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.53MB；(2)NavalSystem——缓存ships列表(_shipsBuf)并传给所有6个子方法，消除每tick内6次重复getEntitiesWithComponents调用；(3)QuestSystem——legends Map内存泄漏修复：在generateBallads中收集dead hero ID后批量delete；(4)NavalSystem.portShipCount——内存泄漏修复：spawnShips开始时清理已摧毁port的Map条目；(5)CreatureAmbidextritySystem(MAX=150)+CreatureHomesicknessSystem(MAX=120)——用Map<entityId, Profile/State>替换some()+find()的O(n)扫描，getByEntity改为O(1)+fallback；共5次提交全部推送。\n注意：测试首次失败（3个测试）——因为测试通过getProfiles().push()直接操控内部数组，绕过了Map的更新，修复方案是在getByEntity中添加lazy sync fallback scan。",
+  "notes": "迭代111。本轮主要成就：(1)全量验证通过：tsc零错误、4997/4997测试全过、构建约1.53MB；(2)发现并修复5个系统update()内重复getEntitiesWithComponents调用——CreatureDanceSystem(循环内调用，最严重)、CreatureCollectionSystem(3个子方法各自调用)、CreatureSuperstitionSystem(2个子方法)、CreatureTotemSystem(2个子方法)、CreatureMigrationMemorySystem(2个子方法)——均改为update()顶部缓存一次传给子方法；(3)发现并修复5个WorldSystem循环内的重复调用——BallLightning/CrystalCave/DustDevil/Waterspout/Mudslide——将creatures缓存提升到循环外；(4)WorldQuicksandSystem——for(pit)循环内getEntitiesWithComponent提升到循环外；共3次提交全部推送。\n注意：Python精准扫描update()方法体后发现已无重复调用，优化覆盖面广。",
   "priorities": [
     "1. 【持续监控】tsc+vitest+build三重验证保持全绿",
-    "2. 【可探索】其他MAX>=30的系统：CreatureExileSystem(60)/CreatureSleepwalkSystem(30)有some()——但ExileSystem用splice(0,n)截断不适合Set，Sleepwalk规模小",
-    "3. 【可探索】ArmySystem.recruitSoldiers中civ.buildings.some()检查barracks/castle——每300tick对每个文明建筑遍历，可在civ对象上预缓存buildingTypeSet",
-    "4. 【可探索】BiomeEvolutionSystem的neighbors.includes()——neighbors是8元素数组，换Set后get()有开销但避免closure，综合评估不一定值得",
-    "5. 【可探索】CivManager.hasBuildingAt()中的buildings.some()——建筑placement时调用，非热路径但可预建<x*10000+y, boolean> Map"
+    "2. 【可探索】CreatureApprenticeSystem.ts:90——在for循环内调用getEntitiesWithComponents('position','creature','civMember')，约每CHECK_INTERVAL运行，可提升到循环外",
+    "3. 【可探索】ArmySystem.recruitSoldiers/updateSiege的buildings.some()——需要em.getComponent调用，考虑在Civilization对象上缓存buildingTypeSet（但建筑可被摧毁，需要事件同步）",
+    "4. 【可探索】CombatSystem的towers和buildings查询——updateTowerDefense每30tick，updateSiege每20tick，LCM=60，同tick概率低但可考虑在update()共享一个buildings缓存",
+    "5. 【可探索】WorldRelicSystem.checkDiscovery每tick运行，查询'civMember'组件；applyEffects每EFFECT_INTERVAL运行；若两者组件集合可合并则可共���一次查询"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -55,7 +55,10 @@
     "【迭代110新增】单个update()内多次调用getEntitiesWithComponents()是常见的性能问题——应在update()开头缓存一次到_shipsBuf数组，所有子方法共享该缓存，避免重复遍历ECS索引",
     "【迭代110新增】Map内存泄漏的两种典型模式：(1)以heroId/entityId为key但不cleanup dead entities（QuestSystem.legends）；(2)以portId为key但不cleanup destroyed ports（NavalSystem.portShipCount）。修复：分别在周期性检查方法和spawn方法开头扫描清理",
     "【迭代110新增】用Map优化some()/find()时，若代码暴露了返回内部数组的getXxx()方法，测试可能直接push到数组绕过Map更新——应在查询方法(getByEntity)中添加lazy sync fallback: if(!cached){found=arr.find(); if(found)map.set(id,found)}",
-    "【迭代110新增】Map优化some()查找的标准模式：add: this.arr.push(obj); this._map.set(eid, obj); / remove: this._map.delete(eid); arr.splice(i,1); / query: return this._map.get(eid) ?? fallback。三个操作必须配套实现"
+    "【迭代110新增】Map优化some()查找的标准模式：add: this.arr.push(obj); this._map.set(eid, obj); / remove: this._map.delete(eid); arr.splice(i,1); / query: return this._map.get(eid) ?? fallback。三个操作必须配套实现",
+    "【迭代111新增】getEntitiesWithComponents重复调用扫描技巧：(1)Python精确提取update()方法体（计数大括号深度）；(2)Counter统计每种调用的出现次数；(3)同一update内>=2次相同调用即为优化目标",
+    "【迭代111新增】for(item of list)循环内调用getEntitiesWithComponents最危险——调用次数=list.length，修复：提升到循环前缓存一次",
+    "【迭代111新增】多个私有子方法分别调用相同getEntitiesWithComponents的修复模式：update()顶部缓存→改子方法签名增加entities参数→传入→删除子方法内的重复查询。Python一次性批量替换4个系统耗时<1分钟"
   ],
-  "last_updated": "2026-03-02T08:21:00+08:00"
+  "last_updated": "2026-03-02T08:40:00+08:00"
 }
