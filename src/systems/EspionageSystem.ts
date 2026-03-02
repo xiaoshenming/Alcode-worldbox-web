@@ -56,6 +56,8 @@ export class EspionageSystem {
   private _civsBuf: Civilization[] = []
   private spies: Spy[] = []
   private tributes: TributeRecord[] = []
+  /** O(1) tribute lookup: key = fromCivId * 1000 + toCivId (civId < 1000 safe) */
+  private _tributeMap = new Map<number, TributeRecord>()
   private warJustifications: WarJustification[] = []
   private _justificationFullSet = new Set<string>()  // key: `${reason}_${attackerId}_${defenderId}`
   private _justificationPairSet = new Set<string>()  // key: `${attackerId}_${defenderId}`
@@ -266,7 +268,7 @@ export class EspionageSystem {
         const powerRatio = (strong.population * strong.techLevel) / Math.max(1, weak.population * weak.techLevel)
         if (powerRatio < 2.0) continue
 
-        const existing = this.tributes.find(t => t.fromCivId === weak.id && t.toCivId === strong.id)
+        const existing = this._tributeMap.get(weak.id * 1000 + strong.id)
 
         // Vassal-like states (very negative power balance) auto-tribute
         if (powerRatio > 3.0 || (rel < -20 && rel > -60)) {
@@ -277,7 +279,7 @@ export class EspionageSystem {
               this.tributeRefused(weak, strong, civManager, tick)
               for (let _i = this.tributes.length - 1; _i >= 0; _i--) {
       const t = this.tributes[_i]
-      if (!(!(t.fromCivId === weak.id && t.toCivId === strong.id))) this.tributes.splice(_i, 1)
+      if (!(!(t.fromCivId === weak.id && t.toCivId === strong.id))) { this.tributes.splice(_i, 1); this._tributeMap.delete(weak.id * 1000 + strong.id) }
     }
             }
             continue
@@ -295,7 +297,9 @@ export class EspionageSystem {
             existing.amount = amount
             existing.lastTick = tick
           } else {
-            this.tributes.push({ fromCivId: weak.id, toCivId: strong.id, amount, lastTick: tick })
+            const newTribute = { fromCivId: weak.id, toCivId: strong.id, amount, lastTick: tick }
+            this.tributes.push(newTribute)
+            this._tributeMap.set(weak.id * 1000 + strong.id, newTribute)
             EventLog.log('trade', `${weak.name} pays tribute to ${strong.name} (${amount} gold)`, tick)
           }
         }

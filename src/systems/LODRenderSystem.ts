@@ -1,5 +1,4 @@
 /** LODRenderSystem - zoom-dependent detail levels for entities and terrain */
-import { RenderComponent, CreatureComponent } from '../ecs/Entity'
 import { Camera } from '../game/Camera'
 
 export type LODLevel = 'full' | 'medium' | 'low' | 'icon'
@@ -20,17 +19,6 @@ const DEFAULT_THRESHOLDS: LODThresholds = {
 export class LODRenderSystem {
   private thresholds: LODThresholds = { ...DEFAULT_THRESHOLDS }
   private currentLOD: LODLevel = 'full'
-  // Cached font strings — rebuilt only when zoom changes
-  private _lastZoom = -1
-  private _fullFont = ''
-  private _mediumFont = ''
-
-  private _rebuildFontsIfNeeded(zoom: number): void {
-    if (zoom === this._lastZoom) return
-    this._lastZoom = zoom
-    this._fullFont = `${Math.max(8, zoom * 0.35)}px monospace`
-    this._mediumFont = `${Math.max(7, zoom * 0.3)}px monospace`
-  }
 
   /** Determine current LOD level based on zoom */
   update(camera: Camera): void {
@@ -43,78 +31,6 @@ export class LODRenderSystem {
 
   getLOD(): LODLevel {
     return this.currentLOD
-  }
-
-  /** Full detail: body + name + health bar */
-  private renderFull(
-    ctx: CanvasRenderingContext2D,
-    sx: number, sy: number, zoom: number,
-    render: RenderComponent | undefined,
-    creature: CreatureComponent | undefined
-  ): void {
-    const size = (render?.size ?? 1) * zoom * 0.4
-    const color = render?.color ?? '#888'
-
-    // Body
-    ctx.fillStyle = color
-    ctx.beginPath()
-    ctx.arc(sx, sy, size, 0, Math.PI * 2)
-    ctx.fill()
-
-    // Name label
-    if (creature) {
-      this._rebuildFontsIfNeeded(zoom)
-      ctx.fillStyle = '#fff'
-      ctx.font = this._fullFont
-      ctx.textAlign = 'center'
-      ctx.fillText(creature.name, sx, sy - size - 4)
-    }
-  }
-
-  /** Medium detail: body + species initial */
-  private renderMedium(
-    ctx: CanvasRenderingContext2D,
-    sx: number, sy: number, zoom: number,
-    render: RenderComponent | undefined,
-    creature: CreatureComponent | undefined
-  ): void {
-    const size = (render?.size ?? 1) * zoom * 0.35
-    const color = render?.color ?? '#888'
-
-    ctx.fillStyle = color
-    ctx.beginPath()
-    ctx.arc(sx, sy, size, 0, Math.PI * 2)
-    ctx.fill()
-
-    // Species initial
-    if (creature && zoom > 12) {
-      this._rebuildFontsIfNeeded(zoom)
-      ctx.fillStyle = '#fff'
-      ctx.font = this._mediumFont
-      ctx.textAlign = 'center'
-      ctx.fillText(creature.species[0], sx, sy + 3)
-    }
-  }
-
-  /** Low detail: colored dot */
-  private renderLow(
-    ctx: CanvasRenderingContext2D,
-    sx: number, sy: number, zoom: number,
-    render: RenderComponent | undefined
-  ): void {
-    const size = Math.max(2, (render?.size ?? 1) * zoom * 0.25)
-    ctx.fillStyle = render?.color ?? '#888'
-    ctx.fillRect(sx - size / 2, sy - size / 2, size, size)
-  }
-
-  /** Icon level: single pixel dot */
-  private renderIcon(
-    ctx: CanvasRenderingContext2D,
-    sx: number, sy: number, _zoom: number,
-    render: RenderComponent | undefined
-  ): void {
-    ctx.fillStyle = render?.color ?? '#888'
-    ctx.fillRect(sx - 1, sy - 1, 2, 2)
   }
 
   setThresholds(t: Partial<LODThresholds>): void {

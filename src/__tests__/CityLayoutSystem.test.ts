@@ -90,7 +90,6 @@ describe('CityLayoutSystem.removeCity', () => {
 
   it('删除已注册城市后查询返回默认值', () => {
     ;(cls as any).layouts.set(1, makeCityLayout('capital'))
-    ;(cls as any).cities.set(1, { id: 1, centerX: 0, centerY: 0, buildings: [], population: 0 })
     cls.removeCity(1)
     expect(cls.getCityLevel(1)).toBe('village')
     expect(cls.getRoads(1)).toHaveLength(0)
