@@ -130,9 +130,15 @@ export class QuestSystem {
   private generateQuests(em: EntityManager, world: World, civManager: CivManager, tick: number): void {
     const heroes = em.getEntitiesWithComponents('position', 'hero', 'creature', 'civMember', 'ai')
 
+    // Build active hero set for O(1) lookup
+    const activeHeroIds = new Set<number>()
+    for (const q of this.quests) {
+      if (!q.completed && !q.failed) activeHeroIds.add(q.heroId)
+    }
+
     for (const heroId of heroes) {
       // Max 1 active quest per hero
-      if (this.quests.some(q => q.heroId === heroId && !q.completed && !q.failed)) continue
+      if (activeHeroIds.has(heroId)) continue
 
       const hero = em.getComponent<HeroComponent>(heroId, 'hero')
       const civMember = em.getComponent<CivMemberComponent>(heroId, 'civMember')
@@ -172,8 +178,7 @@ export class QuestSystem {
       }
 
       this.quests.push(quest)
-
-      // Direct hero toward quest target
+      activeHeroIds.add(heroId)
       const ai = em.getComponent<AIComponent>(heroId, 'ai')
       if (ai) {
         ai.state = 'wandering'
