@@ -44,16 +44,16 @@ export class CreatureMigrationMemorySystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    this.formMemories(em, tick)
-    this.inheritMemories(em, tick)
+    const entities = em.getEntitiesWithComponents('position', 'creature')
+    this.formMemories(em, tick, entities)
+    this.inheritMemories(em, tick, entities)
     this.updateRoutes(em)
     this.decayMemories()
     this.pruneDeadCreatures(em)
   }
 
-  private formMemories(em: EntityManager, tick: number): void {
+  private formMemories(em: EntityManager, tick: number, entities: number[]): void {
     if (this.memories.length >= MAX_MEMORIES) return
-    const entities = em.getEntitiesWithComponents('position', 'creature')
 
     for (const id of entities) {
       if (Math.random() > MEMORIZE_CHANCE) continue
@@ -89,9 +89,8 @@ export class CreatureMigrationMemorySystem {
     }
   }
 
-  private inheritMemories(em: EntityManager, tick: number): void {
+  private inheritMemories(em: EntityManager, tick: number, entities: number[]): void {
     if (this.memories.length >= MAX_MEMORIES) return
-    const entities = em.getEntitiesWithComponents('position', 'creature')
 
     for (const id of entities) {
       if (Math.random() > INHERIT_CHANCE * 0.01) continue

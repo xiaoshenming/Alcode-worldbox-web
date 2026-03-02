@@ -50,6 +50,9 @@ export class CreatureDanceSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
+    // Cache creatures once — reused by both update loops
+    const entities = em.getEntitiesWithComponents('position', 'creature')
+
     // Update existing dances
     for (let i = this.dances.length - 1; i >= 0; i--) {
       const dance = this.dances[i]
@@ -63,7 +66,6 @@ export class CreatureDanceSystem {
 
       // Count nearby creatures as participants
       let nearby = 0
-      const entities = em.getEntitiesWithComponents('position', 'creature')
       for (const eid of entities) {
         const pos = em.getComponent<PositionComponent>(eid, 'position')
         if (!pos) continue
@@ -91,7 +93,6 @@ export class CreatureDanceSystem {
 
     // Try to spawn new dances near creatures
     if (this.dances.length < MAX_DANCES) {
-      const entities = em.getEntitiesWithComponents('position', 'creature')
       for (const eid of entities) {
         if (this.dances.length >= MAX_DANCES) break
         if (Math.random() > SPAWN_CHANCE) continue

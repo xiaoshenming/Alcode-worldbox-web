@@ -47,17 +47,16 @@ export class CreatureSuperstitionSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    this.formSuperstitions(em, tick)
-    this.spreadBeliefs(em)
+    const entities = em.getEntitiesWithComponents('position', 'creature')
+    this.formSuperstitions(em, tick, entities)
+    this.spreadBeliefs(em, entities)
     this.decaySuperstitions()
     this.cleanup()
   }
 
-  private formSuperstitions(em: EntityManager, tick: number): void {
+  private formSuperstitions(em: EntityManager, tick: number, entities: number[]): void {
     if (this.superstitions.length >= MAX_SUPERSTITIONS) return
     if (Math.random() > FORM_CHANCE) return
-
-    const entities = em.getEntitiesWithComponents('position', 'creature')
     if (entities.length === 0) return
 
     const idx = Math.floor(Math.random() * entities.length)
@@ -89,8 +88,7 @@ export class CreatureSuperstitionSystem {
     })
   }
 
-  private spreadBeliefs(em: EntityManager): void {
-    const entities = em.getEntitiesWithComponents('position', 'creature')
+  private spreadBeliefs(em: EntityManager, entities: number[]): void {
 
     for (const sup of this.superstitions) {
       for (const eid of entities) {

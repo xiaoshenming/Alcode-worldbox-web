@@ -46,15 +46,14 @@ export class CreatureTotemSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    this.worshipTotems(em)
-    this.trySpawnTotem(em, world, tick)
+    const entities = em.getEntitiesWithComponents('creature', 'position')
+    this.worshipTotems(em, entities)
+    this.trySpawnTotem(em, world, tick, entities)
     this.decayTotems()
   }
 
-  private trySpawnTotem(em: EntityManager, world: World, tick: number): void {
+  private trySpawnTotem(em: EntityManager, world: World, tick: number, entities: number[]): void {
     if (this.totems.length >= MAX_TOTEMS) return
-
-    const entities = em.getEntitiesWithComponents('creature', 'position')
     if (entities.length < 5) return
 
     for (let attempt = 0; attempt < 4; attempt++) {
@@ -96,8 +95,7 @@ export class CreatureTotemSystem {
     }
   }
 
-  private worshipTotems(em: EntityManager): void {
-    const entities = em.getEntitiesWithComponents('creature', 'position')
+  private worshipTotems(em: EntityManager, entities: number[]): void {
 
     for (const totem of this.totems) {
       let worshippers = 0

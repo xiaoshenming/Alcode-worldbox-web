@@ -41,9 +41,10 @@ export class CreatureCollectionSystem {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
     this.lastCheck = tick
 
-    this.findItems(em, tick)
-    this.tradeItems(em)
-    this.stealItems(em)
+    const entities = em.getEntitiesWithComponents('position', 'creature')
+    this.findItems(em, tick, entities)
+    this.tradeItems(em, entities)
+    this.stealItems(em, entities)
     this.cleanupDeadCollectors(em)
   }
 
@@ -62,9 +63,7 @@ export class CreatureCollectionSystem {
     return col
   }
 
-  private findItems(em: EntityManager, tick: number): void {
-    const entities = em.getEntitiesWithComponents('position', 'creature')
-
+  private findItems(em: EntityManager, tick: number, entities: number[]): void {
     for (const eid of entities) {
       if (Math.random() > FIND_CHANCE) continue
       if (this.collections.size >= MAX_COLLECTIONS && !this.collections.has(eid)) continue
@@ -79,9 +78,7 @@ export class CreatureCollectionSystem {
     }
   }
 
-  private tradeItems(em: EntityManager): void {
-    const entities = em.getEntitiesWithComponents('position', 'creature')
-
+  private tradeItems(em: EntityManager, entities: number[]): void {
     for (const eid of entities) {
       if (Math.random() > TRADE_CHANCE) continue
       const col = this.collections.get(eid)
@@ -118,9 +115,7 @@ export class CreatureCollectionSystem {
     }
   }
 
-  private stealItems(em: EntityManager): void {
-    const entities = em.getEntitiesWithComponents('position', 'creature')
-
+  private stealItems(em: EntityManager, entities: number[]): void {
     for (const eid of entities) {
       if (Math.random() > THEFT_CHANCE) continue
 
