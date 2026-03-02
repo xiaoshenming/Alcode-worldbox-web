@@ -1,11 +1,11 @@
 {
-  "notes": "迭代133（循环39/100）。本轮主要成就：批量处理9个World系统测试（VVV/WWW/XXX组），测试从13023增至13263，+240个测试。\n\n本轮处理的系统（分3批Agent并行）：\nVVV组(+99): WorldExportSystem(29) WorldFairyChimneySystem(35) WorldFjordSystem(35)\nWWW组(+92): WorldFlatironSystem(26) WorldFloatingIslandSystem(32) WorldFogBankSystem(34)\nXXX组(+94): WorldFranciumSpringSystem(29) WorldFrostbiteSystem(32) WorldFrostHollowSystem(33)\n\n关键发现：\n- WorldExportSystem: 纯导入导出系统，有validate私有方法验证ExportData schema，importWorld异步方法，render方法绘制进度条\n- WorldFairyChimneySystem: 烟囱侵蚀演化系统，height/coneWidth每帧递减，erosionRate在[1,25]，cutoff=tick-91000\n- WorldFjordSystem: 峡湾系统，cliffHeight每帧-0.002且不低于20，cutoff=tick-100000，MAX_FJORDS=14\n- WorldFlatironSystem: 熨斗山weathering侵蚀，height递减且不低于15，cutoff=tick-93000，MAX_FLATIRONS=15\n- WorldFloatingIslandSystem: 双删除条件（tick<cutoff OR magicLevel<=0），magicLevel每帧-0.01消耗，driftAngle=0时x坐标漂移，MAX_ISLANDS=20\n- WorldFogBankSystem: 特殊cleanup条件!(visibility<95 && radius>1)，消散阶段(elapsed>duration*0.7)时visibility增加+radius减少，MAX_FOGS=10\n- WorldFranciumSpringSystem: Spring系统标准结构（zones数组，MAX_ZONES=32，cutoff=tick-54000）\n- WorldFrostbiteSystem: severity升级系统（mild→moderate@60000→severe@120000→extreme@200000），age>300000时active=false并删除，MAX_ZONES=16\n- WorldFrostHollowSystem: 温度冷却系统（temperature降低且不低于-30），frostDuration每次-1，cleanup条件frostDuration<=0 OR airPooling<=10，MAX_HOLLOWS=25\n- 测试总数从13023→13263，+240\n- tsc+vitest+build三重验证保持全绿（当前13263/13263通过）\n\n下轮优先方向：\n1. 继续处理World系统（剩余178个文件，全部5测试待改善）\n2. 使用同样的并行Agent策略（3 Agent × 3文件/批）\n3. tsc+vitest+build三重验证保持全绿",
+  "notes": "迭代134（循环40/100）。本轮主要成就：批量处理9个World系统测试（YYY/ZZZ/AAA2组），测试从13263增至13487，+224个测试。\n\n本轮处理的系统（分3批Agent并行）：\nYYY组(+102): WorldFumaroleFieldSystem(28) WorldFumaroleSystem(34) WorldFumarolicFieldSystem(40)\nZZZ组(+83): WorldFungalNetworkSystem(42) WorldGadoliniumSpringSystem(23) WorldGalliumSpringSystem(28)\nAAA2组(+84): WorldGeoglyphSystem(27) WorldGeothermalPoolSystem(29) WorldGeothermalSpringSystem(28)\n\n关键发现：\n- WorldFumaroleFieldSystem: CHECK_INTERVAL=2720, MAX_FIELDS=6，cleanup条件age>=95（先+0.004后判断），gasEmission递减-0.008下界5，sulfurDeposit递增+0.012上界90\n- WorldFumaroleSystem: CHECK_INTERVAL=2700, MAX_FUMAROLES=11，cleanup条件temperature<=50（先Math.max(50,temp-0.01)后判断），steamIntensity用正弦波更新：20+15*sin(activityCycle)\n- WorldFumarolicFieldSystem: CHECK_INTERVAL=3050, MAX_FIELDS=12，tick-based cleanup：field.tick<tick-82000，gasIntensity随机浮动±0.25，sulfurDeposit递增+0.008上界70\n- WorldFungalNetworkSystem: CHECK_INTERVAL=2800, MAX_NETWORKS=30，内部数组名networks，有_networkKeySet:Set<number>去重，cleanup条件!(connectivity>1&&nodeCount>0)，connectivity每次+0.05上限100\n- WorldGadoliniumSpringSystem: CHECK_INTERVAL=2960, MAX_ZONES=32，cutoff=tick-54000，spawn需nearWater(SHALLOW_WATER/DEEP_WATER)||nearMountain(MOUNTAIN=5)，无字段更新逻辑\n- WorldGalliumSpringSystem: CHECK_INTERVAL=2890, MAX_ZONES=32，与Gadolinium同结构，cutoff=tick-54000，字段：galliumContent/springFlow/bauxiteLeaching/mineralLiquidity\n- WorldGeoglyphSystem: CHECK_INTERVAL=4000, MAX_GEOGLYPHS=10，cleanup条件visibility<=10（非时间，是侵蚀阈值），age=tick-g.tick>100000时visibility-=0.03，spawn需SAND/GRASS\n- WorldGeothermalPoolSystem: CHECK_INTERVAL=3100, MAX_POOLS=14，无tile检查（任意地形可生成），cutoff=tick-85000，temperature[30,98]，mineralContent每次+0.005上限80\n- WorldGeothermalSpringSystem: CHECK_INTERVAL=2600, MAX_SPRINGS=22，spawn需MOUNTAIN/GRASS/SNOW，cutoff=tick-92000，4个字段同时更新\n- 测试总数从13263→13487，+224\n- tsc+vitest+build三重验证保持全绿（当前13487/13487通过）\n\n下轮优先方向：\n1. 继续处理World系统（剩余169个文件，全部5测试待改善）\n2. 使用同样的并行Agent策略（3 Agent × 3文件/批）\n3. tsc+vitest+build三重验��保持全绿",
   "priorities": [
-    "1. 【持续目标】继续处理World系统（剩余178个文件，全部只有5测试），用并行Agent批量处理",
-    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前13263/13263通过）",
-    "3. 【里程碑】已完成63+9=72个World系统测试改善（+1368+240=1608测试），继续下一批",
+    "1. 【持续目标】继续处理World系统（剩余169个文件，全部只有5测试），用并行Agent批量处理",
+    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前13487/13487通过）",
+    "3. 【里程碑】已完成72+9=81个World系统测试改善（+1608+224=1832测试），继续下一批",
     "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+150-250测试",
-    "5. 【下一批系统】WorldFumaroleFieldSystem WorldFumaroleSystem WorldFumarolicFieldSystem及后续"
+    "5. 【下一批系统】WorldGeothermalSystem WorldGeothermalVentSystem WorldGermaniumSpringSystem及后续"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -48,22 +48,11 @@
     "【迭代130新增】Flaky修复策略：在有sys.update()且有确定性toHaveLength(N)断言的测试中，在update前加vi.spyOn(Math,'random').mockReturnValue(0.9)",
     "【迭代131新增】TileType枚举正确值：DEEP_WATER=0, SHALLOW_WATER=1, SAND=2, GRASS=3, FOREST=4, MOUNTAIN=5, SNOW=6, LAVA=7——MOUNTAIN=5不是4！",
     "【迭代131新增】hasAdjacentTile安全mock：用getTile:()=>2(SAND)，因为SAND既不匹配SHALLOW_WATER也不匹配DEEP_WATER也不匹配MOUNTAIN，可靠阻断Spring系统spawn",
-    "【迭代131新增】WorldCorruptionSystem是非标准系统：按tick%30触发spread，按tick%60触发damageCreatures，无常规CHECK_INTERVAL——source直接写入corruptionMap",
-    "【迭代131新增】WorldCoralNurserySystem cleanup是概率性（random<0.01），测试需vi.spyOn(Math,'random').mockReturnValue(0.001)",
-    "【迭代131新增】WorldCoralReefGrowthSystem cleanup双条件：health<=10 AND coverage<5，单个条件不触发删除",
-    "【迭代131新增】WorldCoralSpawningSystem季节totalCycle=60000+30000+15000+40000=145000（dispersing+age>145000才cleanup）",
-    "【迭代132新增】WorldDustStormSystem: CHECK_INTERVAL=800使用>=而非<（tick-lastCheck>=800），intensity类型为'mild'|'moderate'|'severe'|'catastrophic'",
-    "【迭代132新增】WorldDashboardSystem/WorldDecorationSystem/WorldEventTimelineSystem是纯UI/生成系统：无标准update(dt,world,em,tick)，测试纯逻辑方法",
-    "【迭代132新增】WorldDewFormationSystem cleanup条件是evaporated===true（temperature>=80），不是tick cutoff",
-    "【迭代132新增】WorldErosionSystem只有3个参数update(dt,world,tick)，无em参数，有setWorldSize()和getTotalErosions()方法",
-    "【迭代132新增】WorldEventSystem非标准update签名：update(em,world,civManager,particles,timeline)，checkInterval=120，tick%120!==0早返回",
-    "【迭代132新增】Spring系统（Dysprosium/Erbium/Europium）统一结构：内部数组叫zones（不是springs），MAX_ZONES=32，cutoff=tick-54000，无字段更新逻辑",
-    "【迭代133新增】WorldExportSystem是纯导入导出系统：有validate私有方法验证schema，importWorld异步方法，render方法绘制进度条，importing状态控制",
-    "【迭代133新增】侵蚀演化系统模式：WorldFairyChimneySystem(height/coneWidth递减)、WorldFjordSystem(cliffHeight每帧-0.002)、WorldFlatironSystem(height递减且不低于15)",
-    "【迭代133新增】WorldFloatingIslandSystem双删除条件：tick<cutoff OR magicLevel<=0，magicLevel每帧-0.01消耗，driftAngle=0时x坐标漂移",
-    "【迭代133新增】WorldFogBankSystem特殊cleanup：!(visibility<95 && radius>1)，消散阶段(elapsed>duration*0.7)时visibility增加+radius减少",
     "【迭代133新增】WorldFrostbiteSystem severity升级：mild→moderate@60000→severe@120000→extreme@200000，age>300000时active=false并删除",
-    "【迭代133新增】WorldFrostHollowSystem温度冷却：temperature降低且不低于-30，frostDuration每次-1，cleanup条件frostDuration<=0 OR airPooling<=10"
+    "【迭代134新增】WorldFumaroleSystem cleanup特殊性：temperature=50时会先Math.max(50,50-0.01)=50，然后判断<=50触发删除——边界测试需注意",
+    "【迭代134新增】WorldFungalNetworkSystem有Set去重结构_networkKeySet：key=x*10000+y，cleanup时需同步清除keySet",
+    "【迭代134新增】WorldGeoglyphSystem非时间cleanup：visibility<=10（侵蚀阈值），age>100000才触发-0.03递减——需要tick差值>100000才能观察到侵蚀",
+    "【迭代134新增】温泉/地热系统（GeothermalPool/GeothermalSpring）无特殊spawn tile要求，任意地形均可，字段temperature有随机浮动+Math.max/min钳制"
   ],
-  "last_updated": "2026-03-03T00:05:00+08:00"
+  "last_updated": "2026-03-03T00:30:00+08:00"
 }
