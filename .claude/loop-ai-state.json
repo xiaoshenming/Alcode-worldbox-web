@@ -1,11 +1,11 @@
 {
-  "notes": "迭代140（循环47/100）。本轮主要成就：收集并提交QQQ2/RRR2/SSS2三批Agent结果，修复2个flaky测试，测试从14829增至15159，+330个测试。\n\n本轮处理的系统（3批Agent并行）：\nQQQ2组(+126): WorldMangroveSystem(44) WorldMemorialSystem(37) WorldMesaSystem(45)\nRRR2组(+125): WorldMigrationWaveSystem(40) WorldMineralSpringSystem(40) WorldMirageSystem(45)\nSSS2组(+124): WorldMoraineSystem(42) WorldMossGrowthSystem(39) WorldMudFlatSystem(43)\n\n本轮修复的flaky测试：\n- WeatherSystem.test.ts: mock world缺少getSeason方法，补加getSeason: () => 'clear'\n- GeneticDisplaySystem.test.ts: 5%概率100次循环偶尔失败，改为500次循环\n\n关键发现：\n- WorldMangroveSystem: CHECK_INTERVAL=1300, MAX=14, GROW_CHANCE=0.004, spawn:SHALLOW_WATER+SAND+水陆边界\n- WorldMemorialSystem: CHECK_INTERVAL=2000, MAX=50, MEMORIAL_CHANCE=0.008, age++，significance*0.9998衰减\n- WorldMesaSystem: CHECK_INTERVAL=2800, MAX=15, FORM_CHANCE=0.0018, spawn:MOUNTAIN/SAND，elevation-=0.001\n- WorldMigrationWaveSystem: CHECK_INTERVAL=180(detectTriggers)+MOVE_INTERVAL=2(advanceWaves)双重节流，progress+=WAVE_SPEED=0.003\n- WorldMineralSpringSystem: CHECK_INTERVAL=3000, tick=0时(差=0<3000)不执行，tick=3000首次执行\n- WorldMirageSystem: SPAWN_INTERVAL=3600, SPAWN_CHANCE, tile=SAND(2)才spawn，4种类型(oasis/heat/phantom/echo)\n- WorldMoraineSystem: CHECK_INTERVAL=2800, MAX=14, tile=MOUNTAIN(5)/SNOW(6), cutoff=94000\n- WorldMossGrowthSystem: CHECK_INTERVAL=2500, MAX=60, 邻近水源+FOREST/MOUNTAIN, 4阶段升级: spore→thin→thick→lush\n- WorldMudFlatSystem: CHECK_INTERVAL=2700, MAX=22, tile=SAND(2)/SHALLOW_WATER(1), cutoff=88000\n\n当前已派发下一批（TTT2/UUU2/VVV2）：\n- TTT2组: WorldMudPotSystem WorldMudslideSystem WorldMudVolcanoSystem\n- UUU2组: WorldNaturalTunnelSystem WorldNeodymiumSpringSystem WorldNiobiumSpringSystem\n- VVV2组: WorldNorthernLightsSystem WorldNunatakSystem WorldOasisSystem\n\n下轮优先方向：\n1. 等待TTT2/UUU2/VVV2 Agent完成，收集结果\n2. 运行全量测试验证，修复flaky测试\n3. 继续处理WorldObsidian/WorldO系列剩余",
+  "notes": "迭代141（循环48/100）。本轮主要成就：收集并提交TTT2/UUU2/VVV2三批Agent结果，测试从15159增至15499，+340个测试。\n\n本轮处理的系统（3批Agent并行）：\nTTT2组(+128): WorldMudPotSystem(43) WorldMudslideSystem(43) WorldMudVolcanoSystem(42)\nUUU2组(+119): WorldNaturalTunnelSystem(44) WorldNeodymiumSpringSystem(37) WorldNiobiumSpringSystem(38)\nVVV2组(+141): WorldNorthernLightsSystem(44) WorldNunatakSystem(45) WorldOasisSystem(52)\n\n关键发现：\n- WorldMudPotSystem: CHECK_INTERVAL=2680, FORM_CHANCE=0.0009, MAX=8, age+0.005, temperature-0.006(floor30), cleanup:age>=90删除\n- WorldMudslideSystem: CHECK_INTERVAL=1400, MUDSLIDE_CHANCE=0.004, MAX=4, progress=elapsed/duration*100, cleanup:progress>=100删除\n- WorldMudVolcanoSystem: CHECK_INTERVAL=2650, FORM_CHANCE=0.0013, MAX=10, dormancy+0.01, cleanup:dormancy>=100删除\n- WorldNaturalTunnelSystem: CHECK_INTERVAL=2650, FORM_CHANCE=0.0011, MAX=12, LIFETIME=95000, tile=MOUNTAIN\n- WorldNeodymiumSpringSystem: CHECK_INTERVAL=2930, MAX=32, LIFETIME=54000, nearWater/nearMountain双条件\n- WorldNiobiumSpringSystem: CHECK_INTERVAL=2840, MAX=32, LIFETIME=54000\n- WorldNorthernLightsSystem: CHECK_INTERVAL=3000, MAX=8, FORM_CHANCE=0.005, aurora有4种intensity, evolve按progress调整\n- WorldNunatakSystem: CHECK_INTERVAL=2700, MAX=13, FORM_CHANCE=0.0015, LIFETIME=97000, tile=SNOW/MOUNTAIN\n- WorldOasisSystem: CHECK_INTERVAL=1100, MAX=12, spawn判断是Math.random()>FORM_CHANCE（与其他系统相反！），waterLevel<0且drying才cleanup\n\n当前已派发下一批（WWW2/XXX2/YYY2）：\n- WWW2组: WorldObsidianFieldSystem WorldObsidianFlowSystem WorldObsidianPillarSystem\n- XXX2组: WorldPeninsulaSystem WorldPermafrostSystem WorldPetrifiedForestSystem\n- YYY2组: WorldPhosphoriteSystem WorldPlateauSystem WorldPollenSystem\n\n下轮优先方向：\n1. 等待WWW2/XXX2/YYY2 Agent完成，收集结果\n2. 运行全量测试验证，修复flaky测试\n3. 继续处理WorldP/WorldQ/WorldR系列",
   "priorities": [
-    "1. 【持续目标】继续处理World系统（剩余约80个文件），用并行Agent批量处理",
-    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前15159/15159通过）",
-    "3. 【里程碑】已完成135个World系统测试改善（+3504测试），继续下一批",
-    "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+300-380测试",
-    "5. 【下一批系统】WorldObsidian/WorldO/WorldP系列"
+    "1. 【持续目标】继续处理World系统（剩余约70个文件），用并行Agent批量处理",
+    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前15499/15499通过）",
+    "3. 【里程碑】已完成144个World系统测试改善（+3844测试），继续下一批",
+    "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+300-400测试",
+    "5. 【下一批系统】WorldObsidian/WorldP/WorldQ/WorldR系列"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -42,7 +42,7 @@
     "【迭代130新增】Flaky测试根本原因：cleanup/state测试中未mock Math.random，spawn逻辑有小概率触发导致length断言失败或TypeError",
     "【迭代130新增】Flaky修复策略：在有sys.update()且有确定性toHaveLength(N)断言的测试中，在update前加vi.spyOn(Math,'random').mockReturnValue(0.9)",
     "【迭代131新增】TileType枚举正确值：DEEP_WATER=0, SHALLOW_WATER=1, SAND=2, GRASS=3, FOREST=4, MOUNTAIN=5, SNOW=6, LAVA=7——MOUNTAIN=5不是4！",
-    "【迭代135新增】spawn后立即update的off-by-one陷阱：同一次update()内先spawn再update所有记录，导致spawn初始值立即偏移（-0.01,-0.02,-0.004等）��—修复方案：断言下界用Math.max保底值而非spawn初始值",
+    "【迭代135新增】spawn后立即update的off-by-one陷阱：同一次update()内先spawn再update所有记录，导致spawn初始值立即偏移（-0.01,-0.02,-0.004等）——修复方案：断言下界用Math.max保底值而非spawn初始值",
     "【迭代137新增】tick==CHECK_INTERVAL边界：条件tick-lastCheck<CHECK_INTERVAL，等于时3000-0=3000不<3000，会执行（而非不执行）",
     "【迭代138新增】WorldLabyrinthSystem cleanup双条件：explored>=100 AND tick<cutoff，两个条件都满足才删除",
     "【迭代138新增】WorldLaharSystem cleanup条件为velocity<=1（含等于），是<=不是<——与大多数系统的严格小于不同！",
@@ -50,11 +50,12 @@
     "【迭代139新增】WorldMaelstromSystem age超MAX_AGE后active=false并立刻被cleanup删除——不能断言active字段，应断言toHaveLength(0)",
     "【迭代139新增】WorldMagicStormSystem的spawn后同tick触发moveStorms：age从0→1（非0），spawn字段测试必须考虑同帧update偏移",
     "【迭代139新增】WorldMagicStormSystem的cleanupZones：tick>=decayAt（含等于）时删除，与常见严格<相反！",
-    "【迭代139新增】WorldMangroveSwampSystem双条件cleanup：时间>80000 AND density<15，两个条件都满足才删除",
-    "【迭代139新增】WorldMangroveDeltaSystem的tidalRange/salinity字段有clamp范围，测试断言需用clamp后的范围而非spawn初始范围",
     "【迭代140新增】WeatherSystem.test.ts的mock world需包含getSeason方法——WeatherSystem.update()在startRandomWeather时调用this.world.getSeason()",
     "【迭代140新增】Flaky概率测试：5%概率100次循环失败概率0.95^100≈0.6%偶尔失败，改为500次（0.95^500≈7e-12）消除flakiness",
-    "【迭代140新增】WorldMossGrowthSystem的patch升级阶梯：stage=='spore'时moisture>60升级为thin，thin时moisture>70升级thick，thick时moisture>80升级lush——mock time固定后的边界测试需精确"
+    "【迭代141新增】WorldMudslideSystem预填充泥石流：默认startTick=0,duration=800在tick=1400时progress=175>100被cleanup删除——需用startTick=1000,duration=800确保progress=50<100保留",
+    "【迭代141新增】WorldNorthernLightsSystem spawn后evolve立即修改age=0的极光intensity为faint——spawn后的intensity断言应改为测试progress在[0.3,0.7]区间时intensity保持不变",
+    "【迭代141新增】WorldOasisSystem的spawn判断是Math.random()>FORM_CHANCE（大于，与其他系统<不同！），需特别注意判断方向",
+    "【迭代141新增】WorldNunatakSystem的spawn后update立即修改字段：weathering+0.002、exposedRock+=(random-0.48)*0.1等，断言需用toBeCloseTo而非toBe"
   ],
-  "last_updated": "2026-03-03T01:50:00+08:00"
+  "last_updated": "2026-03-03T10:15:00+08:00"
 }
