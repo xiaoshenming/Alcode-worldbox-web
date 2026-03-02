@@ -43,7 +43,7 @@ describe('1. 模块导入与构造', () => {
   it('可以无参数构造实例', () => {
     const sys = new PerformanceMonitorSystem()
     expect(sys).toBeInstanceOf(PerformanceMonitorSystem)
-    sys.destroy?.()
+    ;(sys as any).destroy?.()
   })
 
   it('构造时向 window 注册 keydown 事件监听', () => {
@@ -51,15 +51,15 @@ describe('1. 模块导入与构造', () => {
     const sys = new PerformanceMonitorSystem()
     const calls = spy.mock.calls.filter(c => c[0] === 'keydown')
     expect(calls.length).toBeGreaterThanOrEqual(1)
-    sys.destroy?.()
+    ;(sys as any).destroy?.()
   })
 
   it('多次构造不会抛出异常', () => {
     expect(() => {
       const a = new PerformanceMonitorSystem()
       const b = new PerformanceMonitorSystem()
-      a.destroy?.()
-      b.destroy?.()
+      ;(a as any).destroy?.()
+      ;(b as any).destroy?.()
     }).not.toThrow()
   })
 })
@@ -69,7 +69,7 @@ describe('2. 初始状态', () => {
   let sys: PerformanceMonitorSystem
 
   beforeEach(() => { sys = new PerformanceMonitorSystem() })
-  afterEach(() => { sys.destroy?.(); vi.restoreAllMocks() })
+  afterEach(() => { (sys as any).destroy?.(); vi.restoreAllMocks() })
 
   it('初始 visible 为 false', () => {
     expect((sys as any).visible).toBe(false)
@@ -138,7 +138,7 @@ describe('3. toggle() 方法', () => {
   let sys: PerformanceMonitorSystem
 
   beforeEach(() => { sys = new PerformanceMonitorSystem() })
-  afterEach(() => { sys.destroy?.(); vi.restoreAllMocks() })
+  afterEach(() => { (sys as any).destroy?.(); vi.restoreAllMocks() })
 
   it('toggle() 将 visible 从 false 变为 true', () => {
     sys.toggle()
@@ -189,7 +189,7 @@ describe('4. update() 基础行为', () => {
   let sys: PerformanceMonitorSystem
 
   beforeEach(() => { sys = new PerformanceMonitorSystem() })
-  afterEach(() => { sys.destroy?.(); vi.restoreAllMocks() })
+  afterEach(() => { (sys as any).destroy?.(); vi.restoreAllMocks() })
 
   it('update() 正常调用不抛出异常', () => {
     expect(() => sys.update(0.016, 100, 1, 1)).not.toThrow()
@@ -255,7 +255,7 @@ describe('5. FPS 计算逻辑', () => {
   let sys: PerformanceMonitorSystem
 
   beforeEach(() => { sys = new PerformanceMonitorSystem() })
-  afterEach(() => { sys.destroy?.(); vi.restoreAllMocks() })
+  afterEach(() => { (sys as any).destroy?.(); vi.restoreAllMocks() })
 
   it('累积 dt < 0.5 时 fps 不更新（保持 0）', () => {
     sys.update(0.1, 0, 0, 1)
@@ -339,7 +339,7 @@ describe('6. 常量验证（通过私有字段推断）', () => {
   let sys: PerformanceMonitorSystem
 
   beforeEach(() => { sys = new PerformanceMonitorSystem() })
-  afterEach(() => { sys.destroy?.(); vi.restoreAllMocks() })
+  afterEach(() => { (sys as any).destroy?.(); vi.restoreAllMocks() })
 
   it('HISTORY_SIZE=120：fpsHistory.length 为 120', () => {
     expect((sys as any).fpsHistory.length).toBe(120)
@@ -410,7 +410,7 @@ describe('7. render() 行为', () => {
   let sys: PerformanceMonitorSystem
 
   beforeEach(() => { sys = new PerformanceMonitorSystem() })
-  afterEach(() => { sys.destroy?.(); vi.restoreAllMocks() })
+  afterEach(() => { (sys as any).destroy?.(); vi.restoreAllMocks() })
 
   it('visible=false 时 render() 不调用任何 ctx 方法', () => {
     const ctx = makeCtx()
@@ -651,18 +651,18 @@ describe('8. destroy() 清理', () => {
   it('destroy() 方法存在（如实现了的话）', () => {
     const sys = new PerformanceMonitorSystem()
     // destroy 是可选方法，若存在则调用
-    if (typeof sys.destroy === 'function') {
-      expect(() => sys.destroy!()).not.toThrow()
+    if (typeof (sys as any).destroy === 'function') {
+      expect(() => (sys as any).destroy!()).not.toThrow()
     } else {
       // 没有 destroy 也是合理设计
-      expect(sys.destroy).toBeUndefined()
+      expect((sys as any).destroy).toBeUndefined()
     }
   })
 
   it('destroy() 移除 keydown 事件监听（F3 不再触发 toggle）', () => {
     const sys = new PerformanceMonitorSystem()
-    if (typeof sys.destroy === 'function') {
-      sys.destroy()
+    if (typeof (sys as any).destroy === 'function') {
+      ;(sys as any).destroy()
       window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F3', bubbles: true }))
       expect((sys as any).visible).toBe(false)
     } else {
@@ -674,16 +674,16 @@ describe('8. destroy() 清理', () => {
 
   it('destroy() 后再次调用 destroy() 不抛出', () => {
     const sys = new PerformanceMonitorSystem()
-    if (typeof sys.destroy === 'function') {
-      sys.destroy()
-      expect(() => sys.destroy!()).not.toThrow()
+    if (typeof (sys as any).destroy === 'function') {
+      ;(sys as any).destroy()
+      expect(() => (sys as any).destroy!()).not.toThrow()
     }
   })
 
   it('boundKeyHandler 字段存在（用于事件清理）', () => {
     const sys = new PerformanceMonitorSystem()
     expect(typeof (sys as any).boundKeyHandler).toBe('function')
-    sys.destroy?.()
+    ;(sys as any).destroy?.()
   })
 
   it('手动 removeEventListener 使 F3 不再触发', () => {

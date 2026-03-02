@@ -550,7 +550,7 @@ describe('ArmySystem.updateSiege (private)', () => {
       buildingType: BuildingType.HOUSE,
       health: 1,
       maxHealth: 100,
-    })
+    } as any)
 
     const civManager = makeCivManager([{ id: 2, name: 'Defender', buildings: [bId] }])
     const particles = makeParticles()
@@ -575,7 +575,7 @@ describe('ArmySystem.updateSiege (private)', () => {
       buildingType: BuildingType.WALL,
       health: 1000,
       maxHealth: 1000,
-    })
+    } as any)
 
     const civManager = makeCivManager([{ id: 2, name: 'Defender', buildings: [bId] }])
     const particles = makeParticles()
@@ -619,7 +619,7 @@ describe('ArmySystem.recruitSoldiers (private)', () => {
     em.addComponent<BuildingComponent>(bId, {
       type: 'building', buildingType: BuildingType.BARRACKS,
       health: 100, maxHealth: 100,
-    })
+    } as any)
 
     // 10 个 worker
     const workers: number[] = []
@@ -649,7 +649,7 @@ describe('ArmySystem.recruitSoldiers (private)', () => {
     em.addComponent<BuildingComponent>(bId, {
       type: 'building', buildingType: BuildingType.BARRACKS,
       health: 100, maxHealth: 100,
-    })
+    } as any)
 
     const w = em.createEntity()
     em.addComponent<CivMemberComponent>(w, { type: 'civMember', civId: 1, role: 'worker' })

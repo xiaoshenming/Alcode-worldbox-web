@@ -37,7 +37,7 @@ function makeEntityManager() {
     getEntitiesWithComponents: vi.fn(() => Array.from(entities.keys())),
     getComponent: vi.fn((eid: EntityId, type: string) => entities.get(eid)?.[type]),
     addEntity: (eid: EntityId, comps: any) => entities.set(eid, comps)
-  } as any as EntityManager
+  } as any
 }
 
 describe('WorldCometSystem - 初始状态', () => {
@@ -55,7 +55,7 @@ describe('WorldCometSystem - 初始状态', () => {
 describe('WorldCometSystem - 节流机制', () => {
   let sys: WorldCometSystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
   afterEach(() => { vi.restoreAllMocks() })
 
@@ -105,7 +105,7 @@ describe('WorldCometSystem - 节流机制', () => {
 describe('WorldCometSystem - spawn条件', () => {
   let sys: WorldCometSystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
   afterEach(() => { vi.restoreAllMocks() })
 
@@ -157,7 +157,7 @@ describe('WorldCometSystem - spawn条件', () => {
 describe('WorldCometSystem - spawn后字段值', () => {
   let sys: WorldCometSystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
   afterEach(() => { vi.restoreAllMocks() })
 
@@ -245,7 +245,7 @@ describe('WorldCometSystem - spawn后字段值', () => {
 describe('WorldCometSystem - update字段变更', () => {
   let sys: WorldCometSystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
 
   it('progress>0.7时brightness减少', () => {
@@ -346,7 +346,7 @@ describe('WorldCometSystem - update字段变更', () => {
 describe('WorldCometSystem - cleanup逻辑', () => {
   let sys: WorldCometSystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
   afterEach(() => { vi.restoreAllMocks() })
 
@@ -390,7 +390,7 @@ describe('WorldCometSystem - cleanup逻辑', () => {
 describe('WorldCometSystem - MAX上限', () => {
   let sys: WorldCometSystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
   afterEach(() => { vi.restoreAllMocks() })
 
@@ -429,7 +429,7 @@ describe('WorldCometSystem - MAX上限', () => {
 describe('WorldCometSystem - 边界验证', () => {
   let sys: WorldCometSystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
 
   it('支持5种CometEffect', () => {

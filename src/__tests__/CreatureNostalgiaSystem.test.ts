@@ -450,7 +450,7 @@ describe('CreatureNostalgiaSystem - mood 应用到 creature', () => {
     em.addComponent(1, { type: 'position', x: 1, y: 1 })
     em.addComponent(1, { type: 'creature', speed: 1, isHostile: false, age: 10, maxAge: 100, mood: 0 })
     ;(sys as any).updateNostalgia(em, 5000)
-    const creature = em.getComponent<{ mood: number }>(1, 'creature')
+    const creature = em.getComponent<{ type: 'creature'; mood: number }>(1, 'creature')
     expect(creature?.mood).toBeGreaterThanOrEqual(0)
   })
 
@@ -462,7 +462,7 @@ describe('CreatureNostalgiaSystem - mood 应用到 creature', () => {
     em.addComponent(1, { type: 'position', x: 1, y: 1 })
     em.addComponent(1, { type: 'creature', speed: 1, isHostile: false, age: 10, maxAge: 100, mood: 100 })
     ;(sys as any).updateNostalgia(em, 5000)
-    const creature = em.getComponent<{ mood: number }>(1, 'creature')
+    const creature = em.getComponent<{ type: 'creature'; mood: number }>(1, 'creature')
     expect(creature?.mood).toBeLessThanOrEqual(100)
   })
 

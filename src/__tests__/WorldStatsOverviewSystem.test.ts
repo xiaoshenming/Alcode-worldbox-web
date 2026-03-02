@@ -14,7 +14,7 @@ function makeEM(creatures: Array<{ species: string }> = []) {
       if (idx === -1) return null
       return { type: 'creature', species: creatures[idx].species }
     }),
-  }
+  } as any
 }
 
 /** 构造最小 CivManager stub */

@@ -337,7 +337,7 @@ describe('DiplomacySystem events 数组操作', () => {
 })
 
 describe('DiplomacySystem getCivName 私有方法', () => {
-  let ds: DiplomacySystem
+  let ds: DiplomacySystem | undefined
 
   afterEach(() => vi.restoreAllMocks())
 

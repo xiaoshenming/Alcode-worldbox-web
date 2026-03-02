@@ -31,7 +31,7 @@ function makeCiv(id: number, overrides: any = {}) {
   }
 }
 
-function makeCivManager(civs: any[] = {}) {
+function makeCivManager(civs: any[] = []) {
   const map = new Map<number, any>()
   for (const civ of Object.values(civs)) map.set((civ as any).id, civ)
   return { civilizations: map }

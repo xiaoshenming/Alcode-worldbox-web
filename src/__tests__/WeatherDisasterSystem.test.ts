@@ -26,7 +26,7 @@ function makeWorld(tileMap: Map<string, TileType> = new Map()) {
     tick: 0,
     width: WORLD_WIDTH,
     height: WORLD_HEIGHT,
-  }
+  } as any
 }
 
 function makeCtx() {

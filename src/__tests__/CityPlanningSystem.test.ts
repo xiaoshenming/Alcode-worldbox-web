@@ -282,7 +282,7 @@ describe('CityPlanningSystem', () => {
         return id
       })
       civM.buildings = fakeBuildingIds
-      addBuilding(em2, civM, BuildingType.MINE, 1, 100, 100, 99, 99)
+      addBuilding(em2, civM, BuildingType.MINE, 1, 100, 100)
 
       sys.update(makeCivManager([civV]), em1, makeWorld(), makeParticles(), 60)
       const stoneV = civV.resources.stone

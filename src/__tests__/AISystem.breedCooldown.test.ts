@@ -36,7 +36,7 @@ function addCreatureEntity(
     hunger: number
     age?: number
     maxAge?: number
-    gender?: string
+    gender?: 'male' | 'female'
     species?: string
     isHostile?: boolean
     speed?: number

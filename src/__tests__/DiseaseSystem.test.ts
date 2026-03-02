@@ -47,7 +47,7 @@ function makeParticles() {
 }
 
 function makeCivManager() {
-  return new CivManager() as any
+  return new (CivManager as any)() as any
 }
 
 /** 创建一个具有 position/creature/needs 组件的实体 */

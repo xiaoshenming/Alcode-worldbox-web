@@ -25,7 +25,7 @@ function injectMarker(sys: MapMarkerSystem, slot: number, m: MarkerData) {
 
 describe('MapMarkerSystem — 初始化', () => {
   beforeEach(() => {
-    localStorageMock.getItem.mockReturnValue(null)
+    localStorageMock.getItem.mockReturnValue(null as any)
     localStorageMock.clear()
     _gId = 1
   })
@@ -59,7 +59,7 @@ describe('MapMarkerSystem — 初始化', () => {
 
 describe('MapMarkerSystem — getMarkers()', () => {
   beforeEach(() => {
-    localStorageMock.getItem.mockReturnValue(null)
+    localStorageMock.getItem.mockReturnValue(null as any)
     _gId = 1
   })
   afterEach(() => { vi.restoreAllMocks() })
@@ -121,7 +121,7 @@ describe('MapMarkerSystem — getMarkers()', () => {
 
 describe('MapMarkerSystem — update()', () => {
   beforeEach(() => {
-    localStorageMock.getItem.mockReturnValue(null)
+    localStorageMock.getItem.mockReturnValue(null as any)
     _gId = 1
   })
   afterEach(() => { vi.restoreAllMocks() })
@@ -198,7 +198,7 @@ describe('MapMarkerSystem — save() 和 load()', () => {
   })
 
   it('load null 数据不崩溃', () => {
-    localStorageMock.getItem.mockReturnValue(null)
+    localStorageMock.getItem.mockReturnValue(null as any)
     expect(() => makeSys()).not.toThrow()
   })
 
@@ -251,7 +251,7 @@ describe('MapMarkerSystem — save() 和 load()', () => {
 
 describe('MapMarkerSystem — render()', () => {
   beforeEach(() => {
-    localStorageMock.getItem.mockReturnValue(null)
+    localStorageMock.getItem.mockReturnValue(null as any)
     _gId = 1
   })
   afterEach(() => { vi.restoreAllMocks() })
@@ -337,7 +337,7 @@ describe('MapMarkerSystem — render()', () => {
 
 describe('MapMarkerSystem — 标记类型覆盖', () => {
   beforeEach(() => {
-    localStorageMock.getItem.mockReturnValue(null)
+    localStorageMock.getItem.mockReturnValue(null as any)
     _gId = 1
   })
   afterEach(() => { vi.restoreAllMocks() })
@@ -371,7 +371,7 @@ describe('MapMarkerSystem — 标记类型覆盖', () => {
 
 describe('MapMarkerSystem — 边界与额外覆盖', () => {
   beforeEach(() => {
-    localStorageMock.getItem.mockReturnValue(null)
+    localStorageMock.getItem.mockReturnValue(null as any)
     _gId = 1
   })
   afterEach(() => { vi.restoreAllMocks() })

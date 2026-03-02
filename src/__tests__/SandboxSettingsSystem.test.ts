@@ -19,7 +19,7 @@ Object.defineProperty(globalThis, 'localStorage', {
 
 function makeSys() {
   localStorageMock.clear()
-  localStorageMock.getItem.mockReturnValue(null)
+  localStorageMock.getItem.mockReturnValue(null as any)
   return new SandboxSettingsSystem()
 }
 
@@ -302,7 +302,7 @@ describe('endDrag()', () => {
 describe('localStorage 持久化', () => {
   beforeEach(() => {
     localStorageMock.clear()
-    localStorageMock.getItem.mockReturnValue(null)
+    localStorageMock.getItem.mockReturnValue(null as any)
   })
 
   it('构造时调用localStorage.getItem', () => {
@@ -334,7 +334,7 @@ describe('localStorage 持久化', () => {
   })
 
   it('localStorage返回null时保持默认值', () => {
-    localStorageMock.getItem.mockReturnValue(null)
+    localStorageMock.getItem.mockReturnValue(null as any)
     const sys = new SandboxSettingsSystem()
     expect(sys.get('reproductionRate')).toBe(1)
   })

@@ -25,7 +25,7 @@ function makeEntityManager() {
     getEntitiesWithComponents: vi.fn(() => Array.from(entities.keys())),
     getComponent: vi.fn((eid: EntityId, type: string) => entities.get(eid)?.[type]),
     addEntity: (eid: EntityId, comps: any) => entities.set(eid, comps)
-  } as any as EntityManager
+  } as any
 }
 
 describe('WorldAnomalySystem - 初始状态', () => {
@@ -43,7 +43,7 @@ describe('WorldAnomalySystem - 初始状态', () => {
 describe('WorldAnomalySystem - 节流机制', () => {
   let sys: WorldAnomalySystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
 
   it('tick<nextSpawnTick时不spawn', () => {
@@ -93,7 +93,7 @@ describe('WorldAnomalySystem - 节流机制', () => {
 describe('WorldAnomalySystem - spawn条件', () => {
   let sys: WorldAnomalySystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
   afterEach(() => { vi.restoreAllMocks() })
 
@@ -151,7 +151,7 @@ describe('WorldAnomalySystem - spawn条件', () => {
 describe('WorldAnomalySystem - spawn后字段值', () => {
   let sys: WorldAnomalySystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
   afterEach(() => { vi.restoreAllMocks() })
 
@@ -235,7 +235,7 @@ describe('WorldAnomalySystem - spawn后字段值', () => {
 describe('WorldAnomalySystem - update字段变更', () => {
   let sys: WorldAnomalySystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
 
   it('每次update减少duration', () => {
@@ -322,7 +322,7 @@ describe('WorldAnomalySystem - update字段变更', () => {
 describe('WorldAnomalySystem - cleanup逻辑', () => {
   let sys: WorldAnomalySystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
 
   it('duration耗尽后移除', () => {
@@ -353,7 +353,7 @@ describe('WorldAnomalySystem - cleanup逻辑', () => {
 describe('WorldAnomalySystem - MAX上限', () => {
   let sys: WorldAnomalySystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
   afterEach(() => { vi.restoreAllMocks() })
 
@@ -382,7 +382,7 @@ describe('WorldAnomalySystem - MAX上限', () => {
 describe('WorldAnomalySystem - 边界验证', () => {
   let sys: WorldAnomalySystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
 
   it('支持5种AnomalyType', () => {

@@ -265,7 +265,7 @@ describe('CreaturePhobiaSystem – developPhobias via update()', () => {
     const developSpy = vi.spyOn(sys as any, 'developPhobias').mockImplementation(function (this: any, _em: EntityManager, tick: number) {
       this.phobias.push({ id: this.nextId++, entityId: 99, fear: 'fire', severity: 5, tick })
       this._phobiaKeySet.add('99_fire')
-    })
+    } as any)
     sys.update(1, em, 0)
     sys.update(1, em, 900)
     expect(developSpy).toHaveBeenCalled()

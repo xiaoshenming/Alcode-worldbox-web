@@ -304,7 +304,7 @@ describe('CreatureHomesicknessSystem.update — 返家行为', () => {
     // eid 已在 _entityIds，develop 段跳过，第 1 次 random = 返家判断
     vi.spyOn(Math, 'random').mockReturnValue(0.01) // 触发返家
     sys.update(1, em, 1001)
-    const pos = em.getComponent<{ x: number; y: number }>(eid, 'position')!
+    const pos = em.getComponent<{ type: 'position'; x: number; y: number }>(eid, 'position')!
     expect(pos.x).toBeLessThan(100) // 向 home(x=0) 靠近
   })
 })

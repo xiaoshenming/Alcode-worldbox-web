@@ -24,7 +24,7 @@ function makeCiv(id: number, techLevel: number = 1, overrides: Record<string, un
     happiness: 70,
     taxRate: 1,
     revoltTimer: 0,
-    research: { currentTech: null, progress: 0, completed: [], researchRate: 1.0 },
+    research: { currentTech: null as string | null, progress: 0, completed: [], researchRate: 1.0 },
     treaties: [],
     embassies: [],
     diplomaticStance: 'neutral' as const,

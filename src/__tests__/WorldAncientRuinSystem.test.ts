@@ -25,7 +25,7 @@ function makeEntityManager() {
     getEntitiesWithComponents: vi.fn(() => Array.from(entities.keys())),
     getComponent: vi.fn((eid: EntityId, type: string) => entities.get(eid)?.[type]),
     addEntity: (eid: EntityId, comps: any) => entities.set(eid, comps)
-  } as any as EntityManager
+  } as any
 }
 
 describe('WorldAncientRuinSystem - 初始状态', () => {
@@ -46,7 +46,7 @@ describe('WorldAncientRuinSystem - 初始状态', () => {
 describe('WorldAncientRuinSystem - 节流机制', () => {
   let sys: WorldAncientRuinSystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
 
   it('tick<nextSpawnTick时不spawn', () => {
@@ -98,7 +98,7 @@ describe('WorldAncientRuinSystem - 节流机制', () => {
 describe('WorldAncientRuinSystem - spawn条件', () => {
   let sys: WorldAncientRuinSystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
   afterEach(() => { vi.restoreAllMocks() })
 
@@ -154,7 +154,7 @@ describe('WorldAncientRuinSystem - spawn条件', () => {
 describe('WorldAncientRuinSystem - spawn后字段值', () => {
   let sys: WorldAncientRuinSystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
   afterEach(() => { vi.restoreAllMocks() })
 
@@ -268,7 +268,7 @@ describe('WorldAncientRuinSystem - spawn后字段值', () => {
 describe('WorldAncientRuinSystem - update字段变更', () => {
   let sys: WorldAncientRuinSystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
 
   it('探索后explored=true', () => {
@@ -369,7 +369,7 @@ describe('WorldAncientRuinSystem - cleanup逻辑', () => {
 describe('WorldAncientRuinSystem - MAX上限', () => {
   let sys: WorldAncientRuinSystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
   afterEach(() => { vi.restoreAllMocks() })
 
@@ -398,7 +398,7 @@ describe('WorldAncientRuinSystem - MAX上限', () => {
 describe('WorldAncientRuinSystem - 边界验证', () => {
   let sys: WorldAncientRuinSystem
   let world: any
-  let em: EntityManager
+  let em: any
   beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
 
   it('EXPLORE_RANGE=4时距离4内可探索', () => {
