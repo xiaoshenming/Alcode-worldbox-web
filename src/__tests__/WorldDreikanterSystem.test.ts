@@ -1,31 +1,222 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { WorldDreikanterSystem } from '../systems/WorldDreikanterSystem'
 import type { Dreikanter } from '../systems/WorldDreikanterSystem'
 
+const CHECK_INTERVAL = 2550
+const MAX_DREIKANTERS = 16
+
 function makeSys(): WorldDreikanterSystem { return new WorldDreikanterSystem() }
-let nextId = 1
-function makeDreikanter(): Dreikanter {
-  return { id: nextId++, x: 20, y: 30, faces: 3, polish: 80, windIntensity: 70, stoneSize: 5, desertAge: 5000, spectacle: 60, tick: 0 }
+
+let _nextId = 1
+function makeDreikanter(overrides: Partial<Dreikanter> = {}): Dreikanter {
+  return {
+    id: _nextId++,
+    x: 50, y: 60,
+    faces: 3,
+    polish: 20,
+    windIntensity: 40,
+    stoneSize: 15,
+    desertAge: 300,
+    spectacle: 18,
+    tick: 0,
+    ...overrides,
+  }
 }
 
-describe('WorldDreikanterSystem.getDreikanters', () => {
-  let sys: WorldDreikanterSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
+const worldSand     = { width: 200, height: 200, getTile: () => 2 } as any
+const worldMountain = { width: 200, height: 200, getTile: () => 5 } as any
+const worldGrass    = { width: 200, height: 200, getTile: () => 3 } as any
+const em = {} as any
 
-  it('初始无三棱石', () => { expect((sys as any).dreikanters).toHaveLength(0) })
-  it('注入后可查询', () => {
+describe('WorldDreikanterSystem', () => {
+  let sys: WorldDreikanterSystem
+
+  beforeEach(() => {
+    sys = makeSys()
+    _nextId = 1
+    vi.restoreAllMocks()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  // --- 1. 基础数据结构 ---
+  it('dreikanters[] 初始为空', () => {
+    expect((sys as any).dreikanters).toHaveLength(0)
+  })
+
+  it('dreikanters 是数组', () => {
+    expect(Array.isArray((sys as any).dreikanters)).toBe(true)
+  })
+
+  it('nextId 初始为 1', () => {
+    expect((sys as any).nextId).toBe(1)
+  })
+
+  it('lastCheck 初始为 0', () => {
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('注入后长度正确', () => {
     ;(sys as any).dreikanters.push(makeDreikanter())
+    ;(sys as any).dreikanters.push(makeDreikanter())
+    ;(sys as any).dreikanters.push(makeDreikanter())
+    expect((sys as any).dreikanters).toHaveLength(3)
+  })
+
+  // --- 2. CHECK_INTERVAL 节流 ---
+  it('tick < CHECK_INTERVAL 时 lastCheck 保持 0', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, worldSand, em, CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('tick === CHECK_INTERVAL 时 lastCheck 更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+
+  it('第二次不满足间隔时 lastCheck 不变', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    sys.update(0, worldSand, em, CHECK_INTERVAL + 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+
+  it('满足间隔后 lastCheck 再次更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    sys.update(0, worldSand, em, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+
+  // --- 3. spawn 逻辑 ---
+  it('SAND tile 时可 spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
     expect((sys as any).dreikanters).toHaveLength(1)
   })
-  it('返回内部引用', () => {
-    expect((sys as any).dreikanters).toBe((sys as any).dreikanters)
+
+  it('MOUNTAIN tile 时可 spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, worldMountain, em, CHECK_INTERVAL)
+    expect((sys as any).dreikanters).toHaveLength(1)
   })
-  it('三棱石字段正确', () => {
-    ;(sys as any).dreikanters.push(makeDreikanter())
-    const d = (sys as any).dreikanters[0]
-    expect(d.faces).toBe(3)
-    expect(d.polish).toBe(80)
-    expect(d.windIntensity).toBe(70)
+
+  it('GRASS tile（不符合条件）时不 spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, worldGrass, em, CHECK_INTERVAL)
+    expect((sys as any).dreikanters).toHaveLength(0)
   })
-  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+
+  it('达到 MAX_DREIKANTERS 时不再 spawn', () => {
+    for (let i = 0; i < MAX_DREIKANTERS; i++) {
+      ;(sys as any).dreikanters.push(makeDreikanter())
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    expect((sys as any).dreikanters).toHaveLength(MAX_DREIKANTERS)
+  })
+
+  it('spawn 后 nextId 递增', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    expect((sys as any).nextId).toBe(2)
+  })
+
+  it('spawn 的记录 tick 等于传入的 tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    expect((sys as any).dreikanters[0].tick).toBe(CHECK_INTERVAL)
+  })
+
+  it('spawn 的记录 faces 始终为 3', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    expect((sys as any).dreikanters[0].faces).toBe(3)
+  })
+
+  // --- 4. 字段动态更新 ---
+  it('update 后 polish 不超过上限 75', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    ;(sys as any).dreikanters.push(makeDreikanter({ polish: 74.9999 }))
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    expect((sys as any).dreikanters[0].polish).toBeLessThanOrEqual(75)
+  })
+
+  it('update 后 windIntensity 在 [10, 80] 范围内', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    ;(sys as any).dreikanters.push(makeDreikanter({ windIntensity: 40 }))
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    const v = (sys as any).dreikanters[0].windIntensity
+    expect(v).toBeGreaterThanOrEqual(10)
+    expect(v).toBeLessThanOrEqual(80)
+  })
+
+  it('update 后 desertAge 不超过上限 1000', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    ;(sys as any).dreikanters.push(makeDreikanter({ desertAge: 999.999 }))
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    expect((sys as any).dreikanters[0].desertAge).toBeLessThanOrEqual(1000)
+  })
+
+  it('update 后 spectacle 在 [5, 45] 范围内', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    ;(sys as any).dreikanters.push(makeDreikanter({ spectacle: 25 }))
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    const s = (sys as any).dreikanters[0].spectacle
+    expect(s).toBeGreaterThanOrEqual(5)
+    expect(s).toBeLessThanOrEqual(45)
+  })
+
+  it('polish 每次 update 增加 0.00003', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    ;(sys as any).dreikanters.push(makeDreikanter({ polish: 20 }))
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    expect((sys as any).dreikanters[0].polish).toBeCloseTo(20 + 0.00003, 8)
+  })
+
+  it('desertAge 每次 update 增加 0.001', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    ;(sys as any).dreikanters.push(makeDreikanter({ desertAge: 300 }))
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    expect((sys as any).dreikanters[0].desertAge).toBeCloseTo(300 + 0.001, 6)
+  })
+
+  // --- 5. cleanup ---
+  it('老记录（tick < cutoff）被删除', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).dreikanters.push(makeDreikanter({ tick: 0 }))
+    const tick = 91001 + CHECK_INTERVAL
+    sys.update(0, worldSand, em, tick)
+    expect((sys as any).dreikanters).toHaveLength(0)
+  })
+
+  it('新记录（tick >= cutoff）不被删除', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const tick = CHECK_INTERVAL * 2
+    ;(sys as any).dreikanters.push(makeDreikanter({ tick: tick - 1000 }))
+    sys.update(0, worldSand, em, tick)
+    expect((sys as any).dreikanters).toHaveLength(1)
+  })
+
+  it('混合新旧只删旧的', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const tick = 91001 + CHECK_INTERVAL
+    ;(sys as any).dreikanters.push(makeDreikanter({ tick: 0 }))
+    ;(sys as any).dreikanters.push(makeDreikanter({ tick: tick - 1000 }))
+    sys.update(0, worldSand, em, tick)
+    expect((sys as any).dreikanters).toHaveLength(1)
+  })
+
+  it('刚好等于 cutoff 边界不删除', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const tick = CHECK_INTERVAL
+    const cutoff = tick - 91000
+    ;(sys as any).dreikanters.push(makeDreikanter({ tick: cutoff }))
+    sys.update(0, worldSand, em, tick)
+    expect((sys as any).dreikanters).toHaveLength(1)
+  })
 })

@@ -1,37 +1,40 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代123（循环25/100）。本轮主要成就：大规模系统性提升测试质量——从5190增至5502，+312个测试。
+🧠 AI 上轮笔记：迭代131（循环36/100）。本轮主要成就：修复1个漏网的Diplomatic flaky（DiplomaticPrefectureSystem），并批量处理27个World系统测试（GGG/HHH/III/JJJ/KKK/LLL/MMM/NNN/OOO九组），测试从12004增至12588，+584个测试。
 
-本轮测试质量改进详情：
-1. CreatureDivinationSystem: 3→11个测试（pruneOld截断、CHECK_INTERVAL节流、6种DivinationType）
-2. CreatureNightWatchSystem: 3→12个测试（pruneOld保留最新、getRecent、processThreats vigilance上限）
-3. CreaturePetSystem: 3→12个测试（updateBonds bond递增clamp100、无creature删除、双间隔节流）
-4. CreatureRivalryDuelSystem: 3→12个测试（endDuel victory/defeat/draw、history截断50、duelingIds清理）
-5. CreatureTradeSkillSystem: 3→15个测试（trainSkills增量clamp、getAverageSkill纯计算、双间隔节流）
-6. CreatureApprenticeSystem: 3→14个测试（getActiveCount只计非graduated、applyGraduation 5种技能效果）
-7. LODRenderSystem: 3→16个测试（4种LOD阈值边界、setThresholds自定义、连续切换）
-8. RenderCullingSystem: 4→17个测试（getLODLevel距离计算、isVisible边界/margin/zoom、getVisibleTileBounds缓存对象）
-9. CreatureAnvilsmithSystem: 5→10个测试（CHECK_INTERVAL节流、技能递增0.02/上限100、cleanup先增后删边界3.98）
-10. CreatureAnnealerSystem: 5→10个测试（同上模式）
-11. CreatureBlacksmithSystem: 5→9个测试（cleanup无creature删除、CHECK_INTERVAL节流）
-12-21. 9个工匠系统（Beekeeper/Beveller/BobbinWinder/AppliqueMakers/AssayerSystem/AwlMakers/BasketWeaver/Bellfounder/Borer）：各5→15-20个测试
-22-30. 9个工匠系统（Assayers/BasketWeavers/BellFounders/BellMakers/BobbinLaceMakers/Bookbinders/BraidMakers/BobbinLace2Makers/BobbinMakers）：各5→16-18个测试
+本轮处理的系统（分9批Agent并行）：
+GGG组(+61): WorldAuroraStormSystem(+20) WorldAuroraSystem(+19) WorldAvalancheSystem(+22)
+HHH组(+74): WorldBadlandsSystem(+25) WorldBalancingRockSystem(+25) WorldBallLightningSystem(+24)
+III组(+54): WorldBariumSpringSystem(+17) WorldBarrierIslandSystem(+18) WorldBasaltColumnSystem(+19)
+JJJ组(+61): WorldCaesiumSpringSystem(+19) WorldCalderaSystem(+19) WorldCanyonSystem(+23)
+KKK组(+60): WorldCenoteSystem(+21) WorldCeriumSpringSystem(+18) WorldChalybeateSpringSystem(+21)
+LLL组(+65): WorldCinderConeSystem(+23) WorldCirqueSystem(+22) WorldCloudForestSystem(+20)
+MMM组(+66): WorldCopperSpringSystem(+17) WorldCoralAtollSystem(+22) WorldCoralBleachingSystem(+27)
+NNN组(+74): WorldCoralNurserySystem(+23) WorldCoralReefGrowthSystem(+22) WorldCoralSpawningSystem(+29)
+OOO组(+69): WorldCorruptionSystem(+24) WorldCouleeSystem(+21) WorldCrystalCaveSystem(+24)
 
 关键发现：
-- 两类主要cleanup模式：(1)技能<=4删除，先递增后cleanup，需用3.98触发；(2)!em.hasComponent删除，用mock em实现
-- 工匠系统有两类结构：(a)纯数组+技能递增+cleanup，(b)skillMap+过期time-based cleanup+公式计算
-- 还有约200个5测试文件可以改进
-- 并行Agent方式极高效：3个Agent同时处理3批共9个文件，每批约2分钟完成
+- TileType枚举：DEEP_WATER=0, SHALLOW_WATER=1, SAND=2, GRASS=3, FOREST=4, MOUNTAIN=5, SNOW=6, LAVA=7
+  注意MOUNTAIN=5（不是4！），FOREST=4（之前提示有错）
+- hasAdjacentTile依赖邻居getTile返回值——用getTile:()=>2(SAND)最安全（SAND不匹配SHALLOW/DEEP/MOUNTAIN）
+- 对于AuroraStorm/Caldera/ChalybeateSpring等无tile检查的系统，spawn只需random<FORM_CHANCE
+- WorldCorruptionSystem是非标准系统：无CHECK_INTERVAL，按tick%30触发spread，按tick%60触发damage
+- WorldCoralNurserySystem cleanup是概率性（random<0.01），测试需mock random=0.001
+- WorldCoralReefGrowthSystem cleanup双条件：health<=10 AND coverage<5
+- WorldCoralSpawningSystem季节totalCycle=145000（dormant60k+preparing30k+spawning15k+dispersing40k）
+- 测试总数从12004→12588，+584
+- tsc+vitest+build三重验证保持全绿（当前12588/12588通过）
 
 下轮优先方向：
-1. 继续用并行Agent批量改进剩余工匠系统（还有~200个5测试文件）
-2. 保持tsc+vitest+build三重验证全绿（当前5502/5502通过）
+1. 继续处理World系统（剩余196个文件，全部5测试待改善）
+2. 使用同样的并行Agent策略（3 Agent × 3文件/批）
+3. tsc+vitest+build三重验证保持全绿
 🎯 AI 自定优先级：[
-  "1. 【持续监控】tsc+vitest+build三重验证保持全绿（当前5502/5502通过）",
-  "2. 【进行中】继续用并行Agent批量改进剩余工匠系统测试（还有~190个5测试文件）",
-  "3. 【重要经验】工匠系统cleanup边界：先递增后cleanup，用3.98而非4.0触发<=4删除",
-  "4. 【重要经验】time-based cleanup用tick-offset确定cutoff，创建测试时注入满足条件的老tick记录",
-  "5. 【新发现】并行3个Agent批处理9个系统，每轮可+150个测试"
+  "1. 【持续目标】继续处理World系统（剩余196个文件，全部只有5测试），用并行Agent批量处理",
+  "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前12588/12588通过）",
+  "3. 【里程碑】已完成27+18=45个World系统测试改善（+584+328=912测试），继续下一批",
+  "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+150-200测试",
+  "5. 【下一批系统】WorldCuestaSystem WorldDashboardSystem WorldDecorationSystem及后续"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
@@ -62,21 +65,25 @@
   "【迭代120新增】项目进入「稳定维护」阶段：systems/game/civilization/entities/ui/utils所有目录的私有方法死代码已全部清除，find()/some()优化已穷举",
   "【迭代121新增】测试路径规范：src/__tests__/目录内的测试文件import路径是'../systems/'（单级上溯），不是'../../systems/'（双级）",
   "【迭代121新增】数据模块（仅含常量/接口/纯函数的文件）是最易测的模块——无需mock、无Canvas、无DOM",
-  "【迭代121新增】Math.random()替换为确定性伪随机虽可提升可测试性，但751个文件受影响——此方向不适合",
   "【迭代122新增】addComponent API需要带type字段的对象：{ type: 'position', x, y }不能缺type字段，否则getEntitiesWithComponents找不到实体",
   "【迭代122新增】performance.now()在短生命周期测试进程中可能<3000ms——需用vi.spyOn(performance, 'now').mockReturnValue(大数)来mock超时测试",
-  "【迭代122新增】ESM模块不能用require()——在测试中用import或直接通过系统内部状态(sys as any).field验证常量，不要用require()",
-  "【迭代122新增】测试质量提升模式：(1)找CHECK_INTERVAL节流验证(2)找pruneXxx截断逻辑(3)找applyXxxEffect纯计算(4)找getWisdom等派生值计算——这4类最易写出有意义的测试",
-  "【迭代122新增】WeatherDisasterSystem(706行)等大文件分析：职责单一（4种灾难的trigger/ongoing/render各有独立私有方法），共享activeDisasters状态——不适合拆分",
-  "【迭代122新增】computeSimilarities等纯算法函数是最高价值的测试目标——直接注入数据验证输出，无需mock任何外部依赖",
   "【迭代123新增】工匠系统cleanup边界规则：先递增后cleanup，cleanup条件<=4，初始值4.0会在+0.02后变4.02>4不删除，需用3.98确保4.00<=4触发删除",
-  "【迭代123新增】工匠系统分两类：(a)纯数组+固定技能递增+技能值cleanup（用3.98边界）；(b)skillMap+time-based过期cleanup（用tick-offset计算cutoff）",
-  "【迭代123新增】getRecent(n)用slice(-n)实现，slice(-0)等于slice(0)返回全部，不要用0测试getRecent",
-  "【迭代123新增】并行Agent策略：3个Agent同时处理9个文件，每轮约2-3分钟完成+150个测试，效率极高",
-  "【迭代123新增】LODRenderSystem测试：zoom>=full=20→'full'，zoom>=medium=10→'medium'，zoom>=low=4→'low'，else→'icon'"
+  "【迭代124新增】并行Agent批处理效率极高：每批9个系统，3个Agent并行，2-3分钟完成+100-180个测试，本轮共处理81个系统，+904个测试",
+  "【迭代125新增】测试含招募逻辑的cleanup时：getEntitiesWithComponent必须返回空数组[]，否则招募新实体会干扰cleanup后数量断言（NomadSystem是典型案例）",
+  "【迭代126新增】Diplomatic系统有3种update签名变体：(a)标准4参数(dt,world,em,tick)；(b)3参数(dt,em,civManager,tick)；(c)含civs数组的特殊签名。必须先读源码确认",
+  "【迭代127新增】random=0导致civA===civB早返回问题：duration/cleanup测试必须用mockReturnValue(1)跳过spawn块",
+  "【迭代129新增】spawn后同次update立刻执行duration+=1——新spawn的arrangement.duration=1不是0，测试时注意边界",
+  "【迭代130新增】Flaky测试根本原因：cleanup/state测试中未mock Math.random，spawn逻辑有小概率触发导致length断言失败或TypeError",
+  "【迭代130新增】Flaky修复策略：在有sys.update()且有确定性toHaveLength(N)断言的测试中，在update前加vi.spyOn(Math,'random').mockReturnValue(0.9)",
+  "【迭代131新增】TileType枚举正确值：DEEP_WATER=0, SHALLOW_WATER=1, SAND=2, GRASS=3, FOREST=4, MOUNTAIN=5, SNOW=6, LAVA=7——MOUNTAIN=5不是4！",
+  "【迭代131新增】hasAdjacentTile安全mock：用getTile:()=>2(SAND)，因为SAND既不匹配SHALLOW_WATER也不匹配DEEP_WATER也不匹配MOUNTAIN，可靠阻断Spring系统spawn",
+  "【迭代131新增】WorldCorruptionSystem是非标准系统：按tick%30触发spread，按tick%60触发damageCreatures，无常规CHECK_INTERVAL——source直接写入corruptionMap",
+  "【迭代131新增】WorldCoralNurserySystem cleanup是概率性（random<0.01），测试需vi.spyOn(Math,'random').mockReturnValue(0.001)",
+  "【迭代131新增】WorldCoralReefGrowthSystem cleanup双条件：health<=10 AND coverage<5，单个条件不触发删除",
+  "【迭代131新增】WorldCoralSpawningSystem季节totalCycle=60000+30000+15000+40000=145000（dispersing+age>145000才cleanup）"
 ]
 
-迭代轮次: 26/100
+迭代轮次: 32/100
 
 
 🔄 自我进化（每轮必做）：
@@ -85,6 +92,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-03-02T13:33:07+08:00"
+  "last_updated": "2026-03-02T22:21:27+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。

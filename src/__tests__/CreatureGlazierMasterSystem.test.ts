@@ -106,7 +106,9 @@ describe('CreatureGlazierMasterSystem', () => {
   // 11. cleanup: glassCutting 明显低于 4 时删除
   it('cleanup: glassCutting=2 时删除', () => {
     ;(sys as any).masters.push(makeMaster(1, { glassCutting: 2 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)  // 阻断spawn(RECRUIT_CHANCE=0.0013)
     triggerUpdate(sys)
+    vi.restoreAllMocks()
     expect((sys as any).masters).toHaveLength(0)
   })
 
