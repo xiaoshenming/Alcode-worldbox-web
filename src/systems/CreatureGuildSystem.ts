@@ -59,6 +59,8 @@ export class CreatureGuildSystem {
   private nextLevelTick = LEVEL_INTERVAL
   private _lastZoom = -1
   private _nameFont = ''
+  // Reverse index: entityId → Guild for O(1) membership lookup
+  private _entityToGuild: Map<number, Guild> = new Map()
 
   private _activeGuildsBuf: Guild[] = []
   private _unguildedBuf: EntityId[] = []
@@ -71,7 +73,7 @@ export class CreatureGuildSystem {
   }
 
   private getGuildForEntity(eid: EntityId): Guild | undefined {
-    return this.guilds.find(g => g.members.includes(eid))
+    return this._entityToGuild.get(eid)
   }
 
   update(dt: number, em: EntityManager, tick: number): void {
@@ -81,6 +83,7 @@ export class CreatureGuildSystem {
       for (let i = guild.members.length - 1; i >= 0; i--) {
         const pos = em.getComponent<PositionComponent>(guild.members[i], 'position')
         if (!pos) {
+          this._entityToGuild.delete(guild.members[i])
           guild.members.splice(i, 1)
           changed = true
         }
@@ -170,6 +173,7 @@ export class CreatureGuildSystem {
         panelLabel: `${name} Lv1 [${members.length}]`,
       }
       this.guilds.push(guild)
+      for (const mid of members) this._entityToGuild.set(mid, guild)
       EventLog.log('culture', `Guild "${name}" (${guildType}) founded with ${members.length} members`, 0)
       return
     }
@@ -189,6 +193,7 @@ export class CreatureGuildSystem {
         const dy = pos.y - guild.hallY
         if (dx * dx + dy * dy < GUILD_RANGE * GUILD_RANGE) {
           guild.members.push(eid)
+          this._entityToGuild.set(eid, guild)
         }
       }
       if (guild.members.length !== initialCount) {
