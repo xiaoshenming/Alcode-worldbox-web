@@ -93,6 +93,11 @@ export class CreatureAmbidextritySystem {
   }
 
   getByEntity(entityId: number): AmbidextrityProfile | undefined {
-    return this._entityIds.get(entityId)
+    const cached = this._entityIds.get(entityId)
+    if (cached) return cached
+    // Fallback scan (e.g. if profile was added externally via getProfiles().push)
+    const found = this.profiles.find(p => p.entityId === entityId)
+    if (found) this._entityIds.set(entityId, found)
+    return found
   }
 }

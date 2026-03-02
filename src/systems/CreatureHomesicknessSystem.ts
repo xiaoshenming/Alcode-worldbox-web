@@ -97,6 +97,11 @@ export class CreatureHomesicknessSystem {
   }
 
   getByEntity(entityId: number): HomesicknessState | undefined {
-    return this._entityIds.get(entityId)
+    const cached = this._entityIds.get(entityId)
+    if (cached) return cached
+    // Fallback scan (e.g. if state was added externally via getStates().push)
+    const found = this.states.find(s => s.entityId === entityId)
+    if (found) this._entityIds.set(entityId, found)
+    return found
   }
 }
