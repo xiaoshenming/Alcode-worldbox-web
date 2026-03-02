@@ -232,17 +232,6 @@ export class MiniGameSystem {
     };
   }
 
-  /** 绘制圆角矩形路径 */
-
-  /** 自动换行绘制文字 */
-  private wrapText(
-    ctx: CanvasRenderingContext2D,
-    text: string, cx: number, startY: number, maxW: number, lineH: number
-  ): void {
-    const lines = this.computeWrappedLines(ctx, text, maxW);
-    for (let i = 0; i < lines.length; i++) ctx.fillText(lines[i], cx, startY + i * lineH);
-  }
-
   /** Compute character-wrapped lines for text within maxW pixels */
   private computeWrappedLines(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
     const chars = text.split('');
