@@ -65,6 +65,7 @@ interface CivLike {
 
 export class DiplomaticEspionageSystem {
   private spies: Spy[] = []
+  private _spiesSet = new Set<number>()
   private reports: EspionageReport[] = []
   private nextCheckTick = CHECK_INTERVAL
   private nextMissionTick = MISSION_INTERVAL
@@ -87,6 +88,7 @@ export class DiplomaticEspionageSystem {
       const spy = this.spies[i]
       const pos = em.getComponent<PositionComponent>(spy.entityId, 'position')
       if (!pos) {
+        this._spiesSet.delete(spy.entityId)
         this.spies.splice(i, 1)
       }
     }
@@ -129,6 +131,7 @@ export class DiplomaticEspionageSystem {
     for (let i = this.spies.length - 1; i >= 0; i--) {
       const s = this.spies[i]
       if (s.discovered && tick - s.startTick > 5000) {
+        this._spiesSet.delete(s.entityId)
         this.spies.splice(i, 1)
       }
     }
@@ -151,7 +154,7 @@ export class DiplomaticEspionageSystem {
     const entities = em.getEntitiesWithComponents('position', 'creature')
     let spyEntity: EntityId | null = null
     for (const eid of entities) {
-      const alreadySpy = this.spies.some(s => s.entityId === eid)
+      const alreadySpy = this._spiesSet.has(eid)
       if (alreadySpy) continue
       spyEntity = eid
       break
@@ -180,6 +183,7 @@ export class DiplomaticEspionageSystem {
     }
     spy.statusStr = `${spy.mission} 0% cov:${spy.cover}`
     this.spies.push(spy)
+    this._spiesSet.add(spy.entityId)
     EventLog.log('diplomacy', `Civ#${originCiv.id} deployed spy to civ#${target.id} (${mission})`, 0)
   }
 
