@@ -20,6 +20,8 @@ const WANDER_SPEED = 0.3
 export class CreatureSleepwalkSystem {
   private sleepwalkers: Sleepwalker[] = []
   private _sleepSet = new Set<number>()
+  /** O(1) lookup: entityId → Sleepwalker — kept in sync with sleepwalkers array */
+  private _sleepMap = new Map<number, Sleepwalker>()
   private nextId = 1
   private lastCheck = 0
 
@@ -42,15 +44,17 @@ export class CreatureSleepwalkSystem {
       if (this._sleepSet.has(eid)) continue
       if (this.sleepwalkers.length >= MAX_SLEEPWALKERS) break
 
-      this.sleepwalkers.push({
+      const sw: Sleepwalker = {
         id: this.nextId++,
         entityId: eid,
         startTick: tick,
         distance: 0,
         direction: Math.random() * Math.PI * 2,
         duration: 300 + Math.floor(Math.random() * 500),
-      })
+      }
+      this.sleepwalkers.push(sw)
       this._sleepSet.add(eid)
+      this._sleepMap.set(eid, sw)
     }
   }
 
@@ -72,18 +76,18 @@ export class CreatureSleepwalkSystem {
       const sw = this.sleepwalkers[_i]
       if (!(tick - sw.startTick < sw.duration)) {
         this._sleepSet.delete(sw.entityId)
+        this._sleepMap.delete(sw.entityId)
         this.sleepwalkers.splice(_i, 1)
       }
     }
   }
 
   getSleepwalker(entityId: number): Sleepwalker | undefined {
-    if (!this._sleepSet.has(entityId)) {
-      // Fallback scan in case sleepwalkers was pushed externally (e.g. tests)
-      const found = this.sleepwalkers.find(sw => sw.entityId === entityId)
-      if (found) this._sleepSet.add(entityId)
-      return found
-    }
-    return this.sleepwalkers.find(sw => sw.entityId === entityId)
+    const cached = this._sleepMap.get(entityId)
+    if (cached !== undefined) return cached
+    // Fallback scan in case sleepwalkers was pushed externally (e.g. tests)
+    const found = this.sleepwalkers.find(sw => sw.entityId === entityId)
+    if (found) { this._sleepSet.add(entityId); this._sleepMap.set(entityId, found) }
+    return found
   }
 }
