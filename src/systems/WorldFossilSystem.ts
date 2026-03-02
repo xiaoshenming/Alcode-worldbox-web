@@ -51,6 +51,7 @@ function pickRarityWeighted(): FossilRarity {
 
 export class WorldFossilSystem {
   private fossils: Fossil[] = []
+  private _fossilKeySet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
   /** Accumulated knowledge from discovered fossils */
@@ -77,7 +78,7 @@ export class WorldFossilSystem {
 
       if (tile === null || !VALID_TERRAIN.has(tile)) continue
       if (Math.random() > SPAWN_CHANCE) continue
-      if (this.fossils.some(f => f.x === x && f.y === y)) continue
+      if (this._fossilKeySet.has(x * 10000 + y)) continue
 
       this.fossils.push({
         id: this.nextId++,
@@ -88,6 +89,7 @@ export class WorldFossilSystem {
         discovered: false,
         discoveredTick: 0,
       })
+      this._fossilKeySet.add(x * 10000 + y)
     }
   }
 

@@ -27,6 +27,7 @@ const ERUPTION_CHANCE = 0.008
 
 export class WorldGeothermalVentSystem {
   private vents: GeothermalVent[] = []
+  private _ventKeySet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -44,7 +45,7 @@ export class WorldGeothermalVentSystem {
       const tile = world.getTile(x, y)
 
       if (tile === TileType.DEEP_WATER) {
-        if (!this.vents.some(v => v.x === x && v.y === y)) {
+        if (!this._ventKeySet.has(x * 10000 + y)) {
           this.vents.push({
             id: this.nextId++,
             x,
@@ -56,6 +57,7 @@ export class WorldGeothermalVentSystem {
             eruptionCooldown: 0,
             tick,
           })
+          this._ventKeySet.add(x * 10000 + y)
         }
       }
     }
@@ -96,7 +98,10 @@ export class WorldGeothermalVentSystem {
     // Remove depleted vents
     for (let _i = this.vents.length - 1; _i >= 0; _i--) {
       const e = this.vents[_i]
-      if (e.heatOutput <= 2) this.vents.splice(_i, 1)
+      if (e.heatOutput <= 2) {
+        this._ventKeySet.delete(e.x * 10000 + e.y)
+        this.vents.splice(_i, 1)
+      }
     }
   }
 

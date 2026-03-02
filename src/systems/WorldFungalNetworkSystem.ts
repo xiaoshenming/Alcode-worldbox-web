@@ -31,6 +31,7 @@ const FLOW_RATE: Record<MyceliumType, number> = {
 
 export class WorldFungalNetworkSystem {
   private networks: FungalNetwork[] = []
+  private _networkKeySet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -48,7 +49,7 @@ export class WorldFungalNetworkSystem {
       const tile = world.getTile(x, y)
 
       if (tile === TileType.FOREST) {
-        if (!this.networks.some(n => n.x === x && n.y === y)) {
+        if (!this._networkKeySet.has(x * 10000 + y)) {
           const mtype = pickRandom(MYCELIUM_TYPES)
           this.networks.push({
             id: this.nextId++, x, y,
@@ -57,6 +58,7 @@ export class WorldFungalNetworkSystem {
             nutrientFlow: FLOW_RATE[mtype],
             age: 0, myceliumType: mtype, tick,
           })
+          this._networkKeySet.add(x * 10000 + y)
         }
       }
     }
@@ -85,7 +87,10 @@ export class WorldFungalNetworkSystem {
     // Remove dead networks
     for (let _i = this.networks.length - 1; _i >= 0; _i--) {
       const n = this.networks[_i]
-      if (!(n.connectivity > 1 && n.nodeCount > 0)) this.networks.splice(_i, 1)
+      if (!(n.connectivity > 1 && n.nodeCount > 0)) {
+        this._networkKeySet.delete(n.x * 10000 + n.y)
+        this.networks.splice(_i, 1)
+      }
     }
   }
 
