@@ -33,6 +33,8 @@ export class DiplomaticPledgeSystem {
   private pledges: DiplomaticPledge[] = []
   private nextId = 1
   private lastCheck = 0
+  // Active pledge pair set: key = `${fromCivId}_${toCivId}` (strength > 0)
+  private _activePairSet: Set<string> = new Set()
 
   update(dt: number, em: EntityManager, civManager: CivManager, tick: number): void {
     if (tick - this.lastCheck < CHECK_INTERVAL) return
@@ -48,10 +50,8 @@ export class DiplomaticPledgeSystem {
       const civA = pickRandom(civs)
       const civB = pickRandom(civs)
       if (civA.id !== civB.id) {
-        const existing = this.pledges.find(
-          p => p.fromCivId === civA.id && p.toCivId === civB.id && p.strength > 0
-        )
-        if (!existing) {
+        const pairKey = `${civA.id}_${civB.id}`
+        if (!this._activePairSet.has(pairKey)) {
           const type = pickRandom(TYPES)
           this.pledges.push({
             id: this.nextId++,
@@ -64,6 +64,7 @@ export class DiplomaticPledgeSystem {
             startTick: tick,
             duration: 4000 + Math.random() * 6000,
           })
+          this._activePairSet.add(pairKey)
         }
       }
     }
@@ -89,7 +90,10 @@ export class DiplomaticPledgeSystem {
     // Clean up dead pledges
     for (let _i = this.pledges.length - 1; _i >= 0; _i--) {
       const e = this.pledges[_i]
-      if (e.strength <= 0) this.pledges.splice(_i, 1)
+      if (e.strength <= 0) {
+        this._activePairSet.delete(`${e.fromCivId}_${e.toCivId}`)
+        this.pledges.splice(_i, 1)
+      }
     }
   }
 
