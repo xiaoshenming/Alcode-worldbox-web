@@ -106,59 +106,6 @@ export class NaturalDisasterRecoverySystem {
 
   // --- Private helpers ---
 
-  private scanDamagedTiles(
-    cx: number,
-    cy: number,
-    radius: number,
-    world: World
-  ): RecoveryZone['damagedTiles'] {
-    const result: RecoveryZone['damagedTiles'] = []
-    const r2 = radius * radius
-
-    for (let dy = -radius; dy <= radius; dy++) {
-      for (let dx = -radius; dx <= radius; dx++) {
-        if (dx * dx + dy * dy > r2) continue
-        const tx = cx + dx
-        const ty = cy + dy
-        const tile = world.getTile(tx, ty)
-        if (tile === null) continue
-
-        // Track tiles that are in a "damaged" state (sand, lava) and could recover
-        if (tile === TileType.SAND || tile === TileType.LAVA) {
-          result.push({ x: tx, y: ty, originalType: TileType.GRASS, restored: false })
-        }
-      }
-    }
-    return result
-  }
-
-  private scanDestroyedBuildings(
-    cx: number,
-    cy: number,
-    radius: number,
-    entityManager: EntityManager
-  ): RecoveryZone['destroyedBuildings'] {
-    const result: RecoveryZone['destroyedBuildings'] = []
-    const r2 = radius * radius
-    const buildingEntities = entityManager.getEntitiesWithComponents('position', 'building')
-
-    for (const eid of buildingEntities) {
-      const pos = entityManager.getComponent<PositionComponent>(eid, 'position')
-      const building = entityManager.getComponent<BuildingComponent>(eid, 'building')
-      if (!pos || !building) continue
-
-      const dx = pos.x - cx
-      const dy = pos.y - cy
-      if (dx * dx + dy * dy > r2) continue
-
-      // Buildings with very low health are considered destroyed
-      if (building.health <= building.maxHealth * 0.1) {
-        result.push({ x: pos.x, y: pos.y, civId: building.civId, rebuilt: false })
-      }
-    }
-    return result
-  }
-
   private restoreTerrain(zone: RecoveryZone, world: World): void {
     // Determine which terrain stage we should be at based on progress
     const stageIndex = Math.min(
