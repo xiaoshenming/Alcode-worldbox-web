@@ -1,11 +1,11 @@
 {
-  "notes": "迭代123（循环25/100）。本轮主要成就：大规模系统性提升测试质量——从5190增至5502，+312个测试。\n\n本轮测试质量改进详情：\n1. CreatureDivinationSystem: 3→11个测试（pruneOld截断、CHECK_INTERVAL节流、6种DivinationType）\n2. CreatureNightWatchSystem: 3→12个测试（pruneOld保留最新、getRecent、processThreats vigilance上限）\n3. CreaturePetSystem: 3→12个测试（updateBonds bond递增clamp100、无creature删除、双间隔节流）\n4. CreatureRivalryDuelSystem: 3→12个测试（endDuel victory/defeat/draw、history截断50、duelingIds清理）\n5. CreatureTradeSkillSystem: 3→15个测试（trainSkills增量clamp、getAverageSkill纯计算、双间隔节流）\n6. CreatureApprenticeSystem: 3→14个测试（getActiveCount只计非graduated、applyGraduation 5种技能效果）\n7. LODRenderSystem: 3→16个测试（4种LOD阈值边界、setThresholds自定义、连续切换）\n8. RenderCullingSystem: 4→17个测试（getLODLevel距离计算、isVisible边界/margin/zoom、getVisibleTileBounds缓存对象）\n9. CreatureAnvilsmithSystem: 5→10个测试（CHECK_INTERVAL节流、技能递增0.02/上限100、cleanup先增后删边界3.98）\n10. CreatureAnnealerSystem: 5→10个测试（同上模式）\n11. CreatureBlacksmithSystem: 5→9个测试（cleanup无creature删除、CHECK_INTERVAL节流）\n12-21. 9个工匠系统（Beekeeper/Beveller/BobbinWinder/AppliqueMakers/AssayerSystem/AwlMakers/BasketWeaver/Bellfounder/Borer）：各5→15-20个测试\n22-30. 9个工匠系统（Assayers/BasketWeavers/BellFounders/BellMakers/BobbinLaceMakers/Bookbinders/BraidMakers/BobbinLace2Makers/BobbinMakers）：各5→16-18个测试\n\n关键发现：\n- 两类主要cleanup模式：(1)技能<=4删除，先递增后cleanup，需用3.98触发；(2)!em.hasComponent删除，用mock em实现\n- 工匠系统有两类结构：(a)纯数组+技能递增+cleanup，(b)skillMap+过期time-based cleanup+公式计算\n- 还有约200个5测试文件可以改进\n- 并行Agent方式极高效：3个Agent同时处理3批共9个文件，每批约2分钟完成\n\n下轮优先方向：\n1. 继续用并行Agent批量改进剩余工匠系统（还有~200个5测试文件）\n2. 保持tsc+vitest+build三重验证全绿（当前5502/5502通过）",
+  "notes": "迭代124（循环26/100）。本轮主要成就：大规模系统性提升测试质量——从5502增至6406，+904个测试。\n\n本轮测试质量改进详情（按批次）：\n批A/B/C（18个系统）：Bridlemaker(5→14), Broacher(5→14), BroomMakers(5→14), BuckleMakers(5→18), Burnisher(5→17), BurnOuter(5→17), Calderers(5→14), CardingMakers(5→10), Chainmaker(5→10), Chandlers(5→21), CharcoalBurners(5→21), CheeseAger(5→17), Chiseller(5→13), Chronicler(5→12), ClaspMakers(5→15), Claustrophobia(5→15), Cobbler(5→15), Coiner(5→13) → +180测试\n批D/E/F（9个系统）：CombMakers(5→28), Constellation(5→22), Coopers(5→28), Cooper(5→13), Countersinker(5→13), Courier(5→13), CrochetMakers(5→13), Curiers(5→13), Dance(5→13) → +111测试\n批G/H/I（9个系统）：Dowser(5→15), Drawer(5→13), Drifter(5→13), DyeingMakers(5→21), Dyers(5→21), EmbroideryMakers(5→21), Emotion(5→16), Enamelors(5→21), Engravers(5→21) → +117测试\n批J/K/L（9个系统）：Engraver单数(5→12), Exile(5→12), Falconry(5→12), Fame(5→15), Felters(5→14), FeltingMakers(5→14), FeltingMakers2(5→19), FeltingMakersSystem2(5→16), FerruleMakers(5→26) → +95测试\n批M/N/O（9个系统）：Firewalker(5→13), Flatter(5→15), Fletchers复数(5→19), Fletcher单数(5→14), Forger(5→15), FringeMakers(5→16), Fuller(5→11), FullingMakers(5→11), Furbisher(5→11) → +80测试\n批P/Q/R（9个系统）：Furriers(5→33), Gambler(5→27), Gilders(5→33), Girdler(5→15), Gladiator(5→16), Glassblowers(5→18), Glazers(5→13), GlazierMaster(5→12), Glazier(5→13) → +135测试\n批S/T/U（9个系统）：Gondolier(5→14), GrommetMakers(5→16), Hammerman(5→15), Handicraft(5→16), HarnessMakers(5→15), Harnessmaker(5→15), Herald(5→13), Herbalist(5→14), Honer(5→13) → +86测试\n批V/W/X（9个系统）：Horners(5→23), Hornworker(5→16), Illuminators(5→23), Jester(5→13), KnittingMakers(5→12), Knurler(5→13), LaceMakers(5→18), Lamplighter(5→13), Lapidary(5→14) → +100测试\n\n关键发现：\n- 并行Agent策略极高效：3个Agent同时处理9个文件，每批约2-3分钟完成+100-180个测试\n- 工匠系统分两类：(a)纯数组+技能递增+cleanup（用3.98边界）；(b)skillMap+time-based cleanup（用tick-offset计算cutoff）\n- cleanup边界规则：先递增后cleanup，cleanup条件<=4，初始值4.0会在+0.02后变4.02>4不删除，需用3.98确保4.00<=4触发删除\n- 还有约113个5测试文件可以改进\n\n下轮优先方向：\n1. 继续用并行Agent批量改进剩余工匠系统（还有~113个5测试文件）\n2. 保持tsc+vitest+build三重验证全绿（当前6406/6406通过）",
   "priorities": [
-    "1. 【持续监控】tsc+vitest+build三重验证保持全绿（当前5502/5502通过）",
-    "2. 【进行中】继续用并行Agent批量改进剩余工匠系统测试（还有~190个5测试文件）",
+    "1. 【持续监控】tsc+vitest+build三重验证保持全绿（当前6406/6406通过）",
+    "2. 【进行中】继续用并行Agent批量改进剩余工匠系统测试（还有~113个5测试文件）",
     "3. 【重要经验】工匠系统cleanup边界：先递增后cleanup，用3.98而非4.0触发<=4删除",
     "4. 【重要经验】time-based cleanup用tick-offset确定cutoff，创建测试时注入满足条件的老tick记录",
-    "5. 【新发现】并行3个Agent批处理9个系统，每轮可+150个测试"
+    "5. 【新发现】并行3个Agent批处理9个系统，每轮可+100-180个测试"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -30,7 +30,7 @@
     "【重要安全规则】严禁用Write工具创建src/__tests__/目录内的文件！Write工具会将__转义为\\_\\_导致创建错误目录，必须用Bash cat heredoc方式创建测试文件",
     "【迭代89新增】死代码方法扫描策略：用Python脚本找public方法→grep '.methodName('验证无外部调用→并行派发子代理批量删除，效率极高",
     "【迭代96新增】整系统文件死代码的识别方法：检查'类名是否出现在Game.ts'而非'实例字段是否有.update()调用'，因为很多系统通过_batchXXY数组批量调度",
-    "【迭代100新增-最重要】非空断言扫描必须同时用两种正则：① [^a-zA-Z]!\\. 匹配 x!.y 形式；② \\)!(?=[.\\[;,\\)\\s]|$) 匹配 func()! 形式。只用其中一种必然漏报！",
+    "【迭代100新增-最重要】非空断言扫描必须同时用两种正则：① [^a-zA-Z]!\\\\. 匹配 x!.y 形式；② \\\\)!(?=[.\\\\[;,\\\\)\\\\s]|$) 匹配 func()! 形式。只用其中一种必然漏报！",
     "【迭代112新增】some(item => item.entityId === eid)在for(entities)循环内是O(n*list)陷阱——标准修复：添加private _xxxSet = new Set<number>()，push时.add(eid)，splice时.delete(eid)，查询时.has(eid)",
     "【迭代112新增】添加Set优化后，public查询方法(getXxx)需要加lazy sync fallback——因为测试会直接push内部数组绕过Set",
     "【迭代120新增】项目进入「稳定维护」阶段：systems/game/civilization/entities/ui/utils所有目录的私有方法死代码已全部清除，find()/some()优化已穷举",
@@ -47,7 +47,8 @@
     "【迭代123新增】工匠系统分两类：(a)纯数组+固定技能递增+技能值cleanup（用3.98边界）；(b)skillMap+time-based过期cleanup（用tick-offset计算cutoff）",
     "【迭代123新增】getRecent(n)用slice(-n)实现，slice(-0)等于slice(0)返回全部，不要用0测试getRecent",
     "【迭代123新增】并行Agent策略：3个Agent同时处理9个文件，每轮约2-3分钟完成+150个测试，效率极高",
-    "【迭代123新增】LODRenderSystem测试：zoom>=full=20→'full'，zoom>=medium=10→'medium'，zoom>=low=4→'low'，else→'icon'"
+    "【迭代123新增】LODRenderSystem测试：zoom>=full=20→'full'，zoom>=medium=10→'medium'，zoom>=low=4→'low'，else→'icon'",
+    "【迭代124新增】并行Agent批处理效率极高：每批9个系统，3个Agent并行，2-3分钟完成+100-180个测试，本轮共处理81个系统，+904个测试"
   ],
-  "last_updated": "2026-03-02T13:30:00+08:00"
+  "last_updated": "2026-03-02T14:22:00+08:00"
 }
