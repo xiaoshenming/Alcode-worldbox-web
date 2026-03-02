@@ -1,11 +1,11 @@
 {
-  "notes": "迭代130（循环35/100）。本轮主要成就：修复116个测试文件中327个flaky测试（Creature/Diplomatic），提升18个World系统测试质量（AAA/BBB/CCC+DDD/EEE/FFF组），测试从11676增至12004，+328个测试。\n\n本轮处理的系统（分6个Agent并行）：\nAAA组（+63）: WorldAcousticSystem(21) WorldActiniumSpringSystem(19) WorldAlluvialFanSystem(23)\nBBB组（+67）: WorldAqueductSystem(23) WorldArchipelagoSystem(21) WorldArroyoSystem(23)\nCCC组（+61）: WorldArtesianWellSystem(21) WorldAstatineSpringSystem(19) WorldAtollSystem(21)\nDDD组（+66）: WorldBayouSystem(22) WorldBioluminescenceSystem(21) WorldBioluminescentBaySystem(23)\nEEE组（+95）: WorldBlackSandBeachSystem(23) WorldBlowhole2System(34) WorldBlowholeSystem(38)\nFFF组（+66）: WorldBorateSpringSystem(18) WorldBorderSystem(24) WorldButtesSystem(24)\n\n关键发现：\n- Flaky测试根本原因：cleanup/state测试中未mock Math.random，spawn逻辑有小概率触发导致length断言失败\n- 修复策略：在有sys.update()且有确定性toHaveLength(N)断言的测试中，在update前加vi.spyOn(Math,'random').mockReturnValue(0.9)\n- 第一轮修复：116个文件（Creature+Diplomatic），327个测试块\n- 第二轮修复：43个Diplomatic文件，323个测试块（更宽泛条件：空em对象触发TypeError）\n- World系统特殊cleanup：WorldBioluminescenceSystem基于active字段，WorldBioluminescentBaySystem基于organismDensity<=5，WorldAqueductSystem基于integrity<=5\n- WorldBorderSystem是渲染系统，update(tick)单参数，不是标准游戏逻辑系统\n- 测试数量从11676→12004，+328\n- tsc+vitest+build三重验证保持全绿（当前12004/12004通过）\n- 3次连续运行全部通过，不再出现flaky\n\n下轮优先方向：\n1. 继续处理World系统（剩余224个文件，全部5测试待改善）\n2. 使用同样的并行Agent策略（3 Agent × 3文件/批）\n3. tsc+vitest+build三重验证保持全绿",
+  "notes": "迭代131（循环36/100）。本轮主要成就：修复1个漏网的Diplomatic flaky（DiplomaticPrefectureSystem），并批量处理27个World系统测试（GGG/HHH/III/JJJ/KKK/LLL/MMM/NNN/OOO九组），测试从12004增至12588，+584个测试。\n\n本轮处理的系统（分9批Agent并行）：\nGGG组(+61): WorldAuroraStormSystem(+20) WorldAuroraSystem(+19) WorldAvalancheSystem(+22)\nHHH组(+74): WorldBadlandsSystem(+25) WorldBalancingRockSystem(+25) WorldBallLightningSystem(+24)\nIII组(+54): WorldBariumSpringSystem(+17) WorldBarrierIslandSystem(+18) WorldBasaltColumnSystem(+19)\nJJJ组(+61): WorldCaesiumSpringSystem(+19) WorldCalderaSystem(+19) WorldCanyonSystem(+23)\nKKK组(+60): WorldCenoteSystem(+21) WorldCeriumSpringSystem(+18) WorldChalybeateSpringSystem(+21)\nLLL组(+65): WorldCinderConeSystem(+23) WorldCirqueSystem(+22) WorldCloudForestSystem(+20)\nMMM组(+66): WorldCopperSpringSystem(+17) WorldCoralAtollSystem(+22) WorldCoralBleachingSystem(+27)\nNNN组(+74): WorldCoralNurserySystem(+23) WorldCoralReefGrowthSystem(+22) WorldCoralSpawningSystem(+29)\nOOO组(+69): WorldCorruptionSystem(+24) WorldCouleeSystem(+21) WorldCrystalCaveSystem(+24)\n\n关键发现：\n- TileType枚举：DEEP_WATER=0, SHALLOW_WATER=1, SAND=2, GRASS=3, FOREST=4, MOUNTAIN=5, SNOW=6, LAVA=7\n  注意MOUNTAIN=5（不是4！），FOREST=4（之前提示有错）\n- hasAdjacentTile依赖邻居getTile返回值——用getTile:()=>2(SAND)最安全（SAND不匹配SHALLOW/DEEP/MOUNTAIN）\n- 对于AuroraStorm/Caldera/ChalybeateSpring等无tile检查的系统，spawn只需random<FORM_CHANCE\n- WorldCorruptionSystem是非标准系统：无CHECK_INTERVAL，按tick%30触发spread，按tick%60触发damage\n- WorldCoralNurserySystem cleanup是概率性（random<0.01），测试需mock random=0.001\n- WorldCoralReefGrowthSystem cleanup双条件：health<=10 AND coverage<5\n- WorldCoralSpawningSystem季节totalCycle=145000（dormant60k+preparing30k+spawning15k+dispersing40k）\n- 测试总数从12004→12588，+584\n- tsc+vitest+build三重验证保持全绿（当前12588/12588通过）\n\n下轮优先方向：\n1. 继续处理World系统（剩余196个文件，全部5测试待改善）\n2. 使用同样的并行Agent策略（3 Agent × 3文件/批）\n3. tsc+vitest+build三重验证保持全绿",
   "priorities": [
-    "1. 【持续目标】继续处理World系统（剩余224个文件，全部只有5测试），用并行Agent批量处理",
-    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前12004/12004通过）",
-    "3. 【里程碑】已完成18个World系统测试改善（+328测试），下一批继续处理",
+    "1. 【持续目标】继续处理World系统（剩余196个文件，全部只有5测试），用并行Agent批量处理",
+    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前12588/12588通过）",
+    "3. 【里程碑】已完成27+18=45个World系统测试改善（+584+328=912测试），继续下一批",
     "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+150-200测试",
-    "5. 【经验】flaky测试修复：在有update()且有确定性断言的测试中添加Math.random mock"
+    "5. 【下一批系统】WorldCuestaSystem WorldDashboardSystem WorldDecorationSystem及后续"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -44,13 +44,14 @@
     "【迭代126新增】Diplomatic系统有3种update签名变体：(a)标准4参数(dt,world,em,tick)；(b)3参数(dt,em,civManager,tick)；(c)含civs数组的特殊签名。必须先读源码确认",
     "【迭代127新增】random=0导致civA===civB早返回问题：duration/cleanup测试必须用mockReturnValue(1)跳过spawn块",
     "【迭代129新增】spawn后同次update立刻执行duration+=1——新spawn的arrangement.duration=1不是0，测试时注意边界",
-    "【迭代129新增】WarReparations(复数)是5参数(dt,world,em,civManager,tick)；WarReparation(单数)是3参数(dt,em,civManager,tick)——两个系统名字相近但签名不同",
-    "【迭代129新增】World系统有242个待改善文件（全部5测试），是下一个大目标",
     "【迭代130新增】Flaky测试根本原因：cleanup/state测试中未mock Math.random，spawn逻辑有小概率触发导致length断言失败或TypeError",
     "【迭代130新增】Flaky修复策略：在有sys.update()且有确定性toHaveLength(N)断言的测试中，在update前加vi.spyOn(Math,'random').mockReturnValue(0.9)",
-    "【迭代130新增】空em对象flaky：Diplomatic测试用{} as any作为em，spawn触发时调用em.getEntitiesWithComponent()导致TypeError",
-    "【迭代130新增】World系统特殊cleanup：WorldBioluminescenceSystem基于active字段，WorldBioluminescentBaySystem基于organismDensity<=5，WorldAqueductSystem基于integrity<=5",
-    "【迭代130新增】WorldBorderSystem是渲染系统，update(tick)单参数，不是标准游戏逻辑系统"
+    "【迭代131新增】TileType枚举正确值：DEEP_WATER=0, SHALLOW_WATER=1, SAND=2, GRASS=3, FOREST=4, MOUNTAIN=5, SNOW=6, LAVA=7——MOUNTAIN=5不是4！",
+    "【迭代131新增】hasAdjacentTile安全mock：用getTile:()=>2(SAND)，因为SAND既不匹配SHALLOW_WATER也不匹配DEEP_WATER也不匹配MOUNTAIN，可靠阻断Spring系统spawn",
+    "【迭代131新增】WorldCorruptionSystem是非标准系统：按tick%30触发spread，按tick%60触发damageCreatures，无常规CHECK_INTERVAL——source直接写入corruptionMap",
+    "【迭代131新增】WorldCoralNurserySystem cleanup是概率性（random<0.01），测试需vi.spyOn(Math,'random').mockReturnValue(0.001)",
+    "【迭代131新增】WorldCoralReefGrowthSystem cleanup双条件：health<=10 AND coverage<5，单个条件不触发删除",
+    "【迭代131新增】WorldCoralSpawningSystem季节totalCycle=60000+30000+15000+40000=145000（dispersing+age>145000才cleanup）"
   ],
-  "last_updated": "2026-03-02T20:55:00+08:00"
+  "last_updated": "2026-03-02T22:20:00+08:00"
 }
