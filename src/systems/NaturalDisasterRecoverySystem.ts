@@ -61,6 +61,8 @@ let nextZoneId = 1
 export class NaturalDisasterRecoverySystem {
   private recoveryZones: RecoveryZone[] = []
   private tickCounter: number = 0
+  /** O(1) lookup by zone id — maintained on push/splice, lazy-synced in getRecoveryProgress */
+  private _zoneById = new Map<number, RecoveryZone>()
 
   /**
    * Advance recovery for all active zones.
@@ -83,6 +85,7 @@ export class NaturalDisasterRecoverySystem {
       if (zone.progress >= 1) {
         this.finalizeZone(zone, world)
         this.recoveryZones.splice(i, 1)
+        this._zoneById.delete(zone.id)
         EventLog.log('disaster', `Area near (${zone.centerX},${zone.centerY}) fully recovered from ${zone.disasterType}`, world.tick)
       }
     }
@@ -95,7 +98,12 @@ export class NaturalDisasterRecoverySystem {
 
   /** Returns recovery progress (0-1) for a specific zone, or -1 if not found */
   getRecoveryProgress(zoneId: number): number {
-    const zone = this.recoveryZones.find(z => z.id === zoneId)
+    let zone = this._zoneById.get(zoneId)
+    if (zone === undefined) {
+      // Lazy sync: tests may push directly to recoveryZones bypassing Map
+      const found = this.recoveryZones.find(z => z.id === zoneId)
+      if (found) { this._zoneById.set(found.id, found); zone = found }
+    }
     return zone ? zone.progress : -1
   }
 
