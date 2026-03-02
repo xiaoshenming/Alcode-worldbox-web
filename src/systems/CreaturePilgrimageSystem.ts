@@ -27,6 +27,7 @@ const GOALS: PilgrimageGoal[] = ['sacred_mountain', 'ancient_temple', 'holy_spri
 
 export class CreaturePilgrimageSystem {
   private pilgrimages: Pilgrimage[] = []
+  private _activePilgrimsSet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -47,7 +48,7 @@ export class CreaturePilgrimageSystem {
     const entities = em.getEntitiesWithComponents('creature', 'position')
     for (const eid of entities) {
       if (Math.random() > PILGRIMAGE_CHANCE) continue
-      if (this.isOnPilgrimage(eid)) continue
+      if (this._activePilgrimsSet.has(eid)) continue
       if (this.pilgrimages.length >= MAX_PILGRIMAGES) break
 
       const width = world.width || 200
@@ -65,6 +66,7 @@ export class CreaturePilgrimageSystem {
         startTick: tick,
         completed: false,
       })
+      this._activePilgrimsSet.add(eid)
     }
   }
 
@@ -101,6 +103,7 @@ export class CreaturePilgrimageSystem {
       const dy = p.targetY - pos.y
       if (dx * dx + dy * dy < 9) {
         p.completed = true
+        this._activePilgrimsSet.delete(p.entityId)
       }
     }
   }
@@ -121,10 +124,6 @@ export class CreaturePilgrimageSystem {
     this.pilgrimages.length = activeEnd
     const keep = Math.min(20, completed.length)
     for (let i = 0; i < keep; i++) this.pilgrimages.push(completed[i])
-  }
-
-  private isOnPilgrimage(entityId: number): boolean {
-    return this.pilgrimages.some(p => p.entityId === entityId && !p.completed)
   }
 
 }
