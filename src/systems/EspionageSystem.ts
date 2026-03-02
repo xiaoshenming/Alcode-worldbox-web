@@ -57,6 +57,8 @@ export class EspionageSystem {
   private spies: Spy[] = []
   private tributes: TributeRecord[] = []
   private warJustifications: WarJustification[] = []
+  private _justificationFullSet = new Set<string>()  // key: `${reason}_${attackerId}_${defenderId}`
+  private _justificationPairSet = new Set<string>()  // key: `${attackerId}_${defenderId}`
   private _aliveBuf: Spy[] = []
   private _civSpyBuf: Spy[] = []
 
@@ -80,8 +82,17 @@ export class EspionageSystem {
     this.checkAllianceWars(civManager, tick)
 
     // Decay old war justifications (expire after 6000 ticks)
+    let spliced = false
     for (let i = this.warJustifications.length - 1; i >= 0; i--) {
-      if (tick - this.warJustifications[i].tick >= 6000) this.warJustifications.splice(i, 1)
+      if (tick - this.warJustifications[i].tick >= 6000) { this.warJustifications.splice(i, 1); spliced = true }
+    }
+    if (spliced) {
+      this._justificationFullSet.clear()
+      this._justificationPairSet.clear()
+      for (const j of this.warJustifications) {
+        this._justificationFullSet.add(`${j.reason}_${j.attackerId}_${j.defenderId}`)
+        this._justificationPairSet.add(`${j.attackerId}_${j.defenderId}`)
+      }
     }
   }
 
@@ -237,6 +248,8 @@ export class EspionageSystem {
       reason: 'spy_caught',
       tick,
     })
+    this._justificationFullSet.add(`spy_caught_${target.id}_${owner.id}`)
+    this._justificationPairSet.add(`${target.id}_${owner.id}`)
 
     EventLog.log('diplomacy', `${target.name} caught a spy from ${owner.name}! Relations deteriorated`, tick)
   }
@@ -301,6 +314,8 @@ export class EspionageSystem {
       reason: 'tribute_refused',
       tick,
     })
+    this._justificationFullSet.add(`tribute_refused_${strong.id}_${weak.id}`)
+    this._justificationPairSet.add(`${strong.id}_${weak.id}`)
 
     EventLog.log('diplomacy', `${weak.name} refused tribute to ${strong.name}!`, tick)
   }
@@ -339,18 +354,26 @@ export class EspionageSystem {
   // --- Casus Belli Queries ---
 
   hasJustification(attackerId: number, defenderId: number): boolean {
-    return this.warJustifications.some(j => j.attackerId === attackerId && j.defenderId === defenderId)
+    if (this._justificationPairSet.has(`${attackerId}_${defenderId}`)) return true
+    // Lazy sync: tests may push directly to warJustifications
+    const found = this.warJustifications.some(j => j.attackerId === attackerId && j.defenderId === defenderId)
+    if (found) this._justificationPairSet.add(`${attackerId}_${defenderId}`)
+    return found
   }
 
   addBorderConflict(civAId: number, civBId: number, tick: number): void {
-    if (!this.warJustifications.some(j => j.reason === 'border_conflict' && j.attackerId === civAId && j.defenderId === civBId)) {
+    if (!this._justificationFullSet.has(`border_conflict_${civAId}_${civBId}`)) {
       this.warJustifications.push({ attackerId: civAId, defenderId: civBId, reason: 'border_conflict', tick })
+      this._justificationFullSet.add(`border_conflict_${civAId}_${civBId}`)
+      this._justificationPairSet.add(`${civAId}_${civBId}`)
     }
   }
 
   addReligiousTension(civAId: number, civBId: number, tick: number): void {
-    if (!this.warJustifications.some(j => j.reason === 'religious_diff' && j.attackerId === civAId && j.defenderId === civBId)) {
+    if (!this._justificationFullSet.has(`religious_diff_${civAId}_${civBId}`)) {
       this.warJustifications.push({ attackerId: civAId, defenderId: civBId, reason: 'religious_diff', tick })
+      this._justificationFullSet.add(`religious_diff_${civAId}_${civBId}`)
+      this._justificationPairSet.add(`${civAId}_${civBId}`)
     }
   }
 
