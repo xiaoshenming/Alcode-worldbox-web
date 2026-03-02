@@ -57,6 +57,7 @@ describe('DiplomaticHostageExchangeSystem', () => {
       expect(() => sys().update(1, {} as any, makeEM(), makeCivManager(2), 3600)).not.toThrow()
     })
     it('civManager少于2个文明时不处理', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       const s = sys(); s.update(1, {} as any, makeEM(), makeCivManager(1), 3600)
       expect(exchanges(s)).toHaveLength(0)
     })
