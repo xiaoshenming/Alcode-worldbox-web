@@ -94,6 +94,11 @@ export class NavalSystem {
   // ── Spawning ──────────────────────────────────────────────────────────
 
   private spawnShips(em: EntityManager, world: World, civManager: CivManager, tick: number): void {
+    // Clean up portShipCount entries for destroyed ports (prevents memory leak)
+    for (const [portId] of this.portShipCount) {
+      if (!em.getComponent<BuildingComponent>(portId, 'building')) this.portShipCount.delete(portId)
+    }
+
     const ports = em.getEntitiesWithComponent('building')
 
     for (const portId of ports) {
