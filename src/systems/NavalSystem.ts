@@ -45,41 +45,50 @@ export class NavalSystem {
   private _portCandXBuf: number[] = []
   private _portCandYBuf: number[] = []
   private _portResultBuf = { x: 0, y: 0 }
+  /** Cached ship+position entity list — fetched once per update() tick, reused across sub-methods */
+  private _shipsBuf: EntityId[] = []
 
   update(em: EntityManager, world: World, civManager: CivManager, particles: ParticleSystem, tick: number): void {
+    // Fetch ships once per tick — shared by all sub-methods to avoid redundant getEntitiesWithComponents calls
+    const ships = em.getEntitiesWithComponents('ship', 'position')
+    // Copy into persistent buffer (getEntitiesWithComponents returns a live Iterable; sub-methods may remove entities)
+    this._shipsBuf.length = 0
+    for (const id of ships) this._shipsBuf.push(id)
+    const shipsBuf = this._shipsBuf
+
     // Spawn ships from ports
     if (tick % SPAWN_INTERVAL === 0) {
       this.spawnShips(em, world, civManager, tick)
     }
 
     // Move all ships
-    this.moveShips(em, world, tick)
+    this.moveShips(em, world, tick, shipsBuf)
 
     // Naval combat
-    this.updateCombat(em, civManager, particles, tick)
+    this.updateCombat(em, civManager, particles, tick, shipsBuf)
 
     // Trade ships generate gold
     if (tick % TRADE_INTERVAL === 0) {
-      this.updateTraders(em, civManager, tick)
+      this.updateTraders(em, civManager, tick, shipsBuf)
     }
 
     // Explorer ships reveal and find treasure
     if (tick % EXPLORE_INTERVAL === 0) {
-      this.updateExplorers(em, civManager, particles, tick)
+      this.updateExplorers(em, civManager, particles, tick, shipsBuf)
     }
 
     // Fishing boats generate food
     if (tick % FISH_INTERVAL === 0) {
-      this.updateFishing(em, civManager)
+      this.updateFishing(em, civManager, shipsBuf)
     }
 
     // Blockade enemy ports
     if (tick % BLOCKADE_INTERVAL === 0) {
-      this.updateBlockades(em, civManager, tick)
+      this.updateBlockades(em, civManager, tick, shipsBuf)
     }
 
     // Clean up sunk ships
-    this.cleanupSunk(em, particles)
+    this.cleanupSunk(em, particles, shipsBuf)
   }
 
   // ── Spawning ──────────────────────────────────────────────────────────
@@ -181,9 +190,7 @@ export class NavalSystem {
 
   // ── Movement ──────────────────────────────────────────────────────────
 
-  private moveShips(em: EntityManager, world: World, tick: number): void {
-    const ships = em.getEntitiesWithComponents('ship', 'position')
-
+  private moveShips(em: EntityManager, world: World, tick: number, ships: EntityId[]): void {
     for (const id of ships) {
       const ship = em.getComponent<ShipComponent>(id, 'ship')
       const pos = em.getComponent<PositionComponent>(id, 'position')
@@ -239,9 +246,7 @@ export class NavalSystem {
 
   // ── Naval Combat ──────────────────────────────────────────────────────
 
-  private updateCombat(em: EntityManager, civManager: CivManager, particles: ParticleSystem, tick: number): void {
-    const ships = em.getEntitiesWithComponents('ship', 'position')
-
+  private updateCombat(em: EntityManager, civManager: CivManager, particles: ParticleSystem, tick: number, ships: EntityId[]): void {
     // Spatial hash for fast neighbor lookup (cell size 8)
     const grid = this._combatGrid
     // Return all cells to pool before clearing
@@ -333,9 +338,7 @@ export class NavalSystem {
 
   // ── Trade Ships ───────────────────────────────────────────────────────
 
-  private updateTraders(em: EntityManager, civManager: CivManager, tick: number): void {
-    const ships = em.getEntitiesWithComponents('ship', 'position')
-
+  private updateTraders(em: EntityManager, civManager: CivManager, tick: number, ships: EntityId[]): void {
     for (const id of ships) {
       const ship = em.getComponent<ShipComponent>(id, 'ship')
       if (!ship || ship.shipType !== 'trader' || ship.health <= 0) continue
@@ -399,9 +402,7 @@ export class NavalSystem {
 
   // ── Explorer Ships ────────────────────────────────────────────────────
 
-  private updateExplorers(em: EntityManager, civManager: CivManager, particles: ParticleSystem, tick: number): void {
-    const ships = em.getEntitiesWithComponents('ship', 'position')
-
+  private updateExplorers(em: EntityManager, civManager: CivManager, particles: ParticleSystem, tick: number, ships: EntityId[]): void {
     for (const id of ships) {
       const ship = em.getComponent<ShipComponent>(id, 'ship')
       if (!ship || ship.shipType !== 'explorer' || ship.health <= 0) continue
@@ -440,9 +441,7 @@ export class NavalSystem {
 
   // ── Fishing Boats ─────────────────────────────────────────────────────
 
-  private updateFishing(em: EntityManager, civManager: CivManager): void {
-    const ships = em.getEntitiesWithComponents('ship', 'position')
-
+  private updateFishing(em: EntityManager, civManager: CivManager, ships: EntityId[]): void {
     for (const id of ships) {
       const ship = em.getComponent<ShipComponent>(id, 'ship')
       if (!ship || ship.shipType !== 'fishing' || ship.health <= 0) continue
@@ -458,8 +457,7 @@ export class NavalSystem {
 
   // ── Blockades ─────────────────────────────────────────────────────────
 
-  private updateBlockades(em: EntityManager, civManager: CivManager, tick: number): void {
-    const ships = em.getEntitiesWithComponents('ship', 'position')
+  private updateBlockades(em: EntityManager, civManager: CivManager, tick: number, ships: EntityId[]): void {
     const ports = em.getEntitiesWithComponent('building')
 
     for (const shipId of ships) {
@@ -506,9 +504,7 @@ export class NavalSystem {
 
   // ── Cleanup ───────────────────────────────────────────────────────────
 
-  private cleanupSunk(em: EntityManager, particles: ParticleSystem): void {
-    const ships = em.getEntitiesWithComponents('ship', 'position')
-
+  private cleanupSunk(em: EntityManager, particles: ParticleSystem, ships: EntityId[]): void {
     for (const id of ships) {
       const ship = em.getComponent<ShipComponent>(id, 'ship')
       if (!ship || ship.health > 0) continue
