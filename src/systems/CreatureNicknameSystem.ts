@@ -37,7 +37,8 @@ const REASONS: Record<NicknameTitle, string> = {
 
 export class CreatureNicknameSystem {
   private nicknames: Nickname[] = []
-  private _nicknameSet = new Set<number>()
+  /** O(1) lookup: entityId → Nickname — kept in sync with nicknames array */
+  private _nicknameMap = new Map<number, Nickname>()
   private nextId = 1
   private _famousBuf: Nickname[] = []
   private lastCheck = 0
@@ -74,15 +75,16 @@ export class CreatureNicknameSystem {
         title = pickRandom(TITLES)
       }
 
-      this.nicknames.push({
+      const nn: Nickname = {
         id: this.nextId++,
         entityId: eid,
         name: title,
         reason: REASONS[title],
         fame: 10 + Math.random() * 30,
         tick,
-      })
-      this._nicknameSet.add(eid)
+      }
+      this.nicknames.push(nn)
+      this._nicknameMap.set(eid, nn)
 
       if (this.nicknames.length >= MAX_NICKNAMES) break
     }
@@ -99,24 +101,23 @@ export class CreatureNicknameSystem {
     if (this.nicknames.length > MAX_NICKNAMES) {
       this.nicknames.sort((a, b) => b.fame - a.fame)
       this.nicknames.length = MAX_NICKNAMES
-      // Rebuild set after truncation
-      this._nicknameSet.clear()
-      for (const n of this.nicknames) this._nicknameSet.add(n.entityId)
+      // Rebuild map after truncation
+      this._nicknameMap.clear()
+      for (const n of this.nicknames) this._nicknameMap.set(n.entityId, n)
     }
   }
 
   private hasNickname(entityId: number): boolean {
-    return this._nicknameSet.has(entityId)
+    return this._nicknameMap.has(entityId)
   }
 
   getNickname(entityId: number): Nickname | undefined {
-    if (!this._nicknameSet.has(entityId)) {
-      // Fallback scan in case nicknames was pushed externally (e.g. tests)
-      const found = this.nicknames.find(n => n.entityId === entityId)
-      if (found) this._nicknameSet.add(entityId)
-      return found
-    }
-    return this.nicknames.find(n => n.entityId === entityId)
+    const cached = this._nicknameMap.get(entityId)
+    if (cached !== undefined) return cached
+    // Fallback scan in case nicknames was pushed externally (e.g. tests)
+    const found = this.nicknames.find(n => n.entityId === entityId)
+    if (found) this._nicknameMap.set(entityId, found)
+    return found
   }
   getFamous(count: number): Nickname[] {
     this._famousBuf.length = 0
