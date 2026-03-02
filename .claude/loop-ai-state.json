@@ -1,11 +1,11 @@
 {
-  "notes": "迭代134（循环40/100）。本轮主要成就：批量处理9个World系统测试（YYY/ZZZ/AAA2组），测试从13263增至13487，+224个测试。\n\n本轮处理的系统（分3批Agent并行）：\nYYY组(+102): WorldFumaroleFieldSystem(28) WorldFumaroleSystem(34) WorldFumarolicFieldSystem(40)\nZZZ组(+83): WorldFungalNetworkSystem(42) WorldGadoliniumSpringSystem(23) WorldGalliumSpringSystem(28)\nAAA2组(+84): WorldGeoglyphSystem(27) WorldGeothermalPoolSystem(29) WorldGeothermalSpringSystem(28)\n\n关键发现：\n- WorldFumaroleFieldSystem: CHECK_INTERVAL=2720, MAX_FIELDS=6，cleanup条件age>=95（先+0.004后判断），gasEmission递减-0.008下界5，sulfurDeposit递增+0.012上界90\n- WorldFumaroleSystem: CHECK_INTERVAL=2700, MAX_FUMAROLES=11，cleanup条件temperature<=50（先Math.max(50,temp-0.01)后判断），steamIntensity用正弦波更新：20+15*sin(activityCycle)\n- WorldFumarolicFieldSystem: CHECK_INTERVAL=3050, MAX_FIELDS=12，tick-based cleanup：field.tick<tick-82000，gasIntensity随机浮动±0.25，sulfurDeposit递增+0.008上界70\n- WorldFungalNetworkSystem: CHECK_INTERVAL=2800, MAX_NETWORKS=30，内部数组名networks，有_networkKeySet:Set<number>去重，cleanup条件!(connectivity>1&&nodeCount>0)，connectivity每次+0.05上限100\n- WorldGadoliniumSpringSystem: CHECK_INTERVAL=2960, MAX_ZONES=32，cutoff=tick-54000，spawn需nearWater(SHALLOW_WATER/DEEP_WATER)||nearMountain(MOUNTAIN=5)，无字段更新逻辑\n- WorldGalliumSpringSystem: CHECK_INTERVAL=2890, MAX_ZONES=32，与Gadolinium同结构，cutoff=tick-54000，字段：galliumContent/springFlow/bauxiteLeaching/mineralLiquidity\n- WorldGeoglyphSystem: CHECK_INTERVAL=4000, MAX_GEOGLYPHS=10，cleanup条件visibility<=10（非时间，是侵蚀阈值），age=tick-g.tick>100000时visibility-=0.03，spawn需SAND/GRASS\n- WorldGeothermalPoolSystem: CHECK_INTERVAL=3100, MAX_POOLS=14，无tile检查（任意地形可生成），cutoff=tick-85000，temperature[30,98]，mineralContent每次+0.005上限80\n- WorldGeothermalSpringSystem: CHECK_INTERVAL=2600, MAX_SPRINGS=22，spawn需MOUNTAIN/GRASS/SNOW，cutoff=tick-92000，4个字段同时更新\n- 测试总数从13263→13487，+224\n- tsc+vitest+build三重验证保持全绿（当前13487/13487通过）\n\n下轮优先方向：\n1. 继续处理World系统（剩余169个文件，全部5测试待改善）\n2. 使用同样的并行Agent策略（3 Agent × 3文件/批）\n3. tsc+vitest+build三重验��保持全绿",
+  "notes": "迭代135（循环41/100）。本轮主要成就：批量处理9个World系统测试（BBB2/CCC2/DDD2组），测试从13487增至13731，+244个测试。\n\n本轮处理的系统（分3批Agent并行）：\nBBB2组(+93): WorldGeothermalSystem(5→31) WorldGeothermalVentSystem(5→31) WorldGermaniumSpringSystem(5→31)\nCCC2组(+85): WorldGeyserFieldSystem(5→29) WorldGeyseriteSystem(10→31) WorldGeyserSystem(5→35)\nDDD2组(+86): WorldGorgeSystem(5→33) WorldGrottoSystem(5→34) WorldHafniumSpringSystem(5→34)\n\n关键发现：\n- WorldGeothermalSystem: CHECK_INTERVAL=1800, MAX_VENTS=30，spawn需tile>=6(SNOW/LAVA)，temperature[60,200]spawn后decay→[59.99,199.99]，cutoff=tick-60000\n- WorldGeothermalVentSystem: CHECK_INTERVAL=1300, MAX_VENTS=30，有_ventKeySet去重，spawn需DEEP_WATER=0，age每次+=CHECK_INTERVAL，eruptionCooldown触发dormant+decay，ERUPTION_CHANCE=0.008\n- WorldGermaniumSpringSystem: CHECK_INTERVAL可从源码读取，3次attempt，spawn需nearWater||nearMountain，cutoff=tick-54000\n- WorldGeyserFieldSystem: CHECK_INTERVAL=2720, MAX_FIELDS=8，无tile检查（任意地形），cleanup: waterTemperature<=40，字段waterTemperature每次-0.02有保底40\n- WorldGeyseriteSystem: CHECK_INTERVAL=?,  deposits数组，age每次+=0.003，cleanup: age>=96，thermalProximity每次-0.004保底10\n- WorldGeyserSystem: geysers数组，cleanup: active=false，power<=1时random<0.05概率失活，测试cleanup需用nullTileWorld防止新spawn干扰\n- WorldGorgeSystem: CHECK_INTERVAL=?,  gorges数组，tick-based cleanup\n- WorldGrottoSystem: CHECK_INTERVAL=?,  grottos数组，tick-based cleanup\n- WorldHafniumSpringSystem: CHECK_INTERVAL=?,  zones数组，与其他Spring系统类似结构\n- 测试总数从13487→13731，+244\n- tsc+vitest+build三重验证保持全绿（当前13731/13731通过）\n\n本轮遇到的flaky陷阱（首次全量测试有14个失败）：\n1. spawn后立即update的off-by-one：temperature=60→59.99，thermalProximity=30→29.996，age=0→0.003；修复：调整期望范围下界\n2. GeothermalVentSystem eruption随机触发：ERUPTION_CHANCE=0.008，random=0时会触发eruption，使spawn后activity/heatOutput/cooldown全部偏离；修复：用mockReturnValueOnce(0).mockReturnValue(0.9)分别控制spawn和update\n3. GeyserFieldSystem cleanup被eruptionInterval干扰：lastEruption=0，tick=2720时2720-0>eruptionInterval触发喷发+5温度，使本应被cleanup的记录温度升高而保留；修复：注入makeField时设eruptionInterval:999999\n4. GeyserSystem cleanup时spawn干扰：nullTileWorld（getTile:()=>null）可防止新spawn\n\n下轮优先方向：\n1. 继续处理World系统（剩余160个文件，全部<=10测试待改善）\n2. 使用同样的并行Agent策略（3 Agent × 3文件/批）\n3. tsc+vitest+build三重验证保持全绿",
   "priorities": [
-    "1. 【持续目标】继续处理World系统（剩余169个文件，全部只有5测试），用并行Agent批量处理",
-    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前13487/13487通过）",
-    "3. 【里程碑】已完成72+9=81个World系统测试改善（+1608+224=1832测试），继续下一批",
+    "1. 【持续目标】继续处理World系统（剩余约160个文件），用并行Agent批量处理",
+    "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前13731/13731通过）",
+    "3. 【里程碑】已完成81+9=90个World系统测试改善（+1832+244=2076测试），继续下一批",
     "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+150-250测试",
-    "5. 【下一批系统】WorldGeothermalSystem WorldGeothermalVentSystem WorldGermaniumSpringSystem及后续"
+    "5. 【下一批系统】WorldHeatmapSystem WorldHogbackSystem WorldHolmiumSpringSystem及后续H/I/J系列"
   ],
   "lessons": [
     "非空断言(!)是最常见的崩溃点",
@@ -52,7 +52,12 @@
     "【迭代134新增】WorldFumaroleSystem cleanup特殊性：temperature=50时会先Math.max(50,50-0.01)=50，然后判断<=50触发删除——边界测试需注意",
     "【迭代134新增】WorldFungalNetworkSystem有Set去重结构_networkKeySet：key=x*10000+y，cleanup时需同步清除keySet",
     "【迭代134新增】WorldGeoglyphSystem非时间cleanup：visibility<=10（侵蚀阈值），age>100000才触发-0.03递减——需要tick差值>100000才能观察到侵蚀",
-    "【迭代134新增】温泉/地热系统（GeothermalPool/GeothermalSpring）无特殊spawn tile要求，任意地形均可，字段temperature有随机浮动+Math.max/min钳制"
+    "【迭代134新增】温泉/地热系统（GeothermalPool/GeothermalSpring）无特殊spawn tile要求，任意地形均可，字段temperature有随机浮动+Math.max/min钳制",
+    "【迭代135新增】spawn后立即update的off-by-one陷阱：同一次update()内先spawn再update所有记录，导致spawn初始值立即偏移（-0.01,-0.02,-0.004等）——修复方案：断言下界用Math.max保底值而非spawn初始值",
+    "【迭代135新增】GeothermalVentSystem的eruption陷阱：ERUPTION_CHANCE=0.008，random=0时0<0.008会触发eruption，使heatOutput+40/cooldown=2000+random*3000/activity='erupting'——需用mockReturnValueOnce(0).mockReturnValue(0.9)分别控制spawn和后续update",
+    "【迭代135新增】GeyserFieldSystem的eruptionInterval干扰cleanup：lastEruption=0+小tick时会触发喷发+5温度，阻止cleanup；测试cleanup时设eruptionInterval:999999",
+    "【迭代135新增】GeyserSystem cleanup测试必须用nullTileWorld（getTile:()=>null）：nullTile阻断spawn，确保cleanup后无新记录干扰length断言",
+    "【迭代135新增】WorldGeothermalSystem spawn需tile>=6(SNOW=6或LAVA=7)，不是MOUNTAIN=5；safeWorld用getTile:()=>2(SAND)阻断spawn"
   ],
-  "last_updated": "2026-03-03T00:30:00+08:00"
+  "last_updated": "2026-03-03T01:00:00+08:00"
 }
