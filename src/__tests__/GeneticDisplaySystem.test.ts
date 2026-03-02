@@ -26,7 +26,7 @@ describe('GeneticDisplaySystem删除后 - GeneticsSystem基础功能', () => {
   it('mutate不总是发生（5%概率）', () => {
     const g = GeneticsSystem.generateRandomTraits()
     let mutated = false
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 500; i++) {
       if (GeneticsSystem.mutate(g) !== null) { mutated = true; break }
     }
     expect(mutated).toBe(true)

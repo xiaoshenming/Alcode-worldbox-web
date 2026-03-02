@@ -5,7 +5,7 @@ import { TileType } from '../utils/Constants'
 
 function makeMocks() {
   const em = new EntityManager()
-  const world = { width: 20, height: 20, getTile: () => TileType.GRASS, setTile: () => {}, tick: 0 }
+  const world = { width: 20, height: 20, getTile: () => TileType.GRASS, setTile: () => {}, tick: 0, getSeason: () => 'clear' }
   const particles = { spawnRain: () => {}, spawn: () => {}, spawnDeath: () => {} }
   return { em, world, particles }
 }
