@@ -90,6 +90,8 @@ export class MiningSystem {
   private readonly WORLD_H = WORLD_HEIGHT
   private _civDepBuf: OreDeposit[] = []
   private _discovBuf: OreDeposit[] = []
+  // O(1) lookup for undiscovered deposits by coordinate: key = x * 10000 + y
+  private _undiscoveredMap: Map<number, OreDeposit> = new Map()
 
   constructor() {
     // Initialize empty ore map
@@ -109,6 +111,7 @@ export class MiningSystem {
     const noiseSize = new Noise(seed + 600)
 
     this.deposits = []
+    this._undiscoveredMap.clear()
     for (let y = 0; y < this.WORLD_H; y++) {
       this.oreMap[y] = new Array(this.WORLD_W).fill(OreType.NONE)
     }
@@ -152,7 +155,7 @@ export class MiningSystem {
               sizeVal > 0.7 ? 'large' : sizeVal > 0.4 ? 'medium' : 'small'
             const maxReserves = SIZE_RESERVES[size]
 
-            this.deposits.push({
+            const deposit: OreDeposit = {
               x, y,
               type: bestOre,
               size,
@@ -162,7 +165,9 @@ export class MiningSystem {
               discoveredBy: null,
               mineBuilt: false,
               productionRate: 0
-            })
+            }
+            this.deposits.push(deposit)
+            this._undiscoveredMap.set(x * 10000 + y, deposit)
           }
         }
       }
@@ -245,7 +250,7 @@ export class MiningSystem {
   ): OreDeposit | null {
     if (x < 0 || x >= this.WORLD_W || y < 0 || y >= this.WORLD_H) return null
 
-    const deposit = this.deposits.find(d => d.x === x && d.y === y && !d.discovered)
+    const deposit = this._undiscoveredMap.get(x * 10000 + y)
     if (!deposit) return null
 
     // Base discovery chance scales with tech level
@@ -260,6 +265,7 @@ export class MiningSystem {
     if (Math.random() < chance) {
       deposit.discovered = true
       deposit.discoveredBy = civId
+      this._undiscoveredMap.delete(x * 10000 + y)
       EventLog.log('trade',
         `Discovered ${ORE_NAMES[deposit.type]} deposit (${deposit.size}) at (${x},${y})!`, 0)
       return deposit
