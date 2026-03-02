@@ -48,6 +48,8 @@ export class DiplomacySystem {
   private _civsBuf: Civilization[] = []
   // Reusable buffer for getActiveTreatiesBetween to avoid new array per call
   private _treatyBuf: Treaty[] = []
+  // Embassy host-set per civ: Map<builderId, Set<hostCivId>>
+  private _embassySet: Map<number, Set<number>> = new Map()
 
   update(civManager: CivManager, world: World, em: EntityManager): void {
     const tick = world.tick
@@ -122,16 +124,22 @@ export class DiplomacySystem {
   private tryFormTreaty(a: Civilization, b: Civilization, relation: number, tick: number): void {
     // Already have a treaty of this type?
     const existing = this.getActiveTreatiesBetween(a.id, b.id)
+    let hasNonAggression = false, hasTradeAgreement = false, hasMilitaryAlliance = false
+    for (const t of existing) {
+      if (t.type === 'non_aggression') hasNonAggression = true
+      else if (t.type === 'trade_agreement') hasTradeAgreement = true
+      else if (t.type === 'military_alliance') hasMilitaryAlliance = true
+    }
 
-    if (relation > 30 && Math.random() < 0.001 && !existing.some(t => t.type === 'non_aggression')) {
+    if (relation > 30 && Math.random() < 0.001 && !hasNonAggression) {
       this.signTreaty('non_aggression', a, b, tick, -1, 60)
     }
 
-    if (relation > 50 && Math.random() < 0.0008 && !existing.some(t => t.type === 'trade_agreement')) {
+    if (relation > 50 && Math.random() < 0.0008 && !hasTradeAgreement) {
       this.signTreaty('trade_agreement', a, b, tick, -1, 70)
     }
 
-    if (relation > 70 && Math.random() < 0.0005 && !existing.some(t => t.type === 'military_alliance')) {
+    if (relation > 70 && Math.random() < 0.0005 && !hasMilitaryAlliance) {
       this.signTreaty('military_alliance', a, b, tick, -1, 80)
     }
   }
@@ -181,7 +189,9 @@ export class DiplomacySystem {
     for (const [otherId, otherCiv] of civManager.civilizations) {
       if (otherId === a.id || otherId === b.id) continue
       const allyTreaties = this.getActiveTreatiesBetween(b.id, otherId)
-      if (allyTreaties.some(t => t.type === 'military_alliance')) {
+      let hasAlliance = false
+      for (const t of allyTreaties) { if (t.type === 'military_alliance') { hasAlliance = true; break } }
+      if (hasAlliance) {
         const rel = otherCiv.relations.get(a.id) ?? 0
         otherCiv.relations.set(a.id, Math.max(-100, rel - 15))
       }
@@ -236,7 +246,13 @@ export class DiplomacySystem {
     if (Math.random() > 0.0002) return
 
     // Already has embassy with this civ?
-    if (builder.embassies.some(e => e.civId === host.id)) return
+    let builderEmbassySet = this._embassySet.get(builder.id)
+    if (!builderEmbassySet) {
+      // Lazy init: sync from current embassies
+      builderEmbassySet = new Set(builder.embassies.map(e => e.civId))
+      this._embassySet.set(builder.id, builderEmbassySet)
+    }
+    if (builderEmbassySet.has(host.id)) return
 
     // Find a tile in host territory to place embassy
     const hostTerritorySize = host.territory.size
@@ -253,6 +269,7 @@ export class DiplomacySystem {
     }
 
     builder.embassies.push({ civId: host.id, x, y })
+    builderEmbassySet.add(host.id)
 
     const desc = `${builder.name} built an embassy in ${host.name}`
     this.addEvent(world.tick, 'embassy_built', builder.id, host.id, desc)
@@ -275,7 +292,9 @@ export class DiplomacySystem {
       // Clean up embassies for dead civs
       for (let i = civ.embassies.length - 1; i >= 0; i--) {
         if (!civManager.civilizations.has(civ.embassies[i].civId)) {
+          const removedCivId = civ.embassies[i].civId
           civ.embassies.splice(i, 1)
+          this._embassySet.get(civ.id)?.delete(removedCivId)
         }
       }
     }

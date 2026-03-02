@@ -51,6 +51,8 @@ export class HeroLegendSystem {
   private monuments: Monument[] = []
   private trackedHeroes: Set<number> = new Set()
   private lastSurvivalTick: Map<number, number> = new Map()
+  // Per-hero deed type sets for O(1) dedup
+  private _deedTypeSets: Map<number, Set<string>> = new Map()
   // Reusable set to avoid GC pressure
   private _aliveSet: Set<number> = new Set()
 
@@ -71,6 +73,7 @@ export class HeroLegendSystem {
           deeds: [],
           civId: civMember?.civId ?? 0,
         })
+        this._deedTypeSets.set(id, new Set())
         this.lastSurvivalTick.set(id, tick)
         this.trackedHeroes.add(id)
       }
@@ -95,11 +98,14 @@ export class HeroLegendSystem {
       }
 
       // Check kill-based deeds
-      if (hero.kills >= 1 && !fame.deeds.some(d => d.type === 'first_kill')) {
-        this.recordDeed(id, 'first_kill', `${fame.name} claimed their first kill`, tick)
-      }
-      if (hero.kills >= 100 && !fame.deeds.some(d => d.type === 'hundred_kills')) {
-        this.recordDeed(id, 'hundred_kills', `${fame.name} has slain 100 enemies`, tick)
+      const deedTypes = this._deedTypeSets.get(id)
+      if (deedTypes) {
+        if (hero.kills >= 1 && !deedTypes.has('first_kill')) {
+          this.recordDeed(id, 'first_kill', `${fame.name} claimed their first kill`, tick)
+        }
+        if (hero.kills >= 100 && !deedTypes.has('hundred_kills')) {
+          this.recordDeed(id, 'hundred_kills', `${fame.name} has slain 100 enemies`, tick)
+        }
       }
 
       // Update title
@@ -115,6 +121,7 @@ export class HeroLegendSystem {
         }
         this.trackedHeroes.delete(id)
         this.lastSurvivalTick.delete(id)
+        this._deedTypeSets.delete(id)
         this.fameMap.delete(id)
       }
     }
@@ -133,7 +140,13 @@ export class HeroLegendSystem {
   recordDeed(entityId: number, type: string, description: string, tick: number): void {
     const fame = this.fameMap.get(entityId)
     if (!fame) return
-    if (fame.deeds.some(d => d.type === type)) return
+    const deedTypes = this._deedTypeSets.get(entityId)
+    if (deedTypes) {
+      if (deedTypes.has(type)) return
+      deedTypes.add(type)
+    } else {
+      if (fame.deeds.some(d => d.type === type)) return
+    }
 
     fame.deeds.push({ type, description, tick })
     const bonus = DEED_FAME[type] ?? 10

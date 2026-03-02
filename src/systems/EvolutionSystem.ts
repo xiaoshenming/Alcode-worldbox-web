@@ -107,6 +107,7 @@ export class EvolutionSystem {
   private tickCounter: number = 0
   private _speciesGroups: Map<string, EntityId[]> = new Map()
   private _traitsBuf: EvolutionTrait[] = []
+  private _traitNamesBuf: Set<string> = new Set()
 
   /** Main update — call every tick, internally throttles to every 60 ticks. */
   update(em: EntityManager, world: World, tick: number): void {
@@ -228,19 +229,20 @@ export class EvolutionSystem {
     if (!specData) return []
 
     const result = this._traitsBuf; result.length = 0
+    const resultNames = this._traitNamesBuf; resultNames.clear()
 
     // Environment traits (unlocked when adaptation reaches threshold)
     for (const [terrainKey, progress] of specData.adaptationProgress) {
       if (progress >= ADAPTATION_THRESHOLD) {
         const traitDef = TERRAIN_TRAITS[terrainKey]
-        if (traitDef) result.push(traitDef)
+        if (traitDef) { result.push(traitDef); resultNames.add(traitDef.name) }
       }
     }
 
     // Natural selection traits
     for (const [traitName, stat] of specData.traits) {
       // Only include traits not already from environment
-      if (result.some(t => t.name === traitName)) continue
+      if (resultNames.has(traitName)) continue
       if (stat.count > 0 || stat.total === 0) {
         // Find matching selection trait
         const selectionTraits = SELECTION_TRAIT_NAMES
