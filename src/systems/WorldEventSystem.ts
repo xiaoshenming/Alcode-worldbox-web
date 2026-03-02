@@ -21,6 +21,7 @@ import {
 
 export class WorldEventSystem {
   private activeEvents: ActiveEvent[] = []
+  private _activeEventIds = new Set<string>()
   private eventCooldowns: Map<string, number> = new Map()
   private eventHistory: { id: string; name: string; tick: number }[] = []
   private banner: EventBanner | null = null
@@ -69,6 +70,7 @@ export class WorldEventSystem {
         if (active.def.id === 'blood_moon') {
           this.removeBloodMoonBuffs(em)
         }
+        this._activeEventIds.delete(active.def.id)
         this.activeEvents.splice(i, 1)
       }
     }
@@ -95,7 +97,7 @@ export class WorldEventSystem {
     this._availEventsBuf.length = 0
     for (const def of EVENT_DEFINITIONS) {
       if (this.eventCooldowns.has(def.id)) continue
-      if (this.activeEvents.some(a => a.def.id === def.id)) continue
+      if (this._activeEventIds.has(def.id)) continue
       this._availEventsBuf.push(def)
     }
     const available = this._availEventsBuf
@@ -157,7 +159,7 @@ export class WorldEventSystem {
     }
 
     this.activeEvents.push(active)
-    this.eventCooldowns.set(def.id, def.cooldown)
+    this._activeEventIds.add(def.id)
     this.eventHistory.push({ id: def.id, name: def.name, tick })
     if (this.eventHistory.length > 100) this.eventHistory.splice(0, this.eventHistory.length - 100)
 
@@ -189,7 +191,7 @@ export class WorldEventSystem {
 
   private applyBloodMoonBuffs(em: EntityManager): void {
     // Buff any new hostile creatures that spawned during blood moon
-    if (!this.activeEvents.some(a => a.def.id === 'blood_moon')) return
+    if (!this._activeEventIds.has('blood_moon')) return
     const creatures = em.getEntitiesWithComponents('creature')
     for (const eid of creatures) {
       if (this.bloodMoonBuffs.has(eid)) continue

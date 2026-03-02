@@ -59,6 +59,7 @@ let nextFestivalId = 1
 export class SeasonFestivalSystem {
   private _civsBuf: CivLike[] = []
   private festivals: Festival[] = []
+  private _festivalCivSet = new Set<number>()
   private history: Festival[] = []
   private nextCheckTick = CHECK_INTERVAL
   private lastSeason = ''
@@ -89,7 +90,10 @@ export class SeasonFestivalSystem {
     }
     for (let _i = this.festivals.length - 1; _i >= 0; _i--) {
       const f = this.festivals[_i]
-      if (!f.active) this.festivals.splice(_i, 1)
+      if (!f.active) {
+        this._festivalCivSet.delete(f.civId)
+        this.festivals.splice(_i, 1)
+      }
     }
 
     // Try to start new festivals
@@ -109,7 +113,7 @@ export class SeasonFestivalSystem {
     for (const civ of civManager.civilizations.values()) civs.push(civ)
     for (const civ of civs) {
       if (civ.population < 5) continue
-      if (this.festivals.some(f => f.civId === civ.id)) continue
+      if (this._festivalCivSet.has(civ.id)) continue
       if (Math.random() > FESTIVAL_CHANCE) continue
 
       const festival: Festival = {
@@ -122,8 +126,7 @@ export class SeasonFestivalSystem {
         moraleBoost: 15,
       }
       this.festivals.push(festival)
-
-      // Boost relations with neighbors
+      this._festivalCivSet.add(civ.id)
       for (const [otherId, rel] of civ.relations) {
         if (rel > 0) civ.relations.set(otherId, rel + RELATION_BOOST)
       }
