@@ -117,8 +117,6 @@ function clamp(v: number, lo: number, hi: number): number {
 export class CultureSystem {
   private cultures: Map<number, Culture> = new Map()
   private languages: LanguageFamily[] = [...BASE_LANGUAGES]
-  // Cache vowels/consonants per language id to avoid filter() on each name generation
-  private _phonemeCache: Map<number, { vowels: string[]; consonants: string[] }> = new Map()
   /** Reusable Set for getLanguageCompatibility phoneme lookup — avoids new Set() per call */
   private _phonemeSetBuf: Set<string> = new Set()
 
@@ -193,37 +191,6 @@ export class CultureSystem {
   }
 
   // --- Private methods ---
-
-  private pickLanguage(raceName: string): LanguageFamily {
-    const lower = raceName.toLowerCase()
-    if (lower.includes('elf') || lower.includes('elv')) return this.languages[1]
-    if (lower.includes('dwarf') || lower.includes('dwar')) return this.languages[2]
-    if (lower.includes('orc')) return this.languages[3]
-    return this.languages[0] // human / default
-  }
-
-  private generateNameFromLang(lang: LanguageFamily): string {
-    const pattern = pick(lang.namePatterns)
-    // Use cached vowels/consonants to avoid filter() on each call
-    let cached = this._phonemeCache.get(lang.id)
-    if (!cached) {
-      cached = {
-        vowels: lang.phonemes.filter(p => /^[aeiou]/.test(p)),
-        consonants: lang.phonemes.filter(p => !/^[aeiou]/.test(p)),
-      }
-      this._phonemeCache.set(lang.id, cached)
-    }
-    const { vowels, consonants } = cached
-    if (vowels.length === 0 || consonants.length === 0) return 'Unnamed'
-
-    let name = ''
-    for (const ch of pattern) {
-      if (ch === 'V') name += pick(vowels)
-      else if (ch === 'C') name += pick(consonants)
-    }
-    // Capitalize first letter
-    return name.charAt(0).toUpperCase() + name.slice(1)
-  }
 
   private spreadBetween(a: Culture, b: Culture, viaTrade: boolean, tick: number): void {
     const diff = a.influence - b.influence
