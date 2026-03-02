@@ -52,8 +52,14 @@ const CHAIN_RULES: ChainEvent[] = [
 
 export class DisasterChainSystem {
   private chainRules: ChainEvent[] = [...CHAIN_RULES]
+  // O(1) lookup map for chain rules: key = `${sourceType}_${targetType}`
+  private _chainRuleMap: Map<string, ChainEvent> = new Map(
+    CHAIN_RULES.map(r => [`${r.sourceType}_${r.targetType}`, r])
+  )
   private pendingChains: PendingChain[] = []
   private ecoCrises: EcoCrisis[] = []
+  // O(1) lookup map for eco crises by type
+  private _ecoCrisisMap: Map<string, EcoCrisis> = new Map()
   private recoveryZones: RecoveryZone[] = []
   private globalTemperature: number = 0
   private targetTemperature: number = 0
@@ -94,7 +100,7 @@ export class DisasterChainSystem {
 
 
   getChainProbability(sourceType: string, targetType: string, magnitude: number): number {
-    const rule = this.chainRules.find(r => r.sourceType === sourceType && r.targetType === targetType)
+    const rule = this._chainRuleMap.get(`${sourceType}_${targetType}`)
     if (!rule) return 0
     const magBonus = (magnitude - 1) / 9 * 0.3
     return Math.min(0.95, rule.probability + magBonus)
@@ -198,20 +204,26 @@ export class DisasterChainSystem {
   }
 
   private upsertCrisis(type: EcoCrisis['type'], severity: number, cx: number, cy: number, radius: number): void {
-    const existing = this.ecoCrises.find(c => c.type === type)
+    const existing = this._ecoCrisisMap.get(type)
     if (existing) {
       existing.severity = Math.min(1, existing.severity * 0.8 + severity * 0.2)
       existing.ticksActive++
     } else if (this.ecoCrises.length < MAX_CRISES) {
-      this.ecoCrises.push({ type, severity: Math.min(1, severity), affectedArea: { x: cx, y: cy, radius }, ticksActive: 0 })
+      const crisis: EcoCrisis = { type, severity: Math.min(1, severity), affectedArea: { x: cx, y: cy, radius }, ticksActive: 0 }
+      this.ecoCrises.push(crisis)
+      this._ecoCrisisMap.set(type, crisis)
     }
   }
 
   private fadeCrisis(type: EcoCrisis['type']): void {
-    const idx = this.ecoCrises.findIndex(c => c.type === type)
-    if (idx === -1) return
-    this.ecoCrises[idx].severity -= 0.05
-    if (this.ecoCrises[idx].severity <= 0) this.ecoCrises.splice(idx, 1)
+    const crisis = this._ecoCrisisMap.get(type)
+    if (!crisis) return
+    crisis.severity -= 0.05
+    if (crisis.severity <= 0) {
+      this._ecoCrisisMap.delete(type)
+      const idx = this.ecoCrises.indexOf(crisis)
+      if (idx >= 0) this.ecoCrises.splice(idx, 1)
+    }
   }
 
   private updateTemperature(): void {
