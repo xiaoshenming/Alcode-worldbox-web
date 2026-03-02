@@ -1,40 +1,38 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代131（循环36/100）。本轮主要成就：修复1个漏网的Diplomatic flaky（DiplomaticPrefectureSystem），并批量处理27个World系统测试（GGG/HHH/III/JJJ/KKK/LLL/MMM/NNN/OOO九组），测试从12004增至12588，+584个测试。
+🧠 AI 上轮笔记：迭代132（循环38/100）。本轮主要成就：批量处理18个World系统测试（PPP/QQQ/RRR + SSS/TTT/UUU两批），测试从12818增至13023，+205个测试。修复2个Diplomatic flaky测试。
 
-本轮处理的系统（分9批Agent并行）：
-GGG组(+61): WorldAuroraStormSystem(+20) WorldAuroraSystem(+19) WorldAvalancheSystem(+22)
-HHH组(+74): WorldBadlandsSystem(+25) WorldBalancingRockSystem(+25) WorldBallLightningSystem(+24)
-III组(+54): WorldBariumSpringSystem(+17) WorldBarrierIslandSystem(+18) WorldBasaltColumnSystem(+19)
-JJJ组(+61): WorldCaesiumSpringSystem(+19) WorldCalderaSystem(+19) WorldCanyonSystem(+23)
-KKK组(+60): WorldCenoteSystem(+21) WorldCeriumSpringSystem(+18) WorldChalybeateSpringSystem(+21)
-LLL组(+65): WorldCinderConeSystem(+23) WorldCirqueSystem(+22) WorldCloudForestSystem(+20)
-MMM组(+66): WorldCopperSpringSystem(+17) WorldCoralAtollSystem(+22) WorldCoralBleachingSystem(+27)
-NNN组(+74): WorldCoralNurserySystem(+23) WorldCoralReefGrowthSystem(+22) WorldCoralSpawningSystem(+29)
-OOO组(+69): WorldCorruptionSystem(+24) WorldCouleeSystem(+21) WorldCrystalCaveSystem(+24)
+本轮处理的系统（分6批Agent并行）：
+PPP组(+75): WorldCuestaSystem(24) WorldDeflationHollowSystem(25) WorldDreikanterSystem(26)
+QQQ组(+95): WorldDeltaSystem(31) WorldDrumlinSystem(31) WorldDewFormationSystem(33)
+RRR组(+81): WorldDustDevilSystem(24) WorldDashboardSystem(24) WorldDecorationSystem(33)
+SSS组(+120): WorldDustStormSystem(37) WorldEscarpmentSystem(40) WorldEstuarySystem(43)
+TTT组(+69): WorldDysprosiumSpringSystem(23) WorldErbiumSpringSystem(23) WorldEuropiumSpringSystem(23)
+UUU组(+85): WorldErosionSystem(25) WorldEventSystem(25) WorldEventTimelineSystem(35)
 
 关键发现：
-- TileType枚举：DEEP_WATER=0, SHALLOW_WATER=1, SAND=2, GRASS=3, FOREST=4, MOUNTAIN=5, SNOW=6, LAVA=7
-  注意MOUNTAIN=5（不是4！），FOREST=4（之前提示有错）
-- hasAdjacentTile依赖邻居getTile返回值——用getTile:()=>2(SAND)最安全（SAND不匹配SHALLOW/DEEP/MOUNTAIN）
-- 对于AuroraStorm/Caldera/ChalybeateSpring等无tile检查的系统，spawn只需random<FORM_CHANCE
-- WorldCorruptionSystem是非标准系统：无CHECK_INTERVAL，按tick%30触发spread，按tick%60触发damage
-- WorldCoralNurserySystem cleanup是概率性（random<0.01），测试需mock random=0.001
-- WorldCoralReefGrowthSystem cleanup双条件：health<=10 AND coverage<5
-- WorldCoralSpawningSystem季节totalCycle=145000（dormant60k+preparing30k+spawning15k+dispersing40k）
-- 测试总数从12004→12588，+584
-- tsc+vitest+build三重验证保持全绿（当前12588/12588通过）
+- WorldDustStormSystem: CHECK_INTERVAL=800使用>=而非<（tick-lastCheck>=800），intensity类型为'mild'|'moderate'|'severe'|'catastrophic'
+- WorldDashboardSystem: 纯UI系统，无update(dt,world,em,tick)，只有toggle()和addPopulationSample()
+- WorldDecorationSystem: 纯生成系统，无update，只有generate()和render()
+- WorldDewFormationSystem: cleanup条件是evaporated===true（temperature>=80），不是tick cutoff
+- WorldErosionSystem: 只有3个参数update(dt,world,tick)，无em参数，有setWorldSize()和getTotalErosions()
+- WorldEventSystem: 非标准update签名update(em,world,civManager,particles,timeline)，checkInterval=120
+- WorldEventTimelineSystem: UI系统，无标准update，有addEvent()和handleKey()
+- Spring系统（Dysprosium/Erbium/Europium）：内部数组叫zones，MAX_ZONES=32，cutoff=tick-54000，无字段更新
+- 修复2个Diplomatic flaky：DiplomaticCommutationSystem和DiplomaticCommonwealthSystem的cleanup测试需要Math.random mock
+- 测试总数从12818→13023，+205
+- tsc+vitest+build三重验证保持全绿（当前13023/13023通过）
 
 下轮优先方向：
-1. 继续处理World系统（剩余196个文件，全部5测试待改善）
+1. 继续处理World系统（剩余179个文件，全部5测试待改善）
 2. 使用同样的并行Agent策略（3 Agent × 3文件/批）
 3. tsc+vitest+build三重验证保持全绿
 🎯 AI 自定优先级：[
-  "1. 【持续目标】继续处理World系统（剩余196个文件，全部只有5测试），用并行Agent批量处理",
-  "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前12588/12588通过）",
-  "3. 【里程碑】已完成27+18=45个World系统测试改善（+584+328=912测试），继续下一批",
-  "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+150-200测试",
-  "5. 【下一批系统】WorldCuestaSystem WorldDashboardSystem WorldDecorationSystem及后续"
+  "1. 【持续目标】继续处理World系统（剩余179个文件，全部只有5测试），用并行Agent批量处理",
+  "2. 【持续监控】tsc+vitest+build三重验证保持全绿（当前13023/13023通过）",
+  "3. 【里程碑】已完成45+18=63个World系统测试改善（+912+456=1368测试），继续下一批",
+  "4. 【策略】每批3 Agent × 3文件 = 9个系统，每批约+150-250测试",
+  "5. 【下一批系统】WorldFaultLineSystem WorldFenSystem WorldFernSystem及后续"
 ]
 💡 AI 积累经验：[
   "非空断言(!)是最常见的崩溃点",
@@ -80,10 +78,16 @@ OOO组(+69): WorldCorruptionSystem(+24) WorldCouleeSystem(+21) WorldCrystalCaveS
   "【迭代131新增】WorldCorruptionSystem是非标准系统：按tick%30触发spread，按tick%60触发damageCreatures，无常规CHECK_INTERVAL——source直接写入corruptionMap",
   "【迭代131新增】WorldCoralNurserySystem cleanup是概率性（random<0.01），测试需vi.spyOn(Math,'random').mockReturnValue(0.001)",
   "【迭代131新增】WorldCoralReefGrowthSystem cleanup双条件：health<=10 AND coverage<5，单个条件不触发删除",
-  "【迭代131新增】WorldCoralSpawningSystem季节totalCycle=60000+30000+15000+40000=145000（dispersing+age>145000才cleanup）"
+  "【迭代131新增】WorldCoralSpawningSystem季节totalCycle=60000+30000+15000+40000=145000（dispersing+age>145000才cleanup）",
+  "【迭代132新增】WorldDustStormSystem: CHECK_INTERVAL=800使用>=而非<（tick-lastCheck>=800），intensity类型为'mild'|'moderate'|'severe'|'catastrophic'",
+  "【迭代132新增】WorldDashboardSystem/WorldDecorationSystem/WorldEventTimelineSystem是纯UI/生成系统：无标准update(dt,world,em,tick)，测试纯逻辑方法",
+  "【迭代132新增】WorldDewFormationSystem cleanup条件是evaporated===true（temperature>=80），不是tick cutoff",
+  "【迭代132新增】WorldErosionSystem只有3个参数update(dt,world,tick)，无em参数，有setWorldSize()和getTotalErosions()方法",
+  "【迭代132新增】WorldEventSystem非标准update签名：update(em,world,civManager,particles,timeline)，checkInterval=120，tick%120!==0早返回",
+  "【迭代132新增】Spring系统（Dysprosium/Erbium/Europium）统一结构：内部数组叫zones（不是springs），MAX_ZONES=32，cutoff=tick-54000，无字段更新逻辑"
 ]
 
-迭代轮次: 38/100
+迭代轮次: 39/100
 
 
 🔄 自我进化（每轮必做）：
@@ -92,6 +96,6 @@ OOO组(+69): WorldCorruptionSystem(+24) WorldCouleeSystem(+21) WorldCrystalCaveS
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-03-02T23:18:25+08:00"
+  "last_updated": "2026-03-02T23:49:35+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。
