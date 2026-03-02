@@ -19,6 +19,7 @@ const WANDER_SPEED = 0.3
 
 export class CreatureSleepwalkSystem {
   private sleepwalkers: Sleepwalker[] = []
+  private _sleepSet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -38,7 +39,7 @@ export class CreatureSleepwalkSystem {
     const entities = em.getEntitiesWithComponents('creature', 'position')
     for (const eid of entities) {
       if (Math.random() > SLEEPWALK_CHANCE) continue
-      if (this.isSleepwalking(eid)) continue
+      if (this._sleepSet.has(eid)) continue
       if (this.sleepwalkers.length >= MAX_SLEEPWALKERS) break
 
       this.sleepwalkers.push({
@@ -49,6 +50,7 @@ export class CreatureSleepwalkSystem {
         direction: Math.random() * Math.PI * 2,
         duration: 300 + Math.floor(Math.random() * 500),
       })
+      this._sleepSet.add(eid)
     }
   }
 
@@ -68,15 +70,20 @@ export class CreatureSleepwalkSystem {
   private expireSleepwalkers(tick: number): void {
     for (let _i = this.sleepwalkers.length - 1; _i >= 0; _i--) {
       const sw = this.sleepwalkers[_i]
-      if (!(tick - sw.startTick < sw.duration)) this.sleepwalkers.splice(_i, 1)
+      if (!(tick - sw.startTick < sw.duration)) {
+        this._sleepSet.delete(sw.entityId)
+        this.sleepwalkers.splice(_i, 1)
+      }
     }
   }
 
-  private isSleepwalking(entityId: number): boolean {
-    return this.sleepwalkers.some(sw => sw.entityId === entityId)
-  }
-
   getSleepwalker(entityId: number): Sleepwalker | undefined {
+    if (!this._sleepSet.has(entityId)) {
+      // Fallback scan in case sleepwalkers was pushed externally (e.g. tests)
+      const found = this.sleepwalkers.find(sw => sw.entityId === entityId)
+      if (found) this._sleepSet.add(entityId)
+      return found
+    }
     return this.sleepwalkers.find(sw => sw.entityId === entityId)
   }
 }
