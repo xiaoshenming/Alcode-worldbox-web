@@ -20,6 +20,7 @@ const PANIC_THRESHOLD = 60
 
 export class CreatureClaustrophobiaSystem {
   private claustrophobes: Claustrophobe[] = []
+  private _claustrophobeSet = new Set<number>()
   private nextId = 1
   private lastCheck = 0
 
@@ -50,6 +51,7 @@ export class CreatureClaustrophobiaSystem {
         triggers: 0,
         tick,
       })
+      this._claustrophobeSet.add(eid)
     }
   }
 
@@ -97,11 +99,14 @@ export class CreatureClaustrophobiaSystem {
     if (this.claustrophobes.length > MAX_CLAUSTROPHOBES) {
       this.claustrophobes.sort((a, b) => b.severity - a.severity)
       this.claustrophobes.length = MAX_CLAUSTROPHOBES
+      // Rebuild set after truncation
+      this._claustrophobeSet.clear()
+      for (const c of this.claustrophobes) this._claustrophobeSet.add(c.entityId)
     }
   }
 
   private isClaustrophobe(entityId: number): boolean {
-    return this.claustrophobes.some(c => c.entityId === entityId)
+    return this._claustrophobeSet.has(entityId)
   }
 
 }

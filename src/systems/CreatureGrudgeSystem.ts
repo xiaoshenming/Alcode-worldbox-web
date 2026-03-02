@@ -33,6 +33,8 @@ const INTENSITY_MAP: Record<GrudgeReason, number> = {
 
 export class CreatureGrudgeSystem {
   private grudges: Grudge[] = []
+  /** Map<holderId, Set<targetId>> for O(1) hasGrudge check */
+  private _grudgeMap = new Map<number, Set<number>>()
   private nextId = 1
   private lastCheck = 0
 
@@ -75,6 +77,9 @@ export class CreatureGrudgeSystem {
         intensity: baseIntensity + Math.random() * 20 - 10,
         tick,
       })
+      let targets = this._grudgeMap.get(eid)
+      if (!targets) { targets = new Set<number>(); this._grudgeMap.set(eid, targets) }
+      targets.add(targetId)
     }
   }
 
@@ -84,7 +89,11 @@ export class CreatureGrudgeSystem {
     }
     for (let _i = this.grudges.length - 1; _i >= 0; _i--) {
       const e = this.grudges[_i]
-      if (e.intensity <= 0) this.grudges.splice(_i, 1)
+      if (e.intensity <= 0) {
+        const targets = this._grudgeMap.get(e.holderId)
+        if (targets) targets.delete(e.targetId)
+        this.grudges.splice(_i, 1)
+      }
     }
   }
 
@@ -92,11 +101,18 @@ export class CreatureGrudgeSystem {
     if (this.grudges.length > MAX_GRUDGES) {
       this.grudges.sort((a, b) => b.intensity - a.intensity)
       this.grudges.length = MAX_GRUDGES
+      // Rebuild map after truncation
+      this._grudgeMap.clear()
+      for (const g of this.grudges) {
+        let targets = this._grudgeMap.get(g.holderId)
+        if (!targets) { targets = new Set<number>(); this._grudgeMap.set(g.holderId, targets) }
+        targets.add(g.targetId)
+      }
     }
   }
 
   private hasGrudge(holderId: number, targetId: number): boolean {
-    return this.grudges.some(g => g.holderId === holderId && g.targetId === targetId)
+    return this._grudgeMap.get(holderId)?.has(targetId) ?? false
   }
 
   private _grudgesBuf: Grudge[] = []

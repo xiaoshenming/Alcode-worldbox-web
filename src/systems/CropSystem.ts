@@ -45,6 +45,8 @@ const SEASON_GROWTH: Record<Season, number> = {
 export class CropSystem {
   private fields: CropField[] = []
   private plantCooldown: number = 0
+  /** Set of active (non-harvested/dead) field coordinate keys: x*10000+y */
+  private _activeFieldKeys = new Set<number>()
 
   update(world: World, civManager: CivManager, em: EntityManager, particles: ParticleSystem): void {
     const season = world.season
@@ -63,12 +65,14 @@ export class CropSystem {
       // Skip harvested/dead
       if (field.stage === 'harvested' || field.stage === 'dead') {
         // Remove after a delay (re-plantable next spring)
+        this._activeFieldKeys.delete(field.x * 10000 + field.y)
         this.fields.splice(i, 1)
         continue
       }
 
       // Winter kills non-potato crops that aren't mature
       if (season === 'winter' && field.cropType !== 'potato' && field.stage !== 'mature') {
+        this._activeFieldKeys.delete(field.x * 10000 + field.y)
         field.stage = 'dead'
         continue
       }
@@ -95,6 +99,7 @@ export class CropSystem {
         const civ = civManager.civilizations.get(field.civId)
         if (civ) {
           civ.resources.food += field.yield
+          this._activeFieldKeys.delete(field.x * 10000 + field.y)
           field.stage = 'harvested'
 
           // Harvest particles
@@ -140,8 +145,7 @@ export class CropSystem {
           const cy = farmY + dy
 
           // Check not already occupied by a crop
-          const occupied = this.fields.some(f => f.x === cx && f.y === cy && f.stage !== 'harvested' && f.stage !== 'dead')
-          if (occupied) continue
+          if (this._activeFieldKeys.has(cx * 10000 + cy)) continue
 
           const cropType = pickRandom(CROP_TYPES)
           const info = CROP_INFO[cropType]
@@ -156,6 +160,7 @@ export class CropSystem {
             plantedSeason: season,
             yield: info.baseYield + Math.floor(Math.random() * 4),
           })
+          this._activeFieldKeys.add(cx * 10000 + cy)
           break // one new crop per farm per cycle
         }
       }

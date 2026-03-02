@@ -37,6 +37,7 @@ const REASONS: Record<NicknameTitle, string> = {
 
 export class CreatureNicknameSystem {
   private nicknames: Nickname[] = []
+  private _nicknameSet = new Set<number>()
   private nextId = 1
   private _famousBuf: Nickname[] = []
   private lastCheck = 0
@@ -81,6 +82,7 @@ export class CreatureNicknameSystem {
         fame: 10 + Math.random() * 30,
         tick,
       })
+      this._nicknameSet.add(eid)
 
       if (this.nicknames.length >= MAX_NICKNAMES) break
     }
@@ -97,14 +99,23 @@ export class CreatureNicknameSystem {
     if (this.nicknames.length > MAX_NICKNAMES) {
       this.nicknames.sort((a, b) => b.fame - a.fame)
       this.nicknames.length = MAX_NICKNAMES
+      // Rebuild set after truncation
+      this._nicknameSet.clear()
+      for (const n of this.nicknames) this._nicknameSet.add(n.entityId)
     }
   }
 
   private hasNickname(entityId: number): boolean {
-    return this.nicknames.some(n => n.entityId === entityId)
+    return this._nicknameSet.has(entityId)
   }
 
   getNickname(entityId: number): Nickname | undefined {
+    if (!this._nicknameSet.has(entityId)) {
+      // Fallback scan in case nicknames was pushed externally (e.g. tests)
+      const found = this.nicknames.find(n => n.entityId === entityId)
+      if (found) this._nicknameSet.add(entityId)
+      return found
+    }
     return this.nicknames.find(n => n.entityId === entityId)
   }
   getFamous(count: number): Nickname[] {
