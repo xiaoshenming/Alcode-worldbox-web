@@ -293,6 +293,7 @@ describe('CreatureGlazierSystem', () => {
     })
 
     it('cleanup: 混合记录只删除低值部分', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99) // 禁止招募（>RECRUIT_CHANCE=0.0015）
       ;(sys as any).glaziers.push(makeGlazier(1, { glassCutting: 2 }))
       ;(sys as any).glaziers.push(makeGlazier(2, { glassCutting: 50 }))
       ;(sys as any).glaziers.push(makeGlazier(3, { glassCutting: 3 }))
