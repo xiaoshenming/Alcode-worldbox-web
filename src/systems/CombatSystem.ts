@@ -129,13 +129,14 @@ export class CombatSystem {
     }
 
     // Siege: soldiers attack enemy buildings
-    if (tick % 20 === 0) {
-      this.updateSiege(entities)
-    }
-
     // Tower defense: towers attack nearby enemies
-    if (tick % 30 === 0) {
-      this.updateTowerDefense()
+    // Share a single buildings query when either (or both) are needed this tick
+    const needsSiege = tick % 20 === 0
+    const needsTower = tick % 30 === 0
+    if (needsSiege || needsTower) {
+      const buildings = this.em.getEntitiesWithComponent('building')
+      if (needsSiege) this.updateSiege(entities, buildings)
+      if (needsTower) this.updateTowerDefense(buildings)
     }
 
     // Clean up dead entities
@@ -261,8 +262,7 @@ export class CombatSystem {
     }
   }
 
-  private updateTowerDefense(): void {
-    const towers = this.em.getEntitiesWithComponent('building')
+  private updateTowerDefense(towers: number[]): void {
 
     for (const towerId of towers) {
       const b = this.em.getComponent<BuildingComponent>(towerId, 'building')
@@ -310,8 +310,7 @@ export class CombatSystem {
     }
   }
 
-  private updateSiege(creatures: EntityId[]): void {
-    const buildings = this.em.getEntitiesWithComponent('building')
+  private updateSiege(creatures: EntityId[], buildings: number[]): void {
 
     for (const creatureId of creatures) {
       const civMember = this.em.getComponent<CivMemberComponent>(creatureId, 'civMember')
