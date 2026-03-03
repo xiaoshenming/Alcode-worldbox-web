@@ -1,20 +1,22 @@
 {
-  "notes": "迭代157（循环64/100）。本轮主要成就：修复2个flaky测试（WorldCometSystem和CreatureBevellerSystem），均为cleanup测试中缺少Math.random mock导致随机spawn/recruit干扰。这是第4和第5次遇到相同模式。当前状态：861个测试文件全部通过，44873个测试全部通过（相比上轮+73）。项目质量稳定，无待修复错误。",
+  "notes": "迭代158（循环65/100）。本轮主要成就：系统性检查所有cleanup测试的Math.random mock需求，修复4个flaky测试（CreatureBroacherSystem、CreatureNeedlerSystem、CreatureNeedleworkMakersSystem、CreatureToolsmithSystem），均为cleanup测试中缺少Math.random mock导致随机recruit干扰。这是第6、7、8、9次遇到相同模式。通过脚本扫描151个有spawn/recruit逻辑的系统，确认所有cleanup测试都已正确mock。当前状态：861个测试文件全部通过，44873个测试全部通过。项目质量稳定，无待修复错误。",
 
   "batch_results": {
-    "flaky测试修复": "WorldCometSystem和CreatureBevellerSystem cleanup测试失败——原因是SPAWN_CHANCE/RECRUIT_CHANCE的随机逻辑在cleanup测试中触发，解决方案是在主describe块的beforeEach中mock Math.random=0.99",
-    "测试状态": "861个文件，44873个测试，全部通过"
+    "flaky测试修复": "系统性扫描151个有SPAWN_CHANCE/RECRUIT_CHANCE的系统，发现4个cleanup测试缺少Math.random mock（Broacher、Needler、NeedleworkMakers、Toolsmith），全部修复后所有测试通过",
+    "测试状态": "861个文件，44873个测试，全部通过",
+    "类型检查": "通过",
+    "构建": "通过（3.84s）"
   },
 
-  "test_count": "44800→44873（本迭代+73）",
+  "test_count": "44873（本迭代无变化）",
 
   "remaining_small_files": "79个文件<35测试（未变化）",
 
   "priorities": [
-    "1. 系统性检查所有cleanup测试是否需要Math.random mock（搜索cleanup相关测试，检查是否有spawn/recruit逻辑）",
-    "2. 继续扩展剩余79个<35测试的文件至50+测试",
-    "3. 代码质量优化（性能profiling、类型安全、逻辑简化）",
-    "4. 检查是否有其他潜在的flaky测试模式"
+    "1. 继续扩展剩余79个<35测试的文件至50+测试",
+    "2. 代码质量优化（性能profiling、类型安全、逻辑简化）",
+    "3. 检查是否有其他潜在的测试问题（非flaky类型）",
+    "4. 文档和注释完善"
   ],
 
   "lessons": [
@@ -41,10 +43,11 @@
     "【迭代155新增】makeSystem()是常见的辅助函数命名错误，应该是new XXXSystem()，批量替换时要小心",
     "【迭代155新增】代理扩展测试时可能引入错误（如未定义的函数、错误的断言值），需要在提交前验证所有测试通过",
     "【迭代156新增】CreatureAssayerSystem cleanup测试flaky模式：这是第三次遇到相同问题（ChisellerSystem、FurbisherSystem、AssayerSystem），cleanup测试中的随机招募逻辑必须用Math.random mock隔离，解决方案已成为标准模式",
-    "【迭代157新增】WorldCometSystem和CreatureBevellerSystem cleanup测试flaky模式：这是第4和第5次遇到相同问题，cleanup测试中的随机spawn/recruit逻辑必须在主describe块的beforeEach中mock Math.random=0.99，这个模式已经非常明确且可预测"
+    "【迭代157新增】WorldCometSystem和CreatureBevellerSystem cleanup测试flaky模式：这是第4和第5次遇到相同问题，cleanup测试中的随机spawn/recruit逻辑必须在主describe块的beforeEach中mock Math.random=0.99，这个模式已经非常明确且可预测",
+    "【迭代158新增】系统性扫描cleanup测试Math.random mock：通过脚本扫描151个有spawn/recruit逻辑的系统，发现并修复4个缺少mock的测试（第6-9次），确认所有cleanup测试都已正确隔离随机逻辑，这个问题已彻底解决"
   ],
 
-  "last_updated": "2026-03-03T15:54:10+08:00",
-  "iteration": 157,
-  "loop": "64/100"
+  "last_updated": "2026-03-03T16:33:00+08:00",
+  "iteration": 158,
+  "loop": "65/100"
 }
