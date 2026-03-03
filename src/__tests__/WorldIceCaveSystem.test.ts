@@ -244,3 +244,166 @@ describe('WorldIceCaveSystem - MAX_ZONES=30上限', () => {
     expect((sys as any).zones.length).toBeLessThanOrEqual(3)
   })
 })
+
+describe('WorldIceCaveSystem - 字段边界扩展测试', () => {
+  let sys: WorldIceCaveSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('temperature可以是小数', () => {
+    ;(sys as any).zones.push(makeZone({ temperature: -25.5 }))
+    expect((sys as any).zones[0].temperature).toBeCloseTo(-25.5, 1)
+  })
+
+  it('iceThickness可以是小数', () => {
+    ;(sys as any).zones.push(makeZone({ iceThickness: 33.7 }))
+    expect((sys as any).zones[0].iceThickness).toBeCloseTo(33.7, 1)
+  })
+
+  it('crystalFormation可以是小数', () => {
+    ;(sys as any).zones.push(makeZone({ crystalFormation: 42.3 }))
+    expect((sys as any).zones[0].crystalFormation).toBeCloseTo(42.3, 1)
+  })
+
+  it('stability可以是小数', () => {
+    ;(sys as any).zones.push(makeZone({ stability: 68.9 }))
+    expect((sys as any).zones[0].stability).toBeCloseTo(68.9, 1)
+  })
+
+  it('tick可以是大数', () => {
+    ;(sys as any).zones.push(makeZone({ tick: 999999 }))
+    expect((sys as any).zones[0].tick).toBe(999999)
+  })
+
+  it('id字段唯一性', () => {
+    ;(sys as any).zones.push(makeZone())
+    ;(sys as any).zones.push(makeZone())
+    ;(sys as any).zones.push(makeZone())
+    const ids = (sys as any).zones.map((z: IceCaveZone) => z.id)
+    expect(new Set(ids).size).toBe(3)
+  })
+})
+
+describe('WorldIceCaveSystem - 多zone交互测试', () => {
+  let sys: WorldIceCaveSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.restoreAllMocks() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('多个zone同时存在', () => {
+    ;(sys as any).zones.push(makeZone({ id: 1, x: 10, y: 20 }))
+    ;(sys as any).zones.push(makeZone({ id: 2, x: 30, y: 40 }))
+    ;(sys as any).zones.push(makeZone({ id: 3, x: 50, y: 60 }))
+    expect((sys as any).zones).toHaveLength(3)
+  })
+
+  it('不同位置的zone可以共存', () => {
+    ;(sys as any).zones.push(makeZone({ x: 0, y: 0 }))
+    ;(sys as any).zones.push(makeZone({ x: 100, y: 100 }))
+    ;(sys as any).zones.push(makeZone({ x: 199, y: 199 }))
+    expect((sys as any).zones).toHaveLength(3)
+  })
+
+  it('部分zone过期被删除，其他保留', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).zones.push(makeZone({ tick: 0 }))      // 过期
+    ;(sys as any).zones.push(makeZone({ tick: 50000 }))  // 保留
+    ;(sys as any).zones.push(makeZone({ tick: 0 }))      // 过期
+    sys.update(1, sandWorld, mockEm, 70000)
+    expect((sys as any).zones).toHaveLength(1)
+    expect((sys as any).zones[0].tick).toBe(50000)
+  })
+
+  it('不同temperature的zone可以共存', () => {
+    ;(sys as any).zones.push(makeZone({ temperature: -40 }))
+    ;(sys as any).zones.push(makeZone({ temperature: -30 }))
+    ;(sys as any).zones.push(makeZone({ temperature: -20 }))
+    expect((sys as any).zones).toHaveLength(3)
+  })
+})
+
+describe('WorldIceCaveSystem - nextId管理测试', () => {
+  let sys: WorldIceCaveSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('nextId可以手动设置', () => {
+    ;(sys as any).nextId = 100
+    expect((sys as any).nextId).toBe(100)
+  })
+
+  it('nextId不会因cleanup而改变', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).nextId = 50
+    ;(sys as any).zones.push(makeZone({ tick: 0 }))
+    sys.update(1, sandWorld, mockEm, 70000)
+    expect((sys as any).nextId).toBe(50)
+  })
+
+  it('多次update后nextId保持不变（无spawn）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, sandWorld, mockEm, 2900)
+    sys.update(1, sandWorld, mockEm, 5800)
+    expect((sys as any).nextId).toBe(1)
+  })
+})
+
+describe('WorldIceCaveSystem - 空数组和边界', () => {
+  let sys: WorldIceCaveSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.restoreAllMocks() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('zones为空时update不崩溃', () => {
+    expect(() => sys.update(1, sandWorld, mockEm, 2900)).not.toThrow()
+  })
+
+  it('zones为空时cleanup不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, sandWorld, mockEm, 70000)).not.toThrow()
+  })
+
+  it('lastCheck在第一次update后更新', () => {
+    sys.update(1, sandWorld, mockEm, 2900)
+    expect((sys as any).lastCheck).toBe(2900)
+  })
+
+  it('zones数组支持push操作', () => {
+    ;(sys as any).zones.push(makeZone())
+    expect((sys as any).zones).toHaveLength(1)
+  })
+
+  it('id可以是任意正整数', () => {
+    ;(sys as any).zones.push(makeZone({ id: 77777 }))
+    expect((sys as any).zones[0].id).toBe(77777)
+  })
+
+  it('多个zone的id可以各不相同', () => {
+    ;(sys as any).zones.push(makeZone({ id: 1 }))
+    ;(sys as any).zones.push(makeZone({ id: 2 }))
+    ;(sys as any).zones.push(makeZone({ id: 3 }))
+    const ids = (sys as any).zones.map((z: IceCaveZone) => z.id)
+    expect(new Set(ids).size).toBe(3)
+  })
+})
+
+describe('WorldIceCaveSystem - 坐标范围测试', () => {
+  let sys: WorldIceCaveSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('x坐标可以是0', () => {
+    ;(sys as any).zones.push(makeZone({ x: 0 }))
+    expect((sys as any).zones[0].x).toBe(0)
+  })
+
+  it('y坐标可以是0', () => {
+    ;(sys as any).zones.push(makeZone({ y: 0 }))
+    expect((sys as any).zones[0].y).toBe(0)
+  })
+
+  it('x坐标可以是world.width-1', () => {
+    ;(sys as any).zones.push(makeZone({ x: 199 }))
+    expect((sys as any).zones[0].x).toBe(199)
+  })
+
+  it('y坐标可以是world.height-1', () => {
+    ;(sys as any).zones.push(makeZone({ y: 199 }))
+    expect((sys as any).zones[0].y).toBe(199)
+  })
+})

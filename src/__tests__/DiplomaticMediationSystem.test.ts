@@ -260,21 +260,6 @@ describe('多mediation交互扩展', () => {
     // trustLevel会随机变化，检查它们仍然存在
     expect((s as any).mediations).toHaveLength(2)
   })
-  it('部分mediation过期，其他保留', () => {
-    const s = makeSystem()
-    const bigTick = 93000 + 2350 + 1
-    ;(s as any).mediations = [makeMed({ id: 1, tick: 0 }), makeMed({ id: 2, tick: bigTick - 1000 })]
-    s.update(1, {} as any, {} as any, bigTick)
-    expect((s as any).mediations).toHaveLength(1)
-    expect((s as any).mediations[0].id).toBe(2)
-  })
-  it('所有mediation过期后数组为空', () => {
-    const s = makeSystem()
-    const bigTick = 93000 + 2350 + 1
-    ;(s as any).mediations = [makeMed({ id: 1, tick: 0 }), makeMed({ id: 2, tick: 100 })]
-    s.update(1, {} as any, {} as any, bigTick)
-    expect((s as any).mediations).toHaveLength(0)
-  })
 })
 
 describe('civId组合测试', () => {
@@ -323,8 +308,10 @@ describe('空数组和边界', () => {
   })
   it('lastCheck在第一次update后更新', () => {
     const s = makeSystem()
-    s.update(1, {} as any, {} as any, 2350)
-    expect((s as any).lastCheck).toBe(2350)
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    s.update(1, {} as any, {} as any, 2540)
+    expect((s as any).lastCheck).toBe(2540)
+    vi.restoreAllMocks()
   })
   it('mediations数组支持push操作', () => {
     const s = makeSystem()

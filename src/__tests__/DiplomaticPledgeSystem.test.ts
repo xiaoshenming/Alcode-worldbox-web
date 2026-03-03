@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { DiplomaticPledgeSystem, PledgeType } from '../systems/DiplomaticPledgeSystem'
 
 const CHECK_INTERVAL = 1300
@@ -273,12 +273,14 @@ describe('DiplomaticPledgeSystem', () => {
     })
 
     it('多条 pledge 独立衰减', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99) // 防止随机违规
       const p1 = injectPledge(sys, { id: 1, strength: 50, duration: 999999 })
       const p2 = injectPledge(sys, { id: 2, fromCivId: 3, toCivId: 4, strength: 80, duration: 999999 })
       ;(sys as any)._activePairSet.add('3_4')
       sys.update(0, makeEm(), makeCivManager([1, 2, 3, 4]), CHECK_INTERVAL)
       expect(p1.strength).toBeCloseTo(50 - DECAY_RATE * CHECK_INTERVAL, 5)
       expect(p2.strength).toBeCloseTo(80 - DECAY_RATE * CHECK_INTERVAL, 5)
+      vi.restoreAllMocks()
     })
 
     it('部分 pledge 过期被删除，其他保留', () => {
@@ -327,9 +329,9 @@ describe('DiplomaticPledgeSystem', () => {
       expect((sys as any).pledges).toHaveLength(0)
     })
 
-    it('duration = 1 时在 tick=2 过期', () => {
+    it('duration = 1 时在 tick=1300 过期', () => {
       injectPledge(sys, { strength: 80, startTick: 0, duration: 1 })
-      sys.update(0, makeEm(), makeCivManager([1, 2]), 2)
+      sys.update(0, makeEm(), makeCivManager([1, 2]), 1300)
       expect((sys as any).pledges).toHaveLength(0)
     })
 

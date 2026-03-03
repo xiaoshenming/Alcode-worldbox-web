@@ -263,4 +263,175 @@ describe('WorldHoodooSystem', () => {
       expect((sys as any).hoodoos[0].id).not.toBe((sys as any).hoodoos[1].id)
     })
   })
+
+  // ── 字段边界值测试 ──────────────────────────────────────────────────────────
+  describe('字段边界值测试', () => {
+    it('height可以是小数', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ height: 25.5 }))
+      expect((sys as any).hoodoos[0].height).toBeCloseTo(25.5, 1)
+    })
+
+    it('capstoneSize可以是小数', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ capstoneSize: 6.7 }))
+      expect((sys as any).hoodoos[0].capstoneSize).toBeCloseTo(6.7, 1)
+    })
+
+    it('shaftWidth可以是小数', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ shaftWidth: 2.3 }))
+      expect((sys as any).hoodoos[0].shaftWidth).toBeCloseTo(2.3, 1)
+    })
+
+    it('erosionRate可以是小数', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ erosionRate: 0.05 }))
+      expect((sys as any).hoodoos[0].erosionRate).toBeCloseTo(0.05, 2)
+    })
+
+    it('stability可以是小数', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ stability: 75.5 }))
+      expect((sys as any).hoodoos[0].stability).toBeCloseTo(75.5, 1)
+    })
+
+    it('tick可以是大数', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ tick: 999999 }))
+      expect((sys as any).hoodoos[0].tick).toBe(999999)
+    })
+  })
+
+  // ── 多hoodoo交互测试 ────────────────────────────────────────────────────────
+  describe('多hoodoo交互测试', () => {
+    it('多个hoodoo同时存在', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ id: 1, x: 10, y: 20 }))
+      ;(sys as any).hoodoos.push(makeHoodoo({ id: 2, x: 30, y: 40 }))
+      ;(sys as any).hoodoos.push(makeHoodoo({ id: 3, x: 50, y: 60 }))
+      expect((sys as any).hoodoos).toHaveLength(3)
+    })
+
+    it('不同位置的hoodoo可以共存', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ x: 0, y: 0 }))
+      ;(sys as any).hoodoos.push(makeHoodoo({ x: 100, y: 100 }))
+      ;(sys as any).hoodoos.push(makeHoodoo({ x: 199, y: 199 }))
+      expect((sys as any).hoodoos).toHaveLength(3)
+    })
+
+    it('部分hoodoo过期被删除，其他保留', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      const bigTick = 90000 + CHECK_INTERVAL + 1
+      ;(sys as any).hoodoos.push(makeHoodoo({ tick: 0 }))      // 过期
+      ;(sys as any).hoodoos.push(makeHoodoo({ tick: 50000 }))  // 保留
+      ;(sys as any).hoodoos.push(makeHoodoo({ tick: 0 }))      // 过期
+      sys.update(0, grassWorld, fakeEm, bigTick)
+      expect((sys as any).hoodoos).toHaveLength(1)
+      expect((sys as any).hoodoos[0].tick).toBe(50000)
+    })
+
+    it('不同height的hoodoo可以共存', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ height: 10 }))
+      ;(sys as any).hoodoos.push(makeHoodoo({ height: 20 }))
+      ;(sys as any).hoodoos.push(makeHoodoo({ height: 30 }))
+      expect((sys as any).hoodoos).toHaveLength(3)
+    })
+  })
+
+  // ── nextId管理测试 ──────────────────────────────────────────────────────────
+  describe('nextId管理测试', () => {
+    it('nextId可以手动设置', () => {
+      ;(sys as any).nextId = 100
+      expect((sys as any).nextId).toBe(100)
+    })
+
+    it('nextId不会因cleanup而改变', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      ;(sys as any).nextId = 50
+      ;(sys as any).hoodoos.push(makeHoodoo({ tick: 0 }))
+      const bigTick = 90000 + CHECK_INTERVAL + 1
+      sys.update(0, grassWorld, fakeEm, bigTick)
+      expect((sys as any).nextId).toBe(50)
+    })
+
+    it('多次update后nextId保持不变（无spawn）', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(0, grassWorld, fakeEm, CHECK_INTERVAL)
+      sys.update(0, grassWorld, fakeEm, CHECK_INTERVAL * 2)
+      expect((sys as any).nextId).toBe(1)
+    })
+  })
+
+  // ── 空数组和边界 ────────────────────────────────────────────────────────────
+  describe('空数组和边界', () => {
+    it('hoodoos为空时update不崩溃', () => {
+      expect(() => sys.update(0, grassWorld, fakeEm, CHECK_INTERVAL)).not.toThrow()
+    })
+
+    it('hoodoos为空时cleanup不崩溃', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      const bigTick = 90000 + CHECK_INTERVAL + 1
+      expect(() => sys.update(0, grassWorld, fakeEm, bigTick)).not.toThrow()
+    })
+
+    it('lastCheck在第一次update后更新', () => {
+      sys.update(0, grassWorld, fakeEm, CHECK_INTERVAL)
+      expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+    })
+
+    it('hoodoos数组支持push操作', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo())
+      expect((sys as any).hoodoos).toHaveLength(1)
+    })
+
+    it('id可以是任意正整数', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ id: 77777 }))
+      expect((sys as any).hoodoos[0].id).toBe(77777)
+    })
+
+    it('多个hoodoo的id可以各不相同', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ id: 1 }))
+      ;(sys as any).hoodoos.push(makeHoodoo({ id: 2 }))
+      ;(sys as any).hoodoos.push(makeHoodoo({ id: 3 }))
+      const ids = (sys as any).hoodoos.map((h: Hoodoo) => h.id)
+      expect(new Set(ids).size).toBe(3)
+    })
+  })
+
+  // ── 坐标范围测试 ────────────────────────────────────────────────────────────
+  describe('坐标范围测试', () => {
+    it('x坐标可以是0', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ x: 0 }))
+      expect((sys as any).hoodoos[0].x).toBe(0)
+    })
+
+    it('y坐标可以是0', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ y: 0 }))
+      expect((sys as any).hoodoos[0].y).toBe(0)
+    })
+
+    it('x坐标可以是world.width-1', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ x: 199 }))
+      expect((sys as any).hoodoos[0].x).toBe(199)
+    })
+
+    it('y坐标可以是world.height-1', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ y: 199 }))
+      expect((sys as any).hoodoos[0].y).toBe(199)
+    })
+  })
+
+  // ── colorBanding字段测试 ────────────────────────────────────────────────────
+  describe('colorBanding字段测试', () => {
+    it('colorBanding可以是整数', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ colorBanding: 8 }))
+      expect((sys as any).hoodoos[0].colorBanding).toBe(8)
+    })
+
+    it('colorBanding可以是小数', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ colorBanding: 5.5 }))
+      expect((sys as any).hoodoos[0].colorBanding).toBeCloseTo(5.5, 1)
+    })
+
+    it('不同colorBanding的hoodoo可以共存', () => {
+      ;(sys as any).hoodoos.push(makeHoodoo({ colorBanding: 3 }))
+      ;(sys as any).hoodoos.push(makeHoodoo({ colorBanding: 6 }))
+      ;(sys as any).hoodoos.push(makeHoodoo({ colorBanding: 9 }))
+      expect((sys as any).hoodoos).toHaveLength(3)
+    })
+  })
 })

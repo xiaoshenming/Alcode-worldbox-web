@@ -194,6 +194,10 @@ describe('CreatureChisellerSystem', () => {
   // ── 5. cleanup 逻辑（chisellingSkill <= 4 删除）──────────────────────────────
 
   describe('cleanup 逻辑（chisellingSkill <= 4 时删除）', () => {
+    beforeEach(() => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99) // 禁止随机招募
+    })
+
     it('chisellingSkill 递增后恰好等于 4.00 时删除（3.98 → 4.00）', () => {
       ;(sys as any).chisellers.push(makeChiseller(1, { chisellingSkill: 3.98 }))
       sys.update(16, makeEm(), 2920)

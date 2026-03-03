@@ -280,4 +280,165 @@ describe('DiplomaticClavigersSystem', () => {
       expect((sys as any).arrangements).toHaveLength(0)
     })
   })
+
+  // ─── 6. ClavigerForm枚举完整性 ───────────────────────────────────────
+  describe('ClavigerForm枚举完整性', () => {
+    it('royal_claviger是合法form', () => {
+      ;(sys as any).arrangements.push(makeArrangement({ form: 'royal_claviger' }))
+      expect((sys as any).arrangements[0].form).toBe('royal_claviger')
+    })
+
+    it('castle_claviger是合法form', () => {
+      ;(sys as any).arrangements.push(makeArrangement({ form: 'castle_claviger' }))
+      expect((sys as any).arrangements[0].form).toBe('castle_claviger')
+    })
+
+    it('city_claviger是合法form', () => {
+      ;(sys as any).arrangements.push(makeArrangement({ form: 'city_claviger' }))
+      expect((sys as any).arrangements[0].form).toBe('city_claviger')
+    })
+
+    it('abbey_claviger是合法form', () => {
+      ;(sys as any).arrangements.push(makeArrangement({ form: 'abbey_claviger' }))
+      expect((sys as any).arrangements[0].form).toBe('abbey_claviger')
+    })
+
+    it('FORMS数组包含全部4种form', () => {
+      expect(FORMS).toHaveLength(4)
+      expect(FORMS).toContain('royal_claviger')
+      expect(FORMS).toContain('castle_claviger')
+      expect(FORMS).toContain('city_claviger')
+      expect(FORMS).toContain('abbey_claviger')
+    })
+  })
+
+  // ─── 7. 字段边界值测试 ──────────────────────────────────────────────
+  describe('字段边界值测试', () => {
+    it('gateAuthority可以是小数', () => {
+      ;(sys as any).arrangements.push(makeArrangement({ gateAuthority: 42.5 }))
+      expect((sys as any).arrangements[0].gateAuthority).toBeCloseTo(42.5, 1)
+    })
+
+    it('accessControl可以是小数', () => {
+      ;(sys as any).arrangements.push(makeArrangement({ accessControl: 55.7 }))
+      expect((sys as any).arrangements[0].accessControl).toBeCloseTo(55.7, 1)
+    })
+
+    it('keyHolding可以是小数', () => {
+      ;(sys as any).arrangements.push(makeArrangement({ keyHolding: 33.3 }))
+      expect((sys as any).arrangements[0].keyHolding).toBeCloseTo(33.3, 1)
+    })
+
+    it('curfewEnforcement可以是小数', () => {
+      ;(sys as any).arrangements.push(makeArrangement({ curfewEnforcement: 28.9 }))
+      expect((sys as any).arrangements[0].curfewEnforcement).toBeCloseTo(28.9, 1)
+    })
+
+    it('duration初始为0', () => {
+      ;(sys as any).arrangements.push(makeArrangement({ duration: 0 }))
+      expect((sys as any).arrangements[0].duration).toBe(0)
+    })
+
+    it('tick可以是大数', () => {
+      ;(sys as any).arrangements.push(makeArrangement({ tick: 999999 }))
+      expect((sys as any).arrangements[0].tick).toBe(999999)
+    })
+  })
+
+  // ─── 8. 多arrangement交互测试 ────────────────────────────────────────
+  describe('多arrangement交互测试', () => {
+    it('多个arrangement同时存在', () => {
+      ;(sys as any).arrangements.push(makeArrangement({ id: 1, gateCivId: 1, accessCivId: 2 }))
+      ;(sys as any).arrangements.push(makeArrangement({ id: 2, gateCivId: 3, accessCivId: 4 }))
+      ;(sys as any).arrangements.push(makeArrangement({ id: 3, gateCivId: 5, accessCivId: 6 }))
+      expect((sys as any).arrangements).toHaveLength(3)
+    })
+
+    it('多个arrangement独立更新duration', () => {
+      ;(sys as any).arrangements.push(makeArrangement({ id: 1, duration: 0, tick: 1000 }))
+      ;(sys as any).arrangements.push(makeArrangement({ id: 2, duration: 5, tick: 1000 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 3030)
+      expect((sys as any).arrangements[0].duration).toBe(1)
+      expect((sys as any).arrangements[1].duration).toBe(6)
+    })
+
+    it('部分arrangement过期被删除，其他保留', () => {
+      ;(sys as any).arrangements.push(makeArrangement({ id: 1, tick: 0 }))      // 过期
+      ;(sys as any).arrangements.push(makeArrangement({ id: 2, tick: 50000 }))  // 保留
+      ;(sys as any).arrangements.push(makeArrangement({ id: 3, tick: 0 }))      // 过期
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 91030)
+      expect((sys as any).arrangements).toHaveLength(1)
+      expect((sys as any).arrangements[0].id).toBe(2)
+    })
+
+    it('不同form的arrangement可以共存', () => {
+      ;(sys as any).arrangements.push(makeArrangement({ id: 1, form: 'royal_claviger' }))
+      ;(sys as any).arrangements.push(makeArrangement({ id: 2, form: 'castle_claviger' }))
+      ;(sys as any).arrangements.push(makeArrangement({ id: 3, form: 'city_claviger' }))
+      ;(sys as any).arrangements.push(makeArrangement({ id: 4, form: 'abbey_claviger' }))
+      expect((sys as any).arrangements).toHaveLength(4)
+    })
+  })
+
+  // ─── 9. nextId管理测试 ──────────────────────────────────────────────
+  describe('nextId管理测试', () => {
+    it('nextId可以手动设置', () => {
+      ;(sys as any).nextId = 100
+      expect((sys as any).nextId).toBe(100)
+    })
+
+    it('nextId不会因cleanup而改变', () => {
+      ;(sys as any).nextId = 50
+      ;(sys as any).arrangements.push(makeArrangement({ id: 1, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 91030)
+      expect((sys as any).nextId).toBe(50)
+    })
+
+    it('多次update后nextId保持不变（无新增）', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1) // 不触发新增
+      sys.update(1, {} as any, {} as any, 3030)
+      sys.update(1, {} as any, {} as any, 6060)
+      expect((sys as any).nextId).toBe(1)
+    })
+  })
+
+  // ─── 10. 空数组和边界 ───────────────────────────────────────────────
+  describe('空数组和边界', () => {
+    it('arrangements为空时update不崩溃', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      expect(() => sys.update(1, {} as any, {} as any, 3030)).not.toThrow()
+    })
+
+    it('arrangements为空时cleanup不崩溃', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      expect(() => sys.update(1, {} as any, {} as any, 91030)).not.toThrow()
+    })
+
+    it('lastCheck在第一次update后更新', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 3030)
+      expect((sys as any).lastCheck).toBe(3030)
+    })
+
+    it('arrangements数组支持push操作', () => {
+      ;(sys as any).arrangements.push(makeArrangement())
+      expect((sys as any).arrangements).toHaveLength(1)
+    })
+
+    it('id可以是任意正整数', () => {
+      ;(sys as any).arrangements.push(makeArrangement({ id: 77777 }))
+      expect((sys as any).arrangements[0].id).toBe(77777)
+    })
+
+    it('多个arrangement的id可以各不相同', () => {
+      ;(sys as any).arrangements.push(makeArrangement({ id: 1 }))
+      ;(sys as any).arrangements.push(makeArrangement({ id: 2 }))
+      ;(sys as any).arrangements.push(makeArrangement({ id: 3 }))
+      const ids = (sys as any).arrangements.map((a: any) => a.id)
+      expect(new Set(ids).size).toBe(3)
+    })
+  })
 })
