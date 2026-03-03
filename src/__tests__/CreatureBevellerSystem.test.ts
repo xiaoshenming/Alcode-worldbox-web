@@ -14,7 +14,10 @@ function makeBeveller(entityId: number, overrides: Partial<Beveller> = {}): Beve
 
 describe('CreatureBevellerSystem', () => {
   let sys: CreatureBevellerSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  beforeEach(() => {
+    sys = makeSys(); nextId = 1
+    vi.spyOn(Math, 'random').mockReturnValue(0.99) // 阻止随机招募
+  })
   afterEach(() => vi.restoreAllMocks())
 
   // ── 基础数据测试 ────────────────────────────────────────────────────────────
