@@ -292,4 +292,317 @@ describe('WorldDeltaSystem — cleanup（按 tick 过期删除）', () => {
     sys.update(0, worldGrass, em, bigTick)
     expect((sys as any).deltas).toHaveLength(0)
   })
+
+  it('达到上限后删除过期的，可以再生成新的', () => {
+    // 预填14个过期三角洲（留一个空位）
+    for (let i = 0; i < MAX_DELTAS - 1; i++) {
+      ;(sys as any).deltas.push(makeDelta({ tick: 0 }))
+    }
+    const bigTick = 200000
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001) // 触发spawn
+    sys.update(0, worldSand, em, bigTick)
+    // 14个过期被删除，然后生成1个新的
+    expect((sys as any).deltas).toHaveLength(1)
+    expect((sys as any).deltas[0].tick).toBe(bigTick)
+  })
+
+  it('多个三角洲同时过期', () => {
+    const bigTick = 300000
+    for (let i = 0; i < 10; i++) {
+      ;(sys as any).deltas.push(makeDelta({ tick: 100000 })) // 全部过期
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, worldGrass, em, bigTick)
+    expect((sys as any).deltas).toHaveLength(0)
+  })
+})
+
+describe('WorldDeltaSystem — 边界条件测试', () => {
+  let sys: WorldDeltaSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('sedimentDeposit 极小值（接近5）时更新后仍≥5', () => {
+    ;(sys as any).deltas.push(makeDelta({ sedimentDeposit: 5.1 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.01) // 会减少
+    sys.update(0, worldGrass, em, CHECK_INTERVAL)
+    expect((sys as any).deltas[0].sedimentDeposit).toBeGreaterThanOrEqual(5)
+  })
+
+  it('sedimentDeposit 极大值（接近80）时更新后仍≤80', () => {
+    ;(sys as any).deltas.push(makeDelta({ sedimentDeposit: 79.9 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.99) // 会增加
+    sys.update(0, worldGrass, em, CHECK_INTERVAL)
+    expect((sys as any).deltas[0].sedimentDeposit).toBeLessThanOrEqual(80)
+  })
+
+  it('fertility 极小值（接近15）时更新后仍≥15', () => {
+    ;(sys as any).deltas.push(makeDelta({ fertility: 15.1 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.01) // 会减少
+    sys.update(0, worldGrass, em, CHECK_INTERVAL)
+    expect((sys as any).deltas[0].fertility).toBeGreaterThanOrEqual(15)
+  })
+
+  it('fertility 极大值（接近90）时更新后仍≤90', () => {
+    ;(sys as any).deltas.push(makeDelta({ fertility: 89.9 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.99) // 会增加
+    sys.update(0, worldGrass, em, CHECK_INTERVAL)
+    expect((sys as any).deltas[0].fertility).toBeLessThanOrEqual(90)
+  })
+
+  it('spectacle 极小值（接近10）时更新后仍≥10', () => {
+    ;(sys as any).deltas.push(makeDelta({ spectacle: 10.1 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.01) // 会减少
+    sys.update(0, worldGrass, em, CHECK_INTERVAL)
+    expect((sys as any).deltas[0].spectacle).toBeGreaterThanOrEqual(10)
+  })
+
+  it('spectacle 极大值（接近70）时更新后仍≤70', () => {
+    ;(sys as any).deltas.push(makeDelta({ spectacle: 69.9 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.99) // 会增加
+    sys.update(0, worldGrass, em, CHECK_INTERVAL)
+    expect((sys as any).deltas[0].spectacle).toBeLessThanOrEqual(70)
+  })
+
+  it('area 接近上限时增长受限', () => {
+    ;(sys as any).deltas.push(makeDelta({ area: 79.9, sedimentDeposit: 80 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    sys.update(0, worldGrass, em, CHECK_INTERVAL)
+    // area 上限为 80，应该被 clamp
+    expect((sys as any).deltas[0].area).toBeLessThanOrEqual(80)
+    expect((sys as any).deltas[0].area).toBeGreaterThan(79.9)
+  })
+
+  it('世界边界位置（x=10, y=10）可以生成三角洲', () => {
+    const worldSmall = { width: 50, height: 50, getTile: () => 2, setTile: () => {} } as any
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0.0001) // FORM_CHANCE
+      .mockReturnValueOnce(0) // x = 10 + 0*(50-20) = 10
+      .mockReturnValueOnce(0) // y = 10 + 0*(50-20) = 10
+    sys.update(0, worldSmall, em, CHECK_INTERVAL)
+    expect((sys as any).deltas).toHaveLength(1)
+    expect((sys as any).deltas[0].x).toBe(10)
+    expect((sys as any).deltas[0].y).toBe(10)
+  })
+
+  it('世界边界位置（x=width-11, y=height-11）可以生成三角洲', () => {
+    const worldSmall = { width: 50, height: 50, getTile: () => 2, setTile: () => {} } as any
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0.0001) // FORM_CHANCE
+      .mockReturnValueOnce(0.9999) // x = 10 + floor(0.9999*30) = 10+29 = 39
+      .mockReturnValueOnce(0.9999) // y = 10 + floor(0.9999*30) = 10+29 = 39
+    sys.update(0, worldSmall, em, CHECK_INTERVAL)
+    expect((sys as any).deltas).toHaveLength(1)
+    expect((sys as any).deltas[0].x).toBe(39)
+    expect((sys as any).deltas[0].y).toBe(39)
+  })
+})
+
+describe('WorldDeltaSystem — 多实体交互测试', () => {
+  let sys: WorldDeltaSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('同时有多个三角洲在不同生命周期阶段', () => {
+    const currentTick = 200000
+    ;(sys as any).deltas.push(makeDelta({ tick: 0, sedimentDeposit: 20 }))        // 过期
+    ;(sys as any).deltas.push(makeDelta({ tick: 150000, sedimentDeposit: 40 }))   // 保留
+    ;(sys as any).deltas.push(makeDelta({ tick: 190000, sedimentDeposit: 60 }))   // 保留
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    sys.update(0, worldGrass, em, currentTick)
+    expect((sys as any).deltas).toHaveLength(2)
+    // 验证保留的两个都被更新了
+    for (const d of (sys as any).deltas) {
+      expect(d.sedimentDeposit).toBeGreaterThanOrEqual(5)
+      expect(d.sedimentDeposit).toBeLessThanOrEqual(80)
+    }
+  })
+
+  it('多个三角洲的id唯一性', () => {
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).deltas.push(makeDelta())
+    }
+    const ids = (sys as any).deltas.map((d: Delta) => d.id)
+    const uniqueIds = new Set(ids)
+    expect(uniqueIds.size).toBe(5)
+  })
+
+  it('nextId 在多次spawn后连续递增', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    for (let i = 0; i < 3; i++) {
+      sys.update(0, worldSand, em, CHECK_INTERVAL * (i + 1))
+    }
+    expect((sys as any).nextId).toBe(4) // 1→2→3→4
+    expect((sys as any).deltas).toHaveLength(3)
+  })
+})
+
+describe('WorldDeltaSystem — 状态转换测试', () => {
+  let sys: WorldDeltaSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('从0个三角洲到1个的转换', () => {
+    expect((sys as any).deltas).toHaveLength(0)
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    expect((sys as any).deltas).toHaveLength(1)
+  })
+
+  it('从MAX_DELTAS-1到MAX_DELTAS的转换', () => {
+    for (let i = 0; i < MAX_DELTAS - 1; i++) {
+      ;(sys as any).deltas.push(makeDelta())
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    expect((sys as any).deltas).toHaveLength(MAX_DELTAS)
+  })
+
+  it('连续多次update后sedimentDeposit累积变化', () => {
+    ;(sys as any).deltas.push(makeDelta({ sedimentDeposit: 40 }))
+    const initial = (sys as any).deltas[0].sedimentDeposit
+    vi.spyOn(Math, 'random').mockReturnValue(0.6) // 稳定增长
+    for (let i = 0; i < 5; i++) {
+      sys.update(0, worldGrass, em, CHECK_INTERVAL * (i + 1))
+    }
+    // 验证值发生了变化
+    expect((sys as any).deltas[0].sedimentDeposit).not.toBe(initial)
+  })
+
+  it('连续多次update后area累积增长', () => {
+    ;(sys as any).deltas.push(makeDelta({ area: 30, sedimentDeposit: 50 }))
+    const initial = (sys as any).deltas[0].area
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    for (let i = 0; i < 10; i++) {
+      sys.update(0, worldGrass, em, CHECK_INTERVAL * (i + 1))
+    }
+    expect((sys as any).deltas[0].area).toBeGreaterThan(initial)
+  })
+})
+
+describe('WorldDeltaSystem — 极端值测试', () => {
+  let sys: WorldDeltaSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('tick=0时的行为正常', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, worldSand, em, 0)
+    // tick=0 < CHECK_INTERVAL，不执行逻辑
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('tick 非常大时的行为正常', () => {
+    const hugeTick = 10000000
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    sys.update(0, worldSand, em, hugeTick)
+    expect((sys as any).lastCheck).toBe(hugeTick)
+  })
+
+  it('random=0时所有字段更新正常', () => {
+    ;(sys as any).deltas.push(makeDelta({ sedimentDeposit: 40, fertility: 50, spectacle: 35 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, worldGrass, em, CHECK_INTERVAL)
+    const d = (sys as any).deltas[0]
+    expect(d.sedimentDeposit).toBeGreaterThanOrEqual(5)
+    expect(d.fertility).toBeGreaterThanOrEqual(15)
+    expect(d.spectacle).toBeGreaterThanOrEqual(10)
+  })
+
+  it('random=1时所有字段更新正常', () => {
+    ;(sys as any).deltas.push(makeDelta({ sedimentDeposit: 40, fertility: 50, spectacle: 35 }))
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(0, worldGrass, em, CHECK_INTERVAL)
+    const d = (sys as any).deltas[0]
+    expect(d.sedimentDeposit).toBeLessThanOrEqual(80)
+    expect(d.fertility).toBeLessThanOrEqual(90)
+    expect(d.spectacle).toBeLessThanOrEqual(70)
+  })
+
+  it('channelCount 的范围验证（2-8）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    const channelCount = (sys as any).deltas[0].channelCount
+    expect(channelCount).toBeGreaterThanOrEqual(2)
+    expect(channelCount).toBeLessThanOrEqual(8)
+  })
+
+  it('floodRisk 的初始值验证（10-45）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    const floodRisk = (sys as any).deltas[0].floodRisk
+    expect(floodRisk).toBeGreaterThanOrEqual(10)
+    expect(floodRisk).toBeLessThanOrEqual(45)
+  })
+})
+
+describe('WorldDeltaSystem — 组合场景测试', () => {
+  let sys: WorldDeltaSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('spawn + update + cleanup 在同一次调用中', () => {
+    ;(sys as any).deltas.push(makeDelta({ tick: 0 })) // 会被删除
+    const bigTick = 200000
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    sys.update(0, worldSand, em, bigTick)
+    // 旧的被删除，新的被创建
+    expect((sys as any).deltas).toHaveLength(1)
+    expect((sys as any).deltas[0].tick).toBe(bigTick)
+  })
+
+  it('连续多次达到CHECK_INTERVAL的调用', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    for (let i = 1; i <= 5; i++) {
+      sys.update(0, worldSand, em, CHECK_INTERVAL * i)
+    }
+    expect((sys as any).deltas.length).toBeGreaterThan(0)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 5)
+  })
+
+  it('不同tile类型的混合测试', () => {
+    const worldMixed = {
+      width: 200, height: 200,
+      getTile: (x: number, y: number) => (x + y) % 2 === 0 ? 2 : 3, // SAND和GRASS交替
+      setTile: () => {}
+    } as any
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    sys.update(0, worldMixed, em, CHECK_INTERVAL)
+    // 可能spawn也可能不spawn，取决于随机位置
+    expect((sys as any).deltas.length).toBeGreaterThanOrEqual(0)
+  })
+
+  it('area增长的累积效果验证', () => {
+    ;(sys as any).deltas.push(makeDelta({ area: 30, sedimentDeposit: 60 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    const initialArea = (sys as any).deltas[0].area
+    for (let i = 0; i < 20; i++) {
+      sys.update(0, worldGrass, em, CHECK_INTERVAL * (i + 1))
+    }
+    const finalArea = (sys as any).deltas[0].area
+    expect(finalArea).toBeGreaterThan(initialArea)
+    expect(finalArea).toBeLessThanOrEqual(80)
+  })
+
+  it('sedimentDeposit对area增长的影响验证', () => {
+    ;(sys as any).deltas.push(makeDelta({ area: 30, sedimentDeposit: 20 }))
+    ;(sys as any).deltas.push(makeDelta({ area: 30, sedimentDeposit: 70 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    sys.update(0, worldGrass, em, CHECK_INTERVAL)
+    const area1 = (sys as any).deltas[0].area
+    const area2 = (sys as any).deltas[1].area
+    // sedimentDeposit更高的三角洲area增长更快
+    expect(area2 - 30).toBeGreaterThan(area1 - 30)
+  })
+
+  it('多次spawn后所有三角洲都有有效的tick值', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    for (let i = 1; i <= 5; i++) {
+      sys.update(0, worldSand, em, CHECK_INTERVAL * i)
+    }
+    for (const d of (sys as any).deltas) {
+      expect(d.tick).toBeGreaterThan(0)
+      expect(d.tick).toBeLessThanOrEqual(CHECK_INTERVAL * 5)
+    }
+  })
 })
