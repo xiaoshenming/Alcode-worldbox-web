@@ -256,7 +256,10 @@ describe('CreatureBroacherSystem - 技能增长', () => {
 
 describe('CreatureBroacherSystem - cleanup 逻辑', () => {
   let sys: CreatureBroacherSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys = makeSys(); nextId = 1
+  })
   afterEach(() => vi.restoreAllMocks())
 
   it('broachingSkill <= 4（3.98+0.02=4.00）时被删除', () => {

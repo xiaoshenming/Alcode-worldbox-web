@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { CreatureNeedlerSystem } from '../systems/CreatureNeedlerSystem'
 import type { Needler } from '../systems/CreatureNeedlerSystem'
 
@@ -142,7 +142,11 @@ describe('CreatureNeedlerSystem - 技能增量', () => {
 
 describe('CreatureNeedlerSystem - cleanup边界', () => {
   let sys: CreatureNeedlerSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys = makeSys(); nextId = 1
+  })
+  afterEach(() => vi.restoreAllMocks())
 
   it('needlingSkill=3.98，增量后4.00<=4，被删除', () => {
     ;(sys as any).needlers.push({ ...makeNeedler(1), needlingSkill: 3.98 })
@@ -219,7 +223,11 @@ describe('CreatureNeedlerSystem - lastCheck追踪', () => {
 
 describe('CreatureNeedlerSystem - 多工匠cleanup批量', () => {
   let sys: CreatureNeedlerSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys = makeSys(); nextId = 1
+  })
+  afterEach(() => vi.restoreAllMocks())
 
   it('5个工匠全部needlingSkill低，全删', () => {
     for (let i = 0; i < 5; i++) {
@@ -366,7 +374,11 @@ describe('CreatureNeedlerSystem - 精确验证', () => {
 
 describe('CreatureNeedlerSystem - 批量工匠全部cleanup', () => {
   let sys: CreatureNeedlerSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys = makeSys(); nextId = 1
+  })
+  afterEach(() => vi.restoreAllMocks())
 
   it('8个全高，全部保留', () => {
     for (let i = 0; i < 8; i++) {

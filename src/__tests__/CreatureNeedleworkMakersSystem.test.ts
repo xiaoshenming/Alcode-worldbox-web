@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { CreatureNeedleworkMakersSystem } from '../systems/CreatureNeedleworkMakersSystem'
 import type { NeedleworkMaker } from '../systems/CreatureNeedleworkMakersSystem'
 
@@ -143,7 +143,11 @@ describe('CreatureNeedleworkMakersSystem - 技能增量', () => {
 
 describe('CreatureNeedleworkMakersSystem - cleanup边界', () => {
   let sys: CreatureNeedleworkMakersSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys = makeSys(); nextId = 1
+  })
+  afterEach(() => vi.restoreAllMocks())
 
   it('stitchPrecision=3.98，增量后4.00<=4，被删除', () => {
     ;(sys as any).makers.push({ ...makeMaker(1), stitchPrecision: 3.98 })
@@ -253,7 +257,11 @@ describe('CreatureNeedleworkMakersSystem - threadSelection字段保留', () => {
 describe('CreatureNeedleworkMakersSystem - 批量cleanup', () => {
   let sys: CreatureNeedleworkMakersSystem
   const em = {} as any
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys = makeSys(); nextId = 1
+  })
+  afterEach(() => vi.restoreAllMocks())
 
   it('stitchPrecision全低：全部被清除', () => {
     for (let i = 0; i < 4; i++) {
