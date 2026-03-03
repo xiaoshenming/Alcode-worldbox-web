@@ -260,7 +260,7 @@ describe('CreatureHornworkerSystem — update 后技能增长', () => {
 
 describe('CreatureHornworkerSystem — cleanup hornShaping <= 4', () => {
   let sys: CreatureHornworkerSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
   afterEach(() => vi.restoreAllMocks())
 
   it('hornShaping = 3（初始）增长后 3.02 <= 4，被删除', () => {
