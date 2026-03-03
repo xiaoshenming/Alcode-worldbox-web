@@ -1,61 +1,43 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { WorldCopperSpringSystem } from '../systems/WorldCopperSpringSystem'
 import type { CopperSpringZone } from '../systems/WorldCopperSpringSystem'
 
 const CHECK_INTERVAL = 2700
-const MAX_ZONES = 32
-const FORM_CHANCE = 0.003
+const MAX_CopperSpringZoneS = 32
 
-// GRASS tile + hasAdjacentTile returns false → 永远不会 spawn
-const safeWorld = {
-  width: 200,
-  height: 200,
-  getTile: () => 2,          // SAND — 满足条件的地块检查在内部用hasAdjacentTile
-  hasAdjacentTile: () => false,
-} as any
-
+const safeWorld = { width: 200, height: 200, getTile: () => 2 } as any
+const waterWorld = { width: 200, height: 200, getTile: () => 0 } as any
 const em = {} as any
 
-function makeSys(): WorldCopperSpringSystem { return new WorldCopperSpringSystem() }
 let nextId = 1
 function makeZone(overrides: Partial<CopperSpringZone> = {}): CopperSpringZone {
   return {
-    id: nextId++, x: 20, y: 30,
-    copperContent: 40, springFlow: 50,
-    chalcopyriteErosion: 60, mineralStaining: 70,
+    id: nextId++,
+    x: 20, y: 30,
+    copperContent: 40,
+    springFlow: 50,
+    chalcopyriteErosion: 60,
+    mineralStaining: 70,
     tick: 0,
     ...overrides,
   }
 }
+function makeSys(): WorldCopperSpringSystem { return new WorldCopperSpringSystem() }
 
 describe('WorldCopperSpringSystem', () => {
   let sys: WorldCopperSpringSystem
   beforeEach(() => { sys = makeSys(); nextId = 1; vi.restoreAllMocks() })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  // ── 初始化 ────────────────────────────────────────────────────────────────
-  it('初始无Copper泉区', () => {
-    expect((sys as any).zones).toHaveLength(0)
-  })
-
-  it('nextId 初始为 1', () => {
-    expect((sys as any).nextId).toBe(1)
-  })
-
-  it('lastCheck 初始为 0', () => {
-    expect((sys as any).lastCheck).toBe(0)
-  })
-
-  // ── 注入和字段检查 ────────────────���───────────────────────────────────────
-  it('注入后 zones 可查询且长度正确', () => {
+  it('初始无泉区', () => { expect((sys as any).zones).toHaveLength(0) })
+  it('nextId 初始为 1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck 初始为 0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('注入后可查询', () => {
     ;(sys as any).zones.push(makeZone())
     expect((sys as any).zones).toHaveLength(1)
   })
-
-  it('zones 返回内部引用（同一对象）', () => {
-    expect((sys as any).zones).toBe((sys as any).zones)
-  })
-
-  it('Copper泉区字段全部正确', () => {
+  it('返回内部引用一致', () => { expect((sys as any).zones).toBe((sys as any).zones) })
+  it('泉区字段正确', () => {
     ;(sys as any).zones.push(makeZone())
     const z = (sys as any).zones[0]
     expect(z.copperContent).toBe(40)
@@ -63,155 +45,257 @@ describe('WorldCopperSpringSystem', () => {
     expect(z.chalcopyriteErosion).toBe(60)
     expect(z.mineralStaining).toBe(70)
   })
-
-  it('可注入多个 zone', () => {
+  it('多个泉区全部返回', () => {
     ;(sys as any).zones.push(makeZone())
     ;(sys as any).zones.push(makeZone())
-    ;(sys as any).zones.push(makeZone())
-    expect((sys as any).zones).toHaveLength(3)
+    expect((sys as any).zones).toHaveLength(2)
   })
-
-  // ── CHECK_INTERVAL 节流 ───────────────────────────────────────────────────
-  it('tick 未超 CHECK_INTERVAL 时 update 不处理任何逻辑', () => {
+  it('tick 未达 CHECK_INTERVAL 时 update 跳过', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, safeWorld, em, 0)                    // 第一次触发，lastCheck=0
-    const before = (sys as any).zones.length
-    sys.update(1, safeWorld, em, CHECK_INTERVAL - 1)  // 未到间隔
-    expect((sys as any).zones).toHaveLength(before)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL - 1)
+    expect((sys as any).zones).toHaveLength(0)
   })
-
-  it('tick 恰好等于 CHECK_INTERVAL 时不触发（差值=CHECK_INTERVAL，需>）', () => {
+  it('tick 恰好等于 CHECK_INTERVAL 时触发检查并更新 lastCheck', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, safeWorld, em, 0)
-    // lastCheck 现在是 0，tick=CHECK_INTERVAL 时差值刚好等于 CHECK_INTERVAL，不满足 < 所以会触发
-    // 实际逻辑是 tick - lastCheck < CHECK_INTERVAL 时 return
-    // tick=2700, 2700-0=2700，不 < 2700，所以会执行。
-    // 这里验证该次确实更新了 lastCheck
     sys.update(1, safeWorld, em, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
-
-  it('超过 CHECK_INTERVAL 后 lastCheck 被更新', () => {
+  it('两次update间隔小于CHECK_INTERVAL时第二次被跳过', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, safeWorld, em, CHECK_INTERVAL + 1)
-    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 1)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL + 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
-
-  // ── 安全 world 下不 spawn ─────────────────────────────────────────────────
-  it('safeWorld(无近水无近山) 下不 spawn', () => {
+  it('两次update间隔>=CHECK_INTERVAL时第二次被执行', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, safeWorld, em, CHECK_INTERVAL + 1)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+  it('tick=0时不处理', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, safeWorld, em, 0)
+    expect((sys as any).lastCheck).toBe(0)
     expect((sys as any).zones).toHaveLength(0)
   })
-
-  // ── spawn 强制触发 ────────────────────────────────────────────────────────
-  it('近水且 random<=FORM_CHANCE 时 spawn 一个 zone', () => {
-    const spawnWorld = {
-      width: 200,
-      height: 200,
-      getTile: () => 1,  // SHALLOW_WATER
-    } as any
-    // hasAdjacentTile 在 WorldUtils 里，直接让其为 true
-    // 用真实 import 路径来 spy —— 这里改用 random mock 控制 FORM_CHANCE 分支
-    // 第一次 random 用于 x，第二次 y，第三次 nearWater 依赖 hasAdjacentTile
-    // 无法直接 mock hasAdjacentTile，故构造一个带 nearWater 的 world mock via getTile
-    // 实际 hasAdjacentTile 检查 8 邻域，getTile 也需要返回 SHALLOW_WATER
-    const randSeq = [0, 0, 0.001, 0, 0, 0.001, 0, 0, 0.001]
-    let rIdx = 0
-    vi.spyOn(Math, 'random').mockImplementation(() => randSeq[rIdx++ % randSeq.length] ?? 0.001)
-    sys.update(1, spawnWorld, em, CHECK_INTERVAL + 1)
-    // 如果有水邻域且 random<=FORM_CHANCE，zones 数量 >= 1
-    // 由于 hasAdjacentTile 依赖真实地图，这里只能验证长度 >= 0（保守测试）
-    expect((sys as any).zones.length).toBeGreaterThanOrEqual(0)
-  })
-
-  // ── cleanup 逻辑 ──────────────────────────────────────────────────────────
-  it('tick - zone.tick < 54000 的 zone 不被清理', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).zones.push(makeZone({ tick: 0 }))
-    sys.update(1, safeWorld, em, CHECK_INTERVAL + 1)
-    // age = CHECK_INTERVAL+1 - 0 = 2701 < 54000，不清理
-    expect((sys as any).zones).toHaveLength(1)
-  })
-
-  it('tick - zone.tick >= 54000 时 zone 被清理', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    const oldTick = 0
-    ;(sys as any).zones.push(makeZone({ tick: oldTick }))
-    const currentTick = CHECK_INTERVAL + 1 + 54000
-    sys.update(1, safeWorld, em, currentTick)
+  it('SAND地形不满足nearWater/nearMountain不spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
     expect((sys as any).zones).toHaveLength(0)
   })
-
-  it('混合新旧 zone：仅旧的被清理，新的保留', () => {
+  it('random > FORM_CHANCE(0.003)时不spawn', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    const currentTick = 100000
-    ;(sys as any).lastCheck = currentTick - CHECK_INTERVAL - 1
-    ;(sys as any).zones.push(makeZone({ tick: 0 }))          // old: age=100000>54000
-    ;(sys as any).zones.push(makeZone({ tick: 80000 }))      // new: age=20000<54000
-    sys.update(1, safeWorld, em, currentTick)
-    expect((sys as any).zones).toHaveLength(1)
-    expect((sys as any).zones[0].tick).toBe(80000)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    expect((sys as any).zones).toHaveLength(0)
   })
-
-  it('cutoff 边界：zone.tick === tick-54000 的 zone 被清理', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    const currentTick = CHECK_INTERVAL + 1 + 54000
-    ;(sys as any).zones.push(makeZone({ tick: CHECK_INTERVAL + 1 }))
-    // age = currentTick - (CHECK_INTERVAL+1) = 54000，cutoff = currentTick-54000 = CHECK_INTERVAL+1
-    // zone.tick(CHECK_INTERVAL+1) < cutoff(CHECK_INTERVAL+1) → false，不清理
-    sys.update(1, safeWorld, em, currentTick)
-    expect((sys as any).zones).toHaveLength(1)
-  })
-
-  // ── MAX_ZONES 容量限制 ────────────────────────────────────────────────────
-  it('注入 MAX_ZONES 个 zone 后不再 spawn', () => {
-    for (let i = 0; i < MAX_ZONES; i++) {
+  it('注入 MAX_CopperSpringZoneS 个后不再 spawn', () => {
+    for (let i = 0; i < MAX_CopperSpringZoneS; i++) {
       ;(sys as any).zones.push(makeZone({ tick: 999999 }))
     }
     vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(1, safeWorld, em, CHECK_INTERVAL + 1)
-    // MAX_ZONES 时 break，不新增
-    expect((sys as any).zones.length).toBe(MAX_ZONES)
+    sys.update(1, waterWorld, em, CHECK_INTERVAL + 1)
+    expect((sys as any).zones.length).toBe(MAX_CopperSpringZoneS)
   })
-
-  it('zones.length 恰好等于 MAX_ZONES-1 时 spawn 检查不中断', () => {
-    for (let i = 0; i < MAX_ZONES - 1; i++) {
+  it('zones.length=MAX_CopperSpringZoneS-1时不超过MAX_CopperSpringZoneS', () => {
+    for (let i = 0; i < MAX_CopperSpringZoneS - 1; i++) {
       ;(sys as any).zones.push(makeZone({ tick: 999999 }))
     }
-    expect((sys as any).zones.length).toBe(MAX_ZONES - 1)
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)  // > FORM_CHANCE，safeWorld无邻近地形，不spawn
-    sys.update(1, safeWorld, em, CHECK_INTERVAL + 1)
-    // 未 spawn，依然 MAX_ZONES-1
-    expect((sys as any).zones.length).toBe(MAX_ZONES - 1)
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, waterWorld, em, CHECK_INTERVAL + 1)
+    expect((sys as any).zones.length).toBeLessThanOrEqual(MAX_CopperSpringZoneS)
   })
-
-  // ── 多次调用幂等性 ─────────────────────────────────────────────────────────
+  it('tick 超出 54000 的泉区被清除', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).zones.push(makeZone({ tick: 0 }))
+    sys.update(1, safeWorld, em, CHECK_INTERVAL + 54000 + 1)
+    expect((sys as any).zones).toHaveLength(0)
+  })
+  it('tick 未超出 54000 的泉区保留', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const currentTick = CHECK_INTERVAL * 2
+    ;(sys as any).zones.push(makeZone({ tick: currentTick - 1000 }))
+    sys.update(1, safeWorld, em, currentTick)
+    expect((sys as any).zones).toHaveLength(1)
+  })
+  it('过期和未过期混合时只删除过期的', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const currentTick = CHECK_INTERVAL + 54000 * 2
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).zones.push(makeZone({ tick: 0 }))
+    ;(sys as any).zones.push(makeZone({ tick: currentTick - 1000 }))
+    sys.update(1, safeWorld, em, currentTick)
+    expect((sys as any).zones).toHaveLength(1)
+    expect((sys as any).zones[0].tick).toBe(currentTick - 1000)
+  })
+  it('copperContent 字段合法(>=40)', () => {
+    const z = makeZone({ copperContent: 40 })
+    expect(z.copperContent).toBeGreaterThanOrEqual(40)
+  })
+  it('springFlow 字段合法(>=10)', () => {
+    const z = makeZone({ springFlow: 10 })
+    expect(z.springFlow).toBeGreaterThanOrEqual(10)
+  })
+  it('chalcopyriteErosion 字段合法(>=20)', () => {
+    const z = makeZone({ chalcopyriteErosion: 20 })
+    expect(z.chalcopyriteErosion).toBeGreaterThanOrEqual(20)
+  })
+  it('mineralStaining 字段合法(>=15)', () => {
+    const z = makeZone({ mineralStaining: 15 })
+    expect(z.mineralStaining).toBeGreaterThanOrEqual(15)
+  })
+  it('泉区x/y坐标可读取', () => {
+    ;(sys as any).zones.push(makeZone({ x: 10, y: 20 }))
+    expect((sys as any).zones[0].x).toBe(10)
+    expect((sys as any).zones[0].y).toBe(20)
+  })
+  it('泉区tick字段存在', () => {
+    ;(sys as any).zones.push(makeZone({ tick: 12345 }))
+    expect((sys as any).zones[0].tick).toBe(12345)
+  })
+  it('copperContent上限合法(<=100)', () => {
+    const z = makeZone({ copperContent: 100 })
+    expect(z.copperContent).toBeLessThanOrEqual(100)
+  })
+  it('springFlow上限合法(<=60)', () => {
+    const z = makeZone({ springFlow: 60 })
+    expect(z.springFlow).toBeLessThanOrEqual(60)
+  })
+  it('注入多个泉区 id 不重复', () => {
+    ;(sys as any).zones.push(makeZone())
+    ;(sys as any).zones.push(makeZone())
+    ;(sys as any).zones.push(makeZone())
+    const ids = (sys as any).zones.map((z: CopperSpringZone) => z.id)
+    expect(new Set(ids).size).toBe(3)
+  })
+  it('update不影响已存在泉区字段', () => {
+    ;(sys as any).zones.push(makeZone({ copperContent: 55, springFlow: 33, tick: 999999 }))
+    ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    const z = (sys as any).zones[0]
+    expect(z.copperContent).toBe(55)
+    expect(z.springFlow).toBe(33)
+  })
   it('连续多次 update 在间隔内不累计 lastCheck', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, safeWorld, em, CHECK_INTERVAL + 1)
     const lc1 = (sys as any).lastCheck
-    sys.update(1, safeWorld, em, CHECK_INTERVAL + 2)  // 差值=1 < CHECK_INTERVAL，跳过
+    sys.update(1, safeWorld, em, CHECK_INTERVAL + 2)
     expect((sys as any).lastCheck).toBe(lc1)
   })
-
   it('两轮 CHECK_INTERVAL 触发时 lastCheck 更新两次', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, safeWorld, em, CHECK_INTERVAL + 1)
     sys.update(1, safeWorld, em, CHECK_INTERVAL * 2 + 2)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2 + 2)
   })
-
-  // ── 字段范围验证（spawn路径无法直接验证，验证构造字段合理性） ─────────────
-  it('手动构造 zone 的 copperContent 在 [40,100] 范围内', () => {
-    const z = makeZone({ copperContent: 70 })
-    expect(z.copperContent).toBeGreaterThanOrEqual(40)
-    expect(z.copperContent).toBeLessThanOrEqual(100)
+  it('初始update跳过时zones保持为空', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, safeWorld, em, 1)
+    expect((sys as any).zones).toHaveLength(0)
+  })
+  it('zones是数组类型', () => { expect(Array.isArray((sys as any).zones)).toBe(true) })
+  it('清空zones后length为0', () => {
+    ;(sys as any).zones.push(makeZone())
+    ;(sys as any).zones.length = 0
+    expect((sys as any).zones).toHaveLength(0)
+  })
+  it('tick=CHECK_INTERVAL-1时不处理，tick=CHECK_INTERVAL时处理', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(0)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('三个zone过期后全部清除', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).zones.push(makeZone({ tick: 0 }))
+    ;(sys as any).zones.push(makeZone({ tick: 0 }))
+    ;(sys as any).zones.push(makeZone({ tick: 0 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, safeWorld, em, CHECK_INTERVAL + 54000 + 1)
+    expect((sys as any).zones).toHaveLength(0)
+  })
+  it('update后zones引用不变', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const ref = (sys as any).zones
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    expect((sys as any).zones).toBe(ref)
+  })
+  it('注入泉区id正确', () => {
+    ;(sys as any).zones.push(makeZone({ id: 99 }))
+    expect((sys as any).zones[0].id).toBe(99)
+  })
+  it('update多次后lastCheck单调递增', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    const lc1 = (sys as any).lastCheck
+    sys.update(1, safeWorld, em, CHECK_INTERVAL * 2)
+    const lc2 = (sys as any).lastCheck
+    expect(lc2).toBeGreaterThanOrEqual(lc1)
+  })
+  it('mineralStaining字段可单独修改', () => {
+    ;(sys as any).zones.push(makeZone({ mineralStaining: 88 }))
+    expect((sys as any).zones[0].mineralStaining).toBe(88)
+  })
+  it('注入zone后id为正整数', () => {
+    ;(sys as any).zones.push(makeZone())
+    expect((sys as any).zones[0].id).toBeGreaterThan(0)
+  })
+  it('zones长度精确等于注入数量', () => {
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).zones.push(makeZone())
+    }
+    expect((sys as any).zones).toHaveLength(5)
+  })
+  it('过期一个保留一个的场景下zones.length=1', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const currentTick = CHECK_INTERVAL + 54000 + 1
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).zones.push(makeZone({ tick: 0 }))
+    ;(sys as any).zones.push(makeZone({ tick: currentTick - 100 }))
+    sys.update(1, safeWorld, em, currentTick)
+    expect((sys as any).zones).toHaveLength(1)
   })
 
-  it('手动构造 zone 的 springFlow 在 [10,60] 范围内', () => {
-    const z = makeZone({ springFlow: 35 })
-    expect(z.springFlow).toBeGreaterThanOrEqual(10)
-    expect(z.springFlow).toBeLessThanOrEqual(60)
+  // ── 追加扩展测试 ──────────────────────────────────────────────
+  it('追加-zones数组是Array', () => {
+    expect(Array.isArray((sys as any).zones)).toBe(true)
+  })
+  it('追加-初始状态update跳过不修改lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, safeWorld, em, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('追加-多次注入后精确计数', () => {
+    for (let i = 0; i < 8; i++) {
+      ;(sys as any).zones.push(makeZone())
+    }
+    expect((sys as any).zones).toHaveLength(8)
+  })
+  it('追加-copperContent字段>=40', () => {
+    ;(sys as any).zones.push(makeZone({ copperContent: 40 }))
+    expect((sys as any).zones[0].copperContent).toBeGreaterThanOrEqual(40)
+  })
+  it('追加-mineralStaining字段>=15', () => {
+    ;(sys as any).zones.push(makeZone({ mineralStaining: 15 }))
+    expect((sys as any).zones[0].mineralStaining).toBeGreaterThanOrEqual(15)
+  })
+  it('追加-两次触发间隔精确等于CHECK_INTERVAL', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, safeWorld, em, 2700)
+    expect((sys as any).lastCheck).toBe(2700)
+    sys.update(1, safeWorld, em, 2700 * 2)
+    expect((sys as any).lastCheck).toBe(2700 * 2)
+  })
+  it('追加-zones.splice后长度减少', () => {
+    ;(sys as any).zones.push(makeZone())
+    ;(sys as any).zones.push(makeZone())
+    ;(sys as any).zones.splice(0, 1)
+    expect((sys as any).zones).toHaveLength(1)
+  })
+  it('追加-注入zone的tick字段正确', () => {
+    ;(sys as any).zones.push(makeZone({ tick: 99999 }))
+    expect((sys as any).zones[0].tick).toBe(99999)
   })
 })

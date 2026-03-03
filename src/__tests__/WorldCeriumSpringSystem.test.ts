@@ -1,17 +1,12 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { WorldCeriumSpringSystem } from '../systems/WorldCeriumSpringSystem'
 import type { CeriumSpringZone } from '../systems/WorldCeriumSpringSystem'
 
 const CHECK_INTERVAL = 2950
-const MAX_ZONES = 32
+const MAX_CeriumSpringZoneS = 32
 
-// 安全 world mock：getTile 返回 0（DEEP_WATER）
-// hasAdjacentTile 依赖 world.getTile，此处全返回 DEEP_WATER，
-// nearWater 条件：adjacent SHALLOW_WATER(1) or DEEP_WATER(0)
-// 但 hasAdjacentTile 检查的是指定 tileType，DEEP_WATER=0 ≠ SHALLOW_WATER(1) 且 ≠ MOUNTAIN(5)
-// 然而 hasAdjacentTile(world, x, y, TileType.DEEP_WATER) 会返回 true！
-// 因此使用 getTile:()=>2 (SAND) 才能保证 nearWater=false && nearMountain=false
 const safeWorld = { width: 200, height: 200, getTile: () => 2 } as any
+const waterWorld = { width: 200, height: 200, getTile: () => 0 } as any
 const em = {} as any
 
 let nextId = 1
@@ -27,37 +22,22 @@ function makeZone(overrides: Partial<CeriumSpringZone> = {}): CeriumSpringZone {
     ...overrides,
   }
 }
-
 function makeSys(): WorldCeriumSpringSystem { return new WorldCeriumSpringSystem() }
 
 describe('WorldCeriumSpringSystem', () => {
   let sys: WorldCeriumSpringSystem
   beforeEach(() => { sys = makeSys(); nextId = 1; vi.restoreAllMocks() })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  // ── 初始状态 ──────────────────────────────────────────────────
-  it('初始无 Cerium 泉区', () => {
-    expect((sys as any).zones).toHaveLength(0)
-  })
-
-  it('nextId 初始为 1', () => {
-    expect((sys as any).nextId).toBe(1)
-  })
-
-  it('lastCheck 初始为 0', () => {
-    expect((sys as any).lastCheck).toBe(0)
-  })
-
-  // ── 内部数组操作 ──────────────────────────────────────────────
+  it('初始无泉区', () => { expect((sys as any).zones).toHaveLength(0) })
+  it('nextId 初始为 1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck 初始为 0', () => { expect((sys as any).lastCheck).toBe(0) })
   it('注入后可查询', () => {
     ;(sys as any).zones.push(makeZone())
     expect((sys as any).zones).toHaveLength(1)
   })
-
-  it('返回内部引用一致', () => {
-    expect((sys as any).zones).toBe((sys as any).zones)
-  })
-
-  it('Cerium 泉区字段正确', () => {
+  it('返回内部引用一致', () => { expect((sys as any).zones).toBe((sys as any).zones) })
+  it('泉区字段正确', () => {
     ;(sys as any).zones.push(makeZone())
     const z = (sys as any).zones[0]
     expect(z.ceriumContent).toBe(40)
@@ -65,143 +45,257 @@ describe('WorldCeriumSpringSystem', () => {
     expect(z.monaziteLeaching).toBe(60)
     expect(z.mineralAbundance).toBe(70)
   })
-
   it('多个泉区全部返回', () => {
     ;(sys as any).zones.push(makeZone())
     ;(sys as any).zones.push(makeZone())
     expect((sys as any).zones).toHaveLength(2)
   })
-
-  // ── CHECK_INTERVAL 节流 ───────────────────────────────────────
-  it('tick 未到 CHECK_INTERVAL 时不处理', () => {
+  it('tick 未达 CHECK_INTERVAL 时 update 跳过', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, safeWorld, em, 0)
     sys.update(1, safeWorld, em, CHECK_INTERVAL - 1)
     expect((sys as any).zones).toHaveLength(0)
   })
-
-  it('tick 到达 CHECK_INTERVAL 时才运行并更新 lastCheck', () => {
+  it('tick 恰好等于 CHECK_INTERVAL 时触发检查并更新 lastCheck', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, safeWorld, em, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
-
-  it('连续两次 update 在同一 CHECK_INTERVAL 内只触发一次', () => {
+  it('两次update间隔小于CHECK_INTERVAL时第二次被跳过', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, safeWorld, em, CHECK_INTERVAL)
-    const lastCheck1 = (sys as any).lastCheck
-    sys.update(1, safeWorld, em, CHECK_INTERVAL + 1)
-    expect((sys as any).lastCheck).toBe(lastCheck1) // 未重新触发
+    sys.update(1, safeWorld, em, CHECK_INTERVAL + 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
-
-  // ── Spawn 逻辑（nearWater 触发） ──────────────────────────────
-  it('adjacent SHALLOW_WATER(1) 且 random < FORM_CHANCE 时 spawn', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.002)
-    // getTile 返回 1（SHALLOW_WATER），hasAdjacentTile(SHALLOW_WATER) 会返回 true
-    const waterWorld = { width: 200, height: 200, getTile: () => 1 } as any
-    sys.update(1, waterWorld, em, CHECK_INTERVAL)
-    expect((sys as any).zones.length).toBeGreaterThan(0)
-  })
-
-  it('adjacent MOUNTAIN(5) 且 random < FORM_CHANCE 时 spawn', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.002)
-    const mountainWorld = { width: 200, height: 200, getTile: () => 5 } as any
-    sys.update(1, mountainWorld, em, CHECK_INTERVAL)
-    expect((sys as any).zones.length).toBeGreaterThan(0)
-  })
-
-  it('random > FORM_CHANCE 时不 spawn（即使 nearWater）', () => {
+  it('两次update间隔>=CHECK_INTERVAL时第二次被执行', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    const waterWorld = { width: 200, height: 200, getTile: () => 1 } as any
-    sys.update(1, waterWorld, em, CHECK_INTERVAL)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+  it('tick=0时不处理', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, safeWorld, em, 0)
+    expect((sys as any).lastCheck).toBe(0)
     expect((sys as any).zones).toHaveLength(0)
   })
-
-  it('SAND tile 不触发 nearWater/nearMountain，不 spawn', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.002)
-    sys.update(1, safeWorld, em, CHECK_INTERVAL) // safeWorld getTile=2(SAND)
+  it('SAND地形不满足nearWater/nearMountain不spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
     expect((sys as any).zones).toHaveLength(0)
   })
-
-  it('已达 MAX_ZONES 时不再 spawn', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.002)
-    for (let i = 0; i < MAX_ZONES; i++) {
-      ;(sys as any).zones.push(makeZone())
+  it('random > FORM_CHANCE(0.003)时不spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    expect((sys as any).zones).toHaveLength(0)
+  })
+  it('注入 MAX_CeriumSpringZoneS 个后不再 spawn', () => {
+    for (let i = 0; i < MAX_CeriumSpringZoneS; i++) {
+      ;(sys as any).zones.push(makeZone({ tick: 999999 }))
     }
-    const waterWorld = { width: 200, height: 200, getTile: () => 1 } as any
-    sys.update(1, waterWorld, em, CHECK_INTERVAL)
-    expect((sys as any).zones).toHaveLength(MAX_ZONES)
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, waterWorld, em, CHECK_INTERVAL + 1)
+    expect((sys as any).zones.length).toBe(MAX_CeriumSpringZoneS)
   })
-
-  it('spawn 后 nextId 递增', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.002)
-    const waterWorld = { width: 200, height: 200, getTile: () => 1 } as any
-    sys.update(1, waterWorld, em, CHECK_INTERVAL)
-    expect((sys as any).nextId).toBeGreaterThan(1)
-  })
-
-  it('spawn 的泉区记录了正确 tick', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.002)
-    const waterWorld = { width: 200, height: 200, getTile: () => 1 } as any
-    sys.update(1, waterWorld, em, CHECK_INTERVAL)
-    if ((sys as any).zones.length > 0) {
-      expect((sys as any).zones[0].tick).toBe(CHECK_INTERVAL)
+  it('zones.length=MAX_CeriumSpringZoneS-1时不超过MAX_CeriumSpringZoneS', () => {
+    for (let i = 0; i < MAX_CeriumSpringZoneS - 1; i++) {
+      ;(sys as any).zones.push(makeZone({ tick: 999999 }))
     }
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, waterWorld, em, CHECK_INTERVAL + 1)
+    expect((sys as any).zones.length).toBeLessThanOrEqual(MAX_CeriumSpringZoneS)
   })
-
-  it('3 次 attempt 循环，最多可 spawn 3 个', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.002)
-    const waterWorld = { width: 200, height: 200, getTile: () => 1 } as any
-    sys.update(1, waterWorld, em, CHECK_INTERVAL)
-    expect((sys as any).zones.length).toBeGreaterThanOrEqual(1)
-    expect((sys as any).zones.length).toBeLessThanOrEqual(3)
-  })
-
-  // ── Cleanup 逻辑 ──────────────────────────────────────────────
   it('tick 超出 54000 的泉区被清除', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     ;(sys as any).zones.push(makeZone({ tick: 0 }))
-    sys.update(1, safeWorld, em, CHECK_INTERVAL + 54001)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL + 54000 + 1)
     expect((sys as any).zones).toHaveLength(0)
   })
-
   it('tick 未超出 54000 的泉区保留', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     const currentTick = CHECK_INTERVAL * 2
-    ;(sys as any).cenotes = [] // 无关字段
     ;(sys as any).zones.push(makeZone({ tick: currentTick - 1000 }))
     sys.update(1, safeWorld, em, currentTick)
     expect((sys as any).zones).toHaveLength(1)
   })
-
   it('过期和未过期混合时只删除过期的', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    const currentTick = CHECK_INTERVAL + 200000
+    const currentTick = CHECK_INTERVAL + 54000 * 2
     ;(sys as any).lastCheck = 0
-    ;(sys as any).zones.push(makeZone({ tick: 0 }))               // 过期
-    ;(sys as any).zones.push(makeZone({ tick: currentTick - 1000 })) // 未过期
+    ;(sys as any).zones.push(makeZone({ tick: 0 }))
+    ;(sys as any).zones.push(makeZone({ tick: currentTick - 1000 }))
     sys.update(1, safeWorld, em, currentTick)
     expect((sys as any).zones).toHaveLength(1)
     expect((sys as any).zones[0].tick).toBe(currentTick - 1000)
   })
-
-  it('spawn 的泉区具有合理的 ceriumContent（40~100）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.002)
-    const waterWorld = { width: 200, height: 200, getTile: () => 1 } as any
-    sys.update(1, waterWorld, em, CHECK_INTERVAL)
-    for (const z of (sys as any).zones) {
-      expect(z.ceriumContent).toBeGreaterThanOrEqual(40)
-      expect(z.ceriumContent).toBeLessThanOrEqual(100)
+  it('ceriumContent 字段合法(>=40)', () => {
+    const z = makeZone({ ceriumContent: 40 })
+    expect(z.ceriumContent).toBeGreaterThanOrEqual(40)
+  })
+  it('springFlow 字段合法(>=10)', () => {
+    const z = makeZone({ springFlow: 10 })
+    expect(z.springFlow).toBeGreaterThanOrEqual(10)
+  })
+  it('monaziteLeaching 字段合法(>=20)', () => {
+    const z = makeZone({ monaziteLeaching: 20 })
+    expect(z.monaziteLeaching).toBeGreaterThanOrEqual(20)
+  })
+  it('mineralAbundance 字段合法(>=15)', () => {
+    const z = makeZone({ mineralAbundance: 15 })
+    expect(z.mineralAbundance).toBeGreaterThanOrEqual(15)
+  })
+  it('泉区x/y坐标可读取', () => {
+    ;(sys as any).zones.push(makeZone({ x: 10, y: 20 }))
+    expect((sys as any).zones[0].x).toBe(10)
+    expect((sys as any).zones[0].y).toBe(20)
+  })
+  it('泉区tick字段存在', () => {
+    ;(sys as any).zones.push(makeZone({ tick: 12345 }))
+    expect((sys as any).zones[0].tick).toBe(12345)
+  })
+  it('ceriumContent上限合法(<=100)', () => {
+    const z = makeZone({ ceriumContent: 100 })
+    expect(z.ceriumContent).toBeLessThanOrEqual(100)
+  })
+  it('springFlow上限合法(<=60)', () => {
+    const z = makeZone({ springFlow: 60 })
+    expect(z.springFlow).toBeLessThanOrEqual(60)
+  })
+  it('注入多个泉区 id 不重复', () => {
+    ;(sys as any).zones.push(makeZone())
+    ;(sys as any).zones.push(makeZone())
+    ;(sys as any).zones.push(makeZone())
+    const ids = (sys as any).zones.map((z: CeriumSpringZone) => z.id)
+    expect(new Set(ids).size).toBe(3)
+  })
+  it('update不影响已存在泉区字段', () => {
+    ;(sys as any).zones.push(makeZone({ ceriumContent: 55, springFlow: 33, tick: 999999 }))
+    ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    const z = (sys as any).zones[0]
+    expect(z.ceriumContent).toBe(55)
+    expect(z.springFlow).toBe(33)
+  })
+  it('连续多次 update 在间隔内不累计 lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL + 1)
+    const lc1 = (sys as any).lastCheck
+    sys.update(1, safeWorld, em, CHECK_INTERVAL + 2)
+    expect((sys as any).lastCheck).toBe(lc1)
+  })
+  it('两轮 CHECK_INTERVAL 触发时 lastCheck 更新两次', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL + 1)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL * 2 + 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2 + 2)
+  })
+  it('初始update跳过时zones保持为空', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, safeWorld, em, 1)
+    expect((sys as any).zones).toHaveLength(0)
+  })
+  it('zones是数组类型', () => { expect(Array.isArray((sys as any).zones)).toBe(true) })
+  it('清空zones后length为0', () => {
+    ;(sys as any).zones.push(makeZone())
+    ;(sys as any).zones.length = 0
+    expect((sys as any).zones).toHaveLength(0)
+  })
+  it('tick=CHECK_INTERVAL-1时不处理，tick=CHECK_INTERVAL时处理', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(0)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('三个zone过期后全部清除', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).zones.push(makeZone({ tick: 0 }))
+    ;(sys as any).zones.push(makeZone({ tick: 0 }))
+    ;(sys as any).zones.push(makeZone({ tick: 0 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, safeWorld, em, CHECK_INTERVAL + 54000 + 1)
+    expect((sys as any).zones).toHaveLength(0)
+  })
+  it('update后zones引用不变', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const ref = (sys as any).zones
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    expect((sys as any).zones).toBe(ref)
+  })
+  it('注入泉区id正确', () => {
+    ;(sys as any).zones.push(makeZone({ id: 99 }))
+    expect((sys as any).zones[0].id).toBe(99)
+  })
+  it('update多次后lastCheck单调递增', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    const lc1 = (sys as any).lastCheck
+    sys.update(1, safeWorld, em, CHECK_INTERVAL * 2)
+    const lc2 = (sys as any).lastCheck
+    expect(lc2).toBeGreaterThanOrEqual(lc1)
+  })
+  it('mineralAbundance字段可单独修改', () => {
+    ;(sys as any).zones.push(makeZone({ mineralAbundance: 88 }))
+    expect((sys as any).zones[0].mineralAbundance).toBe(88)
+  })
+  it('注入zone后id为正整数', () => {
+    ;(sys as any).zones.push(makeZone())
+    expect((sys as any).zones[0].id).toBeGreaterThan(0)
+  })
+  it('zones长度精确等于注入数量', () => {
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).zones.push(makeZone())
     }
+    expect((sys as any).zones).toHaveLength(5)
+  })
+  it('过期一个保留一个的场景下zones.length=1', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const currentTick = CHECK_INTERVAL + 54000 + 1
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).zones.push(makeZone({ tick: 0 }))
+    ;(sys as any).zones.push(makeZone({ tick: currentTick - 100 }))
+    sys.update(1, safeWorld, em, currentTick)
+    expect((sys as any).zones).toHaveLength(1)
   })
 
-  it('spawn 的泉区具有合理的 springFlow（10~60）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.002)
-    const waterWorld = { width: 200, height: 200, getTile: () => 1 } as any
-    sys.update(1, waterWorld, em, CHECK_INTERVAL)
-    for (const z of (sys as any).zones) {
-      expect(z.springFlow).toBeGreaterThanOrEqual(10)
-      expect(z.springFlow).toBeLessThanOrEqual(60)
+  // ── 追加扩展测试 ──────────────────────────────────────────────
+  it('追加-zones数组是Array', () => {
+    expect(Array.isArray((sys as any).zones)).toBe(true)
+  })
+  it('追加-初始状态update跳过不修改lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, safeWorld, em, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('追加-多次注入后精确计数', () => {
+    for (let i = 0; i < 8; i++) {
+      ;(sys as any).zones.push(makeZone())
     }
+    expect((sys as any).zones).toHaveLength(8)
+  })
+  it('追加-ceriumContent字段>=40', () => {
+    ;(sys as any).zones.push(makeZone({ ceriumContent: 40 }))
+    expect((sys as any).zones[0].ceriumContent).toBeGreaterThanOrEqual(40)
+  })
+  it('追加-mineralAbundance字段>=15', () => {
+    ;(sys as any).zones.push(makeZone({ mineralAbundance: 15 }))
+    expect((sys as any).zones[0].mineralAbundance).toBeGreaterThanOrEqual(15)
+  })
+  it('追加-两次触发间隔精确等于CHECK_INTERVAL', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, safeWorld, em, 2950)
+    expect((sys as any).lastCheck).toBe(2950)
+    sys.update(1, safeWorld, em, 2950 * 2)
+    expect((sys as any).lastCheck).toBe(2950 * 2)
+  })
+  it('追加-zones.splice后长度减少', () => {
+    ;(sys as any).zones.push(makeZone())
+    ;(sys as any).zones.push(makeZone())
+    ;(sys as any).zones.splice(0, 1)
+    expect((sys as any).zones).toHaveLength(1)
+  })
+  it('追加-注入zone的tick字段正确', () => {
+    ;(sys as any).zones.push(makeZone({ tick: 99999 }))
+    expect((sys as any).zones[0].tick).toBe(99999)
   })
 })

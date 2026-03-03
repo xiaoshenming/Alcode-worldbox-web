@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { WorldCalderaSystem } from '../systems/WorldCalderaSystem'
 import type { Caldera } from '../systems/WorldCalderaSystem'
 
@@ -218,5 +218,175 @@ describe('WorldCalderaSystem', () => {
     sys.update(1, world, em, CHECK_INTERVAL)
     // age 1+0.005=1.005 < 100, 全部保留，且上限阻止 spawn
     expect((sys as any).calderas).toHaveLength(MAX_CALDERAS)
+  })
+
+  // ── 追加扩展测试 ──────────────────────────────────────────────
+  it('追加-calderas数组是Array', () => {
+    expect(Array.isArray((sys as any).calderas)).toBe(true)
+  })
+  it('追加-nextId初始为1', () => {
+    expect((sys as any).nextId).toBe(1)
+  })
+  it('追加-lastCheck初始为0', () => {
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('追加-spawn的破火山口nextId自增', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    sys.update(1, world, em, CHECK_INTERVAL)
+    expect((sys as any).nextId).toBe(2)
+  })
+  it('追加-age=99持续更新未被删除', () => {
+    ;(sys as any).calderas.push(makeCaldera({ age: 99 }))
+    ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, world, em, CHECK_INTERVAL)
+    expect((sys as any).calderas).toHaveLength(1)
+    expect((sys as any).calderas[0].age).toBeCloseTo(99.005, 5)
+  })
+  it('追加-3个同时过期的calderas全被删除', () => {
+    ;(sys as any).calderas.push(makeCaldera({ age: 99.995 }))
+    ;(sys as any).calderas.push(makeCaldera({ age: 99.995 }))
+    ;(sys as any).calderas.push(makeCaldera({ age: 99.995 }))
+    ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, world, em, CHECK_INTERVAL)
+    expect((sys as any).calderas).toHaveLength(0)
+  })
+  it('追加-多次注入后length正确', () => {
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).calderas.push(makeCaldera())
+    }
+    expect((sys as any).calderas).toHaveLength(5)
+  })
+  it('追加-lakeDepth初始为10', () => {
+    ;(sys as any).calderas.push(makeCaldera({ lakeDepth: 10 }))
+    expect((sys as any).calderas[0].lakeDepth).toBe(10)
+  })
+  it('追加-diameter字段正确', () => {
+    ;(sys as any).calderas.push(makeCaldera({ diameter: 25 }))
+    expect((sys as any).calderas[0].diameter).toBe(25)
+  })
+  it('追加-MAX_CALDERAS-1个时还可继续spawn', () => {
+    for (let i = 0; i < MAX_CALDERAS - 1; i++) {
+      ;(sys as any).calderas.push(makeCaldera({ age: 1 }))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    ;(sys as any).lastCheck = 0
+    sys.update(1, world, em, CHECK_INTERVAL)
+    expect((sys as any).calderas.length).toBeLessThanOrEqual(MAX_CALDERAS)
+  })
+  it('追加-update后calderas引用稳定', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const ref = (sys as any).calderas
+    sys.update(1, world, em, CHECK_INTERVAL)
+    expect((sys as any).calderas).toBe(ref)
+  })
+  it('追加-lakeDepth在[0,80]范围内', () => {
+    ;(sys as any).calderas.push(makeCaldera({ lakeDepth: 50 }))
+    ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, world, em, CHECK_INTERVAL)
+    expect((sys as any).calderas[0].lakeDepth).toBeLessThanOrEqual(80)
+    expect((sys as any).calderas[0].lakeDepth).toBeGreaterThanOrEqual(0)
+  })
+  it('追加-geothermalActivity在[5,80]范围内', () => {
+    ;(sys as any).calderas.push(makeCaldera({ geothermalActivity: 40 }))
+    ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, world, em, CHECK_INTERVAL)
+    expect((sys as any).calderas[0].geothermalActivity).toBeGreaterThanOrEqual(5)
+    expect((sys as any).calderas[0].geothermalActivity).toBeLessThanOrEqual(80)
+  })
+  it('追加-resurgentDome在[0,100]范围内', () => {
+    ;(sys as any).calderas.push(makeCaldera({ resurgentDome: 50 }))
+    ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, world, em, CHECK_INTERVAL)
+    expect((sys as any).calderas[0].resurgentDome).toBeGreaterThanOrEqual(0)
+    expect((sys as any).calderas[0].resurgentDome).toBeLessThanOrEqual(100)
+  })
+  it('追加-spawn时tick字段为当前tick值', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    sys.update(1, world, em, CHECK_INTERVAL)
+    expect((sys as any).calderas[0].tick).toBe(CHECK_INTERVAL)
+  })
+  it('追加-tick=0时update不执行', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    sys.update(1, world, em, 0)
+    expect((sys as any).calderas).toHaveLength(0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('追加-连续触发lastCheck单调递增', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, world, em, CHECK_INTERVAL)
+    const lc1 = (sys as any).lastCheck
+    sys.update(1, world, em, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBeGreaterThanOrEqual(lc1)
+  })
+  it('追加-spawn破火山口x坐标在世界范围内', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    sys.update(1, world, em, CHECK_INTERVAL)
+    const c = (sys as any).calderas[0]
+    expect(c.x).toBeGreaterThanOrEqual(0)
+    expect(c.x).toBeLessThan(200)
+  })
+  it('追加-spawn破火山口y坐标在世界范围内', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    sys.update(1, world, em, CHECK_INTERVAL)
+    const c = (sys as any).calderas[0]
+    expect(c.y).toBeGreaterThanOrEqual(0)
+    expect(c.y).toBeLessThan(200)
+  })
+  it('追加-age字段增量准确', () => {
+    ;(sys as any).calderas.push(makeCaldera({ age: 5.0 }))
+    ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, world, em, CHECK_INTERVAL)
+    expect((sys as any).calderas[0].age).toBeCloseTo(5.005, 5)
+  })
+  it('追加-calderas.splice正确', () => {
+    ;(sys as any).calderas.push(makeCaldera())
+    ;(sys as any).calderas.push(makeCaldera())
+    ;(sys as any).calderas.splice(0, 1)
+    expect((sys as any).calderas).toHaveLength(1)
+  })
+  it('追加-caldera id字段为正整数', () => {
+    ;(sys as any).calderas.push(makeCaldera())
+    expect((sys as any).calderas[0].id).toBeGreaterThan(0)
+  })
+  it('追加-caldera默认age为0', () => {
+    ;(sys as any).calderas.push(makeCaldera())
+    expect((sys as any).calderas[0].age).toBe(0)
+  })
+})
+
+// Final extra tests
+describe('WorldCalderaSystem - 最终补充', () => {
+  let sys: WorldCalderaSystem
+  beforeEach(() => { sys = new WorldCalderaSystem(); vi.restoreAllMocks() })
+  afterEach(() => { vi.restoreAllMocks() })
+  const w = { width: 200, height: 200, getTile: () => 0 } as any
+  const e = {} as any
+  const CI = 2750
+  it('补充-spawn两次nextId=3', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    sys.update(1, w, e, CI)
+    ;(sys as any).lastCheck = 0
+    sys.update(1, w, e, CI)
+    expect((sys as any).nextId).toBe(3)
+  })
+  it('补充-spawn的破火山口active字段不存在（无active）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    sys.update(1, w, e, CI)
+    expect((sys as any).calderas[0].active).toBeUndefined()
+  })
+  it('补充-updatey大量caldera后all均存在', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).calderas.push({ id: i+1, x: 10, y: 10, diameter: 20, lakeDepth: 0, resurgentDome: 10, geothermalActivity: 40, age: 1, tick: 0 })
+    }
+    ;(sys as any).lastCheck = 0
+    sys.update(1, w, e, CI)
+    expect((sys as any).calderas.length).toBe(5)
   })
 })

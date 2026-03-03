@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { WorldGeoglyphSystem } from '../systems/WorldGeoglyphSystem'
 
 const sandWorld = { width: 200, height: 200, getTile: () => 2 } as any
@@ -253,5 +253,105 @@ describe('WorldGeoglyphSystem', () => {
     sys.update(1, sandWorld, em, 4000)
     sys.update(1, sandWorld, em, 8000)
     expect((sys as any).lastCheck).toBe(8000)
+  })
+})
+
+describe('WorldGeoglyphSystem - 附加测试', () => {
+  let sys: WorldGeoglyphSystem
+  beforeEach(() => { sys = new WorldGeoglyphSystem(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('geoglyphs初始为空数组', () => { expect((sys as any).geoglyphs).toHaveLength(0) })
+  it('geoglyphs是数组类型', () => { expect(Array.isArray((sys as any).geoglyphs)).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('tick不足4000时不更新lastCheck（首次）', () => {
+    sys.update(1, sandWorld, em, 100)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick=4000时更新lastCheck', () => {
+    sys.update(1, sandWorld, em, 4000)
+    expect((sys as any).lastCheck).toBe(4000)
+  })
+  it('tick=3999时不触发', () => {
+    sys.update(1, sandWorld, em, 3999)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick=8000时再次触发', () => {
+    sys.update(1, sandWorld, em, 4000)
+    sys.update(1, sandWorld, em, 8000)
+    expect((sys as any).lastCheck).toBe(8000)
+  })
+  it('update后lastCheck等于传入tick', () => {
+    sys.update(1, sandWorld, em, 12000)
+    expect((sys as any).lastCheck).toBe(12000)
+  })
+  it('注入geoglyph后长度为1', () => {
+    ;(sys as any).geoglyphs.push({ id:1, x:10, y:10, tick:1000 })
+    expect((sys as any).geoglyphs).toHaveLength(1)
+  })
+  it('注入5个后长度为5', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).geoglyphs.push({ id:i+1, x:i, y:0, tick:1000 }) }
+    expect((sys as any).geoglyphs).toHaveLength(5)
+  })
+  it('geoglyph含id字段', () => {
+    ;(sys as any).geoglyphs.push({ id:42, x:0, y:0, tick:1000 })
+    expect((sys as any).geoglyphs[0].id).toBe(42)
+  })
+  it('geoglyph含x,y坐标', () => {
+    ;(sys as any).geoglyphs.push({ id:1, x:15, y:25, tick:1000 })
+    expect((sys as any).geoglyphs[0].x).toBe(15)
+    expect((sys as any).geoglyphs[0].y).toBe(25)
+  })
+  it('geoglyph含tick字段', () => {
+    ;(sys as any).geoglyphs.push({ id:1, x:0, y:0, tick:5000 })
+    expect((sys as any).geoglyphs[0].tick).toBe(5000)
+  })
+  it('过期geoglyph被清除', () => {
+    // visibility <= 10 的 geoglyph 会被 source 删除
+    ;(sys as any).geoglyphs.push({ id:1, x:0, y:0, tick:0, shape:'spiral', size:5, spiritualPower:8, visibility:9, age:0 })
+    sys.update(1, sandWorld, em, 100000)
+    expect((sys as any).geoglyphs).toHaveLength(0)
+  })
+  it('未过期geoglyph保留', () => {
+    ;(sys as any).geoglyphs.push({ id:1, x:0, y:0, tick:90000 })
+    sys.update(1, sandWorld, em, 95000)
+    expect((sys as any).geoglyphs).toHaveLength(1)
+  })
+  it('混合新旧只删旧的', () => {
+    // id:1: visibility=9(<=10) → 被删除
+    ;(sys as any).geoglyphs.push({ id:1, x:0, y:0, tick:0, shape:'spiral', size:5, spiritualPower:8, visibility:9, age:0 })
+    // id:2: visibility=80(>10) → 保留
+    ;(sys as any).geoglyphs.push({ id:2, x:1, y:0, tick:90000, shape:'animal', size:5, spiritualPower:12, visibility:80, age:0 })
+    sys.update(1, sandWorld, em, 95000)
+    expect((sys as any).geoglyphs).toHaveLength(1)
+    expect((sys as any).geoglyphs[0].id).toBe(2)
+  })
+  it('全部5个过期时清空', () => {
+    // visibility=9 的 geoglyph 都被删除
+    for (let i = 0; i < 5; i++) { (sys as any).geoglyphs.push({ id:i+1, x:i, y:0, tick:0, shape:'spiral', size:5, spiritualPower:8, visibility:9, age:0 }) }
+    sys.update(1, sandWorld, em, 100000)
+    expect((sys as any).geoglyphs).toHaveLength(0)
+  })
+  it('空geoglyphs时update不崩溃', () => {
+    expect(() => sys.update(1, sandWorld, em, 4000)).not.toThrow()
+  })
+  it('同一tick两次update只触发一次', () => {
+    sys.update(1, sandWorld, em, 4000)
+    const lc1 = (sys as any).lastCheck
+    sys.update(1, sandWorld, em, 4000)
+    expect((sys as any).lastCheck).toBe(lc1)
+  })
+  it('geoglyphs中id不重复', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).geoglyphs.push({ id:i+1, x:i, y:0, tick:1000 }) }
+    const ids = (sys as any).geoglyphs.map((g: any) => g.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+  it('update不返回值', () => {
+    const ret = sys.update(1, sandWorld, em, 4000)
+    expect(ret).toBeUndefined()
+  })
+  it('waterWorld(getTile=0)时update不崩溃', () => {
+    expect(() => sys.update(1, waterWorld, em, 4000)).not.toThrow()
   })
 })

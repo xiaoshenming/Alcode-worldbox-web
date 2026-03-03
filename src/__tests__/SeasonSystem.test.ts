@@ -231,3 +231,98 @@ describe('SeasonSystem tileColorShift config', () => {
     expect(typeof cfg.tileColorShift.b).toBe('number')
   })
 })
+
+describe('SeasonSystem - 附加测试', () => {
+  let ss: SeasonSystem
+
+  beforeEach(() => { ss = makeSS() })
+
+  it('SeasonSystem可以实例化', () => { expect(ss).toBeInstanceOf(SeasonSystem) })
+  it('getCurrentSeason方法存在', () => { expect(typeof ss.getCurrentSeason).toBe('function') })
+  it('getYear方法存在', () => { expect(typeof ss.getYear).toBe('function') })
+  it('getSeasonProgress方法存在', () => { expect(typeof ss.getSeasonProgress).toBe('function') })
+  it('getTransitionProgress方法存在', () => { expect(typeof ss.getTransitionProgress).toBe('function') })
+  it('getConfig方法存在', () => { expect(typeof ss.getConfig).toBe('function') })
+  it('update方法存在', () => { expect(typeof (ss as any).update).toBe('function') })
+  it('Season枚举包含Spring', () => { expect(Season.Spring).toBeDefined() })
+  it('Season枚举包含Summer', () => { expect(Season.Summer).toBeDefined() })
+  it('Season枚举包含Autumn', () => { expect(Season.Autumn).toBeDefined() })
+  it('Season枚举包含Winter', () => { expect(Season.Winter).toBeDefined() })
+  it('注入Summer季节返回Summer', () => {
+    setSeason(ss, Season.Summer)
+    expect(ss.getCurrentSeason()).toBe(Season.Summer)
+  })
+  it('注入Autumn季节返回Autumn', () => {
+    setSeason(ss, Season.Autumn)
+    expect(ss.getCurrentSeason()).toBe(Season.Autumn)
+  })
+  it('getYear初始为0', () => { expect(ss.getYear()).toBe(0) })
+  it('注入year=10后返回10', () => {
+    setSeason(ss, Season.Spring, 1, 0, 10)
+    expect(ss.getYear()).toBe(10)
+  })
+  it('getSeasonProgress返回[0,1]范围值', () => {
+    setSeason(ss, Season.Spring, 1, 1800)
+    const p = ss.getSeasonProgress()
+    expect(p).toBeGreaterThanOrEqual(0)
+    expect(p).toBeLessThanOrEqual(1)
+  })
+  it('seasonTick=3600时进度为1（一季完成）', () => {
+    setSeason(ss, Season.Spring, 1, 3600)
+    expect(ss.getSeasonProgress()).toBeCloseTo(1)
+  })
+  it('getTransitionProgress返回[0,1]范围值', () => {
+    setSeason(ss, Season.Summer, 0.5)
+    const p = ss.getTransitionProgress()
+    expect(p).toBeGreaterThanOrEqual(0)
+    expect(p).toBeLessThanOrEqual(1)
+  })
+  it('summer配置growthMultiplier=1.2', () => {
+    setSeason(ss, Season.Summer)
+    expect(ss.getConfig().growthMultiplier).toBe(1.2)
+  })
+  it('winter配置growthMultiplier=0.1', () => {
+    setSeason(ss, Season.Winter)
+    expect(ss.getConfig().growthMultiplier).toBe(0.1)
+  })
+  it('autumn配置growthMultiplier=0.6', () => {
+    setSeason(ss, Season.Autumn)
+    expect(ss.getConfig().growthMultiplier).toBe(0.6)
+  })
+  it('winter配置temperatureOffset=-20', () => {
+    setSeason(ss, Season.Winter)
+    expect(ss.getConfig().temperatureOffset).toBe(-20)
+  })
+  it('spring配置temperatureOffset=5', () => {
+    setSeason(ss, Season.Spring)
+    expect(ss.getConfig().temperatureOffset).toBe(5)
+  })
+  it('getConfig返回对象非null', () => {
+    const cfg = ss.getConfig()
+    expect(cfg).not.toBeNull()
+    expect(typeof cfg).toBe('object')
+  })
+  it('getConfig包含growthMultiplier字段', () => {
+    const cfg = ss.getConfig()
+    expect(typeof cfg.growthMultiplier).toBe('number')
+  })
+  it('getConfig包含temperatureOffset字段', () => {
+    const cfg = ss.getConfig()
+    expect(typeof cfg.temperatureOffset).toBe('number')
+  })
+  it('update方法不崩溃', () => {
+    expect(() => {
+      for (let t = 0; t <= 100; t++) { ;(ss as any).update(1, t) }
+    }).not.toThrow()
+  })
+  it('yearCount是数字类型', () => {
+    expect(typeof (ss as any).yearCount).toBe('number')
+  })
+  it('currentSeason初始为Spring', () => {
+    expect((ss as any).currentSeason).toBe(Season.Spring)
+  })
+  it('TICKS_PER_SEASON为3600（来自配置）', () => {
+    setSeason(ss, Season.Spring, 1, 3600)
+    expect(ss.getSeasonProgress()).toBeCloseTo(1)
+  })
+})

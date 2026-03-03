@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { WorldFlatironSystem } from '../systems/WorldFlatironSystem'
 import type { Flatiron } from '../systems/WorldFlatironSystem'
 
@@ -252,5 +252,109 @@ describe('WorldFlatironSystem', () => {
     sys.update(1, sandWorld, em, CHECK_INTERVAL)
     const f = (sys as any).flatirons[0]
     expect(f.height).toBeGreaterThanOrEqual(15)
+  })
+})
+
+describe('WorldFlatironSystem - 附加测试', () => {
+  let sys: WorldFlatironSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('flatirons初始为空数组', () => { expect((sys as any).flatirons).toHaveLength(0) })
+  it('flatirons是数组类型', () => { expect(Array.isArray((sys as any).flatirons)).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('tick不足CHECK_INTERVAL=2640时不更新lastCheck', () => {
+    sys.update(1, sandWorld, em, 100)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick=2640时更新lastCheck', () => {
+    sys.update(1, sandWorld, em, 2640)
+    expect((sys as any).lastCheck).toBe(2640)
+  })
+  it('tick=2639时不触发', () => {
+    sys.update(1, sandWorld, em, 2639)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick=5280时再次触发', () => {
+    sys.update(1, sandWorld, em, 2640)
+    sys.update(1, sandWorld, em, 5280)
+    expect((sys as any).lastCheck).toBe(5280)
+  })
+  it('第二次间隔不足时不触发', () => {
+    sys.update(1, sandWorld, em, 2640)
+    sys.update(1, sandWorld, em, 3000)
+    expect((sys as any).lastCheck).toBe(2640)
+  })
+  it('update后lastCheck等于传入tick', () => {
+    sys.update(1, sandWorld, em, 7920)
+    expect((sys as any).lastCheck).toBe(7920)
+  })
+  it('注入flatiron后长度为1', () => {
+    ;(sys as any).flatirons.push(makeFlatiron())
+    expect((sys as any).flatirons).toHaveLength(1)
+  })
+  it('注入5个后长度为5', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).flatirons.push(makeFlatiron()) }
+    expect((sys as any).flatirons).toHaveLength(5)
+  })
+  it('flatiron含height字段', () => {
+    const f = makeFlatiron({ height: 80 })
+    expect(f.height).toBe(80)
+  })
+  it('flatiron含tiltAngle字段', () => {
+    const f = makeFlatiron({ tiltAngle: 30 })
+    expect(f.tiltAngle).toBe(30)
+  })
+  it('flatiron含rockHardness字段', () => {
+    const f = makeFlatiron({ rockHardness: 70 })
+    expect(f.rockHardness).toBe(70)
+  })
+  it('flatiron含weatheringRate字段', () => {
+    const f = makeFlatiron({ weatheringRate: 5 })
+    expect(f.weatheringRate).toBe(5)
+  })
+  it('flatiron含tick字段', () => {
+    const f = makeFlatiron({ tick: 1234 })
+    expect(f.tick).toBe(1234)
+  })
+  it('过期flatiron（tick远小于cutoff）被删除', () => {
+    ;(sys as any).flatirons.push(makeFlatiron({ tick: 0 }))
+    sys.update(1, sandWorld, em, 100000)
+    expect((sys as any).flatirons).toHaveLength(0)
+  })
+  it('未过期flatiron保留', () => {
+    ;(sys as any).flatirons.push(makeFlatiron({ tick: 90000 }))
+    sys.update(1, sandWorld, em, 95000)
+    expect((sys as any).flatirons).toHaveLength(1)
+  })
+  it('混合新旧只删旧的', () => {
+    ;(sys as any).flatirons.push(makeFlatiron({ id:1, tick: 0 }))
+    ;(sys as any).flatirons.push(makeFlatiron({ id:2, tick: 90000 }))
+    sys.update(1, sandWorld, em, 95000)
+    expect((sys as any).flatirons).toHaveLength(1)
+    expect((sys as any).flatirons[0].id).toBe(2)
+  })
+  it('MAX_FLATIRONS=15硬上限不超过', () => {
+    for (let i = 0; i < 15; i++) { (sys as any).flatirons.push(makeFlatiron({ id:i+1, tick: 999999 })) }
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, mountainWorld, em, 2640)
+    expect((sys as any).flatirons.length).toBeLessThanOrEqual(15)
+  })
+  it('flatirons中id不重复', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).flatirons.push(makeFlatiron()) }
+    const ids = (sys as any).flatirons.map((f: any) => f.id)
+    const unique = new Set(ids)
+    expect(unique.size).toBe(ids.length)
+  })
+  it('空flatirons时update不崩溃', () => {
+    expect(() => sys.update(1, sandWorld, em, 2640)).not.toThrow()
+  })
+  it('同一tick两次update只触发一次', () => {
+    sys.update(1, sandWorld, em, 2640)
+    const lc1 = (sys as any).lastCheck
+    sys.update(1, sandWorld, em, 2640)
+    expect((sys as any).lastCheck).toBe(lc1)
   })
 })

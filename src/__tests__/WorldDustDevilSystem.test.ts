@@ -193,3 +193,132 @@ describe('WorldDustDevilSystem - lifetime范围', () => {
     expect(d.lifetime).toBeLessThanOrEqual(6000)
   })
 })
+
+describe('WorldDustDevilSystem - 扩展覆盖', () => {
+  let sys: WorldDustDevilSystem
+  const worldSand = { width: 200, height: 200, getTile: () => 2 } as any
+  const emEmpty = { getEntitiesWithComponents: () => [], getComponent: () => null } as any
+  const CI = 1000
+
+  beforeEach(() => { sys = new WorldDustDevilSystem(); nextId = 1; vi.restoreAllMocks() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('扩展-devils数组是Array', () => { expect(Array.isArray((sys as any).devils)).toBe(true) })
+  it('扩展-初始lastCheck=0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('扩展-初始nextId=1', () => { expect((sys as any).nextId).toBe(1) })
+  it('扩展-tick未达CI不处理', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, worldSand, emEmpty, 0)
+    expect((sys as any).devils).toHaveLength(0)
+  })
+  it('扩展-tick达到CI时lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, worldSand, emEmpty, CI)
+    expect((sys as any).lastCheck).toBe(CI)
+  })
+  it('扩展-random>SPAWN_CHANCE不spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, worldSand, emEmpty, CI)
+    expect((sys as any).devils).toHaveLength(0)
+  })
+  it('扩展-两次间隔<CI时第二次跳过', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, worldSand, emEmpty, CI)
+    sys.update(0, worldSand, emEmpty, CI + 100)
+    expect((sys as any).lastCheck).toBe(CI)
+  })
+  it('扩展-两次间隔>=CI时第二次执行', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, worldSand, emEmpty, CI)
+    sys.update(0, worldSand, emEmpty, CI * 2)
+    expect((sys as any).lastCheck).toBe(CI * 2)
+  })
+  it('扩展-devils.splice正确', () => {
+    ;(sys as any).devils.push(makeDevil('minor', { id: 1 }))
+    ;(sys as any).devils.push(makeDevil('minor', { id: 2 }))
+    ;(sys as any).devils.splice(0, 1)
+    expect((sys as any).devils).toHaveLength(1)
+  })
+  it('扩展-5个注入后length=5', () => {
+    for (let i = 0; i < 5; i++) { ;(sys as any).devils.push(makeDevil('minor', { id: i + 1 })) }
+    expect((sys as any).devils).toHaveLength(5)
+  })
+  it('扩展-update后devils引用稳定', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const ref = (sys as any).devils
+    sys.update(0, worldSand, emEmpty, CI)
+    expect((sys as any).devils).toBe(ref)
+  })
+  it('扩展-连续触发lastCheck单调递增', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, worldSand, emEmpty, CI)
+    const lc1 = (sys as any).lastCheck
+    sys.update(0, worldSand, emEmpty, CI * 2)
+    expect((sys as any).lastCheck).toBeGreaterThanOrEqual(lc1)
+  })
+  it('扩展-devils注入后可读取id', () => {
+    ;(sys as any).devils.push(makeDevil('minor', { id: 99 }))
+    expect((sys as any).devils[0].id).toBe(99)
+  })
+  it('扩展-MAX_DEVILS上限时不再spawn', () => {
+    for (let i = 0; i < 8; i++) { ;(sys as any).devils.push(makeDevil('minor', { id: i+1, x: 50, y: 50, lifetime: 999999, startTick: 0 })) }
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, worldSand, emEmpty, CI)
+    expect((sys as any).devils.length).toBeLessThanOrEqual(8)
+  })
+  it('扩展-devil的creaturesDisoriented初始为0', () => {
+    ;(sys as any).devils.push(makeDevil('minor', { creaturesDisoriented: 0 }))
+    expect((sys as any).devils[0].creaturesDisoriented).toBe(0)
+  })
+  it('扩展-devil的lifetime字段存在', () => {
+    ;(sys as any).devils.push(makeDevil('minor', { lifetime: 3000 }))
+    expect((sys as any).devils[0].lifetime).toBe(3000)
+  })
+  it('扩展-devil的startTick字段存在', () => {
+    ;(sys as any).devils.push(makeDevil('minor', { startTick: 500 }))
+    expect((sys as any).devils[0].startTick).toBe(500)
+  })
+  it('扩展-tick=CI-1时不处理', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, worldSand, emEmpty, CI - 1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('扩展-清空devils后length=0', () => {
+    ;(sys as any).devils.push(makeDevil('minor'))
+    ;(sys as any).devils.length = 0
+    expect((sys as any).devils).toHaveLength(0)
+  })
+  it('扩展-id字段为正整数', () => {
+    ;(sys as any).devils.push(makeDevil('minor', { id: 5 }))
+    expect((sys as any).devils[0].id).toBeGreaterThan(0)
+  })
+  it('扩展-direction字段存在', () => {
+    ;(sys as any).devils.push(makeDevil('minor', { direction: Math.PI }))
+    expect((sys as any).devils[0].direction).toBe(Math.PI)
+  })
+  it('扩展-多次注入后长度精确', () => {
+    for (let i = 0; i < 6; i++) { ;(sys as any).devils.push(makeDevil('minor', { id: i + 1 })) }
+    expect((sys as any).devils).toHaveLength(6)
+  })
+  it('扩展-update后lastCheck不超过传入tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, worldSand, emEmpty, 999999)
+    expect((sys as any).lastCheck).toBeLessThanOrEqual(999999)
+  })
+  it('扩展-minor强度radius=2', () => {
+    ;(sys as any).devils.push(makeDevil('minor', { radius: 2 }))
+    expect((sys as any).devils[0].radius).toBe(2)
+  })
+  it('扩展-massive强度radius=7', () => {
+    ;(sys as any).devils.push(makeDevil('violent', { radius: 7 }))
+    expect((sys as any).devils[0].radius).toBe(7)
+  })
+  it('扩展-resourcesScattered初始为0', () => {
+    ;(sys as any).devils.push(makeDevil('minor', { resourcesScattered: 0 }))
+    expect((sys as any).devils[0].resourcesScattered).toBe(0)
+  })
+  it('扩展-speed字段大于0', () => {
+    ;(sys as any).devils.push(makeDevil('minor', { speed: 0.5 }))
+    expect((sys as any).devils[0].speed).toBeGreaterThan(0)
+  })
+})

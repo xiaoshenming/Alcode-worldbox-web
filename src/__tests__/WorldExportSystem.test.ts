@@ -210,3 +210,76 @@ describe('WorldExportSystem', () => {
     }).not.toThrow()
   })
 })
+
+describe('WorldExportSystem - 附加测试', () => {
+  let sys: WorldExportSystem
+  beforeEach(() => { sys = makeSys(); vi.restoreAllMocks() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('validate: 缺少version返回false', () => {
+    const d = makeValidData(); delete (d as any).version
+    expect((sys as any).validate(d)).toBe(false)
+  })
+  it('validate: 缺少tiles返回false', () => {
+    const d = makeValidData(); delete (d as any).tiles
+    expect((sys as any).validate(d)).toBe(false)
+  })
+  it('validate: version非number返回false', () => {
+    expect((sys as any).validate({ ...makeValidData(), version: 'v1' })).toBe(false)
+  })
+  it('validate: worldWidth非number返回false', () => {
+    expect((sys as any).validate({ ...makeValidData(), worldWidth: '100' })).toBe(false)
+  })
+  it('validate: worldHeight非number返回false', () => {
+    expect((sys as any).validate({ ...makeValidData(), worldHeight: '100' })).toBe(false)
+  })
+  it('validate: tiles非数组返回false', () => {
+    expect((sys as any).validate({ ...makeValidData(), tiles: 'notarray' })).toBe(false)
+  })
+  it('validate: entities非数组返回false', () => {
+    expect((sys as any).validate({ ...makeValidData(), entities: 'notarray' })).toBe(false)
+  })
+  it('validate: civilizations非数组时validate仍可返回结果', () => {
+    // civilizations字段不在validate检查范围内，传非数组也不影响验证
+    expect(typeof (sys as any).validate({ ...makeValidData(), civilizations: 'notarray' })).toBe('boolean')
+  })
+  it('validate: 完整数据返回true', () => {
+    expect((sys as any).validate(makeValidData())).toBe(true)
+  })
+  it('validate: version=0时validate可通过（source仅检查version>EXPORT_VERSION才失败）', () => {
+    expect((sys as any).validate({ ...makeValidData(), version: 0 })).toBe(true)
+  })
+  it('importing初始为false', () => { expect((sys as any).importing).toBe(false) })
+  it('importProgress初始为0', () => { expect((sys as any).importProgress).toBe(0) })
+  it('_importProgressStr包含0%', () => { expect((sys as any)._importProgressStr).toContain('0%') })
+  it('系统可实例化', () => { expect(sys).toBeDefined() })
+  it('validate方法存在', () => { expect(typeof (sys as any).validate).toBe('function') })
+  it('ExportData包含version字段', () => {
+    const d = makeValidData({ version: 1 })
+    expect(d.version).toBe(1)
+  })
+  it('ExportData包含worldWidth和worldHeight', () => {
+    const d = makeValidData({ worldWidth: 200, worldHeight: 150 })
+    expect(d.worldWidth).toBe(200)
+    expect(d.worldHeight).toBe(150)
+  })
+  it('ExportData包含entities数组', () => {
+    const d = makeValidData({ entities: [] })
+    expect(Array.isArray(d.entities)).toBe(true)
+  })
+  it('ExportData包含civilizations数组', () => {
+    const d = makeValidData({ civilizations: [] })
+    expect(Array.isArray(d.civilizations)).toBe(true)
+  })
+  it('ExportData包含tiles二维数组', () => {
+    const d = makeValidData({ tiles: [[1,2],[3,4]] })
+    expect(d.tiles).toHaveLength(2)
+  })
+  it('ExportData包含tick字段', () => {
+    const d = makeValidData({ tick: 12345 })
+    expect(d.tick).toBe(12345)
+  })
+  it('validate: tick非number返回false', () => {
+    expect((sys as any).validate({ ...makeValidData(), tick: 'notanumber' })).toBe(false)
+  })
+})

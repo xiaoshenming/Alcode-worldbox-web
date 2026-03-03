@@ -155,3 +155,184 @@ describe('DiplomaticTithingmanSystem', () => {
     expect(a.form).toBe('manor_tithingman')
   })
 })
+
+describe('DiplomaticTithingmanSystem - 附加测试', () => {
+  let sys: DiplomaticTithingmanSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('注入3个后长度为3', () => {
+    ;(sys as any).arrangements.push(makeArrangement({id:1}), makeArrangement({id:2}), makeArrangement({id:3}))
+    expect((sys as any).arrangements).toHaveLength(3)
+  })
+  it('tick=2899时不触发', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, w, em, 2899)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('update后lastCheck等于传入tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, w, em, 8700)
+    expect((sys as any).lastCheck).toBe(8700)
+  })
+  it('连续3次interval触发lastCheck正确', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, w, em, 2900)
+    sys.update(1, w, em, 5800)
+    sys.update(1, w, em, 8700)
+    expect((sys as any).lastCheck).toBe(8700)
+  })
+  it('collectiveAuthority不低于5', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const a = makeArrangement({ tick: 0, collectiveAuthority: 5 })
+    ;(sys as any).arrangements.push(a)
+    sys.update(1, w, em, 2900)
+    expect(a.collectiveAuthority).toBeGreaterThanOrEqual(5)
+  })
+  it('collectiveAuthority不超过85', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const a = makeArrangement({ tick: 0, collectiveAuthority: 85 })
+    ;(sys as any).arrangements.push(a)
+    sys.update(1, w, em, 2900)
+    expect(a.collectiveAuthority).toBeLessThanOrEqual(85)
+  })
+  it('suretyBonds不超过90', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const a = makeArrangement({ tick: 0, suretyBonds: 90 })
+    ;(sys as any).arrangements.push(a)
+    sys.update(1, w, em, 2900)
+    expect(a.suretyBonds).toBeLessThanOrEqual(90)
+  })
+  it('peacekeeping不低于5', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const a = makeArrangement({ tick: 0, peacekeeping: 5 })
+    ;(sys as any).arrangements.push(a)
+    sys.update(1, w, em, 2900)
+    expect(a.peacekeeping).toBeGreaterThanOrEqual(5)
+  })
+  it('peacekeeping不超过80', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const a = makeArrangement({ tick: 0, peacekeeping: 80 })
+    ;(sys as any).arrangements.push(a)
+    sys.update(1, w, em, 2900)
+    expect(a.peacekeeping).toBeLessThanOrEqual(80)
+  })
+  it('taxCollection不低于5', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const a = makeArrangement({ tick: 0, taxCollection: 5 })
+    ;(sys as any).arrangements.push(a)
+    sys.update(1, w, em, 2900)
+    expect(a.taxCollection).toBeGreaterThanOrEqual(5)
+  })
+  it('同一tick两次update只触发一次', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, w, em, 2900)
+    const lc1 = (sys as any).lastCheck
+    sys.update(1, w, em, 2900)
+    expect((sys as any).lastCheck).toBe(lc1)
+  })
+  it('空arrangements时update不崩溃', () => {
+    expect(() => sys.update(1, w, em, 2900)).not.toThrow()
+  })
+  it('arrangement含tithingCivId和oversightCivId字段', () => {
+    const a = makeArrangement({ tithingCivId: 3, oversightCivId: 7 })
+    expect(a.tithingCivId).toBe(3)
+    expect(a.oversightCivId).toBe(7)
+  })
+  it('tithingCivId与oversightCivId不相等', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    vi.restoreAllMocks()
+    let call = 0
+    vi.spyOn(Math, 'random').mockImplementation(() => { call++; if(call===1)return 0.001;if(call===2)return 0.0;if(call===3)return 0.99;return 0.5 })
+    sys.update(1, w, em, 2900)
+    if ((sys as any).arrangements.length > 0) {
+      const a = (sys as any).arrangements[0]
+      expect(a.tithingCivId).not.toBe(a.oversightCivId)
+    }
+  })
+  it('arrangement的form是4种TithingmanForm之一', () => {
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    for (let t = 2900; t <= 2900 * 20; t += 2900) { sys.update(1, w, em, t) }
+    const valid: TithingmanForm[] = ['royal_tithingman','hundred_tithingman','parish_tithingman','manor_tithingman']
+    ;(sys as any).arrangements.forEach((a: any) => expect(valid).toContain(a.form))
+  })
+  it('duration从0每步递增1（5步）', () => {
+    const a = makeArrangement({ tick: 0, duration: 0 })
+    ;(sys as any).arrangements.push(a)
+    for (let i = 1; i <= 5; i++) {
+      vi.restoreAllMocks()
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, w, em, 2900 * i)
+      expect((sys as any).arrangements[0]?.duration).toBe(i)
+    }
+  })
+  it('MAX_ARRANGEMENTS=16硬上限100次迭代不超过', () => {
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    for (let t = 2900; t <= 2900 * 100; t += 2900) { sys.update(1, w, em, t) }
+    expect((sys as any).arrangements.length).toBeLessThanOrEqual(16)
+  })
+  it('arrangements内id不重复', () => {
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    for (let t = 2900; t <= 2900 * 25; t += 2900) { sys.update(1, w, em, t) }
+    const ids = (sys as any).arrangements.map((a: any) => a.id)
+    const unique = new Set(ids)
+    expect(unique.size).toBe(ids.length)
+  })
+  it('4种TithingmanForm全部合法', () => {
+    const valid: TithingmanForm[] = ['royal_tithingman','hundred_tithingman','parish_tithingman','manor_tithingman']
+    expect(valid).toHaveLength(4)
+  })
+  it('arrangements每个元素含tick字段', () => {
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    for (let t = 2900; t <= 2900 * 10; t += 2900) { sys.update(1, w, em, t) }
+    ;(sys as any).arrangements.forEach((a: any) => expect(a.tick).toBeDefined())
+  })
+})
+
+describe('DiplomaticTithingmanSystem - 附加测试2', () => {
+  let sys: DiplomaticTithingmanSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('新增arrangement的duration初始为0', () => {
+    vi.restoreAllMocks()
+    let call = 0
+    vi.spyOn(Math, 'random').mockImplementation(() => { call++; if(call===1)return 0.001;if(call===2)return 0.0;if(call===3)return 0.99;return 0.5 })
+    sys.update(1, w, em, 2900)
+    if ((sys as any).arrangements.length > 0) { expect((sys as any).arrangements[0].duration).toBeLessThanOrEqual(1) }
+  })
+  it('tick=100000时cutoff=12000,tick=10000的arrangement被删', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    ;(sys as any).arrangements.push(makeArrangement({ tick: 10000 }))
+    sys.update(1, w, em, 100000)
+    expect((sys as any).arrangements).toHaveLength(0)
+  })
+  it('全部5个过期时arrangements清空', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).arrangements.push(makeArrangement({ id:i+1, tick: 0 }))
+    }
+    sys.update(1, w, em, 100000)
+    expect((sys as any).arrangements).toHaveLength(0)
+  })
+  it('arrangement的collectiveAuthority是数字类型', () => {
+    const a = makeArrangement()
+    expect(typeof a.collectiveAuthority).toBe('number')
+  })
+  it('arrangement的suretyBonds是数字类型', () => {
+    const a = makeArrangement()
+    expect(typeof a.suretyBonds).toBe('number')
+  })
+  it('arrangement的peacekeeping是数字类型', () => {
+    const a = makeArrangement()
+    expect(typeof a.peacekeeping).toBe('number')
+  })
+  it('arrangement的taxCollection是数字类型', () => {
+    const a = makeArrangement()
+    expect(typeof a.taxCollection).toBe('number')
+  })
+})

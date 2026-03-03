@@ -232,3 +232,108 @@ describe('WorldGalliumSpringSystem', () => {
     })
   })
 })
+
+describe('WorldGalliumSpringSystem - 附加测试', () => {
+  let sys: WorldGalliumSpringSystem
+  beforeEach(() => { sys = makeSys(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('zones初始为空数组', () => { expect(getZones(sys)).toHaveLength(0) })
+  it('nextId初始为1', () => { expect(getNextId(sys)).toBe(1) })
+  it('lastCheck初始为0', () => { expect(getLastCheck(sys)).toBe(0) })
+  it('tick不足CHECK_INTERVAL=2890时不更新lastCheck', () => {
+    sys.update(1, safeWorld, em, 100)
+    expect(getLastCheck(sys)).toBe(0)
+  })
+  it('tick=2890时更新lastCheck', () => {
+    sys.update(1, safeWorld, em, 2890)
+    expect(getLastCheck(sys)).toBe(2890)
+  })
+  it('tick=2889时不触发', () => {
+    sys.update(1, safeWorld, em, 2889)
+    expect(getLastCheck(sys)).toBe(0)
+  })
+  it('tick=5780时再次触发', () => {
+    sys.update(1, safeWorld, em, 2890)
+    sys.update(1, safeWorld, em, 5780)
+    expect(getLastCheck(sys)).toBe(5780)
+  })
+  it('update后lastCheck等于传入tick', () => {
+    sys.update(1, safeWorld, em, 8670)
+    expect(getLastCheck(sys)).toBe(8670)
+  })
+  it('注入zone后长度为1', () => {
+    injectZone(sys, 1000)
+    expect(getZones(sys)).toHaveLength(1)
+  })
+  it('注入5个后长度为5', () => {
+    for (let i = 0; i < 5; i++) { injectZone(sys, 1000, { x: i }) }
+    expect(getZones(sys)).toHaveLength(5)
+  })
+  it('zone含galliumContent字段', () => {
+    const z = injectZone(sys, 1000)
+    expect(typeof z.galliumContent).toBe('number')
+  })
+  it('zone含springFlow字段', () => {
+    const z = injectZone(sys, 1000)
+    expect(typeof z.springFlow).toBe('number')
+  })
+  it('zone含bauxiteLeaching字段', () => {
+    const z = injectZone(sys, 1000)
+    expect(typeof z.bauxiteLeaching).toBe('number')
+  })
+  it('zone含mineralLiquidity字段', () => {
+    const z = injectZone(sys, 1000)
+    expect(typeof z.mineralLiquidity).toBe('number')
+  })
+  it('zone含tick字段', () => {
+    const z = injectZone(sys, 5000)
+    expect(z.tick).toBe(5000)
+  })
+  it('zone含id字段', () => {
+    const z = injectZone(sys, 1000)
+    expect(typeof z.id).toBe('number')
+  })
+  it('过期zone被删除', () => {
+    injectZone(sys, 0)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL + CUTOFF_OFFSET + 100)
+    expect(getZones(sys)).toHaveLength(0)
+  })
+  it('未过期zone保留', () => {
+    const ct = CHECK_INTERVAL + CUTOFF_OFFSET
+    injectZone(sys, ct - 1000)
+    sys.update(1, safeWorld, em, ct)
+    expect(getZones(sys)).toHaveLength(1)
+  })
+  it('混合新旧只删旧的', () => {
+    injectZone(sys, 0)
+    injectZone(sys, 90000)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL + CUTOFF_OFFSET + 100)
+    expect(getZones(sys)).toHaveLength(1)
+  })
+  it('MAX_ZONES=32硬上限不超过', () => {
+    for (let i = 0; i < 32; i++) { injectZone(sys, 999999, { x: i }) }
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    expect(getZones(sys).length).toBeLessThanOrEqual(32)
+  })
+  it('zones中id不重复', () => {
+    for (let i = 0; i < 5; i++) { injectZone(sys, 1000, { x: i }) }
+    const ids = getZones(sys).map((z: any) => z.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+  it('空zones时update不崩溃', () => {
+    expect(() => sys.update(1, safeWorld, em, 2890)).not.toThrow()
+  })
+  it('safeWorld(getTile=2)不spawn', () => {
+    sys.update(1, safeWorld, em, 2890)
+    expect(getZones(sys)).toHaveLength(0)
+  })
+  it('同一tick两次update只触发一次', () => {
+    sys.update(1, safeWorld, em, 2890)
+    const lc1 = getLastCheck(sys)
+    sys.update(1, safeWorld, em, 2890)
+    expect(getLastCheck(sys)).toBe(lc1)
+  })
+})

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { WorldGeothermalPoolSystem } from '../systems/WorldGeothermalPoolSystem'
 
 const world = { width: 200, height: 200, getTile: () => 2 } as any
@@ -242,5 +242,105 @@ describe('WorldGeothermalPoolSystem', () => {
     sys.update(1, world, em, 3100)
     sys.update(1, world, em, 6200)
     expect(p[0].mineralContent).toBeCloseTo(20.010, 4)
+  })
+})
+
+describe('WorldGeothermalPoolSystem - 附加测试', () => {
+  let sys: WorldGeothermalPoolSystem
+  beforeEach(() => { sys = new WorldGeothermalPoolSystem(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('pools初始为空数组', () => { expect((sys as any).pools).toHaveLength(0) })
+  it('pools是数组类型', () => { expect(Array.isArray((sys as any).pools)).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('tick不足3100时不更新lastCheck', () => {
+    sys.update(1, world, em, 100)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick=3100时更新lastCheck', () => {
+    sys.update(1, world, em, 3100)
+    expect((sys as any).lastCheck).toBe(3100)
+  })
+  it('tick=3099时不触发', () => {
+    sys.update(1, world, em, 3099)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick=6200时再次触发', () => {
+    sys.update(1, world, em, 3100)
+    sys.update(1, world, em, 6200)
+    expect((sys as any).lastCheck).toBe(6200)
+  })
+  it('update后lastCheck等于传入tick', () => {
+    sys.update(1, world, em, 9300)
+    expect((sys as any).lastCheck).toBe(9300)
+  })
+  it('注入pool后长度为1', () => {
+    ;(sys as any).pools.push({ id:1, x:10, y:10, tick:1000 })
+    expect((sys as any).pools).toHaveLength(1)
+  })
+  it('注入5个后长度为5', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).pools.push({ id:i+1, x:i, y:0, tick:1000 }) }
+    expect((sys as any).pools).toHaveLength(5)
+  })
+  it('pool含id字段', () => {
+    ;(sys as any).pools.push({ id:42, x:0, y:0, tick:1000 })
+    expect((sys as any).pools[0].id).toBe(42)
+  })
+  it('pool含x,y坐标', () => {
+    ;(sys as any).pools.push({ id:1, x:15, y:25, tick:1000 })
+    expect((sys as any).pools[0].x).toBe(15)
+    expect((sys as any).pools[0].y).toBe(25)
+  })
+  it('pool含tick字段', () => {
+    ;(sys as any).pools.push({ id:1, x:0, y:0, tick:5000 })
+    expect((sys as any).pools[0].tick).toBe(5000)
+  })
+  it('过期pool被清除', () => {
+    ;(sys as any).pools.push({ id:1, x:0, y:0, tick:0 })
+    sys.update(1, world, em, 100000)
+    expect((sys as any).pools).toHaveLength(0)
+  })
+  it('未过期pool保留', () => {
+    ;(sys as any).pools.push({ id:1, x:0, y:0, tick:90000 })
+    sys.update(1, world, em, 95000)
+    expect((sys as any).pools).toHaveLength(1)
+  })
+  it('混合新旧只删旧的', () => {
+    ;(sys as any).pools.push({ id:1, x:0, y:0, tick:0 })
+    ;(sys as any).pools.push({ id:2, x:1, y:0, tick:90000 })
+    sys.update(1, world, em, 95000)
+    expect((sys as any).pools).toHaveLength(1)
+    expect((sys as any).pools[0].id).toBe(2)
+  })
+  it('全部5个过期时清空', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).pools.push({ id:i+1, x:i, y:0, tick:0 }) }
+    sys.update(1, world, em, 100000)
+    expect((sys as any).pools).toHaveLength(0)
+  })
+  it('空pools时update不崩溃', () => {
+    expect(() => sys.update(1, world, em, 3100)).not.toThrow()
+  })
+  it('同一tick两次update只触发一次', () => {
+    sys.update(1, world, em, 3100)
+    const lc1 = (sys as any).lastCheck
+    sys.update(1, world, em, 3100)
+    expect((sys as any).lastCheck).toBe(lc1)
+  })
+  it('pools中id不重复', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).pools.push({ id:i+1, x:i, y:0, tick:1000 }) }
+    const ids = (sys as any).pools.map((p: any) => p.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+  it('update不返回值', () => {
+    const ret = sys.update(1, world, em, 3100)
+    expect(ret).toBeUndefined()
+  })
+  it('tick=0时不触发', () => {
+    sys.update(1, world, em, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('world(getTile=2,SAND)时update不崩溃', () => {
+    expect(() => sys.update(1, { width:200, height:200, getTile:()=>2 } as any, em, 3100)).not.toThrow()
   })
 })

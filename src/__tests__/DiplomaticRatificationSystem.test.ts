@@ -214,3 +214,170 @@ describe('DiplomaticRatificationSystem', () => {
     expect(r).toHaveProperty('tick')
   })
 })
+
+describe('DiplomaticRatificationSystem — 额外测试', () => {
+  let sys: DiplomaticRatificationSystem
+  beforeEach(() => { sys = makeSys(); vi.restoreAllMocks() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('CHECK_INTERVAL=2100验证', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, W, EM, 2099)
+    expect((sys as any).lastCheck).toBe(0)
+    sys.update(1, W, EM, 2100)
+    expect((sys as any).lastCheck).toBe(2100)
+  })
+  it('MAX_RATIFICATIONS=28上限', () => {
+    for (let i = 1; i <= 28; i++) {
+      ;(sys as any).ratifications.push({ id: i, civId: 1, targetCivId: 2, treatyType: 'peace',
+        approvalRate: 60, legislatorsFor: 6, legislatorsAgainst: 4, ratified: true, tick: 999999 })
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, W, EM, 2100)
+    expect((sys as any).ratifications).toHaveLength(28)
+  })
+  it('TreatyType包含peace', () => {
+    const types: TreatyType[] = ['peace', 'trade', 'defense', 'non_aggression']
+    expect(types).toContain('peace')
+  })
+  it('TreatyType包含4种', () => {
+    const types: TreatyType[] = ['peace', 'trade', 'defense', 'non_aggression']
+    expect(types).toHaveLength(4)
+  })
+  it('ratified=true当approvalRate>50', () => {
+    const r: Ratification = {
+      id: 1, civId: 1, targetCivId: 2, treatyType: 'peace',
+      approvalRate: 60, legislatorsFor: 6, legislatorsAgainst: 4, ratified: true, tick: 0
+    }
+    expect(r.ratified).toBe(true)
+  })
+  it('ratified=false当approvalRate<=50', () => {
+    const r: Ratification = {
+      id: 1, civId: 1, targetCivId: 2, treatyType: 'peace',
+      approvalRate: 40, legislatorsFor: 4, legislatorsAgainst: 6, ratified: false, tick: 0
+    }
+    expect(r.ratified).toBe(false)
+  })
+  it('Ratification包含legislatorsFor字段', () => {
+    const r: Ratification = {
+      id: 1, civId: 1, targetCivId: 2, treatyType: 'trade',
+      approvalRate: 50, legislatorsFor: 5, legislatorsAgainst: 5, ratified: false, tick: 0
+    }
+    expect(r).toHaveProperty('legislatorsFor')
+  })
+  it('Ratification包含legislatorsAgainst字段', () => {
+    const r: Ratification = {
+      id: 1, civId: 1, targetCivId: 2, treatyType: 'defense',
+      approvalRate: 55, legislatorsFor: 6, legislatorsAgainst: 4, ratified: true, tick: 0
+    }
+    expect(r).toHaveProperty('legislatorsAgainst')
+  })
+  it('过期清理cutoff=tick-52000', () => {
+    ;(sys as any).ratifications.push({ id: 1, civId: 1, targetCivId: 2, treatyType: 'peace',
+      approvalRate: 60, legislatorsFor: 6, legislatorsAgainst: 4, ratified: true, tick: 0 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, W, EM, 55000)
+    expect((sys as any).ratifications).toHaveLength(0)
+  })
+  it('新鲜tick在过期时存活', () => {
+    ;(sys as any).ratifications.push({ id: 1, civId: 1, targetCivId: 2, treatyType: 'peace',
+      approvalRate: 60, legislatorsFor: 6, legislatorsAgainst: 4, ratified: true, tick: 999999 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, W, EM, 55000)
+    expect((sys as any).ratifications).toHaveLength(1)
+  })
+  it('spawn时civId!=targetCivId', () => {
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0.5)
+    sys.update(1, W, EM, 2100)
+    if ((sys as any).ratifications.length > 0) {
+      const r = (sys as any).ratifications[0]
+      expect(r.civId).not.toBe(r.targetCivId)
+    }
+  })
+  it('spawn后nextId=2', () => {
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0.5)
+    sys.update(1, W, EM, 2100)
+    expect((sys as any).nextId).toBe(2)
+  })
+  it('_ratificationsBuf是数组', () => {
+    expect(Array.isArray((sys as any)._ratificationsBuf)).toBe(true)
+  })
+  it('系统实例化不报错', () => {
+    expect(() => new DiplomaticRatificationSystem()).not.toThrow()
+  })
+  it('整体运行不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    expect(() => {
+      for (let _i = 0; _i <= 10; _i++) sys.update(1, W, EM, 2100 * _i)
+    }).not.toThrow()
+  })
+})
+
+describe('DiplomaticRatificationSystem — 补充测试', () => {
+  let sys: DiplomaticRatificationSystem
+  beforeEach(() => { sys = makeSys(); vi.restoreAllMocks() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('ratification包含approvalRate字段', () => {
+    ;(sys as any).ratifications.push({ id: 1, civId: 1, targetCivId: 2, treatyType: 'peace',
+      approvalRate: 60, legislatorsFor: 6, legislatorsAgainst: 4, ratified: true, tick: 0 })
+    expect((sys as any).ratifications[0]).toHaveProperty('approvalRate')
+  })
+  it('ratification包含treatyType字段', () => {
+    ;(sys as any).ratifications.push({ id: 1, civId: 1, targetCivId: 2, treatyType: 'trade',
+      approvalRate: 60, legislatorsFor: 6, legislatorsAgainst: 4, ratified: true, tick: 0 })
+    expect((sys as any).ratifications[0]).toHaveProperty('treatyType')
+  })
+  it('三次足够间隔后lastCheck=6300', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, W, EM, 2100)
+    sys.update(1, W, EM, 4200)
+    sys.update(1, W, EM, 6300)
+    expect((sys as any).lastCheck).toBe(6300)
+  })
+  it('non_aggression是合法TreatyType', () => {
+    const types: TreatyType[] = ['peace', 'trade', 'defense', 'non_aggression']
+    expect(types).toContain('non_aggression')
+  })
+  it('defense是合法TreatyType', () => {
+    const types: TreatyType[] = ['peace', 'trade', 'defense', 'non_aggression']
+    expect(types).toContain('defense')
+  })
+  it('两条ratification均过期时清空', () => {
+    ;(sys as any).ratifications.push({ id: 1, civId: 1, targetCivId: 2, treatyType: 'peace',
+      approvalRate: 60, legislatorsFor: 6, legislatorsAgainst: 4, ratified: true, tick: 0 })
+    ;(sys as any).ratifications.push({ id: 2, civId: 3, targetCivId: 4, treatyType: 'trade',
+      approvalRate: 60, legislatorsFor: 6, legislatorsAgainst: 4, ratified: true, tick: 100 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, W, EM, 55000)
+    expect((sys as any).ratifications).toHaveLength(0)
+  })
+  it('ratification注入后tick字段正确', () => {
+    ;(sys as any).ratifications.push({ id: 1, civId: 1, targetCivId: 2, treatyType: 'peace',
+      approvalRate: 60, legislatorsFor: 6, legislatorsAgainst: 4, ratified: true, tick: 9999 })
+    expect((sys as any).ratifications[0].tick).toBe(9999)
+  })
+  it('random=0.99时不spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, W, EM, 2100)
+    expect((sys as any).ratifications).toHaveLength(0)
+  })
+  it('tick=0时不触发任何逻辑', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, W, EM, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('ratifications数组初始为空', () => {
+    expect((sys as any).ratifications).toHaveLength(0)
+  })
+  it('EXPIRE_OFFSET=52000验证(tick=0在tick=55000时删除)', () => {
+    ;(sys as any).ratifications.push({ id: 1, civId: 1, targetCivId: 2, treatyType: 'peace',
+      approvalRate: 60, legislatorsFor: 6, legislatorsAgainst: 4, ratified: true, tick: 0 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, W, EM, 55000)
+    // cutoff = 55000-52000=3000; tick=0<3000 → deleted
+    expect((sys as any).ratifications).toHaveLength(0)
+  })
+})

@@ -247,3 +247,101 @@ describe('WorldHotPoolSystem', () => {
     })
   })
 })
+
+describe('WorldHotPoolSystem - 附加测试', () => {
+  let sys: WorldHotPoolSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('pools初始为空数组', () => { expect((sys as any).pools).toHaveLength(0) })
+  it('pools是数组类型', () => { expect(Array.isArray((sys as any).pools)).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('tick不足CHECK_INTERVAL=2730时不更新lastCheck', () => {
+    sys.update(1, mockWorld, fakeEm, 100)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick=2730时更新lastCheck', () => {
+    sys.update(1, mockWorld, fakeEm, 2730)
+    expect((sys as any).lastCheck).toBe(2730)
+  })
+  it('tick=2729时不触发', () => {
+    sys.update(1, mockWorld, fakeEm, 2729)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick=5460时再次触发', () => {
+    sys.update(1, mockWorld, fakeEm, 2730)
+    sys.update(1, mockWorld, fakeEm, 5460)
+    expect((sys as any).lastCheck).toBe(5460)
+  })
+  it('update后lastCheck等于传入tick', () => {
+    sys.update(1, mockWorld, fakeEm, 8190)
+    expect((sys as any).lastCheck).toBe(8190)
+  })
+  it('注入pool后长度为1', () => {
+    ;(sys as any).pools.push(makePool())
+    expect((sys as any).pools).toHaveLength(1)
+  })
+  it('注入5个后长度为5', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).pools.push(makePool()) }
+    expect((sys as any).pools).toHaveLength(5)
+  })
+  it('pool含temperature字段', () => { expect(makePool({ temperature: 95 }).temperature).toBe(95) })
+  it('pool含mineralRichness字段', () => { expect(makePool({ mineralRichness: 80 }).mineralRichness).toBe(80) })
+  it('pool含poolDepth字段', () => { expect(makePool({ poolDepth: 5 }).poolDepth).toBe(5) })
+  it('pool含colorIntensity字段', () => { expect(makePool({ colorIntensity: 90 }).colorIntensity).toBe(90) })
+  it('pool含age字段', () => { expect(makePool({ age: 100 }).age).toBe(100) })
+  it('pool含tick字段', () => { expect(makePool({ tick: 5000 }).tick).toBe(5000) })
+  it('pool含x,y坐标', () => {
+    const p = makePool({ x: 15, y: 25 })
+    expect(p.x).toBe(15); expect(p.y).toBe(25)
+  })
+  it('过期pool被清除', () => {
+    // age >= 93 的 pool 会被 source 的 !(p.age < 93) 条件删除
+    ;(sys as any).pools.push(makePool({ age: 93, tick: 0 }))
+    sys.update(1, mockWorld, fakeEm, 100000)
+    expect((sys as any).pools).toHaveLength(0)
+  })
+  it('未过期pool保留', () => {
+    ;(sys as any).pools.push(makePool({ tick: 90000 }))
+    sys.update(1, mockWorld, fakeEm, 95000)
+    expect((sys as any).pools).toHaveLength(1)
+  })
+  it('混合新旧只删旧的', () => {
+    // pool1: age=93 (过期) → 被删除
+    ;(sys as any).pools.push(makePool({ id:1, age: 93, tick: 0 }))
+    // pool2: age=0 (未过期) → 保留
+    ;(sys as any).pools.push(makePool({ id:2, age: 0, tick: 90000 }))
+    sys.update(1, mockWorld, fakeEm, 95000)
+    expect((sys as any).pools).toHaveLength(1)
+    expect((sys as any).pools[0].id).toBe(2)
+  })
+  it('MAX_POOLS=7硬上限不超过', () => {
+    for (let i = 0; i < 7; i++) { (sys as any).pools.push(makePool({ id:i+1, tick: 999999 })) }
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    sys.update(1, mockWorld, fakeEm, 2730)
+    expect((sys as any).pools.length).toBeLessThanOrEqual(7)
+  })
+  it('pools中id不重复', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).pools.push(makePool()) }
+    const ids = (sys as any).pools.map((p: any) => p.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+  it('空pools时update不崩溃', () => {
+    expect(() => sys.update(1, mockWorld, fakeEm, 2730)).not.toThrow()
+  })
+  it('同一tick两次update只触发一次', () => {
+    sys.update(1, mockWorld, fakeEm, 2730)
+    const lc1 = (sys as any).lastCheck
+    sys.update(1, mockWorld, fakeEm, 2730)
+    expect((sys as any).lastCheck).toBe(lc1)
+  })
+  it('update不返回值', () => {
+    expect(sys.update(1, mockWorld, fakeEm, 2730)).toBeUndefined()
+  })
+  it('tick=0时不触发', () => {
+    sys.update(1, mockWorld, fakeEm, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+})

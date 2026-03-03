@@ -204,3 +204,72 @@ describe('WorldHogbackSystem - MAX_HOGBACKS上限', () => {
     expect((sys as any).hogbacks.length).toBe(15)
   })
 })
+
+describe('WorldHogbackSystem - 附加测试', () => {
+  let sys: WorldHogbackSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('hogbacks初始为空数组', () => { expect((sys as any).hogbacks).toHaveLength(0) })
+  it('hogbacks是数组类型', () => { expect(Array.isArray((sys as any).hogbacks)).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('注入hogback后长度为1', () => {
+    ;(sys as any).hogbacks.push(makeHogback())
+    expect((sys as any).hogbacks).toHaveLength(1)
+  })
+  it('注入5个后长度为5', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).hogbacks.push(makeHogback()) }
+    expect((sys as any).hogbacks).toHaveLength(5)
+  })
+  it('hogback含length字段', () => { expect(makeHogback({ length: 30 }).length).toBe(30) })
+  it('hogback含height字段', () => { expect(makeHogback({ height: 60 }).height).toBe(60) })
+  it('hogback含dipAngle字段', () => { expect(makeHogback({ dipAngle: 30 }).dipAngle).toBe(30) })
+  it('hogback含rockResistance字段', () => { expect(makeHogback({ rockResistance: 90 }).rockResistance).toBe(90) })
+  it('hogback含erosionRate字段', () => { expect(makeHogback({ erosionRate: 3 }).erosionRate).toBe(3) })
+  it('hogback含spectacle字段', () => { expect(makeHogback({ spectacle: 55 }).spectacle).toBe(55) })
+  it('hogback含tick字段', () => { expect(makeHogback({ tick: 5000 }).tick).toBe(5000) })
+  it('hogback含x,y坐标', () => {
+    const h = makeHogback({ x: 15, y: 25 })
+    expect(h.x).toBe(15); expect(h.y).toBe(25)
+  })
+  it('过期hogback被清除', () => {
+    ;(sys as any).hogbacks.push(makeHogback({ tick: 0 }))
+    sys.update(1, mockWorldSand as any, mockEM, 100000)
+    expect((sys as any).hogbacks).toHaveLength(0)
+  })
+  it('未过期hogback保留', () => {
+    ;(sys as any).hogbacks.push(makeHogback({ tick: 90000 }))
+    sys.update(1, mockWorldSand as any, mockEM, 95000)
+    expect((sys as any).hogbacks).toHaveLength(1)
+  })
+  it('混合新旧只删旧的', () => {
+    ;(sys as any).hogbacks.push(makeHogback({ id:1, tick: 0 }))
+    ;(sys as any).hogbacks.push(makeHogback({ id:2, tick: 90000 }))
+    sys.update(1, mockWorldSand as any, mockEM, 95000)
+    expect((sys as any).hogbacks).toHaveLength(1)
+    expect((sys as any).hogbacks[0].id).toBe(2)
+  })
+  it('全部5个过期时清空', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).hogbacks.push(makeHogback({ tick: 0 })) }
+    sys.update(1, mockWorldSand as any, mockEM, 100000)
+    expect((sys as any).hogbacks).toHaveLength(0)
+  })
+  it('空hogbacks时update不崩溃', () => {
+    expect(() => sys.update(1, mockWorldSand as any, mockEM, 3000)).not.toThrow()
+  })
+  it('hogbacks中id不重复', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).hogbacks.push(makeHogback()) }
+    const ids = (sys as any).hogbacks.map((h: any) => h.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+  it('sandWorld(getTile=2)不spawn（无山无森）', () => {
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, mockWorldSand as any, mockEM, 3000)
+    expect((sys as any).hogbacks).toHaveLength(0)
+  })
+  it('update不返回值', () => {
+    expect(sys.update(1, mockWorldSand as any, mockEM, 3000)).toBeUndefined()
+  })
+})

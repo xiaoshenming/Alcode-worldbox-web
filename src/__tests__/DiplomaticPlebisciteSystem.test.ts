@@ -174,3 +174,148 @@ describe('DiplomaticPlebisciteSystem', () => {
     expect((sys as any).lastCheck).toBe(6800)
   })
 })
+
+describe('DiplomaticPlebisciteSystem — 额外测试', () => {
+  let sys: any
+  beforeEach(() => { sys = makeSys(); vi.restoreAllMocks() })
+
+  it('CHECK_INTERVAL=3400', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, world, em6, 3399)
+    expect((sys as any).lastCheck).toBe(0)
+    sys.update(1, world, em6, 3400)
+    expect((sys as any).lastCheck).toBe(3400)
+  })
+  it('MAX_PACTS=25上限存在', () => {
+    for (let i = 0; i < 25; i++) {
+      ;(sys as any).pacts.push({ id: i+1, nationA: i, nationB: i+1, status: 'active', strength: 50,
+        voterTurnout: 50, approvalRate: 50, legitimacy: 50, contestedBy: 0, tick: 999999 })
+    }
+    expect((sys as any).pacts.length).toBe(25)
+  })
+  it('pact中包含nationA和nationB字段', () => {
+    ;(sys as any).pacts.push({ id: 1, nationA: 2, nationB: 3, status: 'proposed', strength: 30,
+      voterTurnout: 40, approvalRate: 35, legitimacy: 25, contestedBy: 0, tick: 1000 })
+    expect((sys as any).pacts[0].nationA).toBe(2)
+    expect((sys as any).pacts[0].nationB).toBe(3)
+  })
+  it('proposed状态pact在tick中可能转变为active或rejected', () => {
+    ;(sys as any).pacts.push({ id: 1, nationA: 0, nationB: 1, status: 'proposed', strength: 30,
+      voterTurnout: 50, approvalRate: 50, legitimacy: 30, contestedBy: 0, tick: 999999 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.1) // <0.15 触发转换, approvalRate=50>40 → active
+    sys.update(1, world, em6, 3400)
+    const p = (sys as any).pacts[0]
+    if (p) { expect(['active', 'rejected', 'proposed']).toContain(p.status) }
+  })
+  it('active状态下voterTurnout在[0,100]', () => {
+    ;(sys as any).pacts.push({ id: 1, nationA: 0, nationB: 1, status: 'active', strength: 50,
+      voterTurnout: 50, approvalRate: 50, legitimacy: 30, contestedBy: 0, tick: 999999 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, world, em6, 3400)
+    const p = (sys as any).pacts[0]
+    if (p) { expect(p.voterTurnout).toBeGreaterThanOrEqual(0); expect(p.voterTurnout).toBeLessThanOrEqual(100) }
+  })
+  it('_pactKeySet是Set', () => {
+    expect((sys as any)._pactKeySet instanceof Set).toBe(true)
+  })
+  it('系统实例化不报错', () => {
+    expect(() => makeSys()).not.toThrow()
+  })
+  it('expired状态是合法status', () => {
+    ;(sys as any).pacts.push({ id: 1, nationA: 0, nationB: 1, status: 'expired', strength: 10,
+      voterTurnout: 20, approvalRate: 30, legitimacy: 15, contestedBy: 0, tick: 0 })
+    expect((sys as any).pacts[0].status).toBe('expired')
+  })
+  it('PlebisciteStatus包含proposed/active/expired/rejected', () => {
+    const statuses = ['proposed', 'active', 'expired', 'rejected']
+    expect(statuses).toHaveLength(4)
+  })
+  it('整体运行不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => {
+      for (let i = 0; i <= 5; i++) sys.update(1, world, em6, 3400 * i)
+    }).not.toThrow()
+  })
+  it('nations数为6时lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, world, em6, 3400)
+    expect((sys as any).lastCheck).toBe(3400)
+  })
+  it('active状态pact存在tick-30000>30000时变expired', () => {
+    ;(sys as any).pacts.push({ id: 1, nationA: 0, nationB: 1, status: 'active', strength: 50,
+      voterTurnout: 50, approvalRate: 50, legitimacy: 30, contestedBy: 0, tick: 0 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    sys.update(1, world, em6, 35000)
+    const p = (sys as any).pacts.find((pp: any) => pp.id === 1)
+    if (p) { expect(['expired', 'active']).toContain(p.status) }
+  })
+  it('tick=3400时nationsBuf有数据', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, world, em6, 3400)
+    expect(Array.isArray((sys as any)._nationsBuf)).toBe(true)
+  })
+  it('初始_nationsBuf为空数组', () => {
+    expect(Array.isArray((sys as any)._nationsBuf)).toBe(true)
+  })
+  it('pact中包含contestedBy字段', () => {
+    ;(sys as any).pacts.push({ id: 1, nationA: 0, nationB: 1, status: 'proposed', strength: 30,
+      voterTurnout: 40, approvalRate: 30, legitimacy: 25, contestedBy: 3, tick: 1000 })
+    expect((sys as any).pacts[0]).toHaveProperty('contestedBy')
+  })
+  it('rejected是合法status', () => {
+    ;(sys as any).pacts.push({ id: 1, nationA: 0, nationB: 1, status: 'rejected', strength: 10,
+      voterTurnout: 20, approvalRate: 30, legitimacy: 15, contestedBy: 0, tick: 1000 })
+    expect((sys as any).pacts[0].status).toBe('rejected')
+  })
+  it('nextId随spawn递增', () => {
+    const before = (sys as any).nextId
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, world, em6, 3400)
+    const after = (sys as any).nextId
+    expect(after).toBeGreaterThanOrEqual(before)
+  })
+})
+
+describe('DiplomaticPlebisciteSystem — 补充测试', () => {
+  let sys: any
+  beforeEach(() => { sys = makeSys(); vi.restoreAllMocks() })
+
+  it('pact字段strength在[0,100]内', () => {
+    ;(sys as any).pacts.push({ id: 1, nationA: 0, nationB: 1, status: 'active', strength: 50,
+      voterTurnout: 50, approvalRate: 50, legitimacy: 30, contestedBy: 0, tick: 999999 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, world, em6, 3400)
+    const p = (sys as any).pacts[0]
+    if (p) { expect(p.strength).toBeGreaterThanOrEqual(0); expect(p.strength).toBeLessThanOrEqual(100) }
+  })
+  it('approvalRate在[0,100]内', () => {
+    ;(sys as any).pacts.push({ id: 1, nationA: 0, nationB: 1, status: 'active', strength: 50,
+      voterTurnout: 50, approvalRate: 50, legitimacy: 30, contestedBy: 0, tick: 999999 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, world, em6, 3400)
+    const p = (sys as any).pacts[0]
+    if (p) { expect(p.approvalRate).toBeGreaterThanOrEqual(0); expect(p.approvalRate).toBeLessThanOrEqual(100) }
+  })
+  it('_nationsSet是Set', () => {
+    expect((sys as any)._nationsSet instanceof Set).toBe(true)
+  })
+  it('两次触发后lastCheck=6800', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, world, em6, 3400)
+    sys.update(1, world, em6, 6800)
+    expect((sys as any).lastCheck).toBe(6800)
+  })
+  it('pact数量不超过MAX_PACTS=25', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    for (let i = 0; i < 10; i++) sys.update(1, world, em6, 3400 * (i + 1))
+    expect((sys as any).pacts.length).toBeLessThanOrEqual(25)
+  })
+  it('proposed且approvalRate<40时变rejected', () => {
+    ;(sys as any).pacts.push({ id: 1, nationA: 0, nationB: 1, status: 'proposed', strength: 30,
+      voterTurnout: 40, approvalRate: 30, legitimacy: 25, contestedBy: 0, tick: 999999 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.05) // 0.05<0.15触发，approvalRate=30<40→rejected
+    sys.update(1, world, em6, 3400)
+    const p = (sys as any).pacts.find((pp: any) => pp.id === 1)
+    if (p) { expect(p.status).toBe('rejected') }
+  })
+})

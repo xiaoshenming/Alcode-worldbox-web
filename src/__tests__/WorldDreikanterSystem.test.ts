@@ -220,3 +220,95 @@ describe('WorldDreikanterSystem', () => {
     expect((sys as any).dreikanters).toHaveLength(1)
   })
 })
+
+describe('WorldDreikanterSystem - 附加测试', () => {
+  let sys: WorldDreikanterSystem
+  beforeEach(() => { sys = makeSys(); _nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('dreikanters初始为空数组', () => { expect((sys as any).dreikanters).toHaveLength(0) })
+  it('dreikanters是数组类型', () => { expect(Array.isArray((sys as any).dreikanters)).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('tick不足CHECK_INTERVAL=2550时不更新lastCheck', () => {
+    sys.update(1, worldSand, em, 100)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick=2550时更新lastCheck', () => {
+    sys.update(1, worldSand, em, 2550)
+    expect((sys as any).lastCheck).toBe(2550)
+  })
+  it('tick=2549时不触发', () => {
+    sys.update(1, worldSand, em, 2549)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick=5100时再次触发', () => {
+    sys.update(1, worldSand, em, 2550)
+    sys.update(1, worldSand, em, 5100)
+    expect((sys as any).lastCheck).toBe(5100)
+  })
+  it('update后lastCheck等于传入tick', () => {
+    sys.update(1, worldSand, em, 7650)
+    expect((sys as any).lastCheck).toBe(7650)
+  })
+  it('注入dreikanter后长度为1', () => {
+    ;(sys as any).dreikanters.push(makeDreikanter())
+    expect((sys as any).dreikanters).toHaveLength(1)
+  })
+  it('注入5个后长度为5', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).dreikanters.push(makeDreikanter()) }
+    expect((sys as any).dreikanters).toHaveLength(5)
+  })
+  it('dreikanter含faces字段', () => { expect(makeDreikanter({ faces: 4 }).faces).toBe(4) })
+  it('dreikanter含polish字段', () => { expect(makeDreikanter({ polish: 30 }).polish).toBe(30) })
+  it('dreikanter含windIntensity字段', () => { expect(makeDreikanter({ windIntensity: 60 }).windIntensity).toBe(60) })
+  it('dreikanter含stoneSize字段', () => { expect(makeDreikanter({ stoneSize: 20 }).stoneSize).toBe(20) })
+  it('dreikanter含desertAge字段', () => { expect(makeDreikanter({ desertAge: 500 }).desertAge).toBe(500) })
+  it('dreikanter含spectacle字段', () => { expect(makeDreikanter({ spectacle: 25 }).spectacle).toBe(25) })
+  it('dreikanter含tick字段', () => { expect(makeDreikanter({ tick: 5000 }).tick).toBe(5000) })
+  it('dreikanter含x,y坐标', () => {
+    const d = makeDreikanter({ x: 10, y: 20 })
+    expect(d.x).toBe(10); expect(d.y).toBe(20)
+  })
+  it('过期dreikanter被清除', () => {
+    ;(sys as any).dreikanters.push(makeDreikanter({ tick: 0 }))
+    sys.update(1, worldSand, em, 100000)
+    expect((sys as any).dreikanters).toHaveLength(0)
+  })
+  it('未过期dreikanter保留', () => {
+    ;(sys as any).dreikanters.push(makeDreikanter({ tick: 90000 }))
+    sys.update(1, worldSand, em, 95000)
+    expect((sys as any).dreikanters).toHaveLength(1)
+  })
+  it('混合新旧只删旧的', () => {
+    ;(sys as any).dreikanters.push(makeDreikanter({ id:1, tick: 0 }))
+    ;(sys as any).dreikanters.push(makeDreikanter({ id:2, tick: 90000 }))
+    sys.update(1, worldSand, em, 95000)
+    expect((sys as any).dreikanters).toHaveLength(1)
+    expect((sys as any).dreikanters[0].id).toBe(2)
+  })
+  it('MAX_DREIKANTERS=16硬上限不超过', () => {
+    for (let i = 0; i < 16; i++) { (sys as any).dreikanters.push(makeDreikanter({ id:i+1, tick: 999999 })) }
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, worldSand, em, 2550)
+    expect((sys as any).dreikanters.length).toBeLessThanOrEqual(16)
+  })
+  it('dreikanters中id不重复', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).dreikanters.push(makeDreikanter()) }
+    const ids = (sys as any).dreikanters.map((d: any) => d.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+  it('空dreikanters时update不崩溃', () => {
+    expect(() => sys.update(1, worldSand, em, 2550)).not.toThrow()
+  })
+  it('同一tick两次update只触发一次', () => {
+    sys.update(1, worldSand, em, 2550)
+    const lc1 = (sys as any).lastCheck
+    sys.update(1, worldSand, em, 2550)
+    expect((sys as any).lastCheck).toBe(lc1)
+  })
+  it('update不返回值', () => {
+    expect(sys.update(1, worldSand, em, 2550)).toBeUndefined()
+  })
+})

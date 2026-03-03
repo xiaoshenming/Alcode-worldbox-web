@@ -214,3 +214,119 @@ describe('WorldGadoliniumSpringSystem', () => {
     })
   })
 })
+
+describe('WorldGadoliniumSpringSystem - 附加测试', () => {
+  let sys: WorldGadoliniumSpringSystem
+  beforeEach(() => { sys = makeSys(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('zones初始为空数组', () => { expect(getZones(sys)).toHaveLength(0) })
+  it('nextId初始为1', () => { expect(getNextId(sys)).toBe(1) })
+  it('lastCheck初始为0', () => { expect(getLastCheck(sys)).toBe(0) })
+  it('tick不足CHECK_INTERVAL时不触发', () => {
+    sys.update(1, safeWorld, em, 100)
+    expect(getLastCheck(sys)).toBe(0)
+  })
+  it('tick=CHECK_INTERVAL时更新lastCheck', () => {
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    expect(getLastCheck(sys)).toBe(CHECK_INTERVAL)
+  })
+  it('第二次调用需再等CHECK_INTERVAL', () => {
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL + 100)
+    expect(getLastCheck(sys)).toBe(CHECK_INTERVAL)
+  })
+  it('tick=2*CHECK_INTERVAL时再次触发', () => {
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    sys.update(1, safeWorld, em, 2 * CHECK_INTERVAL)
+    expect(getLastCheck(sys)).toBe(2 * CHECK_INTERVAL)
+  })
+  it('空zones时update不崩溃', () => {
+    expect(() => sys.update(1, safeWorld, em, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('safeWorld(getTile=2)不spawn（无水无山）', () => {
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    expect(getZones(sys)).toHaveLength(0)
+  })
+  it('注入zone后长度为1', () => {
+    injectZone(sys, 1000)
+    expect(getZones(sys)).toHaveLength(1)
+  })
+  it('注入5个zone后长度��5', () => {
+    for (let i = 0; i < 5; i++) { injectZone(sys, 1000, { x: i }) }
+    expect(getZones(sys)).toHaveLength(5)
+  })
+  it('zone含gadoliniumContent字段', () => {
+    const z = injectZone(sys, 1000)
+    expect(typeof z.gadoliniumContent).toBe('number')
+  })
+  it('zone含springFlow字段', () => {
+    const z = injectZone(sys, 1000)
+    expect(typeof z.springFlow).toBe('number')
+  })
+  it('zone含xenotimeWeathering字段', () => {
+    const z = injectZone(sys, 1000)
+    expect(typeof z.xenotimeWeathering).toBe('number')
+  })
+  it('zone含magneticSusceptibility字段', () => {
+    const z = injectZone(sys, 1000)
+    expect(typeof z.magneticSusceptibility).toBe('number')
+  })
+  it('zone含tick字段', () => {
+    const z = injectZone(sys, 1000)
+    expect(z.tick).toBe(1000)
+  })
+  it('zone含id字段', () => {
+    const z = injectZone(sys, 1000)
+    expect(typeof z.id).toBe('number')
+  })
+  it('zone含x,y坐标', () => {
+    const z = injectZone(sys, 1000, { x: 5, y: 10 })
+    expect(z.x).toBe(5); expect(z.y).toBe(10)
+  })
+  it('注入的zones id不重复', () => {
+    for (let i = 0; i < 5; i++) { injectZone(sys, 1000, { x: i }) }
+    const ids = getZones(sys).map((z: any) => z.id)
+    const unique = new Set(ids)
+    expect(unique.size).toBe(ids.length)
+  })
+  it('过期zone被清除（tick=0，大tick值）', () => {
+    injectZone(sys, 0)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL + CUTOFF_OFFSET + 1)
+    expect(getZones(sys)).toHaveLength(0)
+  })
+  it('未过期zone保留', () => {
+    const currentTick = CHECK_INTERVAL + CUTOFF_OFFSET
+    injectZone(sys, currentTick - 1000)
+    sys.update(1, safeWorld, em, currentTick)
+    expect(getZones(sys)).toHaveLength(1)
+  })
+  it('MAX_ZONES=32：上限不超过', () => {
+    for (let i = 0; i < 32; i++) { injectZone(sys, 999999, { x: i }) }
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    expect(getZones(sys).length).toBeLessThanOrEqual(32)
+  })
+  it('zones是数组类型', () => { expect(Array.isArray(getZones(sys))).toBe(true) })
+  it('update后lastCheck等于传入tick', () => {
+    sys.update(1, safeWorld, em, 5920)
+    expect(getLastCheck(sys)).toBe(5920)
+  })
+  it('同一tick两次update只触发一次', () => {
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    const lc1 = getLastCheck(sys)
+    sys.update(1, safeWorld, em, CHECK_INTERVAL)
+    expect(getLastCheck(sys)).toBe(lc1)
+  })
+  it('cutoff=tick-54000正确：tick=56960,cutoff=2960', () => {
+    injectZone(sys, 2959) // tick=2959 < 2960 → 删除
+    sys.update(1, safeWorld, em, 56960)
+    expect(getZones(sys)).toHaveLength(0)
+  })
+  it('tick=2960(=cutoff)的zone保留', () => {
+    injectZone(sys, 2960)
+    sys.update(1, safeWorld, em, 56960)
+    expect(getZones(sys)).toHaveLength(1)
+  })
+})

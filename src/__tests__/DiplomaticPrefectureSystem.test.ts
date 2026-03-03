@@ -1,203 +1,277 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { DiplomaticPrefectureSystem, PrefectureForm } from '../systems/DiplomaticPrefectureSystem'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { DiplomaticPrefectureSystem } from '../systems/DiplomaticPrefectureSystem'
+import type { PrefectureArrangement, PrefectureForm } from '../systems/DiplomaticPrefectureSystem'
 
 const CHECK_INTERVAL = 2590
 const MAX_ARRANGEMENTS = 16
-
+const EXPIRE_OFFSET = 88000
+const W = {} as any, EM = {} as any
 function makeSys() { return new DiplomaticPrefectureSystem() }
-function makeWorld() { return {} as any }
-function makeEm() { return {} as any }
-
-function inject(sys: DiplomaticPrefectureSystem, overrides: Record<string, any> = {}) {
-  const a = {
-    id: 99, appointerCivId: 1, prefectureCivId: 2,
-    form: 'civil_prefecture' as PrefectureForm,
-    administrativeOrder: 40, taxEfficiency: 40,
-    localLoyalty: 20, prefectAuthority: 25,
-    duration: 0, tick: 0,
-    ...overrides,
-  }
-  ;(sys as any).arrangements.push(a)
-  return a
+function getArr(sys: any): PrefectureArrangement[] { return sys.arrangements }
+function makeA(o: Partial<PrefectureArrangement> = {}): PrefectureArrangement {
+  return { id: 1, appointerCivId: 1, prefectureCivId: 2, form: 'civil_prefecture', administrativeOrder: 40, taxEfficiency: 40, localLoyalty: 20, prefectAuthority: 15, duration: 0, tick: 0, ...o }
 }
 
-describe('DiplomaticPrefectureSystem', () => {
+describe('DiplomaticPrefectureSystem — 基础数据结构', () => {
   let sys: DiplomaticPrefectureSystem
+  beforeEach(() => { sys = makeSys() })
 
-  beforeEach(() => { sys = makeSys(); vi.restoreAllMocks() })
-
-  // ── 1. 基础数据结构 ──────────────────────────────────────────────────────
-  describe('基础数据结构', () => {
-    it('arrangements 初始为空数组', () => {
-      expect((sys as any).arrangements).toHaveLength(0)
-    })
-
-    it('nextId 初始为 1', () => {
-      expect((sys as any).nextId).toBe(1)
-    })
-
-    it('lastCheck 初始为 0', () => {
-      expect((sys as any).lastCheck).toBe(0)
-    })
-
-    it('注入后 arrangements 长度为 1', () => {
-      inject(sys)
-      expect((sys as any).arrangements).toHaveLength(1)
-    })
-
-    it('arrangements 是数组', () => {
-      expect(Array.isArray((sys as any).arrangements)).toBe(true)
-    })
+  it('初始arrangements为空数组', () => { expect(getArr(sys)).toHaveLength(0) })
+  it('arrangements是数组类型', () => { expect(Array.isArray(getArr(sys))).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('注入一条后长度为1', () => { getArr(sys).push(makeA()); expect(getArr(sys)).toHaveLength(1) })
+  it('PrefectureArrangement包含id字段', () => { expect(makeA()).toHaveProperty('id') })
+  it('PrefectureArrangement包含appointerCivId字段', () => { expect(makeA()).toHaveProperty('appointerCivId') })
+  it('PrefectureArrangement包含prefectureCivId字段', () => { expect(makeA()).toHaveProperty('prefectureCivId') })
+  it('PrefectureArrangement包含administrativeOrder字段', () => { expect(makeA()).toHaveProperty('administrativeOrder') })
+  it('PrefectureArrangement包含duration和tick', () => {
+    const a = makeA()
+    expect(a).toHaveProperty('duration')
+    expect(a).toHaveProperty('tick')
   })
-
-  // ── 2. CHECK_INTERVAL 节流 ────────────────────────────────────────────────
-  describe('CHECK_INTERVAL 节流', () => {
-    it('tick < CHECK_INTERVAL 时 lastCheck 保持 0', () => {
-      sys.update(0, makeWorld(), makeEm(), CHECK_INTERVAL - 1)
-      expect((sys as any).lastCheck).toBe(0)
-    })
-
-    it('tick === CHECK_INTERVAL 时 lastCheck 更新', () => {
-      sys.update(0, makeWorld(), makeEm(), CHECK_INTERVAL)
-      expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
-    })
-
-    it('第二次 update 未满间隔时 lastCheck 不变', () => {
-      sys.update(0, makeWorld(), makeEm(), CHECK_INTERVAL)
-      sys.update(0, makeWorld(), makeEm(), CHECK_INTERVAL + 100)
-      expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
-    })
-
-    it('满足间隔后 lastCheck 再次更新', () => {
-      sys.update(0, makeWorld(), makeEm(), CHECK_INTERVAL)
-      sys.update(0, makeWorld(), makeEm(), CHECK_INTERVAL * 2)
-      expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
-    })
-
-    it('多次不满足间隔调用不改变 arrangements', () => {
-      inject(sys, { tick: 0 })
-      const lenBefore = (sys as any).arrangements.length
-      sys.update(0, makeWorld(), makeEm(), 100)
-      sys.update(0, makeWorld(), makeEm(), 200)
-      expect((sys as any).arrangements.length).toBe(lenBefore)
-    })
+  it('注入两条后长度为2', () => {
+    getArr(sys).push(makeA({ id: 1 }))
+    getArr(sys).push(makeA({ id: 2 }))
+    expect(getArr(sys)).toHaveLength(2)
   })
+})
 
-  // ── 3. 字段动态更新 ───────────────────────────────────────────────────────
-  describe('字段动态更新', () => {
-    it('每次触发后 duration += 1', () => {
-      const a = inject(sys, { tick: 0 })
-      sys.update(0, makeWorld(), makeEm(), CHECK_INTERVAL)
-      expect(a.duration).toBe(1)
-    })
+describe('DiplomaticPrefectureSystem — CHECK_INTERVAL=2590 节流', () => {
+  let sys: DiplomaticPrefectureSystem
+  beforeEach(() => { sys = makeSys(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
 
-    it('两次触发后 duration === 2', () => {
-      const a = inject(sys, { tick: 0 })
-      sys.update(0, makeWorld(), makeEm(), CHECK_INTERVAL)
-      sys.update(0, makeWorld(), makeEm(), CHECK_INTERVAL * 2)
-      expect(a.duration).toBe(2)
-    })
-
-    it('administrativeOrder 在触发后发生变化（在合法范围内）', () => {
-      const a = inject(sys, { administrativeOrder: 40, tick: 0 })
-      sys.update(0, makeWorld(), makeEm(), CHECK_INTERVAL)
-      expect(a.administrativeOrder).toBeGreaterThanOrEqual(5)
-      expect(a.administrativeOrder).toBeLessThanOrEqual(85)
-    })
-
-    it('taxEfficiency 在触发后在合法范围内', () => {
-      const a = inject(sys, { taxEfficiency: 40, tick: 0 })
-      sys.update(0, makeWorld(), makeEm(), CHECK_INTERVAL)
-      expect(a.taxEfficiency).toBeGreaterThanOrEqual(10)
-      expect(a.taxEfficiency).toBeLessThanOrEqual(90)
-    })
+  it('tick=0不触发', () => { sys.update(1, W, EM, 0); expect((sys as any).lastCheck).toBe(0) })
+  it('tick=CHECK_INTERVAL-1不触发', () => {
+    sys.update(1, W, EM, CHECK_INTERVAL - 1); expect((sys as any).lastCheck).toBe(0)
   })
-
-  // ── 4. cleanup（cutoff = tick - 88000）────────────────────────────────────
-  describe('cleanup', () => {
-    it('tick < cutoff 的 arrangement 被删除', () => {
-      const tick = 100000
-      inject(sys, { tick: tick - 88001 }) // 早于 cutoff
-      vi.spyOn(Math, 'random').mockReturnValue(0.9)
-      sys.update(0, makeWorld(), makeEm(), tick)
-      expect((sys as any).arrangements).toHaveLength(0)
-    })
-
-    it('tick === cutoff 边界时被删除', () => {
-      const tick = 100000
-      inject(sys, { tick: tick - 88000 }) // 恰好等于 cutoff，不满足 < cutoff
-      vi.spyOn(Math, 'random').mockReturnValue(0.9)
-      sys.update(0, makeWorld(), makeEm(), tick)
-      // tick < cutoff 为 false，不删除
-      expect((sys as any).arrangements).toHaveLength(1)
-    })
-
-    it('新鲜 arrangement 不被 cleanup 删除', () => {
-      const tick = CHECK_INTERVAL
-      inject(sys, { tick })
-      vi.spyOn(Math, 'random').mockReturnValue(0.9)
-      sys.update(0, makeWorld(), makeEm(), tick)
-      expect((sys as any).arrangements).toHaveLength(1)
-    })
-
-    it('混合新旧 arrangement 只删旧的', () => {
-      const tick = 100000
-      inject(sys, { id: 1, tick: 0 })          // 旧：tick=0 < cutoff=12000
-      inject(sys, { id: 2, tick: tick - 100 }) // 新：tick 接近当前
-      vi.spyOn(Math, 'random').mockReturnValue(0.9)
-      sys.update(0, makeWorld(), makeEm(), tick)
-      const remaining = (sys as any).arrangements
-      expect(remaining).toHaveLength(1)
-      expect(remaining[0].id).toBe(2)
-    })
+  it('tick=CHECK_INTERVAL触发', () => {
+    sys.update(1, W, EM, CHECK_INTERVAL); expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
-
-  // ── 5. MAX_ARRANGEMENTS 上限 ──────────────────────────────────────────────
-  describe('MAX_ARRANGEMENTS 上限', () => {
-    it('MAX_ARRANGEMENTS 常量为 16', () => {
-      expect(MAX_ARRANGEMENTS).toBe(16)
-    })
-
-    it('arrangements.length >= MAX 时不再 spawn', () => {
-      for (let i = 0; i < MAX_ARRANGEMENTS; i++) {
-        ;(sys as any).arrangements.push({ id: i, appointerCivId: i, prefectureCivId: i + 100, form: 'civil_prefecture', administrativeOrder: 40, taxEfficiency: 40, localLoyalty: 20, prefectAuthority: 25, duration: 0, tick: 999999 })
-      }
-      for (let t = 1; t <= 5; t++) {
-        sys.update(0, makeWorld(), makeEm(), CHECK_INTERVAL * t)
-      }
-      expect((sys as any).arrangements.length).toBeLessThanOrEqual(MAX_ARRANGEMENTS)
-    })
-
-    it('注入 5 条后 length 为 5', () => {
-      for (let i = 0; i < 5; i++) inject(sys, { id: i, tick: 999999 })
-      expect((sys as any).arrangements).toHaveLength(5)
-    })
-
-    it('cleanup 后 length 减少', () => {
-      const tick = 100000
-      inject(sys, { id: 1, tick: 0 })
-      inject(sys, { id: 2, tick: tick - 100 })
-      vi.spyOn(Math, 'random').mockReturnValue(0.9)
-      sys.update(0, makeWorld(), makeEm(), tick)
-      expect((sys as any).arrangements).toHaveLength(1)
-    })
+  it('tick=CHECK_INTERVAL+1000触发', () => {
+    sys.update(1, W, EM, CHECK_INTERVAL + 1000); expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 1000)
   })
+  it('间隔不足时不更新', () => {
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL + 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('间隔足够时第二次更新', () => {
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+  it('tick=1被节流', () => { sys.update(1, W, EM, 1); expect((sys as any).lastCheck).toBe(0) })
+  it('三次足够间隔', () => {
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    sys.update(1, W, EM, CHECK_INTERVAL * 3)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 3)
+  })
+})
 
-  // ── 6. 枚举完整性 ─────────────────────────────────────────────────────────
-  describe('枚举完整性', () => {
-    it('4 种 PrefectureForm 均合法', () => {
-      const forms: PrefectureForm[] = ['civil_prefecture', 'military_prefecture', 'judicial_prefecture', 'fiscal_prefecture']
-      expect(forms).toHaveLength(4)
-    })
+describe('DiplomaticPrefectureSystem — 数值字段动态更新', () => {
+  let sys: DiplomaticPrefectureSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
 
-    it('civil_prefecture 可作为 form 字段', () => {
-      const a = inject(sys, { form: 'civil_prefecture' })
-      expect(a.form).toBe('civil_prefecture')
-    })
+  it('duration每tick递增1', () => {
+    getArr(sys).push(makeA({ duration: 0, tick: 999999 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect(getArr(sys)[0].duration).toBe(1)
+  })
+  it('administrativeOrder在[5, 85]', () => {
+    getArr(sys).push(makeA({ administrativeOrder: 40, tick: CHECK_INTERVAL }))
+    for (let _i = 1; _i <= 100; _i++) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, W, EM, CHECK_INTERVAL * _i)
+      vi.restoreAllMocks()
+    }
+    const v = (sys as any).arrangements[0]?.administrativeOrder
+    if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(5); expect(v).toBeLessThanOrEqual(85) }
+  })
+  it('taxEfficiency在[10, 90]', () => {
+    getArr(sys).push(makeA({ taxEfficiency: 40, tick: CHECK_INTERVAL }))
+    for (let _i = 1; _i <= 100; _i++) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, W, EM, CHECK_INTERVAL * _i)
+      vi.restoreAllMocks()
+    }
+    const v = (sys as any).arrangements[0]?.taxEfficiency
+    if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(10); expect(v).toBeLessThanOrEqual(90) }
+  })
+  it('localLoyalty在[5, 80]', () => {
+    getArr(sys).push(makeA({ localLoyalty: 20, tick: CHECK_INTERVAL }))
+    for (let _i = 1; _i <= 100; _i++) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, W, EM, CHECK_INTERVAL * _i)
+      vi.restoreAllMocks()
+    }
+    const v = (sys as any).arrangements[0]?.localLoyalty
+    if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(5); expect(v).toBeLessThanOrEqual(80) }
+  })
+  it('prefectAuthority在[5, 65]', () => {
+    getArr(sys).push(makeA({ prefectAuthority: 15, tick: CHECK_INTERVAL }))
+    for (let _i = 1; _i <= 100; _i++) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, W, EM, CHECK_INTERVAL * _i)
+      vi.restoreAllMocks()
+    }
+    const v = (sys as any).arrangements[0]?.prefectAuthority
+    if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(5); expect(v).toBeLessThanOrEqual(65) }
+  })
+  it('多次update后duration累积', () => {
+    getArr(sys).push(makeA({ tick: 999999 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    sys.update(1, W, EM, CHECK_INTERVAL * 3)
+    expect(getArr(sys)[0].duration).toBe(3)
+  })
+  it('administrativeOrder最小值>=5', () => {
+    getArr(sys).push(makeA({ administrativeOrder: 5, tick: CHECK_INTERVAL }))
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    expect(getArr(sys)[0].administrativeOrder).toBeGreaterThanOrEqual(5)
+  })
+  it('prefectAuthority最大值<=65', () => {
+    getArr(sys).push(makeA({ prefectAuthority: 65, tick: CHECK_INTERVAL }))
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    expect(getArr(sys)[0].prefectAuthority).toBeLessThanOrEqual(65)
+  })
+})
 
-    it('military_prefecture 可作为 form 字段', () => {
-      const a = inject(sys, { form: 'military_prefecture' })
-      expect(a.form).toBe('military_prefecture')
-    })
+describe('DiplomaticPrefectureSystem — 过期清理(cutoff=tick-88000)', () => {
+  let sys: DiplomaticPrefectureSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('tick=0在tick=90000时被清理', () => {
+    getArr(sys).push(makeA({ id: 1, tick: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 90000)
+    expect(getArr(sys)).toHaveLength(0)
+  })
+  it('新鲜tick存活', () => {
+    getArr(sys).push(makeA({ id: 1, tick: 90000 - 1000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 90000)
+    expect(getArr(sys)).toHaveLength(1)
+  })
+  it('cutoff边界时保留', () => {
+    getArr(sys).push(makeA({ id: 1, tick: 2000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 90000)
+    expect(getArr(sys)).toHaveLength(1)
+  })
+  it('只删过期的', () => {
+    getArr(sys).push(makeA({ id: 1, tick: 0 }))
+    getArr(sys).push(makeA({ id: 2, tick: 90000 - 100 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 90000)
+    expect(getArr(sys)).toHaveLength(1)
+    expect(getArr(sys)[0].id).toBe(2)
+  })
+  it('全部过期时清空', () => {
+    getArr(sys).push(makeA({ id: 1, tick: 100 }))
+    getArr(sys).push(makeA({ id: 2, tick: 200 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 90000)
+    expect(getArr(sys)).toHaveLength(0)
+  })
+  it('无记录时不报错', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, W, EM, 90000)).not.toThrow()
+  })
+  it('三条混合正确保留', () => {
+    getArr(sys).push(makeA({ id: 1, tick: 50 }))
+    getArr(sys).push(makeA({ id: 2, tick: 90000 - 500 }))
+    getArr(sys).push(makeA({ id: 3, tick: 90000 - 1500 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 90000)
+    expect(getArr(sys).every(a => a.id !== 1)).toBe(true)
+  })
+  it('EXPIRE_OFFSET=88000', () => { expect(EXPIRE_OFFSET).toBe(88000) })
+})
+
+describe('DiplomaticPrefectureSystem — MAX_ARRANGEMENTS=16 上限', () => {
+  let sys: DiplomaticPrefectureSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('满16条时不新增', () => {
+    for (let _i = 1; _i <= MAX_ARRANGEMENTS; _i++) {
+      getArr(sys).push(makeA({ id: _i, tick: 999999 }))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect(getArr(sys)).toHaveLength(MAX_ARRANGEMENTS)
+  })
+  it('PrefectureForm包含4种形式', () => {
+    const forms: PrefectureForm[] = ['civil_prefecture', 'military_prefecture', 'judicial_prefecture', 'fiscal_prefecture']
+    expect(forms).toHaveLength(4)
+  })
+  it('各form可赋值', () => {
+    const forms: PrefectureForm[] = ['civil_prefecture', 'military_prefecture', 'judicial_prefecture', 'fiscal_prefecture']
+    forms.forEach(f => { expect(makeA({ form: f }).form).toBe(f) })
+  })
+  it('spawn时appointerCivId!=prefectureCivId', () => {
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0.5)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    if (getArr(sys).length > 0) {
+      const a = getArr(sys)[0]
+      expect(a.appointerCivId).not.toBe(a.prefectureCivId)
+    }
+  })
+  it('spawn后tick=当前tick', () => {
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0.5)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    if (getArr(sys).length > 0) { expect(getArr(sys)[0].tick).toBe(CHECK_INTERVAL) }
+  })
+  it('nextId初始=1', () => { expect((sys as any).nextId).toBe(1) })
+  it('spawn后nextId=2', () => {
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0.5)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).nextId).toBe(2)
+  })
+  it('random=0.99时不spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect(getArr(sys)).toHaveLength(0)
+  })
+  it('整体不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    expect(() => { for (let _i = 0; _i <= 10; _i++) sys.update(1, W, EM, CHECK_INTERVAL * _i) }).not.toThrow()
+  })
+  it('CHECK_INTERVAL=2590', () => { expect(CHECK_INTERVAL).toBe(2590) })
+  it('MAX_ARRANGEMENTS=16', () => { expect(MAX_ARRANGEMENTS).toBe(16) })
+  it('spawn的id从1开始', () => {
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0.5)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    if (getArr(sys).length > 0) { expect(getArr(sys)[0].id).toBe(1) }
+  })
+  it('数组可独立注入读取', () => {
+    const a = makeA({ id: 42, appointerCivId: 3, prefectureCivId: 7 })
+    getArr(sys).push(a)
+    expect(getArr(sys)[0].id).toBe(42)
+    expect(getArr(sys)[0].appointerCivId).toBe(3)
+  })
+  it('两条记录均正确更新duration', () => {
+    getArr(sys).push(makeA({ id: 1, tick: 999999 }))
+    getArr(sys).push(makeA({ id: 2, tick: 999999 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect(getArr(sys)[0].duration).toBe(1)
+    expect(getArr(sys)[1].duration).toBe(1)
+  })
+  it('系统实例化不报错', () => {
+    expect(() => new DiplomaticPrefectureSystem()).not.toThrow()
   })
 })

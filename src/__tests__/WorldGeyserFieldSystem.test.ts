@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { WorldGeyserFieldSystem } from '../systems/WorldGeyserFieldSystem'
 import type { GeyserField } from '../systems/WorldGeyserFieldSystem'
 
@@ -255,5 +255,114 @@ describe('WorldGeyserFieldSystem', () => {
     ;(sys as any).fields.push(makeField())
     ;(sys as any).fields.push(makeField())
     expect((sys as any).fields).toHaveLength(2)
+  })
+})
+
+describe('WorldGeyserFieldSystem - 附加测试', () => {
+  let sys: WorldGeyserFieldSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('fields初始为空数组', () => { expect((sys as any).fields).toHaveLength(0) })
+  it('fields是数组类型', () => { expect(Array.isArray((sys as any).fields)).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('tick不足CHECK_INTERVAL=2720时不更新lastCheck', () => {
+    sys.update(1, safeWorld, em, 100)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick=2720时更新lastCheck', () => {
+    sys.update(1, safeWorld, em, 2720)
+    expect((sys as any).lastCheck).toBe(2720)
+  })
+  it('tick=2719时不触发', () => {
+    sys.update(1, safeWorld, em, 2719)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick=5440时再次触发', () => {
+    sys.update(1, safeWorld, em, 2720)
+    sys.update(1, safeWorld, em, 5440)
+    expect((sys as any).lastCheck).toBe(5440)
+  })
+  it('update后lastCheck等于传入tick', () => {
+    sys.update(1, safeWorld, em, 8160)
+    expect((sys as any).lastCheck).toBe(8160)
+  })
+  it('注入field后长度为1', () => {
+    ;(sys as any).fields.push(makeField())
+    expect((sys as any).fields).toHaveLength(1)
+  })
+  it('注入5个后长度为5', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).fields.push(makeField()) }
+    expect((sys as any).fields).toHaveLength(5)
+  })
+  it('field含geyserCount字段', () => {
+    const f = makeField({ geyserCount: 8 })
+    expect(f.geyserCount).toBe(8)
+  })
+  it('field含eruptionInterval字段', () => {
+    const f = makeField({ eruptionInterval: 300 })
+    expect(f.eruptionInterval).toBe(300)
+  })
+  it('field含waterTemperature字段', () => {
+    const f = makeField({ waterTemperature: 95 })
+    expect(f.waterTemperature).toBe(95)
+  })
+  it('field含mineralContent字段', () => {
+    const f = makeField({ mineralContent: 60 })
+    expect(f.mineralContent).toBe(60)
+  })
+  it('field含tick字段', () => {
+    const f = makeField({ tick: 5000 })
+    expect(f.tick).toBe(5000)
+  })
+  it('field含lastEruption字段', () => {
+    const f = makeField({ lastEruption: 1000 })
+    expect(f.lastEruption).toBe(1000)
+  })
+  it('过期field被清除', () => {
+    // waterTemperature=40, lastEruption=99999以防止tick=100000时触发喷发(100000-99999=1 < 200)
+    // Math.max(40, 40-0.02)=40, 40<=40 → 被删除
+    ;(sys as any).fields.push(makeField({ tick: 0, waterTemperature: 40, lastEruption: 99999 }))
+    sys.update(1, safeWorld, em, 100000)
+    expect((sys as any).fields).toHaveLength(0)
+  })
+  it('未过期field保留', () => {
+    ;(sys as any).fields.push(makeField({ tick: 90000, waterTemperature: 90 }))
+    sys.update(1, safeWorld, em, 95000)
+    expect((sys as any).fields).toHaveLength(1)
+  })
+  it('混合新旧只删旧的', () => {
+    // id:1: waterTemperature=40, lastEruption=94999防止喷发 → 被删除
+    ;(sys as any).fields.push(makeField({ id:1, tick: 0, waterTemperature: 40, lastEruption: 94999 }))
+    // id:2: waterTemperature=90 → 保留
+    ;(sys as any).fields.push(makeField({ id:2, tick: 90000, waterTemperature: 90 }))
+    sys.update(1, safeWorld, em, 95000)
+    expect((sys as any).fields).toHaveLength(1)
+    expect((sys as any).fields[0].id).toBe(2)
+  })
+  it('MAX_FIELDS=8硬上限不超过', () => {
+    for (let i = 0; i < 8; i++) { (sys as any).fields.push(makeField({ id:i+1, tick: 999999 })) }
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, safeWorld, em, 2720)
+    expect((sys as any).fields.length).toBeLessThanOrEqual(8)
+  })
+  it('fields中id不重复', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).fields.push(makeField()) }
+    const ids = (sys as any).fields.map((f: any) => f.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+  it('空fields时update不崩溃', () => {
+    expect(() => sys.update(1, safeWorld, em, 2720)).not.toThrow()
+  })
+  it('同一tick两次update只触发一次', () => {
+    sys.update(1, safeWorld, em, 2720)
+    const lc1 = (sys as any).lastCheck
+    sys.update(1, safeWorld, em, 2720)
+    expect((sys as any).lastCheck).toBe(lc1)
+  })
+  it('update不返回值', () => {
+    expect(sys.update(1, safeWorld, em, 2720)).toBeUndefined()
   })
 })

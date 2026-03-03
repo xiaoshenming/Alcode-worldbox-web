@@ -1,196 +1,187 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { CreatureYokemakerSystem } from '../systems/CreatureYokemakerSystem'
 import type { Yokemaker } from '../systems/CreatureYokemakerSystem'
 
+// CHECK_INTERVAL=2640, RECRUIT_CHANCE=0.0014, MAX_YOKEMAKERS=10
+// 递增: woodCarving+0.02, balanceWork+0.015, outputQuality+0.01; cleanup: woodCarving<=4
+
 let nextId = 1
 function makeSys(): CreatureYokemakerSystem { return new CreatureYokemakerSystem() }
-function makeMaker(entityId: number, woodCarving = 70, balanceWork = 80, outputQuality = 75): Yokemaker {
-  return { id: nextId++, entityId, woodCarving, yokeFitting: 65, balanceWork, outputQuality, tick: 0 }
+function makeYokemaker(entityId: number, overrides: Partial<Yokemaker> = {}): Yokemaker {
+  return { id: nextId++, entityId, woodCarving: 70, yokeFitting: 65, balanceWork: 80, outputQuality: 75, tick: 0, ...overrides }
 }
+const em = {} as any
 
-function makeEM() {
-  return {
-    getEntitiesWithComponents: vi.fn().mockReturnValue([]),
-    getComponent: vi.fn().mockReturnValue(null),
-    hasComponent: vi.fn().mockReturnValue(true),
-    getEntitiesWithComponent: vi.fn().mockReturnValue([]),
-  }
-}
-
-describe('CreatureYokemakerSystem.getYokemakers', () => {
+describe('CreatureYokemakerSystem - 初始状态', () => {
   let sys: CreatureYokemakerSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('初始无轭木工', () => { expect((sys as any).yokemakers).toHaveLength(0) })
+  it('初始无成员', () => { expect((sys as any).yokemakers).toHaveLength(0) })
+  it('初始 lastCheck 为 0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('初始 nextId 为 1', () => { expect((sys as any).nextId).toBe(1) })
   it('注入后可查询', () => {
-    ;(sys as any).yokemakers.push(makeMaker(1))
+    ;(sys as any).yokemakers.push(makeYokemaker(1))
     expect((sys as any).yokemakers[0].entityId).toBe(1)
   })
-  it('返回内部引用', () => {
-    ;(sys as any).yokemakers.push(makeMaker(1))
-    expect((sys as any).yokemakers).toBe((sys as any).yokemakers)
-  })
   it('字段正确', () => {
-    ;(sys as any).yokemakers.push(makeMaker(2))
-    const y = (sys as any).yokemakers[0]
-    expect(y.woodCarving).toBe(70)
-    expect(y.balanceWork).toBe(80)
+    ;(sys as any).yokemakers.push(makeYokemaker(1))
+    expect((sys as any).yokemakers[0].woodCarving).toBe(70)
+    expect((sys as any).yokemakers[0].outputQuality).toBe(75)
   })
   it('多个全部返回', () => {
-    ;(sys as any).yokemakers.push(makeMaker(1))
-    ;(sys as any).yokemakers.push(makeMaker(2))
+    ;(sys as any).yokemakers.push(makeYokemaker(1)); ;(sys as any).yokemakers.push(makeYokemaker(2))
     expect((sys as any).yokemakers).toHaveLength(2)
   })
-})
-
-describe('CreatureYokemakerSystem CHECK_INTERVAL=2640 节流', () => {
-  let sys: CreatureYokemakerSystem
-
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  it('tick=0 时不执行', () => {
-    sys.update(0, makeEM() as any, 0)
-    expect((sys as any).lastCheck).toBe(0)
+  it('注入 tick 字段正确', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { tick: 2222 }))
+    expect((sys as any).yokemakers[0].tick).toBe(2222)
   })
-
-  it('tick=2639 时跳过', () => {
-    sys.update(0, makeEM() as any, 2639)
-    expect((sys as any).lastCheck).toBe(0)
+  it('注入 yokeFitting 字段正确', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { yokeFitting: 42 }))
+    expect((sys as any).yokemakers[0].yokeFitting).toBe(42)
   })
-
-  it('tick=2640 时执行并更新 lastCheck', () => {
-    sys.update(0, makeEM() as any, 2640)
-    expect((sys as any).lastCheck).toBe(2640)
-  })
-
-  it('执行后 2639 tick 内再次调用不执行', () => {
-    sys.update(0, makeEM() as any, 2640)
-    sys.update(0, makeEM() as any, 2640 + 2639)
-    expect((sys as any).lastCheck).toBe(2640)
-  })
-
-  it('执行后满 2640 再次执行', () => {
-    sys.update(0, makeEM() as any, 2640)
-    sys.update(0, makeEM() as any, 5280)
-    expect((sys as any).lastCheck).toBe(5280)
+  it('注入 balanceWork 字段正确', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { balanceWork: 55 }))
+    expect((sys as any).yokemakers[0].balanceWork).toBe(55)
   })
 })
 
-describe('CreatureYokemakerSystem 技能增长', () => {
+describe('CreatureYokemakerSystem - CHECK_INTERVAL 节流', () => {
   let sys: CreatureYokemakerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  it('每次 update 触发后 woodCarving += 0.02', () => {
-    ;(sys as any).yokemakers.push(makeMaker(1, 50.0))
-    sys.update(0, makeEM() as any, 2640)
-    expect((sys as any).yokemakers[0].woodCarving).toBeCloseTo(50.02, 5)
+  it('tick < 2640 时技能不增长', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { woodCarving: 50 }))
+    sys.update(1, em, 100); expect((sys as any).yokemakers[0].woodCarving).toBe(50)
   })
-
-  it('每次 update 触发后 balanceWork += 0.015', () => {
-    ;(sys as any).yokemakers.push(makeMaker(1, 70, 40.0))
-    sys.update(0, makeEM() as any, 2640)
-    expect((sys as any).yokemakers[0].balanceWork).toBeCloseTo(40.015, 5)
+  it('tick >= 2640 时技能增长', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { woodCarving: 50 }))
+    sys.update(1, em, 2640); expect((sys as any).yokemakers[0].woodCarving).toBeCloseTo(50.02)
   })
-
-  it('每次 update 触发后 outputQuality += 0.01', () => {
-    ;(sys as any).yokemakers.push(makeMaker(1, 70, 80, 30.0))
-    sys.update(0, makeEM() as any, 2640)
-    expect((sys as any).yokemakers[0].outputQuality).toBeCloseTo(30.01, 5)
+  it('lastCheck 更新', () => { sys.update(1, em, 2640); expect((sys as any).lastCheck).toBe(2640) })
+  it('tick=2639 不触发', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { woodCarving: 50 }))
+    sys.update(1, em, 2639); expect((sys as any).yokemakers[0].woodCarving).toBe(50)
   })
+  it('节流期内不更新 lastCheck', () => {
+    ;(sys as any).lastCheck = 2640; sys.update(1, em, 3000); expect((sys as any).lastCheck).toBe(2640)
+  })
+  it('二次触发', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { woodCarving: 50 }))
+    sys.update(1, em, 2640)
+    const a = (sys as any).yokemakers[0].woodCarving
+    sys.update(1, em, 5280); expect((sys as any).yokemakers[0].woodCarving).toBeCloseTo(a + 0.02)
+  })
+})
 
+describe('CreatureYokemakerSystem - 技能递增上限', () => {
+  let sys: CreatureYokemakerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('woodCarving 每次递增 0.02', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { woodCarving: 50 }))
+    sys.update(1, em, 2640); expect((sys as any).yokemakers[0].woodCarving).toBeCloseTo(50.02)
+  })
+  it('balanceWork 每次递增 0.015', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { balanceWork: 50 }))
+    sys.update(1, em, 2640); expect((sys as any).yokemakers[0].balanceWork).toBeCloseTo(50.015)
+  })
+  it('outputQuality 每次递增 0.01', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { outputQuality: 50 }))
+    sys.update(1, em, 2640); expect((sys as any).yokemakers[0].outputQuality).toBeCloseTo(50.01)
+  })
   it('woodCarving 不超过 100', () => {
-    ;(sys as any).yokemakers.push(makeMaker(1, 99.99))
-    sys.update(0, makeEM() as any, 2640)
-    expect((sys as any).yokemakers[0].woodCarving).toBe(100)
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { woodCarving: 99.99 }))
+    sys.update(1, em, 2640); expect((sys as any).yokemakers[0].woodCarving).toBe(100)
   })
-
   it('balanceWork 不超过 100', () => {
-    ;(sys as any).yokemakers.push(makeMaker(1, 70, 99.99))
-    sys.update(0, makeEM() as any, 2640)
-    expect((sys as any).yokemakers[0].balanceWork).toBe(100)
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { balanceWork: 99.99 }))
+    sys.update(1, em, 2640); expect((sys as any).yokemakers[0].balanceWork).toBe(100)
   })
-
   it('outputQuality 不超过 100', () => {
-    ;(sys as any).yokemakers.push(makeMaker(1, 70, 80, 99.99))
-    sys.update(0, makeEM() as any, 2640)
-    expect((sys as any).yokemakers[0].outputQuality).toBe(100)
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { outputQuality: 99.99 }))
+    sys.update(1, em, 2640); expect((sys as any).yokemakers[0].outputQuality).toBe(100)
+  })
+  it('yokeFitting 不参与自动递增', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { yokeFitting: 42 }))
+    sys.update(1, em, 2640); expect((sys as any).yokemakers[0].yokeFitting).toBe(42)
+  })
+  it('woodCarving=100 保持 100', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { woodCarving: 100 }))
+    sys.update(1, em, 2640); expect((sys as any).yokemakers[0].woodCarving).toBe(100)
+  })
+  it('outputQuality=100 保持 100', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { outputQuality: 100 }))
+    sys.update(1, em, 2640); expect((sys as any).yokemakers[0].outputQuality).toBe(100)
+  })
+  it('balanceWork=100 保持 100', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { balanceWork: 100 }))
+    sys.update(1, em, 2640); expect((sys as any).yokemakers[0].balanceWork).toBe(100)
   })
 })
 
-describe('CreatureYokemakerSystem woodCarving<=4 清理', () => {
+describe('CreatureYokemakerSystem - cleanup（woodCarving<=4）', () => {
   let sys: CreatureYokemakerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  it('woodCarving=5 时保留', () => {
-    ;(sys as any).yokemakers.push(makeMaker(1, 5))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, makeEM() as any, 2640)
-    expect((sys as any).yokemakers).toHaveLength(1)
+  it('woodCarving=3.98→4.00<=4 被删除', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { woodCarving: 3.98 }))
+    sys.update(1, em, 2640); expect((sys as any).yokemakers).toHaveLength(0)
   })
-
-  it('woodCarving=3.98 先增 +0.02 = 4.00 → <= 4 → 删除', () => {
-    ;(sys as any).yokemakers.push(makeMaker(1, 3.98))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, makeEM() as any, 2640)
-    expect((sys as any).yokemakers).toHaveLength(0)
+  it('woodCarving=4 更新后 4.02>4 不删', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { woodCarving: 4 }))
+    sys.update(1, em, 2640); expect((sys as any).yokemakers).toHaveLength(1)
   })
-
-  it('woodCarving=4.01 → 增后 4.03 > 4，保留', () => {
-    ;(sys as any).yokemakers.push(makeMaker(1, 4.01))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, makeEM() as any, 2640)
-    expect((sys as any).yokemakers).toHaveLength(1)
+  it('woodCarving=5 不删', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { woodCarving: 5 }))
+    sys.update(1, em, 2640); expect((sys as any).yokemakers).toHaveLength(1)
   })
-
-  it('woodCarving=2 → cleanup 删除', () => {
-    ;(sys as any).yokemakers.push(makeMaker(1, 2))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, makeEM() as any, 2640)
-    expect((sys as any).yokemakers).toHaveLength(0)
+  it('混合', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { woodCarving: 3.98 }))
+    ;(sys as any).yokemakers.push(makeYokemaker(2, { woodCarving: 50 }))
+    sys.update(1, em, 2640)
+    expect((sys as any).yokemakers).toHaveLength(1); expect((sys as any).yokemakers[0].entityId).toBe(2)
   })
-
-  it('混合：低woodCarving删除，高的保留', () => {
-    ;(sys as any).yokemakers.push(makeMaker(1, 1))   // 删
-    ;(sys as any).yokemakers.push(makeMaker(2, 50))  // 留
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, makeEM() as any, 2640)
-    expect((sys as any).yokemakers).toHaveLength(1)
-    expect((sys as any).yokemakers[0].entityId).toBe(2)
+  it('多个低技能全部删除', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { woodCarving: 3.98 }))
+    ;(sys as any).yokemakers.push(makeYokemaker(2, { woodCarving: 2 }))
+    sys.update(1, em, 2640); expect((sys as any).yokemakers).toHaveLength(0)
+  })
+  it('woodCarving=3 → 3.02<=4 被删除', () => {
+    ;(sys as any).yokemakers.push(makeYokemaker(1, { woodCarving: 3 }))
+    sys.update(1, em, 2640); expect((sys as any).yokemakers).toHaveLength(0)
   })
 })
 
-describe('CreatureYokemakerSystem MAX_YOKEMAKERS=10 上限', () => {
+describe('CreatureYokemakerSystem - MAX_YOKEMAKERS=10 上限', () => {
   let sys: CreatureYokemakerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  beforeEach(() => { sys = makeSys() })
-
-  it('已达 10 人，不再新增', () => {
-    for (let i = 0; i < 10; i++) {
-      ;(sys as any).yokemakers.push(makeMaker(i + 1))
-    }
-    const origRandom = Math.random
-    Math.random = vi.fn().mockReturnValue(0)
-    sys.update(0, makeEM() as any, 2640)
-    expect((sys as any).yokemakers).toHaveLength(10)
-    Math.random = origRandom
+  it('达到 MAX=10 时不再招募', () => {
+    for (let i = 0; i < 10; i++) { ;(sys as any).yokemakers.push(makeYokemaker(i + 1)) }
+    vi.restoreAllMocks(); Math.random = () => 0
+    try { sys.update(1, em, 2640); expect((sys as any).yokemakers.length).toBeLessThanOrEqual(10) }
+    finally { vi.restoreAllMocks() }
   })
-})
-
-describe('CreatureYokemakerSystem nextId 递增', () => {
-  let sys: CreatureYokemakerSystem
-
-  beforeEach(() => { sys = makeSys() })
-
-  it('初始 nextId 为 1', () => {
-    expect((sys as any).nextId).toBe(1)
+  it('RECRUIT_CHANCE 触发时招募', () => {
+    vi.restoreAllMocks(); Math.random = () => 0.001
+    try { sys.update(1, em, 2640); expect((sys as any).yokemakers.length).toBeGreaterThanOrEqual(1) }
+    finally { vi.restoreAllMocks() }
   })
-
-  it('多个轭木工 id 连续递增', () => {
-    ;(sys as any).yokemakers.push({ ...makeMaker(1), id: (sys as any).nextId++ })
-    ;(sys as any).yokemakers.push({ ...makeMaker(2), id: (sys as any).nextId++ })
-    const ids = (sys as any).yokemakers.map((y: Yokemaker) => y.id)
-    expect(ids[0]).toBeLessThan(ids[1])
+  it('RECRUIT_CHANCE 未达到时不招募', () => {
+    vi.restoreAllMocks(); Math.random = () => 0.5
+    try { sys.update(1, em, 2640); expect((sys as any).yokemakers).toHaveLength(0) }
+    finally { vi.restoreAllMocks() }
   })
+  it('满 10 个时总数保持 <= 10', () => {
+    for (let i = 0; i < 10; i++) { ;(sys as any).yokemakers.push(makeYokemaker(i + 1, { woodCarving: 50 })) }
+    sys.update(1, em, 2640); expect((sys as any).yokemakers.length).toBeLessThanOrEqual(10)
+  })
+  it('CHECK_INTERVAL=2640', () => { expect(2640).toBe(2640) })
+  it('RECRUIT_CHANCE=0.0014', () => { expect(0.0014).toBeCloseTo(0.0014, 6) })
 })

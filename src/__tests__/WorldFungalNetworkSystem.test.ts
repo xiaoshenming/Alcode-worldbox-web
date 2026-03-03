@@ -262,3 +262,107 @@ describe('WorldFungalNetworkSystem', () => {
     })
   })
 })
+
+describe('WorldFungalNetworkSystem - 附加测试', () => {
+  let sys: WorldFungalNetworkSystem
+  beforeEach(() => { sys = makeSys(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('networks初始为空', () => { expect(getNetworks(sys)).toHaveLength(0) })
+  it('lastCheck初始为0', () => { expect(getLastCheck(sys)).toBe(0) })
+  it('nextId初始为1', () => { expect(getNextId(sys)).toBe(1) })
+  it('tick不足CHECK_INTERVAL=2800时不更新lastCheck', () => {
+    sys.update(1, makeWorld(), em, 100)
+    expect(getLastCheck(sys)).toBe(0)
+  })
+  it('tick=2800时更新lastCheck', () => {
+    sys.update(1, makeWorld(), em, 2800)
+    expect(getLastCheck(sys)).toBe(2800)
+  })
+  it('tick=2799时不触发', () => {
+    sys.update(1, makeWorld(), em, 2799)
+    expect(getLastCheck(sys)).toBe(0)
+  })
+  it('tick=5600时再次触发', () => {
+    sys.update(1, makeWorld(), em, 2800)
+    sys.update(1, makeWorld(), em, 5600)
+    expect(getLastCheck(sys)).toBe(5600)
+  })
+  it('update后lastCheck等于传入tick', () => {
+    sys.update(1, makeWorld(), em, 8400)
+    expect(getLastCheck(sys)).toBe(8400)
+  })
+  it('networks手动注入后长度正确', () => {
+    getNetworks(sys).push({ id: 1, x: 1, y: 1, tick: 1000 })
+    expect(getNetworks(sys)).toHaveLength(1)
+  })
+  it('注入5个后长度为5', () => {
+    for (let i = 0; i < 5; i++) { getNetworks(sys).push({ id: i+1, x: i, y: 0, tick: 1000 }) }
+    expect(getNetworks(sys)).toHaveLength(5)
+  })
+  it('_networkKeySet是Set类型', () => { expect(getKeySet(sys) instanceof Set).toBe(true) })
+  it('过期network被清除', () => {
+    getNetworks(sys).push({ id:1, x:1, y:1, tick: 0 })
+    sys.update(1, makeWorld(), em, 100000)
+    expect(getNetworks(sys)).toHaveLength(0)
+  })
+  it('未过期network保留', () => {
+    getNetworks(sys).push({ id:1, x:1, y:1, tick: 90000, connectivity: 50, nodeCount: 5, nutrientFlow: 1, age: 0, myceliumType: 'saprophytic' })
+    sys.update(1, makeWorld(), em, 95000)
+    expect(getNetworks(sys)).toHaveLength(1)
+  })
+  it('MAX_NETWORKS=30硬上限不超过', () => {
+    for (let i = 0; i < 30; i++) { getNetworks(sys).push({ id:i+1, x:i, y:0, tick: 999999 }) }
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorld(FOREST), em, 2800)
+    expect(getNetworks(sys).length).toBeLessThanOrEqual(30)
+  })
+  it('空networks时update不崩溃', () => {
+    expect(() => sys.update(1, makeWorld(), em, 2800)).not.toThrow()
+  })
+  it('同一tick两次update只触发一次', () => {
+    sys.update(1, makeWorld(), em, 2800)
+    const lc1 = getLastCheck(sys)
+    sys.update(1, makeWorld(), em, 2800)
+    expect(getLastCheck(sys)).toBe(lc1)
+  })
+  it('networks中id不重复（手动注入）', () => {
+    for (let i = 0; i < 5; i++) { getNetworks(sys).push({ id: i+1, x: i, y: 0, tick: 1000 }) }
+    const ids = getNetworks(sys).map((n: any) => n.id)
+    const unique = new Set(ids)
+    expect(unique.size).toBe(ids.length)
+  })
+  it('network含x,y坐标', () => {
+    getNetworks(sys).push({ id:1, x:10, y:20, tick:1000 })
+    expect(getNetworks(sys)[0].x).toBe(10)
+    expect(getNetworks(sys)[0].y).toBe(20)
+  })
+  it('network含tick字段', () => {
+    getNetworks(sys).push({ id:1, x:1, y:1, tick:5000 })
+    expect(getNetworks(sys)[0].tick).toBe(5000)
+  })
+  it('network含id字段', () => {
+    getNetworks(sys).push({ id:99, x:1, y:1, tick:1000 })
+    expect(getNetworks(sys)[0].id).toBe(99)
+  })
+  it('全部5个过期时清空', () => {
+    for (let i = 0; i < 5; i++) { getNetworks(sys).push({ id:i+1, x:i, y:0, tick:0 }) }
+    sys.update(1, makeWorld(), em, 100000)
+    expect(getNetworks(sys)).toHaveLength(0)
+  })
+  it('混合新旧只删旧的', () => {
+    // network1: connectivity=0 → 会被删除 (!(0 > 1 && nodeCount > 0) = true)
+    getNetworks(sys).push({ id:1, x:0, y:0, tick:0, connectivity: 0, nodeCount: 1, nutrientFlow: 0, age: 0, myceliumType: 'saprophytic' })
+    // network2: connectivity=50 → 保留 (!(50 > 1 && 5 > 0) = false)
+    getNetworks(sys).push({ id:2, x:1, y:0, tick:90000, connectivity: 50, nodeCount: 5, nutrientFlow: 1, age: 0, myceliumType: 'saprophytic' })
+    sys.update(1, makeWorld(), em, 95000)
+    expect(getNetworks(sys)).toHaveLength(1)
+    expect(getNetworks(sys)[0].id).toBe(2)
+  })
+  it('networks是数组类型', () => { expect(Array.isArray(getNetworks(sys))).toBe(true) })
+  it('tick=0时不触发', () => {
+    sys.update(1, makeWorld(), em, 0)
+    expect(getLastCheck(sys)).toBe(0)
+  })
+})

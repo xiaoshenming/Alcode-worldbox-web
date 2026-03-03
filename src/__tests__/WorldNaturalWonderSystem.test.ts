@@ -386,7 +386,7 @@ describe('WorldNaturalWonderSystem 边界验证', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5)
     const world = makeWorld()
     expect(() => {
-      for (let i = 0; i < 20; i++) ;(sys as any).trySpawnWonder(world)
+      for (let i = 0; i < 20; i++) { ;(sys as any).trySpawnWonder(world) }
     }).not.toThrow()
   })
 

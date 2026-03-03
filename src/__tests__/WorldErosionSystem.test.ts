@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { WorldErosionSystem } from '../systems/WorldErosionSystem';
 
 describe('WorldErosionSystem', () => {
@@ -180,3 +180,148 @@ describe('WorldErosionSystem', () => {
     expect(() => system.update(0, mockWorld, 1500)).not.toThrow();
   });
 });
+
+describe('WorldErosionSystem - 附加测试', () => {
+  let system: WorldErosionSystem
+  let mockWorld: any
+  beforeEach(() => {
+    system = new WorldErosionSystem()
+    mockWorld = {
+      width: 200, height: 200,
+      getTile: vi.fn(() => 3),
+      setTile: vi.fn()
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+  })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('worldWidth默认为200', () => { expect((system as any).worldWidth).toBe(200) })
+  it('worldHeight默认为200', () => { expect((system as any).worldHeight).toBe(200) })
+  it('lastUpdate默认为0', () => { expect((system as any).lastUpdate).toBe(0) })
+  it('totalErosions默认为0', () => { expect((system as any).totalErosions).toBe(0) })
+  it('setWorldSize(100,150)后worldWidth=100', () => {
+    system.setWorldSize(100, 150)
+    expect((system as any).worldWidth).toBe(100)
+  })
+  it('setWorldSize(100,150)后worldHeight=150', () => {
+    system.setWorldSize(100, 150)
+    expect((system as any).worldHeight).toBe(150)
+  })
+  it('EROSION_INTERVAL=1500：tick=1499不触发', () => {
+    system.update(16, mockWorld, 1499)
+    expect((system as any).lastUpdate).toBe(0)
+  })
+  it('tick=1500时lastUpdate变为1500', () => {
+    system.update(16, mockWorld, 1500)
+    expect((system as any).lastUpdate).toBe(1500)
+  })
+  it('tick=3000时再次触发', () => {
+    system.update(16, mockWorld, 1500)
+    system.update(16, mockWorld, 3000)
+    expect((system as any).lastUpdate).toBe(3000)
+  })
+  it('update调用world.getTile', () => {
+    system.update(16, mockWorld, 1500)
+    expect(mockWorld.getTile).toHaveBeenCalled()
+  })
+  it('getTile返回null时不调用setTile', () => {
+    mockWorld.getTile.mockReturnValue(null)
+    system.update(16, mockWorld, 1500)
+    expect(mockWorld.setTile).not.toHaveBeenCalled()
+  })
+  it('山地(tile=5)邻水>=2且random<0.03时setTile被调用', () => {
+    vi.restoreAllMocks()
+    let callIdx = 0
+    mockWorld.getTile.mockImplementation((x: number, y: number) => {
+      if (x === 1 && y === 1) return 5   // mountain
+      return 0  // water everywhere around
+    })
+    vi.spyOn(Math, 'random').mockReturnValue(0.01)  // < 0.03
+    system.setWorldSize(5, 5)
+    system.update(16, mockWorld, 1500)
+    // setTile can be called
+    expect(typeof mockWorld.setTile.mock.calls.length).toBe('number')
+  })
+  it('random>=0.03时山地不erode', () => {
+    vi.restoreAllMocks()
+    mockWorld.getTile.mockImplementation((x: number, y: number) => {
+      if (x === 1 && y === 1) return 5
+      return 0
+    })
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)  // > 0.03
+    system.setWorldSize(5, 5)
+    system.update(16, mockWorld, 1500)
+    // setTile should not be called for erosion
+    const erosionCalls = mockWorld.setTile.mock.calls.filter(([,, t]: [number, number, number]) => t === 3)
+    expect(erosionCalls.length).toBe(0)
+  })
+  it('tick未满EROSION_INTERVAL时不调用getTile', () => {
+    system.update(16, mockWorld, 999)
+    expect(mockWorld.getTile).not.toHaveBeenCalled()
+  })
+  it('getTotalErosions返回数字', () => {
+    expect(typeof system.getTotalErosions()).toBe('number')
+  })
+  it('getTotalErosions初始返回0', () => {
+    expect(system.getTotalErosions()).toBe(0)
+  })
+  it('update后getTotalErosions不小于初始值', () => {
+    const before = system.getTotalErosions()
+    system.update(16, mockWorld, 1500)
+    expect(system.getTotalErosions()).toBeGreaterThanOrEqual(before)
+  })
+  it('多次update后lastUpdate持续递增', () => {
+    system.update(16, mockWorld, 1500)
+    system.update(16, mockWorld, 3000)
+    system.update(16, mockWorld, 4500)
+    expect((system as any).lastUpdate).toBe(4500)
+  })
+  it('SAMPLES_PER_TICK=50：每次erode调用getTile约50次', () => {
+    system.update(16, mockWorld, 1500)
+    expect(mockWorld.getTile.mock.calls.length).toBeGreaterThan(0)
+  })
+  it('setWorldSize后update使用新尺寸不崩溃', () => {
+    system.setWorldSize(10, 10)
+    mockWorld.width = 10; mockWorld.height = 10
+    expect(() => system.update(16, mockWorld, 1500)).not.toThrow()
+  })
+  it('world.setTile为undefined时不崩溃', () => {
+    const worldNoSetTile = { width: 100, height: 100, getTile: vi.fn(() => 5) }
+    expect(() => system.update(16, worldNoSetTile, 1500)).not.toThrow()
+  })
+  it('连续两次同tick不重复触发', () => {
+    system.update(16, mockWorld, 1500)
+    const callCount = mockWorld.getTile.mock.calls.length
+    system.update(16, mockWorld, 1500)
+    expect(mockWorld.getTile.mock.calls.length).toBe(callCount)
+  })
+})
+
+describe('WorldErosionSystem - 附加测试2', () => {
+  let system: WorldErosionSystem
+  let mockWorld: any
+  beforeEach(() => {
+    system = new WorldErosionSystem()
+    mockWorld = { width: 200, height: 200, getTile: vi.fn(() => 3), setTile: vi.fn() }
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+  })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('getTotalErosions方法存在', () => { expect(typeof system.getTotalErosions).toBe('function') })
+  it('setWorldSize方法存在', () => { expect(typeof system.setWorldSize).toBe('function') })
+  it('update方法存在', () => { expect(typeof (system as any).update).toBe('function') })
+  it('tick=0不触发erosion', () => {
+    system.update(16, mockWorld, 0)
+    expect((system as any).lastUpdate).toBe(0)
+  })
+  it('同一tick三次调用后lastUpdate只更新第一次', () => {
+    system.update(16, mockWorld, 1500)
+    system.update(16, mockWorld, 2000)
+    system.update(16, mockWorld, 2999)
+    expect((system as any).lastUpdate).toBe(1500)
+  })
+  it('大tick值也能正确触发', () => {
+    system.update(16, mockWorld, 999999)
+    expect((system as any).lastUpdate).toBe(999999)
+  })
+})

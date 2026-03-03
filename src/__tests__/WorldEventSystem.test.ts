@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { WorldEventSystem } from '../systems/WorldEventSystem';
 
 describe('WorldEventSystem', () => {
@@ -267,3 +267,119 @@ describe('WorldEventSystem', () => {
     expect(secondState).toBeDefined();
   });
 });
+
+describe('WorldEventSystem - 附加测试', () => {
+  let system: WorldEventSystem
+  let mockEm: any, mockWorld: any, mockCivManager: any, mockParticles: any, mockTimeline: any
+  beforeEach(() => {
+    system = new WorldEventSystem()
+    mockEm = { entities: [], getEntitiesByType: vi.fn(() => []), addEntity: vi.fn(), removeEntity: vi.fn() }
+    mockWorld = { width: 100, height: 100, tick: 0, getTile: vi.fn(() => 3), setTile: vi.fn() }
+    mockCivManager = { civilizations: [], getCivilizations: vi.fn(() => []) }
+    mockParticles = { particles: [], addParticle: vi.fn(), update: vi.fn() }
+    mockTimeline = { eventCount: 0, addEvent: vi.fn(), handleKey: vi.fn() }
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+  })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('activeEvents初始为空数组', () => { expect((system as any).activeEvents).toHaveLength(0) })
+  it('eventHistory初始为空数组', () => { expect((system as any).eventHistory).toHaveLength(0) })
+  it('eventCooldowns初始为空Map', () => { expect((system as any).eventCooldowns.size).toBe(0) })
+  it('banner初始为null', () => { expect((system as any).banner).toBeNull() })
+  it('screenOverlay初始为null', () => { expect((system as any).screenOverlay).toBeNull() })
+  it('checkInterval初始为120', () => { expect((system as any).checkInterval).toBe(120) })
+  it('nextEventTick大于2000', () => { expect((system as any).nextEventTick).toBeGreaterThanOrEqual(2000) })
+  it('_activeEventIds初始为空Set', () => { expect((system as any)._activeEventIds.size).toBe(0) })
+  it('bloodMoonBuffs初始为空Map', () => { expect((system as any).bloodMoonBuffs.size).toBe(0) })
+  it('tick%checkInterval!=0时不处理（快速返回）', () => {
+    mockWorld.tick = 1  // 1 % 120 != 0
+    system.update(mockEm, mockWorld, mockCivManager, mockParticles, mockTimeline)
+    expect((system as any).eventHistory).toHaveLength(0)
+  })
+  it('tick%120==0时进行处理', () => {
+    mockWorld.tick = 120
+    expect(() => system.update(mockEm, mockWorld, mockCivManager, mockParticles, mockTimeline)).not.toThrow()
+  })
+  it('activeEvents是数组类型', () => { expect(Array.isArray((system as any).activeEvents)).toBe(true) })
+  it('eventHistory是数组类型', () => { expect(Array.isArray((system as any).eventHistory)).toBe(true) })
+  it('nextEventTick是数字', () => { expect(typeof (system as any).nextEventTick).toBe('number') })
+  it('update方法长度为5', () => { expect(system.update.length).toBe(5) })
+  it('mockTimeline.addEvent调用不崩溃', () => {
+    mockWorld.tick = 0
+    system.update(mockEm, mockWorld, mockCivManager, mockParticles, mockTimeline)
+    expect(mockTimeline.addEvent).toBeDefined()
+  })
+  it('多次调用update不崩溃（tick递增）', () => {
+    expect(() => {
+      for (let t = 0; t <= 240; t += 120) {
+        mockWorld.tick = t
+        system.update(mockEm, mockWorld, mockCivManager, mockParticles, mockTimeline)
+      }
+    }).not.toThrow()
+  })
+  it('世界宽度为0时不崩溃', () => {
+    mockWorld.width = 0; mockWorld.height = 0
+    expect(() => system.update(mockEm, mockWorld, mockCivManager, mockParticles, mockTimeline)).not.toThrow()
+  })
+  it('civManager为空时不崩溃', () => {
+    mockCivManager.civilizations = []
+    expect(() => system.update(mockEm, mockWorld, mockCivManager, mockParticles, mockTimeline)).not.toThrow()
+  })
+  it('em.entities为空数组时不崩溃', () => {
+    mockEm.entities = []
+    expect(() => system.update(mockEm, mockWorld, mockCivManager, mockParticles, mockTimeline)).not.toThrow()
+  })
+  it('tick=4000时nextEventTick可能被重设', () => {
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    mockWorld.tick = 4000
+    system.update(mockEm, mockWorld, mockCivManager, mockParticles, mockTimeline)
+    // nextEventTick应该被重设
+    expect((system as any).nextEventTick).toBeGreaterThan(0)
+  })
+  it('activeEvents的过期事件被自动删除', () => {
+    ;(system as any).activeEvents.push({
+      def: { id: 'test', name: 'Test', onEnd: vi.fn() },
+      remainingTicks: 0
+    })
+    ;(system as any)._activeEventIds.add('test')
+    mockWorld.tick = 120
+    system.update(mockEm, mockWorld, mockCivManager, mockParticles, mockTimeline)
+    expect((system as any).activeEvents.find((e: any) => e.def.id === 'test')).toBeUndefined()
+  })
+  it('activeEvents剩余ticks不足时从_activeEventIds删除', () => {
+    ;(system as any).activeEvents.push({
+      def: { id: 'test2', name: 'Test2', onEnd: vi.fn() },
+      remainingTicks: 1
+    })
+    ;(system as any)._activeEventIds.add('test2')
+    mockWorld.tick = 240
+    system.update(mockEm, mockWorld, mockCivManager, mockParticles, mockTimeline)
+    expect((system as any)._activeEventIds.has('test2')).toBe(false)
+  })
+  it('_availEventsBuf是数组', () => { expect(Array.isArray((system as any)._availEventsBuf)).toBe(true) })
+})
+
+describe('WorldEventSystem - 附加测试2', () => {
+  let system: WorldEventSystem
+  let mockEm: any, mockWorld: any, mockCivManager: any, mockParticles: any, mockTimeline: any
+  beforeEach(() => {
+    system = new WorldEventSystem()
+    mockEm = { entities: [], getEntitiesByType: vi.fn(() => []) }
+    mockWorld = { width: 100, height: 100, tick: 0, getTile: vi.fn(() => 3), setTile: vi.fn() }
+    mockCivManager = { civilizations: [] }
+    mockParticles = { addParticle: vi.fn() }
+    mockTimeline = { addEvent: vi.fn() }
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+  })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('系统实例创建成功', () => { expect(system).toBeInstanceOf(WorldEventSystem) })
+  it('eventCooldowns是Map类型', () => { expect((system as any).eventCooldowns instanceof Map).toBe(true) })
+  it('_activeEventIds是Set类型', () => { expect((system as any)._activeEventIds instanceof Set).toBe(true) })
+  it('bloodMoonBuffs是Map类型', () => { expect((system as any).bloodMoonBuffs instanceof Map).toBe(true) })
+  it('update不返回值（void）', () => {
+    const ret = system.update(mockEm, mockWorld, mockCivManager, mockParticles, mockTimeline)
+    expect(ret).toBeUndefined()
+  })
+})

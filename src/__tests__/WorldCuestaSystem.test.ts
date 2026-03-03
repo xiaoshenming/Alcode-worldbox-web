@@ -208,4 +208,159 @@ describe('WorldCuestaSystem', () => {
     sys.update(0, worldMountain, em, tick)
     expect((sys as any).cuestas).toHaveLength(1)
   })
+
+  // ── 追加扩展测试 ──────────────────────────────────────────────
+  it('追加-nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('追加-lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('追加-SAND地形不生成cuesta', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, worldSand, em, CHECK_INTERVAL)
+    expect((sys as any).cuestas).toHaveLength(0)
+  })
+  it('追加-GRASS地形且random<FORM_CHANCE生成cuesta', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, worldGrass, em, CHECK_INTERVAL)
+    expect((sys as any).cuestas).toHaveLength(1)
+  })
+  it('追加-MOUNTAIN地形且random<FORM_CHANCE生成cuesta', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, worldMountain, em, CHECK_INTERVAL)
+    expect((sys as any).cuestas).toHaveLength(1)
+  })
+  it('追加-spawn时nextId自增', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, worldMountain, em, CHECK_INTERVAL)
+    expect((sys as any).nextId).toBe(2)
+  })
+  it('追加-cuesta的length字段存在', () => {
+    ;(sys as any).cuestas.push(makeCuesta({ length: 35 }))
+    expect((sys as any).cuestas[0].length).toBe(35)
+  })
+  it('追加-cuesta的erosionStage字段存在', () => {
+    ;(sys as any).cuestas.push(makeCuesta({ erosionStage: 2 }))
+    expect((sys as any).cuestas[0].erosionStage).toBe(2)
+  })
+  it('追加-cuesta的rockLayering字段存在', () => {
+    ;(sys as any).cuestas.push(makeCuesta({ rockLayering: 6 }))
+    expect((sys as any).cuestas[0].rockLayering).toBe(6)
+  })
+  it('追加-dipAngle被钳制在[2,25]', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    ;(sys as any).cuestas.push(makeCuesta({ dipAngle: 10 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(0, worldMountain, em, CHECK_INTERVAL)
+    const d = (sys as any).cuestas[0].dipAngle
+    expect(d).toBeGreaterThanOrEqual(2)
+    expect(d).toBeLessThanOrEqual(25)
+  })
+  it('追加-scarpHeight被钳制在[8,60]', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    ;(sys as any).cuestas.push(makeCuesta({ scarpHeight: 30 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(0, worldMountain, em, CHECK_INTERVAL)
+    const s = (sys as any).cuestas[0].scarpHeight
+    expect(s).toBeGreaterThanOrEqual(8)
+    expect(s).toBeLessThanOrEqual(60)
+  })
+  it('追加-多次注入后length正确', () => {
+    for (let i = 0; i < 8; i++) { ;(sys as any).cuestas.push(makeCuesta()) }
+    expect((sys as any).cuestas).toHaveLength(8)
+  })
+  it('追加-MAX_CUESTAS时不再spawn', () => {
+    for (let i = 0; i < MAX_CUESTAS; i++) { ;(sys as any).cuestas.push(makeCuesta({ tick: 999999 })) }
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, worldMountain, em, CHECK_INTERVAL)
+    expect((sys as any).cuestas).toHaveLength(MAX_CUESTAS)
+  })
+  it('追加-update后cuestas引用稳定', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const ref = (sys as any).cuestas
+    sys.update(0, worldMountain, em, CHECK_INTERVAL)
+    expect((sys as any).cuestas).toBe(ref)
+  })
+  it('追加-id字段为正整数', () => {
+    ;(sys as any).cuestas.push(makeCuesta())
+    expect((sys as any).cuestas[0].id).toBeGreaterThan(0)
+  })
+  it('追加-cuestas.splice正确', () => {
+    ;(sys as any).cuestas.push(makeCuesta())
+    ;(sys as any).cuestas.push(makeCuesta())
+    ;(sys as any).cuestas.splice(0, 1)
+    expect((sys as any).cuestas).toHaveLength(1)
+  })
+  it('追加-两轮trigger时lastCheck分别更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, worldMountain, em, CHECK_INTERVAL)
+    sys.update(0, worldMountain, em, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+  it('追加-cuesta的tick等于触发tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, worldMountain, em, CHECK_INTERVAL)
+    expect((sys as any).cuestas[0].tick).toBe(CHECK_INTERVAL)
+  })
+  it('追加-update不影响未过期cuesta的tick字段', () => {
+    ;(sys as any).cuestas.push(makeCuesta({ tick: 99999 }))
+    ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, worldMountain, em, CHECK_INTERVAL)
+    expect((sys as any).cuestas[0].tick).toBe(99999)
+  })
+  it('追加-spectacle被钳制在[5,60]', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    ;(sys as any).cuestas.push(makeCuesta({ spectacle: 30 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(0, worldMountain, em, CHECK_INTERVAL)
+    const s = (sys as any).cuestas[0].spectacle
+    expect(s).toBeGreaterThanOrEqual(5)
+    expect(s).toBeLessThanOrEqual(60)
+  })
+})
+
+describe('WorldCuestaSystem - 最终补充', () => {
+  let sys: WorldCuestaSystem
+  beforeEach(() => { sys = new WorldCuestaSystem(); vi.restoreAllMocks() })
+  afterEach(() => { vi.restoreAllMocks() })
+  const wm = { width: 200, height: 200, getTile: () => 5 } as any
+  const e = {} as any
+  const CI = 2580
+  it('补充-tick=0不处理', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, wm, e, 0)
+    expect((sys as any).cuestas).toHaveLength(0)
+  })
+  it('补充-连续触发lastCheck持续增加', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, wm, e, CI)
+    sys.update(0, wm, e, CI * 2)
+    sys.update(0, wm, e, CI * 3)
+    expect((sys as any).lastCheck).toBe(CI * 3)
+  })
+  it('补充-cuesta的y坐标在世界范围内', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, wm, e, CI)
+    expect((sys as any).cuestas[0].y).toBeGreaterThanOrEqual(0)
+    expect((sys as any).cuestas[0].y).toBeLessThan(200)
+  })
+  it('补充-cuesta的x坐标在世界范围内', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(0, wm, e, CI)
+    expect((sys as any).cuestas[0].x).toBeGreaterThanOrEqual(0)
+    expect((sys as any).cuestas[0].x).toBeLessThan(200)
+  })
+  it('补充-cutoff边界正好=cutoff不删除', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const tick = CI
+    const cutoff = tick - 89000
+    ;(sys as any).cuestas.push({ id: 1, x: 10, y: 10, length: 30, scarpHeight: 20, dipAngle: 10, rockLayering: 5, erosionStage: 3, spectacle: 30, tick: cutoff })
+    sys.update(0, wm, e, tick)
+    expect((sys as any).cuestas).toHaveLength(1)
+  })
+  it('补充-scarpHeight减少0.00002', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    ;(sys as any).cuestas.push({ id: 1, x: 10, y: 10, length: 30, scarpHeight: 30, dipAngle: 10, rockLayering: 5, erosionStage: 3, spectacle: 30, tick: 999999 })
+    ;(sys as any).lastCheck = 0
+    sys.update(0, wm, e, CI)
+    expect((sys as any).cuestas[0].scarpHeight).toBeCloseTo(30 - 0.00002, 8)
+  })
 })

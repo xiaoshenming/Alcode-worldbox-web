@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { WorldCorruptionSystem } from '../systems/WorldCorruptionSystem'
 
 function makeSys(): WorldCorruptionSystem { return new WorldCorruptionSystem() }
@@ -219,5 +219,105 @@ describe('WorldCorruptionSystem.update tick节流', () => {
     const count2 = sys.getCorruptedTileCount()
     expect(count2).toBeGreaterThanOrEqual(count1)
     vi.restoreAllMocks()
+  })
+})
+
+describe('WorldCorruptionSystem - 扩展补充', () => {
+  let sys: WorldCorruptionSystem
+  beforeEach(() => { sys = new WorldCorruptionSystem(); vi.restoreAllMocks() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('补充-corruptionMap初始全为0', () => {
+    const map = (sys as any).corruptionMap as Float32Array
+    let allZero = true
+    for (let i = 0; i < 100; i++) { if (map[i] !== 0) { allZero = false; break } }
+    expect(allZero).toBe(true)
+  })
+  it('补充-sources初始为空数组', () => {
+    expect((sys as any).sources).toHaveLength(0)
+  })
+  it('补充-purifiers初始为空数组', () => {
+    expect((sys as any).purifiers).toHaveLength(0)
+  })
+  it('补充-weather初始为clear', () => {
+    expect((sys as any).weather).toBe('clear')
+  })
+  it('补充-season初始为spring', () => {
+    expect((sys as any).season).toBe('spring')
+  })
+  it('补充-getCorruptedTileCount初始为0', () => {
+    expect(sys.getCorruptedTileCount()).toBe(0)
+  })
+  it('补充-corruptionMap长度=WORLD_WIDTH*WORLD_HEIGHT', () => {
+    const map = (sys as any).corruptionMap as Float32Array
+    expect(map.length).toBe(200 * 200)
+  })
+  it('补充-直接修改corruptionMap后getCorruption返回正确值', () => {
+    const map = (sys as any).corruptionMap as Float32Array
+    map[0] = 0.5
+    expect(sys.getCorruption(0, 0)).toBeCloseTo(0.5, 5)
+  })
+  it('补充-直接修改corruptionMap后getCorruptedTileCount>=1', () => {
+    const map = (sys as any).corruptionMap as Float32Array
+    map[0] = 1.0
+    expect(sys.getCorruptedTileCount()).toBeGreaterThanOrEqual(1)
+  })
+  it('补充-直接注入source后sources.length>=1', () => {
+    ;(sys as any).sources.push({ x: 10, y: 10, strength: 0.5, tick: 0 })
+    expect((sys as any).sources.length).toBeGreaterThanOrEqual(1)
+  })
+  it('补充-直接注入purifier后purifiers.length>=1', () => {
+    ;(sys as any).purifiers.push({ x: 10, y: 10 })
+    expect((sys as any).purifiers.length).toBeGreaterThanOrEqual(1)
+  })
+  it('补充-修改weather字段为storm', () => {
+    ;(sys as any).weather = 'storm'
+    expect((sys as any).weather).toBe('storm')
+  })
+  it('补充-修改season字段为winter', () => {
+    ;(sys as any).season = 'winter'
+    expect((sys as any).season).toBe('winter')
+  })
+  it('补充-corruptionMap是Float32Array', () => {
+    expect((sys as any).corruptionMap).toBeInstanceOf(Float32Array)
+  })
+  it('补充-getCorruption边界x=0,y=0', () => {
+    expect(sys.getCorruption(0, 0)).toBe(0)
+  })
+  it('补充-getCorruption边界x=199,y=199', () => {
+    expect(sys.getCorruption(199, 199)).toBe(0)
+  })
+  it('补充-sources数组可以splice', () => {
+    ;(sys as any).sources.push({ x: 1, y: 1, strength: 0.5, tick: 0 })
+    ;(sys as any).sources.push({ x: 2, y: 2, strength: 0.5, tick: 0 })
+    ;(sys as any).sources.splice(0, 1)
+    expect((sys as any).sources).toHaveLength(1)
+  })
+  it('补充-purifiers数组可以splice', () => {
+    ;(sys as any).purifiers.push({ x: 1, y: 1 })
+    ;(sys as any).purifiers.push({ x: 2, y: 2 })
+    ;(sys as any).purifiers.splice(0, 1)
+    expect((sys as any).purifiers).toHaveLength(1)
+  })
+  it('补充-weather可以修改为rain', () => {
+    ;(sys as any).weather = 'rain'
+    expect((sys as any).weather).toBe('rain')
+  })
+  it('补充-season可以修改为summer', () => {
+    ;(sys as any).season = 'summer'
+    expect((sys as any).season).toBe('summer')
+  })
+  it('补充-多个corruptionMap位置被修改后getCorruptedTileCount正确', () => {
+    const map = (sys as any).corruptionMap as Float32Array
+    map[0] = 0.5
+    map[1] = 0.5
+    map[2] = 0.5
+    expect(sys.getCorruptedTileCount()).toBeGreaterThanOrEqual(3)
+  })
+  it('补充-corruptionMap第N个位置可以独立修改', () => {
+    const map = (sys as any).corruptionMap as Float32Array
+    map[100] = 0.8
+    expect(map[100]).toBeCloseTo(0.8, 5)
+    expect(map[101]).toBe(0)
   })
 })

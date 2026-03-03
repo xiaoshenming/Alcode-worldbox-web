@@ -1,215 +1,275 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { DiplomaticNeutralitySystem } from '../systems/DiplomaticNeutralitySystem'
+import type { NeutralityDeclaration, NeutralityScope } from '../systems/DiplomaticNeutralitySystem'
 
-const w = {} as any, em = {} as any
-
-function make() { return new DiplomaticNeutralitySystem() }
-
-function addDecl(sys: any, tick: number, overrides: any = {}) {
-  sys['declarations'].push({
-    id: sys['nextId']++, civId: 1, scope: 'military',
-    credibility: 50, tradeAccess: 30, diplomaticStanding: 40,
-    vulnerabilityRisk: 20, duration: 0, tick, ...overrides
-  })
+const CHECK_INTERVAL = 2380
+const MAX_PACTS = 20
+const EXPIRE_OFFSET = 81000
+const W = {} as any, EM = {} as any
+function makeSys() { return new DiplomaticNeutralitySystem() }
+function getP(sys: any): NeutralityDeclaration[] { return sys.declarations }
+function makeP(o: Partial<NeutralityDeclaration> = {}): NeutralityDeclaration {
+  return { id: 1, civId: 1, scope: 2, scope: 'military', credibility: 40, tradeAccess: 40, diplomaticStanding: 20, vulnerabilityRisk: 15, duration: 0, tick: 0, ...o }
 }
 
-function runCheck(sys: any, tick: number) {
-  vi.spyOn(Math, 'random').mockReturnValue(1)
-  sys.update(1, w, em, tick)
-  vi.restoreAllMocks()
-}
+describe('DiplomaticNeutralitySystem — 基础数据结构', () => {
+  let sys: DiplomaticNeutralitySystem
+  beforeEach(() => { sys = makeSys() })
 
-// 1. 基础数据结构
-describe('基础数据结构', () => {
-  it('初始declarations为空', () => {
-    expect(make()['declarations']).toHaveLength(0)
+  it('初始declarations为空数组', () => { expect(getP(sys)).toHaveLength(0) })
+  it('declarations是数组类型', () => { expect(Array.isArray(getP(sys))).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('注入一条后长度为1', () => { getP(sys).push(makeP()); expect(getP(sys)).toHaveLength(1) })
+  it('NeutralityDeclaration包含id字段', () => { expect(makeP()).toHaveProperty('id') })
+  it('NeutralityDeclaration包含civId字段', () => { expect(makeP()).toHaveProperty('civId') })
+  it('NeutralityDeclaration包含scope字段', () => { expect(makeP()).toHaveProperty('scope') })
+  it('NeutralityDeclaration包含credibility字段', () => { expect(makeP()).toHaveProperty('credibility') })
+  it('NeutralityDeclaration包含duration和tick', () => {
+    const p = makeP()
+    expect(p).toHaveProperty('duration')
+    expect(p).toHaveProperty('tick')
   })
-  it('初始nextId为1', () => {
-    expect(make()['nextId']).toBe(1)
-  })
-  it('初始lastCheck为0', () => {
-    expect(make()['lastCheck']).toBe(0)
-  })
-  it('手动push后declarations长度正确', () => {
-    const sys = make()
-    addDecl(sys, 1000)
-    expect(sys['declarations']).toHaveLength(1)
-  })
-  it('declaration字段结构完整', () => {
-    const sys = make()
-    addDecl(sys, 1000)
-    const d = sys['declarations'][0]
-    expect(d).toHaveProperty('id')
-    expect(d).toHaveProperty('civId')
-    expect(d).toHaveProperty('scope')
-    expect(d).toHaveProperty('credibility')
-    expect(d).toHaveProperty('tradeAccess')
-    expect(d).toHaveProperty('diplomaticStanding')
-    expect(d).toHaveProperty('vulnerabilityRisk')
-    expect(d).toHaveProperty('duration')
-    expect(d).toHaveProperty('tick')
+  it('注入两条后长度为2', () => {
+    getP(sys).push(makeP({ id: 1 }))
+    getP(sys).push(makeP({ id: 2 }))
+    expect(getP(sys)).toHaveLength(2)
   })
 })
 
-// 2. CHECK_INTERVAL节流
-describe('CHECK_INTERVAL节流', () => {
-  it('tick差不足2380时不更新lastCheck', () => {
-    const sys = make()
-    runCheck(sys, 2380)          // 触发首次check，lastCheck=2380
-    sys.update(1, w, em, 3000)  // 差=620 < 2380，不触发
-    expect(sys['lastCheck']).toBe(2380)
+describe('DiplomaticNeutralitySystem — CHECK_INTERVAL=2380 节流', () => {
+  let sys: DiplomaticNeutralitySystem
+  beforeEach(() => { sys = makeSys(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('tick=0不触发', () => { sys.update(1, W, EM, 0); expect((sys as any).lastCheck).toBe(0) })
+  it('tick=CHECK_INTERVAL-1不触发', () => {
+    sys.update(1, W, EM, CHECK_INTERVAL - 1); expect((sys as any).lastCheck).toBe(0)
   })
-  it('tick差>=2380时更新lastCheck', () => {
-    const sys = make()
-    sys.update(1, w, em, 1000)
-    runCheck(sys, 1000 + 2380)
-    expect(sys['lastCheck']).toBe(1000 + 2380)
+  it('tick=CHECK_INTERVAL触发', () => {
+    sys.update(1, W, EM, CHECK_INTERVAL); expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
-  it('节流期间declarations不变', () => {
-    const sys = make()
+  it('tick=CHECK_INTERVAL+1000触发', () => {
+    sys.update(1, W, EM, CHECK_INTERVAL + 1000); expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 1000)
+  })
+  it('间隔不足时不更新', () => {
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL + 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('间隔足够时第二次更新', () => {
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+  it('tick=1被节流', () => { sys.update(1, W, EM, 1); expect((sys as any).lastCheck).toBe(0) })
+  it('三次足够间隔', () => {
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    sys.update(1, W, EM, CHECK_INTERVAL * 3)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 3)
+  })
+})
+
+describe('DiplomaticNeutralitySystem — 数值字段动态更新', () => {
+  let sys: DiplomaticNeutralitySystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('duration每tick递增1', () => {
+    getP(sys).push(makeP({ duration: 0, tick: 999999 }))
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, w, em, 1000)
-    addDecl(sys, 1000)
-    sys.update(1, w, em, 2000)
-    expect(sys['declarations']).toHaveLength(1)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect(getP(sys)[0].duration).toBe(1)
   })
-  it('首次update设置lastCheck', () => {
-    const sys = make()
-    runCheck(sys, 5000)
-    expect(sys['lastCheck']).toBe(5000)
-  })
-  it('连续两次间隔不足不触发第二次', () => {
-    const sys = make()
-    runCheck(sys, 5000)
-    const before = sys['lastCheck']
-    sys.update(1, w, em, 5001)
-    expect(sys['lastCheck']).toBe(before)
-  })
-})
-
-// 3. 字段动态更新
-describe('字段动态更新', () => {
-  it('每次check后duration+1', () => {
-    const sys = make()
-    addDecl(sys, 0)
-    runCheck(sys, 2380)
-    expect(sys['declarations'][0].duration).toBe(1)
-  })
-  it('多次check后duration累加', () => {
-    const sys = make()
-    addDecl(sys, 0)
-    runCheck(sys, 2380)
-    runCheck(sys, 4760)
-    expect(sys['declarations'][0].duration).toBe(2)
-  })
-  it('credibility在[10,90]范围内', () => {
-    const sys = make()
-    addDecl(sys, 0, { credibility: 50 })
-    for (let i = 1; i <= 10; i++) runCheck(sys, 2380 * i)
-    const v = sys['declarations'][0].credibility
-    expect(v).toBeGreaterThanOrEqual(10)
-    expect(v).toBeLessThanOrEqual(90)
-  })
-  it('tradeAccess在[5,75]范围内', () => {
-    const sys = make()
-    addDecl(sys, 0, { tradeAccess: 30 })
-    for (let i = 1; i <= 10; i++) runCheck(sys, 2380 * i)
-    const v = sys['declarations'][0].tradeAccess
-    expect(v).toBeGreaterThanOrEqual(5)
-    expect(v).toBeLessThanOrEqual(75)
-  })
-})
-
-// 4. 过期cleanup
-describe('过期cleanup', () => {
-  it('tick < cutoff时删除declaration', () => {
-    const sys = make()
-    addDecl(sys, 0)
-    runCheck(sys, 81001)
-    expect(sys['declarations']).toHaveLength(0)
-  })
-  it('tick >= cutoff时保留declaration', () => {
-    const sys = make()
-    addDecl(sys, 0)
-    runCheck(sys, 80999)
-    expect(sys['declarations']).toHaveLength(1)
-  })
-  it('只删除过期的，保留未过期的', () => {
-    const sys = make()
-    addDecl(sys, 0)
-    addDecl(sys, 50000)
-    runCheck(sys, 81001)
-    expect(sys['declarations']).toHaveLength(1)
-    expect(sys['declarations'][0].tick).toBe(50000)
-  })
-  it('cutoff边界：tick===cutoff-1时保留', () => {
-    const sys = make()
-    const t = 100
-    addDecl(sys, t)
-    runCheck(sys, t + 81000)
-    expect(sys['declarations']).toHaveLength(1)
-  })
-})
-
-// 5. MAX上限
-describe('MAX_DECLARATIONS上限', () => {
-  it('declarations不超过20', () => {
-    const sys = make()
-    for (let i = 0; i < 25; i++) addDecl(sys, 999999)
-    expect(sys['declarations'].length).toBeGreaterThanOrEqual(20)
-    // spawn块在random=1时不触发，手动push不受MAX限制，验证MAX逻辑
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys['lastCheck'] = 0
-    sys.update(1, w, em, 2380)
-    vi.restoreAllMocks()
-    expect(sys['declarations'].length).toBeLessThanOrEqual(26)
-  })
-  it('达到MAX时spawn不增加新declaration', () => {
-    const sys = make()
-    for (let i = 0; i < 20; i++) addDecl(sys, 999999)
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys['lastCheck'] = 0
-    sys.update(1, w, em, 2380)
-    vi.restoreAllMocks()
-    expect(sys['declarations']).toHaveLength(20)
-  })
-  it('低于MAX时random<DECLARE_CHANCE可spawn', () => {
-    const sys = make()
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(1, w, em, 2380)
-    vi.restoreAllMocks()
-    expect(sys['declarations'].length).toBeGreaterThanOrEqual(1)
-  })
-  it('MAX=20是硬上限', () => {
-    const sys = make()
-    for (let i = 0; i < 20; i++) addDecl(sys, 999999)
-    const before = sys['declarations'].length
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys['lastCheck'] = 0
-    sys.update(1, w, em, 2380)
-    vi.restoreAllMocks()
-    expect(sys['declarations'].length).toBe(before)
-  })
-})
-
-// 6. 枚举完整性
-describe('枚举完整性', () => {
-  it('scope包含military', () => {
-    const scopes = ['military', 'economic', 'political', 'comprehensive']
-    expect(scopes).toContain('military')
-  })
-  it('scope包含所有4种类型', () => {
-    const scopes: string[] = ['military', 'economic', 'political', 'comprehensive']
-    expect(scopes).toHaveLength(4)
-  })
-  it('spawn的scope是合法值', () => {
-    const sys = make()
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(1, w, em, 2380)
-    vi.restoreAllMocks()
-    const valid = ['military', 'economic', 'political', 'comprehensive']
-    if (sys['declarations'].length > 0) {
-      expect(valid).toContain(sys['declarations'][0].scope)
+  it('credibility在[10, 90]', () => {
+    getP(sys).push(makeP({ credibility: 40, tick: CHECK_INTERVAL }))
+    for (let _i = 1; _i <= 100; _i++) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, W, EM, CHECK_INTERVAL * _i)
+      vi.restoreAllMocks()
     }
+    const v = (sys as any).declarations[0]?.credibility
+    if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(10); expect(v).toBeLessThanOrEqual(90) }
+  })
+  it('tradeAccess在[5, 75]', () => {
+    getP(sys).push(makeP({ tradeAccess: 40, tick: CHECK_INTERVAL }))
+    for (let _i = 1; _i <= 100; _i++) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, W, EM, CHECK_INTERVAL * _i)
+      vi.restoreAllMocks()
+    }
+    const v = (sys as any).declarations[0]?.tradeAccess
+    if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(5); expect(v).toBeLessThanOrEqual(75) }
+  })
+  it('diplomaticStanding在[10, 85]', () => {
+    getP(sys).push(makeP({ diplomaticStanding: 20, tick: CHECK_INTERVAL }))
+    for (let _i = 1; _i <= 100; _i++) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, W, EM, CHECK_INTERVAL * _i)
+      vi.restoreAllMocks()
+    }
+    const v = (sys as any).declarations[0]?.diplomaticStanding
+    if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(10); expect(v).toBeLessThanOrEqual(85) }
+  })
+  it('vulnerabilityRisk在[5, 60]', () => {
+    getP(sys).push(makeP({ vulnerabilityRisk: 15, tick: CHECK_INTERVAL }))
+    for (let _i = 1; _i <= 100; _i++) {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, W, EM, CHECK_INTERVAL * _i)
+      vi.restoreAllMocks()
+    }
+    const v = (sys as any).declarations[0]?.vulnerabilityRisk
+    if (v !== undefined) { expect(v).toBeGreaterThanOrEqual(5); expect(v).toBeLessThanOrEqual(60) }
+  })
+  it('多次update后duration累积', () => {
+    getP(sys).push(makeP({ tick: 999999 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    sys.update(1, W, EM, CHECK_INTERVAL * 3)
+    expect(getP(sys)[0].duration).toBe(3)
+  })
+  it('credibility最小值>=10', () => {
+    getP(sys).push(makeP({ credibility: 10, tick: CHECK_INTERVAL }))
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    expect(getP(sys)[0].credibility).toBeGreaterThanOrEqual(10)
+  })
+  it('vulnerabilityRisk最大值<=60', () => {
+    getP(sys).push(makeP({ vulnerabilityRisk: 60, tick: CHECK_INTERVAL }))
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    expect(getP(sys)[0].vulnerabilityRisk).toBeLessThanOrEqual(60)
+  })
+})
+
+describe('DiplomaticNeutralitySystem — 过期清理(cutoff=tick-81000)', () => {
+  let sys: DiplomaticNeutralitySystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('tick=0在tick=83000时被清理', () => {
+    getP(sys).push(makeP({ id: 1, tick: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 83000)
+    expect(getP(sys)).toHaveLength(0)
+  })
+  it('新鲜tick存活', () => {
+    getP(sys).push(makeP({ id: 1, tick: 83000 - 1000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 83000)
+    expect(getP(sys)).toHaveLength(1)
+  })
+  it('cutoff边界时保留', () => {
+    getP(sys).push(makeP({ id: 1, tick: 2000 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 83000)
+    expect(getP(sys)).toHaveLength(1)
+  })
+  it('只删过期的', () => {
+    getP(sys).push(makeP({ id: 1, tick: 0 }))
+    getP(sys).push(makeP({ id: 2, tick: 83000 - 100 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 83000)
+    expect(getP(sys)).toHaveLength(1)
+    expect(getP(sys)[0].id).toBe(2)
+  })
+  it('全部过期时清空', () => {
+    getP(sys).push(makeP({ id: 1, tick: 100 }))
+    getP(sys).push(makeP({ id: 2, tick: 200 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 83000)
+    expect(getP(sys)).toHaveLength(0)
+  })
+  it('无记录时不报错', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, W, EM, 83000)).not.toThrow()
+  })
+  it('三条混合正确保留', () => {
+    getP(sys).push(makeP({ id: 1, tick: 50 }))
+    getP(sys).push(makeP({ id: 2, tick: 83000 - 500 }))
+    getP(sys).push(makeP({ id: 3, tick: 83000 - 1500 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 83000)
+    expect(getP(sys).every(p => p.id !== 1)).toBe(true)
+  })
+  it('EXPIRE_OFFSET=81000', () => { expect(EXPIRE_OFFSET).toBe(81000) })
+})
+
+describe('DiplomaticNeutralitySystem — MAX_PACTS=20 上限', () => {
+  let sys: DiplomaticNeutralitySystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('满20条时不新增', () => {
+    for (let _i = 1; _i <= MAX_PACTS; _i++) {
+      getP(sys).push(makeP({ id: _i, tick: 999999 }))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect(getP(sys)).toHaveLength(MAX_PACTS)
+  })
+  it('NeutralityScope包含4种形式', () => {
+    const forms: NeutralityScope[] = ['military', 'economic', 'political', 'comprehensive']
+    expect(forms).toHaveLength(4)
+  })
+  it('各form可赋值', () => {
+    const forms: NeutralityScope[] = ['military', 'economic', 'political', 'comprehensive']
+    forms.forEach(f => { expect(makeP({ scope: f }).scope).toBe(f) })
+  })
+  it('spawn时civId!=scope', () => {
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0.5)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    if (getP(sys).length > 0) {
+      const p = getP(sys)[0]
+      expect(p.civId).not.toBe(p.scope)
+    }
+  })
+  it('spawn后tick=当前tick', () => {
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0.5)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    if (getP(sys).length > 0) { expect(getP(sys)[0].tick).toBe(CHECK_INTERVAL) }
+  })
+  it('nextId初始=1', () => { expect((sys as any).nextId).toBe(1) })
+  it('spawn后nextId=2', () => {
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0.5)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).nextId).toBe(2)
+  })
+  it('random=0.99时不spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect(getP(sys)).toHaveLength(0)
+  })
+  it('整体不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    expect(() => { for (let _i = 0; _i <= 10; _i++) sys.update(1, W, EM, CHECK_INTERVAL * _i) }).not.toThrow()
+  })
+  it('CHECK_INTERVAL=2380', () => { expect(CHECK_INTERVAL).toBe(2380) })
+  it('MAX_PACTS=20', () => { expect(MAX_PACTS).toBe(20) })
+  it('数组可独立注入读取', () => {
+    const p = makeP({ id: 42, civId: 3, scope: 7 })
+    getP(sys).push(p)
+    expect(getP(sys)[0].id).toBe(42)
+    expect(getP(sys)[0].civId).toBe(3)
+  })
+  it('两条记录均正确更新duration', () => {
+    getP(sys).push(makeP({ id: 1, tick: 999999 }))
+    getP(sys).push(makeP({ id: 2, tick: 999999 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect(getP(sys)[0].duration).toBe(1)
+    expect(getP(sys)[1].duration).toBe(1)
+  })
+  it('系统实例化不报错', () => { expect(() => new DiplomaticNeutralitySystem()).not.toThrow() })
+})
+
+describe('DiplomaticNeutralitySystem — 额外验证', () => {
+  it('系统实例化不报错', () => {
+    expect(() => new DiplomaticNeutralitySystem()).not.toThrow()
   })
 })

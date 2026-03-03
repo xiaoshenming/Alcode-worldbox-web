@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { WorldAuroraStormSystem } from '../systems/WorldAuroraStormSystem'
 import type { AuroraStorm } from '../systems/WorldAuroraStormSystem'
 
@@ -196,5 +196,165 @@ describe('WorldAuroraStormSystem', () => {
     ;(sys as any).storms.push(storm)
     const active = sys.getActiveStorms()
     expect(active[0].hue).toBe(240)
+  })
+})
+
+describe('WorldAuroraStormSystem - 扩展覆盖', () => {
+  let sys: WorldAuroraStormSystem
+  const world = { width: 200, height: 200, getTile: () => 5 } as any
+  const em = { getEntitiesWithComponents: () => [] } as any
+  const CI = 600
+
+  beforeEach(() => { sys = new WorldAuroraStormSystem(); vi.restoreAllMocks() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('扩展-storms是Array', () => { expect(Array.isArray((sys as any).storms)).toBe(true) })
+  it('扩展-nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('扩展-lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('扩展-tick=0不处理', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, world, em, 0)
+    expect((sys as any).storms).toHaveLength(0)
+  })
+  it('扩展-storms.splice正确', () => {
+    ;(sys as any).storms.push({ id: 1, active: true })
+    ;(sys as any).storms.push({ id: 2, active: true })
+    ;(sys as any).storms.splice(0, 1)
+    expect((sys as any).storms).toHaveLength(1)
+  })
+  it('扩展-5个注入后length=5', () => {
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).storms.push({ id: i+1, active: true, duration: 0, maxDuration: 5000, hue: 0, intensity: 50, radius: 20, x: 50, y: 50 })
+    }
+    expect((sys as any).storms).toHaveLength(5)
+  })
+  it('扩展-update后storms引用稳定', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const ref = (sys as any).storms
+    sys.update(1, world, em, CI)
+    expect((sys as any).storms).toBe(ref)
+  })
+  it('扩展-连续触发lastCheck单调递增', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, world, em, CI)
+    const lc1 = (sys as any).lastCheck
+    sys.update(1, world, em, CI * 2)
+    expect((sys as any).lastCheck).toBeGreaterThanOrEqual(lc1)
+  })
+  it('扩展-storm的hue在0-360范围内', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    ;(sys as any).storms.push({ id: 1, active: true, duration: 0, maxDuration: 5000, hue: 359.8, intensity: 50, radius: 20, x: 50, y: 50 })
+    sys.update(1, world, em, CI)
+    const hue = (sys as any).storms[0].hue
+    expect(hue).toBeGreaterThanOrEqual(0)
+    expect(hue).toBeLessThan(360)
+  })
+  it('扩展-storm.intensity被钳制在[20,100]', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).storms.push({ id: 1, active: true, duration: 0, maxDuration: 5000, hue: 0, intensity: 20, radius: 20, x: 50, y: 50 })
+    sys.update(1, world, em, CI)
+    expect((sys as any).storms[0].intensity).toBeGreaterThanOrEqual(20)
+  })
+  it('扩展-storm.radius被钳制在[8,40]', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    ;(sys as any).storms.push({ id: 1, active: true, duration: 0, maxDuration: 5000, hue: 0, intensity: 50, radius: 40, x: 50, y: 50 })
+    sys.update(1, world, em, CI)
+    expect((sys as any).storms[0].radius).toBeLessThanOrEqual(40)
+  })
+  it('扩展-duration经多次update单调增加', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).storms.push({ id: 1, active: true, duration: 0, maxDuration: 10000, hue: 0, intensity: 50, radius: 20, x: 50, y: 50 })
+    sys.update(1, world, em, CI)
+    const d1 = (sys as any).storms[0].duration
+    sys.update(1, world, em, CI * 2)
+    const d2 = (sys as any).storms[0].duration
+    expect(d2).toBeGreaterThan(d1)
+  })
+  it('扩展-inactive=false的storm经cleanup被删除', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).storms.push({ id: 1, active: false, duration: 0, maxDuration: 5000, hue: 0, intensity: 50, radius: 20, x: 50, y: 50 })
+    sys.update(1, world, em, CI)
+    expect((sys as any).storms).toHaveLength(0)
+  })
+  it('扩展-active=true的storm经cleanup保留', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).storms.push({ id: 1, active: true, duration: 0, maxDuration: 5000, hue: 0, intensity: 50, radius: 20, x: 50, y: 50 })
+    sys.update(1, world, em, CI)
+    expect((sys as any).storms).toHaveLength(1)
+  })
+  it('扩展-MAX_STORMS(3)时不spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    for (let i = 0; i < 3; i++) { ;(sys as any).storms.push({ id: i+1, active: true, duration: 0, maxDuration: 5000, hue: 0, intensity: 50, radius: 20, x: 50, y: 50 }) }
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, world, em, CI)
+    expect((sys as any).storms.length).toBeLessThanOrEqual(3)
+  })
+  it('扩展-storms注入后可读取id', () => {
+    ;(sys as any).storms.push({ id: 77, active: true })
+    expect((sys as any).storms[0].id).toBe(77)
+  })
+  it('扩展-update后lastCheck不超过传入tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, world, em, 999999)
+    expect((sys as any).lastCheck).toBeLessThanOrEqual(999999)
+  })
+  it('扩展-getActiveStorms初始为空', () => {
+    expect(sys.getActiveStorms()).toHaveLength(0)
+  })
+  it('扩展-getActiveStorms只返回active=true', () => {
+    ;(sys as any).storms.push({ id: 1, active: true })
+    ;(sys as any).storms.push({ id: 2, active: false })
+    expect(sys.getActiveStorms()).toHaveLength(1)
+  })
+  it('扩展-spawn的storm x坐标在世界范围内', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, world, em, CI)
+    if ((sys as any).storms.length > 0) {
+      expect((sys as any).storms[0].x).toBeGreaterThanOrEqual(0)
+    }
+  })
+  it('扩展-spawn的storm y坐标在世界范围内', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, world, em, CI)
+    if ((sys as any).storms.length > 0) {
+      expect((sys as any).storms[0].y).toBeGreaterThanOrEqual(0)
+    }
+  })
+  it('扩展-spawn的storm有id字段', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, world, em, CI)
+    if ((sys as any).storms.length > 0) {
+      expect((sys as any).storms[0].id).toBeGreaterThan(0)
+    }
+  })
+  it('扩展-清空storms后length=0', () => {
+    ;(sys as any).storms.push({ id: 1, active: true })
+    ;(sys as any).storms.length = 0
+    expect((sys as any).storms).toHaveLength(0)
+  })
+})
+
+describe('WorldAuroraStormSystem - 最终补充', () => {
+  let sys: WorldAuroraStormSystem
+  beforeEach(() => { sys = new WorldAuroraStormSystem(); vi.restoreAllMocks() })
+  afterEach(() => { vi.restoreAllMocks() })
+  const world = { width: 200, height: 200, getTile: () => 5 } as any
+  const em = { getEntitiesWithComponents: () => [] } as any
+  it('最终-多次trigger间隔内lastCheck保持不变', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, world, em, 600)
+    sys.update(1, world, em, 700)
+    expect((sys as any).lastCheck).toBe(600)
+  })
+  it('最终-storms是同一引用', () => {
+    const r1 = (sys as any).storms
+    const r2 = (sys as any).storms
+    expect(r1).toBe(r2)
+  })
+  it('最终-两次trigger lastCheck更新两次', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, world, em, 600)
+    sys.update(1, world, em, 1200)
+    expect((sys as any).lastCheck).toBe(1200)
   })
 })

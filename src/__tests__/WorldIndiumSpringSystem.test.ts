@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { WorldIndiumSpringSystem } from '../systems/WorldIndiumSpringSystem'
 import type { IndiumSpringZone } from '../systems/WorldIndiumSpringSystem'
 
@@ -224,5 +224,84 @@ describe('WorldIndiumSpringSystem - cleanup清理', () => {
     sys.update(0, makeWorldWithNeighbor(SAND, SHALLOW_WATER) as any, mockEm, 2880)
     expect((sys as any).zones.length).toBeGreaterThanOrEqual(1)
     vi.restoreAllMocks()
+  })
+})
+
+describe('WorldIndiumSpringSystem - 附加测试', () => {
+  let sys: WorldIndiumSpringSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('zones初始为空数组', () => { expect((sys as any).zones).toHaveLength(0) })
+  it('zones是数组类型', () => { expect(Array.isArray((sys as any).zones)).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('注入zone后长度为1', () => {
+    ;(sys as any).zones.push(makeZone())
+    expect((sys as any).zones).toHaveLength(1)
+  })
+  it('注入5个后长度为5', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).zones.push(makeZone({ x: i })) }
+    expect((sys as any).zones).toHaveLength(5)
+  })
+  it('zone含indiumContent字段', () => { expect(typeof makeZone().indiumContent).toBe('number') })
+  it('zone含springFlow字段', () => { expect(typeof makeZone().springFlow).toBe('number') })
+  it('zone含sulfideLeaching字段', () => { expect(typeof makeZone().sulfideLeaching).toBe('number') })
+  it('zone含mineralSoftness字段', () => { expect(typeof makeZone().mineralSoftness).toBe('number') })
+  it('zone含tick字段', () => { expect(makeZone({ tick: 5000 }).tick).toBe(5000) })
+  it('zone含id字段', () => { expect(typeof makeZone().id).toBe('number') })
+  it('zone含x,y坐标', () => {
+    const z = makeZone({ x: 10, y: 20 })
+    expect(z.x).toBe(10); expect(z.y).toBe(20)
+  })
+  it('sandWorld不spawn', () => {
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeSandWorld() as any, mockEm, 3000)
+    expect((sys as any).zones).toHaveLength(0)
+  })
+  it('过期zone被清除', () => {
+    ;(sys as any).zones.push(makeZone({ tick: 0 }))
+    sys.update(1, makeSandWorld() as any, mockEm, 100000)
+    expect((sys as any).zones).toHaveLength(0)
+  })
+  it('未过期zone保留', () => {
+    ;(sys as any).zones.push(makeZone({ tick: 90000 }))
+    sys.update(1, makeSandWorld() as any, mockEm, 95000)
+    expect((sys as any).zones).toHaveLength(1)
+  })
+  it('混合新旧只删旧的', () => {
+    ;(sys as any).zones.push(makeZone({ id:1, tick: 0 }))
+    ;(sys as any).zones.push(makeZone({ id:2, tick: 90000 }))
+    sys.update(1, makeSandWorld() as any, mockEm, 95000)
+    expect((sys as any).zones).toHaveLength(1)
+    expect((sys as any).zones[0].id).toBe(2)
+  })
+  it('全部5个过期时清空', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).zones.push(makeZone({ tick: 0, x: i })) }
+    sys.update(1, makeSandWorld() as any, mockEm, 100000)
+    expect((sys as any).zones).toHaveLength(0)
+  })
+  it('空zones时update不崩溃', () => {
+    expect(() => sys.update(1, makeSandWorld() as any, mockEm, 3000)).not.toThrow()
+  })
+  it('zones中id不重复', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).zones.push(makeZone({ x: i })) }
+    const ids = (sys as any).zones.map((z: any) => z.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+  it('update不返回值', () => {
+    expect(sys.update(1, makeSandWorld() as any, mockEm, 3000)).toBeUndefined()
+  })
+  it('tick=0时不触发', () => {
+    sys.update(1, makeSandWorld() as any, mockEm, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('zones最大32个（MAX_ZONES）不超过', () => {
+    for (let i = 0; i < 32; i++) { (sys as any).zones.push(makeZone({ id:i+1, tick: 999999, x: i })) }
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorldWithNeighbor(3, SHALLOW_WATER) as any, mockEm, 3000)
+    expect((sys as any).zones.length).toBeLessThanOrEqual(32)
   })
 })

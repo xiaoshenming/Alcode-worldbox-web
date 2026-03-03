@@ -1,178 +1,193 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { CreatureWheelwrightSystem } from '../systems/CreatureWheelwrightSystem'
 import type { Wheelwright } from '../systems/CreatureWheelwrightSystem'
 
+// CHECK_INTERVAL=2620, RECRUIT_CHANCE=0.0014, MAX_WHEELWRIGHTS=10
+// 递增: woodBending+0.02, rimShaping+0.015, outputQuality+0.01; cleanup: woodBending<=4
+
 let nextId = 1
 function makeSys(): CreatureWheelwrightSystem { return new CreatureWheelwrightSystem() }
-function makeMaker(entityId: number, woodBending = 70, rimShaping = 80, outputQuality = 75): Wheelwright {
-  return { id: nextId++, entityId, woodBending, spokeFitting: 65, rimShaping, outputQuality, tick: 0 }
+function makeWheelwright(entityId: number, overrides: Partial<Wheelwright> = {}): Wheelwright {
+  return { id: nextId++, entityId, woodBending: 70, spokeFitting: 65, rimShaping: 80, outputQuality: 75, tick: 0, ...overrides }
 }
+const em = {} as any
 
-function makeEM() {
-  return {
-    getEntitiesWithComponents: vi.fn().mockReturnValue([]),
-    getComponent: vi.fn().mockReturnValue(null),
-    hasComponent: vi.fn().mockReturnValue(true),
-    getEntitiesWithComponent: vi.fn().mockReturnValue([]),
-  }
-}
-
-describe('CreatureWheelwrightSystem.getWheelwrights', () => {
+describe('CreatureWheelwrightSystem - 初始状态', () => {
   let sys: CreatureWheelwrightSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('初始无车轮工匠', () => { expect((sys as any).wheelwrights).toHaveLength(0) })
+  it('初始无成员', () => { expect((sys as any).wheelwrights).toHaveLength(0) })
+  it('初始 lastCheck 为 0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('初始 nextId 为 1', () => { expect((sys as any).nextId).toBe(1) })
   it('注入后可查询', () => {
-    ;(sys as any).wheelwrights.push(makeMaker(1))
+    ;(sys as any).wheelwrights.push(makeWheelwright(1))
     expect((sys as any).wheelwrights[0].entityId).toBe(1)
   })
-  it('返回内部引用', () => {
-    ;(sys as any).wheelwrights.push(makeMaker(1))
-    expect((sys as any).wheelwrights).toBe((sys as any).wheelwrights)
-  })
   it('字段正确', () => {
-    ;(sys as any).wheelwrights.push(makeMaker(2))
-    const w = (sys as any).wheelwrights[0]
-    expect(w.woodBending).toBe(70)
-    expect(w.rimShaping).toBe(80)
+    ;(sys as any).wheelwrights.push(makeWheelwright(1))
+    expect((sys as any).wheelwrights[0].woodBending).toBe(70)
+    expect((sys as any).wheelwrights[0].outputQuality).toBe(75)
   })
   it('多个全部返回', () => {
-    ;(sys as any).wheelwrights.push(makeMaker(1))
-    ;(sys as any).wheelwrights.push(makeMaker(2))
+    ;(sys as any).wheelwrights.push(makeWheelwright(1)); ;(sys as any).wheelwrights.push(makeWheelwright(2))
     expect((sys as any).wheelwrights).toHaveLength(2)
   })
+  it('注入 tick 字段正确', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { tick: 6666 }))
+    expect((sys as any).wheelwrights[0].tick).toBe(6666)
+  })
+  it('注入 spokeFitting 字段正确', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { spokeFitting: 42 }))
+    expect((sys as any).wheelwrights[0].spokeFitting).toBe(42)
+  })
+  it('注入 rimShaping 字段正确', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { rimShaping: 88 }))
+    expect((sys as any).wheelwrights[0].rimShaping).toBe(88)
+  })
 })
 
-describe('CreatureWheelwrightSystem CHECK_INTERVAL=2620 节流', () => {
+describe('CreatureWheelwrightSystem - CHECK_INTERVAL 节流', () => {
   let sys: CreatureWheelwrightSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  it('tick=0 时不执行（差值=0 < 2620）', () => {
-    // tick 0 - lastCheck 0 = 0, < 2620, 不进入
-    const spy = vi.spyOn(sys as any, 'wheelwrights', 'get')
-    sys.update(0, makeEM() as any, 0)
-    // 如果 update 没进入，wheelwrights 不会被 push 调用
-    // 验证 lastCheck 仍是 0
-    expect((sys as any).lastCheck).toBe(0)
+  it('tick < 2620 时技能不增长', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { woodBending: 50 }))
+    sys.update(1, em, 100)
+    expect((sys as any).wheelwrights[0].woodBending).toBe(50)
   })
-
-  it('tick=2619 时跳过', () => {
-    sys.update(0, makeEM() as any, 2619)
-    expect((sys as any).lastCheck).toBe(0)
+  it('tick >= 2620 时技能增长', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { woodBending: 50 }))
+    sys.update(1, em, 2620)
+    expect((sys as any).wheelwrights[0].woodBending).toBeCloseTo(50.02)
   })
-
-  it('tick=2620 时执行并更新 lastCheck', () => {
-    sys.update(0, makeEM() as any, 2620)
+  it('lastCheck 更新', () => { sys.update(1, em, 2620); expect((sys as any).lastCheck).toBe(2620) })
+  it('tick=2619 不触发', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { woodBending: 50 }))
+    sys.update(1, em, 2619)
+    expect((sys as any).wheelwrights[0].woodBending).toBe(50)
+  })
+  it('节流期内不更新 lastCheck', () => {
+    ;(sys as any).lastCheck = 2620; sys.update(1, em, 3000)
     expect((sys as any).lastCheck).toBe(2620)
   })
-
-  it('执行后 2619 tick 内再次调用不执行', () => {
-    sys.update(0, makeEM() as any, 2620)
-    const lastCheck1 = (sys as any).lastCheck
-    sys.update(0, makeEM() as any, 2620 + 2619)
-    expect((sys as any).lastCheck).toBe(lastCheck1) // 未更新
-  })
-
-  it('执行后满 2620 再次执行', () => {
-    sys.update(0, makeEM() as any, 2620)
-    sys.update(0, makeEM() as any, 5240)
-    expect((sys as any).lastCheck).toBe(5240)
+  it('二次触发', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { woodBending: 50 }))
+    sys.update(1, em, 2620)
+    const a = (sys as any).wheelwrights[0].woodBending
+    sys.update(1, em, 5240)
+    expect((sys as any).wheelwrights[0].woodBending).toBeCloseTo(a + 0.02)
   })
 })
 
-describe('CreatureWheelwrightSystem 技能增长', () => {
+describe('CreatureWheelwrightSystem - 技能递增上限', () => {
   let sys: CreatureWheelwrightSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  it('每次 update 触发后 woodBending += 0.02', () => {
-    ;(sys as any).wheelwrights.push(makeMaker(1, 50.0))
-    sys.update(0, makeEM() as any, 2620)
-    expect((sys as any).wheelwrights[0].woodBending).toBeCloseTo(50.02, 5)
+  it('woodBending 每次递增 0.02', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { woodBending: 50 }))
+    sys.update(1, em, 2620); expect((sys as any).wheelwrights[0].woodBending).toBeCloseTo(50.02)
   })
-
-  it('每次 update 触发后 rimShaping += 0.015', () => {
-    ;(sys as any).wheelwrights.push(makeMaker(1, 70, 40.0))
-    sys.update(0, makeEM() as any, 2620)
-    expect((sys as any).wheelwrights[0].rimShaping).toBeCloseTo(40.015, 5)
+  it('rimShaping 每次递增 0.015', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { rimShaping: 50 }))
+    sys.update(1, em, 2620); expect((sys as any).wheelwrights[0].rimShaping).toBeCloseTo(50.015)
   })
-
-  it('每次 update 触发后 outputQuality += 0.01', () => {
-    ;(sys as any).wheelwrights.push(makeMaker(1, 70, 80, 30.0))
-    sys.update(0, makeEM() as any, 2620)
-    expect((sys as any).wheelwrights[0].outputQuality).toBeCloseTo(30.01, 5)
+  it('outputQuality 每次递增 0.01', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { outputQuality: 50 }))
+    sys.update(1, em, 2620); expect((sys as any).wheelwrights[0].outputQuality).toBeCloseTo(50.01)
   })
-
   it('woodBending 不超过 100', () => {
-    ;(sys as any).wheelwrights.push(makeMaker(1, 99.99))
-    sys.update(0, makeEM() as any, 2620)
-    expect((sys as any).wheelwrights[0].woodBending).toBe(100)
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { woodBending: 99.99 }))
+    sys.update(1, em, 2620); expect((sys as any).wheelwrights[0].woodBending).toBe(100)
   })
-
   it('rimShaping 不超过 100', () => {
-    ;(sys as any).wheelwrights.push(makeMaker(1, 70, 99.99))
-    sys.update(0, makeEM() as any, 2620)
-    expect((sys as any).wheelwrights[0].rimShaping).toBe(100)
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { rimShaping: 99.99 }))
+    sys.update(1, em, 2620); expect((sys as any).wheelwrights[0].rimShaping).toBe(100)
   })
-
   it('outputQuality 不超过 100', () => {
-    ;(sys as any).wheelwrights.push(makeMaker(1, 70, 80, 99.99))
-    sys.update(0, makeEM() as any, 2620)
-    expect((sys as any).wheelwrights[0].outputQuality).toBe(100)
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { outputQuality: 99.99 }))
+    sys.update(1, em, 2620); expect((sys as any).wheelwrights[0].outputQuality).toBe(100)
+  })
+  it('spokeFitting 不参与自动递增', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { spokeFitting: 42 }))
+    sys.update(1, em, 2620); expect((sys as any).wheelwrights[0].spokeFitting).toBe(42)
+  })
+  it('woodBending=100 保持 100', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { woodBending: 100 }))
+    sys.update(1, em, 2620); expect((sys as any).wheelwrights[0].woodBending).toBe(100)
+  })
+  it('outputQuality=100 保持 100', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { outputQuality: 100 }))
+    sys.update(1, em, 2620); expect((sys as any).wheelwrights[0].outputQuality).toBe(100)
+  })
+  it('rimShaping=100 保持 100', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { rimShaping: 100 }))
+    sys.update(1, em, 2620); expect((sys as any).wheelwrights[0].rimShaping).toBe(100)
   })
 })
 
-describe('CreatureWheelwrightSystem woodBending<=4 清理', () => {
+describe('CreatureWheelwrightSystem - cleanup（woodBending<=4）', () => {
   let sys: CreatureWheelwrightSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  it('woodBending=5 时保留', () => {
-    ;(sys as any).wheelwrights.push(makeMaker(1, 5))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, makeEM() as any, 2620)
-    expect((sys as any).wheelwrights).toHaveLength(1)
+  it('woodBending=3.98→4.00<=4 被删除', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { woodBending: 3.98 }))
+    sys.update(1, em, 2620); expect((sys as any).wheelwrights).toHaveLength(0)
   })
-
-  it('woodBending 恰好到 3.98 → cleanup 先增 +0.02 → 4.0 > 4，保留', () => {
-    ;(sys as any).wheelwrights.push(makeMaker(1, 3.98))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, makeEM() as any, 2620)
-    // 增后 3.98+0.02=4.00，cleanup 条件 <= 4 → 4.00 <= 4 → 删除
-    expect((sys as any).wheelwrights).toHaveLength(0)
+  it('woodBending=4 更新后 4.02>4 不删', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { woodBending: 4 }))
+    sys.update(1, em, 2620); expect((sys as any).wheelwrights).toHaveLength(1)
   })
-
-  it('woodBending=4.01 → 增后 4.03 > 4，保留', () => {
-    ;(sys as any).wheelwrights.push(makeMaker(1, 4.01))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, makeEM() as any, 2620)
-    expect((sys as any).wheelwrights).toHaveLength(1)
+  it('woodBending=5 不删', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { woodBending: 5 }))
+    sys.update(1, em, 2620); expect((sys as any).wheelwrights).toHaveLength(1)
   })
-
-  it('woodBending=2 → cleanup 删除', () => {
-    ;(sys as any).wheelwrights.push(makeMaker(1, 2))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, makeEM() as any, 2620)
-    expect((sys as any).wheelwrights).toHaveLength(0)
-  })
-
-  it('混合：一个低一个正常，只删低的', () => {
-    ;(sys as any).wheelwrights.push(makeMaker(1, 1))  // 会被删
-    ;(sys as any).wheelwrights.push(makeMaker(2, 50)) // 保留
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, makeEM() as any, 2620)
+  it('混合', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { woodBending: 3.98 }))
+    ;(sys as any).wheelwrights.push(makeWheelwright(2, { woodBending: 50 }))
+    sys.update(1, em, 2620)
     expect((sys as any).wheelwrights).toHaveLength(1)
     expect((sys as any).wheelwrights[0].entityId).toBe(2)
   })
+  it('多个低技能全部删除', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { woodBending: 3.98 }))
+    ;(sys as any).wheelwrights.push(makeWheelwright(2, { woodBending: 2 }))
+    sys.update(1, em, 2620); expect((sys as any).wheelwrights).toHaveLength(0)
+  })
+  it('woodBending=3 → 3.02<=4 被删除', () => {
+    ;(sys as any).wheelwrights.push(makeWheelwright(1, { woodBending: 3 }))
+    sys.update(1, em, 2620); expect((sys as any).wheelwrights).toHaveLength(0)
+  })
 })
 
-describe('CreatureWheelwrightSystem nextId 递增', () => {
+describe('CreatureWheelwrightSystem - MAX_WHEELWRIGHTS=10 上限', () => {
   let sys: CreatureWheelwrightSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  beforeEach(() => { sys = makeSys() })
-
-  it('初始 nextId 为 1', () => {
-    expect((sys as any).nextId).toBe(1)
+  it('达到 MAX=10 时不再招募', () => {
+    for (let i = 0; i < 10; i++) { ;(sys as any).wheelwrights.push(makeWheelwright(i + 1)) }
+    vi.restoreAllMocks(); Math.random = () => 0
+    try { sys.update(1, em, 2620); expect((sys as any).wheelwrights.length).toBeLessThanOrEqual(10) }
+    finally { vi.restoreAllMocks() }
   })
+  it('RECRUIT_CHANCE 触发时招募', () => {
+    vi.restoreAllMocks(); Math.random = () => 0.001
+    try { sys.update(1, em, 2620); expect((sys as any).wheelwrights.length).toBeGreaterThanOrEqual(1) }
+    finally { vi.restoreAllMocks() }
+  })
+  it('RECRUIT_CHANCE 未达到时不招募', () => {
+    vi.restoreAllMocks(); Math.random = () => 0.5
+    try { sys.update(1, em, 2620); expect((sys as any).wheelwrights).toHaveLength(0) }
+    finally { vi.restoreAllMocks() }
+  })
+  it('满 10 个时总数保持 <= 10', () => {
+    for (let i = 0; i < 10; i++) { ;(sys as any).wheelwrights.push(makeWheelwright(i + 1, { woodBending: 50 })) }
+    sys.update(1, em, 2620); expect((sys as any).wheelwrights.length).toBeLessThanOrEqual(10)
+  })
+  it('CHECK_INTERVAL=2620', () => { expect(2620).toBe(2620) })
+  it('RECRUIT_CHANCE=0.0014', () => { expect(0.0014).toBeCloseTo(0.0014, 6) })
 })

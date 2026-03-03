@@ -431,7 +431,7 @@ describe('8. 上限/边界/TectonicPlate 字段', () => {
   it('stress 最大被 buildStress 夹在 100', () => {
     const p = makePlate({ stress: 100 })
     ;(sys as any).plates.push(p)
-    for (let i = 0; i < 5; i++) ;(sys as any).buildStress()
+    for (let i = 0; i < 5; i++) { ;(sys as any).buildStress() }
     expect(p.stress).toBe(100)
   })
 

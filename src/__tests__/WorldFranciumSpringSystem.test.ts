@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { WorldFranciumSpringSystem } from '../systems/WorldFranciumSpringSystem'
 import type { FranciumSpringZone } from '../systems/WorldFranciumSpringSystem'
 
@@ -244,5 +244,115 @@ describe('WorldFranciumSpringSystem', () => {
     ;(sys as any).zones.push(makeZone({ tick: 12345 }))
     const z = (sys as any).zones[0]
     expect(z.tick).toBe(12345)
+  })
+})
+
+describe('WorldFranciumSpringSystem - 附加测试', () => {
+  let sys: WorldFranciumSpringSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('zones初始为空数组', () => { expect((sys as any).zones).toHaveLength(0) })
+  it('zones是数组类型', () => { expect(Array.isArray((sys as any).zones)).toBe(true) })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('tick不足CHECK_INTERVAL=3100时不更新lastCheck', () => {
+    sys.update(1, safeWorld, em, 100)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick=3100时更新lastCheck', () => {
+    sys.update(1, safeWorld, em, 3100)
+    expect((sys as any).lastCheck).toBe(3100)
+  })
+  it('tick=3099时不触发', () => {
+    sys.update(1, safeWorld, em, 3099)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick=6200时再次触发', () => {
+    sys.update(1, safeWorld, em, 3100)
+    sys.update(1, safeWorld, em, 6200)
+    expect((sys as any).lastCheck).toBe(6200)
+  })
+  it('update后lastCheck等于传入tick', () => {
+    sys.update(1, safeWorld, em, 9300)
+    expect((sys as any).lastCheck).toBe(9300)
+  })
+  it('注入zone后长度为1', () => {
+    ;(sys as any).zones.push(makeZone())
+    expect((sys as any).zones).toHaveLength(1)
+  })
+  it('注入5个后长度为5', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).zones.push(makeZone({ x: i })) }
+    expect((sys as any).zones).toHaveLength(5)
+  })
+  it('zone含franciumContent字段', () => {
+    const z = makeZone({ franciumContent: 75 })
+    expect(z.franciumContent).toBe(75)
+  })
+  it('zone含springFlow字段', () => {
+    const z = makeZone({ springFlow: 40 })
+    expect(z.springFlow).toBe(40)
+  })
+  it('zone含actiniumDecay字段', () => {
+    const z = makeZone({ actiniumDecay: 55 })
+    expect(z.actiniumDecay).toBe(55)
+  })
+  it('zone含alkaliReactivity字段', () => {
+    const z = makeZone({ alkaliReactivity: 70 })
+    expect(z.alkaliReactivity).toBe(70)
+  })
+  it('zone含tick字段', () => {
+    const z = makeZone({ tick: 5000 })
+    expect(z.tick).toBe(5000)
+  })
+  it('zone含id字段', () => {
+    const z = makeZone({ id: 42 })
+    expect(z.id).toBe(42)
+  })
+  it('zone含x,y坐标', () => {
+    const z = makeZone({ x: 15, y: 25 })
+    expect(z.x).toBe(15); expect(z.y).toBe(25)
+  })
+  it('过期zone被删除', () => {
+    ;(sys as any).zones.push(makeZone({ tick: 0 }))
+    sys.update(1, safeWorld, em, 100000)
+    expect((sys as any).zones).toHaveLength(0)
+  })
+  it('未过期zone保留', () => {
+    ;(sys as any).zones.push(makeZone({ tick: 90000 }))
+    sys.update(1, safeWorld, em, 95000)
+    expect((sys as any).zones).toHaveLength(1)
+  })
+  it('混合新旧只删旧的', () => {
+    ;(sys as any).zones.push(makeZone({ id:1, tick: 0 }))
+    ;(sys as any).zones.push(makeZone({ id:2, tick: 90000 }))
+    sys.update(1, safeWorld, em, 95000)
+    expect((sys as any).zones).toHaveLength(1)
+  })
+  it('MAX_ZONES=32硬上限不超过', () => {
+    for (let i = 0; i < 32; i++) { (sys as any).zones.push(makeZone({ id:i+1, tick: 999999, x:i })) }
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, safeWorld, em, 3100)
+    expect((sys as any).zones.length).toBeLessThanOrEqual(32)
+  })
+  it('zones中id不重复', () => {
+    for (let i = 0; i < 5; i++) { (sys as any).zones.push(makeZone({ x: i })) }
+    const ids = (sys as any).zones.map((z: any) => z.id)
+    const unique = new Set(ids)
+    expect(unique.size).toBe(ids.length)
+  })
+  it('空zones时update不崩溃', () => {
+    expect(() => sys.update(1, safeWorld, em, 3100)).not.toThrow()
+  })
+  it('safeWorld(getTile=2)不spawn（需水/山）', () => {
+    sys.update(1, safeWorld, em, 3100)
+    expect((sys as any).zones).toHaveLength(0)
+  })
+  it('同一tick两次update只触发一次', () => {
+    sys.update(1, safeWorld, em, 3100)
+    const lc1 = (sys as any).lastCheck
+    sys.update(1, safeWorld, em, 3100)
+    expect((sys as any).lastCheck).toBe(lc1)
   })
 })

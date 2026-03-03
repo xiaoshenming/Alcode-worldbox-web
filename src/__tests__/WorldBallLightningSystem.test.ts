@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { WorldBallLightningSystem } from '../systems/WorldBallLightningSystem'
 import type { BallLightning, BallSize } from '../systems/WorldBallLightningSystem'
 
@@ -290,5 +290,165 @@ describe('WorldBallLightningSystem - em 调用', () => {
     sys.update(1, world, nearEm as any, 0)
     sys.update(1, world, nearEm as any, CHECK_INTERVAL)
     expect((sys as any).balls[0].creaturesTerrified).toBeGreaterThan(0)
+  })
+})
+
+describe('WorldBallLightningSystem - 扩展补充', () => {
+  let sys: WorldBallLightningSystem
+  beforeEach(() => { sys = new WorldBallLightningSystem(); vi.restoreAllMocks() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('补充-balls初始为空Array', () => { expect(Array.isArray((sys as any).balls)).toBe(true) })
+  it('补充-nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('补充-lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('补充-tick=0时不处理', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const w = { width: 200, height: 200, getTile: () => 0 } as any
+    const e = { getEntitiesWithComponents: () => [] } as any
+    sys.update(1, w, e, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('补充-tick=900时lastCheck更新为900', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const w = { width: 200, height: 200, getTile: () => 0 } as any
+    const e = { getEntitiesWithComponents: () => [] } as any
+    sys.update(1, w, e, 900)
+    expect((sys as any).lastCheck).toBe(900)
+  })
+  it('补充-两次update间隔<CI时第二次跳过', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const w = { width: 200, height: 200, getTile: () => 0 } as any
+    const e = { getEntitiesWithComponents: () => [] } as any
+    sys.update(1, w, e, 900)
+    sys.update(1, w, e, 900 + 100)
+    expect((sys as any).lastCheck).toBe(900)
+  })
+  it('补充-两次update间隔>=CI时第二次执行', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const w = { width: 200, height: 200, getTile: () => 0 } as any
+    const e = { getEntitiesWithComponents: () => [] } as any
+    sys.update(1, w, e, 900)
+    sys.update(1, w, e, 900 * 2)
+    expect((sys as any).lastCheck).toBe(900 * 2)
+  })
+  it('补充-update后balls引用稳定', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const w = { width: 200, height: 200, getTile: () => 0 } as any
+    const e = { getEntitiesWithComponents: () => [] } as any
+    const ref = (sys as any).balls
+    sys.update(1, w, e, 900)
+    expect((sys as any).balls).toBe(ref)
+  })
+  it('补充-balls.splice正确', () => {
+    ;(sys as any).balls.push({ id: 1 })
+    ;(sys as any).balls.push({ id: 2 })
+    ;(sys as any).balls.splice(0, 1)
+    expect((sys as any).balls).toHaveLength(1)
+  })
+  it('补充-注入5个后length=5', () => {
+    for (let i = 0; i < 5; i++) { ;(sys as any).balls.push({ id: i+1 }) }
+    expect((sys as any).balls).toHaveLength(5)
+  })
+  it('补充-连续trigger lastCheck单调递增', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const w = { width: 200, height: 200, getTile: () => 0 } as any
+    const e = { getEntitiesWithComponents: () => [] } as any
+    sys.update(1, w, e, 900)
+    const lc1 = (sys as any).lastCheck
+    sys.update(1, w, e, 900 * 2)
+    expect((sys as any).lastCheck).toBeGreaterThanOrEqual(lc1)
+  })
+  it('补充-update后lastCheck不超过传入tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const w = { width: 200, height: 200, getTile: () => 0 } as any
+    const e = { getEntitiesWithComponents: () => [] } as any
+    sys.update(1, w, e, 999999)
+    expect((sys as any).lastCheck).toBeLessThanOrEqual(999999)
+  })
+  it('补充-清空balls后length=0', () => {
+    ;(sys as any).balls.push({ id: 1 })
+    ;(sys as any).balls.length = 0
+    expect((sys as any).balls).toHaveLength(0)
+  })
+  it('补充-id注入后可读取', () => {
+    ;(sys as any).balls.push({ id: 99 })
+    expect((sys as any).balls[0].id).toBe(99)
+  })
+  it('补充-多次trigger三轮lastCheck递增', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const w = { width: 200, height: 200, getTile: () => 0 } as any
+    const e = { getEntitiesWithComponents: () => [] } as any
+    sys.update(1, w, e, 900)
+    sys.update(1, w, e, 900 * 2)
+    sys.update(1, w, e, 900 * 3)
+    expect((sys as any).lastCheck).toBe(900 * 3)
+  })
+  it('补充-tick=CI-1时lastCheck保持0', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const w = { width: 200, height: 200, getTile: () => 0 } as any
+    const e = { getEntitiesWithComponents: () => [] } as any
+    sys.update(1, w, e, 900 - 1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('补充-balls是同一引用', () => {
+    const r1 = (sys as any).balls
+    const r2 = (sys as any).balls
+    expect(r1).toBe(r2)
+  })
+  it('补充-注入10个后length=10', () => {
+    for (let i = 0; i < 10; i++) { ;(sys as any).balls.push({ id: i + 1 }) }
+    expect((sys as any).balls).toHaveLength(10)
+  })
+  it('补充-3个trigger间lastCheck精确', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const w = { width: 200, height: 200, getTile: () => 0 } as any
+    const e = { getEntitiesWithComponents: () => [] } as any
+    sys.update(1, w, e, 900 * 3)
+    expect((sys as any).lastCheck).toBe(900 * 3)
+  })
+  it('补充-random=0.9时不spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const w = { width: 200, height: 200, getTile: () => 0 } as any
+    const e = { getEntitiesWithComponents: () => [] } as any
+    sys.update(1, w, e, 900)
+    expect((sys as any).balls).toHaveLength(0)
+  })
+  it('补充-balls可以pop操作', () => {
+    ;(sys as any).balls.push({ id: 1 })
+    ;(sys as any).balls.pop()
+    expect((sys as any).balls).toHaveLength(0)
+  })
+  it('补充-初始状态update不影响lastCheck=0', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const w = { width: 200, height: 200, getTile: () => 0 } as any
+    const e = { getEntitiesWithComponents: () => [] } as any
+    sys.update(1, w, e, 1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('补充-第N次trigger后lastCheck=N*CI', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const w = { width: 200, height: 200, getTile: () => 0 } as any
+    const e = { getEntitiesWithComponents: () => [] } as any
+    const N = 4
+    sys.update(1, w, e, 900 * N)
+    expect((sys as any).lastCheck).toBe(900 * N)
+  })
+  it('补充-注入元素tick字段可读取', () => {
+    ;(sys as any).balls.push({ id: 1, tick: 12345 })
+    expect((sys as any).balls[0].tick).toBe(12345)
+  })
+  it('补充-balls注入x/y字段可读取', () => {
+    ;(sys as any).balls.push({ id: 1, x: 50, y: 60 })
+    expect((sys as any).balls[0].x).toBe(50)
+    expect((sys as any).balls[0].y).toBe(60)
+  })
+  it('补充-两次update在CI内仅执行一次', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const w = { width: 200, height: 200, getTile: () => 0 } as any
+    const e = { getEntitiesWithComponents: () => [] } as any
+    sys.update(1, w, e, 900)
+    const lc = (sys as any).lastCheck
+    sys.update(1, w, e, 900 + 900 - 1)
+    expect((sys as any).lastCheck).toBe(lc)
   })
 })

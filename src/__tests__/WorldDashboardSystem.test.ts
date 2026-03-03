@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { WorldDashboardSystem } from '../systems/WorldDashboardSystem'
 
 function makeSys(): WorldDashboardSystem { return new WorldDashboardSystem() }
@@ -109,5 +109,115 @@ describe('WorldDashboardSystem - 环形缓冲区(MAX_POP_SAMPLES=60)', () => {
     ;(sys as any)._orderedDirty = false
     sys.addPopulationSample(100, { human: 10 })
     expect((sys as any)._orderedDirty).toBe(true)
+  })
+})
+
+describe('WorldDashboardSystem - 扩展覆盖', () => {
+  let sys: WorldDashboardSystem
+  beforeEach(() => { sys = new WorldDashboardSystem() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('扩展-5次toggle后isVisible为true', () => {
+    for (let i = 0; i < 5; i++) { sys.toggle() }
+    expect(sys.isVisible()).toBe(true)
+  })
+  it('扩展-10次toggle后isVisible为false', () => {
+    for (let i = 0; i < 10; i++) { sys.toggle() }
+    expect(sys.isVisible()).toBe(false)
+  })
+  it('扩展-addPopulationSample增加popCount', () => {
+    sys.addPopulationSample(1, { human: 10 })
+    sys.addPopulationSample(2, { human: 20 })
+    expect((sys as any).popCount).toBe(2)
+  })
+  it('扩展-addPopulationSample后popSamples正确', () => {
+    sys.addPopulationSample(100, { elf: 5 })
+    expect((sys as any).popSamples[0].populations.elf).toBe(5)
+  })
+  it('扩展-popSamples初始为空', () => {
+    expect((sys as any).popSamples).toHaveLength(0)
+  })
+  it('扩展-popCount初始为0', () => {
+    expect((sys as any).popCount).toBe(0)
+  })
+  it('扩展-60个sample后popCount=60', () => {
+    for (let i = 0; i < 60; i++) { sys.addPopulationSample(i, { human: i }) }
+    expect((sys as any).popCount).toBe(60)
+  })
+  it('扩展-70个sample后popCount仍为60', () => {
+    for (let i = 0; i < 70; i++) { sys.addPopulationSample(i, { human: i }) }
+    expect((sys as any).popCount).toBe(60)
+  })
+  it('扩展-addPopulationSample后_orderedDirty=true', () => {
+    ;(sys as any)._orderedDirty = false
+    sys.addPopulationSample(1, { human: 1 })
+    expect((sys as any)._orderedDirty).toBe(true)
+  })
+  it('扩展-61个sample后popWriteIndex=1', () => {
+    for (let i = 0; i < 61; i++) { sys.addPopulationSample(i, { human: i }) }
+    expect((sys as any).popWriteIndex).toBe(1)
+  })
+  it('扩展-120个sample后popWriteIndex=0', () => {
+    for (let i = 0; i < 120; i++) { sys.addPopulationSample(i, { human: i }) }
+    expect((sys as any).popWriteIndex).toBe(0)
+  })
+  it('扩展-religionData初始为空Map', () => {
+    expect((sys as any).religionData.size).toBe(0)
+  })
+  it('扩展-powerData初始为空数组', () => {
+    expect((sys as any).powerData).toHaveLength(0)
+  })
+  it('扩展-activeTab初始为religion', () => {
+    expect((sys as any).activeTab).toBe('religion')
+  })
+  it('扩展-sample的entries正确', () => {
+    sys.addPopulationSample(1, { dwarf: 7 })
+    const entry = (sys as any).popSamples[0].entries[0]
+    expect(entry[0]).toBe('dwarf')
+    expect(entry[1]).toBe(7)
+  })
+  it('扩展-popWriteIndex初始为0', () => {
+    expect((sys as any).popWriteIndex).toBe(0)
+  })
+  it('扩展-sample的tick字段正确', () => {
+    sys.addPopulationSample(9999, { orc: 3 })
+    expect((sys as any).popSamples[0].tick).toBe(9999)
+  })
+  it('扩展-62个sample后popWriteIndex=2', () => {
+    for (let i = 0; i < 62; i++) { sys.addPopulationSample(i, { human: i }) }
+    expect((sys as any).popWriteIndex).toBe(2)
+  })
+  it('扩展-sample populations是独立副本', () => {
+    const pops = { human: 5 }
+    sys.addPopulationSample(1, pops)
+    pops.human = 999
+    expect((sys as any).popSamples[0].populations.human).toBe(5)
+  })
+  it('扩展-65个sample后popCount仍为60', () => {
+    for (let i = 0; i < 65; i++) { sys.addPopulationSample(i * 100, { human: i * 10 }) }
+    expect((sys as any).popCount).toBe(60)
+  })
+  it('扩展-60个sample后popWriteIndex为0', () => {
+    for (let i = 0; i < 60; i++) { sys.addPopulationSample(i * 100, { human: i }) }
+    expect((sys as any).popWriteIndex).toBe(0)
+  })
+  it('扩展-直接注入religionData后可读取', () => {
+    ;(sys as any).religionData.set('sun', 10)
+    expect((sys as any).religionData.get('sun')).toBe(10)
+  })
+  it('扩展-直接注入powerData后可读取', () => {
+    ;(sys as any).powerData.push({ name: 'A', power: 100 })
+    expect((sys as any).powerData).toHaveLength(1)
+  })
+  it('扩展-isVisible初始为false', () => {
+    expect(sys.isVisible()).toBe(false)
+  })
+  it('扩展-addPopulationSample后sample的populations字段正确', () => {
+    sys.addPopulationSample(100, { orc: 77 })
+    expect((sys as any).popSamples[0].populations.orc).toBe(77)
+  })
+  it('扩展-toggle一次后visible=true', () => {
+    sys.toggle()
+    expect(sys.isVisible()).toBe(true)
   })
 })
