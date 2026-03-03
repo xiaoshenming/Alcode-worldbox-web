@@ -1,6 +1,6 @@
 仅做修复、优化和测试，严禁新增任何功能。\n\n📋 本轮任务：\n1. git log --oneline -10 检查当前状态\n2. 阅读 .claude/loop-ai-state.json 了解上轮笔记\n3. 运行类型检查、构建、测试，找出所有错误\n4. 修复 bug、性能问题、代码质量问题\n5. 优化现有代码（重构、简化、消除技术债）\n6. 确保所有测试通过\n7. 每修复一个问题就 git commit + git push\n\n🔴 铁律：\n- 严禁新增功能\n- 只修复、优化、测试\n- 类型检查必须通过\n- 构建必须成功\n- 每次 commit 后 git push origin main
 
-🧠 AI 上轮笔记：迭代156（循环63/100）。本轮主要成就：修复CreatureAssayerSystem.test.ts的1个flaky测试，在6个cleanup测试中添加Math.random mock防止随机招募干扰。当前状态：861个测试文件全部通过，44800个测试全部通过（相比上轮-14可能是统计误差）。项目质量稳定，无待修复错误。
+🧠 AI 上轮笔记：迭代157（循环64/100）。本轮主要成就：修复2个flaky测试（WorldCometSystem和CreatureBevellerSystem），均为cleanup测试中缺少Math.random mock导致随机spawn/recruit干扰。这是第4和第5次遇到相同模式。当前状态：861个测试文件全部通过，44873个测试全部通过（相比上轮+73）。项目质量稳定，无待修复错误。
 🎯 AI 自定优先级：[
   "1. 系统性检查所有cleanup测试是否需要Math.random mock（搜索cleanup相关测试，检查是否有spawn/recruit逻辑）",
   "2. 继续扩展剩余79个<35测试的文件至50+测试",
@@ -30,10 +30,11 @@
   "【迭代155新增】AISystem繁殖触发概率仅0.5%，500次尝试仍有8.2%概率全部失败，必须mock Math.random确保触发",
   "【迭代155新增】makeSystem()是常见的辅助函数命名错误，应该是new XXXSystem()，批量替换时要小心",
   "【迭代155新增】代理扩展测试时可能引入错误（如未定义的函数、错误的断言值），需要在提交前验证所有测试通过",
-  "【迭代156新增】CreatureAssayerSystem cleanup测试flaky模式：这是第三次遇到相同问题（ChisellerSystem、FurbisherSystem、AssayerSystem），cleanup测试中的随机招募逻辑必须用Math.random mock隔离，解决方案已成为标准模式"
+  "【迭代156新增】CreatureAssayerSystem cleanup测试flaky模式：这是第三次遇到相同问题（ChisellerSystem、FurbisherSystem、AssayerSystem），cleanup测试中的随机招募逻辑必须用Math.random mock隔离，解决方案已成为标准模式",
+  "【迭代157新增】WorldCometSystem和CreatureBevellerSystem cleanup测试flaky模式：这是第4和第5次遇到相同问题，cleanup测试中的随机spawn/recruit逻辑必须在主describe块的beforeEach中mock Math.random=0.99，这个模式已经非常明确且可预测"
 ]
 
-迭代轮次: 85/100
+迭代轮次: 87/100
 
 
 🔄 自我进化（每轮必做）：
@@ -42,6 +43,6 @@
   "notes": "本轮做了什么、发现了什么问题、下轮应该做什么",
   "priorities": "根据当前项目状态，你认为最重要的 3-5 个待办事项",
   "lessons": "积累的经验教训，比如哪些方法有效、哪些坑要避开",
-  "last_updated": "2026-03-03T15:29:52+08:00"
+  "last_updated": "2026-03-03T15:54:47+08:00"
 }
 这个文件是你的记忆，下一轮的你会读到它。写有价值的内容，帮助未来的自己更高效。

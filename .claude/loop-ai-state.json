@@ -1,12 +1,12 @@
 {
-  "notes": "迭代156（循环63/100）。本轮主要成就：修复CreatureAssayerSystem.test.ts的1个flaky测试，在6个cleanup测试中添加Math.random mock防止随机招募干扰。当前状态：861个测试文件全部通过，44800个测试全部通过（相比上轮-14可能是统计误差）。项目质量稳定，无待修复错误。",
+  "notes": "迭代157（循环64/100）。本轮主要成就：修复2个flaky测试（WorldCometSystem和CreatureBevellerSystem），均为cleanup测试中缺少Math.random mock导致随机spawn/recruit干扰。这是第4和第5次遇到相同模式。当前状态：861个测试文件全部通过，44873个测试全部通过（相比上轮+73）。项目质量稳定，无待修复错误。",
 
   "batch_results": {
-    "flaky测试修复": "CreatureAssayerSystem cleanup测试失败（expected 2 to be 3）——原因是RECRUIT_CHANCE=0.0014的随机招募逻辑在cleanup测试中触发，解决方案是在所有6个cleanup测试中mock Math.random=0.99",
-    "测试状态": "861个文件，44800个测试，全部通过"
+    "flaky测试修复": "WorldCometSystem和CreatureBevellerSystem cleanup测试失败——原因是SPAWN_CHANCE/RECRUIT_CHANCE的随机逻辑在cleanup测试中触发，解决方案是在主describe块的beforeEach中mock Math.random=0.99",
+    "测试状态": "861个文件，44873个测试，全部通过"
   },
 
-  "test_count": "44814→44800（本迭代-14，可能是上轮统计误差或测试合并）",
+  "test_count": "44800→44873（本迭代+73）",
 
   "remaining_small_files": "79个文件<35测试（未变化）",
 
@@ -40,10 +40,11 @@
     "【迭代155新增】AISystem繁殖触发概率仅0.5%，500次尝试仍有8.2%概率全部失败，必须mock Math.random确保触发",
     "【迭代155新增】makeSystem()是常见的辅助函数命名错误，应该是new XXXSystem()，批量替换时要小心",
     "【迭代155新增】代理扩展测试时可能引入错误（如未定义的函数、错误的断言值），需要在提交前验证所有测试通过",
-    "【迭代156新增】CreatureAssayerSystem cleanup测试flaky模式：这是第三次遇到相同问题（ChisellerSystem、FurbisherSystem、AssayerSystem），cleanup测试中的随机招募逻辑必须用Math.random mock隔离，解决方案已成为标准模式"
+    "【迭代156新增】CreatureAssayerSystem cleanup测试flaky模式：这是第三次遇到相同问题（ChisellerSystem、FurbisherSystem、AssayerSystem），cleanup测试中的随机招募逻辑必须用Math.random mock隔离，解决方案已成为标准模式",
+    "【迭代157新增】WorldCometSystem和CreatureBevellerSystem cleanup测试flaky模式：这是第4和第5次遇到相同问题，cleanup测试中的随机spawn/recruit逻辑必须在主describe块的beforeEach中mock Math.random=0.99，这个模式已经非常明确且可预测"
   ],
 
-  "last_updated": "2026-03-03T14:51:00+08:00",
-  "iteration": 156,
-  "loop": "63/100"
+  "last_updated": "2026-03-03T15:54:10+08:00",
+  "iteration": 157,
+  "loop": "64/100"
 }
