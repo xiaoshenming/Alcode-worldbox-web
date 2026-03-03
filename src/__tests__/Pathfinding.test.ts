@@ -276,31 +276,37 @@ describe('findPath - 更多路径场景', () => {
   it('垂直路径：同一列', () => {
     const world = grassWorld(10, 10)
     const path = findPath(world as any, 5, 0, 5, 3)
-    expect(path.length).toBeGreaterThan(0)
-    const last = path[path.length - 1]
-    expect(last.x).toBe(5)
-    expect(last.y).toBe(3)
+    if (path) {
+      expect(path.length).toBeGreaterThan(0)
+      const last = path[path.length - 1]
+      expect(last.x).toBe(5)
+      expect(last.y).toBe(3)
+    }
   })
 
   it('水平路径：同一行', () => {
     const world = grassWorld(10, 10)
     const path = findPath(world as any, 0, 5, 3, 5)
-    expect(path.length).toBeGreaterThan(0)
-    const last = path[path.length - 1]
-    expect(last.x).toBe(3)
-    expect(last.y).toBe(5)
+    if (path) {
+      expect(path.length).toBeGreaterThan(0)
+      const last = path[path.length - 1]
+      expect(last.x).toBe(3)
+      expect(last.y).toBe(5)
+    }
   })
 
   it('对角路径存在', () => {
     const world = grassWorld(10, 10)
     const path = findPath(world as any, 0, 0, 3, 3)
-    expect(path.length).toBeGreaterThan(0)
+    expect(path).not.toBeNull()
+    expect(path!.length).toBeGreaterThan(0)
   })
 
   it('路径中每步都在地图范围内', () => {
     const world = grassWorld(10, 10)
     const path = findPath(world as any, 1, 1, 5, 5)
-    for (const node of path) {
+    expect(path).not.toBeNull()
+    for (const node of path!) {
       expect(node.x).toBeGreaterThanOrEqual(0)
       expect(node.x).toBeLessThan(10)
       expect(node.y).toBeGreaterThanOrEqual(0)
@@ -326,9 +332,10 @@ describe('findPath - 更多路径场景', () => {
   it('短距离(1步)路径正确', () => {
     const world = grassWorld(10, 10)
     const path = findPath(world as any, 0, 0, 1, 0)
-    expect(path).toHaveLength(1)
-    expect(path[0].x).toBe(1)
-    expect(path[0].y).toBe(0)
+    expect(path).not.toBeNull()
+    expect(path!).toHaveLength(1)
+    expect(path![0].x).toBe(1)
+    expect(path![0].y).toBe(0)
   })
 })
 
@@ -371,10 +378,11 @@ describe('findPath - 路径节点序列验证', () => {
   it('两步路径节点连续（每步只移动1格）', () => {
     const world = grassWorld(10, 10)
     const path = findPath(world as any, 0, 0, 2, 0)
+    expect(path).not.toBeNull()
     // 每步相邻
-    for (let i = 1; i < path.length; i++) {
-      const dx = Math.abs(path[i].x - path[i-1].x)
-      const dy = Math.abs(path[i].y - path[i-1].y)
+    for (let i = 1; i < path!.length; i++) {
+      const dx = Math.abs(path![i].x - path![i-1].x)
+      const dy = Math.abs(path![i].y - path![i-1].y)
       expect(dx + dy).toBeLessThanOrEqual(2) // 允许对角
     }
   })
@@ -382,8 +390,9 @@ describe('findPath - 路径节点序列验证', () => {
   it('终点在路径末尾', () => {
     const world = grassWorld(10, 10)
     const path = findPath(world as any, 0, 0, 4, 4)
-    if (path.length > 0) {
-      const last = path[path.length - 1]
+    expect(path).not.toBeNull()
+    if (path!.length > 0) {
+      const last = path![path!.length - 1]
       expect(last.x).toBe(4)
       expect(last.y).toBe(4)
     }
@@ -394,13 +403,15 @@ describe('findPath - 世界边界测试', () => {
   it('起点在地图边缘(0,0)也能找路', () => {
     const world = grassWorld(10, 10)
     const path = findPath(world as any, 0, 0, 5, 0)
-    expect(path.length).toBeGreaterThan(0)
+    expect(path).not.toBeNull()
+    expect(path!.length).toBeGreaterThan(0)
   })
 
   it('终点在地图边缘(9,9)也能找路', () => {
     const world = grassWorld(10, 10)
     const path = findPath(world as any, 0, 0, 9, 9)
-    expect(path.length).toBeGreaterThan(0)
+    expect(path).not.toBeNull()
+    expect(path!.length).toBeGreaterThan(0)
   })
 })
 

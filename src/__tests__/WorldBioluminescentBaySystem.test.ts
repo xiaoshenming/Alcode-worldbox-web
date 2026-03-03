@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { WorldBioluminescentBaySystem } from '../systems/WorldBioluminescentBaySystem'
 import type { BioluminescentBay } from '../systems/WorldBioluminescentBaySystem'
+import { EntityManager } from '../ecs/Entity'
 
 function makeSys(): WorldBioluminescentBaySystem { return new WorldBioluminescentBaySystem() }
+function makeEm(): EntityManager { return new EntityManager() }
 let nextId = 1
 function makeBay(overrides: Partial<BioluminescentBay> = {}): BioluminescentBay {
   return {
@@ -37,74 +39,74 @@ describe('WorldBioluminescentBaySystem', () => {
   // ─── 节流逻辑 ─────────────────────────────────────────────────────────────
   it('tick < CHECK_INTERVAL时不触发', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, makeWorld(), {}, CHECK_INTERVAL - 1)
+    sys.update(1, makeWorld(), makeEm(), CHECK_INTERVAL - 1)
     expect((sys as any).lastCheck).toBe(0)
   })
   it('tick >= CHECK_INTERVAL时更新lastCheck', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(), makeEm(), CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
   it('第二次间隔不足时lastCheck不更新', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
-    sys.update(1, makeWorld(), {}, CHECK_INTERVAL + 100)
+    sys.update(1, makeWorld(), makeEm(), CHECK_INTERVAL)
+    sys.update(1, makeWorld(), makeEm(), CHECK_INTERVAL + 100)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
   it('间隔足够时第二次触发', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
-    sys.update(1, makeWorld(), {}, CHECK_INTERVAL * 2)
+    sys.update(1, makeWorld(), makeEm(), CHECK_INTERVAL)
+    sys.update(1, makeWorld(), makeEm(), CHECK_INTERVAL * 2)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
   })
 
   // ─── spawn ────────────────────────────────────────────────────────────────
   it('random > SPAWN_CHANCE时不spawn', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, makeWorld(0), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(0), makeEm(), CHECK_INTERVAL)
     expect((sys as any).bays).toHaveLength(0)
   })
   it('非水地形不spawn', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(1, makeWorld(5), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(5), makeEm(), CHECK_INTERVAL)
     expect((sys as any).bays).toHaveLength(0)
   })
   it('DEEP_WATER+random<SPAWN_CHANCE时spawn', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(1, makeWorld(0), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(0), makeEm(), CHECK_INTERVAL)
     expect((sys as any).bays).toHaveLength(1)
   })
   it('SHALLOW_WATER也可spawn', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(1, makeWorld(1), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(1), makeEm(), CHECK_INTERVAL)
     expect((sys as any).bays).toHaveLength(1)
   })
   it('MAX_BAYS(10)上限不超出', () => {
     for (let i = 0; i < 10; i++) (sys as any).bays.push(makeBay({ tick: 99999 }))
     vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(1, makeWorld(0), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(0), makeEm(), CHECK_INTERVAL)
     expect((sys as any).bays.length).toBeLessThanOrEqual(10)
   })
   it('spawn后bay有tick字段', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(1, makeWorld(0), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(0), makeEm(), CHECK_INTERVAL)
     const b = (sys as any).bays[0]
     if (b) expect(b.tick).toBe(CHECK_INTERVAL)
   })
   it('spawn后nextId递增', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(1, makeWorld(0), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(0), makeEm(), CHECK_INTERVAL)
     if ((sys as any).bays.length > 0) expect((sys as any).nextId).toBeGreaterThan(1)
   })
   it('spawn后bay包含intensity字段', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(1, makeWorld(0), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(0), makeEm(), CHECK_INTERVAL)
     const b = (sys as any).bays[0]
     if (b) expect(typeof b.intensity).toBe('number')
   })
   it('spawn后bay包含seasonalPeak字段', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(1, makeWorld(0), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(0), makeEm(), CHECK_INTERVAL)
     const b = (sys as any).bays[0]
     if (b) expect(typeof b.seasonalPeak).toBe('boolean')
   })
@@ -113,38 +115,38 @@ describe('WorldBioluminescentBaySystem', () => {
   it('organismDensity不低于5', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.0)
     ;(sys as any).bays.push(makeBay({ organismDensity: 5, tick: 99999 }))
-    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(), makeEm(), CHECK_INTERVAL)
     expect((sys as any).bays[0].organismDensity).toBeGreaterThanOrEqual(5)
   })
   it('organismDensity不高于100', () => {
     vi.spyOn(Math, 'random').mockReturnValue(1.0)
     ;(sys as any).bays.push(makeBay({ organismDensity: 100, tick: 99999 }))
-    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(), makeEm(), CHECK_INTERVAL)
     expect((sys as any).bays[0].organismDensity).toBeLessThanOrEqual(100)
   })
   it('waterClarity不低于10', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.0)
     ;(sys as any).bays.push(makeBay({ waterClarity: 10, tick: 99999 }))
-    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(), makeEm(), CHECK_INTERVAL)
     expect((sys as any).bays[0].waterClarity).toBeGreaterThanOrEqual(10)
   })
   it('waterClarity不高于100', () => {
     vi.spyOn(Math, 'random').mockReturnValue(1.0)
     ;(sys as any).bays.push(makeBay({ waterClarity: 100, tick: 99999 }))
-    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(), makeEm(), CHECK_INTERVAL)
     expect((sys as any).bays[0].waterClarity).toBeLessThanOrEqual(100)
   })
   it('culturalValue不高于100', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     ;(sys as any).bays.push(makeBay({ culturalValue: 100, intensity: 100, tick: 99999 }))
-    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(), makeEm(), CHECK_INTERVAL)
     expect((sys as any).bays[0].culturalValue).toBeLessThanOrEqual(100)
   })
   it('seasonalPeak根据tick%20000<5000设置', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     ;(sys as any).bays.push(makeBay({ tick: 99999 }))
     // tick=2600, 2600%20000=2600<5000 → seasonalPeak=true
-    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(), makeEm(), CHECK_INTERVAL)
     expect(typeof (sys as any).bays[0].seasonalPeak).toBe('boolean')
   })
 
@@ -152,14 +154,14 @@ describe('WorldBioluminescentBaySystem', () => {
   it('organismDensity<=5时bay被删除', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.0)
     ;(sys as any).bays.push(makeBay({ organismDensity: 5, tick: 99999 }))
-    sys.update(1, makeWorld(5), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(5), makeEm(), CHECK_INTERVAL)
     // After update: max(5, 5+(0-0.48)*2) = max(5, 4.04) = 5 → cleanup removes (<=5), non-water tile prevents spawn
     expect((sys as any).bays).toHaveLength(0)
   })
   it('organismDensity>5时bay保留', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     ;(sys as any).bays.push(makeBay({ organismDensity: 50, tick: 99999 }))
-    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(), makeEm(), CHECK_INTERVAL)
     expect((sys as any).bays).toHaveLength(1)
   })
 
@@ -179,12 +181,12 @@ describe('WorldBioluminescentBaySystem', () => {
 
   // ─── 边界条件 ────────────────────────────────────────────────────────────
   it('tick=0不触发', () => {
-    sys.update(1, makeWorld(), {}, 0)
+    sys.update(1, makeWorld(), makeEm(), 0)
     expect((sys as any).lastCheck).toBe(0)
   })
   it('大tick值不崩溃', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    expect(() => sys.update(1, makeWorld(), {}, 9999999)).not.toThrow()
+    expect(() => sys.update(1, makeWorld(), makeEm(), 9999999)).not.toThrow()
   })
   it('bay字段结构完整', () => {
     const b = makeBay()

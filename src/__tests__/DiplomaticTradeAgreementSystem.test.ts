@@ -8,7 +8,7 @@ const W = {} as any, EM = {} as any
 function makeSys() { return new DiplomaticTradeAgreementSystem() }
 
 function makeItem(overrides: Partial<any> = {}) {
-  return { id: 1, tick: 0, duration: 0, civ1: 'human', civ2: 'elf', type: 'free_trade', status: 'active', benefit: 50, duration: 0, maxDuration: 3000, ...overrides }
+  return { id: 1, tick: 0, civ1: 1, civ2: 2, type: 'free_trade', status: 'active', benefit: 50, duration: 0, maxDuration: 3000, ...overrides }
 }
 
 describe('DiplomaticTradeAgreementSystem — 初始状态', () => {

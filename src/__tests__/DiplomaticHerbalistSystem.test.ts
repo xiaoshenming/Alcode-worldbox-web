@@ -4,7 +4,7 @@ import { DiplomaticHerbalistSystem } from '../systems/DiplomaticHerbalistSystem'
 const w = {} as any, em = {} as any
 function makeSys() { return new DiplomaticHerbalistSystem() }
 function makeArr(overrides: Record<string, any> = {}) {
-  return { id: 1, gatheringRights: 50, medicinalTrade: 50, herbLore: 50, gardenAccess: 50, duration: 0, tick: 0, ...overrides }
+  return { id: 1, form: 'royal_herbalist', gatheringRights: 50, medicinalTrade: 50, herbLore: 50, gardenAccess: 50, duration: 0, tick: 0, ...overrides }
 }
 
 describe('DiplomaticHerbalistSystem', () => {

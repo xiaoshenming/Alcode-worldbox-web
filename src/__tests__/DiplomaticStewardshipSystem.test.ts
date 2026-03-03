@@ -201,7 +201,7 @@ describe('DiplomaticStewardshipSystem — 综合与边界', () => {
     ;(sys as any).agreements.splice(0, 1)
     expect((sys as any).agreements).toHaveLength(0)
   })
-  it('nextId初始为1（fresh instance）', () => { expect(makeSys() as any, (s: any) => s.nextId).toBeDefined() })
+  it('nextId初始为1（fresh instance）', () => { expect((makeSys() as any).nextId).toBeDefined() })
 })
 
 describe('DiplomaticStewardshipSystem — 补充字段测试', () => {

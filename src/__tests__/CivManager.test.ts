@@ -333,13 +333,13 @@ describe('CivManager.getCultureBonus额外验证', () => {
   it('scholar文化有tech相关bonus', () => {
     insertCiv(cm, 5, { culture: { trait: 'scholar', strength: 100 } })
     // getCultureBonus需要额外参数
-    const bonus = cm.getCultureBonus(5, 'research')
+    const bonus = cm.getCultureBonus(5, 'tech')
     expect(typeof bonus).toBe('number')
   })
 
   it('nature文化有nature相关bonus', () => {
     insertCiv(cm, 6, { culture: { trait: 'nature', strength: 100 } })
-    const bonus = cm.getCultureBonus(6, 'gather')
+    const bonus = cm.getCultureBonus(6, 'food')
     expect(typeof bonus).toBe('number')
   })
 })

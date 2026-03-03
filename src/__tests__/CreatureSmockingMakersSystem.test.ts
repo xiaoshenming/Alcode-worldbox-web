@@ -65,31 +65,31 @@ describe('CreatureSmockingMakersSystem — CHECK_INTERVAL 节流', () => {
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
   it('tick 不足 CHECK_INTERVAL(1470) 时跳过', () => {
-    const em = makeEm()
+    const em: any = makeEm()
     ;(sys as any).lastCheck = 0
     ;(sys as any).skillMap.set(1, 50)
-    sys.update(1, em as any, 100) // 100 < 1470 跳过
+    sys.update(1, em, 100) // 100 < 1470 跳过
     expect((sys as any).skillMap.get(1)).toBe(50) // 不变
   })
 
   it('tick 达到 CHECK_INTERVAL 时执行', () => {
-    const em = makeEm({ getEntitiesWithComponents: vi.fn().mockReturnValue([]) })
+    const em: any = makeEm({ getEntitiesWithComponents: vi.fn().mockReturnValue([]) })
     ;(sys as any).lastCheck = 0
-    sys.update(1, em as any, 1470) // 1470 >= 1470 执行
+    sys.update(1, em, 1470) // 1470 >= 1470 执行
     expect((sys as any).lastCheck).toBe(1470)
   })
 
   it('更新后 lastCheck 记录当前 tick', () => {
-    const em = makeEm()
+    const em: any = makeEm()
     ;(sys as any).lastCheck = 0
-    sys.update(1, em as any, 5000)
+    sys.update(1, em, 5000)
     expect((sys as any).lastCheck).toBe(5000)
   })
 
   it('节流期间 lastCheck 不变', () => {
-    const em = makeEm()
+    const em: any = makeEm()
     ;(sys as any).lastCheck = 3000
-    sys.update(1, em as any, 3100) // 3100 - 3000 < 1470
+    sys.update(1, em, 3100) // 3100 - 3000 < 1470
     expect((sys as any).lastCheck).toBe(3000)
   })
 })
@@ -132,32 +132,32 @@ describe('CreatureSmockingMakersSystem — time-based cleanup', () => {
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
   it('tick - 49000 之前的 maker 被移除', () => {
-    const em = makeEm({ getEntitiesWithComponents: vi.fn().mockReturnValue([]) })
+    const em: any = makeEm({ getEntitiesWithComponents: vi.fn().mockReturnValue([]) })
     ;(sys as any).makers.push(makeMaker(1, 'english', { tick: 1000 }))
     ;(sys as any).lastCheck = 0
     // tick=50001, cutoff=50001-49000=1001, maker.tick=1000 < 1001 => 移除
-    sys.update(1, em as any, 50001)
+    sys.update(1, em, 50001)
     expect((sys as any).makers).toHaveLength(0)
   })
 
   it('tick 在 cutoff 以内的 maker 保留', () => {
-    const em = makeEm({ getEntitiesWithComponents: vi.fn().mockReturnValue([]) })
+    const em: any = makeEm({ getEntitiesWithComponents: vi.fn().mockReturnValue([]) })
     ;(sys as any).makers.push(makeMaker(1, 'english', { tick: 50000 }))
     ;(sys as any).lastCheck = 0
     // tick=98999, cutoff=98999-49000=49999, maker.tick=50000 > 49999 => 保留
-    sys.update(1, em as any, 98999)
+    sys.update(1, em, 98999)
     expect((sys as any).makers).toHaveLength(1)
   })
 
   it('混合: 过期移除未过期保留', () => {
-    const em = makeEm({ getEntitiesWithComponents: vi.fn().mockReturnValue([]) })
+    const em: any = makeEm({ getEntitiesWithComponents: vi.fn().mockReturnValue([]) })
     ;(sys as any).makers.push(makeMaker(1, 'english', { tick: 1000 }))   // 过期
     ;(sys as any).makers.push(makeMaker(2, 'lattice', { tick: 60000 }))  // 保留
     ;(sys as any).lastCheck = 0
     // tick=55000, cutoff=55000-49000=6000
     // maker1.tick=1000 < 6000 => 移除
     // maker2.tick=60000 > 6000 => 保留
-    sys.update(1, em as any, 55000)
+    sys.update(1, em, 55000)
     expect((sys as any).makers).toHaveLength(1)
     expect((sys as any).makers[0].entityId).toBe(2)
   })
@@ -203,16 +203,16 @@ describe('CreatureSmockingMakersSystem - 额外字段与综合测试', () => {
     expect(2 + Math.floor(70 / 9)).toBe(9)
   })
   it('update不崩溃（空em）', () => {
-    const em = makeEm()
+    const em: any = makeEm()
     expect(() => sys.update(0, em, 1470)).not.toThrow()
   })
   it('dt参数不影响节流', () => {
-    const em = makeEm()
+    const em: any = makeEm()
     sys.update(99, em, 1470)
     expect((sys as any).lastCheck).toBe(1470)
   })
   it('tick=0不触发', () => {
-    const em = makeEm()
+    const em: any = makeEm()
     sys.update(0, em, 0)
     expect((sys as any).lastCheck).toBe(0)
   })
@@ -220,7 +220,7 @@ describe('CreatureSmockingMakersSystem - 额外字段与综合测试', () => {
     const currentTick = 55000
     ;(sys as any).lastCheck = 0
     ;(sys as any).makers.push(makeMaker(1, 'english', { tick: 0 }))
-    const em = makeEm()
+    const em: any = makeEm()
     sys.update(0, em, currentTick)
     expect((sys as any).makers).toHaveLength(0)
   })
@@ -228,7 +228,7 @@ describe('CreatureSmockingMakersSystem - 额外字段与综合测试', () => {
     const currentTick = 55000
     ;(sys as any).lastCheck = 0
     ;(sys as any).makers.push(makeMaker(1, 'lattice', { tick: currentTick - 10000 }))
-    const em = makeEm()
+    const em: any = makeEm()
     sys.update(0, em, currentTick)
     expect((sys as any).makers).toHaveLength(1)
   })
@@ -237,7 +237,7 @@ describe('CreatureSmockingMakersSystem - 额外字段与综合测试', () => {
     ;(sys as any).lastCheck = 0
     ;(sys as any).makers.push(makeMaker(1, 'english', { tick: 0 }))
     ;(sys as any).makers.push(makeMaker(2, 'honeycomb', { tick: currentTick - 5000 }))
-    const em = makeEm()
+    const em: any = makeEm()
     sys.update(0, em, currentTick)
     expect((sys as any).makers).toHaveLength(1)
     expect((sys as any).makers[0].entityId).toBe(2)
@@ -251,7 +251,7 @@ describe('CreatureSmockingMakersSystem - 额外字段与综合测试', () => {
     expect((sys as any).makers[0].smockingType).toBe('honeycomb')
   })
   it('update返回undefined', () => {
-    const em = makeEm()
+    const em: any = makeEm()
     expect(sys.update(0, em, 1470)).toBeUndefined()
   })
   it('注入5个maker后长度正确', () => {
@@ -273,7 +273,7 @@ describe('CreatureSmockingMakersSystem - 额外字段与综合测试', () => {
   })
   it('EXPIRE_AFTER=49000', () => { expect(49000).toBe(49000) })
   it('连续多次update不崩溃', () => {
-    const em = makeEm()
+    const em: any = makeEm()
     expect(() => {
       sys.update(0, em, 1470)
       sys.update(0, em, 2940)
@@ -288,7 +288,7 @@ describe('CreatureSmockingMakersSystem - 额外字段与综合测试', () => {
   })
   it('MAX_MAKERS=30达到上限不再添加', () => {
     for (let i = 1; i <= 30; i++) { ;(sys as any).makers.push(makeMaker(i)) }
-    const em = makeEm()
+    const em: any = makeEm()
     vi.spyOn(Math, 'random').mockReturnValue(0)
     sys.update(0, em, 1470)
     expect((sys as any).makers.length).toBeLessThanOrEqual(30)
@@ -301,7 +301,7 @@ describe('CreatureSmockingMakersSystem - 追加', () => {
   beforeEach(() => { sys = makeSys(); nextId = 1 })
   it('tick差不足CHECK_INTERVAL时不触发', () => {
     ;(sys as any).lastCheck = 1000
-    const em = makeEm()
+    const em: any = makeEm()
     sys.update(0, em, 1000 + 1469)
     expect((sys as any).lastCheck).toBe(1000)
   })

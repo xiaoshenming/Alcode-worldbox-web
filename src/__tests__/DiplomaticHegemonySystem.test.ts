@@ -4,7 +4,7 @@ import { DiplomaticHegemonySystem } from '../systems/DiplomaticHegemonySystem'
 const w = {} as any, em = {} as any
 function makeSys() { return new DiplomaticHegemonySystem() }
 function makeRel(overrides: Record<string, any> = {}) {
-  return { id: 1, influenceLevel: 50, complianceRate: 50, resistanceIndex: 50, stabilityFactor: 50, duration: 0, tick: 0, ...overrides }
+  return { id: 1, form: 'military_dominance', influenceLevel: 50, complianceRate: 50, resistanceIndex: 50, stabilityFactor: 50, duration: 0, tick: 0, ...overrides }
 }
 
 describe('DiplomaticHegemonySystem', () => {

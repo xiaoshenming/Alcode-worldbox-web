@@ -201,7 +201,7 @@ describe('DiplomaticVassalageSystem — 综合与边界', () => {
     ;(sys as any).relations.splice(0, 1)
     expect((sys as any).relations).toHaveLength(0)
   })
-  it('nextId初始为1（fresh instance）', () => { expect(makeSys() as any, (s: any) => s.nextId).toBeDefined() })
+  it('nextId初始为1（fresh instance）', () => { expect((makeSys() as any).nextId).toBeDefined() })
 })
 
 describe('DiplomaticVassalageSystem — 补充字段测试', () => {

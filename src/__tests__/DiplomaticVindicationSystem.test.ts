@@ -201,7 +201,10 @@ describe('DiplomaticVindicationSystem — 综合与边界', () => {
     ;(sys as any).proceedings.splice(0, 1)
     expect((sys as any).proceedings).toHaveLength(0)
   })
-  it('nextId初始为1（fresh instance）', () => { expect(makeSys() as any, (s: any) => s.nextId).toBeDefined() })
+  it('nextId初始为1（fresh instance）', () => {
+    const s = makeSys() as any
+    expect(s.nextId).toBeDefined()
+  })
 })
 
 describe('DiplomaticVindicationSystem — 补充字段测试', () => {

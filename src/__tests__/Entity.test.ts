@@ -395,7 +395,11 @@ describe('EntityManager - 零实体操作', () => {
 
   it('getAllEntities无实体时返回空数组或空集合', () => {
     const all = em.getAllEntities()
-    expect(all.size ?? all.length ?? [...all].length).toBe(0)
+    if (Array.isArray(all)) {
+      expect(all.length).toBe(0)
+    } else {
+      expect((all as Set<any>).size).toBe(0)
+    }
   })
 })
 

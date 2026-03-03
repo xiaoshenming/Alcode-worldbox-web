@@ -261,7 +261,7 @@ describe('额外边界与枚举测试', () => {
 
   it('多条 arrangements 各自独立更新 duration', () => {
     const sys = makeSys() as any
-    const base = { custodianCivId: 1, wardCivId: 2, form: 'territorial_custody', custodyScope: 50, trustLevel: 50, autonomyGrant: 40, oversightRigor: 30, tick: 0 }
+    const base = { custodianCivId: 1, wardCivId: 2, form: 'territorial_custody' as CustodianshipForm, custodyScope: 50, trustLevel: 50, autonomyGrant: 40, oversightRigor: 30, tick: 0 }
     inject(sys, [{ id: 1, duration: 3, ...base }, { id: 2, duration: 7, ...base }])
     sys.lastCheck = 0
     sys.update(1, world, em, 2550)

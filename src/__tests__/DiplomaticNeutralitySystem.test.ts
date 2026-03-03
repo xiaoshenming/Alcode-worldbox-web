@@ -9,7 +9,7 @@ const W = {} as any, EM = {} as any
 function makeSys() { return new DiplomaticNeutralitySystem() }
 function getP(sys: any): NeutralityDeclaration[] { return sys.declarations }
 function makeP(o: Partial<NeutralityDeclaration> = {}): NeutralityDeclaration {
-  return { id: 1, civId: 1, scope: 2, scope: 'military', credibility: 40, tradeAccess: 40, diplomaticStanding: 20, vulnerabilityRisk: 15, duration: 0, tick: 0, ...o }
+  return { id: 1, civId: 1, scope: 'military', credibility: 40, tradeAccess: 40, diplomaticStanding: 20, vulnerabilityRisk: 15, duration: 0, tick: 0, ...o }
 }
 
 describe('DiplomaticNeutralitySystem — 基础数据结构', () => {
@@ -252,7 +252,7 @@ describe('DiplomaticNeutralitySystem — MAX_PACTS=20 上限', () => {
   it('CHECK_INTERVAL=2380', () => { expect(CHECK_INTERVAL).toBe(2380) })
   it('MAX_PACTS=20', () => { expect(MAX_PACTS).toBe(20) })
   it('数组可独立注入读取', () => {
-    const p = makeP({ id: 42, civId: 3, scope: 7 })
+    const p = makeP({ id: 42, civId: 3, scope: 'economic' })
     getP(sys).push(p)
     expect(getP(sys)[0].id).toBe(42)
     expect(getP(sys)[0].civId).toBe(3)

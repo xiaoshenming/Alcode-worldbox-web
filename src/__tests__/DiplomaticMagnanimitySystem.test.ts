@@ -201,7 +201,7 @@ describe('DiplomaticMagnanimitySystem — 综合与边界', () => {
     ;(sys as any).gestures.splice(0, 1)
     expect((sys as any).gestures).toHaveLength(0)
   })
-  it('nextId初始为1（fresh instance）', () => { expect(makeSys() as any, (s: any) => s.nextId).toBeDefined() })
+  it('nextId初始为1（fresh instance）', () => { expect((makeSys() as any).nextId).toBeDefined() })
 })
 
 describe('DiplomaticMagnanimitySystem — 补充字段测试', () => {

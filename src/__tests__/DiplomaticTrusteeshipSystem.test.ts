@@ -201,7 +201,7 @@ describe('DiplomaticTrusteeshipSystem — 综合与边界', () => {
     ;(sys as any).arrangements.splice(0, 1)
     expect((sys as any).arrangements).toHaveLength(0)
   })
-  it('nextId初始为1（fresh instance）', () => { expect(makeSys() as any, (s: any) => s.nextId).toBeDefined() })
+  it('nextId初始为1（fresh instance）', () => { expect((makeSys() as any).nextId).toBeDefined() })
 })
 
 describe('DiplomaticTrusteeshipSystem — 补充字段测试', () => {

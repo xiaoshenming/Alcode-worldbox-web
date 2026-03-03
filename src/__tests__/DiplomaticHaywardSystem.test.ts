@@ -4,7 +4,7 @@ import { DiplomaticHaywardSystem } from '../systems/DiplomaticHaywardSystem'
 const w = {} as any, em = {} as any
 function makeSys() { return new DiplomaticHaywardSystem() }
 function makeArr(overrides: Record<string, any> = {}) {
-  return { id: 1, enclosureAuthority: 50, hedgeMaintenance: 50, boundaryEnforcement: 50, commonProtection: 50, duration: 0, tick: 0, ...overrides }
+  return { id: 1, form: 'royal_hayward', enclosureAuthority: 50, hedgeMaintenance: 50, boundaryEnforcement: 50, commonProtection: 50, duration: 0, tick: 0, ...overrides }
 }
 
 describe('DiplomaticHaywardSystem', () => {
