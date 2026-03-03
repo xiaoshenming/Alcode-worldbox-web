@@ -246,41 +246,50 @@ describe('CreatureAssayerSystem', () => {
   // ── cleanup ───────────────────────────────────────────────────────────────
 
   it('cleanup: assayingSkill<=4时删除（先递增后cleanup，3.98+0.02=4.00<=4）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
     const em = {} as any
     ;(sys as any).assayers.push(makeAssayer(1, { assayingSkill: 3.98 }))  // 3.98+0.02=4.00<=4，删除
     ;(sys as any).assayers.push(makeAssayer(2, { assayingSkill: 30 }))    // 保留
     ;(sys as any).lastCheck = 0
     sys.update(1, em, 2790)
+    vi.restoreAllMocks()
     expect((sys as any).assayers.length).toBe(1)
     expect((sys as any).assayers[0].entityId).toBe(2)
   })
 
   it('cleanup: assayingSkill>4时保留', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
     const em = {} as any
     ;(sys as any).assayers.push(makeAssayer(1, { assayingSkill: 10 }))
     ;(sys as any).assayers.push(makeAssayer(2, { assayingSkill: 50 }))
     ;(sys as any).lastCheck = 0
     sys.update(1, em, 2790)
     expect((sys as any).assayers.length).toBe(2)
+    vi.restoreAllMocks()
   })
 
   it('cleanup: assayingSkill=4.01保留（4+0.02=4.02>4）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
     const em = {} as any
     ;(sys as any).assayers.push(makeAssayer(1, { assayingSkill: 4.01 }))  // 4.01+0.02=4.03>4，保留
     ;(sys as any).lastCheck = 0
     sys.update(1, em, 2790)
     expect((sys as any).assayers.length).toBe(1)
+    vi.restoreAllMocks()
   })
 
   it('cleanup: assayingSkill=3.97删除（3.97+0.02=3.99<=4）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
     const em = {} as any
     ;(sys as any).assayers.push(makeAssayer(1, { assayingSkill: 3.97 }))  // 3.97+0.02=3.99<=4，删除
     ;(sys as any).lastCheck = 0
     sys.update(1, em, 2790)
     expect((sys as any).assayers.length).toBe(0)
+    vi.restoreAllMocks()
   })
 
   it('cleanup: 全部低技能时清空列表', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
     const em = {} as any
     ;(sys as any).assayers.push(makeAssayer(1, { assayingSkill: 1 }))
     ;(sys as any).assayers.push(makeAssayer(2, { assayingSkill: 2 }))
@@ -288,12 +297,15 @@ describe('CreatureAssayerSystem', () => {
     ;(sys as any).lastCheck = 0
     sys.update(1, em, 2790)
     expect((sys as any).assayers.length).toBe(0)
+    vi.restoreAllMocks()
   })
 
   it('cleanup: 空列表时不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
     const em = {} as any
     ;(sys as any).lastCheck = 0
     expect(() => sys.update(1, em, 2790)).not.toThrow()
+    vi.restoreAllMocks()
     expect((sys as any).assayers.length).toBe(0)
   })
 
