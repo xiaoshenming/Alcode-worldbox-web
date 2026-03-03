@@ -1,22 +1,21 @@
 {
-  "notes": "迭代154（循环61/100）。本轮主要成就：修复18个测试文件的TypeScript类型错误（98处），批量扩展200+个测试文件从20-30个测试至40-50+个测试，修复97个失败测试。测试从37044增至44244（+7200）。所有861个测试文件均通过，无任何<20测试的文件，78个文件<35测试。",
+  "notes": "迭代155（循环62/100）。本轮主要成就：修复26个测试文件的TypeScript类型错误（128处），修复2个flaky测试的随机性问题，测试数从44244增至44814（+570）。当前状态：858个文件通过，3个文件有26个失败测试（代理扩展时引入的错误），79个文件<35测试。",
 
   "batch_results": {
-    "类型修复": "18个文件98处类型错误（WorldComet/WorldAnomaly/WorldAncientRuin的addEntity，PerformanceMonitor的destroy，MapMarker/SandboxSettings的null参数等）",
-    "第一轮扩展": "122个文件从20-24测试扩展至50+（Creature/Diplomatic/World系列），+2774测试，修复40个失败（for循环分号错误、缺少导入、逻辑断言错误）",
-    "第二轮扩展": "60+个Diplomatic/World文件扩展至50+，+5364测试，修复21个失败（缺少afterEach、duration初始值、cleanup逻辑等）",
-    "第三轮扩展": "75+个Creature/Diplomatic/基础文件扩展至40-50+，+1836测试，修复36个失败（describe块提前关闭、初始值错误、mock方法缺失等）"
+    "类型修复": "26个文件128处类型错误（CivManager bonus类型、CreatureSmockingMakers mock类型、Diplomatic系列form字段/expect语法/数组类型、World系列EntityManager mock、Entity/Pathfinding类型推断）",
+    "flaky测试修复": "AISystem.breedCooldown（mock Math.random确保繁殖触发）、CreatureFeltingMakers2System（mock Math.random防止cleanup测试中随机招募）",
+    "测试扩展": "部分文件扩展（+570测试），但引入26个失败需要修复"
   },
 
-  "test_count": "37044→39818→42408→44244（本迭代+7200）",
+  "test_count": "44244→44814（本迭代+570，但有26个失败）",
 
-  "remaining_small_files": "78个文件<35测试，149个文件<40测试",
+  "remaining_small_files": "79个文件<35测试",
 
   "priorities": [
-    "1. 继续扩展剩余78个<35测试的文件至50+测试",
-    "2. 检查代码优化机会（性能/类型/逻辑）",
-    "3. tsc+vitest验证保持全绿（当前44244/44244）",
-    "4. 检查还有没有其他可以优化的系统"
+    "1. 修复当前26个失败测试（CreatureBeveller/BobbinWinder/FullingMakers/Honer/DiplomaticMarriage）",
+    "2. 继续扩展剩余79个<35测试的文件至50+测试",
+    "3. 确保所有测试通过后再进行下一轮扩展",
+    "4. 检查代码优化机会（性能/类型/逻辑）"
   ],
 
   "lessons": [
@@ -38,10 +37,13 @@
     "【迭代154新增】for循环分号错误是最常见的生成器bug：for(...) ;(sys导致ReferenceError: i is not defined，必须用for(...) {有花括号",
     "【迭代154新增】duration类字段在spawn后立即被自增，初始值断言不能用toBe(0)，应用toBeGreaterThanOrEqual(0)或toBeLessThanOrEqual(2)",
     "【迭代154新增】describe块提前关闭（多余的})）会导致后续describe块无法访问外层变量，需要检查括号匹配",
-    "【迭代154新增】mock对象缺少方法时测试会失败，需要根据源码调用补全所有必要方法（如hasComponent/getEntitiesWithComponent）"
+    "【迭代154新增】mock对象缺少方法时测试会失败，需要根据源码调用补全所有必要方法（如hasComponent/getEntitiesWithComponent）",
+    "【迭代155新增】AISystem繁殖触发概率仅0.5%，500次尝试仍有8.2%概率全部失败，必须mock Math.random确保触发",
+    "【迭代155新增】makeSystem()是常见的辅助函数命名错误，应该是new XXXSystem()，批量替换时要小心",
+    "【迭代155新增】代理扩展测试时可能引入错误（如未定义的函数、错误的断言值），需要在提交前验证所有测试通过"
   ],
 
-  "last_updated": "2026-03-03T11:05:00+08:00",
-  "iteration": 154,
-  "loop": "61/100"
+  "last_updated": "2026-03-03T13:10:00+08:00",
+  "iteration": 155,
+  "loop": "62/100"
 }
