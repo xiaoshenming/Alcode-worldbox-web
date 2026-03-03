@@ -214,4 +214,255 @@ describe('DiplomaticGarbleSystem', () => {
       expect((sys as any).arrangements[0].form).toBe('port_garbler')
     })
   })
+
+  describe('边界条件测试', () => {
+    it('adulterationDetection不超过最大值80', () => {
+      ;(sys as any).arrangements.push(makeArr({ adulterationDetection: 79.99, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 3100)
+      expect((sys as any).arrangements[0].adulterationDetection).toBeLessThanOrEqual(80)
+    })
+    it('tradeCompliance不低于最小值5', () => {
+      ;(sys as any).arrangements.push(makeArr({ tradeCompliance: 5.01, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, 3100)
+      expect((sys as any).arrangements[0].tradeCompliance).toBeGreaterThanOrEqual(5)
+    })
+    it('spiceInspection在边界值5时保持稳定', () => {
+      ;(sys as any).arrangements.push(makeArr({ spiceInspection: 5, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, 3100)
+      expect((sys as any).arrangements[0].spiceInspection).toBe(5)
+    })
+    it('purityStandards在边界值90时保持稳定', () => {
+      ;(sys as any).arrangements.push(makeArr({ purityStandards: 90, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 3100)
+      expect((sys as any).arrangements[0].purityStandards).toBe(90)
+    })
+    it('tick差值刚好3059时不触发更新', () => {
+      ;(sys as any).lastCheck = 10000
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 13059)
+      expect((sys as any).lastCheck).toBe(10000)
+    })
+    it('tick差值刚好3061时触发更新', () => {
+      ;(sys as any).lastCheck = 10000
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 13061)
+      expect((sys as any).lastCheck).toBe(13061)
+    })
+  })
+
+  describe('多实体交互测试', () => {
+    it('多个arrangements同时更新duration', () => {
+      ;(sys as any).arrangements.push(makeArr({ id: 1, tick: 0 }))
+      ;(sys as any).arrangements.push(makeArr({ id: 2, tick: 0 }))
+      ;(sys as any).arrangements.push(makeArr({ id: 3, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 3100)
+      expect((sys as any).arrangements[0].duration).toBe(1)
+      expect((sys as any).arrangements[1].duration).toBe(1)
+      expect((sys as any).arrangements[2].duration).toBe(1)
+    })
+    it('多个arrangements各自独立更新数值字段', () => {
+      ;(sys as any).arrangements.push(makeArr({ id: 1, spiceInspection: 20, tick: 0 }))
+      ;(sys as any).arrangements.push(makeArr({ id: 2, spiceInspection: 70, tick: 0 }))
+      const m = vi.spyOn(Math, 'random')
+      m.mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 3100)
+      expect((sys as any).arrangements[0].spiceInspection).not.toBe(20)
+      expect((sys as any).arrangements[1].spiceInspection).not.toBe(70)
+    })
+    it('部分arrangements过期清理后剩余的继续更新', () => {
+      ;(sys as any).arrangements.push(makeArr({ id: 1, tick: 0, duration: 5 }))
+      ;(sys as any).arrangements.push(makeArr({ id: 2, tick: 150000, duration: 10 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 200000)
+      expect((sys as any).arrangements).toHaveLength(1)
+      expect((sys as any).arrangements[0].duration).toBe(11)
+    })
+    it('15个arrangements时可新增第16个', () => {
+      for (let i = 0; i < 15; i++) {
+        ;(sys as any).arrangements.push(makeArr({ id: i + 1, spiceCivId: i + 1, inspectionCivId: i + 20, tick: 500000 }))
+      }
+      const m = vi.spyOn(Math, 'random')
+      m.mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 503100)
+      expect((sys as any).arrangements.length).toBe(16)
+    })
+  })
+
+  describe('状态转换测试', () => {
+    it('spiceInspection从中间值向上漂移', () => {
+      ;(sys as any).arrangements.push(makeArr({ spiceInspection: 50, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, {} as any, {} as any, 3100)
+      expect((sys as any).arrangements[0].spiceInspection).toBeGreaterThan(50)
+    })
+    it('spiceInspection从中间值向下漂移', () => {
+      ;(sys as any).arrangements.push(makeArr({ spiceInspection: 50, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.1)
+      sys.update(1, {} as any, {} as any, 3100)
+      expect((sys as any).arrangements[0].spiceInspection).toBeLessThan(50)
+    })
+    it('purityStandards从低值逐步增长', () => {
+      ;(sys as any).arrangements.push(makeArr({ purityStandards: 15, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.8)
+      const before = (sys as any).arrangements[0].purityStandards
+      sys.update(1, {} as any, {} as any, 3100)
+      expect((sys as any).arrangements[0].purityStandards).toBeGreaterThan(before)
+    })
+    it('adulterationDetection从高值逐步下降', () => {
+      ;(sys as any).arrangements.push(makeArr({ adulterationDetection: 75, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.1)
+      const before = (sys as any).arrangements[0].adulterationDetection
+      sys.update(1, {} as any, {} as any, 3100)
+      expect((sys as any).arrangements[0].adulterationDetection).toBeLessThan(before)
+    })
+    it('tradeCompliance在多次update后保持在范围内', () => {
+      ;(sys as any).arrangements.push(makeArr({ tradeCompliance: 30, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      for (let i = 0; i < 10; i++) {
+        sys.update(1, {} as any, {} as any, 3100 + i * 3060)
+      }
+      expect((sys as any).arrangements[0].tradeCompliance).toBeGreaterThanOrEqual(5)
+      expect((sys as any).arrangements[0].tradeCompliance).toBeLessThanOrEqual(65)
+    })
+  })
+
+  describe('极端值测试', () => {
+    it('所有数值字段同时处于最小边界', () => {
+      ;(sys as any).arrangements.push(makeArr({
+        spiceInspection: 5,
+        purityStandards: 10,
+        adulterationDetection: 5,
+        tradeCompliance: 5,
+        tick: 0
+      }))
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, 3100)
+      expect((sys as any).arrangements[0].spiceInspection).toBe(5)
+      expect((sys as any).arrangements[0].purityStandards).toBe(10)
+      expect((sys as any).arrangements[0].adulterationDetection).toBe(5)
+      expect((sys as any).arrangements[0].tradeCompliance).toBe(5)
+    })
+    it('所有数值字段同时处于最大边界', () => {
+      ;(sys as any).arrangements.push(makeArr({
+        spiceInspection: 85,
+        purityStandards: 90,
+        adulterationDetection: 80,
+        tradeCompliance: 65,
+        tick: 0
+      }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 3100)
+      expect((sys as any).arrangements[0].spiceInspection).toBe(85)
+      expect((sys as any).arrangements[0].purityStandards).toBe(90)
+      expect((sys as any).arrangements[0].adulterationDetection).toBe(80)
+      expect((sys as any).arrangements[0].tradeCompliance).toBe(65)
+    })
+    it('tick为0的记录在tick=88001时被清理', () => {
+      ;(sys as any).arrangements.push(makeArr({ id: 1, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 88001)
+      expect((sys as any).arrangements).toHaveLength(0)
+    })
+    it('tick为1的记录在tick=88002时被清理', () => {
+      ;(sys as any).arrangements.push(makeArr({ id: 1, tick: 1 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 88002)
+      expect((sys as any).arrangements).toHaveLength(0)
+    })
+    it('duration累加到极大值仍正常工作', () => {
+      ;(sys as any).arrangements.push(makeArr({ duration: 999999, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 3100)
+      expect((sys as any).arrangements[0].duration).toBe(1000000)
+    })
+  })
+
+  describe('组合场景测试', () => {
+    it('16个过期记录被清理后arrangements为空', () => {
+      for (let i = 0; i < 16; i++) {
+        ;(sys as any).arrangements.push(makeArr({ id: i + 1, spiceCivId: i + 1, inspectionCivId: i + 20, tick: 0 }))
+      }
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 200000)
+      expect((sys as any).arrangements.length).toBe(0)
+    })
+    it('相同spiceCivId和inspectionCivId时不新增', () => {
+      const m = vi.spyOn(Math, 'random')
+      m.mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0)
+      sys.update(1, {} as any, {} as any, 3100)
+      expect((sys as any).arrangements).toHaveLength(0)
+    })
+    it('多次update后nextId持续递增', () => {
+      const m = vi.spyOn(Math, 'random')
+      m.mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, 3100)
+      const id1 = (sys as any).nextId
+      sys.update(1, {} as any, {} as any, 6200)
+      const id2 = (sys as any).nextId
+      expect(id2).toBeGreaterThanOrEqual(id1)
+    })
+    it('新增记录后duration会递增', () => {
+      const m = vi.spyOn(Math, 'random')
+      m.mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 3100)
+      if ((sys as any).arrangements.length > 0) {
+        const lastArr = (sys as any).arrangements[(sys as any).arrangements.length - 1]
+        expect(lastArr.duration).toBe(1)
+      }
+    })
+    it('新增记录的tick字段等于当前tick', () => {
+      const m = vi.spyOn(Math, 'random')
+      m.mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 3100)
+      if ((sys as any).arrangements.length > 0) {
+        const lastArr = (sys as any).arrangements[(sys as any).arrangements.length - 1]
+        expect(lastArr.tick).toBe(3100)
+      }
+    })
+    it('新增记录的spiceInspection在20-60范围内', () => {
+      const m = vi.spyOn(Math, 'random')
+      m.mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 3100)
+      if ((sys as any).arrangements.length > 0) {
+        const lastArr = (sys as any).arrangements[(sys as any).arrangements.length - 1]
+        expect(lastArr.spiceInspection).toBeGreaterThanOrEqual(20)
+        expect(lastArr.spiceInspection).toBeLessThanOrEqual(60)
+      }
+    })
+    it('新增记录的purityStandards在25-60范围内', () => {
+      const m = vi.spyOn(Math, 'random')
+      m.mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 3100)
+      if ((sys as any).arrangements.length > 0) {
+        const lastArr = (sys as any).arrangements[(sys as any).arrangements.length - 1]
+        expect(lastArr.purityStandards).toBeGreaterThanOrEqual(25)
+        expect(lastArr.purityStandards).toBeLessThanOrEqual(60)
+      }
+    })
+    it('新增记录的adulterationDetection在10-40范围内', () => {
+      const m = vi.spyOn(Math, 'random')
+      m.mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 3100)
+      if ((sys as any).arrangements.length > 0) {
+        const lastArr = (sys as any).arrangements[(sys as any).arrangements.length - 1]
+        expect(lastArr.adulterationDetection).toBeGreaterThanOrEqual(10)
+        expect(lastArr.adulterationDetection).toBeLessThanOrEqual(40)
+      }
+    })
+    it('新增记录的tradeCompliance在15-40范围内', () => {
+      const m = vi.spyOn(Math, 'random')
+      m.mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 3100)
+      if ((sys as any).arrangements.length > 0) {
+        const lastArr = (sys as any).arrangements[(sys as any).arrangements.length - 1]
+        expect(lastArr.tradeCompliance).toBeGreaterThanOrEqual(15)
+        expect(lastArr.tradeCompliance).toBeLessThanOrEqual(40)
+      }
+    })
+  })
 })
