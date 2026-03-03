@@ -214,4 +214,159 @@ describe('DiplomaticGarthmanSystem', () => {
       expect((sys as any).arrangements[0].form).toBe('borough_garthman')
     })
   })
+
+  describe('边界值精确测试', () => {
+    it('gardenJurisdiction=5时不再下降', () => {
+      ;(sys as any).arrangements.push(makeArr({ gardenJurisdiction: 5, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, 3000)
+      expect((sys as any).arrangements[0].gardenJurisdiction).toBe(5)
+    })
+    it('gardenJurisdiction=85时不再上升', () => {
+      ;(sys as any).arrangements.push(makeArr({ gardenJurisdiction: 85, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 3000)
+      expect((sys as any).arrangements[0].gardenJurisdiction).toBe(85)
+    })
+    it('yardAllocation=10时不再下降', () => {
+      ;(sys as any).arrangements.push(makeArr({ yardAllocation: 10, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, 3000)
+      expect((sys as any).arrangements[0].yardAllocation).toBe(10)
+    })
+    it('yardAllocation=90时不再上升', () => {
+      ;(sys as any).arrangements.push(makeArr({ yardAllocation: 90, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 3000)
+      expect((sys as any).arrangements[0].yardAllocation).toBe(90)
+    })
+    it('cultivationRights=5时不再下降', () => {
+      ;(sys as any).arrangements.push(makeArr({ cultivationRights: 5, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, 3000)
+      expect((sys as any).arrangements[0].cultivationRights).toBe(5)
+    })
+    it('cultivationRights=80时不再上升', () => {
+      ;(sys as any).arrangements.push(makeArr({ cultivationRights: 80, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 3000)
+      expect((sys as any).arrangements[0].cultivationRights).toBe(80)
+    })
+    it('enclosureMaintenance=5时不再下降', () => {
+      ;(sys as any).arrangements.push(makeArr({ enclosureMaintenance: 5, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, 3000)
+      expect((sys as any).arrangements[0].enclosureMaintenance).toBe(5)
+    })
+    it('enclosureMaintenance=65时不再上升', () => {
+      ;(sys as any).arrangements.push(makeArr({ enclosureMaintenance: 65, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 3000)
+      expect((sys as any).arrangements[0].enclosureMaintenance).toBe(65)
+    })
+  })
+
+  describe('多实体并发更新', () => {
+    it('3个arrangements同时更新duration', () => {
+      ;(sys as any).arrangements.push(makeArr({ id: 1, tick: 0 }))
+      ;(sys as any).arrangements.push(makeArr({ id: 2, tick: 0 }))
+      ;(sys as any).arrangements.push(makeArr({ id: 3, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 3000)
+      expect((sys as any).arrangements[0].duration).toBe(1)
+      expect((sys as any).arrangements[1].duration).toBe(1)
+      expect((sys as any).arrangements[2].duration).toBe(1)
+    })
+    it('10个arrangements同时更新，全部保留', () => {
+      for (let i = 0; i < 10; i++) {
+        ;(sys as any).arrangements.push(makeArr({ id: i + 1, tick: 5000 }))
+      }
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 8000)
+      expect((sys as any).arrangements).toHaveLength(10)
+    })
+    it('16个arrangements达到上限后不新增', () => {
+      for (let i = 0; i < 16; i++) {
+        ;(sys as any).arrangements.push(makeArr({ id: i + 1, gardenCivId: i + 1, yardCivId: i + 10, tick: 10000 }))
+      }
+      const m = vi.spyOn(Math, 'random')
+      m.mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 13000)
+      expect((sys as any).arrangements).toHaveLength(16)
+    })
+  })
+
+  describe('极端tick值测试', () => {
+    it('tick=0时lastCheck更新为0', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 0)
+      expect((sys as any).lastCheck).toBe(0)
+    })
+    it('tick=1000000时正常处理', () => {
+      ;(sys as any).arrangements.push(makeArr({ tick: 950000 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 1000000)
+      expect((sys as any).lastCheck).toBe(1000000)
+    })
+    it('cutoff计算：tick=88000时cutoff=0', () => {
+      ;(sys as any).arrangements.push(makeArr({ tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 88000)
+      expect((sys as any).arrangements).toHaveLength(1)
+    })
+    it('cutoff计算：tick=88001时tick=0的记录被删除', () => {
+      ;(sys as any).arrangements.push(makeArr({ tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 88001)
+      expect((sys as any).arrangements).toHaveLength(0)
+    })
+  })
+
+  describe('duration累加长期测试', () => {
+    it('duration从0累加到10', () => {
+      ;(sys as any).arrangements.push(makeArr({ tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      for (let i = 1; i <= 10; i++) {
+        sys.update(1, {} as any, {} as any, i * 3000)
+      }
+      expect((sys as any).arrangements[0].duration).toBe(10)
+    })
+    it('duration从0累加到20', () => {
+      ;(sys as any).arrangements.push(makeArr({ tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      for (let i = 1; i <= 20; i++) {
+        sys.update(1, {} as any, {} as any, i * 3000)
+      }
+      expect((sys as any).arrangements[0].duration).toBe(20)
+    })
+  })
+
+  describe('随机值边界组合', () => {
+    it('所有字段同时达到最小值', () => {
+      ;(sys as any).arrangements.push(makeArr({
+        gardenJurisdiction: 5, yardAllocation: 10,
+        cultivationRights: 5, enclosureMaintenance: 5, tick: 0
+      }))
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, 3000)
+      const a = (sys as any).arrangements[0]
+      expect(a.gardenJurisdiction).toBe(5)
+      expect(a.yardAllocation).toBe(10)
+      expect(a.cultivationRights).toBe(5)
+      expect(a.enclosureMaintenance).toBe(5)
+    })
+    it('所有字段同时达到最大值', () => {
+      ;(sys as any).arrangements.push(makeArr({
+        gardenJurisdiction: 85, yardAllocation: 90,
+        cultivationRights: 80, enclosureMaintenance: 65, tick: 0
+      }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 3000)
+      const a = (sys as any).arrangements[0]
+      expect(a.gardenJurisdiction).toBe(85)
+      expect(a.yardAllocation).toBe(90)
+      expect(a.cultivationRights).toBe(80)
+      expect(a.enclosureMaintenance).toBe(65)
+    })
+  })
 })
