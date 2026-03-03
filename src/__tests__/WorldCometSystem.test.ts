@@ -347,7 +347,10 @@ describe('WorldCometSystem - cleanup逻辑', () => {
   let sys: WorldCometSystem
   let world: any
   let em: any
-  beforeEach(() => { sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1 })
+  beforeEach(() => {
+    sys = makeSys(); world = makeWorld(); em = makeEntityManager(); nextId = 1
+    vi.spyOn(Math, 'random').mockReturnValue(0.99) // 阻止随机spawn
+  })
   afterEach(() => { vi.restoreAllMocks() })
 
   it('过期彗星被移除', () => {
