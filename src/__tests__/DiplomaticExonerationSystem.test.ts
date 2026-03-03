@@ -223,3 +223,176 @@ describe('ExonerationForm枚举完整性', () => {
     expect(p.form).toBe('reputation_restoration')
   })
 })
+
+describe('额外边界与防御性测试', () => {
+  it('evidence 上限 90 不被突破', () => {
+    const sys = new DiplomaticExonerationSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    ;(sys as any).proceedings.push(makeProceeding({ evidence: 89.99, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2440)
+    expect((sys as any).proceedings[0]?.evidence).toBeLessThanOrEqual(90)
+    vi.restoreAllMocks()
+  })
+
+  it('evidence 下限 15 不被突破', () => {
+    const sys = new DiplomaticExonerationSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).proceedings.push(makeProceeding({ evidence: 15.01, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2440)
+    expect((sys as any).proceedings[0]?.evidence).toBeGreaterThanOrEqual(15)
+    vi.restoreAllMocks()
+  })
+
+  it('justiceServed 上限 85 不被突破', () => {
+    const sys = new DiplomaticExonerationSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    ;(sys as any).proceedings.push(makeProceeding({ justiceServed: 84.99, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2440)
+    expect((sys as any).proceedings[0]?.justiceServed).toBeLessThanOrEqual(85)
+    vi.restoreAllMocks()
+  })
+
+  it('reputationRecovery 上限 75 不被突破', () => {
+    const sys = new DiplomaticExonerationSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    ;(sys as any).proceedings.push(makeProceeding({ reputationRecovery: 74.99, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2440)
+    expect((sys as any).proceedings[0]?.reputationRecovery).toBeLessThanOrEqual(75)
+    vi.restoreAllMocks()
+  })
+
+  it('diplomaticReset 上限 65 不被突破', () => {
+    const sys = new DiplomaticExonerationSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    ;(sys as any).proceedings.push(makeProceeding({ diplomaticReset: 64.99, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2440)
+    expect((sys as any).proceedings[0]?.diplomaticReset).toBeLessThanOrEqual(65)
+    vi.restoreAllMocks()
+  })
+
+  it('diplomaticReset 下限 5 不被突破', () => {
+    const sys = new DiplomaticExonerationSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).proceedings.push(makeProceeding({ diplomaticReset: 5.01, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2440)
+    expect((sys as any).proceedings[0]?.diplomaticReset).toBeGreaterThanOrEqual(5)
+    vi.restoreAllMocks()
+  })
+
+  it('war_crime_acquittal form 可存储', () => {
+    expect(makeProceeding({ form: 'war_crime_acquittal' }).form).toBe('war_crime_acquittal')
+  })
+
+  it('honor_vindication form 可存储', () => {
+    expect(makeProceeding({ form: 'honor_vindication' }).form).toBe('honor_vindication')
+  })
+
+  it('过期记录（cutoff=tick-85000）被移除', () => {
+    const sys = new DiplomaticExonerationSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).proceedings.push(makeProceeding({ tick: 0 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, {} as any, {} as any, 85000 + 2440 + 1)
+    expect((sys as any).proceedings).toHaveLength(0)
+    vi.restoreAllMocks()
+  })
+
+  it('未过期记录保留', () => {
+    const sys = new DiplomaticExonerationSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const bigTick = 85000 + 2440
+    ;(sys as any).proceedings.push(makeProceeding({ tick: bigTick - 1000 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, {} as any, {} as any, bigTick)
+    expect((sys as any).proceedings).toHaveLength(1)
+    vi.restoreAllMocks()
+  })
+
+  it('update 不改变 civIdA/civIdB', () => {
+    const sys = new DiplomaticExonerationSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).proceedings.push(makeProceeding({ civIdA: 4, civIdB: 7, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2440)
+    expect((sys as any).proceedings[0].civIdA).toBe(4)
+    expect((sys as any).proceedings[0].civIdB).toBe(7)
+    vi.restoreAllMocks()
+  })
+
+  it('多条 proceedings 各自独立更新 duration', () => {
+    const sys = new DiplomaticExonerationSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).proceedings.push(makeProceeding({ id: 1, duration: 3, tick: 0 }))
+    ;(sys as any).proceedings.push(makeProceeding({ id: 2, duration: 7, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2440)
+    expect((sys as any).proceedings[0].duration).toBe(4)
+    expect((sys as any).proceedings[1].duration).toBe(8)
+    vi.restoreAllMocks()
+  })
+
+  it('空 proceedings 时 update 不崩溃', () => {
+    const sys = new DiplomaticExonerationSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    expect(() => sys.update(1, {} as any, {} as any, 2440)).not.toThrow()
+    vi.restoreAllMocks()
+  })
+
+  it('ExonerationProceeding 包含所有必要字段', () => {
+    const p = makeProceeding()
+    expect(p).toHaveProperty('id')
+    expect(p).toHaveProperty('civIdA')
+    expect(p).toHaveProperty('civIdB')
+    expect(p).toHaveProperty('form')
+    expect(p).toHaveProperty('evidence')
+    expect(p).toHaveProperty('justiceServed')
+    expect(p).toHaveProperty('reputationRecovery')
+    expect(p).toHaveProperty('diplomaticReset')
+    expect(p).toHaveProperty('duration')
+    expect(p).toHaveProperty('tick')
+  })
+
+  it('MAX_PROCEEDINGS=20 已满时不新增', () => {
+    const sys = new DiplomaticExonerationSystem()
+    for (let i = 0; i < 20; i++) {
+      ;(sys as any).proceedings.push(makeProceeding({ id: i + 1, tick: 9999999 }))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).lastCheck = 0
+    sys.update(1, {} as any, {} as any, 2440)
+    expect((sys as any).proceedings.length).toBeLessThanOrEqual(20)
+    vi.restoreAllMocks()
+  })
+
+  it('nextId 手动设置后保持', () => {
+    const sys = new DiplomaticExonerationSystem()
+    ;(sys as any).nextId = 88
+    expect((sys as any).nextId).toBe(88)
+  })
+
+  it('lastCheck 更新到最新 tick', () => {
+    const sys = new DiplomaticExonerationSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, {} as any, {} as any, 2440 * 4)
+    expect((sys as any).lastCheck).toBe(2440 * 4)
+    vi.restoreAllMocks()
+  })
+
+  it('全部过期后 proceedings 清空', () => {
+    const sys = new DiplomaticExonerationSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).proceedings.push(makeProceeding({ tick: 0 }))
+    ;(sys as any).proceedings.push(makeProceeding({ tick: 100 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, {} as any, {} as any, 200000)
+    expect((sys as any).proceedings).toHaveLength(0)
+    vi.restoreAllMocks()
+  })
+
+  it('CHECK_INTERVAL=2440 节流有效', () => {
+    const sys = new DiplomaticExonerationSystem()
+    ;(sys as any).proceedings.push(makeProceeding({ duration: 5, tick: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, {} as any, {} as any, 2439)
+    expect((sys as any).proceedings[0].duration).toBe(5)
+    vi.restoreAllMocks()
+  })
+})

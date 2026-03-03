@@ -288,3 +288,167 @@ describe('DiplomaticEscheatorSystem — EscheatorForm 枚举完整性', () => {
     expect(makeArr({ form: 'palatine_escheator' }).form).toBe('palatine_escheator')
   })
 })
+
+describe('DiplomaticEscheatorSystem — 额外边界与枚举测试', () => {
+  it('estateRecovery 上限 85 不被突破', () => {
+    const sys = makeSys()
+    ;(sys as any).arrangements.push(makeArr({ estateRecovery: 84.99, tick: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, 2780)
+    expect((sys as any).arrangements[0]?.estateRecovery).toBeLessThanOrEqual(85)
+    vi.restoreAllMocks()
+  })
+
+  it('estateRecovery 下限 5 不被突破', () => {
+    const sys = makeSys()
+    ;(sys as any).arrangements.push(makeArr({ estateRecovery: 5.01, tick: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, 2780)
+    expect((sys as any).arrangements[0]?.estateRecovery).toBeGreaterThanOrEqual(5)
+    vi.restoreAllMocks()
+  })
+
+  it('forfeitureAuthority 上限 90 不被突破', () => {
+    const sys = makeSys()
+    ;(sys as any).arrangements.push(makeArr({ forfeitureAuthority: 89.99, tick: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, 2780)
+    expect((sys as any).arrangements[0]?.forfeitureAuthority).toBeLessThanOrEqual(90)
+    vi.restoreAllMocks()
+  })
+
+  it('inventoryAccuracy 上限 80 不被突破', () => {
+    const sys = makeSys()
+    ;(sys as any).arrangements.push(makeArr({ inventoryAccuracy: 79.99, tick: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, 2780)
+    expect((sys as any).arrangements[0]?.inventoryAccuracy).toBeLessThanOrEqual(80)
+    vi.restoreAllMocks()
+  })
+
+  it('revenueYield 上限 65 不被突破', () => {
+    const sys = makeSys()
+    ;(sys as any).arrangements.push(makeArr({ revenueYield: 64.99, tick: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, 2780)
+    expect((sys as any).arrangements[0]?.revenueYield).toBeLessThanOrEqual(65)
+    vi.restoreAllMocks()
+  })
+
+  it('county_escheator form 可存储', () => {
+    expect(makeArr({ form: 'county_escheator' }).form).toBe('county_escheator')
+  })
+
+  it('duchy_escheator form 可存储', () => {
+    expect(makeArr({ form: 'duchy_escheator' }).form).toBe('duchy_escheator')
+  })
+
+  it('过期记录（cutoff=tick-88000）被移除', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).arrangements.push(makeArr({ tick: 0 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, {} as any, {} as any, 88000 + 2780 + 1)
+    expect((sys as any).arrangements).toHaveLength(0)
+    vi.restoreAllMocks()
+  })
+
+  it('未过期记录保留', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const bigTick = 88000 + 2780
+    ;(sys as any).arrangements.push(makeArr({ tick: bigTick - 1000 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, {} as any, {} as any, bigTick)
+    expect((sys as any).arrangements).toHaveLength(1)
+    vi.restoreAllMocks()
+  })
+
+  it('update 不改变 crownCivId/escheatorCivId', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).arrangements.push(makeArr({ crownCivId: 4, escheatorCivId: 7, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2780)
+    expect((sys as any).arrangements[0].crownCivId).toBe(4)
+    expect((sys as any).arrangements[0].escheatorCivId).toBe(7)
+    vi.restoreAllMocks()
+  })
+
+  it('多条 arrangements 各自独立更新 duration', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).arrangements.push(makeArr({ duration: 3, tick: 0 }))
+    ;(sys as any).arrangements.push(makeArr({ duration: 7, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2780)
+    expect((sys as any).arrangements[0].duration).toBe(4)
+    expect((sys as any).arrangements[1].duration).toBe(8)
+    vi.restoreAllMocks()
+  })
+
+  it('全部过期后 arrangements 清空', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).arrangements.push(makeArr({ tick: 0 }))
+    ;(sys as any).arrangements.push(makeArr({ tick: 100 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, {} as any, {} as any, 200000)
+    expect((sys as any).arrangements).toHaveLength(0)
+    vi.restoreAllMocks()
+  })
+
+  it('空 arrangements 时 update 不崩溃', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    expect(() => sys.update(1, {} as any, {} as any, 2780)).not.toThrow()
+    vi.restoreAllMocks()
+  })
+
+  it('EscheatorArrangement 包含所有必要字段', () => {
+    const a = makeArr()
+    expect(a).toHaveProperty('id')
+    expect(a).toHaveProperty('crownCivId')
+    expect(a).toHaveProperty('escheatorCivId')
+    expect(a).toHaveProperty('form')
+    expect(a).toHaveProperty('estateRecovery')
+    expect(a).toHaveProperty('forfeitureAuthority')
+    expect(a).toHaveProperty('inventoryAccuracy')
+    expect(a).toHaveProperty('revenueYield')
+    expect(a).toHaveProperty('duration')
+    expect(a).toHaveProperty('tick')
+  })
+
+  it('MAX_ARRANGEMENTS=16 已满时不新增', () => {
+    const sys = makeSys()
+    for (let i = 0; i < 16; i++) {
+      ;(sys as any).arrangements.push(makeArr({ tick: 9999999 }))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).lastCheck = 0
+    sys.update(1, {} as any, {} as any, 2780)
+    expect((sys as any).arrangements.length).toBeLessThanOrEqual(16)
+    vi.restoreAllMocks()
+  })
+
+  it('nextId 手动设置后保持', () => {
+    const sys = makeSys()
+    ;(sys as any).nextId = 77
+    expect((sys as any).nextId).toBe(77)
+  })
+
+  it('lastCheck 更新到最新 tick', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, {} as any, {} as any, 2780 * 3)
+    expect((sys as any).lastCheck).toBe(2780 * 3)
+    vi.restoreAllMocks()
+  })
+
+  it('update 不改变 form', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).arrangements.push(makeArr({ form: 'duchy_escheator', tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2780)
+    expect((sys as any).arrangements[0].form).toBe('duchy_escheator')
+    vi.restoreAllMocks()
+  })
+})

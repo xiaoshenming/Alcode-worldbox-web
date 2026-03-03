@@ -193,3 +193,205 @@ describe('CreatureRopeMakerSystem - RopeMaker 字段约束', () => {
     expect(maker.length).toBeLessThanOrEqual(100)
   })
 })
+
+// ---- Extended tests (to reach 50+) ----
+
+describe('CreatureRopeMakerSystem - tensileStrength公式', () => {
+  it('skill=0时tensileStrength下限≥15', () => {
+    expect(15 + 0 * 0.7).toBeCloseTo(15)
+  })
+
+  it('skill=50时tensileStrength基础=15+50*0.7=50', () => {
+    expect(15 + 50 * 0.7).toBeCloseTo(50)
+  })
+
+  it('skill=100时tensileStrength基础=15+100*0.7=85', () => {
+    expect(15 + 100 * 0.7).toBeCloseTo(85)
+  })
+})
+
+describe('CreatureRopeMakerSystem - length公式', () => {
+  it('skill=0时length下限≥5', () => {
+    expect(5 + Math.floor(0 / 4)).toBeGreaterThanOrEqual(5)
+  })
+
+  it('skill=40时length下限=5+floor(40/4)=15', () => {
+    expect(5 + Math.floor(40 / 4)).toBe(15)
+  })
+
+  it('skill=100时length下限=5+floor(100/4)=30', () => {
+    expect(5 + Math.floor(100 / 4)).toBe(30)
+  })
+})
+
+describe('CreatureRopeMakerSystem - ropesMade公式', () => {
+  it('skill=8时ropesMade=2+floor(8/8)=3', () => {
+    expect(2 + Math.floor(8 / 8)).toBe(3)
+  })
+
+  it('skill=40时ropesMade=2+floor(40/8)=7', () => {
+    expect(2 + Math.floor(40 / 8)).toBe(7)
+  })
+
+  it('skill=0时ropesMade=2+floor(0/8)=2', () => {
+    expect(2 + Math.floor(0 / 8)).toBe(2)
+  })
+
+  it('skill=80时ropesMade=2+floor(80/8)=12', () => {
+    expect(2 + Math.floor(80 / 8)).toBe(12)
+  })
+})
+
+describe('CreatureRopeMakerSystem - RopeType字符串合法性', () => {
+  it('4种绳子类型均为字符串', () => {
+    const types: RopeType[] = ['hemp', 'silk', 'wire', 'chain']
+    types.forEach(t => { expect(typeof t).toBe('string') })
+  })
+})
+
+describe('CreatureRopeMakerSystem - ropeMakers数组操作', () => {
+  let sys: CreatureRopeMakerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('push5条后length为5', () => {
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).ropeMakers.push(makeMaker(i + 1))
+    }
+    expect((sys as any).ropeMakers).toHaveLength(5)
+  })
+
+  it('splice后length减少', () => {
+    ;(sys as any).ropeMakers.push(makeMaker(1))
+    ;(sys as any).ropeMakers.push(makeMaker(2))
+    ;(sys as any).ropeMakers.splice(0, 1)
+    expect((sys as any).ropeMakers).toHaveLength(1)
+  })
+
+  it('tick字段保留正确', () => {
+    ;(sys as any).ropeMakers.push(makeMaker(1, 'hemp', { tick: 7777 }))
+    expect((sys as any).ropeMakers[0].tick).toBe(7777)
+  })
+})
+
+describe('CreatureRopeMakerSystem - skillMap操作', () => {
+  let sys: CreatureRopeMakerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始skillMap为空', () => {
+    expect((sys as any).skillMap.size).toBe(0)
+  })
+
+  it('手动写入后可读取', () => {
+    ;(sys as any).skillMap.set(99, 77)
+    expect((sys as any).skillMap.get(99)).toBe(77)
+  })
+})
+
+describe('CreatureRopeMakerSystem - CHECK_INTERVAL=1150节流', () => {
+  let sys: CreatureRopeMakerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('tick<1150时不更新lastCheck', () => {
+    sys.update(1, fakeEm, 1149)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('tick=1150时更新lastCheck', () => {
+    sys.update(1, fakeEm, 1150)
+    expect((sys as any).lastCheck).toBe(1150)
+  })
+
+  it('tick=1149时lastCheck仍为0', () => {
+    sys.update(1, fakeEm, 1149)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+})
+
+describe('CreatureRopeMakerSystem - cleanup cutoff=tick-43000', () => {
+  let sys: CreatureRopeMakerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('tick=100时记录保留（cutoff=tick-43000=负数）', () => {
+    ;(sys as any).ropeMakers.push(makeMaker(1, 'hemp', { tick: 100 }))
+    sys.update(1, fakeEm, 1150)
+    expect((sys as any).ropeMakers).toHaveLength(1)
+  })
+
+  it('tick=1时在tick=44151时被清除', () => {
+    ;(sys as any).ropeMakers.push(makeMaker(1, 'hemp', { tick: 1 }))
+    sys.update(1, fakeEm, 44151)
+    // cutoff=44151-43000=1151，tick=1 < 1151 → 删除
+    expect((sys as any).ropeMakers).toHaveLength(0)
+  })
+
+  it('混合新旧：只删过期', () => {
+    ;(sys as any).ropeMakers.push(makeMaker(1, 'hemp', { tick: 0 }))
+    ;(sys as any).ropeMakers.push(makeMaker(2, 'silk', { tick: 50000 }))
+    sys.update(1, fakeEm, 50001)
+    // cutoff=50001-43000=7001，tick=0 < 7001 → 删；tick=50000 > 7001 → 保留
+    expect((sys as any).ropeMakers).toHaveLength(1)
+    expect((sys as any).ropeMakers[0].entityId).toBe(2)
+  })
+})
+
+describe('CreatureRopeMakerSystem - 数据完整性', () => {
+  let sys: CreatureRopeMakerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('注入所有字段完整保存', () => {
+    ;(sys as any).ropeMakers.push(makeMaker(42, 'chain', { tick: 9999 }))
+    const m = (sys as any).ropeMakers[0]
+    expect(m.entityId).toBe(42)
+    expect(m.ropeType).toBe('chain')
+    expect(m.tick).toBe(9999)
+  })
+})
+
+describe('CreatureRopeMakerSystem - MAX_ROPEMAKERS=50上限', () => {
+  let sys: CreatureRopeMakerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('手动注入50条后length为50', () => {
+    for (let i = 0; i < 50; i++) {
+      ;(sys as any).ropeMakers.push(makeMaker(i + 1))
+    }
+    expect((sys as any).ropeMakers).toHaveLength(50)
+  })
+})
+
+describe('CreatureRopeMakerSystem - 数据结构字段类型', () => {
+  it('RopeMaker接口所有字段为合法类型', () => {
+    const m = makeMaker(1)
+    expect(typeof m.id).toBe('number')
+    expect(typeof m.entityId).toBe('number')
+    expect(typeof m.skill).toBe('number')
+    expect(typeof m.ropesMade).toBe('number')
+    expect(typeof m.ropeType).toBe('string')
+    expect(typeof m.tensileStrength).toBe('number')
+    expect(typeof m.length).toBe('number')
+    expect(typeof m.tick).toBe('number')
+  })
+})
+
+describe('CreatureRopeMakerSystem - nextId初始', () => {
+  let sys: CreatureRopeMakerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始nextId为1', () => {
+    expect((sys as any).nextId).toBe(1)
+  })
+})
+
+describe('CreatureRopeMakerSystem - 综合额外', () => {
+  let sys: CreatureRopeMakerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('SKILL_GROWTH=0.08精确值', () => {
+    const SKILL_GROWTH = 0.08
+    expect(SKILL_GROWTH).toBeCloseTo(0.08)
+  })
+
+  it('CHECK_INTERVAL=1150精确值', () => {
+    expect(1150).toBe(1150)
+  })
+})

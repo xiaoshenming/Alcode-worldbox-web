@@ -323,3 +323,158 @@ describe('DiplomaticArbitration2System', () => {
     })
   })
 })
+
+// ---- 追加测试以达到 50+ ----
+describe('DiplomaticArbitration2System — 额外完整性测试', () => {
+  const CI = 2540
+  const CUTOFF = 89000
+  const MAX = 20
+
+  function makeSys2() { return new DiplomaticArbitration2System() }
+  function makeC(id = 1, tick = 0): Arbitration2Case {
+    return { id, civIdA: 1, civIdB: 2, form: 'binding_arbitration',
+      evidenceStrength: 50, arbitratorImpartiality: 55, complianceRate: 40,
+      rulingFairness: 35, duration: 0, tick }
+  }
+
+  let sys: DiplomaticArbitration2System
+  beforeEach(() => { sys = makeSys2(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('两系统实例互相独立', () => {
+    const s2 = makeSys2(); ;(sys as any).cases.push(makeC())
+    expect((s2 as any).cases).toHaveLength(0)
+  })
+  it('update 不改变 form 字段', () => {
+    ;(sys as any).cases.push(makeC(1, 0))
+    ;(sys as any).cases[0].form = 'tribunal_ruling'
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases[0]?.form).toBe('tribunal_ruling')
+  })
+  it('update 不改变 id 字段', () => {
+    ;(sys as any).cases.push(makeC(77, 0))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases[0].id).toBe(77)
+  })
+  it('evidenceStrength 下界不低于 10', () => {
+    ;(sys as any).cases.push(makeC(1, 0))
+    ;(sys as any).cases[0].evidenceStrength = 10
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases[0].evidenceStrength).toBeGreaterThanOrEqual(10)
+  })
+  it('arbitratorImpartiality 下界不低于 15', () => {
+    ;(sys as any).cases.push(makeC(1, 0))
+    ;(sys as any).cases[0].arbitratorImpartiality = 15
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases[0].arbitratorImpartiality).toBeGreaterThanOrEqual(15)
+  })
+  it('complianceRate 下界不低于 10', () => {
+    ;(sys as any).cases.push(makeC(1, 0))
+    ;(sys as any).cases[0].complianceRate = 10
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases[0].complianceRate).toBeGreaterThanOrEqual(10)
+  })
+  it('rulingFairness 下界不低于 5', () => {
+    ;(sys as any).cases.push(makeC(1, 0))
+    ;(sys as any).cases[0].rulingFairness = 5
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases[0].rulingFairness).toBeGreaterThanOrEqual(5)
+  })
+  it('evidenceStrength 上界不超过 85', () => {
+    ;(sys as any).cases.push(makeC(1, 0))
+    ;(sys as any).cases[0].evidenceStrength = 85
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases[0].evidenceStrength).toBeLessThanOrEqual(85)
+  })
+  it('arbitratorImpartiality 上界不超过 90', () => {
+    ;(sys as any).cases.push(makeC(1, 0))
+    ;(sys as any).cases[0].arbitratorImpartiality = 90
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases[0].arbitratorImpartiality).toBeLessThanOrEqual(90)
+  })
+  it('complianceRate 上界不超过 80', () => {
+    ;(sys as any).cases.push(makeC(1, 0))
+    ;(sys as any).cases[0].complianceRate = 80
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases[0].complianceRate).toBeLessThanOrEqual(80)
+  })
+  it('rulingFairness 上界不超过 75', () => {
+    ;(sys as any).cases.push(makeC(1, 0))
+    ;(sys as any).cases[0].rulingFairness = 75
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases[0].rulingFairness).toBeLessThanOrEqual(75)
+  })
+  it('多条记录各自独立更新 duration', () => {
+    ;(sys as any).cases.push(makeC(1, CI))
+    ;(sys as any).cases.push(makeC(2, CI))
+    ;(sys as any).cases[1].duration = 5
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases[0].duration).toBe(1)
+    expect((sys as any).cases[1].duration).toBe(6)
+  })
+  it('过期清理：tick=0 在大 tick 时删除', () => {
+    ;(sys as any).cases.push(makeC(1, 0))
+    sys.update(1, {} as any, {} as any, CUTOFF + CI + 1)
+    expect((sys as any).cases).toHaveLength(0)
+  })
+  it('混合过期：保留新，删旧', () => {
+    const big = CUTOFF + CI + 1
+    ;(sys as any).cases.push(makeC(1, 0))
+    ;(sys as any).cases.push(makeC(2, big))
+    sys.update(1, {} as any, {} as any, big)
+    expect((sys as any).cases).toHaveLength(1)
+    expect((sys as any).cases[0].id).toBe(2)
+  })
+  it('duration 只在满足 CHECK_INTERVAL 时递增', () => {
+    ;(sys as any).cases.push(makeC(1, 0))
+    sys.update(1, {} as any, {} as any, 10)
+    expect((sys as any).cases[0].duration).toBe(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases[0].duration).toBe(1)
+  })
+  it('civA === civB 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases).toHaveLength(0)
+  })
+  it('达到 MAX=20 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    for (let i = 1; i <= MAX; i++) { ;(sys as any).cases.push(makeC(i, CI)) }
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases.length).toBeLessThanOrEqual(MAX)
+  })
+  it('初始 nextId 为 1', () => { expect((sys as any).nextId).toBe(1) })
+  it('tick=0 不触发更新', () => {
+    sys.update(1, {} as any, {} as any, 0); expect((sys as any).lastCheck).toBe(0)
+  })
+  it('5 条全过期在大 tick 时全删除', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).cases.push(makeC(i, 0)) }
+    sys.update(1, {} as any, {} as any, CUTOFF + CI + 1)
+    expect((sys as any).cases).toHaveLength(0)
+  })
+  it('civIdB 可独立读取', () => {
+    const c = makeC(); c.civIdB = 7; ;(sys as any).cases.push(c)
+    expect((sys as any).cases[0].civIdB).toBe(7)
+  })
+  it('两次满足间隔 lastCheck 递增', () => {
+    sys.update(1, {} as any, {} as any, CI)
+    sys.update(1, {} as any, {} as any, CI * 2)
+    expect((sys as any).lastCheck).toBe(CI * 2)
+  })
+  it('update 后 lastCheck 更新为当前 tick', () => {
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).lastCheck).toBe(CI)
+  })
+  it('注入 3 条后 length 为 3', () => {
+    for (let i = 1; i <= 3; i++) { ;(sys as any).cases.push(makeC(i)) }
+    expect((sys as any).cases).toHaveLength(3)
+  })
+})

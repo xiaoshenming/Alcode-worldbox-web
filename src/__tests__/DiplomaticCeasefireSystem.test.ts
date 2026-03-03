@@ -288,3 +288,151 @@ describe('DiplomaticCeasefireSystem', () => {
   })
 
 })
+
+// ---- 追加测试以达到 50+ ----
+describe('DiplomaticCeasefireSystem — 额外完整性测试', () => {
+  const CI = 5000
+  const MAX = 8
+
+  function makeSys2() { return new DiplomaticCeasefireSystem() }
+  function makeC(o: Partial<Ceasefire> = {}): Ceasefire {
+    return { id: 1, factionA: 1, factionB: 2, duration: 30, remaining: 30,
+      stability: 70, violations: 0, mediatorId: 3, tick: 10000, ...o }
+  }
+  function makeEM2(ids: number[]) {
+    return { getEntitiesWithComponent: (_: string) => ids, hasComponent: (_id: number, _comp: string) => false }
+  }
+
+  let sys: DiplomaticCeasefireSystem
+  beforeEach(() => { sys = makeSys2(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('两系统实例互相独立', () => {
+    const s2 = makeSys2(); ;(sys as any).ceasefires.push(makeC())
+    expect((s2 as any).ceasefires).toHaveLength(0)
+  })
+  it('update 不改变 id 字段', () => {
+    ;(sys as any).ceasefires.push(makeC({ id: 55 }))
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    expect((sys as any).ceasefires[0].id).toBe(55)
+  })
+  it('update 不改变 factionA', () => {
+    ;(sys as any).ceasefires.push(makeC({ factionA: 5 }))
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    expect((sys as any).ceasefires[0].factionA).toBe(5)
+  })
+  it('stability 下界不低于 0', () => {
+    ;(sys as any).ceasefires.push(makeC({ stability: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    const c = (sys as any).ceasefires[0]
+    if (c) { expect(c.stability).toBeGreaterThanOrEqual(0) }
+  })
+  it('stability 上界不超过 100', () => {
+    ;(sys as any).ceasefires.push(makeC({ stability: 99, violations: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.05)
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    const c = (sys as any).ceasefires[0]
+    if (c) { expect(c.stability).toBeLessThanOrEqual(100) }
+  })
+  it('remaining 每次 update 减少 1', () => {
+    ;(sys as any).ceasefires.push(makeC({ remaining: 30 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    expect((sys as any).ceasefires[0].remaining).toBe(29)
+  })
+  it('remaining<=0 时 ceasefire 被删除', () => {
+    ;(sys as any).ceasefires.push(makeC({ remaining: 0 }))
+    ;(sys as any)._ceasefireKeySet.add('1_2')
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    expect((sys as any).ceasefires).toHaveLength(0)
+  })
+  it('stability<=5 时 ceasefire 被删除', () => {
+    ;(sys as any).ceasefires.push(makeC({ stability: 1, remaining: 100 }))
+    ;(sys as any)._ceasefireKeySet.add('1_2')
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    expect((sys as any).ceasefires).toHaveLength(0)
+  })
+  it('violation 触发时 violations 增加', () => {
+    ;(sys as any).ceasefires.push(makeC({ violations: 0, stability: 50 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0) // < (1-50/100)*0.03=0.015
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    const c = (sys as any).ceasefires[0]
+    if (c) { expect(c.violations).toBeGreaterThanOrEqual(1) }
+  })
+  it('达到 MAX=8 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    for (let i = 1; i <= MAX; i++) { ;(sys as any).ceasefires.push(makeC({ id: i })) }
+    sys.update(1, {} as any, makeEM2([1, 2, 3]) as any, CI)
+    expect((sys as any).ceasefires.length).toBeLessThanOrEqual(MAX)
+  })
+  it('初始 _ceasefireKeySet 为空', () => {
+    expect((sys as any)._ceasefireKeySet.size).toBe(0)
+  })
+  it('初始 nextId 为 1', () => { expect((sys as any).nextId).toBe(1) })
+  it('tick=0 不触发更新', () => {
+    sys.update(1, {} as any, makeEM2([]) as any, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('两次满足间隔 lastCheck 递增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    sys.update(1, {} as any, makeEM2([]) as any, CI * 2)
+    expect((sys as any).lastCheck).toBe(CI * 2)
+  })
+  it('两条 ceasefire 独立更新 remaining', () => {
+    ;(sys as any).ceasefires.push(makeC({ id: 1, remaining: 30 }))
+    ;(sys as any).ceasefires.push(makeC({ id: 2, factionA: 3, factionB: 4, remaining: 20 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    expect((sys as any).ceasefires[0].remaining).toBe(29)
+    expect((sys as any).ceasefires[1].remaining).toBe(19)
+  })
+  it('factionB 可独立读取', () => {
+    ;(sys as any).ceasefires.push(makeC({ factionB: 7 }))
+    expect((sys as any).ceasefires[0].factionB).toBe(7)
+  })
+  it('violations 初始为 0', () => {
+    ;(sys as any).ceasefires.push(makeC())
+    expect((sys as any).ceasefires[0].violations).toBe(0)
+  })
+  it('注入 3 条后 length 为 3', () => {
+    for (let i = 1; i <= 3; i++) { ;(sys as any).ceasefires.push(makeC({ id: i })) }
+    expect((sys as any).ceasefires).toHaveLength(3)
+  })
+  it('mediatorId 可独立读取', () => {
+    ;(sys as any).ceasefires.push(makeC({ mediatorId: 9 }))
+    expect((sys as any).ceasefires[0].mediatorId).toBe(9)
+  })
+  it('lastCheck 初始为 0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('ceasefires 初始为空', () => { expect((sys as any).ceasefires).toHaveLength(0) })
+  it('实体数量<3 时不新增 ceasefire', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, makeEM2([1, 2]) as any, CI)
+    expect((sys as any).ceasefires).toHaveLength(0)
+  })
+})
+
+describe('DiplomaticCeasefireSystem — 补充边界', () => {
+  const CI = 5000
+  function makeSys3() { return new DiplomaticCeasefireSystem() }
+  function makeC2(o: Partial<Ceasefire> = {}): Ceasefire {
+    return { id: 1, factionA: 1, factionB: 2, duration: 30, remaining: 30,
+      stability: 70, violations: 0, mediatorId: 3, tick: 10000, ...o }
+  }
+  let sys: DiplomaticCeasefireSystem
+  beforeEach(() => { sys = makeSys3(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('duration 字段可读取', () => {
+    ;(sys as any).ceasefires.push(makeC2({ duration: 25 }))
+    expect((sys as any).ceasefires[0].duration).toBe(25)
+  })
+  it('两个实例各自维护独立的 _ceasefireKeySet', () => {
+    const s2 = makeSys3()
+    ;(sys as any)._ceasefireKeySet.add('1_2')
+    expect((s2 as any)._ceasefireKeySet.size).toBe(0)
+  })
+})

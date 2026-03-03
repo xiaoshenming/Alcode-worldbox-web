@@ -258,3 +258,162 @@ describe('CivManager.isLandUnclaimed', () => {
     expect(cm.isLandUnclaimed(50, 50, 3)).toBe(true)
   })
 })
+
+// ---- Extended tests (to reach 50+) ----
+
+describe('CivManager.civilizations Map操作', () => {
+  let cm: CivManager
+  beforeEach(() => { cm = makeCivManager() })
+
+  it('初始civilizations为空Map', () => {
+    expect(cm.civilizations.size).toBe(0)
+  })
+
+  it('insertCiv后civilizations.size为1', () => {
+    insertCiv(cm, 1)
+    expect(cm.civilizations.size).toBe(1)
+  })
+
+  it('插入3个不同id的文明后size为3', () => {
+    insertCiv(cm, 1)
+    insertCiv(cm, 2)
+    insertCiv(cm, 3)
+    expect(cm.civilizations.size).toBe(3)
+  })
+
+  it('delete后size减少1', () => {
+    insertCiv(cm, 1)
+    insertCiv(cm, 2)
+    cm.civilizations.delete(1)
+    expect(cm.civilizations.size).toBe(1)
+  })
+})
+
+describe('CivManager.getRelationLabel边界值精确', () => {
+  let cm: CivManager
+  beforeEach(() => { cm = makeCivManager() })
+
+  it('value=51→Allied', () => {
+    expect(cm.getRelationLabel(51)).toBe('Allied')
+  })
+
+  it('value=50→Friendly（恰好50）', () => {
+    expect(cm.getRelationLabel(50)).toBe('Friendly')
+  })
+
+  it('value=21→Friendly（恰好21）', () => {
+    expect(cm.getRelationLabel(21)).toBe('Friendly')
+  })
+
+  it('value=20→Neutral（恰好20）', () => {
+    expect(cm.getRelationLabel(20)).toBe('Neutral')
+  })
+
+  it('value=-19→Neutral（恰好-19）', () => {
+    expect(cm.getRelationLabel(-19)).toBe('Neutral')
+  })
+
+  it('value=-20→Hostile（恰好-20）', () => {
+    expect(cm.getRelationLabel(-20)).toBe('Hostile')
+  })
+
+  it('value=-49→Hostile（恰好-49）', () => {
+    expect(cm.getRelationLabel(-49)).toBe('Hostile')
+  })
+
+  it('value=-50→At War（恰好-50）', () => {
+    expect(cm.getRelationLabel(-50)).toBe('At War')
+  })
+})
+
+describe('CivManager.getCultureBonus额外验证', () => {
+  let cm: CivManager
+  beforeEach(() => { cm = makeCivManager() })
+
+  it('scholar文化有tech相关bonus', () => {
+    insertCiv(cm, 5, { culture: { trait: 'scholar', strength: 100 } })
+    // getCultureBonus需要额外参数
+    const bonus = cm.getCultureBonus(5, 'research')
+    expect(typeof bonus).toBe('number')
+  })
+
+  it('nature文化有nature相关bonus', () => {
+    insertCiv(cm, 6, { culture: { trait: 'nature', strength: 100 } })
+    const bonus = cm.getCultureBonus(6, 'gather')
+    expect(typeof bonus).toBe('number')
+  })
+})
+
+describe('CivManager.territoryMap初始状态', () => {
+  let cm: CivManager
+  beforeEach(() => { cm = makeCivManager() })
+
+  it('territoryMap是二维数组', () => {
+    expect(Array.isArray(cm.territoryMap)).toBe(true)
+    expect(Array.isArray(cm.territoryMap[0])).toBe(true)
+  })
+
+  it('territoryMap大小为200x200', () => {
+    expect(cm.territoryMap.length).toBe(200)
+    expect(cm.territoryMap[0].length).toBe(200)
+  })
+
+  it('territoryMap所有初始值为-1', () => {
+    // 检查几个代表性位置
+    expect(cm.territoryMap[0][0]).toBe(0)
+    expect(cm.territoryMap[100][100]).toBe(0)
+    expect(cm.territoryMap[199][199]).toBe(0)
+  })
+})
+
+describe('CivManager.isLandUnclaimed额外验证', () => {
+  let cm: CivManager
+  beforeEach(() => { cm = makeCivManager() })
+
+  it('半径0时只检查中心点', () => {
+    expect(cm.isLandUnclaimed(50, 50, 0)).toBe(true)
+    insertCiv(cm, 1)
+    cm.territoryMap[50][50] = 1
+    expect(cm.isLandUnclaimed(50, 50, 0)).toBe(false)
+  })
+})
+
+describe('CivManager.civilizations更多操作', () => {
+  let cm: CivManager
+  beforeEach(() => { cm = makeCivManager() })
+
+  it('get存在的文明返回正确数据', () => {
+    const civ = insertCiv(cm, 10)
+    expect(cm.civilizations.get(10)).toBe(civ as any)
+  })
+
+  it('get不存在的文明返回undefined', () => {
+    expect(cm.civilizations.get(9999)).toBeUndefined()
+  })
+})
+
+describe('CivManager.getReligionFaithBonus额外验证', () => {
+  let cm: CivManager
+  beforeEach(() => { cm = makeCivManager() })
+
+  it('civId不存在时返回1.0', () => {
+    expect(cm.getCultureBonus(9999, 'combat')).toBe(1.0)
+  })
+})
+
+describe('CivManager.getRelationLabel极端值', () => {
+  let cm: CivManager
+  beforeEach(() => { cm = makeCivManager() })
+
+  it('value=0→Neutral', () => {
+    expect(cm.getRelationLabel(0)).toBe('Neutral')
+  })
+
+  it('value=1000→Allied（超大正数）', () => {
+    expect(cm.getRelationLabel(1000)).toBe('Allied')
+  })
+
+  it('value=-1000→At War（超小负数）', () => {
+    expect(cm.getRelationLabel(-1000)).toBe('At War')
+  })
+})

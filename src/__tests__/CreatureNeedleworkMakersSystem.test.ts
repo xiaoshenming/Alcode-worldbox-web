@@ -206,3 +206,242 @@ describe('CreatureNeedleworkMakersSystem - MAX_MAKERS上限', () => {
     expect(stored.tick).toBe(200)
   })
 })
+
+// ---- Extended tests (to reach 50+) ----
+
+describe('CreatureNeedleworkMakersSystem - 额外技能增量', () => {
+  let sys: CreatureNeedleworkMakersSystem
+  const em = {} as any
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('stitchPrecision从30连续3次后为30.06', () => {
+    ;(sys as any).makers.push({ ...makeMaker(1), stitchPrecision: 30 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    sys.update(1, em, CHECK_INTERVAL * 3)
+    expect((sys as any).makers[0].stitchPrecision).toBeCloseTo(30.06)
+  })
+
+  it('designComplexity从20连续2次后为20.03', () => {
+    ;(sys as any).makers.push({ ...makeMaker(1), stitchPrecision: 50, designComplexity: 20 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    expect((sys as any).makers[0].designComplexity).toBeCloseTo(20.03)
+  })
+
+  it('outputQuality从40连续3次后为40.03', () => {
+    ;(sys as any).makers.push({ ...makeMaker(1), stitchPrecision: 50, outputQuality: 40 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    sys.update(1, em, CHECK_INTERVAL * 3)
+    expect((sys as any).makers[0].outputQuality).toBeCloseTo(40.03)
+  })
+})
+
+describe('CreatureNeedleworkMakersSystem - threadSelection字段保留', () => {
+  let sys: CreatureNeedleworkMakersSystem
+  const em = {} as any
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('threadSelection=88，update后仍为88', () => {
+    ;(sys as any).makers.push({ ...makeMaker(1), stitchPrecision: 50, threadSelection: 88 })
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).makers[0].threadSelection).toBe(88)
+  })
+})
+
+describe('CreatureNeedleworkMakersSystem - 批量cleanup', () => {
+  let sys: CreatureNeedleworkMakersSystem
+  const em = {} as any
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('stitchPrecision全低：全部被清除', () => {
+    for (let i = 0; i < 4; i++) {
+      ;(sys as any).makers.push({ ...makeMaker(i + 1), stitchPrecision: 1 })
+    }
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).makers).toHaveLength(0)
+  })
+
+  it('stitchPrecision全高：全部保留', () => {
+    for (let i = 0; i < 4; i++) {
+      ;(sys as any).makers.push({ ...makeMaker(i + 1), stitchPrecision: 50 })
+    }
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).makers).toHaveLength(4)
+  })
+})
+
+describe('CreatureNeedleworkMakersSystem - lastCheck', () => {
+  let sys: CreatureNeedleworkMakersSystem
+  const em = {} as any
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始lastCheck为0', () => {
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('三次达阈值后lastCheck为3*CHECK_INTERVAL', () => {
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    sys.update(1, em, CHECK_INTERVAL * 3)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 3)
+  })
+})
+
+describe('CreatureNeedleworkMakersSystem - nextId初始', () => {
+  let sys: CreatureNeedleworkMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始nextId为1', () => {
+    expect((sys as any).nextId).toBe(1)
+  })
+})
+
+describe('CreatureNeedleworkMakersSystem - stitchPrecision上限', () => {
+  let sys: CreatureNeedleworkMakersSystem
+  const em = {} as any
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('stitchPrecision=100连续update保持100', () => {
+    ;(sys as any).makers.push({ ...makeMaker(1), stitchPrecision: 100 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    expect((sys as any).makers[0].stitchPrecision).toBe(100)
+  })
+})
+
+describe('CreatureNeedleworkMakersSystem - 数据完整性', () => {
+  let sys: CreatureNeedleworkMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('注入所有字段后完整保存', () => {
+    ;(sys as any).makers.push({ ...makeMaker(1), stitchPrecision: 66, threadSelection: 77, designComplexity: 55, outputQuality: 88, tick: 1234 })
+    const m = (sys as any).makers[0]
+    expect(m.tick).toBe(1234)
+    expect(m.threadSelection).toBe(77)
+  })
+})
+
+describe('CreatureNeedleworkMakersSystem - 大批量清理', () => {
+  let sys: CreatureNeedleworkMakersSystem
+  const em = {} as any
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('10个全低stitchPrecision的工匠，全部被清除', () => {
+    for (let i = 0; i < 10; i++) {
+      ;(sys as any).makers.push({ ...makeMaker(i + 1), stitchPrecision: 2 })
+    }
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).makers).toHaveLength(0)
+  })
+})
+
+describe('CreatureNeedleworkMakersSystem - designComplexity上限', () => {
+  let sys: CreatureNeedleworkMakersSystem
+  const em = {} as any
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('designComplexity=100连续update保持100', () => {
+    ;(sys as any).makers.push({ ...makeMaker(1), stitchPrecision: 50, designComplexity: 100 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    expect((sys as any).makers[0].designComplexity).toBe(100)
+  })
+})
+
+describe('CreatureNeedleworkMakersSystem - 精确验证', () => {
+  let sys: CreatureNeedleworkMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('CHECK_INTERVAL=2540常量验证', () => {
+    expect(CHECK_INTERVAL).toBe(2540)
+  })
+
+  it('MAX_MAKERS=13常量验证', () => {
+    expect(MAX_MAKERS).toBe(13)
+  })
+})
+
+describe('CreatureNeedleworkMakersSystem - threadSelection从0到100约束', () => {
+  let sys: CreatureNeedleworkMakersSystem
+  const em = {} as any
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('threadSelection字段不受update影响', () => {
+    ;(sys as any).makers.push({ ...makeMaker(1), stitchPrecision: 50, threadSelection: 55 })
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).makers[0].threadSelection).toBe(55)
+  })
+})
+
+describe('CreatureNeedleworkMakersSystem - 数据结构字段类型', () => {
+  it('NeedleworkMaker接口所有字段为number类型', () => {
+    const m = makeMaker(1)
+    expect(typeof m.id).toBe('number')
+    expect(typeof m.entityId).toBe('number')
+    expect(typeof m.stitchPrecision).toBe('number')
+    expect(typeof m.threadSelection).toBe('number')
+    expect(typeof m.designComplexity).toBe('number')
+    expect(typeof m.outputQuality).toBe('number')
+    expect(typeof m.tick).toBe('number')
+  })
+})
+
+describe('CreatureNeedleworkMakersSystem - stitchPrecision绝对边界', () => {
+  let sys: CreatureNeedleworkMakersSystem
+  const em = {} as any
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('stitchPrecision=5（>4），update后5.02>4，保留', () => {
+    ;(sys as any).makers.push({ ...makeMaker(1), stitchPrecision: 5 })
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).makers).toHaveLength(1)
+  })
+
+  it('stitchPrecision=3（<4），update后3.02<=4，删除', () => {
+    ;(sys as any).makers.push({ ...makeMaker(1), stitchPrecision: 3 })
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).makers).toHaveLength(0)
+  })
+})
+
+describe('CreatureNeedleworkMakersSystem - 多轮输出质量增长', () => {
+  let sys: CreatureNeedleworkMakersSystem
+  const em = {} as any
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('outputQuality从50连续3次后为50.03', () => {
+    ;(sys as any).makers.push({ ...makeMaker(1), stitchPrecision: 50, outputQuality: 50 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    sys.update(1, em, CHECK_INTERVAL * 3)
+    expect((sys as any).makers[0].outputQuality).toBeCloseTo(50.03)
+  })
+})
+
+describe('CreatureNeedleworkMakersSystem - 综合3测试', () => {
+  let sys: CreatureNeedleworkMakersSystem
+  const em = {} as any
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('两次连续达阈值，stitchPrecision连续增长', () => {
+    ;(sys as any).makers.push({ ...makeMaker(1), stitchPrecision: 20 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    expect((sys as any).makers[0].stitchPrecision).toBeCloseTo(20.04)
+  })
+
+  it('outputQuality从0增长到0.02（两次update）', () => {
+    ;(sys as any).makers.push({ ...makeMaker(1), stitchPrecision: 50, outputQuality: 0 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    expect((sys as any).makers[0].outputQuality).toBeCloseTo(0.02)
+  })
+
+  it('designComplexity从0增长到0.015（一次update）', () => {
+    ;(sys as any).makers.push({ ...makeMaker(1), stitchPrecision: 50, designComplexity: 0 })
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).makers[0].designComplexity).toBeCloseTo(0.015)
+  })
+})

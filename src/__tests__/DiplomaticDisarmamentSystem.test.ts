@@ -225,4 +225,173 @@ describe('DiplomaticDisarmamentSystem', () => {
       expect((sys as any).treaties[0].scope).toBe('comprehensive')
     })
   })
+
+  describe('额外覆盖测试', () => {
+    it('armsReduction 上限 80 不被突破', () => {
+      ;(sys as any).treaties.push(makeTreaty({ armsReduction: 79.99, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 2350)
+      expect((sys as any).treaties[0]?.armsReduction).toBeLessThanOrEqual(80)
+      vi.restoreAllMocks()
+    })
+
+    it('armsReduction 下限 5 不被突破', () => {
+      ;(sys as any).treaties.push(makeTreaty({ armsReduction: 5.01, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, 2350)
+      expect((sys as any).treaties[0]?.armsReduction).toBeGreaterThanOrEqual(5)
+      vi.restoreAllMocks()
+    })
+
+    it('verificationLevel 上限 90 不被突破', () => {
+      ;(sys as any).treaties.push(makeTreaty({ verificationLevel: 89.99, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 2350)
+      expect((sys as any).treaties[0]?.verificationLevel).toBeLessThanOrEqual(90)
+      vi.restoreAllMocks()
+    })
+
+    it('complianceRate 上限 100 不被突破', () => {
+      ;(sys as any).treaties.push(makeTreaty({ complianceRate: 99.99, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 2350)
+      expect((sys as any).treaties[0]?.complianceRate).toBeLessThanOrEqual(100)
+      vi.restoreAllMocks()
+    })
+
+    it('peaceDividend 上限 60 不被突破', () => {
+      ;(sys as any).treaties.push(makeTreaty({ peaceDividend: 59.99, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 2350)
+      expect((sys as any).treaties[0]?.peaceDividend).toBeLessThanOrEqual(60)
+      vi.restoreAllMocks()
+    })
+
+    it('DisarmamentTreaty 包含所有必要字段', () => {
+      const t = makeTreaty()
+      expect(t).toHaveProperty('id')
+      expect(t).toHaveProperty('civIdA')
+      expect(t).toHaveProperty('civIdB')
+      expect(t).toHaveProperty('scope')
+      expect(t).toHaveProperty('armsReduction')
+      expect(t).toHaveProperty('verificationLevel')
+      expect(t).toHaveProperty('complianceRate')
+      expect(t).toHaveProperty('peaceDividend')
+      expect(t).toHaveProperty('duration')
+      expect(t).toHaveProperty('tick')
+    })
+
+    it('update 不改变 civIdA/civIdB', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      ;(sys as any).treaties.push(makeTreaty({ civIdA: 4, civIdB: 6, tick: 0 }))
+      sys.update(1, {} as any, {} as any, 2350)
+      expect((sys as any).treaties[0].civIdA).toBe(4)
+      expect((sys as any).treaties[0].civIdB).toBe(6)
+      vi.restoreAllMocks()
+    })
+
+    it('update 不改变 scope 字段', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      ;(sys as any).treaties.push(makeTreaty({ scope: 'comprehensive', tick: 0 }))
+      sys.update(1, {} as any, {} as any, 2350)
+      expect((sys as any).treaties[0].scope).toBe('comprehensive')
+      vi.restoreAllMocks()
+    })
+
+    it('全部过期后 treaties 清空', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      ;(sys as any).treaties.push(makeTreaty({ tick: 0 }))
+      ;(sys as any).treaties.push(makeTreaty({ tick: 100 }))
+      ;(sys as any).lastCheck = 0
+      sys.update(1, {} as any, {} as any, 200000)
+      expect((sys as any).treaties).toHaveLength(0)
+      vi.restoreAllMocks()
+    })
+
+    it('mixed 过期和未过期，仅删过期', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      const bigTick = 200000
+      ;(sys as any).treaties.push(makeTreaty({ id: 1, tick: 0 }))
+      ;(sys as any).treaties.push(makeTreaty({ id: 2, tick: bigTick }))
+      ;(sys as any).lastCheck = 0
+      sys.update(1, {} as any, {} as any, bigTick)
+      expect((sys as any).treaties).toHaveLength(1)
+      expect((sys as any).treaties[0].id).toBe(2)
+      vi.restoreAllMocks()
+    })
+
+    it('多条 treaties 各自独立更新 duration', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      ;(sys as any).treaties.push(makeTreaty({ id: 1, duration: 3, tick: 0 }))
+      ;(sys as any).treaties.push(makeTreaty({ id: 2, duration: 7, tick: 0 }))
+      sys.update(1, {} as any, {} as any, 2350)
+      expect((sys as any).treaties[0].duration).toBe(4)
+      expect((sys as any).treaties[1].duration).toBe(8)
+      vi.restoreAllMocks()
+    })
+
+    it('verificationLevel 下限 10 不被突破', () => {
+      ;(sys as any).treaties.push(makeTreaty({ verificationLevel: 10.01, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, 2350)
+      expect((sys as any).treaties[0]?.verificationLevel).toBeGreaterThanOrEqual(10)
+      vi.restoreAllMocks()
+    })
+
+    it('complianceRate 下限 15 不被突破', () => {
+      ;(sys as any).treaties.push(makeTreaty({ complianceRate: 15.01, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, 2350)
+      expect((sys as any).treaties[0]?.complianceRate).toBeGreaterThanOrEqual(15)
+      vi.restoreAllMocks()
+    })
+
+    it('tick 恰好等于 cutoff 时不被删除', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      const bigTick = 200000
+      const cutoff = bigTick - 85000
+      ;(sys as any).treaties.push(makeTreaty({ tick: cutoff }))
+      ;(sys as any).lastCheck = 0
+      sys.update(1, {} as any, {} as any, bigTick)
+      expect((sys as any).treaties).toHaveLength(1)
+      vi.restoreAllMocks()
+    })
+
+    it('nextId 手动设置后保持', () => {
+      ;(sys as any).nextId = 66
+      expect((sys as any).nextId).toBe(66)
+    })
+
+    it('lastCheck 更新到最新 tick', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, {} as any, {} as any, 2350 * 5)
+      expect((sys as any).lastCheck).toBe(2350 * 5)
+      vi.restoreAllMocks()
+    })
+
+    it('tick 极大时正常执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      expect(() => sys.update(1, {} as any, {} as any, 99999999)).not.toThrow()
+      vi.restoreAllMocks()
+    })
+
+    it('初始系统创建不崩溃', () => {
+      expect(() => new DiplomaticDisarmamentSystem()).not.toThrow()
+    })
+
+    it('treaties 是数组类型', () => {
+      expect(Array.isArray((sys as any).treaties)).toBe(true)
+    })
+
+    it('treaties 数量不超过 MAX_TREATIES=20', () => {
+      for (let i = 0; i < 20; i++) {
+        ;(sys as any).treaties.push(makeTreaty({ id: i + 1, tick: 2350 }))
+      }
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      ;(sys as any).lastCheck = 0
+      sys.update(1, {} as any, {} as any, 2350)
+      expect((sys as any).treaties.length).toBeLessThanOrEqual(20)
+      vi.restoreAllMocks()
+    })
+  })
 })

@@ -217,3 +217,155 @@ describe('MAX_ENTENTES=15上限', () => {
     expect((sys as any).nextId).toBe(idBefore + 1)
   })
 })
+
+describe('额外边界与防御性测试', () => {
+  it('mutualTrust 上限 100 不被突破', () => {
+    const sys = makeSys()
+    ;(sys as any).ententes.push(makeEntente({ mutualTrust: 99.99, tick: 0 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, W, W, 2620)
+    expect((sys as any).ententes[0]?.mutualTrust).toBeLessThanOrEqual(100)
+  })
+
+  it('cooperationDepth 上限 100 不被突破', () => {
+    const sys = makeSys()
+    ;(sys as any).ententes.push(makeEntente({ cooperationDepth: 99.99, tick: 0 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, W, W, 2620)
+    expect((sys as any).ententes[0]?.cooperationDepth).toBeLessThanOrEqual(100)
+  })
+
+  it('informal -> cordial 当 mutualTrust > 30', () => {
+    const sys = makeSys()
+    ;(sys as any).ententes.push(makeEntente({ level: 'informal', mutualTrust: 30.1, tick: 0 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, W, W, 2620)
+    expect((sys as any).ententes[0]?.level).toBe('cordial')
+  })
+
+  it('cordial -> strategic 当 mutualTrust > 55', () => {
+    const sys = makeSys()
+    ;(sys as any).ententes.push(makeEntente({ level: 'cordial', mutualTrust: 55.1, tick: 0 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, W, W, 2620)
+    expect((sys as any).ententes[0]?.level).toBe('strategic')
+  })
+
+  it('strategic -> allied 当 mutualTrust > 80', () => {
+    const sys = makeSys()
+    ;(sys as any).ententes.push(makeEntente({ level: 'strategic', mutualTrust: 80.1, tick: 0 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, W, W, 2620)
+    expect((sys as any).ententes[0]?.level).toBe('allied')
+  })
+
+  it('allied 阶段 duration >= 200 被清理', () => {
+    const sys = makeSys()
+    ;(sys as any).ententes.push(makeEntente({ level: 'allied', mutualTrust: 85, duration: 199, tick: 0 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, W, W, 2620)
+    expect((sys as any).ententes).toHaveLength(0)
+  })
+
+  it('allied 阶段 duration < 200 时保留', () => {
+    const sys = makeSys()
+    ;(sys as any).ententes.push(makeEntente({ level: 'allied', mutualTrust: 85, duration: 100, tick: 0 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, W, W, 2620)
+    expect((sys as any).ententes).toHaveLength(1)
+  })
+
+  it('非 allied 阶段 duration=200 时保留', () => {
+    const sys = makeSys()
+    ;(sys as any).ententes.push(makeEntente({ level: 'strategic', mutualTrust: 70, duration: 200, tick: 0 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, W, W, 2620)
+    expect((sys as any).ententes).toHaveLength(1)
+  })
+
+  it('mutualTrust 每 tick +0.025', () => {
+    const sys = makeSys()
+    ;(sys as any).ententes.push(makeEntente({ mutualTrust: 20, tick: 0 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, W, W, 2620)
+    expect((sys as any).ententes[0]?.mutualTrust).toBeCloseTo(20.025, 5)
+  })
+
+  it('cooperationDepth 每 tick +0.02', () => {
+    const sys = makeSys()
+    ;(sys as any).ententes.push(makeEntente({ cooperationDepth: 10, tick: 0 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, W, W, 2620)
+    expect((sys as any).ententes[0]?.cooperationDepth).toBeCloseTo(10.02, 5)
+  })
+
+  it('CHECK_INTERVAL=2620 节流有效', () => {
+    const sys = makeSys()
+    ;(sys as any).ententes.push(makeEntente({ duration: 5, tick: 0 }))
+    sys.update(1, W, W, 2619)
+    expect((sys as any).ententes[0].duration).toBe(5)
+  })
+
+  it('update 不改变 civIdA/civIdB', () => {
+    const sys = makeSys()
+    ;(sys as any).ententes.push(makeEntente({ civIdA: 5, civIdB: 8, tick: 0 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, W, W, 2620)
+    expect((sys as any).ententes[0].civIdA).toBe(5)
+    expect((sys as any).ententes[0].civIdB).toBe(8)
+  })
+
+  it('空 ententes 时 update 不崩溃', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    expect(() => sys.update(1, W, W, 2620)).not.toThrow()
+    vi.restoreAllMocks()
+  })
+
+  it('MAX_ENTENTES=15 上限：已满时不新增', () => {
+    const sys = makeSys()
+    for (let i = 0; i < 15; i++) {
+      ;(sys as any).ententes.push(makeEntente({ id: i + 1, tick: 9999999 }))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).lastCheck = 0
+    sys.update(1, W, W, 2620)
+    expect((sys as any).ententes.length).toBeLessThanOrEqual(15)
+    vi.restoreAllMocks()
+  })
+
+  it('EntenteAgreement2 包含所有必要字段', () => {
+    const e = makeEntente()
+    expect(e).toHaveProperty('id')
+    expect(e).toHaveProperty('civIdA')
+    expect(e).toHaveProperty('civIdB')
+    expect(e).toHaveProperty('level')
+    expect(e).toHaveProperty('mutualTrust')
+    expect(e).toHaveProperty('sharedInterests')
+    expect(e).toHaveProperty('cooperationDepth')
+    expect(e).toHaveProperty('publicEndorsement')
+    expect(e).toHaveProperty('duration')
+    expect(e).toHaveProperty('tick')
+  })
+
+  it('nextId 手动设置后保持', () => {
+    const sys = makeSys()
+    ;(sys as any).nextId = 55
+    expect((sys as any).nextId).toBe(55)
+  })
+
+  it('lastCheck 更新到最新 tick', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, W, W, 2620 * 3)
+    expect((sys as any).lastCheck).toBe(2620 * 3)
+    vi.restoreAllMocks()
+  })
+
+  it('4 种 level 均可存储', () => {
+    const levels = ['informal', 'cordial', 'strategic', 'allied']
+    for (const l of levels) {
+      expect(makeEntente({ level: l as any }).level).toBe(l)
+    }
+  })
+})

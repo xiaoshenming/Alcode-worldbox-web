@@ -225,4 +225,180 @@ describe('DiplomaticDispensationSystem', () => {
       expect((sys as any).grants[0].form).toBe('law_exception')
     })
   })
+
+  describe('额外覆盖测试', () => {
+    it('exemptionScope 上限 80 不被突破', () => {
+      ;(sys as any).grants.push(makeGrant({ exemptionScope: 79.99, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 2400)
+      expect((sys as any).grants[0]?.exemptionScope).toBeLessThanOrEqual(80)
+      vi.restoreAllMocks()
+    })
+
+    it('exemptionScope 下限 10 不被突破', () => {
+      ;(sys as any).grants.push(makeGrant({ exemptionScope: 10.01, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, 2400)
+      expect((sys as any).grants[0]?.exemptionScope).toBeGreaterThanOrEqual(10)
+      vi.restoreAllMocks()
+    })
+
+    it('politicalCost 上限 70 不被突破', () => {
+      ;(sys as any).grants.push(makeGrant({ politicalCost: 69.99, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 2400)
+      expect((sys as any).grants[0]?.politicalCost).toBeLessThanOrEqual(70)
+      vi.restoreAllMocks()
+    })
+
+    it('politicalCost 下限 5 不被突破', () => {
+      ;(sys as any).grants.push(makeGrant({ politicalCost: 5.01, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, 2400)
+      expect((sys as any).grants[0]?.politicalCost).toBeGreaterThanOrEqual(5)
+      vi.restoreAllMocks()
+    })
+
+    it('benefitValue 上限 85 不被突破', () => {
+      ;(sys as any).grants.push(makeGrant({ benefitValue: 84.99, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 2400)
+      expect((sys as any).grants[0]?.benefitValue).toBeLessThanOrEqual(85)
+      vi.restoreAllMocks()
+    })
+
+    it('precedentRisk 上限 60 不被突破', () => {
+      ;(sys as any).grants.push(makeGrant({ precedentRisk: 59.99, tick: 0 }))
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, 2400)
+      expect((sys as any).grants[0]?.precedentRisk).toBeLessThanOrEqual(60)
+      vi.restoreAllMocks()
+    })
+
+    it('military_waiver form 可存储', () => {
+      ;(sys as any).grants.push(makeGrant({ form: 'military_waiver' }))
+      expect((sys as any).grants[0].form).toBe('military_waiver')
+    })
+
+    it('tribute_relief form 可存储', () => {
+      ;(sys as any).grants.push(makeGrant({ form: 'tribute_relief' }))
+      expect((sys as any).grants[0].form).toBe('tribute_relief')
+    })
+
+    it('law_exception form 可存储', () => {
+      ;(sys as any).grants.push(makeGrant({ form: 'law_exception' }))
+      expect((sys as any).grants[0].form).toBe('law_exception')
+    })
+
+    it('update 不改变 form', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      ;(sys as any).grants.push(makeGrant({ form: 'law_exception', tick: 0 }))
+      sys.update(1, {} as any, {} as any, 2400)
+      expect((sys as any).grants[0].form).toBe('law_exception')
+      vi.restoreAllMocks()
+    })
+
+    it('update 不改变 civIdA/civIdB', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      ;(sys as any).grants.push(makeGrant({ civIdA: 5, civIdB: 8, tick: 0 }))
+      sys.update(1, {} as any, {} as any, 2400)
+      expect((sys as any).grants[0].civIdA).toBe(5)
+      expect((sys as any).grants[0].civIdB).toBe(8)
+      vi.restoreAllMocks()
+    })
+
+    it('过期记录被移除（cutoff=tick-85000）', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      ;(sys as any).grants.push(makeGrant({ tick: 0 }))
+      ;(sys as any).lastCheck = 0
+      sys.update(1, {} as any, {} as any, 200000)
+      expect((sys as any).grants).toHaveLength(0)
+      vi.restoreAllMocks()
+    })
+
+    it('未过期记录保留', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      const bigTick = 200000
+      ;(sys as any).grants.push(makeGrant({ tick: bigTick }))
+      ;(sys as any).lastCheck = 0
+      sys.update(1, {} as any, {} as any, bigTick)
+      expect((sys as any).grants).toHaveLength(1)
+      vi.restoreAllMocks()
+    })
+
+    it('多条 grants 各自独立更新 duration', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      ;(sys as any).grants.push(makeGrant({ id: 1, duration: 3, tick: 0 }))
+      ;(sys as any).grants.push(makeGrant({ id: 2, duration: 7, tick: 0 }))
+      sys.update(1, {} as any, {} as any, 2400)
+      expect((sys as any).grants[0].duration).toBe(4)
+      expect((sys as any).grants[1].duration).toBe(8)
+      vi.restoreAllMocks()
+    })
+
+    it('全部过期后 grants 清空', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      ;(sys as any).grants.push(makeGrant({ tick: 0 }))
+      ;(sys as any).grants.push(makeGrant({ tick: 100 }))
+      ;(sys as any).lastCheck = 0
+      sys.update(1, {} as any, {} as any, 200000)
+      expect((sys as any).grants).toHaveLength(0)
+      vi.restoreAllMocks()
+    })
+
+    it('mixed 过期和未过期，仅删过期', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      const bigTick = 200000
+      ;(sys as any).grants.push(makeGrant({ id: 1, tick: 0 }))
+      ;(sys as any).grants.push(makeGrant({ id: 2, tick: bigTick }))
+      ;(sys as any).lastCheck = 0
+      sys.update(1, {} as any, {} as any, bigTick)
+      expect((sys as any).grants).toHaveLength(1)
+      expect((sys as any).grants[0].id).toBe(2)
+      vi.restoreAllMocks()
+    })
+
+    it('空 grants 时 update 不崩溃', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99)
+      expect(() => sys.update(1, {} as any, {} as any, 2400)).not.toThrow()
+      vi.restoreAllMocks()
+    })
+
+    it('nextId 手动设置后保持', () => {
+      ;(sys as any).nextId = 88
+      expect((sys as any).nextId).toBe(88)
+    })
+
+    it('lastCheck 更新到最新 tick', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, {} as any, {} as any, 2400 * 4)
+      expect((sys as any).lastCheck).toBe(2400 * 4)
+      vi.restoreAllMocks()
+    })
+
+    it('DispensationGrant 包含所有必要字段', () => {
+      const g = makeGrant()
+      expect(g).toHaveProperty('id')
+      expect(g).toHaveProperty('civIdA')
+      expect(g).toHaveProperty('civIdB')
+      expect(g).toHaveProperty('form')
+      expect(g).toHaveProperty('exemptionScope')
+      expect(g).toHaveProperty('politicalCost')
+      expect(g).toHaveProperty('benefitValue')
+      expect(g).toHaveProperty('precedentRisk')
+      expect(g).toHaveProperty('duration')
+      expect(g).toHaveProperty('tick')
+    })
+
+    it('MAX_GRANTS=20 上限：已满时不新增', () => {
+      for (let i = 0; i < 20; i++) {
+        ;(sys as any).grants.push(makeGrant({ id: i + 1, tick: 2400 }))
+      }
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      ;(sys as any).lastCheck = 0
+      sys.update(1, {} as any, {} as any, 2400)
+      expect((sys as any).grants.length).toBeLessThanOrEqual(20)
+      vi.restoreAllMocks()
+    })
+  })
 })

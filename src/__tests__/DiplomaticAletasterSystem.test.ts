@@ -272,3 +272,147 @@ describe('DiplomaticAletasterSystem', () => {
     })
   })
 })
+
+// ---- 追加测试以达到 50+ ----
+describe('DiplomaticAletasterSystem — 额外完整性测试', () => {
+  const CI = 2950
+  const CUTOFF = 88000
+  const MAX = 16
+
+  function makeSys2() { return new DiplomaticAletasterSystem() }
+  function makeA(o: Partial<AletasterArrangement> = {}): AletasterArrangement {
+    return { id: 1, brewingCivId: 1, inspectionCivId: 2, form: 'royal_aletaster',
+      qualityStandards: 50, inspectionRigor: 50, priceRegulation: 40,
+      measureEnforcement: 30, duration: 0, tick: 100000, ...o }
+  }
+
+  let sys: DiplomaticAletasterSystem
+  beforeEach(() => { sys = makeSys2(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('两系统实例互相独立', () => {
+    const s2 = makeSys2(); ;(sys as any).arrangements.push(makeA())
+    expect((s2 as any).arrangements).toHaveLength(0)
+  })
+  it('update 不改变 form 字段', () => {
+    ;(sys as any).arrangements.push(makeA({ form: 'guild_aletaster', tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).arrangements[0].form).toBe('guild_aletaster')
+  })
+  it('update 不改变 id 字段', () => {
+    ;(sys as any).arrangements.push(makeA({ id: 77, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).arrangements[0].id).toBe(77)
+  })
+  it('update 不改变 brewingCivId', () => {
+    ;(sys as any).arrangements.push(makeA({ brewingCivId: 5, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).arrangements[0].brewingCivId).toBe(5)
+  })
+  it('qualityStandards 下界不低于 5', () => {
+    ;(sys as any).arrangements.push(makeA({ qualityStandards: 5, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).arrangements[0].qualityStandards).toBeGreaterThanOrEqual(5)
+  })
+  it('inspectionRigor 下界不低于 10', () => {
+    ;(sys as any).arrangements.push(makeA({ inspectionRigor: 10, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).arrangements[0].inspectionRigor).toBeGreaterThanOrEqual(10)
+  })
+  it('priceRegulation 下界不低于 5', () => {
+    ;(sys as any).arrangements.push(makeA({ priceRegulation: 5, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).arrangements[0].priceRegulation).toBeGreaterThanOrEqual(5)
+  })
+  it('measureEnforcement 下界不低于 5', () => {
+    ;(sys as any).arrangements.push(makeA({ measureEnforcement: 5, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).arrangements[0].measureEnforcement).toBeGreaterThanOrEqual(5)
+  })
+  it('qualityStandards 上界不超过 85', () => {
+    ;(sys as any).arrangements.push(makeA({ qualityStandards: 85, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).arrangements[0].qualityStandards).toBeLessThanOrEqual(85)
+  })
+  it('inspectionRigor 上界不超过 90', () => {
+    ;(sys as any).arrangements.push(makeA({ inspectionRigor: 90, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).arrangements[0].inspectionRigor).toBeLessThanOrEqual(90)
+  })
+  it('priceRegulation 上界不超过 80', () => {
+    ;(sys as any).arrangements.push(makeA({ priceRegulation: 80, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).arrangements[0].priceRegulation).toBeLessThanOrEqual(80)
+  })
+  it('measureEnforcement 上界不超过 65', () => {
+    ;(sys as any).arrangements.push(makeA({ measureEnforcement: 65, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).arrangements[0].measureEnforcement).toBeLessThanOrEqual(65)
+  })
+  it('多条记录各自独立更新 duration', () => {
+    ;(sys as any).arrangements.push(makeA({ id: 1, tick: 0, duration: 0 }))
+    ;(sys as any).arrangements.push(makeA({ id: 2, tick: 0, duration: 5 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).arrangements[0].duration).toBe(1)
+    expect((sys as any).arrangements[1].duration).toBe(6)
+  })
+  it('过期清理：tick=0 在大 tick 时删除', () => {
+    ;(sys as any).arrangements.push(makeA({ id: 1, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CUTOFF + CI + 1)
+    expect((sys as any).arrangements).toHaveLength(0)
+  })
+  it('混合过期：保留新，删旧', () => {
+    const big = CUTOFF + CI + 1
+    ;(sys as any).arrangements.push(makeA({ id: 1, tick: 0 }))
+    ;(sys as any).arrangements.push(makeA({ id: 2, tick: big }))
+    sys.update(1, {} as any, {} as any, big)
+    expect((sys as any).arrangements).toHaveLength(1)
+    expect((sys as any).arrangements[0].id).toBe(2)
+  })
+  it('duration 只在满足 CHECK_INTERVAL 时递增', () => {
+    ;(sys as any).arrangements.push(makeA({ duration: 0, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 10)
+    expect((sys as any).arrangements[0].duration).toBe(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).arrangements[0].duration).toBe(1)
+  })
+  it('civA === civB 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).arrangements).toHaveLength(0)
+  })
+  it('达到 MAX=16 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    for (let i = 1; i <= MAX; i++) { ;(sys as any).arrangements.push(makeA({ id: i, tick: CI })) }
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).arrangements.length).toBeLessThanOrEqual(MAX)
+  })
+  it('初始 nextId 为 1', () => { expect((sys as any).nextId).toBe(1) })
+  it('tick=0 不触发更新', () => {
+    sys.update(1, {} as any, {} as any, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('全新鲜记录无清理', () => {
+    const big = CUTOFF + CI + 1
+    ;(sys as any).arrangements.push(makeA({ id: 1, tick: big - 1000 }))
+    sys.update(1, {} as any, {} as any, big)
+    expect((sys as any).arrangements).toHaveLength(1)
+  })
+  it('5 条全过期在大 tick 时全删除', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).arrangements.push(makeA({ id: i, tick: 0 })) }
+    sys.update(1, {} as any, {} as any, CUTOFF + CI + 1)
+    expect((sys as any).arrangements).toHaveLength(0)
+  })
+  it('inspectionCivId 可独立读取', () => {
+    ;(sys as any).arrangements.push(makeA({ inspectionCivId: 8 }))
+    expect((sys as any).arrangements[0].inspectionCivId).toBe(8)
+  })
+})

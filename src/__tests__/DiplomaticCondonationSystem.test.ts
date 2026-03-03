@@ -296,4 +296,120 @@ describe('DiplomaticCondonationSystem', () => {
       expect((sys as any).nextId).toBeGreaterThan(idBefore)
     })
   })
+
+  // ---- 6. 额外覆盖测试 ----
+  describe('6. 额外边界与枚举测试', () => {
+    it('pragmatism 上限 85 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      const p = injectPolicy(sys, { pragmatism: 84.99, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p.pragmatism).toBeLessThanOrEqual(85)
+    })
+
+    it('pragmatism 下限 15 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      const p = injectPolicy(sys, { pragmatism: 15.01, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p.pragmatism).toBeGreaterThanOrEqual(15)
+    })
+
+    it('moralCost 上限 60 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      const p = injectPolicy(sys, { moralCost: 59.99, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p.moralCost).toBeLessThanOrEqual(60)
+    })
+
+    it('moralCost 下限 5 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      const p = injectPolicy(sys, { moralCost: 5.01, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p.moralCost).toBeGreaterThanOrEqual(5)
+    })
+
+    it('stabilityBenefit 上限 75 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      const p = injectPolicy(sys, { stabilityBenefit: 74.99, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p.stabilityBenefit).toBeLessThanOrEqual(75)
+    })
+
+    it('publicAwareness 上限 50 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      const p = injectPolicy(sys, { publicAwareness: 49.99, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p.publicAwareness).toBeLessThanOrEqual(50)
+    })
+
+    it('publicAwareness 下限 0 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      const p = injectPolicy(sys, { publicAwareness: 0.01, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p.publicAwareness).toBeGreaterThanOrEqual(0)
+    })
+
+    it('offense_overlooking form 可存储', () => {
+      const p = injectPolicy(sys, { form: 'offense_overlooking' })
+      expect(p.form).toBe('offense_overlooking')
+    })
+
+    it('violation_acceptance form 可存储', () => {
+      const p = injectPolicy(sys, { form: 'violation_acceptance' })
+      expect(p.form).toBe('violation_acceptance')
+    })
+
+    it('transgression_tolerance form 可存储', () => {
+      const p = injectPolicy(sys, { form: 'transgression_tolerance' })
+      expect(p.form).toBe('transgression_tolerance')
+    })
+
+    it('breach_forgetting form 可存储', () => {
+      const p = injectPolicy(sys, { form: 'breach_forgetting' })
+      expect(p.form).toBe('breach_forgetting')
+    })
+
+    it('update 不改变 form 字段', () => {
+      const p = injectPolicy(sys, { form: 'breach_forgetting', tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p.form).toBe('breach_forgetting')
+    })
+
+    it('update 不改变 civIdA/civIdB', () => {
+      const p = injectPolicy(sys, { civIdA: 4, civIdB: 6, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p.civIdA).toBe(4)
+      expect(p.civIdB).toBe(6)
+    })
+
+    it('多条 policies 各自独立更新 duration', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      const p1 = injectPolicy(sys, { duration: 3, tick: 0 })
+      const p2 = injectPolicy(sys, { duration: 7, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p1.duration).toBe(4)
+      expect(p2.duration).toBe(8)
+    })
+
+    it('空 policies 时 update 不崩溃', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99)
+      expect(() => sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)).not.toThrow()
+    })
+
+    it('注入 4 种不同 form 后 policies 长度为 4', () => {
+      const forms: CondonationForm[] = ['offense_overlooking', 'violation_acceptance', 'transgression_tolerance', 'breach_forgetting']
+      for (const f of forms) { injectPolicy(sys, { form: f }) }
+      expect((sys as any).policies).toHaveLength(4)
+    })
+
+    it('lastCheck 更新到最新 tick', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99)
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL * 5)
+      expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 5)
+    })
+
+    it('nextId 手动设置后保持', () => {
+      ;(sys as any).nextId = 55
+      expect((sys as any).nextId).toBe(55)
+    })
+  })
 })

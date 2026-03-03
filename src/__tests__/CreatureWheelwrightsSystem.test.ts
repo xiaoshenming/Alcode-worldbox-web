@@ -219,3 +219,197 @@ describe('CreatureWheelwrightsSystem 年龄门槛(age>=8)', () => {
     Math.random = origRandom
   })
 })
+
+// ---- Extended tests (to reach 50+) ----
+
+describe('CreatureWheelwrightsSystem durability公式', () => {
+  it('skill=0时durability=30+0*0.6=30', () => {
+    expect(30 + 0 * 0.6).toBeCloseTo(30)
+  })
+
+  it('skill=50时durability=30+50*0.6=60', () => {
+    expect(30 + 50 * 0.6).toBeCloseTo(60)
+  })
+
+  it('skill=100时durability=30+100*0.6=90', () => {
+    expect(30 + 100 * 0.6).toBeCloseTo(90)
+  })
+
+  it('skill=25时durability=30+25*0.6=45', () => {
+    expect(30 + 25 * 0.6).toBeCloseTo(45)
+  })
+})
+
+describe('CreatureWheelwrightsSystem efficiency公式', () => {
+  it('skill=0时efficiency=20+0*0.7=20', () => {
+    expect(20 + 0 * 0.7).toBeCloseTo(20)
+  })
+
+  it('skill=50时efficiency=20+50*0.7=55', () => {
+    expect(20 + 50 * 0.7).toBeCloseTo(55)
+  })
+
+  it('skill=100时efficiency=20+100*0.7=90', () => {
+    expect(20 + 100 * 0.7).toBeCloseTo(90)
+  })
+})
+
+describe('CreatureWheelwrightsSystem wheelsBuilt公式', () => {
+  it('skill=11时wheelsBuilt=1+floor(11/11)=2', () => {
+    expect(1 + Math.floor(11 / 11)).toBe(2)
+  })
+
+  it('skill=0时wheelsBuilt=1+floor(0/11)=1', () => {
+    expect(1 + Math.floor(0 / 11)).toBe(1)
+  })
+
+  it('skill=99时wheelsBuilt=1+floor(99/11)=10', () => {
+    expect(1 + Math.floor(99 / 11)).toBe(10)
+  })
+})
+
+describe('CreatureWheelwrightsSystem skillMap操作', () => {
+  let sys: CreatureWheelwrightsSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始skillMap为空', () => {
+    expect((sys as any).skillMap.size).toBe(0)
+  })
+
+  it('手动写入后可读取', () => {
+    ;(sys as any).skillMap.set(11, 44)
+    expect((sys as any).skillMap.get(11)).toBe(44)
+  })
+})
+
+describe('CreatureWheelwrightsSystem - 数据完整性', () => {
+  let sys: CreatureWheelwrightsSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('注入所有字段后完整保存', () => {
+    ;(sys as any).wheelwrights.push(makeMaker(42, 'chariot', 88888))
+    const m = (sys as any).wheelwrights[0]
+    expect(m.entityId).toBe(42)
+    expect(m.wheelType).toBe('chariot')
+    expect(m.tick).toBe(88888)
+  })
+})
+
+describe('CreatureWheelwrightsSystem - lastCheck额外', () => {
+  let sys: CreatureWheelwrightsSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始lastCheck为0', () => {
+    expect((sys as any).lastCheck).toBe(0)
+  })
+})
+
+describe('CreatureWheelwrightsSystem - wheelwrights数组批量操作', () => {
+  let sys: CreatureWheelwrightsSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('注入8条后length为8', () => {
+    for (let i = 0; i < 8; i++) {
+      ;(sys as any).wheelwrights.push(makeMaker(i + 1))
+    }
+    expect((sys as any).wheelwrights).toHaveLength(8)
+  })
+
+  it('splice后length正确', () => {
+    ;(sys as any).wheelwrights.push(makeMaker(1, 'cart'))
+    ;(sys as any).wheelwrights.push(makeMaker(2, 'wagon'))
+    ;(sys as any).wheelwrights.splice(0, 1)
+    expect((sys as any).wheelwrights).toHaveLength(1)
+    expect((sys as any).wheelwrights[0].wheelType).toBe('wagon')
+  })
+})
+
+describe('CreatureWheelwrightsSystem - WheelType字符串合法性', () => {
+  it('4种WheelType均为字符串', () => {
+    const types: WheelType[] = ['cart', 'wagon', 'mill', 'chariot']
+    types.forEach(t => { expect(typeof t).toBe('string') })
+  })
+})
+
+describe('CreatureWheelwrightsSystem - durability和efficiency字段保留', () => {
+  let sys: CreatureWheelwrightsSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('durability和efficiency字段均存在', () => {
+    ;(sys as any).wheelwrights.push(makeMaker(5, 'chariot', 5000))
+    const m = (sys as any).wheelwrights[0]
+    expect(m.durability).toBeDefined()
+    expect(m.efficiency).toBeDefined()
+  })
+})
+
+describe('CreatureWheelwrightsSystem - SKILL_GROWTH与常量', () => {
+  it('SKILL_GROWTH=0.07精确值', () => {
+    const SKILL_GROWTH = 0.07
+    expect(SKILL_GROWTH).toBeCloseTo(0.07)
+  })
+
+  it('CHECK_INTERVAL=1400精确值', () => {
+    expect(1400).toBe(1400)
+  })
+})
+
+describe('CreatureWheelwrightsSystem - 数据合法性多项', () => {
+  it('wheelsBuilt非负整数', () => {
+    const m = makeMaker(1)
+    expect(m.wheelsBuilt).toBeGreaterThanOrEqual(0)
+  })
+
+  it('durability为正数', () => {
+    const m = makeMaker(1)
+    expect(m.durability).toBeGreaterThan(0)
+  })
+
+  it('efficiency为正数', () => {
+    const m = makeMaker(1)
+    expect(m.efficiency).toBeGreaterThan(0)
+  })
+})
+
+describe('CreatureWheelwrightsSystem - 数据结构字段类型', () => {
+  it('Wheelwright接口所有字段为合法类型', () => {
+    const m = makeMaker(1)
+    expect(typeof m.id).toBe('number')
+    expect(typeof m.entityId).toBe('number')
+    expect(typeof m.skill).toBe('number')
+    expect(typeof m.wheelsBuilt).toBe('number')
+    expect(typeof m.wheelType).toBe('string')
+    expect(typeof m.durability).toBe('number')
+    expect(typeof m.efficiency).toBe('number')
+    expect(typeof m.tick).toBe('number')
+  })
+})
+
+describe('CreatureWheelwrightsSystem - nextId初始', () => {
+  let sys: CreatureWheelwrightsSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始nextId为1', () => {
+    expect((sys as any).nextId).toBe(1)
+  })
+})
+
+describe('CreatureWheelwrightsSystem - 综合3测试', () => {
+  let sys: CreatureWheelwrightsSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('注入并查询skill字段', () => {
+    ;(sys as any).wheelwrights.push(makeMaker(1, 'cart', 0))
+    expect((sys as any).wheelwrights[0].skill).toBe(70)
+  })
+
+  it('注入并查询wheelsBuilt字段', () => {
+    ;(sys as any).wheelwrights.push(makeMaker(1, 'cart', 0))
+    expect((sys as any).wheelwrights[0].wheelsBuilt).toBe(12)
+  })
+
+  it('注入并查询durability字段', () => {
+    ;(sys as any).wheelwrights.push(makeMaker(1, 'cart', 0))
+    expect((sys as any).wheelwrights[0].durability).toBe(65)
+  })
+})

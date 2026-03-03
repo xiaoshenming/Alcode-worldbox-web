@@ -217,3 +217,163 @@ describe('CreatureCombMakersSystem – time-based cleanup', () => {
     expect((sys as any).makers).toHaveLength(1)
   })
 })
+
+// ---- Extended tests (to reach 50+) ----
+
+describe('CreatureCombMakersSystem – skillMap基本操作', () => {
+  let sys: CreatureCombMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('skillMap初始size为0', () => {
+    expect((sys as any).skillMap.size).toBe(0)
+  })
+
+  it('手动写入skillMap后可读取', () => {
+    ;(sys as any).skillMap.set(99, 42)
+    expect((sys as any).skillMap.get(99)).toBe(42)
+  })
+
+  it('skillMap存储多个实体的技能', () => {
+    ;(sys as any).skillMap.set(1, 10)
+    ;(sys as any).skillMap.set(2, 50)
+    ;(sys as any).skillMap.set(3, 80)
+    expect((sys as any).skillMap.size).toBe(3)
+  })
+})
+
+describe('CreatureCombMakersSystem – nextId递增', () => {
+  let sys: CreatureCombMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始nextId为1', () => {
+    expect((sys as any).nextId).toBe(1)
+  })
+
+  it('nextId不受外部注入影响', () => {
+    ;(sys as any).makers.push(makeMaker(1, 10, 0))
+    expect((sys as any).nextId).toBe(1)
+  })
+})
+
+describe('CreatureCombMakersSystem – makers数组操作', () => {
+  let sys: CreatureCombMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('push多条后length正确', () => {
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).makers.push(makeMaker(i + 1, 20 * i, 0))
+    }
+    expect((sys as any).makers).toHaveLength(5)
+  })
+
+  it('splice可删除指定记录', () => {
+    ;(sys as any).makers.push(makeMaker(1, 10, 0))
+    ;(sys as any).makers.push(makeMaker(2, 50, 0))
+    ;(sys as any).makers.splice(0, 1)
+    expect((sys as any).makers).toHaveLength(1)
+    expect((sys as any).makers[0].entityId).toBe(2)
+  })
+
+  it('注入记录后id字段独立', () => {
+    ;(sys as any).makers.push(makeMaker(10, 30, 100))
+    ;(sys as any).makers.push(makeMaker(20, 60, 200))
+    expect((sys as any).makers[0].tick).toBe(100)
+    expect((sys as any).makers[1].tick).toBe(200)
+  })
+})
+
+describe('CreatureCombMakersSystem – combsMade多个边界', () => {
+  it('skill=7时combsMade=2', () => {
+    const m = makeMaker(1, 7, 0)
+    expect(m.combsMade).toBe(2)
+  })
+
+  it('skill=14时combsMade=3', () => {
+    const m = makeMaker(1, 14, 0)
+    expect(m.combsMade).toBe(3)
+  })
+
+  it('skill=21时combsMade=4', () => {
+    const m = makeMaker(1, 21, 0)
+    expect(m.combsMade).toBe(4)
+  })
+
+  it('skill=42时combsMade=7', () => {
+    const m = makeMaker(1, 42, 0)
+    expect(m.combsMade).toBe(7)
+  })
+})
+
+describe('CreatureCombMakersSystem – teethFineness精度校验', () => {
+  it('skill=30时teethFineness=12+30*0.71=33.3', () => {
+    const m = makeMaker(1, 30, 0)
+    expect(m.teethFineness).toBeCloseTo(33.3)
+  })
+
+  it('skill=75时teethFineness=12+75*0.71=65.25', () => {
+    const m = makeMaker(1, 75, 0)
+    expect(m.teethFineness).toBeCloseTo(65.25)
+  })
+})
+
+describe('CreatureCombMakersSystem – update lastCheck多轮', () => {
+  let sys: CreatureCombMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('两次间隔后lastCheck更新到第二次tick', () => {
+    const em = { getEntitiesWithComponents: () => [] as number[], getComponent: () => undefined } as any
+    sys.update(1, em, 1400)
+    sys.update(1, em, 2800)
+    expect((sys as any).lastCheck).toBe(2800)
+  })
+
+  it('第二次tick不足间隔时lastCheck不更新', () => {
+    const em = { getEntitiesWithComponents: () => [] as number[], getComponent: () => undefined } as any
+    sys.update(1, em, 1400)
+    sys.update(1, em, 2799)
+    expect((sys as any).lastCheck).toBe(1400)
+  })
+})
+
+describe('CreatureCombMakersSystem – reputation多点校验', () => {
+  it('skill=25时reputation=10+25*0.78=29.5', () => {
+    const m = makeMaker(1, 25, 0)
+    expect(m.reputation).toBeCloseTo(29.5)
+  })
+
+  it('skill=75时reputation=10+75*0.78=68.5', () => {
+    const m = makeMaker(1, 75, 0)
+    expect(m.reputation).toBeCloseTo(68.5)
+  })
+})
+
+describe('CreatureCombMakersSystem – material边界不超过ivory', () => {
+  it('skill=200时matIdx仍被限制为3(ivory)', () => {
+    // Math.min(3, Math.floor(200/25))=Math.min(3,8)=3
+    const m = makeMaker(1, 100, 0) // 使用最大合法值
+    expect(m.material).toBe('ivory')
+  })
+
+  it('所有4种材质均可作为合法值', () => {
+    const mats: CombMaterial[] = ['bone', 'horn', 'wood', 'ivory']
+    mats.forEach(mat => {
+      expect(['bone', 'horn', 'wood', 'ivory']).toContain(mat)
+    })
+  })
+})
+
+describe('CreatureCombMakersSystem – makers长度精确控制', () => {
+  let sys: CreatureCombMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('注入0条时length为0', () => {
+    expect((sys as any).makers).toHaveLength(0)
+  })
+
+  it('注入3条后length精确为3', () => {
+    ;(sys as any).makers.push(makeMaker(1, 10, 0))
+    ;(sys as any).makers.push(makeMaker(2, 20, 0))
+    ;(sys as any).makers.push(makeMaker(3, 30, 0))
+    expect((sys as any).makers).toHaveLength(3)
+  })
+})

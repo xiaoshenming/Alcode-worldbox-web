@@ -289,4 +289,111 @@ describe('DiplomaticConservatorshipSystem', () => {
       expect((sys as any).nextId).toBeGreaterThan(idBefore)
     })
   })
+
+  // ---- 6. 额外边界测试 ----
+  describe('6. 额外边界与枚举测试', () => {
+    it('controlScope 上限 85 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      const a = injectArrangement(sys, { controlScope: 84.99, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(a.controlScope).toBeLessThanOrEqual(85)
+    })
+
+    it('controlScope 下限 5 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      const a = injectArrangement(sys, { controlScope: 5.01, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(a.controlScope).toBeGreaterThanOrEqual(5)
+    })
+
+    it('reformProgress 上限 90 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      const a = injectArrangement(sys, { reformProgress: 89.99, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(a.reformProgress).toBeLessThanOrEqual(90)
+    })
+
+    it('resistanceLevel 上限 80 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      const a = injectArrangement(sys, { resistanceLevel: 79.99, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(a.resistanceLevel).toBeLessThanOrEqual(80)
+    })
+
+    it('stabilityGain 上限 65 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      const a = injectArrangement(sys, { stabilityGain: 64.99, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(a.stabilityGain).toBeLessThanOrEqual(65)
+    })
+
+    it('fiscal_conservatorship form 可存储', () => {
+      const a = injectArrangement(sys, { form: 'fiscal_conservatorship' })
+      expect(a.form).toBe('fiscal_conservatorship')
+    })
+
+    it('military_conservatorship form 可存储', () => {
+      const a = injectArrangement(sys, { form: 'military_conservatorship' })
+      expect(a.form).toBe('military_conservatorship')
+    })
+
+    it('administrative_conservatorship form 可存储', () => {
+      const a = injectArrangement(sys, { form: 'administrative_conservatorship' })
+      expect(a.form).toBe('administrative_conservatorship')
+    })
+
+    it('judicial_conservatorship form 可存储', () => {
+      const a = injectArrangement(sys, { form: 'judicial_conservatorship' })
+      expect(a.form).toBe('judicial_conservatorship')
+    })
+
+    it('update 不改变 form', () => {
+      const a = injectArrangement(sys, { form: 'judicial_conservatorship', tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(a.form).toBe('judicial_conservatorship')
+    })
+
+    it('多条 arrangements 各自独立更新 duration', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      const a1 = injectArrangement(sys, { duration: 2, tick: 0 })
+      const a2 = injectArrangement(sys, { duration: 6, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(a1.duration).toBe(3)
+      expect(a2.duration).toBe(7)
+    })
+
+    it('全部过期后 arrangements 清空', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      injectArrangement(sys, { tick: 0 })
+      injectArrangement(sys, { tick: 100 })
+      const bigTick = CUTOFF_AGE + 1000 + CHECK_INTERVAL
+      ;(sys as any).lastCheck = 0
+      sys.update(1, nullWorld, nullEm, bigTick)
+      expect((sys as any).arrangements).toHaveLength(0)
+    })
+
+    it('update 不改变 conservatorCivId/subjectCivId', () => {
+      const a = injectArrangement(sys, { conservatorCivId: 3, subjectCivId: 6, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(a.conservatorCivId).toBe(3)
+      expect(a.subjectCivId).toBe(6)
+    })
+
+    it('空 arrangements 时 update 不崩溃', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99)
+      expect(() => sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)).not.toThrow()
+    })
+
+    it('注入 4 种 form 后 arrangements 长度为 4', () => {
+      const forms: ConservatorshipForm[] = ['fiscal_conservatorship', 'military_conservatorship', 'administrative_conservatorship', 'judicial_conservatorship']
+      for (const f of forms) { injectArrangement(sys, { form: f }) }
+      expect((sys as any).arrangements).toHaveLength(4)
+    })
+
+    it('lastCheck 更新到最新 tick', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99)
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL * 4)
+      expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 4)
+    })
+  })
 })

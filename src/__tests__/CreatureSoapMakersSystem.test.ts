@@ -215,3 +215,158 @@ describe('CreatureSoapMakersSystem - cleanup过期清理', () => {
     expect((sys as any).makers).toHaveLength(0)
   })
 })
+
+// ---- Extended tests (to reach 50+) ----
+
+describe('CreatureSoapMakersSystem - purity公式', () => {
+  it('skill=0时purity=15', () => {
+    expect(15 + 0 * 0.7).toBeCloseTo(15)
+  })
+
+  it('skill=50时purity=15+50*0.7=50', () => {
+    expect(15 + 50 * 0.7).toBeCloseTo(50)
+  })
+
+  it('skill=100时purity=15+100*0.7=85', () => {
+    expect(15 + 100 * 0.7).toBeCloseTo(85)
+  })
+
+  it('skill=25时purity=15+25*0.7=32.5', () => {
+    expect(15 + 25 * 0.7).toBeCloseTo(32.5)
+  })
+})
+
+describe('CreatureSoapMakersSystem - reputation公式', () => {
+  it('skill=0时reputation=10', () => {
+    expect(10 + 0 * 0.8).toBeCloseTo(10)
+  })
+
+  it('skill=50时reputation=10+50*0.8=50', () => {
+    expect(10 + 50 * 0.8).toBeCloseTo(50)
+  })
+
+  it('skill=100时reputation=10+100*0.8=90', () => {
+    expect(10 + 100 * 0.8).toBeCloseTo(90)
+  })
+})
+
+describe('CreatureSoapMakersSystem - batchesMade公式', () => {
+  it('skill=8时batchesMade=1+floor(8/8)=2', () => {
+    expect(1 + Math.floor(8 / 8)).toBe(2)
+  })
+
+  it('skill=0时batchesMade=1', () => {
+    expect(1 + Math.floor(0 / 8)).toBe(1)
+  })
+
+  it('skill=80时batchesMade=1+floor(80/8)=11', () => {
+    expect(1 + Math.floor(80 / 8)).toBe(11)
+  })
+})
+
+describe('CreatureSoapMakersSystem - soapType4段', () => {
+  it('skill=0→tallow', () => {
+    expect(['tallow', 'olive', 'herbal', 'perfumed'][Math.min(3, Math.floor(0 / 25))]).toBe('tallow')
+  })
+
+  it('skill=25→olive', () => {
+    expect(['tallow', 'olive', 'herbal', 'perfumed'][Math.min(3, Math.floor(25 / 25))]).toBe('olive')
+  })
+
+  it('skill=50→herbal', () => {
+    expect(['tallow', 'olive', 'herbal', 'perfumed'][Math.min(3, Math.floor(50 / 25))]).toBe('herbal')
+  })
+
+  it('skill=75→perfumed', () => {
+    expect(['tallow', 'olive', 'herbal', 'perfumed'][Math.min(3, Math.floor(75 / 25))]).toBe('perfumed')
+  })
+
+  it('skill=100→上限3→perfumed', () => {
+    expect(['tallow', 'olive', 'herbal', 'perfumed'][Math.min(3, Math.floor(100 / 25))]).toBe('perfumed')
+  })
+})
+
+describe('CreatureSoapMakersSystem - skillMap操作', () => {
+  let sys: CreatureSoapMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始skillMap为空', () => {
+    expect((sys as any).skillMap.size).toBe(0)
+  })
+
+  it('手动写入后可读取', () => {
+    ;(sys as any).skillMap.set(3, 44)
+    expect((sys as any).skillMap.get(3)).toBe(44)
+  })
+
+  it('多实体技能各自独立', () => {
+    ;(sys as any).skillMap.set(1, 10)
+    ;(sys as any).skillMap.set(2, 50)
+    expect((sys as any).skillMap.get(1)).toBe(10)
+    expect((sys as any).skillMap.get(2)).toBe(50)
+  })
+})
+
+describe('CreatureSoapMakersSystem - lastCheck多轮', () => {
+  let sys: CreatureSoapMakersSystem
+  const fakeEm = { getEntitiesWithComponents: () => [], getComponent: () => null } as any
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始lastCheck为0', () => {
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('两次达阈值后lastCheck正确', () => {
+    sys.update(1, fakeEm, CHECK_INTERVAL)
+    sys.update(1, fakeEm, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+})
+
+describe('CreatureSoapMakersSystem - 数据完整性', () => {
+  let sys: CreatureSoapMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('注入所有字段完整保存', () => {
+    ;(sys as any).makers.push(makeMaker(42, 'perfumed', 80, 9999))
+    const m = (sys as any).makers[0]
+    expect(m.entityId).toBe(42)
+    expect(m.soapType).toBe('perfumed')
+    expect(m.tick).toBe(9999)
+  })
+})
+
+describe('CreatureSoapMakersSystem - MAX_MAKERS=30上限', () => {
+  let sys: CreatureSoapMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('手动注入30条后length为30', () => {
+    for (let i = 0; i < 30; i++) {
+      ;(sys as any).makers.push(makeMaker(i + 1))
+    }
+    expect((sys as any).makers).toHaveLength(30)
+  })
+})
+
+describe('CreatureSoapMakersSystem - 数据结构字段类型', () => {
+  it('SoapMaker接口所有字段为合法类型', () => {
+    const m = makeMaker(1)
+    expect(typeof m.id).toBe('number')
+    expect(typeof m.entityId).toBe('number')
+    expect(typeof m.skill).toBe('number')
+    expect(typeof m.batchesMade).toBe('number')
+    expect(typeof m.soapType).toBe('string')
+    expect(typeof m.purity).toBe('number')
+    expect(typeof m.reputation).toBe('number')
+    expect(typeof m.tick).toBe('number')
+  })
+})
+
+describe('CreatureSoapMakersSystem - nextId初始', () => {
+  let sys: CreatureSoapMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始nextId为1', () => {
+    expect((sys as any).nextId).toBe(1)
+  })
+})

@@ -229,3 +229,190 @@ describe('CreaturePersonalitySystem — handleKeyDown()', () => {
     expect((sys as any).scrollY).toBe(0)
   })
 })
+
+// ---- Extended tests (to reach 50+) ----
+
+describe('CreaturePersonalitySystem — assign多实体独立', () => {
+  let sys: CreaturePersonalitySystem
+  beforeEach(() => { sys = makeSys() })
+
+  it('assign10个不同实体，personalities.size为10', () => {
+    for (let i = 1; i <= 10; i++) { sys.assign(i) }
+    expect((sys as any).personalities.size).toBe(10)
+  })
+
+  it('两个不同实体的traits互不影响', () => {
+    const p1 = sys.assign(1)
+    const p2 = sys.assign(2)
+    p1.traits.bravery = 0.9
+    expect(p2.traits.bravery).not.toBe(0.9)  // 各自独立
+  })
+})
+
+describe('CreaturePersonalitySystem — remove方法', () => {
+  let sys: CreaturePersonalitySystem
+  beforeEach(() => { sys = makeSys() })
+
+  it('remove后personalities中不再有该实体', () => {
+    sys.assign(5)
+    sys.remove(5)
+    expect(sys.get(5)).toBeUndefined()
+  })
+
+  it('remove不存在的实体不崩溃', () => {
+    expect(() => sys.remove(9999)).not.toThrow()
+  })
+
+  it('remove后再assign可重新生成', () => {
+    sys.assign(5)
+    sys.remove(5)
+    const p = sys.assign(5)
+    expect(p.entityId).toBe(5)
+  })
+})
+
+describe('CreaturePersonalitySystem — traits范围验证', () => {
+  let sys: CreaturePersonalitySystem
+  beforeEach(() => { sys = makeSys() })
+
+  it('assign后所有traits在[-1,1]范围内', () => {
+    const p = sys.assign(100)
+    const axes = ['bravery', 'kindness', 'diligence', 'curiosity', 'loyalty'] as const
+    for (const axis of axes) {
+      expect(p.traits[axis]).toBeGreaterThanOrEqual(-1)
+      expect(p.traits[axis]).toBeLessThanOrEqual(1)
+    }
+  })
+
+  it('stability在[0.3,1.0]范围内', () => {
+    const p = sys.assign(101)
+    expect(p.stability).toBeGreaterThanOrEqual(0.3)
+    expect(p.stability).toBeLessThanOrEqual(1)
+  })
+
+  it('sociability在[-1,1]范围内', () => {
+    const p = sys.assign(102)
+    expect(p.sociability).toBeGreaterThanOrEqual(-1)
+    expect(p.sociability).toBeLessThanOrEqual(1)
+  })
+})
+
+describe('CreaturePersonalitySystem — getDecisionBias情景', () => {
+  let sys: CreaturePersonalitySystem
+  beforeEach(() => { sys = makeSys() })
+
+  it('fight偏向：bravery=1,loyalty=1时约0.9', () => {
+    const p = sys.assign(10)
+    p.traits.bravery = 1; p.traits.loyalty = 1; p.stability = 0.5
+    const bias = sys.getDecisionBias(10, 'fight')
+    expect(bias).toBeCloseTo(0.6 * 1 + 0.3 * 1)
+  })
+
+  it('explore偏向：curiosity=0.5时约0.4', () => {
+    const p = sys.assign(11)
+    p.traits.curiosity = 0.5
+    const bias = sys.getDecisionBias(11, 'explore')
+    expect(bias).toBeCloseTo(0.8 * 0.5)
+  })
+
+  it('work偏向：diligence=0.5,loyalty=0.5时约0.45', () => {
+    const p = sys.assign(12)
+    p.traits.diligence = 0.5; p.traits.loyalty = 0.5
+    const bias = sys.getDecisionBias(12, 'work')
+    expect(bias).toBeCloseTo(0.7 * 0.5 + 0.2 * 0.5)
+  })
+
+  it('help偏向：kindness=0.5,sociability=0.5时约0.45', () => {
+    const p = sys.assign(13)
+    p.traits.kindness = 0.5; p.sociability = 0.5
+    const bias = sys.getDecisionBias(13, 'help')
+    expect(bias).toBeCloseTo(0.7 * 0.5 + 0.2 * 0.5)
+  })
+})
+
+describe('CreaturePersonalitySystem — traitStrs预计算', () => {
+  let sys: CreaturePersonalitySystem
+  beforeEach(() => { sys = makeSys() })
+
+  it('assign后traitStrs.bravery为字符串', () => {
+    const p = sys.assign(20)
+    expect(typeof p.traitStrs.bravery).toBe('string')
+  })
+
+  it('assign后socialStr为非空字符串', () => {
+    const p = sys.assign(21)
+    expect(p.socialStr.length).toBeGreaterThan(0)
+  })
+
+  it('sociabilityStr格式为2位小数', () => {
+    const p = sys.assign(22)
+    expect(p.sociabilityStr).toMatch(/^-?\d+\.\d{2}$/)
+  })
+})
+
+describe('CreaturePersonalitySystem — personalities Map操作', () => {
+  let sys: CreaturePersonalitySystem
+  beforeEach(() => { sys = makeSys() })
+
+  it('初始personalities为空Map', () => {
+    expect((sys as any).personalities.size).toBe(0)
+  })
+
+  it('assign后size为1', () => {
+    sys.assign(1)
+    expect((sys as any).personalities.size).toBe(1)
+  })
+
+  it('remove后size减少', () => {
+    sys.assign(1)
+    sys.assign(2)
+    sys.remove(1)
+    expect((sys as any).personalities.size).toBe(1)
+  })
+})
+
+describe('CreaturePersonalitySystem — update tickCounter', () => {
+  let sys: CreaturePersonalitySystem
+  beforeEach(() => { sys = makeSys() })
+
+  it('初始tickCounter为0', () => {
+    expect((sys as any).tickCounter).toBe(0)
+  })
+
+  it('每次update tickCounter增加1', () => {
+    sys.update(1)
+    expect((sys as any).tickCounter).toBe(1)
+    sys.update(2)
+    expect((sys as any).tickCounter).toBe(2)
+  })
+})
+
+describe('CreaturePersonalitySystem — flee偏向公式', () => {
+  let sys: CreaturePersonalitySystem
+  beforeEach(() => { sys = makeSys() })
+
+  it('flee偏向：bravery=-1,stability=1时约0.7', () => {
+    const p = sys.assign(30)
+    p.traits.bravery = -1; p.stability = 1
+    const bias = sys.getDecisionBias(30, 'flee')
+    expect(bias).toBeCloseTo(-(-1) * 0.7 + (1 - 1) * 0.3)
+  })
+})
+
+describe('CreaturePersonalitySystem — scrollY初始', () => {
+  let sys: CreaturePersonalitySystem
+  beforeEach(() => { sys = makeSys() })
+
+  it('初始scrollY为0', () => {
+    expect((sys as any).scrollY).toBe(0)
+  })
+})
+
+describe('CreaturePersonalitySystem — selectedEntity初始', () => {
+  let sys: CreaturePersonalitySystem
+  beforeEach(() => { sys = makeSys() })
+
+  it('初始selectedEntity为-1', () => {
+    expect((sys as any).selectedEntity).toBe(-1)
+  })
+})

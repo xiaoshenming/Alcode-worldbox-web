@@ -225,3 +225,147 @@ describe('DominionForm枚举完整性', () => {
     expect(makeRel({ form: 'tributary_dominion' }).form).toBe('tributary_dominion')
   })
 })
+
+describe('额外边界与枚举测试', () => {
+  it('selfGovernance 上限 90 不被突破', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    ;(sys as any).relations.push(makeRel({ selfGovernance: 89.99, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2550)
+    expect((sys as any).relations[0]?.selfGovernance).toBeLessThanOrEqual(90)
+    vi.restoreAllMocks()
+  })
+
+  it('selfGovernance 下限 10 不被突破', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).relations.push(makeRel({ selfGovernance: 10.01, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2550)
+    expect((sys as any).relations[0]?.selfGovernance).toBeGreaterThanOrEqual(10)
+    vi.restoreAllMocks()
+  })
+
+  it('imperialControl 上限 85 不被突破', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    ;(sys as any).relations.push(makeRel({ imperialControl: 84.99, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2550)
+    expect((sys as any).relations[0]?.imperialControl).toBeLessThanOrEqual(85)
+    vi.restoreAllMocks()
+  })
+
+  it('economicTies 上限 75 不被突破', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    ;(sys as any).relations.push(makeRel({ economicTies: 74.99, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2550)
+    expect((sys as any).relations[0]?.economicTies).toBeLessThanOrEqual(75)
+    vi.restoreAllMocks()
+  })
+
+  it('culturalAssimilation 上限 65 不被突破', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    ;(sys as any).relations.push(makeRel({ culturalAssimilation: 64.99, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2550)
+    expect((sys as any).relations[0]?.culturalAssimilation).toBeLessThanOrEqual(65)
+    vi.restoreAllMocks()
+  })
+
+  it('colonial_dominion form 可存储', () => {
+    expect(makeRel({ form: 'colonial_dominion' }).form).toBe('colonial_dominion')
+  })
+
+  it('autonomous_region form 可存储', () => {
+    expect(makeRel({ form: 'autonomous_region' }).form).toBe('autonomous_region')
+  })
+
+  it('过期记录（cutoff=tick-96000）被移除', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).relations.push(makeRel({ tick: 0 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, {} as any, {} as any, 96000 + 2550 + 1)
+    expect((sys as any).relations).toHaveLength(0)
+    vi.restoreAllMocks()
+  })
+
+  it('未过期记录保留', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const bigTick = 96000 + 2550
+    ;(sys as any).relations.push(makeRel({ tick: bigTick - 1000 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, {} as any, {} as any, bigTick)
+    expect((sys as any).relations).toHaveLength(1)
+    vi.restoreAllMocks()
+  })
+
+  it('多条 relations 各自独立更新 duration', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).relations.push(makeRel({ duration: 3, tick: 0 }))
+    ;(sys as any).relations.push(makeRel({ duration: 7, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2550)
+    expect((sys as any).relations[0].duration).toBe(4)
+    expect((sys as any).relations[1].duration).toBe(8)
+    vi.restoreAllMocks()
+  })
+
+  it('update 不改变 civIdA/civIdB', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).relations.push(makeRel({ civIdA: 4, civIdB: 6, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2550)
+    expect((sys as any).relations[0].civIdA).toBe(4)
+    expect((sys as any).relations[0].civIdB).toBe(6)
+    vi.restoreAllMocks()
+  })
+
+  it('空 relations 时 update 不崩溃', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    expect(() => sys.update(1, {} as any, {} as any, 2550)).not.toThrow()
+    vi.restoreAllMocks()
+  })
+
+  it('MAX_RELATIONS=16 上限：已满时不新增', () => {
+    const sys = makeSys()
+    for (let i = 0; i < 16; i++) {
+      ;(sys as any).relations.push(makeRel({ tick: 9999999 }))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).lastCheck = 0
+    sys.update(1, {} as any, {} as any, 2550)
+    expect((sys as any).relations.length).toBeLessThanOrEqual(16)
+    vi.restoreAllMocks()
+  })
+
+  it('DominionRelation 包含所有必要字段', () => {
+    const r = makeRel()
+    expect(r).toHaveProperty('id')
+    expect(r).toHaveProperty('civIdA')
+    expect(r).toHaveProperty('civIdB')
+    expect(r).toHaveProperty('form')
+    expect(r).toHaveProperty('selfGovernance')
+    expect(r).toHaveProperty('imperialControl')
+    expect(r).toHaveProperty('economicTies')
+    expect(r).toHaveProperty('culturalAssimilation')
+    expect(r).toHaveProperty('duration')
+    expect(r).toHaveProperty('tick')
+  })
+
+  it('nextId 手动设置后保持', () => {
+    const sys = makeSys()
+    ;(sys as any).nextId = 77
+    expect((sys as any).nextId).toBe(77)
+  })
+
+  it('lastCheck 更新到最新 tick', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, {} as any, {} as any, 2550 * 3)
+    expect((sys as any).lastCheck).toBe(2550 * 3)
+    vi.restoreAllMocks()
+  })
+})

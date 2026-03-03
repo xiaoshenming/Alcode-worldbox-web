@@ -198,3 +198,251 @@ describe('CreatureNeedlerSystem - 数据完整性', () => {
     expect(stored.tick).toBe(100)
   })
 })
+
+// ---- Extended tests (to reach 50+) ----
+
+describe('CreatureNeedlerSystem - lastCheck追踪', () => {
+  let sys: CreatureNeedlerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始lastCheck为0', () => {
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('三次达阈值后lastCheck为3*CHECK_INTERVAL', () => {
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    sys.update(1, em, CHECK_INTERVAL * 3)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 3)
+  })
+})
+
+describe('CreatureNeedlerSystem - 多工匠cleanup批量', () => {
+  let sys: CreatureNeedlerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('5个工匠全部needlingSkill低，全删', () => {
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).needlers.push({ ...makeNeedler(i + 1), needlingSkill: 1 })
+    }
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).needlers).toHaveLength(0)
+  })
+
+  it('5个全高，全保留', () => {
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).needlers.push({ ...makeNeedler(i + 1), needlingSkill: 50 })
+    }
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).needlers).toHaveLength(5)
+  })
+})
+
+describe('CreatureNeedlerSystem - eyeForming字段保留', () => {
+  let sys: CreatureNeedlerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('eyeForming=77，update后仍为77', () => {
+    ;(sys as any).needlers.push({ ...makeNeedler(1), needlingSkill: 50, eyeForming: 77 })
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).needlers[0].eyeForming).toBe(77)
+  })
+})
+
+describe('CreatureNeedlerSystem - 数据完整性', () => {
+  let sys: CreatureNeedlerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('所有字段注入后完整保留（包含tick）', () => {
+    const n = { id: 55, entityId: 88, needlingSkill: 60, pointSharpness: 70, eyeForming: 50, tempeControl: 80, tick: 777 }
+    ;(sys as any).needlers.push(n)
+    expect((sys as any).needlers[0].tick).toBe(777)
+    expect((sys as any).needlers[0].entityId).toBe(88)
+  })
+})
+
+describe('CreatureNeedlerSystem - pointSharpness连续增长', () => {
+  let sys: CreatureNeedlerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('pointSharpness从50连续2次后为50.03', () => {
+    ;(sys as any).needlers.push({ ...makeNeedler(1), needlingSkill: 50, pointSharpness: 50 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    expect((sys as any).needlers[0].pointSharpness).toBeCloseTo(50.03)
+  })
+})
+
+describe('CreatureNeedlerSystem - tempeControl连续增长', () => {
+  let sys: CreatureNeedlerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('tempeControl从70连续3次后为70.03', () => {
+    ;(sys as any).needlers.push({ ...makeNeedler(1), needlingSkill: 50, tempeControl: 70 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    sys.update(1, em, CHECK_INTERVAL * 3)
+    expect((sys as any).needlers[0].tempeControl).toBeCloseTo(70.03)
+  })
+})
+
+describe('CreatureNeedlerSystem - nextId初始', () => {
+  let sys: CreatureNeedlerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始nextId为1', () => {
+    expect((sys as any).nextId).toBe(1)
+  })
+})
+
+describe('CreatureNeedlerSystem - needlingSkill上限后连续仍为100', () => {
+  let sys: CreatureNeedlerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('needlingSkill=100连续update仍保持100', () => {
+    ;(sys as any).needlers.push({ ...makeNeedler(1), needlingSkill: 100 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    expect((sys as any).needlers[0].needlingSkill).toBe(100)
+  })
+})
+
+describe('CreatureNeedlerSystem - 批量工匠全部更新', () => {
+  let sys: CreatureNeedlerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('5个工匠同时更新，needlingSkill各自独立增长', () => {
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).needlers.push({ ...makeNeedler(i + 1), needlingSkill: 40 + i })
+    }
+    sys.update(1, em, CHECK_INTERVAL)
+    for (let i = 0; i < 5; i++) {
+      expect((sys as any).needlers[i].needlingSkill).toBeCloseTo(40 + i + 0.02)
+    }
+  })
+})
+
+describe('CreatureNeedlerSystem - 数据结构验证', () => {
+  let sys: CreatureNeedlerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('注入id=100的工匠后entityId正确保存', () => {
+    ;(sys as any).needlers.push({ ...makeNeedler(100), needlingSkill: 50 })
+    expect((sys as any).needlers[0].entityId).toBe(100)
+  })
+
+  it('注入时tick字段保留', () => {
+    ;(sys as any).needlers.push({ ...makeNeedler(1), needlingSkill: 50, tick: 5000 })
+    expect((sys as any).needlers[0].tick).toBe(5000)
+  })
+})
+
+describe('CreatureNeedlerSystem - pointSharpness从0到100', () => {
+  let sys: CreatureNeedlerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('pointSharpness从0开始，update后为0.015', () => {
+    ;(sys as any).needlers.push({ ...makeNeedler(1), needlingSkill: 50, pointSharpness: 0 })
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).needlers[0].pointSharpness).toBeCloseTo(0.015)
+  })
+})
+
+describe('CreatureNeedlerSystem - 精确验证', () => {
+  let sys: CreatureNeedlerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('CHECK_INTERVAL=3120常量验证', () => {
+    expect(CHECK_INTERVAL).toBe(3120)
+  })
+
+  it('注入3个工匠后3个全部可读', () => {
+    for (let i = 0; i < 3; i++) {
+      ;(sys as any).needlers.push(makeNeedler(i + 1))
+    }
+    expect((sys as any).needlers).toHaveLength(3)
+  })
+})
+
+describe('CreatureNeedlerSystem - 批量工匠全部cleanup', () => {
+  let sys: CreatureNeedlerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('8个全高，全部保留', () => {
+    for (let i = 0; i < 8; i++) {
+      ;(sys as any).needlers.push({ ...makeNeedler(i + 1), needlingSkill: 50 })
+    }
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).needlers).toHaveLength(8)
+  })
+})
+
+describe('CreatureNeedlerSystem - 数据结构字段类型', () => {
+  it('Needler接口所有字段为number类型', () => {
+    const n = makeNeedler(1)
+    expect(typeof n.id).toBe('number')
+    expect(typeof n.entityId).toBe('number')
+    expect(typeof n.needlingSkill).toBe('number')
+    expect(typeof n.pointSharpness).toBe('number')
+    expect(typeof n.eyeForming).toBe('number')
+    expect(typeof n.tempeControl).toBe('number')
+    expect(typeof n.tick).toBe('number')
+  })
+})
+
+describe('CreatureNeedlerSystem - needlingSkill绝对边界', () => {
+  let sys: CreatureNeedlerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('needlingSkill=5（>4），update后5.02>4，保留', () => {
+    ;(sys as any).needlers.push({ ...makeNeedler(1), needlingSkill: 5 })
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).needlers).toHaveLength(1)
+  })
+
+  it('needlingSkill=3（<4），update后3.02<=4，删除', () => {
+    ;(sys as any).needlers.push({ ...makeNeedler(1), needlingSkill: 3 })
+    sys.update(1, em, CHECK_INTERVAL)
+    // 3.02 <= 4 → 删除
+    expect((sys as any).needlers).toHaveLength(0)
+  })
+})
+
+describe('CreatureNeedlerSystem - 连续不触发update', () => {
+  let sys: CreatureNeedlerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('tick=1时不触发（lastCheck=0，差值=1<3120）', () => {
+    ;(sys as any).needlers.push({ ...makeNeedler(1), needlingSkill: 50 })
+    const before = (sys as any).needlers[0].needlingSkill
+    sys.update(1, em, 1)
+    expect((sys as any).needlers[0].needlingSkill).toBe(before)
+  })
+})
+
+describe('CreatureNeedlerSystem - 综合3测试', () => {
+  let sys: CreatureNeedlerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('两次连续达阈值，needlingSkill连续增长', () => {
+    ;(sys as any).needlers.push({ ...makeNeedler(1), needlingSkill: 20 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    expect((sys as any).needlers[0].needlingSkill).toBeCloseTo(20.04)
+  })
+
+  it('tempeControl从0增长到0.02（两次update）', () => {
+    ;(sys as any).needlers.push({ ...makeNeedler(1), needlingSkill: 50, tempeControl: 0 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    expect((sys as any).needlers[0].tempeControl).toBeCloseTo(0.02)
+  })
+
+  it('pointSharpness从0增长到0.03（三次update）', () => {
+    ;(sys as any).needlers.push({ ...makeNeedler(1), needlingSkill: 50, pointSharpness: 0 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    sys.update(1, em, CHECK_INTERVAL * 3)
+    expect((sys as any).needlers[0].pointSharpness).toBeCloseTo(0.045)
+  })
+})

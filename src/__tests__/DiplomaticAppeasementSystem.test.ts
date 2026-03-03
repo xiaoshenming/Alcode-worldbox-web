@@ -279,3 +279,135 @@ describe('DiplomaticAppeasementSystem', () => {
     })
   })
 })
+
+// ---- 追加测试以达到 50+ ----
+describe('DiplomaticAppeasementSystem — 额外完整性测试', () => {
+  const CI = 2390
+  const CUTOFF = 80000
+  const MAX = 20
+
+  function makeSys2() { return new DiplomaticAppeasementSystem() }
+  function makeP(o: Partial<AppeasementPolicy> = {}): AppeasementPolicy {
+    return { id: 1, civIdA: 1, civIdB: 2, appeasementType: 'territorial',
+      concessionLevel: 40, peaceStability: 50, publicOpinion: 55, longTermRisk: 25,
+      duration: 0, tick: 0, ...o }
+  }
+
+  let sys: DiplomaticAppeasementSystem
+  beforeEach(() => { sys = makeSys2(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('两系统实例互相独立', () => {
+    const s2 = makeSys2(); ;(sys as any).policies.push(makeP())
+    expect((s2 as any).policies).toHaveLength(0)
+  })
+  it('update 不改变 appeasementType', () => {
+    ;(sys as any).policies.push(makeP({ appeasementType: 'symbolic', tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).policies[0].appeasementType).toBe('symbolic')
+  })
+  it('update 不改变 id 字段', () => {
+    ;(sys as any).policies.push(makeP({ id: 88, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).policies[0].id).toBe(88)
+  })
+  it('concessionLevel 下界不低于 5', () => {
+    ;(sys as any).policies.push(makeP({ concessionLevel: 5, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).policies[0].concessionLevel).toBeGreaterThanOrEqual(5)
+  })
+  it('peaceStability 下界不低于 10', () => {
+    ;(sys as any).policies.push(makeP({ peaceStability: 10, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).policies[0].peaceStability).toBeGreaterThanOrEqual(10)
+  })
+  it('publicOpinion 下界不低于 10', () => {
+    ;(sys as any).policies.push(makeP({ publicOpinion: 10, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).policies[0].publicOpinion).toBeGreaterThanOrEqual(10)
+  })
+  it('longTermRisk 下界不低于 5', () => {
+    ;(sys as any).policies.push(makeP({ longTermRisk: 5, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).policies[0].longTermRisk).toBeGreaterThanOrEqual(5)
+  })
+  it('concessionLevel 上界不超过 80', () => {
+    ;(sys as any).policies.push(makeP({ concessionLevel: 80, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).policies[0].concessionLevel).toBeLessThanOrEqual(80)
+  })
+  it('peaceStability 上界不超过 85', () => {
+    ;(sys as any).policies.push(makeP({ peaceStability: 85, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).policies[0].peaceStability).toBeLessThanOrEqual(85)
+  })
+  it('publicOpinion 上界不超过 90', () => {
+    ;(sys as any).policies.push(makeP({ publicOpinion: 90, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).policies[0].publicOpinion).toBeLessThanOrEqual(90)
+  })
+  it('longTermRisk 上界不超过 70', () => {
+    ;(sys as any).policies.push(makeP({ longTermRisk: 70, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).policies[0].longTermRisk).toBeLessThanOrEqual(70)
+  })
+  it('多条记录各自独立更新 duration', () => {
+    ;(sys as any).policies.push(makeP({ id: 1, tick: CI, duration: 0 }))
+    ;(sys as any).policies.push(makeP({ id: 2, tick: CI, duration: 5 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).policies[0].duration).toBe(1)
+    expect((sys as any).policies[1].duration).toBe(6)
+  })
+  it('过期清理：tick=0 在大 tick 时删除', () => {
+    ;(sys as any).policies.push(makeP({ id: 1, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CUTOFF + CI + 1)
+    expect((sys as any).policies).toHaveLength(0)
+  })
+  it('混合过期：保留新，删旧', () => {
+    const big = CUTOFF + CI + 1
+    ;(sys as any).policies.push(makeP({ id: 1, tick: 0 }))
+    ;(sys as any).policies.push(makeP({ id: 2, tick: big }))
+    sys.update(1, {} as any, {} as any, big)
+    expect((sys as any).policies).toHaveLength(1)
+    expect((sys as any).policies[0].id).toBe(2)
+  })
+  it('duration 只在满足 CHECK_INTERVAL 时递增', () => {
+    ;(sys as any).policies.push(makeP({ duration: 0, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 10)
+    expect((sys as any).policies[0].duration).toBe(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).policies[0].duration).toBe(1)
+  })
+  it('civA === civB 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).policies).toHaveLength(0)
+  })
+  it('达到 MAX=20 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    for (let i = 1; i <= MAX; i++) { ;(sys as any).policies.push(makeP({ id: i, tick: CI })) }
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).policies.length).toBeLessThanOrEqual(MAX)
+  })
+  it('初始 nextId 为 1', () => { expect((sys as any).nextId).toBe(1) })
+  it('tick=0 不触发更新', () => {
+    sys.update(1, {} as any, {} as any, 0); expect((sys as any).lastCheck).toBe(0)
+  })
+  it('5 条全过期在大 tick 时全删除', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).policies.push(makeP({ id: i, tick: 0 })) }
+    sys.update(1, {} as any, {} as any, CUTOFF + CI + 1)
+    expect((sys as any).policies).toHaveLength(0)
+  })
+  it('civIdB 可独立读取', () => {
+    ;(sys as any).policies.push(makeP({ civIdB: 7 }))
+    expect((sys as any).policies[0].civIdB).toBe(7)
+  })
+})

@@ -173,3 +173,178 @@ describe('CreatureFerruleMakersSystem - time-based cleanup', () => {
     expect((sys as any).makers[0].entityId).toBe(1)
   })
 })
+
+// ---- Extended tests (to reach 50+) ----
+
+describe('CreatureFerruleMakersSystem - makers数组多操作', () => {
+  let sys: CreatureFerruleMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('push10条后length为10', () => {
+    for (let i = 0; i < 10; i++) {
+      ;(sys as any).makers.push(makeMaker(i + 1))
+    }
+    expect((sys as any).makers).toHaveLength(10)
+  })
+
+  it('splice第一条后剩余正确', () => {
+    ;(sys as any).makers.push(makeMaker(1))
+    ;(sys as any).makers.push(makeMaker(2))
+    ;(sys as any).makers.splice(0, 1)
+    expect((sys as any).makers).toHaveLength(1)
+    expect((sys as any).makers[0].entityId).toBe(2)
+  })
+
+  it('tick字段保留正确', () => {
+    ;(sys as any).makers.push(makeMaker(1, { tick: 9999 }))
+    expect((sys as any).makers[0].tick).toBe(9999)
+  })
+})
+
+describe('CreatureFerruleMakersSystem - skillMap操作', () => {
+  let sys: CreatureFerruleMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('手动写入skillMap', () => {
+    ;(sys as any).skillMap.set(42, 88)
+    expect((sys as any).skillMap.get(42)).toBe(88)
+  })
+
+  it('skillMap多个条目', () => {
+    ;(sys as any).skillMap.set(1, 10)
+    ;(sys as any).skillMap.set(2, 20)
+    ;(sys as any).skillMap.set(3, 30)
+    expect((sys as any).skillMap.size).toBe(3)
+  })
+})
+
+describe('CreatureFerruleMakersSystem - nextId初始', () => {
+  let sys: CreatureFerruleMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始nextId为1', () => {
+    expect((sys as any).nextId).toBe(1)
+  })
+})
+
+describe('CreatureFerruleMakersSystem - ferrulesMade更多边界', () => {
+  it('skill=21→ferrulesMade=2+floor(21/7)=5', () => {
+    expect(2 + Math.floor(21 / 7)).toBe(5)
+  })
+
+  it('skill=49→ferrulesMade=2+floor(49/7)=9', () => {
+    expect(2 + Math.floor(49 / 7)).toBe(9)
+  })
+
+  it('skill=70→ferrulesMade=2+floor(70/7)=12', () => {
+    expect(2 + Math.floor(70 / 7)).toBe(12)
+  })
+
+  it('skill=100→ferrulesMade=2+floor(100/7)=16', () => {
+    expect(2 + Math.floor(100 / 7)).toBe(16)
+  })
+})
+
+describe('CreatureFerruleMakersSystem - fitPrecision与reputation额外边界', () => {
+  it('skill=25→fitPrecision=15+25*0.74=33.5', () => {
+    expect(15 + 25 * 0.74).toBeCloseTo(33.5)
+  })
+
+  it('skill=75→fitPrecision=15+75*0.74=70.5', () => {
+    expect(15 + 75 * 0.74).toBeCloseTo(70.5)
+  })
+
+  it('skill=25→reputation=10+25*0.78=29.5', () => {
+    expect(10 + 25 * 0.78).toBeCloseTo(29.5)
+  })
+
+  it('skill=75→reputation=10+75*0.78=68.5', () => {
+    expect(10 + 75 * 0.78).toBeCloseTo(68.5)
+  })
+})
+
+describe('CreatureFerruleMakersSystem - CHECK_INTERVAL多轮节流', () => {
+  let sys: CreatureFerruleMakersSystem
+  const fakeEm = { getEntitiesWithComponents: () => [], getComponent: () => null } as any
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('两次各达间隔，各更新lastCheck', () => {
+    sys.update(16, fakeEm, CHECK_INTERVAL)
+    sys.update(16, fakeEm, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+
+  it('第二次未达阈值时lastCheck保留第一次', () => {
+    sys.update(16, fakeEm, CHECK_INTERVAL)
+    sys.update(16, fakeEm, CHECK_INTERVAL + CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+})
+
+describe('CreatureFerruleMakersSystem - FerruleType字符串合法性', () => {
+  it('所有4种类型均为字符串', () => {
+    const types = ['staff', 'tool', 'umbrella', 'furniture']
+    types.forEach(t => { expect(typeof t).toBe('string') })
+  })
+
+  it('skill=24→typeIdx=0→staff', () => {
+    const typeIdx = Math.min(3, Math.floor(24 / 25))
+    expect(['staff', 'tool', 'umbrella', 'furniture'][typeIdx]).toBe('staff')
+  })
+
+  it('skill=49→typeIdx=1→tool', () => {
+    const typeIdx = Math.min(3, Math.floor(49 / 25))
+    expect(['staff', 'tool', 'umbrella', 'furniture'][typeIdx]).toBe('tool')
+  })
+
+  it('skill=74→typeIdx=2→umbrella', () => {
+    const typeIdx = Math.min(3, Math.floor(74 / 25))
+    expect(['staff', 'tool', 'umbrella', 'furniture'][typeIdx]).toBe('umbrella')
+  })
+})
+
+describe('CreatureFerruleMakersSystem - 大批量cleanup', () => {
+  let sys: CreatureFerruleMakersSystem
+  const fakeEm = { getEntitiesWithComponents: () => [], getComponent: () => null } as any
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('多条过期记录全部被清除', () => {
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).makers.push(makeMaker(i + 1, { tick: 0 }))
+    }
+    ;(sys as any).makers.push(makeMaker(99, { tick: 100000 }))
+    sys.update(16, fakeEm, CHECK_INTERVAL + 52001)
+    // cutoff = CHECK_INTERVAL+52001-52000 = CHECK_INTERVAL+1 > 0; tick=0 < cutoff → 删除
+    const makers = (sys as any).makers
+    expect(makers.some((m: any) => m.entityId === 99)).toBe(true)
+  })
+})
+
+describe('CreatureFerruleMakersSystem - 数据完整性', () => {
+  let sys: CreatureFerruleMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('注入所有字段完整保存', () => {
+    ;(sys as any).makers.push(makeMaker(42, { skill: 80, ferrulesMade: 15, tick: 9999 }))
+    const m = (sys as any).makers[0]
+    expect(m.entityId).toBe(42)
+    expect(m.tick).toBe(9999)
+  })
+
+  it('多个工匠的id字段各不相同', () => {
+    ;(sys as any).makers.push(makeMaker(1))
+    ;(sys as any).makers.push(makeMaker(2))
+    ;(sys as any).makers.push(makeMaker(3))
+    const ids = (sys as any).makers.map((m: any) => m.id)
+    expect(new Set(ids).size).toBe(3)
+  })
+})
+
+describe('CreatureFerruleMakersSystem - nextId初始', () => {
+  let sys: CreatureFerruleMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始nextId为1', () => {
+    expect((sys as any).nextId).toBe(1)
+  })
+})

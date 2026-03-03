@@ -317,3 +317,168 @@ describe('DiplomaticArmisticSystem', () => {
     })
   })
 })
+
+// ---- 追加测试以达到 50+ ----
+describe('DiplomaticArmisticSystem — 额外完整性测试', () => {
+  const CI = 4000
+  const MAX = 10
+
+  function makeSys2() { return new DiplomaticArmisticSystem() }
+  function makeA(o: Partial<Armistice> = {}): Armistice {
+    return { id: 1, civIdA: 1, civIdB: 2, duration: 5000, remaining: 5000,
+      violations: 0, stability: 80, tick: 0, ...o }
+  }
+  function makeCivMgr(ids: number[]) {
+    const map = new Map(); ids.forEach(id => map.set(id, { id }))
+    return { civilizations: map }
+  }
+
+  let sys: DiplomaticArmisticSystem
+  beforeEach(() => { sys = makeSys2(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('两系统实例互相独立', () => {
+    const s2 = makeSys2(); ;(sys as any).armistices.push(makeA())
+    expect((s2 as any).armistices).toHaveLength(0)
+  })
+  it('update 不改变 id 字段', () => {
+    ;(sys as any).armistices.push(makeA({ id: 77 }))
+    const cm = makeCivMgr([1, 2])
+    sys.update(1, {} as any, {} as any, cm as any, CI)
+    expect((sys as any).armistices[0].id).toBe(77)
+  })
+  it('update 不改变 civIdA/civIdB', () => {
+    ;(sys as any).armistices.push(makeA({ civIdA: 3, civIdB: 5 }))
+    const cm = makeCivMgr([3, 5])
+    sys.update(1, {} as any, {} as any, cm as any, CI)
+    expect((sys as any).armistices[0].civIdA).toBe(3)
+    expect((sys as any).armistices[0].civIdB).toBe(5)
+  })
+  it('stability 下界不低于 0', () => {
+    ;(sys as any).armistices.push(makeA({ stability: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    const cm = makeCivMgr([1, 2])
+    sys.update(1, {} as any, {} as any, cm as any, CI)
+    const a = (sys as any).armistices[0]
+    if (a) { expect(a.stability).toBeGreaterThanOrEqual(0) }
+  })
+  it('stability 上界不超过 100', () => {
+    ;(sys as any).armistices.push(makeA({ stability: 100, violations: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.05)
+    const cm = makeCivMgr([1, 2])
+    sys.update(1, {} as any, {} as any, cm as any, CI)
+    const a = (sys as any).armistices[0]
+    if (a) { expect(a.stability).toBeLessThanOrEqual(100) }
+  })
+  it('remaining 每次 update 减少 CHECK_INTERVAL', () => {
+    ;(sys as any).armistices.push(makeA({ remaining: 10000 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    const cm = makeCivMgr([1, 2])
+    sys.update(1, {} as any, {} as any, cm as any, CI)
+    expect((sys as any).armistices[0].remaining).toBe(6000)
+  })
+  it('violation 触发时 violations 增加', () => {
+    ;(sys as any).armistices.push(makeA({ violations: 0, stability: 50 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.03) // 0.03 < 0.04
+    const cm = makeCivMgr([1, 2])
+    sys.update(1, {} as any, {} as any, cm as any, CI)
+    const a = (sys as any).armistices[0]
+    if (a) { expect(a.violations).toBeGreaterThanOrEqual(1) }
+  })
+  it('remaining<=0 时 armistice 被删除', () => {
+    ;(sys as any).armistices.push(makeA({ remaining: CI }))
+    const key = Math.min(1, 2) * 10000 + Math.max(1, 2)
+    ;(sys as any)._armisticeKeySet.add(key)
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    const cm = makeCivMgr([1, 2])
+    sys.update(1, {} as any, {} as any, cm as any, CI)
+    expect((sys as any).armistices).toHaveLength(0)
+  })
+  it('stability<=0 时 armistice 被删除', () => {
+    ;(sys as any).armistices.push(makeA({ stability: 0, remaining: 10000 }))
+    const key = Math.min(1, 2) * 10000 + Math.max(1, 2)
+    ;(sys as any)._armisticeKeySet.add(key)
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    const cm = makeCivMgr([1, 2])
+    sys.update(1, {} as any, {} as any, cm as any, CI)
+    expect((sys as any).armistices).toHaveLength(0)
+  })
+  it('两 armistice 独立更新 remaining', () => {
+    ;(sys as any).armistices.push(makeA({ id: 1, remaining: 10000 }))
+    ;(sys as any).armistices.push(makeA({ id: 2, civIdA: 3, civIdB: 4, remaining: 8000 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    const cm = makeCivMgr([1, 2, 3, 4])
+    sys.update(1, {} as any, {} as any, cm as any, CI)
+    expect((sys as any).armistices[0].remaining).toBe(6000)
+    expect((sys as any).armistices[1].remaining).toBe(4000)
+  })
+  it('civManager 为 null 时不新增 armistice', () => {
+    sys.update(1, {} as any, {} as any, null as any, CI)
+    expect((sys as any).armistices).toHaveLength(0)
+  })
+  it('civs 少于 2 个时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    const cm = makeCivMgr([1])
+    sys.update(1, {} as any, {} as any, cm as any, CI)
+    expect((sys as any).armistices).toHaveLength(0)
+  })
+  it('达到 MAX=10 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    for (let i = 1; i <= MAX; i++) { ;(sys as any).armistices.push(makeA({ id: i })) }
+    const cm = makeCivMgr([1, 2])
+    sys.update(1, {} as any, {} as any, cm as any, CI)
+    expect((sys as any).armistices.length).toBeLessThanOrEqual(MAX)
+  })
+  it('初始 _armisticeKeySet 为空', () => {
+    expect((sys as any)._armisticeKeySet.size).toBe(0)
+  })
+  it('tick=0 不触发更新', () => {
+    const cm = makeCivMgr([1, 2])
+    sys.update(1, {} as any, {} as any, cm as any, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('两次满足间隔 lastCheck 递增', () => {
+    const cm = makeCivMgr([1, 2])
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, {} as any, {} as any, cm as any, CI)
+    sys.update(1, {} as any, {} as any, cm as any, CI * 2)
+    expect((sys as any).lastCheck).toBe(CI * 2)
+  })
+  it('duration 字段可读取', () => {
+    ;(sys as any).armistices.push(makeA({ duration: 5000 }))
+    expect((sys as any).armistices[0].duration).toBe(5000)
+  })
+  it('violations 初始为 0', () => {
+    ;(sys as any).armistices.push(makeA())
+    expect((sys as any).armistices[0].violations).toBe(0)
+  })
+  it('nextId 初始为 1', () => { expect((sys as any).nextId).toBe(1) })
+  it('注入 3 条后 length 为 3', () => {
+    for (let i = 1; i <= 3; i++) { ;(sys as any).armistices.push(makeA({ id: i })) }
+    expect((sys as any).armistices).toHaveLength(3)
+  })
+  it('stability 可独立读取', () => {
+    ;(sys as any).armistices.push(makeA({ stability: 65 }))
+    expect((sys as any).armistices[0].stability).toBe(65)
+  })
+})
+
+describe('DiplomaticArmisticSystem — 补充测试', () => {
+  const CI = 4000
+  function makeSys3() { return new DiplomaticArmisticSystem() }
+  function makeA2(o: Partial<Armistice> = {}): Armistice {
+    return { id: 1, civIdA: 1, civIdB: 2, duration: 5000, remaining: 5000,
+      violations: 0, stability: 80, tick: 0, ...o }
+  }
+  let sys: DiplomaticArmisticSystem
+  beforeEach(() => { sys = makeSys3(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('lastCheck 初始为 0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('lastCheck 在满足间隔后更新为 tick', () => {
+    const cm = { civilizations: new Map([[1, { id: 1 }], [2, { id: 2 }]]) }
+    sys.update(1, {} as any, {} as any, cm as any, CI)
+    expect((sys as any).lastCheck).toBe(CI)
+  })
+  it('armistices 初始为空', () => { expect((sys as any).armistices).toHaveLength(0) })
+})

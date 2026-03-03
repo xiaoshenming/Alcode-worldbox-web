@@ -192,3 +192,127 @@ describe('MAX_PROCESSES=14上限', () => {
     sys.processes.forEach((p: any) => expect(p.duration).toBe(1))
   })
 })
+
+describe('额外边界与防御性测试', () => {
+  it('tensionReduction 上限 100 不被突破', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, civIdA: 1, civIdB: 2, phase: 'signaling', tensionReduction: 99.99, tradeVolume: 0, culturalTies: 5, militaryTransparency: 0, duration: 0, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2610)
+    expect(sys.processes[0]?.tensionReduction).toBeLessThanOrEqual(100)
+  })
+
+  it('tradeVolume 上限 100 不被突破', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, civIdA: 1, civIdB: 2, phase: 'signaling', tensionReduction: 10, tradeVolume: 99.99, culturalTies: 5, militaryTransparency: 0, duration: 0, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2610)
+    expect(sys.processes[0]?.tradeVolume).toBeLessThanOrEqual(100)
+  })
+
+  it('signaling -> confidence_building 当 tensionReduction > 25', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, civIdA: 1, civIdB: 2, phase: 'signaling', tensionReduction: 25.1, tradeVolume: 0, culturalTies: 5, militaryTransparency: 0, duration: 0, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2610)
+    expect(sys.processes[0].phase).toBe('confidence_building')
+  })
+
+  it('confidence_building -> normalization 当 tradeVolume > 30', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, civIdA: 1, civIdB: 2, phase: 'confidence_building', tensionReduction: 30, tradeVolume: 30.1, culturalTies: 5, militaryTransparency: 0, duration: 0, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2610)
+    expect(sys.processes[0].phase).toBe('normalization')
+  })
+
+  it('normalization -> partnership 当 tensionReduction > 70', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, civIdA: 1, civIdB: 2, phase: 'normalization', tensionReduction: 70.1, tradeVolume: 35, culturalTies: 5, militaryTransparency: 0, duration: 0, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2610)
+    expect(sys.processes[0].phase).toBe('partnership')
+  })
+
+  it('partnership 阶段 duration >= 150 后被清理', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, civIdA: 1, civIdB: 2, phase: 'partnership', tensionReduction: 80, tradeVolume: 40, culturalTies: 5, militaryTransparency: 0, duration: 149, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2610)
+    expect(sys.processes).toHaveLength(0)
+  })
+
+  it('partnership 阶段 duration < 150 时保留', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, civIdA: 1, civIdB: 2, phase: 'partnership', tensionReduction: 80, tradeVolume: 40, culturalTies: 5, militaryTransparency: 0, duration: 100, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2610)
+    expect(sys.processes).toHaveLength(1)
+  })
+
+  it('非 partnership 阶段不被清理', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, civIdA: 1, civIdB: 2, phase: 'normalization', tensionReduction: 60, tradeVolume: 35, culturalTies: 5, militaryTransparency: 0, duration: 200, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2610)
+    expect(sys.processes).toHaveLength(1)
+  })
+
+  it('CHECK_INTERVAL=2610 节流有效', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, civIdA: 1, civIdB: 2, phase: 'signaling', tensionReduction: 10, tradeVolume: 0, culturalTies: 5, militaryTransparency: 0, duration: 5, tick: 0 }])
+    sys.update(1, world, em, 2609)
+    expect(sys.processes[0].duration).toBe(5)
+  })
+
+  it('tensionReduction 每 tick +0.03', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, civIdA: 1, civIdB: 2, phase: 'signaling', tensionReduction: 10, tradeVolume: 0, culturalTies: 5, militaryTransparency: 0, duration: 0, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2610)
+    expect(sys.processes[0].tensionReduction).toBeCloseTo(10.03, 5)
+  })
+
+  it('tradeVolume 每 tick +0.02', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, civIdA: 1, civIdB: 2, phase: 'signaling', tensionReduction: 10, tradeVolume: 0, culturalTies: 5, militaryTransparency: 0, duration: 0, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2610)
+    expect(sys.processes[0].tradeVolume).toBeCloseTo(0.02, 5)
+  })
+
+  it('空 processes 时 update 不崩溃', () => {
+    expect(() => makeSys().update(1, world, em, 2610)).not.toThrow()
+  })
+
+  it('update 不改变 civIdA/civIdB', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, civIdA: 5, civIdB: 8, phase: 'signaling', tensionReduction: 10, tradeVolume: 0, culturalTies: 5, militaryTransparency: 0, duration: 0, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2610)
+    expect(sys.processes[0].civIdA).toBe(5)
+    expect(sys.processes[0].civIdB).toBe(8)
+  })
+
+  it('MAX_PROCESSES=14 上限：已满时不新增', () => {
+    const sys = makeSys() as any
+    for (let i = 0; i < 14; i++) {
+      inject(sys, [{ id: i + 1, civIdA: 1, civIdB: 2, phase: 'signaling', tensionReduction: 10, tradeVolume: 0, culturalTies: 5, militaryTransparency: 0, duration: 0, tick: 9999999 }])
+    }
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2610)
+    expect(sys.processes.length).toBeLessThanOrEqual(14)
+  })
+
+  it('nextId 手动设置后保持', () => {
+    const sys = makeSys() as any
+    sys.nextId = 55
+    expect(sys.nextId).toBe(55)
+  })
+
+  it('lastCheck 更新到最新 tick', () => {
+    const sys = makeSys() as any
+    sys.update(1, world, em, 2610 * 3)
+    expect(sys.lastCheck).toBe(2610 * 3)
+  })
+})

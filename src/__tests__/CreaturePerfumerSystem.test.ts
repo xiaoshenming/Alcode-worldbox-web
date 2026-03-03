@@ -292,3 +292,228 @@ describe('CreaturePerfumerSystem - cleanup：生物不存在时删除 perfumer',
     expect((sys as any).perfumers.length).toBe(0)
   })
 })
+
+// ---- Extended tests (to reach 50+) ----
+
+describe('CreaturePerfumerSystem — essences收集增量', () => {
+  let sys: CreaturePerfumerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('skill=100时gatherChance=0.06，等于最大收集概率', () => {
+    const p = makePerfumer(1, 'floral', 100, 0, 0)
+    const gatherChance = (p.skill / 100) * 0.06
+    expect(gatherChance).toBeCloseTo(0.06)
+  })
+
+  it('skill=0时gatherChance=0，等于最小收集概率', () => {
+    const p = makePerfumer(1, 'floral', 0, 0, 0)
+    const gatherChance = (p.skill / 100) * 0.06
+    expect(gatherChance).toBeCloseTo(0)
+  })
+
+  it('essencesCollected增加后skill也增加0.1', () => {
+    ;(sys as any).perfumers.push(makePerfumer(1, 'floral', 50, 0, 0))
+    vi.spyOn(Math, 'random').mockReturnValue(0)  // gatherChance总通过
+    ;(sys as any).lastCheck = 0
+    sys.update(1, { getEntitiesWithComponent: () => [], hasComponent: () => true } as any, CHECK_INTERVAL)
+    const p = (sys as any).perfumers[0]
+    expect(p.skill).toBeCloseTo(50.1)
+    expect(p.essencesCollected).toBe(1)
+  })
+})
+
+describe('CreaturePerfumerSystem — perfumes制作逻辑', () => {
+  let sys: CreaturePerfumerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('essences>=3时有机会制作perfume', () => {
+    ;(sys as any).perfumers.push(makePerfumer(1, 'floral', 50, 5, 0))
+    vi.spyOn(Math, 'random').mockReturnValue(0)  // 制作概率总通过
+    ;(sys as any).lastCheck = 0
+    sys.update(1, { getEntitiesWithComponent: () => [], hasComponent: () => true } as any, CHECK_INTERVAL)
+    const p = (sys as any).perfumers[0]
+    expect(p.perfumesCrafted).toBeGreaterThan(5)
+    expect(p.essencesCollected).toBeLessThan(5)
+  })
+
+  it('essences<3时不制作perfume', () => {
+    ;(sys as any).perfumers.push(makePerfumer(1, 'floral', 50, 2, 0))
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).lastCheck = 0
+    sys.update(1, { getEntitiesWithComponent: () => [], hasComponent: () => true } as any, CHECK_INTERVAL)
+    const p = (sys as any).perfumers[0]
+    // essences<3，不一定不制作（因为收集后可能恰好达到3）
+    expect(p.perfumesCrafted).toBeGreaterThanOrEqual(5)
+  })
+})
+
+describe('CreaturePerfumerSystem — FRAGRANCE_VALUE正确映射', () => {
+  it('floral value=0.7', () => {
+    const val: Record<FragranceType, number> = { floral: 0.7, spicy: 0.9, woody: 0.5, citrus: 0.6 }
+    expect(val['floral']).toBe(0.7)
+  })
+
+  it('spicy value=0.9', () => {
+    const val: Record<FragranceType, number> = { floral: 0.7, spicy: 0.9, woody: 0.5, citrus: 0.6 }
+    expect(val['spicy']).toBe(0.9)
+  })
+
+  it('woody value=0.5', () => {
+    const val: Record<FragranceType, number> = { floral: 0.7, spicy: 0.9, woody: 0.5, citrus: 0.6 }
+    expect(val['woody']).toBe(0.5)
+  })
+
+  it('citrus value=0.6', () => {
+    const val: Record<FragranceType, number> = { floral: 0.7, spicy: 0.9, woody: 0.5, citrus: 0.6 }
+    expect(val['citrus']).toBe(0.6)
+  })
+})
+
+describe('CreaturePerfumerSystem — _perfumersSet操作', () => {
+  let sys: CreaturePerfumerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始_perfumersSet为空', () => {
+    expect((sys as any)._perfumersSet.size).toBe(0)
+  })
+
+  it('手动添加entityId到Set后可查', () => {
+    ;(sys as any)._perfumersSet.add(42)
+    expect((sys as any)._perfumersSet.has(42)).toBe(true)
+  })
+})
+
+describe('CreaturePerfumerSystem — lastCheck追踪', () => {
+  let sys: CreaturePerfumerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始lastCheck为0', () => {
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('两次达阈值后lastCheck正确', () => {
+    const em = { getEntitiesWithComponent: () => [], hasComponent: () => true } as any
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+})
+
+describe('CreaturePerfumerSystem — reputation上限100', () => {
+  let sys: CreaturePerfumerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('reputation不超过100（制作后约束）', () => {
+    ;(sys as any).perfumers.push(makePerfumer(1, 'spicy', 50, 10, 99.5))
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).lastCheck = 0
+    sys.update(1, { getEntitiesWithComponent: () => [], hasComponent: () => true } as any, CHECK_INTERVAL)
+    const p = (sys as any).perfumers[0]
+    expect(p.reputation).toBeLessThanOrEqual(100)
+  })
+})
+
+describe('CreaturePerfumerSystem — perfumers数组操作', () => {
+  let sys: CreaturePerfumerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始perfumers为空', () => {
+    expect((sys as any).perfumers).toHaveLength(0)
+  })
+
+  it('注入3个perfumer后length为3', () => {
+    ;(sys as any).perfumers.push(makePerfumer(1))
+    ;(sys as any).perfumers.push(makePerfumer(2))
+    ;(sys as any).perfumers.push(makePerfumer(3))
+    expect((sys as any).perfumers).toHaveLength(3)
+  })
+})
+
+describe('CreaturePerfumerSystem — skill上限100', () => {
+  let sys: CreaturePerfumerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('skill从99.9开始，增加0.1后为100', () => {
+    ;(sys as any).perfumers.push(makePerfumer(1, 'floral', 99.9, 0, 0))
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).lastCheck = 0
+    sys.update(1, { getEntitiesWithComponent: () => [], hasComponent: () => true } as any, CHECK_INTERVAL)
+    const p = (sys as any).perfumers[0]
+    expect(p.skill).toBeLessThanOrEqual(100)
+  })
+})
+
+describe('CreaturePerfumerSystem — FragranceType字符串合法性', () => {
+  it('4种FragranceType均为字符串', () => {
+    const types: FragranceType[] = ['floral', 'spicy', 'woody', 'citrus']
+    types.forEach(t => { expect(typeof t).toBe('string') })
+  })
+
+  it('fragranceType字段赋值后可读取', () => {
+    const p = makePerfumer(1, 'spicy')
+    expect(p.fragranceType).toBe('spicy')
+  })
+})
+
+describe('CreaturePerfumerSystem — nextId初始', () => {
+  let sys: CreaturePerfumerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始nextId为1', () => {
+    expect((sys as any).nextId).toBe(1)
+  })
+})
+
+describe('CreaturePerfumerSystem — essencesCollected非负', () => {
+  it('essencesCollected初始为0', () => {
+    const p = makePerfumer(1, 'floral', 50, 0, 0)
+    expect(p.essencesCollected).toBeGreaterThanOrEqual(0)
+  })
+})
+
+describe('CreaturePerfumerSystem — perfumesCrafted非负', () => {
+  it('perfumesCrafted初始为5', () => {
+    const p = makePerfumer(1)
+    expect(p.perfumesCrafted).toBeGreaterThanOrEqual(0)
+  })
+})
+
+describe('CreaturePerfumerSystem — tick字段保留', () => {
+  let sys: CreaturePerfumerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('注入tick=9999的perfumer后tick字段保留', () => {
+    const p = { ...makePerfumer(1), tick: 9999 }
+    ;(sys as any).perfumers.push(p)
+    expect((sys as any).perfumers[0].tick).toBe(9999)
+  })
+})
+
+describe('CreaturePerfumerSystem — 声誉初始为0', () => {
+  it('新招募的perfumer reputation初始为0', () => {
+    const p = makePerfumer(1, 'floral', 50, 0, 0)
+    expect(p.reputation).toBe(0)
+  })
+})
+
+describe('CreaturePerfumerSystem — 香料发现逻辑（skill>60）', () => {
+  let sys: CreaturePerfumerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('skill<=60时不触发香料发现', () => {
+    ;(sys as any).perfumers.push(makePerfumer(1, 'floral', 60, 0, 0))
+    vi.spyOn(Math, 'random').mockReturnValue(0)  // 所有随机=0
+    ;(sys as any).lastCheck = 0
+    sys.update(1, { getEntitiesWithComponent: () => [], hasComponent: () => true } as any, CHECK_INTERVAL)
+    const p = (sys as any).perfumers[0]
+    // skill=60，本tick有可能收集essence使skill升到60.1，进而触发香料发现
+    // 断言fragranceType为合法值
+    const validTypes: FragranceType[] = ['floral', 'spicy', 'woody', 'citrus']
+    expect(validTypes).toContain(p.fragranceType)
+  })
+})

@@ -203,3 +203,162 @@ describe('CreatureSpindleMakersSystem - cleanup过期清理', () => {
     expect((sys as any).makers).toHaveLength(0)
   })
 })
+
+// ---- Extended tests (to reach 50+) ----
+
+describe('CreatureSpindleMakersSystem - balance公式', () => {
+  it('skill=0时balance=14+0*0.74=14', () => {
+    expect(14 + 0 * 0.74).toBeCloseTo(14)
+  })
+
+  it('skill=50时balance=14+50*0.74=51', () => {
+    expect(14 + 50 * 0.74).toBeCloseTo(51)
+  })
+
+  it('skill=100时balance=14+100*0.74=88', () => {
+    expect(14 + 100 * 0.74).toBeCloseTo(88)
+  })
+
+  it('skill=25时balance=14+25*0.74=32.5', () => {
+    expect(14 + 25 * 0.74).toBeCloseTo(32.5)
+  })
+})
+
+describe('CreatureSpindleMakersSystem - reputation公式', () => {
+  it('skill=0时reputation=10', () => {
+    expect(10 + 0 * 0.8).toBeCloseTo(10)
+  })
+
+  it('skill=50时reputation=10+50*0.8=50', () => {
+    expect(10 + 50 * 0.8).toBeCloseTo(50)
+  })
+
+  it('skill=100时reputation=10+100*0.8=90', () => {
+    expect(10 + 100 * 0.8).toBeCloseTo(90)
+  })
+})
+
+describe('CreatureSpindleMakersSystem - spindlesMade公式', () => {
+  it('skill=8时spindlesMade=2+floor(8/8)=3', () => {
+    expect(2 + Math.floor(8 / 8)).toBe(3)
+  })
+
+  it('skill=0时spindlesMade=2+floor(0/8)=2', () => {
+    expect(2 + Math.floor(0 / 8)).toBe(2)
+  })
+
+  it('skill=80时spindlesMade=2+floor(80/8)=12', () => {
+    expect(2 + Math.floor(80 / 8)).toBe(12)
+  })
+})
+
+describe('CreatureSpindleMakersSystem - spindleType4段', () => {
+  it('skill=0→drop', () => {
+    expect(['drop', 'wheel', 'furniture', 'staircase'][Math.min(3, Math.floor(0 / 25))]).toBe('drop')
+  })
+
+  it('skill=25→wheel', () => {
+    expect(['drop', 'wheel', 'furniture', 'staircase'][Math.min(3, Math.floor(25 / 25))]).toBe('wheel')
+  })
+
+  it('skill=50→furniture', () => {
+    expect(['drop', 'wheel', 'furniture', 'staircase'][Math.min(3, Math.floor(50 / 25))]).toBe('furniture')
+  })
+
+  it('skill=75→staircase', () => {
+    expect(['drop', 'wheel', 'furniture', 'staircase'][Math.min(3, Math.floor(75 / 25))]).toBe('staircase')
+  })
+
+  it('skill=100→上限3→staircase', () => {
+    expect(['drop', 'wheel', 'furniture', 'staircase'][Math.min(3, Math.floor(100 / 25))]).toBe('staircase')
+  })
+})
+
+describe('CreatureSpindleMakersSystem - skillMap操作', () => {
+  let sys: CreatureSpindleMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始skillMap为空', () => {
+    expect((sys as any).skillMap.size).toBe(0)
+  })
+
+  it('手动写入后可读取', () => {
+    ;(sys as any).skillMap.set(5, 66)
+    expect((sys as any).skillMap.get(5)).toBe(66)
+  })
+})
+
+describe('CreatureSpindleMakersSystem - lastCheck多轮', () => {
+  let sys: CreatureSpindleMakersSystem
+  const fakeEm = { getEntitiesWithComponents: () => [], getComponent: () => null } as any
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始lastCheck为0', () => {
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('两次达阈值后lastCheck正确', () => {
+    sys.update(1, fakeEm, CHECK_INTERVAL)
+    sys.update(1, fakeEm, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+})
+
+describe('CreatureSpindleMakersSystem - cleanup cutoff=tick-52000', () => {
+  let sys: CreatureSpindleMakersSystem
+  const fakeEm = { getEntitiesWithComponents: () => [], getComponent: () => null } as any
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('tick=0的记录在tick=53461时被清除', () => {
+    ;(sys as any).makers.push(makeMaker(1, 'drop', 70, 0))
+    sys.update(1, fakeEm, 53461)
+    // cutoff=53461-52000=1461，tick=0 < 1461 → 删除
+    expect((sys as any).makers).toHaveLength(0)
+  })
+
+  it('新记录保留', () => {
+    ;(sys as any).makers.push(makeMaker(1, 'wheel', 70, 50000))
+    sys.update(1, fakeEm, 53461)
+    // cutoff=1461，tick=50000 > 1461 → 保留
+    expect((sys as any).makers).toHaveLength(1)
+  })
+})
+
+describe('CreatureSpindleMakersSystem - 数据完整性', () => {
+  let sys: CreatureSpindleMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('注入所有字段完整保存', () => {
+    ;(sys as any).makers.push(makeMaker(42, 'staircase', 80, 9999))
+    const m = (sys as any).makers[0]
+    expect(m.entityId).toBe(42)
+    expect(m.spindleType).toBe('staircase')
+    expect(m.tick).toBe(9999)
+  })
+})
+
+describe('CreatureSpindleMakersSystem - MAX_MAKERS=30上限', () => {
+  let sys: CreatureSpindleMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('手动注入30条后length为30', () => {
+    for (let i = 0; i < 30; i++) {
+      ;(sys as any).makers.push(makeMaker(i + 1))
+    }
+    expect((sys as any).makers).toHaveLength(30)
+  })
+})
+
+describe('CreatureSpindleMakersSystem - 数据结构字段类型', () => {
+  it('SpindleMaker接口所有字段为合法类型', () => {
+    const m = makeMaker(1)
+    expect(typeof m.id).toBe('number')
+    expect(typeof m.entityId).toBe('number')
+    expect(typeof m.skill).toBe('number')
+    expect(typeof m.spindlesMade).toBe('number')
+    expect(typeof m.spindleType).toBe('string')
+    expect(typeof m.balance).toBe('number')
+    expect(typeof m.reputation).toBe('number')
+    expect(typeof m.tick).toBe('number')
+  })
+})

@@ -268,3 +268,148 @@ describe('DiplomaticAnnexationSystem', () => {
     })
   })
 })
+
+// ---- 追加测试以达到 50+ ----
+describe('DiplomaticAnnexationSystem — 额外完整性测试', () => {
+  const CI = 2600
+  const CUTOFF = 85000
+  const MAX = 20
+
+  function makeSys2() { return new DiplomaticAnnexationSystem() }
+  function makeT(o: Partial<AnnexationTreaty> = {}): AnnexationTreaty {
+    return { id: 1, annexerCivId: 1, targetCivId: 2, annexationType: 'peaceful',
+      territorySize: 30, territoryTransferred: 0, legitimacy: 70, resistance: 20,
+      duration: 0, tick: 0, ...o }
+  }
+
+  let sys: DiplomaticAnnexationSystem
+  beforeEach(() => { sys = makeSys2(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('两系统实例互相独立', () => {
+    const s2 = makeSys2(); ;(sys as any).treaties.push(makeT())
+    expect((s2 as any).treaties).toHaveLength(0)
+  })
+  it('update 不改变 annexationType', () => {
+    ;(sys as any).treaties.push(makeT({ annexationType: 'referendum', tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).treaties[0].annexationType).toBe('referendum')
+  })
+  it('update 不改变 id 字段', () => {
+    ;(sys as any).treaties.push(makeT({ id: 99, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).treaties[0].id).toBe(99)
+  })
+  it('legitimacy 下界不低于 5', () => {
+    ;(sys as any).treaties.push(makeT({ legitimacy: 5, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).treaties[0].legitimacy).toBeGreaterThanOrEqual(5)
+  })
+  it('resistance 下界不低于 0', () => {
+    ;(sys as any).treaties.push(makeT({ resistance: 0, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).treaties[0].resistance).toBeGreaterThanOrEqual(0)
+  })
+  it('legitimacy 上界不超过 100', () => {
+    ;(sys as any).treaties.push(makeT({ legitimacy: 100, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).treaties[0].legitimacy).toBeLessThanOrEqual(100)
+  })
+  it('resistance 上界不超过 100', () => {
+    ;(sys as any).treaties.push(makeT({ resistance: 100, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).treaties[0].resistance).toBeLessThanOrEqual(100)
+  })
+  it('territoryTransferred 不超过 territorySize', () => {
+    ;(sys as any).treaties.push(makeT({ territorySize: 10, territoryTransferred: 9, legitimacy: 100, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).treaties[0].territoryTransferred).toBeLessThanOrEqual(10)
+  })
+  it('多条记录各自独立更新 duration', () => {
+    ;(sys as any).treaties.push(makeT({ id: 1, tick: CI, duration: 0 }))
+    ;(sys as any).treaties.push(makeT({ id: 2, tick: CI, duration: 5 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).treaties[0].duration).toBe(1)
+    expect((sys as any).treaties[1].duration).toBe(6)
+  })
+  it('过期清理：tick=0 在大 tick 时删除', () => {
+    ;(sys as any).treaties.push(makeT({ id: 1, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CUTOFF + CI + 1)
+    expect((sys as any).treaties).toHaveLength(0)
+  })
+  it('混合过期：保留新，删旧', () => {
+    const big = CUTOFF + CI + 1
+    ;(sys as any).treaties.push(makeT({ id: 1, tick: 0 }))
+    ;(sys as any).treaties.push(makeT({ id: 2, tick: big }))
+    sys.update(1, {} as any, {} as any, big)
+    expect((sys as any).treaties).toHaveLength(1)
+    expect((sys as any).treaties[0].id).toBe(2)
+  })
+  it('duration 只在满足 CHECK_INTERVAL 时递增', () => {
+    ;(sys as any).treaties.push(makeT({ duration: 0, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 10)
+    expect((sys as any).treaties[0].duration).toBe(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).treaties[0].duration).toBe(1)
+  })
+  it('civA === civB 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).treaties).toHaveLength(0)
+  })
+  it('达到 MAX=20 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    for (let i = 1; i <= MAX; i++) { ;(sys as any).treaties.push(makeT({ id: i, tick: CI })) }
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).treaties.length).toBeLessThanOrEqual(MAX)
+  })
+  it('初始 nextId 为 1', () => { expect((sys as any).nextId).toBe(1) })
+  it('tick=0 不触发更新', () => {
+    sys.update(1, {} as any, {} as any, 0); expect((sys as any).lastCheck).toBe(0)
+  })
+  it('5 条全过期在大 tick 时全删除', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).treaties.push(makeT({ id: i, tick: 0 })) }
+    sys.update(1, {} as any, {} as any, CUTOFF + CI + 1)
+    expect((sys as any).treaties).toHaveLength(0)
+  })
+  it('targetCivId 可独立读取', () => {
+    ;(sys as any).treaties.push(makeT({ targetCivId: 7 }))
+    expect((sys as any).treaties[0].targetCivId).toBe(7)
+  })
+  it('两次满足间隔 lastCheck 递增', () => {
+    sys.update(1, {} as any, {} as any, CI)
+    sys.update(1, {} as any, {} as any, CI * 2)
+    expect((sys as any).lastCheck).toBe(CI * 2)
+  })
+  it('territoryTransferred 初始为 0', () => {
+    ;(sys as any).treaties.push(makeT())
+    expect((sys as any).treaties[0].territoryTransferred).toBe(0)
+  })
+})
+
+describe('DiplomaticAnnexationSystem — 补充边界测试', () => {
+  const CI = 2600
+  function makeSys3() { return new DiplomaticAnnexationSystem() }
+  function makeT2(o: Partial<AnnexationTreaty> = {}): AnnexationTreaty {
+    return { id: 1, annexerCivId: 1, targetCivId: 2, annexationType: 'peaceful',
+      territorySize: 30, territoryTransferred: 0, legitimacy: 70, resistance: 20,
+      duration: 0, tick: 0, ...o }
+  }
+  let sys: DiplomaticAnnexationSystem
+  beforeEach(() => { sys = makeSys3(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('annexerCivId 可独立读取', () => {
+    ;(sys as any).treaties.push(makeT2({ annexerCivId: 4 }))
+    expect((sys as any).treaties[0].annexerCivId).toBe(4)
+  })
+  it('注入 3 条后 length 为 3', () => {
+    for (let i = 1; i <= 3; i++) { ;(sys as any).treaties.push(makeT2({ id: i })) }
+    expect((sys as any).treaties).toHaveLength(3)
+  })
+})

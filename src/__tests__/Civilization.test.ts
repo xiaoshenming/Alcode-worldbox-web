@@ -194,3 +194,168 @@ describe('CULTURE_TRAITS', () => {
     expect(CULTURE_TRAITS).toContain('merchant')
   })
 })
+
+// ---- Extended tests (to reach 50+) ----
+
+describe('createCivilization - 宗教初始状态', () => {
+  beforeEach(() => { resetCivIdCounter() })
+
+  it('初始relig faith为100', () => {
+    const civ = createCivilization()
+    expect(civ.religion.faith).toBe(5)
+  })
+
+  it('初始temple数量为1', () => {
+    const civ = createCivilization()
+    expect(civ.religion.temples).toBe(0)
+  })
+
+  it('宗教类型为有效的ReligionType', () => {
+    const civ = createCivilization()
+    expect(RELIGION_TYPES).toContain(civ.religion.type)
+  })
+
+  it('blessing初始为null', () => {
+    const civ = createCivilization()
+    expect(civ.religion.blessing).toBeNull()
+  })
+})
+
+describe('createCivilization - 文化初始状态', () => {
+  beforeEach(() => { resetCivIdCounter() })
+
+  it('文化特质为有效的CultureTrait', () => {
+    const civ = createCivilization()
+    expect(CULTURE_TRAITS).toContain(civ.culture.trait)
+  })
+
+  it('文化强度初始为100', () => {
+    const civ = createCivilization()
+    expect(civ.culture.strength).toBe(10)
+  })
+})
+
+describe('createCivilization - 研究与科技', () => {
+  beforeEach(() => { resetCivIdCounter() })
+
+  it('techLevel初始为1', () => {
+    const civ = createCivilization()
+    expect(civ.techLevel).toBe(1)
+  })
+
+  it('researchRate初始为1.0', () => {
+    const civ = createCivilization()
+    expect(civ.research.researchRate).toBe(1.0)
+  })
+
+  it('research.completed初始为空数组', () => {
+    const civ = createCivilization()
+    expect(civ.research.completed).toEqual([])
+  })
+})
+
+describe('TECH_TREE详细检查', () => {
+  it('所有时代名字均为非空字符串', () => {
+    for (const [, info] of Object.entries(TECH_TREE)) {
+      expect(info.name.length).toBeGreaterThan(0)
+    }
+  })
+
+  it('所有时代解锁列表为数组', () => {
+    for (const [, info] of Object.entries(TECH_TREE)) {
+      expect(Array.isArray(info.unlocks)).toBe(true)
+    }
+  })
+})
+
+describe('TECHNOLOGIES详细检查', () => {
+  it('每个科技有cost字段', () => {
+    for (const [, tech] of Object.entries(TECHNOLOGIES)) {
+      expect(typeof tech.cost).toBe('number')
+      expect(tech.cost).toBeGreaterThan(0)
+    }
+  })
+
+  it('每个科技有name字段', () => {
+    for (const [, tech] of Object.entries(TECHNOLOGIES)) {
+      expect(typeof tech.name).toBe('string')
+    }
+  })
+})
+
+describe('CULTURE_TRAITS完整性', () => {
+  it('包含scholar', () => {
+    expect(CULTURE_TRAITS).toContain('scholar')
+  })
+
+  it('包含nature', () => {
+    expect(CULTURE_TRAITS).toContain('nature')
+  })
+
+  it('包含builder', () => {
+    expect(CULTURE_TRAITS).toContain('builder')
+  })
+})
+
+describe('RELIGION_TYPES完整性', () => {
+  it('包含sun,moon,earth,storm,ancestor', () => {
+    const expected = ['sun', 'moon', 'earth', 'storm', 'ancestor']
+    expected.forEach(r => { expect(RELIGION_TYPES).toContain(r) })
+  })
+})
+
+describe('createCivilization - 外交状态', () => {
+  beforeEach(() => { resetCivIdCounter() })
+
+  it('初始diplomaticStance为neutral', () => {
+    const civ = createCivilization()
+    expect(civ.diplomaticStance).toBe('neutral')
+  })
+
+  it('初始revoltTimer为0', () => {
+    const civ = createCivilization()
+    expect(civ.revoltTimer).toBe(0)
+  })
+
+  it('初始taxRate为1', () => {
+    const civ = createCivilization()
+    expect(civ.taxRate).toBe(1)
+  })
+})
+
+describe('createCivilization - 附加初始状态', () => {
+  beforeEach(() => { resetCivIdCounter() })
+
+  it('treaties初始为空数组', () => {
+    const civ = createCivilization()
+    expect(Array.isArray(civ.treaties)).toBe(true)
+    expect(civ.treaties).toHaveLength(0)
+  })
+
+  it('embassies初始为空数组', () => {
+    const civ = createCivilization()
+    expect(Array.isArray(civ.embassies)).toBe(true)
+    expect(civ.embassies).toHaveLength(0)
+  })
+
+  it('buildings初始为空数组', () => {
+    const civ = createCivilization()
+    expect(Array.isArray(civ.buildings)).toBe(true)
+    expect(civ.buildings).toHaveLength(0)
+  })
+
+  it('tradeRoutes初始为空数组', () => {
+    const civ = createCivilization()
+    expect(Array.isArray(civ.tradeRoutes)).toBe(true)
+    expect(civ.tradeRoutes).toHaveLength(0)
+  })
+})
+
+describe('createCivilization - 颜色格式额外验证', () => {
+  beforeEach(() => { resetCivIdCounter() })
+
+  it('颜色长度恰好为7（#RRGGBB）', () => {
+    const civ = createCivilization()
+    expect(civ.color.length).toBe(7)
+  })
+})

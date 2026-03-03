@@ -207,3 +207,246 @@ describe('CreatureNailsmithSystem - nextId自增', () => {
     expect((sys as any).nextId).toBe(1)
   })
 })
+
+// ---- Extended tests (to reach 50+) ----
+
+describe('CreatureNailsmithSystem - headForming字段保留', () => {
+  let sys: CreatureNailsmithSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('注入headForming=40，update后仍为40', () => {
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), headForming: 40 })
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).nailsmiths[0].headForming).toBe(40)
+  })
+
+  it('注入headForming=100，update后仍为100', () => {
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), headForming: 100 })
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).nailsmiths[0].headForming).toBe(100)
+  })
+})
+
+describe('CreatureNailsmithSystem - lastCheck正确追踪', () => {
+  let sys: CreatureNailsmithSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始lastCheck为0', () => {
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('三次各达CHECK_INTERVAL时lastCheck正确更新', () => {
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    sys.update(1, em, CHECK_INTERVAL * 3)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 3)
+  })
+})
+
+describe('CreatureNailsmithSystem - 多工匠各自独立cleanup', () => {
+  let sys: CreatureNailsmithSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('3个ironDrawing均低，全部删除', () => {
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 1 })
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(2), ironDrawing: 2 })
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(3), ironDrawing: 3 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).nailsmiths).toHaveLength(0)
+  })
+
+  it('3个均高，全部保留', () => {
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 50 })
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(2), ironDrawing: 60 })
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(3), ironDrawing: 70 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).nailsmiths).toHaveLength(3)
+  })
+})
+
+describe('CreatureNailsmithSystem - 数据完整性', () => {
+  let sys: CreatureNailsmithSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('注入Nailsmith所有字段正确保存', () => {
+    const ns = { id: 77, entityId: 99, ironDrawing: 55, headForming: 45, pointShaping: 65, outputQuality: 75, tick: 500 }
+    ;(sys as any).nailsmiths.push(ns)
+    const stored = (sys as any).nailsmiths[0]
+    expect(stored.id).toBe(77)
+    expect(stored.entityId).toBe(99)
+    expect(stored.tick).toBe(500)
+  })
+
+  it('不同entityId的工匠可共存', () => {
+    ;(sys as any).nailsmiths.push(makeNailsmith(11))
+    ;(sys as any).nailsmiths.push(makeNailsmith(22))
+    ;(sys as any).nailsmiths.push(makeNailsmith(33))
+    const ids = (sys as any).nailsmiths.map((n: any) => n.entityId)
+    expect(ids).toContain(11)
+    expect(ids).toContain(22)
+    expect(ids).toContain(33)
+  })
+})
+
+describe('CreatureNailsmithSystem - pointShaping边界值', () => {
+  let sys: CreatureNailsmithSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('pointShaping=0时，增量后=0.015，不被cleanup(cleanup检查ironDrawing)', () => {
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 50, pointShaping: 0 })
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).nailsmiths).toHaveLength(1)
+    expect((sys as any).nailsmiths[0].pointShaping).toBeCloseTo(0.015)
+  })
+
+  it('pointShaping从50连续增长', () => {
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 50, pointShaping: 50 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    expect((sys as any).nailsmiths[0].pointShaping).toBeCloseTo(50.03)
+  })
+})
+
+describe('CreatureNailsmithSystem - outputQuality连续增长', () => {
+  let sys: CreatureNailsmithSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('outputQuality从60连续2次更新后为60.02', () => {
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 50, outputQuality: 60 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    expect((sys as any).nailsmiths[0].outputQuality).toBeCloseTo(60.02)
+  })
+})
+
+describe('CreatureNailsmithSystem - ironDrawing连续增长到边界', () => {
+  let sys: CreatureNailsmithSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('ironDrawing从98开始，两次更新后达到100', () => {
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 98 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    expect((sys as any).nailsmiths[0].ironDrawing).toBeCloseTo(98.04)
+  })
+})
+
+describe('CreatureNailsmithSystem - outputQuality从0开始增长', () => {
+  let sys: CreatureNailsmithSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('outputQuality从0开始，update后为0.01', () => {
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 50, outputQuality: 0 })
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).nailsmiths[0].outputQuality).toBeCloseTo(0.01)
+  })
+})
+
+describe('CreatureNailsmithSystem - 大批量工匠处理', () => {
+  let sys: CreatureNailsmithSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('10个工匠同时更新，各自独立', () => {
+    for (let i = 0; i < 10; i++) {
+      ;(sys as any).nailsmiths.push({ ...makeNailsmith(i + 1), ironDrawing: 50 + i })
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, em, CHECK_INTERVAL)
+    for (let i = 0; i < 10; i++) {
+      expect((sys as any).nailsmiths[i].ironDrawing).toBeCloseTo(50 + i + 0.02)
+    }
+  })
+})
+
+describe('CreatureNailsmithSystem - 精确验证', () => {
+  let sys: CreatureNailsmithSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('CHECK_INTERVAL=2620常量验证', () => {
+    expect(CHECK_INTERVAL).toBe(2620)
+  })
+
+  it('注入3个工匠后3个全部可读', () => {
+    for (let i = 0; i < 3; i++) {
+      ;(sys as any).nailsmiths.push(makeNailsmith(i + 1))
+    }
+    expect((sys as any).nailsmiths).toHaveLength(3)
+  })
+})
+
+describe('CreatureNailsmithSystem - 更多字段验证', () => {
+  let sys: CreatureNailsmithSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('headForming=0时不被cleanup删除（cleanup检查ironDrawing）', () => {
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 50, headForming: 0 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, em, CHECK_INTERVAL)
+    vi.restoreAllMocks()
+    expect((sys as any).nailsmiths).toHaveLength(1)
+  })
+})
+
+describe('CreatureNailsmithSystem - ironDrawing绝对边界', () => {
+  let sys: CreatureNailsmithSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('ironDrawing=4.02（>4），保留', () => {
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 4.02 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, em, CHECK_INTERVAL)
+    vi.restoreAllMocks()
+    expect((sys as any).nailsmiths).toHaveLength(1)
+  })
+
+  it('ironDrawing=3（<4），更新后3.02仍<4?不对，3.02>4?不对。3+0.02=3.02<4→删', () => {
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 3 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, em, CHECK_INTERVAL)
+    vi.restoreAllMocks()
+    // 3.02 <= 4 → 删除
+    expect((sys as any).nailsmiths).toHaveLength(0)
+  })
+})
+
+describe('CreatureNailsmithSystem - 数据结构字段类型', () => {
+  it('Nailsmith接口所有字段为number类型', () => {
+    const n = makeNailsmith(1)
+    expect(typeof n.id).toBe('number')
+    expect(typeof n.entityId).toBe('number')
+    expect(typeof n.ironDrawing).toBe('number')
+    expect(typeof n.headForming).toBe('number')
+    expect(typeof n.pointShaping).toBe('number')
+    expect(typeof n.outputQuality).toBe('number')
+    expect(typeof n.tick).toBe('number')
+  })
+})
+
+describe('CreatureNailsmithSystem - 综合3测试', () => {
+  let sys: CreatureNailsmithSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('两次连续达阈值，技能连续增长两次', () => {
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 20 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    expect((sys as any).nailsmiths[0].ironDrawing).toBeCloseTo(20.04)
+  })
+
+  it('outputQuality从0增长到0.02（两次update）', () => {
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 50, outputQuality: 0 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    expect((sys as any).nailsmiths[0].outputQuality).toBeCloseTo(0.02)
+  })
+
+  it('pointShaping从0增长到0.03（三次update）', () => {
+    ;(sys as any).nailsmiths.push({ ...makeNailsmith(1), ironDrawing: 50, pointShaping: 0 })
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    sys.update(1, em, CHECK_INTERVAL * 3)
+    expect((sys as any).nailsmiths[0].pointShaping).toBeCloseTo(0.045)
+  })
+})

@@ -239,3 +239,176 @@ describe('findNextStep', () => {
     expect(step).not.toBeNull()
   })
 })
+
+// ---- Extended tests (to reach 50+) ----
+
+describe('isWalkable - 额外地形测试', () => {
+  it('GRASS canFly=false 可行走', () => {
+    expect(isWalkable(TileType.GRASS, false)).toBe(true)
+  })
+
+  it('FOREST canFly=true 可行走', () => {
+    expect(isWalkable(TileType.FOREST, true)).toBe(true)
+  })
+
+  it('SAND canFly=true 可行走', () => {
+    expect(isWalkable(TileType.SAND, true)).toBe(true)
+  })
+
+  it('SNOW canFly=false 可行走', () => {
+    expect(isWalkable(TileType.SNOW, false)).toBe(true)
+  })
+
+  it('SHALLOW_WATER canFly=true 可行走', () => {
+    expect(isWalkable(TileType.SHALLOW_WATER, true)).toBe(true)
+  })
+
+  it('MOUNTAIN canFly=false 不可行走', () => {
+    expect(isWalkable(TileType.MOUNTAIN, false)).toBe(false)
+  })
+
+  it('LAVA canFly=true 不可行走', () => {
+    expect(isWalkable(TileType.LAVA, true)).toBe(false)
+  })
+})
+
+describe('findPath - 更多路径场景', () => {
+  it('垂直路径：同一列', () => {
+    const world = grassWorld(10, 10)
+    const path = findPath(world as any, 5, 0, 5, 3)
+    expect(path.length).toBeGreaterThan(0)
+    const last = path[path.length - 1]
+    expect(last.x).toBe(5)
+    expect(last.y).toBe(3)
+  })
+
+  it('水平路径：同一行', () => {
+    const world = grassWorld(10, 10)
+    const path = findPath(world as any, 0, 5, 3, 5)
+    expect(path.length).toBeGreaterThan(0)
+    const last = path[path.length - 1]
+    expect(last.x).toBe(3)
+    expect(last.y).toBe(5)
+  })
+
+  it('对角路径存在', () => {
+    const world = grassWorld(10, 10)
+    const path = findPath(world as any, 0, 0, 3, 3)
+    expect(path.length).toBeGreaterThan(0)
+  })
+
+  it('路径中每步都在地图范围内', () => {
+    const world = grassWorld(10, 10)
+    const path = findPath(world as any, 1, 1, 5, 5)
+    for (const node of path) {
+      expect(node.x).toBeGreaterThanOrEqual(0)
+      expect(node.x).toBeLessThan(10)
+      expect(node.y).toBeGreaterThanOrEqual(0)
+      expect(node.y).toBeLessThan(10)
+    }
+  })
+
+  it('终点不可达时返回空数组', () => {
+    const tiles: TileType[][] = Array.from({ length: 10 }, () =>
+      Array.from({ length: 10 }, () => TileType.GRASS)
+    )
+    // 用水包围终点(9,9)
+    for (let x = 7; x < 10; x++) {
+      for (let y = 7; y < 10; y++) {
+        tiles[y][x] = TileType.DEEP_WATER
+      }
+    }
+    const world = makeMockWorld(tiles, 10, 10)
+    const result = findPath(world as any, 0, 0, 9, 9)
+    expect(result === null || (Array.isArray(result) && result.length === 0)).toBe(true)
+  })
+
+  it('短距离(1步)路径正确', () => {
+    const world = grassWorld(10, 10)
+    const path = findPath(world as any, 0, 0, 1, 0)
+    expect(path).toHaveLength(1)
+    expect(path[0].x).toBe(1)
+    expect(path[0].y).toBe(0)
+  })
+})
+
+describe('findNextStep - 额外场景', () => {
+  it('向左移动时x方向正确', () => {
+    const world = grassWorld(10, 10)
+    const step = findNextStep(world as any, 9, 5, 0, 5)
+    expect(step).not.toBeNull()
+    expect(step!.x).toBeLessThan(0)
+  })
+
+  it('向上移动时y方向正确', () => {
+    const world = grassWorld(10, 10)
+    const step = findNextStep(world as any, 5, 9, 5, 0)
+    expect(step).not.toBeNull()
+    expect(step!.y).toBeLessThan(0)
+  })
+
+  it('步长不超过1.5（对角线）', () => {
+    const world = grassWorld(10, 10)
+    const step = findNextStep(world as any, 0, 0, 9, 9)
+    if (step) {
+      const dist = Math.sqrt(step.x * step.x + step.y * step.y)
+      expect(dist).toBeLessThanOrEqual(1.5)
+    }
+  })
+})
+
+describe('isWalkable - 所有TileType系统测试', () => {
+  it('GRASS 默认参数可行走', () => {
+    expect(isWalkable(TileType.GRASS)).toBe(true)
+  })
+
+  it('DEEP_WATER 默认参数不可行走', () => {
+    expect(isWalkable(TileType.DEEP_WATER)).toBe(false)
+  })
+})
+
+describe('findPath - 路径节点序列验证', () => {
+  it('两步路径节点连续（每步只移动1格）', () => {
+    const world = grassWorld(10, 10)
+    const path = findPath(world as any, 0, 0, 2, 0)
+    // 每步相邻
+    for (let i = 1; i < path.length; i++) {
+      const dx = Math.abs(path[i].x - path[i-1].x)
+      const dy = Math.abs(path[i].y - path[i-1].y)
+      expect(dx + dy).toBeLessThanOrEqual(2) // 允许对角
+    }
+  })
+
+  it('终点在路径末尾', () => {
+    const world = grassWorld(10, 10)
+    const path = findPath(world as any, 0, 0, 4, 4)
+    if (path.length > 0) {
+      const last = path[path.length - 1]
+      expect(last.x).toBe(4)
+      expect(last.y).toBe(4)
+    }
+  })
+})
+
+describe('findPath - 世界边界测试', () => {
+  it('起点在地图边缘(0,0)也能找路', () => {
+    const world = grassWorld(10, 10)
+    const path = findPath(world as any, 0, 0, 5, 0)
+    expect(path.length).toBeGreaterThan(0)
+  })
+
+  it('终点在地图边缘(9,9)也能找路', () => {
+    const world = grassWorld(10, 10)
+    const path = findPath(world as any, 0, 0, 9, 9)
+    expect(path.length).toBeGreaterThan(0)
+  })
+})
+
+describe('isWalkable - 无参数调用', () => {
+  it('调用时不传canFly参数，默认为false', () => {
+    // DEEP_WATER without canFly should be false
+    expect(isWalkable(TileType.DEEP_WATER)).toBe(false)
+    // GRASS without canFly should be true
+    expect(isWalkable(TileType.GRASS)).toBe(true)
+  })
+})

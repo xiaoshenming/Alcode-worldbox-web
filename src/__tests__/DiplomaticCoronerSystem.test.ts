@@ -266,3 +266,143 @@ describe('CoronerForm枚举完整性', () => {
     expect(getArrangements(sys)[0].form).toBe('palatine_coroner')
   })
 })
+
+describe('额外边界与枚举测试', () => {
+  it('inquestAuthority 上限 85 不被突破', () => {
+    const sys = new DiplomaticCoronerSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const a: CoronerArrangement = { id: 1, crownCivId: 1, coronerCivId: 2, form: 'royal_coroner', inquestAuthority: 84.99, jurisdictionReach: 50, recordKeeping: 40, crownRevenue: 30, duration: 0, tick: 0 }
+    getArrangements(sys).push(a)
+    sys.update(1, world, em, 2770)
+    expect(a.inquestAuthority).toBeLessThanOrEqual(85)
+    vi.restoreAllMocks()
+  })
+
+  it('inquestAuthority 下限 5 不被突破', () => {
+    const sys = new DiplomaticCoronerSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const a: CoronerArrangement = { id: 1, crownCivId: 1, coronerCivId: 2, form: 'royal_coroner', inquestAuthority: 5.01, jurisdictionReach: 50, recordKeeping: 40, crownRevenue: 30, duration: 0, tick: 0 }
+    getArrangements(sys).push(a)
+    sys.update(1, world, em, 2770)
+    expect(a.inquestAuthority).toBeGreaterThanOrEqual(5)
+    vi.restoreAllMocks()
+  })
+
+  it('jurisdictionReach 上限 90 不被突破', () => {
+    const sys = new DiplomaticCoronerSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const a: CoronerArrangement = { id: 1, crownCivId: 1, coronerCivId: 2, form: 'royal_coroner', inquestAuthority: 50, jurisdictionReach: 89.99, recordKeeping: 40, crownRevenue: 30, duration: 0, tick: 0 }
+    getArrangements(sys).push(a)
+    sys.update(1, world, em, 2770)
+    expect(a.jurisdictionReach).toBeLessThanOrEqual(90)
+    vi.restoreAllMocks()
+  })
+
+  it('recordKeeping 上限 80 不被突破', () => {
+    const sys = new DiplomaticCoronerSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const a: CoronerArrangement = { id: 1, crownCivId: 1, coronerCivId: 2, form: 'royal_coroner', inquestAuthority: 50, jurisdictionReach: 50, recordKeeping: 79.99, crownRevenue: 30, duration: 0, tick: 0 }
+    getArrangements(sys).push(a)
+    sys.update(1, world, em, 2770)
+    expect(a.recordKeeping).toBeLessThanOrEqual(80)
+    vi.restoreAllMocks()
+  })
+
+  it('crownRevenue 上限 65 不被突破', () => {
+    const sys = new DiplomaticCoronerSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const a: CoronerArrangement = { id: 1, crownCivId: 1, coronerCivId: 2, form: 'royal_coroner', inquestAuthority: 50, jurisdictionReach: 50, recordKeeping: 40, crownRevenue: 64.99, duration: 0, tick: 0 }
+    getArrangements(sys).push(a)
+    sys.update(1, world, em, 2770)
+    expect(a.crownRevenue).toBeLessThanOrEqual(65)
+    vi.restoreAllMocks()
+  })
+
+  it('county_coroner form 可存储', () => {
+    const sys = new DiplomaticCoronerSystem()
+    getArrangements(sys).push({ id: 1, crownCivId: 1, coronerCivId: 2, form: 'county_coroner', inquestAuthority: 50, jurisdictionReach: 50, recordKeeping: 40, crownRevenue: 30, duration: 0, tick: 0 })
+    expect(getArrangements(sys)[0].form).toBe('county_coroner')
+  })
+
+  it('borough_coroner form 可存储', () => {
+    const sys = new DiplomaticCoronerSystem()
+    getArrangements(sys).push({ id: 1, crownCivId: 1, coronerCivId: 2, form: 'borough_coroner', inquestAuthority: 50, jurisdictionReach: 50, recordKeeping: 40, crownRevenue: 30, duration: 0, tick: 0 })
+    expect(getArrangements(sys)[0].form).toBe('borough_coroner')
+  })
+
+  it('多条 arrangements 各自独立更新 duration', () => {
+    const sys = new DiplomaticCoronerSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    const a1: CoronerArrangement = { id: 1, crownCivId: 1, coronerCivId: 2, form: 'royal_coroner', inquestAuthority: 50, jurisdictionReach: 50, recordKeeping: 40, crownRevenue: 30, duration: 3, tick: 0 }
+    const a2: CoronerArrangement = { id: 2, crownCivId: 3, coronerCivId: 4, form: 'county_coroner', inquestAuthority: 50, jurisdictionReach: 50, recordKeeping: 40, crownRevenue: 30, duration: 7, tick: 0 }
+    getArrangements(sys).push(a1)
+    getArrangements(sys).push(a2)
+    sys.update(1, world, em, 2770)
+    expect(a1.duration).toBe(4)
+    expect(a2.duration).toBe(8)
+    vi.restoreAllMocks()
+  })
+
+  it('过期记录（tick < cutoff）被移除', () => {
+    const sys = new DiplomaticCoronerSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    getArrangements(sys).push({ id: 1, crownCivId: 1, coronerCivId: 2, form: 'royal_coroner', inquestAuthority: 50, jurisdictionReach: 50, recordKeeping: 40, crownRevenue: 30, duration: 0, tick: 0 })
+    ;(sys as any).lastCheck = 0
+    sys.update(1, world, em, 88000 + 2770 + 1)
+    expect(getArrangements(sys)).toHaveLength(0)
+    vi.restoreAllMocks()
+  })
+
+  it('未过期记录保留', () => {
+    const sys = new DiplomaticCoronerSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    const bigTick = 88000 + 2770
+    getArrangements(sys).push({ id: 1, crownCivId: 1, coronerCivId: 2, form: 'royal_coroner', inquestAuthority: 50, jurisdictionReach: 50, recordKeeping: 40, crownRevenue: 30, duration: 0, tick: bigTick - 1000 })
+    ;(sys as any).lastCheck = 0
+    sys.update(1, world, em, bigTick)
+    expect(getArrangements(sys)).toHaveLength(1)
+    vi.restoreAllMocks()
+  })
+
+  it('update 不改变 crownCivId/coronerCivId', () => {
+    const sys = new DiplomaticCoronerSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    const a: CoronerArrangement = { id: 1, crownCivId: 4, coronerCivId: 7, form: 'royal_coroner', inquestAuthority: 50, jurisdictionReach: 50, recordKeeping: 40, crownRevenue: 30, duration: 0, tick: 0 }
+    getArrangements(sys).push(a)
+    sys.update(1, world, em, 2770)
+    expect(a.crownCivId).toBe(4)
+    expect(a.coronerCivId).toBe(7)
+    vi.restoreAllMocks()
+  })
+
+  it('空 arrangements 时 update 不崩溃', () => {
+    const sys = new DiplomaticCoronerSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    expect(() => sys.update(1, world, em, 2770)).not.toThrow()
+    vi.restoreAllMocks()
+  })
+
+  it('nextId 手动设置后保持', () => {
+    const sys = new DiplomaticCoronerSystem()
+    ;(sys as any).nextId = 33
+    expect((sys as any).nextId).toBe(33)
+  })
+
+  it('全 4 种 form 可注入并保存', () => {
+    const sys = new DiplomaticCoronerSystem()
+    const forms = ['royal_coroner', 'county_coroner', 'borough_coroner', 'palatine_coroner']
+    for (const f of forms) {
+      getArrangements(sys).push({ id: 1, crownCivId: 1, coronerCivId: 2, form: f as any, inquestAuthority: 50, jurisdictionReach: 50, recordKeeping: 40, crownRevenue: 30, duration: 0, tick: 0 })
+    }
+    const storedForms = getArrangements(sys).map(a => a.form)
+    for (const f of forms) { expect(storedForms).toContain(f) }
+  })
+
+  it('lastCheck 更新到最新 tick', () => {
+    const sys = new DiplomaticCoronerSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, world, em, 2770 * 3)
+    expect((sys as any).lastCheck).toBe(2770 * 3)
+    vi.restoreAllMocks()
+  })
+})

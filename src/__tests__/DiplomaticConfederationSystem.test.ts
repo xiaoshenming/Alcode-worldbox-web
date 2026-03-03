@@ -289,4 +289,116 @@ describe('DiplomaticConfederationSystem', () => {
       expect((sys as any).nextId).toBeGreaterThan(idBefore)
     })
   })
+
+  // ---- 6. 额外覆盖测试 ----
+  describe('6. 额外边界与枚举测试', () => {
+    it('cohesionLevel 上限 90 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      const p = injectPact(sys, { cohesionLevel: 89.99, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p.cohesionLevel).toBeLessThanOrEqual(90)
+    })
+
+    it('cohesionLevel 下限 10 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      const p = injectPact(sys, { cohesionLevel: 10.01, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p.cohesionLevel).toBeGreaterThanOrEqual(10)
+    })
+
+    it('sovereigntyPreserved 上限 85 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      const p = injectPact(sys, { sovereigntyPreserved: 84.99, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p.sovereigntyPreserved).toBeLessThanOrEqual(85)
+    })
+
+    it('commonPurpose 上限 75 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      const p = injectPact(sys, { commonPurpose: 74.99, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p.commonPurpose).toBeLessThanOrEqual(75)
+    })
+
+    it('decisionConsensus 上限 65 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      const p = injectPact(sys, { decisionConsensus: 64.99, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p.decisionConsensus).toBeLessThanOrEqual(65)
+    })
+
+    it('defense_league form 可存储', () => {
+      const p = injectPact(sys, { form: 'defense_league' })
+      expect(p.form).toBe('defense_league')
+    })
+
+    it('trade_bloc form 可存储', () => {
+      const p = injectPact(sys, { form: 'trade_bloc' })
+      expect(p.form).toBe('trade_bloc')
+    })
+
+    it('cultural_alliance form 可存储', () => {
+      const p = injectPact(sys, { form: 'cultural_alliance' })
+      expect(p.form).toBe('cultural_alliance')
+    })
+
+    it('resource_compact form 可存储', () => {
+      const p = injectPact(sys, { form: 'resource_compact' })
+      expect(p.form).toBe('resource_compact')
+    })
+
+    it('多条 pacts 各自独立更新 duration', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      const p1 = injectPact(sys, { duration: 3, tick: 0 })
+      const p2 = injectPact(sys, { duration: 7, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p1.duration).toBe(4)
+      expect(p2.duration).toBe(8)
+    })
+
+    it('update 不改变 form', () => {
+      const p = injectPact(sys, { form: 'resource_compact', tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p.form).toBe('resource_compact')
+    })
+
+    it('update 不改变 civIdA/civIdB', () => {
+      const p = injectPact(sys, { civIdA: 5, civIdB: 8, tick: 0 })
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)
+      expect(p.civIdA).toBe(5)
+      expect(p.civIdB).toBe(8)
+    })
+
+    it('空 pacts 时 update 不崩溃', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99)
+      expect(() => sys.update(1, nullWorld, nullEm, CHECK_INTERVAL)).not.toThrow()
+    })
+
+    it('全部过期后 pacts 清空', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      injectPact(sys, { tick: 0 })
+      injectPact(sys, { tick: 100 })
+      const bigTick = CUTOFF_AGE + 1000 + CHECK_INTERVAL
+      ;(sys as any).lastCheck = 0
+      sys.update(1, nullWorld, nullEm, bigTick)
+      expect((sys as any).pacts).toHaveLength(0)
+    })
+
+    it('lastCheck 更新到最新 tick', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99)
+      sys.update(1, nullWorld, nullEm, CHECK_INTERVAL * 5)
+      expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 5)
+    })
+
+    it('nextId 手动设置后保持', () => {
+      ;(sys as any).nextId = 77
+      expect((sys as any).nextId).toBe(77)
+    })
+
+    it('注入 4 种不同 form 后 pacts 长度为 4', () => {
+      const forms: ConfederationForm[] = ['defense_league', 'trade_bloc', 'cultural_alliance', 'resource_compact']
+      for (const f of forms) { injectPact(sys, { form: f }) }
+      expect((sys as any).pacts).toHaveLength(4)
+    })
+  })
 })

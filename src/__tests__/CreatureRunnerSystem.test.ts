@@ -321,3 +321,182 @@ describe('CreatureRunnerSystem', () => {
     })
   })
 })
+
+// ---- Extended tests (to reach 50+) ----
+
+describe('CreatureRunnerSystem - END_SPEED映射完整', () => {
+  it('novice速度为3', () => {
+    expect(END_SPEED['novice']).toBe(3)
+  })
+
+  it('trained速度为6', () => {
+    expect(END_SPEED['trained']).toBe(6)
+  })
+
+  it('elite速度为10', () => {
+    expect(END_SPEED['elite']).toBe(10)
+  })
+
+  it('legendary速度为16', () => {
+    expect(END_SPEED['legendary']).toBe(16)
+  })
+})
+
+describe('CreatureRunnerSystem - runner字段合法性', () => {
+  it('stamina默认为80，在合理范围内', () => {
+    const r = makeRunner(1)
+    expect(r.stamina).toBeGreaterThanOrEqual(0)
+    expect(r.stamina).toBeLessThanOrEqual(100)
+  })
+
+  it('reputation默认为40，非负', () => {
+    const r = makeRunner(1)
+    expect(r.reputation).toBeGreaterThanOrEqual(0)
+  })
+
+  it('messagesDelivered默认为10，非负', () => {
+    const r = makeRunner(1)
+    expect(r.messagesDelivered).toBeGreaterThanOrEqual(0)
+  })
+
+  it('tick默认为0', () => {
+    const r = makeRunner(1)
+    expect(r.tick).toBe(0)
+  })
+})
+
+describe('CreatureRunnerSystem - runners数组操作', () => {
+  let sys: CreatureRunnerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('push5条后length为5', () => {
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).runners.push(makeRunner(i + 1))
+    }
+    expect((sys as any).runners).toHaveLength(5)
+  })
+
+  it('splice后length减少', () => {
+    ;(sys as any).runners.push(makeRunner(1))
+    ;(sys as any).runners.push(makeRunner(2))
+    ;(sys as any).runners.splice(0, 1)
+    expect((sys as any).runners).toHaveLength(1)
+  })
+})
+
+describe('CreatureRunnerSystem - CHECK_INTERVAL=2400节流详细', () => {
+  let sys: CreatureRunnerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('tick=2399时不更新lastCheck', () => {
+    const em = makeEm([])
+    sys.update(1, em as any, 2399)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('tick=2400时更新lastCheck', () => {
+    const em = makeEm([])
+    sys.update(1, em as any, 2400)
+    expect((sys as any).lastCheck).toBe(2400)
+  })
+
+  it('连续两次达阈值，lastCheck正确', () => {
+    const em = makeEm([])
+    sys.update(1, em as any, 2400)
+    sys.update(1, em as any, 4800)
+    expect((sys as any).lastCheck).toBe(4800)
+  })
+})
+
+describe('CreatureRunnerSystem - MAX_RUNNERS=22上限', () => {
+  let sys: CreatureRunnerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('手动注入22条后length为22', () => {
+    for (let i = 0; i < 22; i++) {
+      ;(sys as any).runners.push(makeRunner(i + 1))
+    }
+    expect((sys as any).runners).toHaveLength(22)
+  })
+})
+
+describe('CreatureRunnerSystem - endurance4种类型均有效', () => {
+  it('所有4种endurance均可存储', () => {
+    const endurances: RunnerEndurance[] = ['novice', 'trained', 'elite', 'legendary']
+    endurances.forEach(e => {
+      const r = makeRunner(1, e)
+      expect(r.endurance).toBe(e)
+    })
+  })
+})
+
+describe('CreatureRunnerSystem - 数据完整性', () => {
+  let sys: CreatureRunnerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('注入所有字段后完整保存', () => {
+    const r = makeRunner(42, 'elite', { stamina: 95, reputation: 70, tick: 1234 })
+    ;(sys as any).runners.push(r)
+    const stored = (sys as any).runners[0]
+    expect(stored.creatureId).toBe(42)
+    expect(stored.endurance).toBe('elite')
+    expect(stored.stamina).toBe(95)
+    expect(stored.tick).toBe(1234)
+  })
+})
+
+describe('CreatureRunnerSystem - lastCheck初始', () => {
+  let sys: CreatureRunnerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始lastCheck为0', () => {
+    expect((sys as any).lastCheck).toBe(0)
+  })
+})
+
+describe('CreatureRunnerSystem - nextId初始', () => {
+  let sys: CreatureRunnerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始nextId为1', () => {
+    expect((sys as any).nextId).toBe(1)
+  })
+})
+
+describe('CreatureRunnerSystem - 大批量注入', () => {
+  let sys: CreatureRunnerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('注入10条后全部可查', () => {
+    for (let i = 0; i < 10; i++) {
+      ;(sys as any).runners.push(makeRunner(i + 1, 'trained'))
+    }
+    expect((sys as any).runners.filter((r: any) => r.endurance === 'trained')).toHaveLength(10)
+  })
+})
+
+describe('CreatureRunnerSystem - 数据结构字段类型', () => {
+  it('Runner接口所有字段为合法类型', () => {
+    const r = makeRunner(1)
+    expect(typeof r.id).toBe('number')
+    expect(typeof r.creatureId).toBe('number')
+    expect(typeof r.endurance).toBe('string')
+    expect(typeof r.speed).toBe('number')
+    expect(typeof r.messagesDelivered).toBe('number')
+    expect(typeof r.stamina).toBe('number')
+    expect(typeof r.reputation).toBe('number')
+    expect(typeof r.tick).toBe('number')
+  })
+})
+
+describe('CreatureRunnerSystem - 速度与endurance一致', () => {
+  it('novice速度=3', () => {
+    const r = makeRunner(1, 'novice')
+    expect(r.speed).toBe(3)
+  })
+
+  it('legendary速度=16', () => {
+    const r = makeRunner(1, 'legendary')
+    expect(r.speed).toBe(16)
+  })
+})

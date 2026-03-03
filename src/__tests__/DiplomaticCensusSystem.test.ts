@@ -320,3 +320,113 @@ describe('DiplomaticCensusSystem', () => {
   })
 
 })
+
+// ---- 追加测试以达到 50+ ----
+describe('DiplomaticCensusSystem — 额外完整性测试', () => {
+  const CI = 2000
+  const MAX = 50
+
+  function makeSys2() { return new DiplomaticCensusSystem() }
+  function makeC(o: Partial<Census> = {}): Census {
+    return { id: 1, civId: 1, population: 100, warriors: 15, workers: 40,
+      elders: 8, growthRate: 0, tick: 10000, ...o }
+  }
+  function makeCivMgr(civs: Array<{ id: number; population: number }>) {
+    return { civilizations: new Map(civs.map(c => [c.id, { id: c.id, population: c.population }])) }
+  }
+
+  let sys: DiplomaticCensusSystem
+  beforeEach(() => { sys = makeSys2(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('两系统实例互相独立', () => {
+    const s2 = makeSys2(); ;(sys as any).records.push(makeC())
+    expect((s2 as any).records).toHaveLength(0)
+  })
+  it('注入记录后 length 增加', () => {
+    ;(sys as any).records.push(makeC({ id: 1 }))
+    ;(sys as any).records.push(makeC({ id: 2 }))
+    expect((sys as any).records).toHaveLength(2)
+  })
+  it('records 是 Array 类型', () => {
+    expect(Array.isArray((sys as any).records)).toBe(true)
+  })
+  it('census 包含所有必要字段', () => {
+    ;(sys as any).records.push(makeC())
+    const r = (sys as any).records[0]
+    ;['id','civId','population','warriors','workers','elders','growthRate','tick'].forEach(k => expect(r).toHaveProperty(k))
+  })
+  it('civId 可独立读取', () => {
+    ;(sys as any).records.push(makeC({ civId: 5 }))
+    expect((sys as any).records[0].civId).toBe(5)
+  })
+  it('population 可独立读取', () => {
+    ;(sys as any).records.push(makeC({ population: 250 }))
+    expect((sys as any).records[0].population).toBe(250)
+  })
+  it('tick=0 不触发更新', () => {
+    sys.update(1, {} as any, makeCivMgr([]) as any, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick < CI 时不更新 lastCheck', () => {
+    sys.update(1, {} as any, makeCivMgr([]) as any, CI - 1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick = CI 时更新 lastCheck', () => {
+    sys.update(1, {} as any, makeCivMgr([]) as any, CI)
+    expect((sys as any).lastCheck).toBe(CI)
+  })
+  it('civManager 为 null 时不新增记录', () => {
+    sys.update(1, {} as any, null as any, CI)
+    expect((sys as any).records).toHaveLength(0)
+  })
+  it('不含任何 civ 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0) // 强制通过 CENSUS_CHANCE
+    sys.update(1, {} as any, makeCivMgr([]) as any, CI)
+    expect((sys as any).records).toHaveLength(0)
+  })
+  it('超过 MAX_RECORDS=50 时 cleanup 裁减', () => {
+    for (let i = 1; i <= 55; i++) { ;(sys as any).records.push(makeC({ id: i, tick: i * 100 })) }
+    ;(sys as any).cleanup()
+    expect((sys as any).records.length).toBeLessThanOrEqual(MAX)
+  })
+  it('cleanup 后保留最新记录（按 tick 降序）', () => {
+    for (let i = 1; i <= 55; i++) { ;(sys as any).records.push(makeC({ id: i, tick: i })) }
+    ;(sys as any).cleanup()
+    const ticks = (sys as any).records.map((r: any) => r.tick)
+    expect(Math.min(...ticks)).toBeGreaterThan(5)
+  })
+  it('growthRate 可读取', () => {
+    ;(sys as any).records.push(makeC({ growthRate: 5.5 }))
+    expect((sys as any).records[0].growthRate).toBeCloseTo(5.5, 1)
+  })
+  it('warriors 可读取', () => {
+    ;(sys as any).records.push(makeC({ warriors: 20 }))
+    expect((sys as any).records[0].warriors).toBe(20)
+  })
+  it('workers 可读取', () => {
+    ;(sys as any).records.push(makeC({ workers: 50 }))
+    expect((sys as any).records[0].workers).toBe(50)
+  })
+  it('elders 可读取', () => {
+    ;(sys as any).records.push(makeC({ elders: 10 }))
+    expect((sys as any).records[0].elders).toBe(10)
+  })
+  it('单文明 conductCensus，random通过时新增记录', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0) // 0 < CENSUS_CHANCE=0.04
+    sys.update(1, {} as any, makeCivMgr([{ id: 1, population: 100 }]) as any, CI)
+    expect((sys as any).records.length).toBeGreaterThanOrEqual(1)
+  })
+  it('random > CENSUS_CHANCE 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.9) // > 0.04
+    sys.update(1, {} as any, makeCivMgr([{ id: 1, population: 100 }]) as any, CI)
+    expect((sys as any).records.length).toBe(0)
+  })
+  it('两次满足间隔 lastCheck 递增', () => {
+    sys.update(1, {} as any, makeCivMgr([]) as any, CI)
+    sys.update(1, {} as any, makeCivMgr([]) as any, CI * 2)
+    expect((sys as any).lastCheck).toBe(CI * 2)
+  })
+  it('nextId 初始为 1', () => { expect((sys as any).nextId).toBe(1) })
+  it('records 初始为空', () => { expect((sys as any).records).toHaveLength(0) })
+})

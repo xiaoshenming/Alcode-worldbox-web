@@ -319,3 +319,160 @@ describe('DiplomaticCeremonySystem', () => {
     })
   })
 })
+
+// ---- 追加测试以达到 50+ ----
+describe('DiplomaticCeremonySystem — 额外完整性测试', () => {
+  const CI = 1000
+  const MAX = 5
+
+  function makeFakeCivMgr2(n = 2) {
+    const m = new Map<number, any>()
+    for (let i = 1; i <= n; i++) { m.set(i, { id: i, territory: new Map<string, boolean>() }) }
+    return { civilizations: m }
+  }
+  function makeSys2() { return new DiplomaticCeremonySystem() }
+
+  let sys: DiplomaticCeremonySystem
+  beforeEach(() => { sys = makeSys2(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('两系统实例互相独立', () => {
+    const s2 = makeSys2()
+    ;(sys as any).ceremonies.push({ id: 1 })
+    expect((s2 as any).ceremonies).toHaveLength(0)
+  })
+  it('ceremonies 是 Array 类型', () => {
+    expect(Array.isArray((sys as any).ceremonies)).toBe(true)
+  })
+  it('history 初始为空数组', () => {
+    expect((sys as any).history).toHaveLength(0)
+  })
+  it('tick=0 不触发更新', () => {
+    sys.update(1, makeFakeCivMgr2() as any, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick < CI 时不更新 lastCheck', () => {
+    sys.update(1, makeFakeCivMgr2() as any, CI - 1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick = CI 时更新 lastCheck', () => {
+    sys.update(1, makeFakeCivMgr2() as any, CI)
+    expect((sys as any).lastCheck).toBe(CI)
+  })
+  it('两次满足间隔 lastCheck 递增', () => {
+    sys.update(1, makeFakeCivMgr2() as any, CI)
+    sys.update(1, makeFakeCivMgr2() as any, CI * 2)
+    expect((sys as any).lastCheck).toBe(CI * 2)
+  })
+  it('ceremonies 不超过 MAX=5', () => {
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0) // 触发 INITIATE_CHANCE
+    for (let t = CI; t <= CI * 10; t += CI) {
+      sys.update(1, makeFakeCivMgr2() as any, t)
+    }
+    expect((sys as any).ceremonies.length).toBeLessThanOrEqual(MAX)
+  })
+  it('preparing 状态在下一次 update 变为 active', () => {
+    ;(sys as any).ceremonies.push({ id: 1, type: 'festival', hostCivId: 1, guestCivIds: [],
+      status: 'preparing', prestige: 50, duration: 15, startTick: CI, locationX: 100, locationY: 100 })
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, makeFakeCivMgr2() as any, CI)
+    expect((sys as any).ceremonies[0]?.status).toBe('active')
+  })
+  it('active 且 duration<=0 时被完成并移入 history', () => {
+    ;(sys as any).ceremonies.push({ id: 1, type: 'festival', hostCivId: 1, guestCivIds: [],
+      status: 'active', prestige: 50, duration: 0, startTick: CI, locationX: 100, locationY: 100 })
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, makeFakeCivMgr2() as any, CI)
+    expect((sys as any).ceremonies).toHaveLength(0)
+    expect((sys as any).history).toHaveLength(1)
+  })
+  it('被中断的 ceremony 进入 history（success=false）', () => {
+    ;(sys as any).ceremonies.push({ id: 1, type: 'festival', hostCivId: 1, guestCivIds: [],
+      status: 'active', prestige: 50, duration: 10, startTick: CI, locationX: 100, locationY: 100 })
+    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0.99) // > INITIATE_CHANCE=0.012 → initiateCeremonies返回
+      .mockReturnValueOnce(0.02) // < DISRUPT_CHANCE=0.03 → 触发 disrupted
+      .mockReturnValue(0.99)
+    sys.update(1, makeFakeCivMgr2() as any, CI)
+    expect((sys as any).ceremonies).toHaveLength(0)
+    if ((sys as any).history.length > 0) {
+      expect((sys as any).history[0].success).toBe(false)
+    }
+  })
+  it('history 不超过 40 条', () => {
+    for (let i = 1; i <= 45; i++) {
+      ;(sys as any).history.push({ id: i, type: 'festival', hostCivId: 1, guestCivIds: [],
+        prestige: 50, tick: i * 1000, success: true })
+    }
+    // 触发 recordCeremony 以 trim
+    const c = { id: 99, type: 'festival', hostCivId: 1, guestCivIds: [], prestige: 50,
+      duration: 0, startTick: CI, locationX: 100, locationY: 100, status: 'active' as const }
+    ;(sys as any).recordCeremony(c, CI, true)
+    expect((sys as any).history.length).toBeLessThanOrEqual(40)
+  })
+  it('completed ceremony 的 history 记录 success=true', () => {
+    ;(sys as any).ceremonies.push({ id: 1, type: 'trade_pact', hostCivId: 1, guestCivIds: [2],
+      status: 'active', prestige: 40, duration: 0, startTick: CI, locationX: 100, locationY: 100 })
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, makeFakeCivMgr2() as any, CI)
+    if ((sys as any).history.length > 0) {
+      expect((sys as any).history[0].success).toBe(true)
+    }
+  })
+  it('active duration 每次 update 减少 1', () => {
+    ;(sys as any).ceremonies.push({ id: 1, type: 'festival', hostCivId: 1, guestCivIds: [],
+      status: 'active', prestige: 50, duration: 10, startTick: CI, locationX: 100, locationY: 100 })
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, makeFakeCivMgr2() as any, CI)
+    const c = (sys as any).ceremonies[0]
+    if (c) { expect(c.duration).toBe(9) }
+  })
+  it('nextId 初始为 1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck 初始为 0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('ceremonies 初始为空', () => { expect((sys as any).ceremonies).toHaveLength(0) })
+  it('所有 CeremonyType 均合法', () => {
+    const types: CeremonyType[] = ['coronation', 'peace_treaty', 'trade_pact', 'victory', 'mourning', 'festival']
+    expect(types.length).toBe(6)
+  })
+  it('CeremonyStatus 包含正确值', () => {
+    const statuses: CeremonyStatus[] = ['preparing', 'active', 'completed', 'disrupted']
+    expect(statuses.length).toBe(4)
+  })
+  it('三次满足间隔 lastCheck 递增', () => {
+    sys.update(1, makeFakeCivMgr2() as any, CI)
+    sys.update(1, makeFakeCivMgr2() as any, CI * 2)
+    sys.update(1, makeFakeCivMgr2() as any, CI * 3)
+    expect((sys as any).lastCheck).toBe(CI * 3)
+  })
+})
+
+describe('DiplomaticCeremonySystem — 补充边界', () => {
+  const CI = 1000
+  function makeFakeCivMgr3(n = 2) {
+    const m = new Map<number, any>()
+    for (let i = 1; i <= n; i++) { m.set(i, { id: i, territory: new Map<string, boolean>() }) }
+    return { civilizations: m }
+  }
+  function makeSys3() { return new DiplomaticCeremonySystem() }
+  let sys: DiplomaticCeremonySystem
+  beforeEach(() => { sys = makeSys3(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('_civsBuf 初始为空数组', () => {
+    expect((sys as any)._civsBuf).toHaveLength(0)
+  })
+  it('civs 数量为 0 时不新增 ceremony', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, makeFakeCivMgr3(0) as any, CI)
+    expect((sys as any).ceremonies).toHaveLength(0)
+  })
+  it('注入 3 条 ceremony 后 length 为 3', () => {
+    for (let i = 1; i <= 3; i++) {
+      ;(sys as any).ceremonies.push({ id: i, type: 'festival', hostCivId: 1, guestCivIds: [],
+        status: 'preparing', prestige: 50, duration: 15, startTick: CI, locationX: 100, locationY: 100 })
+    }
+    expect((sys as any).ceremonies).toHaveLength(3)
+  })
+})

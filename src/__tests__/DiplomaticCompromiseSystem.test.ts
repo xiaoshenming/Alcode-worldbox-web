@@ -26,7 +26,7 @@ describe('DiplomaticCompromiseSystem', () => {
 
   beforeEach(() => {
     sys = makeSys()
-    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
   })
   afterEach(() => { vi.restoreAllMocks() })
 
@@ -79,6 +79,16 @@ describe('DiplomaticCompromiseSystem', () => {
       expect(ag).toHaveProperty('duration')
       expect(ag).toHaveProperty('tick')
     })
+
+    it('satisfaction 初始为 0', () => {
+      const ag = makeAgreement()
+      expect(ag.satisfaction).toBe(0)
+    })
+
+    it('rounds 初始为 0', () => {
+      const ag = makeAgreement()
+      expect(ag.rounds).toBe(0)
+    })
   })
 
   // ---- 2. CHECK_INTERVAL 节流 ----
@@ -108,6 +118,23 @@ describe('DiplomaticCompromiseSystem', () => {
       callUpdate(sys, CHECK_INTERVAL)
       callUpdate(sys, CHECK_INTERVAL * 2)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+    })
+
+    it('tick=0 时不执行', () => {
+      callUpdate(sys, 0)
+      expect((sys as any).lastCheck).toBe(0)
+    })
+
+    it('tick=CHECK_INTERVAL-1 时不执行', () => {
+      const ag = makeAgreement({ status: 'proposing', duration: 5 })
+      ;(sys as any).agreements.push(ag)
+      callUpdate(sys, CHECK_INTERVAL - 1)
+      expect(ag.duration).toBe(5)
+    })
+
+    it('tick 极大时正常执行', () => {
+      callUpdate(sys, 99999999)
+      expect((sys as any).lastCheck).toBe(99999999)
     })
   })
 
@@ -153,12 +180,10 @@ describe('DiplomaticCompromiseSystem', () => {
       const ag = makeAgreement({ status: 'counter_offer', concessionA: 50, concessionB: 50 })
       ;(sys as any).agreements.push(ag)
       callUpdate(sys, CHECK_INTERVAL)
-      // after update: concessionA=50.5, concessionB=50.5 → satisfaction=50.5
       expect(ag.satisfaction).toBeCloseTo((ag.concessionA + ag.concessionB) / 2 - 0.0001, 0)
     })
 
     it('satisfaction > 60 时状态变为 accepted', () => {
-      // concessionA=62, concessionB=62 → satisfaction after first counter_offer update ≈ 62.5 > 60
       const ag = makeAgreement({ status: 'counter_offer', concessionA: 62, concessionB: 62 })
       ;(sys as any).agreements.push(ag)
       callUpdate(sys, CHECK_INTERVAL)
@@ -166,7 +191,6 @@ describe('DiplomaticCompromiseSystem', () => {
     })
 
     it('rounds > 10 且 satisfaction < 30 时状态变为 rejected', () => {
-      // concessionA=10, concessionB=10 → satisfaction ≈ 10.5 < 30, rounds=11 > 10
       const ag = makeAgreement({ status: 'counter_offer', concessionA: 10, concessionB: 10, rounds: 11 })
       ;(sys as any).agreements.push(ag)
       callUpdate(sys, CHECK_INTERVAL)
@@ -188,6 +212,23 @@ describe('DiplomaticCompromiseSystem', () => {
       callUpdate(sys, CHECK_INTERVAL)
       expect(ag.status).toBe('counter_offer')
       expect(ag.rounds).toBe(1)
+    })
+
+    it('concessionB 上限为 100', () => {
+      const ag = makeAgreement({ status: 'counter_offer', concessionA: 30, concessionB: 99.9 })
+      ;(sys as any).agreements.push(ag)
+      callUpdate(sys, CHECK_INTERVAL)
+      expect(ag.concessionB).toBeLessThanOrEqual(100)
+    })
+
+    it('多条 agreements 各自独立更新 duration', () => {
+      const ag1 = makeAgreement({ id: 1, duration: 3, status: 'proposing' })
+      const ag2 = makeAgreement({ id: 2, duration: 7, status: 'proposing' })
+      ;(sys as any).agreements.push(ag1)
+      ;(sys as any).agreements.push(ag2)
+      callUpdate(sys, CHECK_INTERVAL)
+      expect(ag1.duration).toBe(4)
+      expect(ag2.duration).toBe(8)
     })
   })
 
@@ -224,6 +265,26 @@ describe('DiplomaticCompromiseSystem', () => {
       expect(remaining).toHaveLength(1)
       expect(remaining[0].id).toBe(1)
     })
+
+    it('status=counter_offer 的记录保留', () => {
+      const ag = makeAgreement({ status: 'counter_offer', concessionA: 20, concessionB: 20 })
+      ;(sys as any).agreements.push(ag)
+      callUpdate(sys, CHECK_INTERVAL)
+      // satisfaction = 20.5 < 60, rounds=0 <= 10 -> not rejected → should stay
+      expect((sys as any).agreements).toHaveLength(1)
+    })
+
+    it('多条 rejected 全部被清理', () => {
+      for (let i = 0; i < 5; i++) {
+        ;(sys as any).agreements.push(makeAgreement({ id: i + 1, status: 'rejected' }))
+      }
+      callUpdate(sys, CHECK_INTERVAL)
+      expect((sys as any).agreements).toHaveLength(0)
+    })
+
+    it('空数组时清理不崩溃', () => {
+      expect(() => callUpdate(sys, CHECK_INTERVAL)).not.toThrow()
+    })
   })
 
   // ---- 5. MAX 上限 ----
@@ -234,9 +295,6 @@ describe('DiplomaticCompromiseSystem', () => {
       }
       vi.spyOn(Math, 'random').mockReturnValue(0) // 触发新增条件
       callUpdate(sys, CHECK_INTERVAL)
-      // 虽然触发了新增逻辑，但 accepted/rejected 清理可能减少数量
-      // 所有状态均为 proposing，random=0 → counter_offer，satisfaction=10<60 → 保持
-      // 关键：初始满员时不允许 push 新记录
       expect((sys as any).agreements.length).toBeLessThanOrEqual(MAX_AGREEMENTS)
     })
 
@@ -250,6 +308,51 @@ describe('DiplomaticCompromiseSystem', () => {
     it('nextId 手动设置后保持', () => {
       ;(sys as any).nextId = 10
       expect((sys as any).nextId).toBe(10)
+    })
+
+    it('random=0.99 时不新增（>INITIATE_CHANCE）', () => {
+      callUpdate(sys, CHECK_INTERVAL)
+      expect((sys as any).agreements).toHaveLength(0)
+    })
+
+    it('agreements 是数组类型', () => {
+      expect(Array.isArray((sys as any).agreements)).toBe(true)
+    })
+
+    it('update 不崩溃（空状态）', () => {
+      expect(() => callUpdate(sys, CHECK_INTERVAL)).not.toThrow()
+    })
+  })
+
+  // ---- 6. 枚举完整性 ----
+  describe('CompromiseStatus 枚举完整性', () => {
+    it("status='proposing' 可读取", () => {
+      const ag = makeAgreement({ status: 'proposing' })
+      expect(ag.status).toBe('proposing')
+    })
+
+    it("status='counter_offer' 可读取", () => {
+      const ag = makeAgreement({ status: 'counter_offer' })
+      expect(ag.status).toBe('counter_offer')
+    })
+
+    it("status='accepted' 可读取", () => {
+      const ag = makeAgreement({ status: 'accepted' })
+      expect(ag.status).toBe('accepted')
+    })
+
+    it("status='rejected' 可读取", () => {
+      const ag = makeAgreement({ status: 'rejected' })
+      expect(ag.status).toBe('rejected')
+    })
+
+    it('update 不改变 civIdA/civIdB', () => {
+      const ag = makeAgreement({ civIdA: 4, civIdB: 6, status: 'proposing' })
+      ;(sys as any).agreements.push(ag)
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      callUpdate(sys, CHECK_INTERVAL)
+      expect(ag.civIdA).toBe(4)
+      expect(ag.civIdB).toBe(6)
     })
   })
 })

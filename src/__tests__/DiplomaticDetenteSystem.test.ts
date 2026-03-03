@@ -272,4 +272,222 @@ describe('DiplomaticDetenteSystem', () => {
       expect((sys as any).treaties[0].phase).toBe('normalization')
     })
   })
+
+  // ===== 额外测试：相位/字段完整性 =====
+  describe('额外覆盖测试', () => {
+    it('diplomaticChannels 字段可存储', () => {
+      ;(sys as any).treaties.push(makeTreaty({ diplomaticChannels: 4 }))
+      expect((sys as any).treaties[0].diplomaticChannels).toBe(4)
+    })
+
+    it('tensionReduction 下限 5 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      ;(sys as any).treaties.push(makeTreaty({ tensionReduction: 5.01, tick: 0 }))
+      sys.update(1, {} as any, {} as any, 2420)
+      expect((sys as any).treaties[0]?.tensionReduction).toBeGreaterThanOrEqual(5)
+      vi.restoreAllMocks()
+    })
+
+    it('tradeOpening 下限 3 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      ;(sys as any).treaties.push(makeTreaty({ tradeOpening: 3.01, tick: 0 }))
+      sys.update(1, {} as any, {} as any, 2420)
+      expect((sys as any).treaties[0]?.tradeOpening).toBeGreaterThanOrEqual(3)
+      vi.restoreAllMocks()
+    })
+
+    it('culturalExchange 下限 3 不被突破', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      ;(sys as any).treaties.push(makeTreaty({ culturalExchange: 3.01, tick: 0 }))
+      sys.update(1, {} as any, {} as any, 2420)
+      expect((sys as any).treaties[0]?.culturalExchange).toBeGreaterThanOrEqual(3)
+      vi.restoreAllMocks()
+    })
+
+    it('update 不改变 civIdA/civIdB', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      ;(sys as any).treaties.push(makeTreaty({ civIdA: 3, civIdB: 7, tick: 0 }))
+      sys.update(1, {} as any, {} as any, 2420)
+      expect((sys as any).treaties[0].civIdA).toBe(3)
+      expect((sys as any).treaties[0].civIdB).toBe(7)
+      vi.restoreAllMocks()
+    })
+
+    it('update 不改变 phase 字段', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      ;(sys as any).treaties.push(makeTreaty({ phase: 'normalization', tick: 0 }))
+      sys.update(1, {} as any, {} as any, 2420)
+      expect((sys as any).treaties[0].phase).toBe('normalization')
+      vi.restoreAllMocks()
+    })
+
+    it('全部过期后 treaties 清空', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      ;(sys as any).treaties.push(makeTreaty({ tick: 0 }))
+      ;(sys as any).treaties.push(makeTreaty({ tick: 100 }))
+      ;(sys as any).lastCheck = 0
+      sys.update(1, {} as any, {} as any, 200000)
+      expect((sys as any).treaties).toHaveLength(0)
+      vi.restoreAllMocks()
+    })
+
+    it('空 treaties 时过期清理不报错', () => {
+      ;(sys as any).lastCheck = 0
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      expect(() => sys.update(1, {} as any, {} as any, 200000)).not.toThrow()
+      vi.restoreAllMocks()
+    })
+
+    it('treaties 数组是可迭代的', () => {
+      ;(sys as any).treaties.push(makeTreaty({ id: 1 }))
+      ;(sys as any).treaties.push(makeTreaty({ id: 2 }))
+      let count = 0
+      for (const _t of (sys as any).treaties) { count++ }
+      expect(count).toBe(2)
+    })
+
+    it('4 种 phase 均可存储', () => {
+      const phases = ['initial', 'negotiation', 'implementation', 'normalization']
+      for (const p of phases) {
+        ;(sys as any).treaties.push(makeTreaty({ phase: p as any }))
+      }
+      expect((sys as any).treaties).toHaveLength(4)
+    })
+
+    it('lastCheck 手动重置后有效', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, {} as any, {} as any, 2420)
+      ;(sys as any).lastCheck = 0
+      sys.update(1, {} as any, {} as any, 2420)
+      expect((sys as any).lastCheck).toBe(2420)
+      vi.restoreAllMocks()
+    })
+
+    it('nextId 手动设置后保持', () => {
+      ;(sys as any).nextId = 77
+      expect((sys as any).nextId).toBe(77)
+    })
+
+    it('tick 极大值时正常执行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      expect(() => sys.update(1, {} as any, {} as any, 99999999)).not.toThrow()
+      vi.restoreAllMocks()
+    })
+
+    it('treaties 数量不超过 MAX_TREATIES=20', () => {
+      for (let i = 0; i < 20; i++) {
+        ;(sys as any).treaties.push(makeTreaty({ id: i + 1, tick: 2420 }))
+      }
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      ;(sys as any).lastCheck = 0
+      sys.update(1, {} as any, {} as any, 2420)
+      expect((sys as any).treaties.length).toBeLessThanOrEqual(20)
+      vi.restoreAllMocks()
+    })
+  })
+})
+
+describe('额外独立测试组', () => {
+  it('tensionReduction 上限 80 不被突破', () => {
+    const sys = new DiplomaticDetenteSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    ;(sys as any).treaties.push(makeTreaty({ tensionReduction: 79.99, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2420)
+    expect((sys as any).treaties[0]?.tensionReduction).toBeLessThanOrEqual(80)
+    vi.restoreAllMocks()
+  })
+
+  it('culturalExchange 上限 60 不被突破', () => {
+    const sys = new DiplomaticDetenteSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    ;(sys as any).treaties.push(makeTreaty({ culturalExchange: 59.99, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2420)
+    expect((sys as any).treaties[0]?.culturalExchange).toBeLessThanOrEqual(60)
+    vi.restoreAllMocks()
+  })
+
+  it('tradeOpening 上限 70 不被突破', () => {
+    const sys = new DiplomaticDetenteSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    ;(sys as any).treaties.push(makeTreaty({ tradeOpening: 69.99, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 2420)
+    expect((sys as any).treaties[0]?.tradeOpening).toBeLessThanOrEqual(70)
+    vi.restoreAllMocks()
+  })
+
+  it('DetenteAgreement 包含所有必要字段', () => {
+    const t = makeTreaty()
+    expect(t).toHaveProperty('id')
+    expect(t).toHaveProperty('civIdA')
+    expect(t).toHaveProperty('civIdB')
+    expect(t).toHaveProperty('phase')
+    expect(t).toHaveProperty('tensionReduction')
+    expect(t).toHaveProperty('diplomaticChannels')
+    expect(t).toHaveProperty('tradeOpening')
+    expect(t).toHaveProperty('culturalExchange')
+    expect(t).toHaveProperty('duration')
+    expect(t).toHaveProperty('tick')
+  })
+
+  it('mixed 过期和未过期，仅删过期', () => {
+    const sys = new DiplomaticDetenteSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const bigTick = 200000
+    ;(sys as any).treaties.push(makeTreaty({ id: 1, tick: 0 }))
+    ;(sys as any).treaties.push(makeTreaty({ id: 2, tick: bigTick }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, {} as any, {} as any, bigTick)
+    expect((sys as any).treaties).toHaveLength(1)
+    expect((sys as any).treaties[0].id).toBe(2)
+    vi.restoreAllMocks()
+  })
+
+  it('duration 字段为 number 类型', () => {
+    const t = makeTreaty({ duration: 42 })
+    expect(typeof t.duration).toBe('number')
+  })
+
+  it('DetentePhase initial 存储读取', () => {
+    const t = makeTreaty({ phase: 'initial' })
+    expect(t.phase).toBe('initial')
+  })
+
+  it('DetentePhase negotiation 存储读取', () => {
+    const t = makeTreaty({ phase: 'negotiation' })
+    expect(t.phase).toBe('negotiation')
+  })
+
+  it('DetentePhase implementation 存储读取', () => {
+    const t = makeTreaty({ phase: 'implementation' })
+    expect(t.phase).toBe('implementation')
+  })
+
+  it('DetentePhase normalization 存储读取', () => {
+    const t = makeTreaty({ phase: 'normalization' })
+    expect(t.phase).toBe('normalization')
+  })
+
+  it('多条 treaty 同时到期都被清除', () => {
+    const sys = new DiplomaticDetenteSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).treaties.push(makeTreaty({ id: i + 1, tick: 0 }))
+    }
+    ;(sys as any).lastCheck = 0
+    sys.update(1, {} as any, {} as any, 200000)
+    expect((sys as any).treaties).toHaveLength(0)
+    vi.restoreAllMocks()
+  })
+
+  it('tick 恰好等于 cutoff 时不被删除', () => {
+    const sys = new DiplomaticDetenteSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const bigTick = 200000
+    const cutoff = bigTick - 83000
+    ;(sys as any).treaties.push(makeTreaty({ tick: cutoff }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, {} as any, {} as any, bigTick)
+    expect((sys as any).treaties).toHaveLength(1)
+    vi.restoreAllMocks()
+  })
 })

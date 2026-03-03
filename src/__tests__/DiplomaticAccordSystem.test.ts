@@ -302,3 +302,135 @@ describe('DiplomaticAccordSystem — MAX_ACCORDS=20 上限', () => {
     expect((sys as any).nextId).toBeGreaterThanOrEqual(1)
   })
 })
+
+// ---- 追加测试以达到 50+ ----
+describe('DiplomaticAccordSystem — 额外完整性测试', () => {
+  let sys: ReturnType<typeof makeSys>
+  const CI = 2360
+  const CUTOFF = 83000
+
+  beforeEach(() => { sys = makeSys(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('两个系统实例互相独立', () => {
+    const s2 = makeSys()
+    ;(sys as any).accords.push(makeAccord())
+    expect((s2 as any).accords).toHaveLength(0)
+  })
+  it('update 不改变 domain 字段', () => {
+    ;(sys as any).accords.push(makeAccord({ domain: 'border', tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).accords[0].domain).toBe('border')
+  })
+  it('update 不改变 civIdA 字段', () => {
+    ;(sys as any).accords.push(makeAccord({ civIdA: 5, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).accords[0].civIdA).toBe(5)
+  })
+  it('update 不改变 id 字段', () => {
+    ;(sys as any).accords.push(makeAccord({ id: 88, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).accords[0].id).toBe(88)
+  })
+  it('bindingForce 下界不低于 10', () => {
+    ;(sys as any).accords.push(makeAccord({ bindingForce: 10, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).accords[0].bindingForce).toBeGreaterThanOrEqual(10)
+  })
+  it('bindingForce 上界不超过 90', () => {
+    ;(sys as any).accords.push(makeAccord({ bindingForce: 90, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).accords[0].bindingForce).toBeLessThanOrEqual(90)
+  })
+  it('mutualSatisfaction 下界不低于 15', () => {
+    ;(sys as any).accords.push(makeAccord({ mutualSatisfaction: 15, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).accords[0].mutualSatisfaction).toBeGreaterThanOrEqual(15)
+  })
+  it('mutualSatisfaction 上界不超过 90', () => {
+    ;(sys as any).accords.push(makeAccord({ mutualSatisfaction: 90, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).accords[0].mutualSatisfaction).toBeLessThanOrEqual(90)
+  })
+  it('implementationRate 下界不低于 5', () => {
+    ;(sys as any).accords.push(makeAccord({ implementationRate: 5, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).accords[0].implementationRate).toBeGreaterThanOrEqual(5)
+  })
+  it('longevity 下界不低于 5', () => {
+    ;(sys as any).accords.push(makeAccord({ longevity: 5, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).accords[0].longevity).toBeGreaterThanOrEqual(5)
+  })
+  it('多条记录各自独立更新 duration', () => {
+    ;(sys as any).accords.push(makeAccord({ id: 1, tick: CI, duration: 0 }))
+    ;(sys as any).accords.push(makeAccord({ id: 2, tick: CI, duration: 9 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).accords[0].duration).toBe(1)
+    expect((sys as any).accords[1].duration).toBe(10)
+  })
+  it('tick=0 不触发更新', () => {
+    sys.update(1, {} as any, {} as any, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('过期清理：tick=0 在大 tick 时删除', () => {
+    ;(sys as any).accords.push(makeAccord({ id: 1, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CUTOFF + CI + 1)
+    expect((sys as any).accords).toHaveLength(0)
+  })
+  it('混合过期：保留新，删旧', () => {
+    const big = CUTOFF + CI + 1
+    ;(sys as any).accords.push(makeAccord({ id: 1, tick: 0 }))
+    ;(sys as any).accords.push(makeAccord({ id: 2, tick: big }))
+    sys.update(1, {} as any, {} as any, big)
+    expect((sys as any).accords).toHaveLength(1)
+    expect((sys as any).accords[0].id).toBe(2)
+  })
+  it('duration 只在满足 CHECK_INTERVAL 时递增', () => {
+    ;(sys as any).accords.push(makeAccord({ duration: 0, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 10)
+    expect((sys as any).accords[0].duration).toBe(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).accords[0].duration).toBe(1)
+  })
+  it('civA === civB 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).accords).toHaveLength(0)
+  })
+  it('注入 20 条后 length 为 20', () => {
+    for (let i = 0; i < 20; i++) { ;(sys as any).accords.push(makeAccord({ id: i + 1 })) }
+    expect((sys as any).accords.length).toBe(20)
+  })
+  it('implementationRate 上界不超过 80', () => {
+    ;(sys as any).accords.push(makeAccord({ implementationRate: 80, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).accords[0].implementationRate).toBeLessThanOrEqual(80)
+  })
+  it('longevity 上界不超过 70', () => {
+    ;(sys as any).accords.push(makeAccord({ longevity: 70, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).accords[0].longevity).toBeLessThanOrEqual(70)
+  })
+  it('5 条全过期在大 tick 时全删除', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).accords.push(makeAccord({ id: i, tick: 0 })) }
+    sys.update(1, {} as any, {} as any, CUTOFF + CI + 1)
+    expect((sys as any).accords).toHaveLength(0)
+  })
+  it('全新鲜记录无清理', () => {
+    const big = CUTOFF + CI + 1
+    ;(sys as any).accords.push(makeAccord({ id: 1, tick: big - 1000 }))
+    ;(sys as any).accords.push(makeAccord({ id: 2, tick: big - 500 }))
+    sys.update(1, {} as any, {} as any, big)
+    expect((sys as any).accords).toHaveLength(2)
+  })
+  it('初始 nextId 为 1', () => { expect((sys as any).nextId).toBe(1) })
+})

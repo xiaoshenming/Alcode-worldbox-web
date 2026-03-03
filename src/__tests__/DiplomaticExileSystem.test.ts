@@ -199,3 +199,134 @@ describe('MAX_EXILES=30上限（仅计算wandering）', () => {
     expect((sys as any).exiles).toHaveLength(35)
   })
 })
+
+describe('额外边界与防御性测试', () => {
+  it('Exile 包含所有必要字段', () => {
+    const exile = { id: 1, entityId: 1, originCivId: 1, reason: 'criminal' as const, exiledAt: 0, status: 'wandering' as const }
+    expect(exile).toHaveProperty('id')
+    expect(exile).toHaveProperty('entityId')
+    expect(exile).toHaveProperty('originCivId')
+    expect(exile).toHaveProperty('reason')
+    expect(exile).toHaveProperty('exiledAt')
+    expect(exile).toHaveProperty('status')
+  })
+
+  it('exile status 所有合法值', () => {
+    const statuses = ['wandering', 'joined_other', 'bandit', 'dead', 'pardoned']
+    for (const s of statuses) {
+      const exile = { id: 1, entityId: 1, originCivId: 1, reason: 'criminal' as const, exiledAt: 0, status: s as any }
+      expect(exile.status).toBe(s)
+    }
+  })
+
+  it('update 空 civilizations 不崩溃', () => {
+    const sys = new DiplomaticExileSystem()
+    expect(() => sys.update(1, makeEM(), makeEmptyManager(), 0)).not.toThrow()
+  })
+
+  it('wandering exile 的 entityId 在 _wanderingSet 中', () => {
+    const sys = new DiplomaticExileSystem()
+    ;(sys as any).exiles.push({ id: 1, entityId: 99, originCivId: 1, reason: 'criminal', exiledAt: 0, status: 'wandering' })
+    ;(sys as any)._wanderingSet.add(99)
+    expect((sys as any)._wanderingSet.has(99)).toBe(true)
+  })
+
+  it('非 wandering exile 不在 _wanderingSet 中', () => {
+    const sys = new DiplomaticExileSystem()
+    ;(sys as any).exiles.push({ id: 1, entityId: 88, originCivId: 1, reason: 'criminal', exiledAt: 0, status: 'bandit' })
+    expect((sys as any)._wanderingSet.has(88)).toBe(false)
+  })
+
+  it('update dead-entity spy: getComponent=null -> status=dead', () => {
+    const sys = new DiplomaticExileSystem()
+    const emDead = {
+      getEntitiesWithComponents: () => [] as number[],
+      getComponent: (_eid: number, comp: string) => comp === 'creature' ? null : null,
+    } as any
+    ;(sys as any).exiles.push({ id: 1, entityId: 1, originCivId: 1, reason: 'criminal', exiledAt: 0, status: 'wandering' })
+    ;(sys as any)._wanderingSet.add(1)
+    ;(sys as any).lastFate = 0
+    sys.update(1, emDead, makeEmptyManager(), 800)
+    const exile = (sys as any).exiles[0]
+    expect(exile.status).toBe('dead')
+  })
+
+  it('exiles 数组是可迭代的', () => {
+    const sys = new DiplomaticExileSystem()
+    for (let i = 0; i < 3; i++) {
+      ;(sys as any).exiles.push({ id: i, entityId: i, originCivId: 1, reason: 'criminal', exiledAt: 0, status: 'wandering' })
+    }
+    let count = 0
+    for (const _e of (sys as any).exiles) { count++ }
+    expect(count).toBe(3)
+  })
+
+  it('_wanderingSet 是 Set 类型', () => {
+    const sys = new DiplomaticExileSystem()
+    expect((sys as any)._wanderingSet).toBeInstanceOf(Set)
+  })
+
+  it('resolveFates 不触发（lastFate 未到期）', () => {
+    const sys = new DiplomaticExileSystem()
+    ;(sys as any).lastFate = 99999
+    ;(sys as any).exiles.push({ id: 1, entityId: 1, originCivId: 1, reason: 'criminal', exiledAt: 0, status: 'wandering' })
+    ;(sys as any)._wanderingSet.add(1)
+    sys.update(1, makeEM(), makeEmptyManager(), 100)
+    // fate not resolved
+    expect((sys as any).exiles[0].status).toBe('wandering')
+  })
+
+  it('exileCreatures 阻断：wandering 超过 MAX_EXILES(30)', () => {
+    const sys = new DiplomaticExileSystem()
+    for (let i = 0; i < 30; i++) {
+      ;(sys as any).exiles.push({ id: i, entityId: i, originCivId: 1, reason: 'criminal', exiledAt: 0, status: 'wandering' })
+      ;(sys as any)._wanderingSet.add(i)
+    }
+    const civManager = { civilizations: new Map([[1, {}]]) } as any
+    const emWithCreature = {
+      getEntitiesWithComponents: () => [100],
+      getComponent: (_eid: number, comp: string) => comp === 'civMember' ? { civId: 1 } : {},
+    } as any
+    vi.spyOn(Math, 'random').mockReturnValue(0) // force exile
+    ;(sys as any).lastCheck = 0
+    sys.update(1, emWithCreature, civManager, 1200)
+    expect((sys as any).exiles.filter((e: any) => e.status === 'wandering').length).toBeLessThanOrEqual(30)
+    vi.restoreAllMocks()
+  })
+
+  it('dissident reason 可存储', () => {
+    const exile = { id: 1, entityId: 1, originCivId: 1, reason: 'dissident' as const, exiledAt: 0, status: 'wandering' as const }
+    expect(exile.reason).toBe('dissident')
+  })
+
+  it('heretic reason 可存储', () => {
+    const exile = { id: 1, entityId: 1, originCivId: 1, reason: 'heretic' as const, exiledAt: 0, status: 'wandering' as const }
+    expect(exile.reason).toBe('heretic')
+  })
+
+  it('traitor reason 可存储', () => {
+    const exile = { id: 1, entityId: 1, originCivId: 1, reason: 'traitor' as const, exiledAt: 0, status: 'wandering' as const }
+    expect(exile.reason).toBe('traitor')
+  })
+
+  it('outcast reason 可存储', () => {
+    const exile = { id: 1, entityId: 1, originCivId: 1, reason: 'outcast' as const, exiledAt: 0, status: 'wandering' as const }
+    expect(exile.reason).toBe('outcast')
+  })
+
+  it('lastCheck 更新到最新 check 触发 tick', () => {
+    const sys = new DiplomaticExileSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, makeEM(), makeEmptyManager(), 1200)
+    expect((sys as any).lastCheck).toBe(1200)
+    vi.restoreAllMocks()
+  })
+
+  it('lastFate 更新到最新 fate 触发 tick', () => {
+    const sys = new DiplomaticExileSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, makeEM(), makeEmptyManager(), 800)
+    expect((sys as any).lastFate).toBe(800)
+    vi.restoreAllMocks()
+  })
+})

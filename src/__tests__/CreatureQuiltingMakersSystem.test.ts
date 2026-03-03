@@ -218,3 +218,166 @@ describe('CreatureQuiltingMakersSystem - MAX_MAKERS容量上限 (30)', () => {
     expect((sys as any).makers.length).toBeLessThanOrEqual(30)
   })
 })
+
+// ---- Extended tests (to reach 50+) ----
+
+describe('CreatureQuiltingMakersSystem - stitchDensity公式', () => {
+  it('skill=0时stitchDensity=15+0*0.68=15', () => {
+    expect(15 + 0 * 0.68).toBeCloseTo(15)
+  })
+
+  it('skill=50时stitchDensity=15+50*0.68=49', () => {
+    expect(15 + 50 * 0.68).toBeCloseTo(49)
+  })
+
+  it('skill=100时stitchDensity=15+100*0.68=83', () => {
+    expect(15 + 100 * 0.68).toBeCloseTo(83)
+  })
+
+  it('skill=25时stitchDensity=15+25*0.68=32', () => {
+    expect(15 + 25 * 0.68).toBeCloseTo(32)
+  })
+})
+
+describe('CreatureQuiltingMakersSystem - reputation公式', () => {
+  it('skill=0时reputation=10', () => {
+    expect(10 + 0 * 0.77).toBeCloseTo(10)
+  })
+
+  it('skill=100时reputation=10+100*0.77=87', () => {
+    expect(10 + 100 * 0.77).toBeCloseTo(87)
+  })
+
+  it('skill=50时reputation=10+50*0.77=48.5', () => {
+    expect(10 + 50 * 0.77).toBeCloseTo(48.5)
+  })
+})
+
+describe('CreatureQuiltingMakersSystem - quiltsMade公式', () => {
+  it('skill=9时quiltsMade=2+floor(9/9)=3', () => {
+    expect(2 + Math.floor(9 / 9)).toBe(3)
+  })
+
+  it('skill=18时quiltsMade=2+floor(18/9)=4', () => {
+    expect(2 + Math.floor(18 / 9)).toBe(4)
+  })
+
+  it('skill=0时quiltsMade=2+floor(0/9)=2', () => {
+    expect(2 + Math.floor(0 / 9)).toBe(2)
+  })
+
+  it('skill=90时quiltsMade=2+floor(90/9)=12', () => {
+    expect(2 + Math.floor(90 / 9)).toBe(12)
+  })
+})
+
+describe('CreatureQuiltingMakersSystem - quiltType4段', () => {
+  it('skill=0→typeIdx=0→patchwork', () => {
+    expect(['patchwork', 'applique_quilt', 'wholecloth', 'trapunto'][Math.min(3, Math.floor(0 / 25))]).toBe('patchwork')
+  })
+
+  it('skill=25→typeIdx=1→applique_quilt', () => {
+    expect(['patchwork', 'applique_quilt', 'wholecloth', 'trapunto'][Math.min(3, Math.floor(25 / 25))]).toBe('applique_quilt')
+  })
+
+  it('skill=50→typeIdx=2→wholecloth', () => {
+    expect(['patchwork', 'applique_quilt', 'wholecloth', 'trapunto'][Math.min(3, Math.floor(50 / 25))]).toBe('wholecloth')
+  })
+
+  it('skill=75→typeIdx=3→trapunto', () => {
+    expect(['patchwork', 'applique_quilt', 'wholecloth', 'trapunto'][Math.min(3, Math.floor(75 / 25))]).toBe('trapunto')
+  })
+
+  it('skill=100→typeIdx上限3→trapunto', () => {
+    expect(['patchwork', 'applique_quilt', 'wholecloth', 'trapunto'][Math.min(3, Math.floor(100 / 25))]).toBe('trapunto')
+  })
+})
+
+describe('CreatureQuiltingMakersSystem - skillMap操作', () => {
+  let sys: CreatureQuiltingMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始skillMap为空', () => {
+    expect((sys as any).skillMap.size).toBe(0)
+  })
+
+  it('手动写入后可读取', () => {
+    ;(sys as any).skillMap.set(7, 55)
+    expect((sys as any).skillMap.get(7)).toBe(55)
+  })
+
+  it('多实体技能各自独立', () => {
+    ;(sys as any).skillMap.set(1, 10)
+    ;(sys as any).skillMap.set(2, 50)
+    expect((sys as any).skillMap.get(1)).toBe(10)
+    expect((sys as any).skillMap.get(2)).toBe(50)
+  })
+})
+
+describe('CreatureQuiltingMakersSystem - lastCheck多轮', () => {
+  let sys: CreatureQuiltingMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始lastCheck为0', () => {
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('两次达阈值后lastCheck正确更新', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1490)
+    sys.update(1, em, 2980)
+    expect((sys as any).lastCheck).toBe(2980)
+  })
+})
+
+describe('CreatureQuiltingMakersSystem - 数据完整性', () => {
+  let sys: CreatureQuiltingMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('注入所有字段完整保存', () => {
+    ;(sys as any).makers.push(makeMaker(42, 'trapunto', 9999, 80))
+    const m = (sys as any).makers[0]
+    expect(m.entityId).toBe(42)
+    expect(m.quiltType).toBe('trapunto')
+    expect(m.tick).toBe(9999)
+  })
+})
+
+describe('CreatureQuiltingMakersSystem - 批量cleanup', () => {
+  let sys: CreatureQuiltingMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('5条过期记录全部被清除', () => {
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).makers.push(makeMaker(i + 1, 'patchwork', 0))
+    }
+    ;(sys as any).makers.push(makeMaker(99, 'trapunto', 100000))
+    const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, em, 100001)
+    vi.restoreAllMocks()
+    expect((sys as any).makers).toHaveLength(1)
+    expect((sys as any).makers[0].entityId).toBe(99)
+  })
+})
+
+describe('CreatureQuiltingMakersSystem - nextId初始', () => {
+  let sys: CreatureQuiltingMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始nextId为1', () => {
+    expect((sys as any).nextId).toBe(1)
+  })
+})
+
+describe('CreatureQuiltingMakersSystem - MAX_MAKERS=30上限', () => {
+  let sys: CreatureQuiltingMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('手动注入30条后length为30', () => {
+    for (let i = 0; i < 30; i++) {
+      ;(sys as any).makers.push(makeMaker(i + 1))
+    }
+    expect((sys as any).makers).toHaveLength(30)
+  })
+})

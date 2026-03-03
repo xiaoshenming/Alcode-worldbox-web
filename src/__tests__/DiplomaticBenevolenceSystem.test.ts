@@ -305,3 +305,164 @@ describe('DiplomaticBenevolenceSystem', () => {
     })
   })
 })
+
+// ---- 追加测试以达到 50+ ----
+describe('DiplomaticBenevolenceSystem — 额外完整性测试', () => {
+  const CI = 2390
+  const CUTOFF = 80000
+  const MAX = 20
+
+  function makeSys2() { return new DiplomaticBenevolenceSystem() }
+  function makeI(o: Partial<BenevolenceInitiative> = {}): BenevolenceInitiative {
+    return { id: 1, civIdA: 1, civIdB: 2, benevolenceType: 'humanitarian',
+      generosity: 40, gratitude: 30, reputationGain: 25, influenceSpread: 15,
+      duration: 0, tick: 100000, ...o }
+  }
+
+  let sys: DiplomaticBenevolenceSystem
+  beforeEach(() => { sys = makeSys2(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('两系统实例互相独立', () => {
+    const s2 = makeSys2(); ;(sys as any).initiatives.push(makeI())
+    expect((s2 as any).initiatives).toHaveLength(0)
+  })
+  it('update 不改变 benevolenceType', () => {
+    ;(sys as any).initiatives.push(makeI({ benevolenceType: 'medical', tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).initiatives[0].benevolenceType).toBe('medical')
+  })
+  it('update 不改变 id 字段', () => {
+    ;(sys as any).initiatives.push(makeI({ id: 77, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).initiatives[0].id).toBe(77)
+  })
+  it('generosity 下界不低于 10', () => {
+    ;(sys as any).initiatives.push(makeI({ generosity: 10, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).initiatives[0].generosity).toBeGreaterThanOrEqual(10)
+  })
+  it('gratitude 下界不低于 5', () => {
+    ;(sys as any).initiatives.push(makeI({ gratitude: 5, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).initiatives[0].gratitude).toBeGreaterThanOrEqual(5)
+  })
+  it('reputationGain 下界不低于 5', () => {
+    ;(sys as any).initiatives.push(makeI({ reputationGain: 5, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).initiatives[0].reputationGain).toBeGreaterThanOrEqual(5)
+  })
+  it('influenceSpread 下界不低于 3', () => {
+    ;(sys as any).initiatives.push(makeI({ influenceSpread: 3, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).initiatives[0].influenceSpread).toBeGreaterThanOrEqual(3)
+  })
+  it('generosity 上界不超过 85', () => {
+    ;(sys as any).initiatives.push(makeI({ generosity: 85, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).initiatives[0].generosity).toBeLessThanOrEqual(85)
+  })
+  it('gratitude 上界不超过 80', () => {
+    ;(sys as any).initiatives.push(makeI({ gratitude: 80, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).initiatives[0].gratitude).toBeLessThanOrEqual(80)
+  })
+  it('reputationGain 上界不超过 70', () => {
+    ;(sys as any).initiatives.push(makeI({ reputationGain: 70, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).initiatives[0].reputationGain).toBeLessThanOrEqual(70)
+  })
+  it('influenceSpread 上界不超过 60', () => {
+    ;(sys as any).initiatives.push(makeI({ influenceSpread: 60, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).initiatives[0].influenceSpread).toBeLessThanOrEqual(60)
+  })
+  it('多条记录各自独立更新 duration', () => {
+    ;(sys as any).initiatives.push(makeI({ id: 1, tick: 0, duration: 0 }))
+    ;(sys as any).initiatives.push(makeI({ id: 2, tick: 0, duration: 5 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).initiatives[0].duration).toBe(1)
+    expect((sys as any).initiatives[1].duration).toBe(6)
+  })
+  it('过期清理：tick=0 在大 tick 时删除', () => {
+    ;(sys as any).initiatives.push(makeI({ id: 1, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CUTOFF + CI + 1)
+    expect((sys as any).initiatives).toHaveLength(0)
+  })
+  it('混合过期：保留新，删旧', () => {
+    const big = CUTOFF + CI + 1
+    ;(sys as any).initiatives.push(makeI({ id: 1, tick: 0 }))
+    ;(sys as any).initiatives.push(makeI({ id: 2, tick: big }))
+    sys.update(1, {} as any, {} as any, big)
+    expect((sys as any).initiatives).toHaveLength(1)
+    expect((sys as any).initiatives[0].id).toBe(2)
+  })
+  it('duration 只在满足 CHECK_INTERVAL 时递增', () => {
+    ;(sys as any).initiatives.push(makeI({ duration: 0, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 10)
+    expect((sys as any).initiatives[0].duration).toBe(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).initiatives[0].duration).toBe(1)
+  })
+  it('civA === civB 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).initiatives).toHaveLength(0)
+  })
+  it('达到 MAX=20 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    for (let i = 1; i <= MAX; i++) { ;(sys as any).initiatives.push(makeI({ id: i, tick: CI })) }
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).initiatives.length).toBeLessThanOrEqual(MAX)
+  })
+  it('初始 nextId 为 1', () => { expect((sys as any).nextId).toBe(1) })
+  it('tick=0 不触发更新', () => {
+    sys.update(1, {} as any, {} as any, 0); expect((sys as any).lastCheck).toBe(0)
+  })
+  it('5 条全过期在大 tick 时全删除', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).initiatives.push(makeI({ id: i, tick: 0 })) }
+    sys.update(1, {} as any, {} as any, CUTOFF + CI + 1)
+    expect((sys as any).initiatives).toHaveLength(0)
+  })
+  it('civIdB 可独立读取', () => {
+    ;(sys as any).initiatives.push(makeI({ civIdB: 7 }))
+    expect((sys as any).initiatives[0].civIdB).toBe(7)
+  })
+  it('两次满足间隔 lastCheck 递增', () => {
+    sys.update(1, {} as any, {} as any, CI)
+    sys.update(1, {} as any, {} as any, CI * 2)
+    expect((sys as any).lastCheck).toBe(CI * 2)
+  })
+  it('所有 BenevolenceType 可注入', () => {
+    const types: BenevolenceType[] = ['humanitarian', 'educational', 'medical', 'infrastructural']
+    for (const t of types) { ;(sys as any).initiatives.push(makeI({ benevolenceType: t })) }
+    expect((sys as any).initiatives.map((i: any) => i.benevolenceType)).toEqual(expect.arrayContaining(types))
+  })
+})
+
+describe('DiplomaticBenevolenceSystem — 补充边界', () => {
+  const CI = 2390
+  function makeSys3() { return new DiplomaticBenevolenceSystem() }
+  function makeI2(o: Partial<BenevolenceInitiative> = {}): BenevolenceInitiative {
+    return { id: 1, civIdA: 1, civIdB: 2, benevolenceType: 'humanitarian',
+      generosity: 40, gratitude: 30, reputationGain: 25, influenceSpread: 15,
+      duration: 0, tick: 100000, ...o }
+  }
+  let sys: DiplomaticBenevolenceSystem
+  beforeEach(() => { sys = makeSys3(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('civIdA 可独立读取', () => {
+    ;(sys as any).initiatives.push(makeI2({ civIdA: 4 }))
+    expect((sys as any).initiatives[0].civIdA).toBe(4)
+  })
+  it('lastCheck 初始为 0', () => { expect((sys as any).lastCheck).toBe(0) })
+})

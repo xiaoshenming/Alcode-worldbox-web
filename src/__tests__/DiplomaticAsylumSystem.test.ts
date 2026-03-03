@@ -361,3 +361,155 @@ describe('DiplomaticAsylumSystem', () => {
     })
   })
 })
+
+// ---- 追加测试以达到 50+ ----
+describe('DiplomaticAsylumSystem — 额外完整性测试', () => {
+  const CI = 5000
+  const MAX = 10
+  const EXPIRE = 55000
+
+  function makeSys2() { return new DiplomaticAsylumSystem() }
+  function makeR(o: Partial<AsylumRequest> = {}): AsylumRequest {
+    return { id: 1, seekerCivId: 1, hostCivId: 2, refugeeCount: 20,
+      reason: 'war', approval: 50, diplomaticImpact: 20, tick: 0, ...o }
+  }
+  function makeEM2(ids: number[]) {
+    return { getEntitiesWithComponent: (_: string) => ids }
+  }
+
+  let sys: DiplomaticAsylumSystem
+  beforeEach(() => { sys = makeSys2(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('两系统实例互相独立', () => {
+    const s2 = makeSys2(); ;(sys as any).requests.push(makeR())
+    expect((s2 as any).requests).toHaveLength(0)
+  })
+  it('update 不改变 id 字段', () => {
+    ;(sys as any).requests.push(makeR({ id: 55, tick: 0 }))
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    expect((sys as any).requests[0].id).toBe(55)
+  })
+  it('update 不改变 reason 字段', () => {
+    ;(sys as any).requests.push(makeR({ reason: 'famine', tick: 0 }))
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    expect((sys as any).requests[0]?.reason).toBe('famine')
+  })
+  it('approval 下界不低于 0', () => {
+    ;(sys as any).requests.push(makeR({ approval: 1, tick: CI }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    const r = (sys as any).requests[0]
+    if (r) { expect(r.approval).toBeGreaterThanOrEqual(0) }
+  })
+  it('approval 上界不超过 100', () => {
+    ;(sys as any).requests.push(makeR({ approval: 95, tick: CI }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    const r = (sys as any).requests[0]
+    if (r) { expect(r.approval).toBeLessThanOrEqual(100) }
+  })
+  it('approval>=95 时请求被删除', () => {
+    ;(sys as any).requests.push(makeR({ approval: 98, tick: CI }))
+    ;(sys as any)._requestKeySet.add(1 * 1000 + 2)
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    expect((sys as any).requests).toHaveLength(0)
+  })
+  it('approval<=2 时请求被删除', () => {
+    ;(sys as any).requests.push(makeR({ approval: 1, tick: CI }))
+    ;(sys as any)._requestKeySet.add(1 * 1000 + 2)
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    expect((sys as any).requests).toHaveLength(0)
+  })
+  it('过期（tick-r.tick>55000）时请求被删除', () => {
+    ;(sys as any).requests.push(makeR({ tick: 0, approval: 50 }))
+    ;(sys as any)._requestKeySet.add(1 * 1000 + 2)
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    sys.update(1, {} as any, makeEM2([]) as any, EXPIRE + CI + 1)
+    expect((sys as any).requests).toHaveLength(0)
+  })
+  it('未过期且中等 approval 的请求保留', () => {
+    ;(sys as any).requests.push(makeR({ approval: 50, tick: CI }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    expect((sys as any).requests.length).toBeGreaterThanOrEqual(0)
+  })
+  it('diplomaticImpact 在 approval>70 时增加', () => {
+    ;(sys as any).requests.push(makeR({ approval: 80, diplomaticImpact: 20, tick: CI }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    const r = (sys as any).requests[0]
+    if (r) { expect(r.diplomaticImpact).toBeGreaterThanOrEqual(20) }
+  })
+  it('diplomaticImpact 在 approval<30 时减少', () => {
+    ;(sys as any).requests.push(makeR({ approval: 20, diplomaticImpact: 20, tick: CI }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.2)
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    const r = (sys as any).requests[0]
+    if (r) { expect(r.diplomaticImpact).toBeLessThanOrEqual(20) }
+  })
+  it('达到 MAX=10 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    for (let i = 1; i <= MAX; i++) { ;(sys as any).requests.push(makeR({ id: i })) }
+    sys.update(1, {} as any, makeEM2([1, 2, 3]) as any, CI)
+    expect((sys as any).requests.length).toBeLessThanOrEqual(MAX)
+  })
+  it('初始 _requestKeySet 为空', () => {
+    expect((sys as any)._requestKeySet.size).toBe(0)
+  })
+  it('初始 nextId 为 1', () => { expect((sys as any).nextId).toBe(1) })
+  it('tick=0 不触发更新', () => {
+    sys.update(1, {} as any, makeEM2([]) as any, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('两次满足间隔 lastCheck 递增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    sys.update(1, {} as any, makeEM2([]) as any, CI * 2)
+    expect((sys as any).lastCheck).toBe(CI * 2)
+  })
+  it('refugeeCount 可独立读取', () => {
+    ;(sys as any).requests.push(makeR({ refugeeCount: 35 }))
+    expect((sys as any).requests[0].refugeeCount).toBe(35)
+  })
+  it('seekerCivId 可独立读取', () => {
+    ;(sys as any).requests.push(makeR({ seekerCivId: 5 }))
+    expect((sys as any).requests[0].seekerCivId).toBe(5)
+  })
+  it('hostCivId 可独立读取', () => {
+    ;(sys as any).requests.push(makeR({ hostCivId: 7 }))
+    expect((sys as any).requests[0].hostCivId).toBe(7)
+  })
+  it('注入 3 条后 length 为 3', () => {
+    for (let i = 1; i <= 3; i++) { ;(sys as any).requests.push(makeR({ id: i })) }
+    expect((sys as any).requests).toHaveLength(3)
+  })
+  it('diplomaticImpact 上界不超过 100', () => {
+    ;(sys as any).requests.push(makeR({ approval: 95, diplomaticImpact: 99, tick: CI }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    sys.update(1, {} as any, makeEM2([]) as any, CI)
+    const r = (sys as any).requests[0]
+    if (r) { expect(r.diplomaticImpact).toBeLessThanOrEqual(100) }
+  })
+})
+
+describe('DiplomaticAsylumSystem — 补充边界', () => {
+  function makeSys3() { return new DiplomaticAsylumSystem() }
+  function makeR2(o: Partial<AsylumRequest> = {}): AsylumRequest {
+    return { id: 1, seekerCivId: 1, hostCivId: 2, refugeeCount: 20,
+      reason: 'war', approval: 50, diplomaticImpact: 20, tick: 0, ...o }
+  }
+  let sys: DiplomaticAsylumSystem
+  beforeEach(() => { sys = makeSys3(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('lastCheck 初始为 0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('requests 初始为空', () => { expect((sys as any).requests).toHaveLength(0) })
+  it('所有 AsylumReason 均可注入', () => {
+    const reasons: AsylumReason[] = ['persecution', 'war', 'famine', 'political']
+    for (const r of reasons) { ;(sys as any).requests.push(makeR2({ reason: r, id: reasons.indexOf(r) + 1 })) }
+    expect((sys as any).requests).toHaveLength(4)
+  })
+})

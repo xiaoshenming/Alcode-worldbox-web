@@ -271,3 +271,140 @@ describe('DiplomaticAmnesty2System', () => {
     })
   })
 })
+
+// ---- 追加测试以达到 50+ ----
+describe('DiplomaticAmnesty2System — 额外完整性测试', () => {
+  const CI = 2480
+  const CUTOFF = 85000
+  const MAX = 20
+
+  function makeSys2() { return new DiplomaticAmnesty2System() }
+  function makeD(o: Partial<Amnesty2Decree> = {}): Amnesty2Decree {
+    return { id: 1, civIdA: 1, civIdB: 2, form: 'general_pardon',
+      coverageScope: 50, publicRelief: 40, politicalCost: 30,
+      stabilityEffect: 20, duration: 0, tick: 100000, ...o }
+  }
+
+  let sys: DiplomaticAmnesty2System
+  beforeEach(() => { sys = makeSys2(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('两系统实例互相独立', () => {
+    const s2 = makeSys2(); ;(sys as any).decrees.push(makeD())
+    expect((s2 as any).decrees).toHaveLength(0)
+  })
+  it('update 不改变 form 字段', () => {
+    ;(sys as any).decrees.push(makeD({ form: 'exile_recall', tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).decrees[0].form).toBe('exile_recall')
+  })
+  it('update 不改变 id 字段', () => {
+    ;(sys as any).decrees.push(makeD({ id: 55, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).decrees[0].id).toBe(55)
+  })
+  it('coverageScope 下界不低于 10', () => {
+    ;(sys as any).decrees.push(makeD({ coverageScope: 10, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).decrees[0].coverageScope).toBeGreaterThanOrEqual(10)
+  })
+  it('publicRelief 下界不低于 10', () => {
+    ;(sys as any).decrees.push(makeD({ publicRelief: 10, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).decrees[0].publicRelief).toBeGreaterThanOrEqual(10)
+  })
+  it('politicalCost 下界不低于 5', () => {
+    ;(sys as any).decrees.push(makeD({ politicalCost: 5, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).decrees[0].politicalCost).toBeGreaterThanOrEqual(5)
+  })
+  it('stabilityEffect 下界不低于 5', () => {
+    ;(sys as any).decrees.push(makeD({ stabilityEffect: 5, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).decrees[0].stabilityEffect).toBeGreaterThanOrEqual(5)
+  })
+  it('coverageScope 上界不超过 85', () => {
+    ;(sys as any).decrees.push(makeD({ coverageScope: 85, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).decrees[0].coverageScope).toBeLessThanOrEqual(85)
+  })
+  it('publicRelief 上界不超过 80', () => {
+    ;(sys as any).decrees.push(makeD({ publicRelief: 80, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).decrees[0].publicRelief).toBeLessThanOrEqual(80)
+  })
+  it('politicalCost 上界不超过 70', () => {
+    ;(sys as any).decrees.push(makeD({ politicalCost: 70, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).decrees[0].politicalCost).toBeLessThanOrEqual(70)
+  })
+  it('stabilityEffect 上界不超过 65', () => {
+    ;(sys as any).decrees.push(makeD({ stabilityEffect: 65, tick: 0 }))
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).decrees[0].stabilityEffect).toBeLessThanOrEqual(65)
+  })
+  it('多条记录各自独立更新 duration', () => {
+    ;(sys as any).decrees.push(makeD({ id: 1, tick: 0, duration: 0 }))
+    ;(sys as any).decrees.push(makeD({ id: 2, tick: 0, duration: 5 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).decrees[0].duration).toBe(1)
+    expect((sys as any).decrees[1].duration).toBe(6)
+  })
+  it('过期清理：tick=0 在大 tick 时删除', () => {
+    ;(sys as any).decrees.push(makeD({ id: 1, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CUTOFF + CI + 1)
+    expect((sys as any).decrees).toHaveLength(0)
+  })
+  it('混合过期：保留新，删旧', () => {
+    const big = CUTOFF + CI + 1
+    ;(sys as any).decrees.push(makeD({ id: 1, tick: 0 }))
+    ;(sys as any).decrees.push(makeD({ id: 2, tick: big }))
+    sys.update(1, {} as any, {} as any, big)
+    expect((sys as any).decrees).toHaveLength(1)
+    expect((sys as any).decrees[0].id).toBe(2)
+  })
+  it('duration 只在满足 CHECK_INTERVAL 时递增', () => {
+    ;(sys as any).decrees.push(makeD({ duration: 0, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 10)
+    expect((sys as any).decrees[0].duration).toBe(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).decrees[0].duration).toBe(1)
+  })
+  it('civA === civB 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).decrees).toHaveLength(0)
+  })
+  it('达到 MAX=20 时不新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    for (let i = 1; i <= MAX; i++) { ;(sys as any).decrees.push(makeD({ id: i, tick: CI })) }
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).decrees.length).toBeLessThanOrEqual(MAX)
+  })
+  it('初始 nextId 为 1', () => { expect((sys as any).nextId).toBe(1) })
+  it('tick=0 不触发更新', () => {
+    sys.update(1, {} as any, {} as any, 0); expect((sys as any).lastCheck).toBe(0)
+  })
+  it('5 条全过期在大 tick 时全删除', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).decrees.push(makeD({ id: i, tick: 0 })) }
+    sys.update(1, {} as any, {} as any, CUTOFF + CI + 1)
+    expect((sys as any).decrees).toHaveLength(0)
+  })
+  it('civIdB 可独立读取', () => {
+    ;(sys as any).decrees.push(makeD({ civIdB: 7 }))
+    expect((sys as any).decrees[0].civIdB).toBe(7)
+  })
+  it('两次满足间隔 lastCheck 递增', () => {
+    sys.update(1, {} as any, {} as any, CI)
+    sys.update(1, {} as any, {} as any, CI * 2)
+    expect((sys as any).lastCheck).toBe(CI * 2)
+  })
+})

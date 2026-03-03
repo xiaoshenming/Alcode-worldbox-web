@@ -198,3 +198,126 @@ describe('CustodianshipForm枚举', () => {
     expect(sys.arrangements[0].form).toBe('military_custody')
   })
 })
+
+describe('额外边界与枚举测试', () => {
+  it('custodyScope 上限 85 不被突破', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, custodianCivId: 1, wardCivId: 2, form: 'territorial_custody', custodyScope: 84.99, trustLevel: 50, autonomyGrant: 40, oversightRigor: 30, duration: 0, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2550)
+    expect(sys.arrangements[0].custodyScope).toBeLessThanOrEqual(85)
+  })
+
+  it('custodyScope 下限 5 不被突破', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, custodianCivId: 1, wardCivId: 2, form: 'territorial_custody', custodyScope: 5.01, trustLevel: 50, autonomyGrant: 40, oversightRigor: 30, duration: 0, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2550)
+    expect(sys.arrangements[0].custodyScope).toBeGreaterThanOrEqual(5)
+  })
+
+  it('trustLevel 上限 90 不被突破', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, custodianCivId: 1, wardCivId: 2, form: 'territorial_custody', custodyScope: 50, trustLevel: 89.99, autonomyGrant: 40, oversightRigor: 30, duration: 0, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2550)
+    expect(sys.arrangements[0].trustLevel).toBeLessThanOrEqual(90)
+  })
+
+  it('autonomyGrant 上限 80 不被突破', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, custodianCivId: 1, wardCivId: 2, form: 'territorial_custody', custodyScope: 50, trustLevel: 50, autonomyGrant: 79.99, oversightRigor: 30, duration: 0, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2550)
+    expect(sys.arrangements[0].autonomyGrant).toBeLessThanOrEqual(80)
+  })
+
+  it('oversightRigor 上限 65 不被突破', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, custodianCivId: 1, wardCivId: 2, form: 'territorial_custody', custodyScope: 50, trustLevel: 50, autonomyGrant: 40, oversightRigor: 64.99, duration: 0, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2550)
+    expect(sys.arrangements[0].oversightRigor).toBeLessThanOrEqual(65)
+  })
+
+  it('resource_custody form 可存储', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, custodianCivId: 1, wardCivId: 2, form: 'resource_custody', custodyScope: 50, trustLevel: 50, autonomyGrant: 40, oversightRigor: 30, duration: 0, tick: 0 }])
+    expect(sys.arrangements[0].form).toBe('resource_custody')
+  })
+
+  it('cultural_custody form 可存储', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, custodianCivId: 1, wardCivId: 2, form: 'cultural_custody', custodyScope: 50, trustLevel: 50, autonomyGrant: 40, oversightRigor: 30, duration: 0, tick: 0 }])
+    expect(sys.arrangements[0].form).toBe('cultural_custody')
+  })
+
+  it('CHECK_INTERVAL=2550 节流有效', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, custodianCivId: 1, wardCivId: 2, form: 'territorial_custody', custodyScope: 50, trustLevel: 50, autonomyGrant: 40, oversightRigor: 30, duration: 5, tick: 0 }])
+    sys.update(1, world, em, 2549)
+    expect(sys.arrangements[0].duration).toBe(5)
+  })
+
+  it('多条 arrangements 各自独立更新 duration', () => {
+    const sys = makeSys() as any
+    const base = { custodianCivId: 1, wardCivId: 2, form: 'territorial_custody', custodyScope: 50, trustLevel: 50, autonomyGrant: 40, oversightRigor: 30, tick: 0 }
+    inject(sys, [{ id: 1, duration: 3, ...base }, { id: 2, duration: 7, ...base }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2550)
+    expect(sys.arrangements[0].duration).toBe(4)
+    expect(sys.arrangements[1].duration).toBe(8)
+  })
+
+  it('过期记录被移除', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, custodianCivId: 1, wardCivId: 2, form: 'territorial_custody', custodyScope: 50, trustLevel: 50, autonomyGrant: 40, oversightRigor: 30, duration: 0, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 88000 + 2550 + 1)
+    expect(sys.arrangements).toHaveLength(0)
+  })
+
+  it('未过期记录保留', () => {
+    const sys = makeSys() as any
+    const bigTick = 88000 + 2550
+    inject(sys, [{ id: 1, custodianCivId: 1, wardCivId: 2, form: 'territorial_custody', custodyScope: 50, trustLevel: 50, autonomyGrant: 40, oversightRigor: 30, duration: 0, tick: bigTick - 1000 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, bigTick)
+    expect(sys.arrangements).toHaveLength(1)
+  })
+
+  it('update 不改变 custodianCivId/wardCivId', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, custodianCivId: 4, wardCivId: 9, form: 'territorial_custody', custodyScope: 50, trustLevel: 50, autonomyGrant: 40, oversightRigor: 30, duration: 0, tick: 0 }])
+    sys.lastCheck = 0
+    sys.update(1, world, em, 2550)
+    expect(sys.arrangements[0].custodianCivId).toBe(4)
+    expect(sys.arrangements[0].wardCivId).toBe(9)
+  })
+
+  it('空 arrangements 时 update 不崩溃', () => {
+    const sys = makeSys()
+    expect(() => sys.update(1, world, em, 2550)).not.toThrow()
+  })
+
+  it('全 4 种 form 可注入并保存', () => {
+    const sys = makeSys() as any
+    const forms: CustodianshipForm[] = ['territorial_custody', 'resource_custody', 'cultural_custody', 'military_custody']
+    forms.forEach((f, i) => {
+      inject(sys, [{ id: i + 1, custodianCivId: 1, wardCivId: 2, form: f, custodyScope: 50, trustLevel: 50, autonomyGrant: 40, oversightRigor: 30, duration: 0, tick: 0 }])
+    })
+    expect(sys.arrangements).toHaveLength(4)
+  })
+
+  it('nextId 手动设置后保持', () => {
+    const sys = makeSys() as any
+    sys.nextId = 66
+    expect(sys.nextId).toBe(66)
+  })
+
+  it('lastCheck 更新到最新 tick', () => {
+    const sys = makeSys() as any
+    sys.update(1, world, em, 2550 * 4)
+    expect(sys.lastCheck).toBe(2550 * 4)
+  })
+})

@@ -270,3 +270,139 @@ describe('CrierForm枚举完整性', () => {
     expect(getArrangements(sys)[0].form).toBe('court_crier')
   })
 })
+
+describe('额外边界与枚举测试', () => {
+  it('proclamationAuthority 上限 85 不被突破', () => {
+    const sys = new DiplomaticCrierSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const a: CrierArrangement = { id: 1, proclamationCivId: 1, audienceCivId: 2, form: 'royal_crier', proclamationAuthority: 84.99, publicReach: 50, messageClarity: 40, ceremonialDuty: 30, duration: 0, tick: 0 }
+    getArrangements(sys).push(a)
+    sys.update(1, world, em, 2990)
+    expect(a.proclamationAuthority).toBeLessThanOrEqual(85)
+    vi.restoreAllMocks()
+  })
+
+  it('proclamationAuthority 下限 5 不被突破', () => {
+    const sys = new DiplomaticCrierSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const a: CrierArrangement = { id: 1, proclamationCivId: 1, audienceCivId: 2, form: 'royal_crier', proclamationAuthority: 5.01, publicReach: 50, messageClarity: 40, ceremonialDuty: 30, duration: 0, tick: 0 }
+    getArrangements(sys).push(a)
+    sys.update(1, world, em, 2990)
+    expect(a.proclamationAuthority).toBeGreaterThanOrEqual(5)
+    vi.restoreAllMocks()
+  })
+
+  it('publicReach 上限 90 不被突破', () => {
+    const sys = new DiplomaticCrierSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const a: CrierArrangement = { id: 1, proclamationCivId: 1, audienceCivId: 2, form: 'royal_crier', proclamationAuthority: 50, publicReach: 89.99, messageClarity: 40, ceremonialDuty: 30, duration: 0, tick: 0 }
+    getArrangements(sys).push(a)
+    sys.update(1, world, em, 2990)
+    expect(a.publicReach).toBeLessThanOrEqual(90)
+    vi.restoreAllMocks()
+  })
+
+  it('messageClarity 上限 80 不被突破', () => {
+    const sys = new DiplomaticCrierSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const a: CrierArrangement = { id: 1, proclamationCivId: 1, audienceCivId: 2, form: 'royal_crier', proclamationAuthority: 50, publicReach: 50, messageClarity: 79.99, ceremonialDuty: 30, duration: 0, tick: 0 }
+    getArrangements(sys).push(a)
+    sys.update(1, world, em, 2990)
+    expect(a.messageClarity).toBeLessThanOrEqual(80)
+    vi.restoreAllMocks()
+  })
+
+  it('ceremonialDuty 上限 65 不被突破', () => {
+    const sys = new DiplomaticCrierSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const a: CrierArrangement = { id: 1, proclamationCivId: 1, audienceCivId: 2, form: 'royal_crier', proclamationAuthority: 50, publicReach: 50, messageClarity: 40, ceremonialDuty: 64.99, duration: 0, tick: 0 }
+    getArrangements(sys).push(a)
+    sys.update(1, world, em, 2990)
+    expect(a.ceremonialDuty).toBeLessThanOrEqual(65)
+    vi.restoreAllMocks()
+  })
+
+  it('borough_crier form 可存储', () => {
+    const sys = new DiplomaticCrierSystem()
+    getArrangements(sys).push({ id: 1, proclamationCivId: 1, audienceCivId: 2, form: 'borough_crier', proclamationAuthority: 50, publicReach: 50, messageClarity: 40, ceremonialDuty: 30, duration: 0, tick: 0 })
+    expect(getArrangements(sys)[0].form).toBe('borough_crier')
+  })
+
+  it('market_crier form 可存储', () => {
+    const sys = new DiplomaticCrierSystem()
+    getArrangements(sys).push({ id: 1, proclamationCivId: 1, audienceCivId: 2, form: 'market_crier', proclamationAuthority: 50, publicReach: 50, messageClarity: 40, ceremonialDuty: 30, duration: 0, tick: 0 })
+    expect(getArrangements(sys)[0].form).toBe('market_crier')
+  })
+
+  it('court_crier form 可存储', () => {
+    const sys = new DiplomaticCrierSystem()
+    getArrangements(sys).push({ id: 1, proclamationCivId: 1, audienceCivId: 2, form: 'court_crier', proclamationAuthority: 50, publicReach: 50, messageClarity: 40, ceremonialDuty: 30, duration: 0, tick: 0 })
+    expect(getArrangements(sys)[0].form).toBe('court_crier')
+  })
+
+  it('多条 arrangements 各自独立更新 duration', () => {
+    const sys = new DiplomaticCrierSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    const a1: CrierArrangement = { id: 1, proclamationCivId: 1, audienceCivId: 2, form: 'royal_crier', proclamationAuthority: 50, publicReach: 50, messageClarity: 40, ceremonialDuty: 30, duration: 3, tick: 0 }
+    const a2: CrierArrangement = { id: 2, proclamationCivId: 3, audienceCivId: 4, form: 'market_crier', proclamationAuthority: 50, publicReach: 50, messageClarity: 40, ceremonialDuty: 30, duration: 7, tick: 0 }
+    getArrangements(sys).push(a1)
+    getArrangements(sys).push(a2)
+    sys.update(1, world, em, 2990)
+    expect(a1.duration).toBe(4)
+    expect(a2.duration).toBe(8)
+    vi.restoreAllMocks()
+  })
+
+  it('过期记录（tick < cutoff）被移除', () => {
+    const sys = new DiplomaticCrierSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    getArrangements(sys).push({ id: 1, proclamationCivId: 1, audienceCivId: 2, form: 'royal_crier', proclamationAuthority: 50, publicReach: 50, messageClarity: 40, ceremonialDuty: 30, duration: 0, tick: 0 })
+    ;(sys as any).lastCheck = 0
+    sys.update(1, world, em, 88000 + 2990 + 1)
+    expect(getArrangements(sys)).toHaveLength(0)
+    vi.restoreAllMocks()
+  })
+
+  it('未过期记录保留', () => {
+    const sys = new DiplomaticCrierSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    const bigTick = 88000 + 2990
+    getArrangements(sys).push({ id: 1, proclamationCivId: 1, audienceCivId: 2, form: 'royal_crier', proclamationAuthority: 50, publicReach: 50, messageClarity: 40, ceremonialDuty: 30, duration: 0, tick: bigTick - 1000 })
+    ;(sys as any).lastCheck = 0
+    sys.update(1, world, em, bigTick)
+    expect(getArrangements(sys)).toHaveLength(1)
+    vi.restoreAllMocks()
+  })
+
+  it('update 不改变 proclamationCivId/audienceCivId', () => {
+    const sys = new DiplomaticCrierSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    const a: CrierArrangement = { id: 1, proclamationCivId: 5, audienceCivId: 8, form: 'royal_crier', proclamationAuthority: 50, publicReach: 50, messageClarity: 40, ceremonialDuty: 30, duration: 0, tick: 0 }
+    getArrangements(sys).push(a)
+    sys.update(1, world, em, 2990)
+    expect(a.proclamationCivId).toBe(5)
+    expect(a.audienceCivId).toBe(8)
+    vi.restoreAllMocks()
+  })
+
+  it('空 arrangements 时 update 不崩溃', () => {
+    const sys = new DiplomaticCrierSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    expect(() => sys.update(1, world, em, 2990)).not.toThrow()
+    vi.restoreAllMocks()
+  })
+
+  it('nextId 手动设置后保持', () => {
+    const sys = new DiplomaticCrierSystem()
+    ;(sys as any).nextId = 44
+    expect((sys as any).nextId).toBe(44)
+  })
+
+  it('lastCheck 更新到最新 tick', () => {
+    const sys = new DiplomaticCrierSystem()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, world, em, 2990 * 3)
+    expect((sys as any).lastCheck).toBe(2990 * 3)
+    vi.restoreAllMocks()
+  })
+})

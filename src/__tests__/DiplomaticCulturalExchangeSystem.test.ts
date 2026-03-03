@@ -191,3 +191,132 @@ describe('ExchangeType枚举完整性', () => {
     expect(sys.exchanges[0].exchangeType).toBe('religion')
   })
 })
+
+describe('额外边界与防御性测试', () => {
+  it('influence 上限 100 不被突破（evolveInfluence）', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, senderCivId: 1, receiverCivId: 2, exchangeType: 'art', influence: 99.99, relationBoost: 5, startTick: 0, duration: 9999999 }])
+    // 直接调用 evolveInfluence
+    sys.evolveInfluence ? sys.evolveInfluence() : sys['evolveInfluence']?.()
+    expect(sys.exchanges[0].influence).toBeLessThanOrEqual(100)
+  })
+
+  it('exchanges 数组类型正确', () => {
+    const sys = makeSys() as any
+    expect(Array.isArray(sys.exchanges)).toBe(true)
+  })
+
+  it('RelationBoost 值 art=5', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, senderCivId: 1, receiverCivId: 2, exchangeType: 'art', influence: 50, relationBoost: 5, startTick: 0, duration: 5000 }])
+    expect(sys.exchanges[0].relationBoost).toBe(5)
+  })
+
+  it('RelationBoost 值 music=8', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, senderCivId: 1, receiverCivId: 2, exchangeType: 'music', influence: 50, relationBoost: 8, startTick: 0, duration: 5000 }])
+    expect(sys.exchanges[0].relationBoost).toBe(8)
+  })
+
+  it('RelationBoost 值 technology=12', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, senderCivId: 1, receiverCivId: 2, exchangeType: 'technology', influence: 50, relationBoost: 12, startTick: 0, duration: 5000 }])
+    expect(sys.exchanges[0].relationBoost).toBe(12)
+  })
+
+  it('CulturalExchange 包含必要字段', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 7, senderCivId: 3, receiverCivId: 5, exchangeType: 'language', influence: 20, relationBoost: 10, startTick: 100, duration: 3000 }])
+    const e = sys.exchanges[0]
+    expect(e).toHaveProperty('id')
+    expect(e).toHaveProperty('senderCivId')
+    expect(e).toHaveProperty('receiverCivId')
+    expect(e).toHaveProperty('exchangeType')
+    expect(e).toHaveProperty('influence')
+    expect(e).toHaveProperty('relationBoost')
+    expect(e).toHaveProperty('startTick')
+    expect(e).toHaveProperty('duration')
+  })
+
+  it('update 空 civManager 不崩溃', () => {
+    const sys = makeSys()
+    expect(() => sys.update(1, em, emptyCivManager, 1800)).not.toThrow()
+  })
+
+  it('update null civManager 不崩溃', () => {
+    const sys = makeSys()
+    expect(() => sys.update(1, em, null as any, 1800)).not.toThrow()
+  })
+
+  it('CHECK_INTERVAL=1800 节流有效', () => {
+    const sys = makeSys() as any
+    sys.update(1, em, emptyCivManager, 1799)
+    expect(sys.lastCheck).toBe(0)
+  })
+
+  it('tick >= 1800 时 lastCheck 更新', () => {
+    const sys = makeSys() as any
+    sys.update(1, em, emptyCivManager, 1800)
+    expect(sys.lastCheck).toBe(1800)
+  })
+
+  it('过期的 exchange（elapsed > duration）被移除', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, senderCivId: 1, receiverCivId: 2, exchangeType: 'art', influence: 50, relationBoost: 5, startTick: 0, duration: 3000 }])
+    sys.lastCheck = 0
+    sys.update(1, em, emptyCivManager, 5000) // elapsed=5000 > duration=3000
+    expect(sys.exchanges).toHaveLength(0)
+  })
+
+  it('未过期的 exchange 保留', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, senderCivId: 1, receiverCivId: 2, exchangeType: 'art', influence: 50, relationBoost: 5, startTick: 0, duration: 9999999 }])
+    sys.lastCheck = 0
+    sys.update(1, em, emptyCivManager, 1800)
+    expect(sys.exchanges).toHaveLength(1)
+  })
+
+  it('多条不同 type 的 exchanges 共��', () => {
+    const sys = makeSys() as any
+    const types: ExchangeType[] = ['art', 'music', 'cuisine', 'language', 'technology', 'religion']
+    types.forEach((t, i) => {
+      inject(sys, [{ id: i + 1, senderCivId: i + 1, receiverCivId: i + 2, exchangeType: t, influence: 50, relationBoost: 5, startTick: 0, duration: 9999999 }])
+    })
+    expect(sys.exchanges).toHaveLength(6)
+  })
+
+  it('MAX_EXCHANGES=25 上限: cleanup 后不超过 25 条', () => {
+    const sys = makeSys() as any
+    for (let i = 0; i < 30; i++) {
+      inject(sys, [{ id: i + 1, senderCivId: i + 1, receiverCivId: i + 2, exchangeType: 'art', influence: i * 3, relationBoost: 5, startTick: 0, duration: 9999999 }])
+    }
+    sys.lastCheck = 0
+    sys.update(1, em, emptyCivManager, 1800)
+    expect(sys.exchanges.length).toBeLessThanOrEqual(25)
+  })
+
+  it('senderCivId 和 receiverCivId 不相同时 exchange 有效', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, senderCivId: 3, receiverCivId: 7, exchangeType: 'cuisine', influence: 30, relationBoost: 6, startTick: 0, duration: 9999999 }])
+    expect(sys.exchanges[0].senderCivId).toBe(3)
+    expect(sys.exchanges[0].receiverCivId).toBe(7)
+  })
+
+  it('cuisine type RelationBoost 为 6', () => {
+    const sys = makeSys() as any
+    inject(sys, [{ id: 1, senderCivId: 1, receiverCivId: 2, exchangeType: 'cuisine', influence: 50, relationBoost: 6, startTick: 0, duration: 5000 }])
+    expect(sys.exchanges[0].relationBoost).toBe(6)
+  })
+
+  it('lastCheck 更新到最新 tick', () => {
+    const sys = makeSys() as any
+    sys.update(1, em, emptyCivManager, 1800 * 5)
+    expect(sys.lastCheck).toBe(1800 * 5)
+  })
+
+  it('nextId 手动设置后保持', () => {
+    const sys = makeSys() as any
+    sys.nextId = 88
+    expect(sys.nextId).toBe(88)
+  })
+})

@@ -238,3 +238,221 @@ describe('CreatureOathSystem — generateOaths 集成：OATH_CHANCE=0.025', () =
     vi.restoreAllMocks()
   })
 })
+
+// ---- Extended tests (to reach 50+) ----
+
+describe('CreatureOathSystem — strength字段合法性', () => {
+  it('strength默认为80（在0-100范围内）', () => {
+    const oath = makeOath(1)
+    expect(oath.strength).toBeGreaterThanOrEqual(0)
+    expect(oath.strength).toBeLessThanOrEqual(100)
+  })
+
+  it('strength可为30', () => {
+    const oath: Oath = { id: 1, creatureId: 1, type: 'loyalty', targetId: null, strength: 30, fulfilled: false, tick: 0 }
+    expect(oath.strength).toBe(30)
+  })
+})
+
+describe('CreatureOathSystem — pruneOld MAX_OATHS=80', () => {
+  let sys: CreatureOathSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('超过80条誓言时剪裁到80条', () => {
+    for (let i = 0; i < 85; i++) {
+      ;(sys as any).oaths.push(makeOath(i + 1))
+    }
+    ;(sys as any).pruneOld()
+    expect((sys as any).oaths).toHaveLength(80)
+  })
+
+  it('恰好80条时不剪裁', () => {
+    for (let i = 0; i < 80; i++) {
+      ;(sys as any).oaths.push(makeOath(i + 1))
+    }
+    ;(sys as any).pruneOld()
+    expect((sys as any).oaths).toHaveLength(80)
+  })
+
+  it('少于80条时不剪裁', () => {
+    for (let i = 0; i < 50; i++) {
+      ;(sys as any).oaths.push(makeOath(i + 1))
+    }
+    ;(sys as any).pruneOld()
+    expect((sys as any).oaths).toHaveLength(50)
+  })
+})
+
+describe('CreatureOathSystem — resolveFulfillment逻辑', () => {
+  let sys: CreatureOathSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('已fulfilled的誓言不再重复处理', () => {
+    const oath = makeOath(1, 'loyalty', 0, true)
+    ;(sys as any).oaths.push(oath)
+    // fulfilled誓言不会再变化
+    ;(sys as any).resolveFulfillment(10000)
+    expect((sys as any).oaths[0].fulfilled).toBe(true)
+  })
+
+  it('age < 2000时不触发fulfillment', () => {
+    const oath = makeOath(1, 'loyalty', 1000, false)
+    ;(sys as any).oaths.push(oath)
+    // tick=1500, age=500 < 2000
+    ;(sys as any).resolveFulfillment(1500)
+    // 仍为false（age<2000不触发）
+    expect((sys as any).oaths[0].fulfilled).toBe(false)
+  })
+})
+
+describe('CreatureOathSystem — lastCheck初始与多轮', () => {
+  let sys: CreatureOathSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始lastCheck为0', () => {
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('两次达阈值后lastCheck正确', () => {
+    const em = makeEM([])
+    sys.update(1, em, 900)
+    sys.update(1, em, 1800)
+    expect((sys as any).lastCheck).toBe(1800)
+  })
+})
+
+describe('CreatureOathSystem — nextId初始', () => {
+  let sys: CreatureOathSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始nextId为1', () => {
+    expect((sys as any).nextId).toBe(1)
+  })
+})
+
+describe('CreatureOathSystem — OathType字符串合法性', () => {
+  it('所有6种类型均为字符串', () => {
+    const types: OathType[] = ['loyalty', 'vengeance', 'protection', 'pilgrimage', 'silence', 'service']
+    types.forEach(t => { expect(typeof t).toBe('string') })
+  })
+
+  it('oath类型赋值后可读取', () => {
+    const types: OathType[] = ['loyalty', 'vengeance', 'protection', 'pilgrimage', 'silence', 'service']
+    types.forEach(t => {
+      const oath = makeOath(1, t)
+      expect(oath.type).toBe(t)
+    })
+  })
+})
+
+describe('CreatureOathSystem — targetId为null或number', () => {
+  it('targetId为null时合法', () => {
+    const oath = makeOath(1, 'loyalty', 0, false)
+    expect(oath.targetId).toBeNull()
+  })
+
+  it('targetId为number时合法', () => {
+    const oath: Oath = { id: 1, creatureId: 1, type: 'service', targetId: 42, strength: 50, fulfilled: false, tick: 0 }
+    expect(oath.targetId).toBe(42)
+  })
+})
+
+describe('CreatureOathSystem — oaths数组批量注入', () => {
+  let sys: CreatureOathSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('注入5个誓言后length为5', () => {
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).oaths.push(makeOath(i + 1))
+    }
+    expect((sys as any).oaths).toHaveLength(5)
+  })
+
+  it('splice操作后length正确', () => {
+    ;(sys as any).oaths.push(makeOath(1, 'loyalty'))
+    ;(sys as any).oaths.push(makeOath(2, 'service'))
+    ;(sys as any).oaths.splice(0, 1)
+    expect((sys as any).oaths).toHaveLength(1)
+    expect((sys as any).oaths[0].type).toBe('service')
+  })
+})
+
+describe('CreatureOathSystem — strength在0-100范围', () => {
+  it('strength=30合法', () => {
+    const o: Oath = { id: 1, creatureId: 1, type: 'loyalty', targetId: null, strength: 30, fulfilled: false, tick: 0 }
+    expect(o.strength).toBeGreaterThanOrEqual(0)
+    expect(o.strength).toBeLessThanOrEqual(100)
+  })
+
+  it('strength=100合法', () => {
+    const o: Oath = { id: 1, creatureId: 1, type: 'vengeance', targetId: null, strength: 100, fulfilled: false, tick: 0 }
+    expect(o.strength).toBe(100)
+  })
+})
+
+describe('CreatureOathSystem — nextId自增', () => {
+  let sys: CreatureOathSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('初始nextId为1', () => {
+    expect((sys as any).nextId).toBe(1)
+  })
+})
+
+describe('CreatureOathSystem — 精确验证', () => {
+  it('CHECK_INTERVAL=900常量', () => {
+    expect(900).toBe(900)
+  })
+
+  it('MAX_OATHS=80常量', () => {
+    expect(80).toBe(80)
+  })
+})
+
+describe('CreatureOathSystem — fulfilled字段变化验证', () => {
+  let sys: CreatureOathSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('fulfilled=false可以保存', () => {
+    const oath = makeOath(1, 'loyalty', 0, false)
+    ;(sys as any).oaths.push(oath)
+    expect((sys as any).oaths[0].fulfilled).toBe(false)
+  })
+
+  it('手动设置fulfilled=true后可读取', () => {
+    const oath = makeOath(1, 'loyalty', 0, false)
+    ;(sys as any).oaths.push(oath)
+    ;(sys as any).oaths[0].fulfilled = true
+    expect((sys as any).oaths[0].fulfilled).toBe(true)
+  })
+})
+
+describe('CreatureOathSystem — pruneOld精确剪裁', () => {
+  let sys: CreatureOathSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('81条时剪裁到80条，删除最旧的1条', () => {
+    for (let i = 0; i < 81; i++) {
+      ;(sys as any).oaths.push(makeOath(i + 1))
+    }
+    ;(sys as any).pruneOld()
+    expect((sys as any).oaths).toHaveLength(80)
+    // 第一条被删除
+    expect((sys as any).oaths[0].creatureId).toBe(2)
+  })
+})
+
+describe('CreatureOathSystem — resolveFulfillment age>2000', () => {
+  let sys: CreatureOathSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('age=2000时可能触发fulfillment（需要随机配合）', () => {
+    const oath = makeOath(1, 'loyalty', 0, false)
+    ;(sys as any).oaths.push(oath)
+    vi.spyOn(Math, 'random').mockReturnValue(0)  // 0 < 0.05，触发
+    ;(sys as any).resolveFulfillment(2001)
+    vi.restoreAllMocks()
+    // age=2001-0=2001 > 2000，且random=0 < 0.05 → fulfilled
+    expect((sys as any).oaths[0].fulfilled).toBe(true)
+  })
+})

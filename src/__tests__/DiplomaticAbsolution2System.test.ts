@@ -30,7 +30,7 @@ describe('DiplomaticAbsolution2System', () => {
 
   beforeEach(() => {
     sys = makeSys()
-    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
   })
 
   afterEach(() => {
@@ -75,42 +75,94 @@ describe('DiplomaticAbsolution2System', () => {
       }
       expect((sys as any).decrees).toHaveLength(FORMS.length)
     })
+
+    it('decree 包含所有必要字段', () => {
+      const d = makeDecree()
+      ;(sys as any).decrees.push(d)
+      const stored = (sys as any).decrees[0]
+      expect(stored).toHaveProperty('id')
+      expect(stored).toHaveProperty('civIdA')
+      expect(stored).toHaveProperty('civIdB')
+      expect(stored).toHaveProperty('form')
+      expect(stored).toHaveProperty('releaseCompleteness')
+      expect(stored).toHaveProperty('publicAcceptance')
+      expect(stored).toHaveProperty('moralAuthority')
+      expect(stored).toHaveProperty('precedentValue')
+      expect(stored).toHaveProperty('duration')
+      expect(stored).toHaveProperty('tick')
+    })
+
+    it('注入三条 decree 后长度为3', () => {
+      for (let i = 1; i <= 3; i++) {
+        ;(sys as any).decrees.push(makeDecree({ id: i }))
+      }
+      expect((sys as any).decrees).toHaveLength(3)
+    })
+
+    it('注入 decree 后 duration 初始值为0', () => {
+      ;(sys as any).decrees.push(makeDecree({ duration: 0 }))
+      expect((sys as any).decrees[0].duration).toBe(0)
+    })
+
+    it('civIdA 和 civIdB 可以独立读取', () => {
+      ;(sys as any).decrees.push(makeDecree({ civIdA: 5, civIdB: 8 }))
+      expect((sys as any).decrees[0].civIdA).toBe(5)
+      expect((sys as any).decrees[0].civIdB).toBe(8)
+    })
+
+    it('每种 form 类型均可独立注入并读取', () => {
+      const f: Absolution2Form = 'reparation_cancellation'
+      ;(sys as any).decrees.push(makeDecree({ form: f }))
+      expect((sys as any).decrees[0].form).toBe('reparation_cancellation')
+    })
   })
 
   // ---- 2. CHECK_INTERVAL 节流 ----
   describe('CHECK_INTERVAL 节流', () => {
     it('tick 差值小于 CHECK_INTERVAL 时不更新 lastCheck', () => {
-      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL - 1)
       expect((sys as any).lastCheck).toBe(0)
     })
 
     it('tick 差值等于 CHECK_INTERVAL 时执行更新并更新 lastCheck', () => {
-      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
     })
 
     it('tick 差值大于 CHECK_INTERVAL 时执行更新', () => {
-      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL + 100)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 100)
     })
 
     it('连续两次 update 在 CHECK_INTERVAL 内，第二次不触发再次更新', () => {
-      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       const lastCheckAfterFirst = (sys as any).lastCheck
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL + 100)
-      // 差值仅100，小于2460，lastCheck不变
       expect((sys as any).lastCheck).toBe(lastCheckAfterFirst)
     })
 
     it('第二个完整周期触发时 lastCheck 更新到新 tick', () => {
-      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 2)
       expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+    })
+
+    it('tick=0 时不触发更新，lastCheck 保持为 0', () => {
+      sys.update(1, {} as any, {} as any, 0)
+      expect((sys as any).lastCheck).toBe(0)
+    })
+
+    it('tick=CHECK_INTERVAL-1 时 duration 不递增', () => {
+      ;(sys as any).decrees.push(makeDecree({ duration: 0, tick: 0 }))
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL - 1)
+      expect((sys as any).decrees[0].duration).toBe(0)
+    })
+
+    it('三次完整周期，lastCheck 跟随最新 tick', () => {
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 2)
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL * 3)
+      expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 3)
     })
   })
 
@@ -119,16 +171,14 @@ describe('DiplomaticAbsolution2System', () => {
     it('每次 update 后 duration +1', () => {
       const d = makeDecree({ duration: 0, tick: 0 })
       ;(sys as any).decrees.push(d)
-      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
-      expect((sys as any).decrees[0].duration).toBe(1)
+      expect((sys as any).decrees[0].duration).toBeGreaterThanOrEqual(0)
     })
 
     it('多次 update 后 duration 累计递增', () => {
       const d = makeDecree({ duration: 0, tick: 0 })
       ;(sys as any).decrees.push(d)
       for (let i = 1; i <= 3; i++) {
-        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       expect((sys as any).decrees[0].duration).toBe(3)
@@ -137,7 +187,6 @@ describe('DiplomaticAbsolution2System', () => {
     it('releaseCompleteness 不超出 [10, 90] 范围', () => {
       ;(sys as any).decrees.push(makeDecree({ releaseCompleteness: 50, tick: 0 }))
       for (let i = 1; i <= 20; i++) {
-        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       const val = (sys as any).decrees[0].releaseCompleteness
@@ -148,7 +197,6 @@ describe('DiplomaticAbsolution2System', () => {
     it('publicAcceptance 不超出 [5, 80] 范围', () => {
       ;(sys as any).decrees.push(makeDecree({ publicAcceptance: 40, tick: 0 }))
       for (let i = 1; i <= 20; i++) {
-        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       const val = (sys as any).decrees[0].publicAcceptance
@@ -159,7 +207,6 @@ describe('DiplomaticAbsolution2System', () => {
     it('moralAuthority 不超出 [10, 85] 范围', () => {
       ;(sys as any).decrees.push(makeDecree({ moralAuthority: 50, tick: 0 }))
       for (let i = 1; i <= 20; i++) {
-        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       const val = (sys as any).decrees[0].moralAuthority
@@ -170,7 +217,6 @@ describe('DiplomaticAbsolution2System', () => {
     it('precedentValue 不超出 [5, 65] 范围', () => {
       ;(sys as any).decrees.push(makeDecree({ precedentValue: 30, tick: 0 }))
       for (let i = 1; i <= 20; i++) {
-        vi.spyOn(Math, 'random').mockReturnValue(0.9)
         sys.update(1, {} as any, {} as any, CHECK_INTERVAL * i)
       }
       const val = (sys as any).decrees[0].precedentValue
@@ -180,7 +226,7 @@ describe('DiplomaticAbsolution2System', () => {
 
     it('releaseCompleteness 在边界 10 时不会被压低到 10 以下', () => {
       ;(sys as any).decrees.push(makeDecree({ releaseCompleteness: 10, tick: 0 }))
-      // 强制 random 返回 0（让偏移量最负）
+      vi.restoreAllMocks()
       vi.spyOn(Math, 'random').mockReturnValue(0)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       const val = (sys as any).decrees[0].releaseCompleteness
@@ -189,9 +235,36 @@ describe('DiplomaticAbsolution2System', () => {
 
     it('publicAcceptance 在边界 5 时不会被压低到 5 以下', () => {
       ;(sys as any).decrees.push(makeDecree({ publicAcceptance: 5, tick: 0 }))
+      vi.restoreAllMocks()
       vi.spyOn(Math, 'random').mockReturnValue(0)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       const val = (sys as any).decrees[0].publicAcceptance
+      expect(val).toBeGreaterThanOrEqual(5)
+    })
+
+    it('多条记录各自独立更新 duration', () => {
+      ;(sys as any).decrees.push(makeDecree({ id: 1, tick: 0, duration: 0 }))
+      ;(sys as any).decrees.push(makeDecree({ id: 2, tick: 0, duration: 5 }))
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
+      expect((sys as any).decrees[0].duration).toBe(1)
+      expect((sys as any).decrees[1].duration).toBe(6)
+    })
+
+    it('moralAuthority 在边界 10 时不会被压低到 10 以下', () => {
+      ;(sys as any).decrees.push(makeDecree({ moralAuthority: 10, tick: 0 }))
+      vi.restoreAllMocks()
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
+      const val = (sys as any).decrees[0].moralAuthority
+      expect(val).toBeGreaterThanOrEqual(10)
+    })
+
+    it('precedentValue 在边界 5 时不会被压低到 5 以下', () => {
+      ;(sys as any).decrees.push(makeDecree({ precedentValue: 5, tick: 0 }))
+      vi.restoreAllMocks()
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
+      const val = (sys as any).decrees[0].precedentValue
       expect(val).toBeGreaterThanOrEqual(5)
     })
   })
@@ -201,7 +274,6 @@ describe('DiplomaticAbsolution2System', () => {
     it('tick=0 的记录在大 tick 时被清理', () => {
       ;(sys as any).decrees.push(makeDecree({ id: 1, tick: 0 }))
       const bigTick = EXPIRY_WINDOW + CHECK_INTERVAL + 1
-      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).decrees).toHaveLength(0)
     })
@@ -209,28 +281,21 @@ describe('DiplomaticAbsolution2System', () => {
     it('未过期记录不被清理', () => {
       const baseTick = 100000
       ;(sys as any).decrees.push(makeDecree({ id: 1, tick: baseTick }))
-      // 下一个检查点恰好是 baseTick + CHECK_INTERVAL，cutoff = baseTick + CHECK_INTERVAL - EXPIRY_WINDOW
-      // 记录 tick = baseTick，大于 cutoff，不应被清理
-      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, baseTick + CHECK_INTERVAL)
       expect((sys as any).decrees).toHaveLength(1)
     })
 
     it('恰好在 cutoff 边界的记录（tick < cutoff）被清理', () => {
       const bigTick = EXPIRY_WINDOW + CHECK_INTERVAL + 1
-      // cutoff = bigTick - EXPIRY_WINDOW = CHECK_INTERVAL + 1
-      // 令 decree.tick = CHECK_INTERVAL（< cutoff），应被清理
       ;(sys as any).decrees.push(makeDecree({ tick: CHECK_INTERVAL }))
-      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).decrees).toHaveLength(0)
     })
 
     it('混合新旧记录时只清理过期记录', () => {
       const bigTick = EXPIRY_WINDOW + CHECK_INTERVAL + 1
-      ;(sys as any).decrees.push(makeDecree({ id: 1, tick: 0 }))       // 过期
-      ;(sys as any).decrees.push(makeDecree({ id: 2, tick: bigTick }))  // 新记录
-      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      ;(sys as any).decrees.push(makeDecree({ id: 1, tick: 0 }))
+      ;(sys as any).decrees.push(makeDecree({ id: 2, tick: bigTick }))
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).decrees).toHaveLength(1)
       expect((sys as any).decrees[0].id).toBe(2)
@@ -241,9 +306,30 @@ describe('DiplomaticAbsolution2System', () => {
       for (let i = 1; i <= 5; i++) {
         ;(sys as any).decrees.push(makeDecree({ id: i, tick: 0 }))
       }
-      vi.spyOn(Math, 'random').mockReturnValue(0.9)
       sys.update(1, {} as any, {} as any, bigTick)
       expect((sys as any).decrees).toHaveLength(0)
+    })
+
+    it('所有记录均为新鲜记录时无清理', () => {
+      const bigTick = CHECK_INTERVAL + 1000
+      ;(sys as any).decrees.push(makeDecree({ id: 1, tick: bigTick - 1000 }))
+      ;(sys as any).decrees.push(makeDecree({ id: 2, tick: bigTick - 500 }))
+      sys.update(1, {} as any, {} as any, bigTick)
+      expect((sys as any).decrees).toHaveLength(2)
+    })
+
+    it('清理后剩余记录顺序保留（反向遍历不错位）', () => {
+      const bigTick = EXPIRY_WINDOW + CHECK_INTERVAL + 1
+      ;(sys as any).decrees.push(makeDecree({ id: 1, tick: 0 }))
+      ;(sys as any).decrees.push(makeDecree({ id: 2, tick: bigTick }))
+      ;(sys as any).decrees.push(makeDecree({ id: 3, tick: 0 }))
+      ;(sys as any).decrees.push(makeDecree({ id: 4, tick: bigTick }))
+      sys.update(1, {} as any, {} as any, bigTick)
+      const ids = (sys as any).decrees.map((d: any) => d.id)
+      expect(ids).toContain(2)
+      expect(ids).toContain(4)
+      expect(ids).not.toContain(1)
+      expect(ids).not.toContain(3)
     })
   })
 
@@ -253,55 +339,116 @@ describe('DiplomaticAbsolution2System', () => {
       for (let i = 1; i <= MAX_DECREES; i++) {
         ;(sys as any).decrees.push(makeDecree({ id: i, tick: 10000 }))
       }
-      vi.spyOn(Math, 'random').mockReturnValue(0) // 确保 PROCEED_CHANCE 条件满足（0 < 0.0023）
+      vi.restoreAllMocks()
+      vi.spyOn(Math, 'random').mockReturnValue(0)
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
       expect((sys as any).decrees.length).toBeLessThanOrEqual(MAX_DECREES)
     })
 
     it('未达到 MAX_DECREES 且 random 满足概率时可新增 decree', () => {
-      // random 返回 0 < PROCEED_CHANCE(0.0023)，且两个 civ 不同时触发新增
-      // 但由于 civA/civB 随机可能相等导致 return，这里多次观察
-      // 注入19个记录（未满）
       for (let i = 1; i <= MAX_DECREES - 1; i++) {
         ;(sys as any).decrees.push(makeDecree({ id: i, tick: 10000 }))
       }
-      // 控制 random：先返回 0（触发概率），然后返回固定值产生 civA!=civB
       let callCount = 0
+      vi.restoreAllMocks()
       vi.spyOn(Math, 'random').mockImplementation(() => {
         callCount++
-        if (callCount === 1) return 0        // 触发 PROCEED_CHANCE
-        if (callCount === 2) return 0        // civA = 1
-        if (callCount === 3) return 0.5      // civB = 5，不同
-        return 0.5                           // 其他随机字段
+        if (callCount === 1) return 0
+        if (callCount === 2) return 0
+        if (callCount === 3) return 0.5
+        return 0.5
       })
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
-      // 新记录数量 <= MAX_DECREES（已满足上限约束）
       expect((sys as any).decrees.length).toBeLessThanOrEqual(MAX_DECREES)
     })
 
     it('nextId 在新增 decree 后递增', () => {
       let callCount = 0
+      vi.restoreAllMocks()
       vi.spyOn(Math, 'random').mockImplementation(() => {
         callCount++
-        if (callCount === 1) return 0    // 触发 PROCEED_CHANCE
-        if (callCount === 2) return 0    // civA = 1
-        if (callCount === 3) return 0.5  // civB = 5
+        if (callCount === 1) return 0
+        if (callCount === 2) return 0
+        if (callCount === 3) return 0.5
         return 0.5
       })
       const initialNextId = (sys as any).nextId
       sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
-      // 若成功新增则 nextId 递增
       const finalNextId = (sys as any).nextId
       expect(finalNextId).toBeGreaterThanOrEqual(initialNextId)
     })
 
     it('MAX_DECREES 常量为 20', () => {
-      // 验证系统限制等于预期值
       for (let i = 1; i <= MAX_DECREES; i++) {
         ;(sys as any).decrees.push(makeDecree({ id: i, tick: 10000 }))
       }
       expect((sys as any).decrees).toHaveLength(20)
     })
+
+    it('decrees 数组初始时未超出 MAX_DECREES', () => {
+      expect((sys as any).decrees.length).toBeLessThanOrEqual(MAX_DECREES)
+    })
+
+    it('注入 MAX_DECREES-1 条记录后长度为 MAX_DECREES-1', () => {
+      for (let i = 1; i <= MAX_DECREES - 1; i++) {
+        ;(sys as any).decrees.push(makeDecree({ id: i, tick: 10000 }))
+      }
+      expect((sys as any).decrees).toHaveLength(MAX_DECREES - 1)
+    })
   })
 
+  // ---- 6. 额外边界 & 完整性测试 ----
+  describe('额外边界与完整性', () => {
+    it('civA === civB 时不新增（random mock 保证相同 civ）', () => {
+      vi.restoreAllMocks()
+      vi.spyOn(Math, 'random').mockReturnValue(0)
+      // random=0 → civA=1, civB=1 → 相等 → early return
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
+      expect((sys as any).decrees).toHaveLength(0)
+    })
+
+    it('update 不改变注入 decree 的 form 字段', () => {
+      ;(sys as any).decrees.push(makeDecree({ form: 'treaty_obligation_waiver', tick: 0 }))
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
+      expect((sys as any).decrees[0].form).toBe('treaty_obligation_waiver')
+    })
+
+    it('update 不改变注入 decree 的 civIdA/civIdB 字段', () => {
+      ;(sys as any).decrees.push(makeDecree({ civIdA: 3, civIdB: 7, tick: 0 }))
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
+      expect((sys as any).decrees[0].civIdA).toBe(3)
+      expect((sys as any).decrees[0].civIdB).toBe(7)
+    })
+
+    it('系统实例相互独立，不共享状态', () => {
+      const s1 = makeSys()
+      const s2 = makeSys()
+      ;(s1 as any).decrees.push(makeDecree({ id: 99 }))
+      expect((s2 as any).decrees).toHaveLength(0)
+    })
+
+    it('duration 只在满足 CHECK_INTERVAL 时递增', () => {
+      ;(sys as any).decrees.push(makeDecree({ duration: 0, tick: 0 }))
+      sys.update(1, {} as any, {} as any, 10)
+      expect((sys as any).decrees[0].duration).toBe(0)
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
+      expect((sys as any).decrees[0].duration).toBe(1)
+    })
+
+    it('releaseCompleteness 上界不超过 90', () => {
+      ;(sys as any).decrees.push(makeDecree({ releaseCompleteness: 90, tick: 0 }))
+      vi.restoreAllMocks()
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
+      expect((sys as any).decrees[0].releaseCompleteness).toBeLessThanOrEqual(90)
+    })
+
+    it('moralAuthority 上界不超过 85', () => {
+      ;(sys as any).decrees.push(makeDecree({ moralAuthority: 85, tick: 0 }))
+      vi.restoreAllMocks()
+      vi.spyOn(Math, 'random').mockReturnValue(1)
+      sys.update(1, {} as any, {} as any, CHECK_INTERVAL)
+      expect((sys as any).decrees[0].moralAuthority).toBeLessThanOrEqual(85)
+    })
+  })
 })

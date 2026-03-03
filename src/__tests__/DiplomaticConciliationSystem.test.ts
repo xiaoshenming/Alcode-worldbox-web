@@ -279,4 +279,111 @@ describe('DiplomaticConciliationSystem', () => {
       expect((sys as any).processes.length).toBeGreaterThanOrEqual(1)
     })
   })
+
+  // ── 6. 额外边界测试 ──────────────────────────────────────────────────────
+  describe('6. 额外边界与防御性测试', () => {
+  beforeEach(() => { sys = makeSys() })
+
+  it('goodwillA 上限 100 不被突破', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    const p = forceProcess(sys, { goodwillA: 99.99, goodwillB: 25 })
+    runUpdate(sys, CHECK_INTERVAL)
+    expect(p.goodwillA).toBeLessThanOrEqual(100)
+  })
+
+  it('goodwillB 上限 100 不被突破', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    const p = forceProcess(sys, { goodwillA: 30, goodwillB: 99.99 })
+    runUpdate(sys, CHECK_INTERVAL)
+    expect(p.goodwillB).toBeLessThanOrEqual(100)
+  })
+
+  it('goodwillB < 10 触发 collapsed', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    const p = forceProcess(sys, { phase: 'proposal', goodwillA: 30, goodwillB: 5 })
+    runUpdate(sys, CHECK_INTERVAL)
+    expect(p.phase).toBe('collapsed')
+  })
+
+  it('ConciliationPhase 所有合法值', () => {
+    const phases = ['proposal', 'negotiation', 'resolution', 'collapsed']
+    for (const ph of phases) {
+      const p = forceProcess(sys, { phase: ph as any })
+      expect(p.phase).toBe(ph)
+    }
+  })
+
+  it('concessionsExchanged 初始为 0', () => {
+    const p = forceProcess(sys)
+    expect(p.concessionsExchanged).toBe(0)
+  })
+
+  it('stabilityGain 初始为 0', () => {
+    const p = forceProcess(sys)
+    expect(p.stabilityGain).toBe(0)
+  })
+
+  it('多次 update 后 duration 累计', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    const p = forceProcess(sys, { goodwillA: 30, goodwillB: 30, duration: 0 })
+    runUpdate(sys, CHECK_INTERVAL)
+    runUpdate(sys, CHECK_INTERVAL * 2)
+    expect(p.duration).toBe(2)
+  })
+
+  it('空 processes 时 update 不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    expect(() => runUpdate(sys, CHECK_INTERVAL)).not.toThrow()
+  })
+
+  it('update 不改变 civIdA/civIdB', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    const p = forceProcess(sys, { civIdA: 3, civIdB: 7, goodwillA: 30, goodwillB: 30 })
+    runUpdate(sys, CHECK_INTERVAL)
+    expect(p.civIdA).toBe(3)
+    expect(p.civIdB).toBe(7)
+  })
+
+  it('duration=198 经过两次 update 后被清理', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    const p = forceProcess(sys, { phase: 'proposal', goodwillA: 30, goodwillB: 25, duration: 198 })
+    runUpdate(sys, CHECK_INTERVAL)     // duration=199, still < 200
+    expect((sys as any).processes.includes(p)).toBe(true)
+    runUpdate(sys, CHECK_INTERVAL * 2) // duration=200, removed
+    expect((sys as any).processes.includes(p)).toBe(false)
+  })
+
+  it('resolution 阶段不会再次触发 concessionsExchanged++ 若 goodwillB<=55', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    const p = forceProcess(sys, { phase: 'resolution', goodwillA: 60, goodwillB: 50, concessionsExchanged: 3 })
+    runUpdate(sys, CHECK_INTERVAL)
+    // goodwillB 增加 0.025 -> 50.025 仍 <= 55, 不触发 negotiation->resolution 分支
+    expect(p.concessionsExchanged).toBe(3)
+  })
+
+  it('lastCheck 正常更新到最新 tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    runUpdate(sys, CHECK_INTERVAL * 5)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 5)
+  })
+
+  it('nextId 手动设置后保持不变（直到 update 中新增）', () => {
+    ;(sys as any).nextId = 42
+    expect((sys as any).nextId).toBe(42)
+  })
+
+  it('注入 5 条 proposal 状态记录后长度为 5', () => {
+    for (let i = 0; i < 5; i++) {
+      forceProcess(sys, { phase: 'proposal', goodwillA: 30, goodwillB: 25, duration: 0 })
+    }
+    expect((sys as any).processes).toHaveLength(5)
+  })
+
+  it('resolution 状态 duration < 200 时不被清理', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    forceProcess(sys, { phase: 'resolution', goodwillA: 50, goodwillB: 60, duration: 0 })
+    runUpdate(sys, CHECK_INTERVAL)
+    expect((sys as any).processes).toHaveLength(1)
+  })
+})
 })

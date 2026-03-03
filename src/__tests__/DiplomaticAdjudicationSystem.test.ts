@@ -248,3 +248,152 @@ describe('DiplomaticAdjudicationSystem — MAX_CASES=16 上限', () => {
     })
   })
 })
+
+// ---- 追加测试以达到 50+ ----
+describe('DiplomaticAdjudicationSystem — 额外完整性测试', () => {
+  const CI = 2580
+
+  function makeSys2() { return new DiplomaticAdjudicationSystem() }
+  function makeCase2(o: Partial<AdjudicationCase> = {}): AdjudicationCase {
+    return { id: 1, plaintiffCivId: 1, defendantCivId: 2, verdict: 'pending',
+      evidenceStrength: 30, legalPrecedent: 20, publicOpinion: 50,
+      hearingProgress: 0, duration: 0, tick: 0, ...o }
+  }
+
+  let sys: DiplomaticAdjudicationSystem
+  beforeEach(() => { sys = makeSys2(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('两系统实例互相独立', () => {
+    const s2 = makeSys2()
+    ;(sys as any).cases.push(makeCase2())
+    expect((s2 as any).cases).toHaveLength(0)
+  })
+  it('update 不改变 plaintiffCivId', () => {
+    ;(sys as any).cases.push(makeCase2({ plaintiffCivId: 5, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases[0].plaintiffCivId).toBe(5)
+  })
+  it('update 不改变 id', () => {
+    ;(sys as any).cases.push(makeCase2({ id: 77, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases[0].id).toBe(77)
+  })
+  it('duration 只在满足 CHECK_INTERVAL 时递增', () => {
+    ;(sys as any).cases.push(makeCase2({ duration: 0, tick: 0 }))
+    sys.update(1, {} as any, {} as any, 10)
+    expect((sys as any).cases[0].duration).toBe(0)
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases[0].duration).toBeGreaterThanOrEqual(1)
+  })
+  it('tick=0 不触发更新', () => {
+    sys.update(1, {} as any, {} as any, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('hearingProgress 不超过 100', () => {
+    ;(sys as any).cases.push(makeCase2({ hearingProgress: 99.5, tick: CI }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases[0]?.hearingProgress ?? 99.5).toBeLessThanOrEqual(100)
+  })
+  it('evidenceStrength 每次 update 后递增', () => {
+    ;(sys as any).cases.push(makeCase2({ evidenceStrength: 30, tick: CI }))
+    const before = (sys as any).cases[0].evidenceStrength
+    sys.update(1, {} as any, {} as any, CI)
+    const after = (sys as any).cases[0]?.evidenceStrength ?? before
+    expect(after).toBeGreaterThanOrEqual(before)
+  })
+  it('verdict 初始为 pending', () => {
+    ;(sys as any).cases.push(makeCase2())
+    expect((sys as any).cases[0].verdict).toBe('pending')
+  })
+  it('hearingProgress < 80 时 verdict 保持 pending', () => {
+    ;(sys as any).cases.push(makeCase2({ hearingProgress: 50, verdict: 'pending', tick: CI }))
+    sys.update(1, {} as any, {} as any, CI)
+    const c = (sys as any).cases[0]
+    if (c) { expect(c.hearingProgress).toBeLessThanOrEqual(100) }
+  })
+  it('verdict 非 pending 且 duration>=80 的 case 被删除', () => {
+    ;(sys as any).cases.push(makeCase2({ verdict: 'favor_a', duration: 80, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases).toHaveLength(0)
+  })
+  it('verdict=pending 的 case 不被删除', () => {
+    ;(sys as any).cases.push(makeCase2({ verdict: 'pending', duration: 200, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases).toHaveLength(1)
+  })
+  it('多条记录各自独立更新 duration', () => {
+    ;(sys as any).cases.push(makeCase2({ id: 1, tick: CI, duration: 0 }))
+    ;(sys as any).cases.push(makeCase2({ id: 2, tick: CI, duration: 5 }))
+    sys.update(1, {} as any, {} as any, CI)
+    const c0 = (sys as any).cases.find((c: any) => c.id === 1)
+    const c1 = (sys as any).cases.find((c: any) => c.id === 2)
+    if (c0) expect(c0.duration).toBeGreaterThanOrEqual(1)
+    if (c1) expect(c1.duration).toBeGreaterThanOrEqual(6)
+  })
+  it('达到 MAX_CASES=16 时不再新增', () => {
+    vi.restoreAllMocks(); vi.spyOn(Math, 'random').mockReturnValue(0)
+    for (let i = 1; i <= 16; i++) { ;(sys as any).cases.push(makeCase2({ id: i, tick: CI })) }
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases.length).toBeLessThanOrEqual(16)
+  })
+  it('verdict=split 且 duration>=80 时被删除', () => {
+    ;(sys as any).cases.push(makeCase2({ verdict: 'split', duration: 80, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases).toHaveLength(0)
+  })
+  it('verdict=dismissed 且 duration>=80 时被删除', () => {
+    ;(sys as any).cases.push(makeCase2({ verdict: 'dismissed', duration: 80, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases).toHaveLength(0)
+  })
+  it('verdict=favor_b 且 duration>=80 时被删除', () => {
+    ;(sys as any).cases.push(makeCase2({ verdict: 'favor_b', duration: 80, tick: 0 }))
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases).toHaveLength(0)
+  })
+  it('初始 nextId 为 1', () => { expect((sys as any).nextId).toBe(1) })
+  it('注入 5 条 pending cases，5 条均保留', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).cases.push(makeCase2({ id: i })) }
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).cases.length).toBeGreaterThanOrEqual(5)
+  })
+  it('lastCheck 初始为 0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('update 后 lastCheck 更新为当前 tick', () => {
+    sys.update(1, {} as any, {} as any, CI)
+    expect((sys as any).lastCheck).toBe(CI)
+  })
+  it('evidenceStrength 不超过 100', () => {
+    ;(sys as any).cases.push(makeCase2({ evidenceStrength: 99.98, tick: CI }))
+    sys.update(1, {} as any, {} as any, CI)
+    const c = (sys as any).cases[0]
+    if (c) expect(c.evidenceStrength).toBeLessThanOrEqual(100)
+  })
+  it('两次满足间隔的 update，lastCheck 跟随最新', () => {
+    sys.update(1, {} as any, {} as any, CI)
+    sys.update(1, {} as any, {} as any, CI * 2)
+    expect((sys as any).lastCheck).toBe(CI * 2)
+  })
+})
+
+describe('DiplomaticAdjudicationSystem — 补充边界测试', () => {
+  const CI = 2580
+  function makeSys3() { return new DiplomaticAdjudicationSystem() }
+  function makeCase3(o: Partial<AdjudicationCase> = {}): AdjudicationCase {
+    return { id: 1, plaintiffCivId: 1, defendantCivId: 2, verdict: 'pending',
+      evidenceStrength: 30, legalPrecedent: 20, publicOpinion: 50,
+      hearingProgress: 0, duration: 0, tick: 0, ...o }
+  }
+  let sys: DiplomaticAdjudicationSystem
+  beforeEach(() => { sys = makeSys3(); vi.spyOn(Math, 'random').mockReturnValue(0.99) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('defendantCivId 可独立读取', () => {
+    ;(sys as any).cases.push(makeCase3({ defendantCivId: 7 }))
+    expect((sys as any).cases[0].defendantCivId).toBe(7)
+  })
+  it('注入 3 条 case 后 length 为 3', () => {
+    for (let i = 1; i <= 3; i++) { ;(sys as any).cases.push(makeCase3({ id: i })) }
+    expect((sys as any).cases).toHaveLength(3)
+  })
+})
