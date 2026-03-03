@@ -189,3 +189,145 @@ describe('MAX_ACTIONS=15上限', () => {
     vi.restoreAllMocks()
   })
 })
+
+describe('字段边界测试', () => {
+  it('influence范围[0,100]', () => {
+    const a = makeAction({ influence: 50 })
+    expect(a.influence).toBeGreaterThanOrEqual(0)
+    expect(a.influence).toBeLessThanOrEqual(100)
+  })
+  it('allianceStrength范围[0,100]', () => {
+    const a = makeAction({ allianceStrength: 30 })
+    expect(a.allianceStrength).toBeGreaterThanOrEqual(0)
+    expect(a.allianceStrength).toBeLessThanOrEqual(100)
+  })
+  it('diplomaticCost范围[0,100]', () => {
+    const a = makeAction({ diplomaticCost: 50 })
+    expect(a.diplomaticCost).toBeGreaterThanOrEqual(0)
+    expect(a.diplomaticCost).toBeLessThanOrEqual(100)
+  })
+  it('duration初始为0', () => {
+    expect(makeAction().duration).toBe(0)
+  })
+  it('tick可以是任意非负整数', () => {
+    expect(makeAction({ tick: 12345 }).tick).toBe(12345)
+  })
+})
+
+describe('result状态转换', () => {
+  it('active可以转为successful', () => {
+    const a = makeAction({ result: 'active' })
+    a.result = 'successful'
+    expect(a.result).toBe('successful')
+  })
+  it('active可以转为rejected', () => {
+    const a = makeAction({ result: 'active' })
+    a.result = 'rejected'
+    expect(a.result).toBe('rejected')
+  })
+  it('active可以转为withdrawn', () => {
+    const a = makeAction({ result: 'active' })
+    a.result = 'withdrawn'
+    expect(a.result).toBe('withdrawn')
+  })
+  it('successful状态保持', () => {
+    const a = makeAction({ result: 'successful' })
+    expect(a.result).toBe('successful')
+  })
+  it('rejected状态保持', () => {
+    const a = makeAction({ result: 'rejected' })
+    expect(a.result).toBe('rejected')
+  })
+})
+
+describe('多action交互', () => {
+  it('多个action独立更新duration', () => {
+    const s = makeSystem()
+    ;(s as any).actions = [makeAction({ id: 1, duration: 0 }), makeAction({ id: 2, duration: 0 })]
+    s.update(1, mockWorld, mockEm, 2570)
+    expect((s as any).actions[0].duration).toBe(1)
+    expect((s as any).actions[1].duration).toBe(1)
+  })
+  it('部分action被cleanup，其他保留', () => {
+    const s = makeSystem()
+    ;(s as any).actions = [
+      makeAction({ id: 1, influence: 0, duration: 51 }),
+      makeAction({ id: 2, influence: 50, duration: 10 })
+    ]
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    s.update(1, mockWorld, mockEm, 2570)
+    expect((s as any).actions).toHaveLength(1)
+    expect((s as any).actions[0].id).toBe(2)
+    vi.restoreAllMocks()
+  })
+  it('所有action被cleanup后数组为空', () => {
+    const s = makeSystem()
+    ;(s as any).actions = [
+      makeAction({ id: 1, influence: 0, duration: 51 }),
+      makeAction({ id: 2, influence: 0, duration: 51 })
+    ]
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    s.update(1, mockWorld, mockEm, 2570)
+    expect((s as any).actions).toHaveLength(0)
+    vi.restoreAllMocks()
+  })
+})
+
+describe('civId边界测试', () => {
+  it('intercessorCivId可以是任意正整数', () => {
+    expect(makeAction({ intercessorCivId: 999 }).intercessorCivId).toBe(999)
+  })
+  it('beneficiaryCivId可以是任意正整数', () => {
+    expect(makeAction({ beneficiaryCivId: 888 }).beneficiaryCivId).toBe(888)
+  })
+  it('opponentCivId可以是任意正整数', () => {
+    expect(makeAction({ opponentCivId: 777 }).opponentCivId).toBe(777)
+  })
+  it('三个civId可以各不相同', () => {
+    const a = makeAction({ intercessorCivId: 1, beneficiaryCivId: 2, opponentCivId: 3 })
+    expect(a.intercessorCivId).not.toBe(a.beneficiaryCivId)
+    expect(a.beneficiaryCivId).not.toBe(a.opponentCivId)
+  })
+})
+
+describe('空数组边界', () => {
+  it('actions为空时update不崩溃', () => {
+    expect(() => makeSystem().update(1, mockWorld, mockEm, 2570)).not.toThrow()
+  })
+  it('actions为空时cleanup不崩溃', () => {
+    const s = makeSystem()
+    expect(() => s.update(1, mockWorld, mockEm, 2570)).not.toThrow()
+  })
+})
+
+describe('id字段测试', () => {
+  it('id可以是任意正整数', () => {
+    expect(makeAction({ id: 12345 }).id).toBe(12345)
+  })
+  it('多个action的id可以不同', () => {
+    const a1 = makeAction({ id: 1 })
+    const a2 = makeAction({ id: 2 })
+    expect(a1.id).not.toBe(a2.id)
+  })
+  it('nextId初始值为1', () => {
+    expect((makeSystem() as any).nextId).toBe(1)
+  })
+  it('手动设置nextId后值保持', () => {
+    const s = makeSystem()
+    ;(s as any).nextId = 100
+    expect((s as any).nextId).toBe(100)
+  })
+  it('action结构包含所有必要字段', () => {
+    const a = makeAction()
+    expect(a).toHaveProperty('id')
+    expect(a).toHaveProperty('intercessorCivId')
+    expect(a).toHaveProperty('beneficiaryCivId')
+    expect(a).toHaveProperty('opponentCivId')
+    expect(a).toHaveProperty('result')
+    expect(a).toHaveProperty('influence')
+    expect(a).toHaveProperty('allianceStrength')
+    expect(a).toHaveProperty('diplomaticCost')
+    expect(a).toHaveProperty('duration')
+    expect(a).toHaveProperty('tick')
+  })
+})

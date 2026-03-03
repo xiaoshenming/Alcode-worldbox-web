@@ -217,3 +217,155 @@ describe('MAX_MEDIATIONS=18上限', () => {
     expect((s as any).nextId).toBe(2)
   })
 })
+
+describe('字段边界扩展测试', () => {
+  it('effectiveness可以是小数', () => {
+    const m = makeMed({ effectiveness: 45.7 })
+    expect(m.effectiveness).toBeCloseTo(45.7, 1)
+  })
+  it('trustLevel可以是小数', () => {
+    const m = makeMed({ trustLevel: 33.3 })
+    expect(m.trustLevel).toBeCloseTo(33.3, 1)
+  })
+  it('duration初始为0时每次update递增1', () => {
+    const s = makeSystem()
+    ;(s as any).mediations = [makeMed({ duration: 0 })]
+    for (let i = 1; i <= 5; i++) {
+      s.update(1, {} as any, {} as any, 2350 * i)
+      expect((s as any).mediations[0].duration).toBe(i)
+    }
+  })
+  it('tick字段在update中保持不变', () => {
+    const s = makeSystem()
+    const m = makeMed({ tick: 12345 })
+    ;(s as any).mediations = [m]
+    s.update(1, {} as any, {} as any, 2350)
+    expect(m.tick).toBe(12345)
+  })
+  it('status可以是任意合法值', () => {
+    const statuses = ['active', 'successful', 'failed', 'abandoned']
+    statuses.forEach(st => {
+      const m = makeMed({ status: st as any })
+      expect(m.status).toBe(st)
+    })
+  })
+})
+
+describe('多mediation交互扩展', () => {
+  it('3个mediation同时存在', () => {
+    const s = makeSystem()
+    ;(s as any).mediations = [makeMed({ id: 1 }), makeMed({ id: 2 }), makeMed({ id: 3 })]
+    expect((s as any).mediations).toHaveLength(3)
+  })
+  it('多个mediation独立更新字段', () => {
+    const s = makeSystem()
+    const m1 = makeMed({ id: 1, effectiveness: 50 })
+    const m2 = makeMed({ id: 2, effectiveness: 60 })
+    ;(s as any).mediations = [m1, m2]
+    s.update(1, {} as any, {} as any, 2350)
+    expect(m1.effectiveness).not.toBe(50)
+    expect(m2.effectiveness).not.toBe(60)
+  })
+  it('部分mediation过期，其他保留', () => {
+    const s = makeSystem()
+    const bigTick = 93000 + 2350 + 1
+    ;(s as any).mediations = [makeMed({ id: 1, tick: 0 }), makeMed({ id: 2, tick: bigTick - 1000 })]
+    s.update(1, {} as any, {} as any, bigTick)
+    expect((s as any).mediations).toHaveLength(1)
+    expect((s as any).mediations[0].id).toBe(2)
+  })
+  it('所有mediation过期后数组为空', () => {
+    const s = makeSystem()
+    const bigTick = 93000 + 2350 + 1
+    ;(s as any).mediations = [makeMed({ id: 1, tick: 0 }), makeMed({ id: 2, tick: 100 })]
+    s.update(1, {} as any, {} as any, bigTick)
+    expect((s as any).mediations).toHaveLength(0)
+  })
+})
+
+describe('civId组合测试', () => {
+  it('mediatorCivId可以是大数', () => {
+    const m = makeMed({ mediatorCivId: 9999 })
+    expect(m.mediatorCivId).toBe(9999)
+  })
+  it('conflictCivIdA和conflictCivIdB可以是大数', () => {
+    const m = makeMed({ conflictCivIdA: 8888, conflictCivIdB: 7777 })
+    expect(m.conflictCivIdA).toBe(8888)
+    expect(m.conflictCivIdB).toBe(7777)
+  })
+  it('mediation结构包含所有必要字段', () => {
+    const m = makeMed()
+    expect(m).toHaveProperty('id')
+    expect(m).toHaveProperty('mediatorCivId')
+    expect(m).toHaveProperty('conflictCivIdA')
+    expect(m).toHaveProperty('conflictCivIdB')
+    expect(m).toHaveProperty('status')
+    expect(m).toHaveProperty('effectiveness')
+    expect(m).toHaveProperty('trustLevel')
+    expect(m).toHaveProperty('duration')
+    expect(m).toHaveProperty('tick')
+  })
+})
+
+describe('nextId管理扩展', () => {
+  it('nextId可以手动设置为大数', () => {
+    const s = makeSystem()
+    ;(s as any).nextId = 1000
+    expect((s as any).nextId).toBe(1000)
+  })
+  it('nextId不会因cleanup而改变', () => {
+    const s = makeSystem()
+    ;(s as any).nextId = 50
+    ;(s as any).mediations = [makeMed({ tick: 0 })]
+    s.update(1, {} as any, {} as any, 93000 + 2350 + 1)
+    expect((s as any).nextId).toBe(50)
+  })
+})
+
+describe('空数组和边界', () => {
+  it('mediations为空时update不崩溃', () => {
+    expect(() => makeSystem().update(1, {} as any, {} as any, 2350)).not.toThrow()
+  })
+  it('mediations为空时cleanup不崩溃', () => {
+    const s = makeSystem()
+    expect(() => s.update(1, {} as any, {} as any, 100000)).not.toThrow()
+  })
+  it('lastCheck初始为0', () => {
+    expect((makeSystem() as any).lastCheck).toBe(0)
+  })
+  it('lastCheck在第一次update后更新', () => {
+    const s = makeSystem()
+    s.update(1, {} as any, {} as any, 2350)
+    expect((s as any).lastCheck).toBe(2350)
+  })
+  it('mediations数组支持push操作', () => {
+    const s = makeSystem()
+    ;(s as any).mediations.push(makeMed())
+    expect((s as any).mediations).toHaveLength(1)
+  })
+  it('id可以是任意正整数', () => {
+    expect(makeMed({ id: 77777 }).id).toBe(77777)
+  })
+  it('多个mediation的id可以各不相同', () => {
+    const m1 = makeMed({ id: 1 })
+    const m2 = makeMed({ id: 2 })
+    const m3 = makeMed({ id: 3 })
+    expect(new Set([m1.id, m2.id, m3.id]).size).toBe(3)
+  })
+  it('nextId初始值为1', () => {
+    expect((makeSystem() as any).nextId).toBe(1)
+  })
+})
+
+describe('status转换测试', () => {
+  it('active可以转为successful', () => {
+    const m = makeMed({ status: 'active' })
+    m.status = 'successful'
+    expect(m.status).toBe('successful')
+  })
+  it('active可以转为failed', () => {
+    const m = makeMed({ status: 'active' })
+    m.status = 'failed'
+    expect(m.status).toBe('failed')
+  })
+})

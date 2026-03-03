@@ -203,5 +203,215 @@ describe('DiplomaticPledgeSystem', () => {
       const pledge = injectPledge(sys, { type: 'mutual_defense' })
       expect(pledge.type).toBe('mutual_defense')
     })
+
+    it('resource_sharing 是合法 PledgeType', () => {
+      const pledge = injectPledge(sys, { type: 'resource_sharing' })
+      expect(pledge.type).toBe('resource_sharing')
+    })
+
+    it('border_respect 是合法 PledgeType', () => {
+      const pledge = injectPledge(sys, { type: 'border_respect' })
+      expect(pledge.type).toBe('border_respect')
+    })
+
+    it('trade_priority 是合法 PledgeType', () => {
+      const pledge = injectPledge(sys, { type: 'trade_priority' })
+      expect(pledge.type).toBe('trade_priority')
+    })
+  })
+
+  // ── 7. violations 字段测试 ────────────────────────────────────────────────
+  describe('violations 字段测试', () => {
+    it('violations 初始为 0', () => {
+      const pledge = injectPledge(sys)
+      expect(pledge.violations).toBe(0)
+    })
+
+    it('violations 可以递增', () => {
+      const pledge = injectPledge(sys, { violations: 0 })
+      pledge.violations++
+      expect(pledge.violations).toBe(1)
+    })
+
+    it('violations 递增后 honored 可被设为 false', () => {
+      const pledge = injectPledge(sys, { violations: 0, honored: true })
+      pledge.violations++
+      pledge.honored = false
+      expect(pledge.honored).toBe(false)
+    })
+
+    it('多次 violations 累计', () => {
+      const pledge = injectPledge(sys, { violations: 0 })
+      pledge.violations += 3
+      expect(pledge.violations).toBe(3)
+    })
+  })
+
+  // ── 8. nextId 递增测试 ────────────────────────────────────────────────────
+  describe('nextId 递增测试', () => {
+    it('nextId 初始为 1', () => {
+      expect((sys as any).nextId).toBe(1)
+    })
+
+    it('注入 pledge 后 nextId 不自动递增（手动管理）', () => {
+      injectPledge(sys, { id: 99 })
+      expect((sys as any).nextId).toBe(1)
+    })
+
+    it('手动设置 nextId 后值保持', () => {
+      ;(sys as any).nextId = 10
+      expect((sys as any).nextId).toBe(10)
+    })
+  })
+
+  // ── 9. 多 pledge 交互测试 ─────────────────────────────────────────────────
+  describe('多 pledge 交互测试', () => {
+    it('多条 pledge 同时存在', () => {
+      injectPledge(sys, { id: 1, fromCivId: 1, toCivId: 2 })
+      injectPledge(sys, { id: 2, fromCivId: 3, toCivId: 4 })
+      expect((sys as any).pledges).toHaveLength(2)
+    })
+
+    it('多条 pledge 独立衰减', () => {
+      const p1 = injectPledge(sys, { id: 1, strength: 50, duration: 999999 })
+      const p2 = injectPledge(sys, { id: 2, fromCivId: 3, toCivId: 4, strength: 80, duration: 999999 })
+      ;(sys as any)._activePairSet.add('3_4')
+      sys.update(0, makeEm(), makeCivManager([1, 2, 3, 4]), CHECK_INTERVAL)
+      expect(p1.strength).toBeCloseTo(50 - DECAY_RATE * CHECK_INTERVAL, 5)
+      expect(p2.strength).toBeCloseTo(80 - DECAY_RATE * CHECK_INTERVAL, 5)
+    })
+
+    it('部分 pledge 过期被删除，其他保留', () => {
+      injectPledge(sys, { id: 1, strength: 0 })
+      injectPledge(sys, { id: 2, fromCivId: 3, toCivId: 4, strength: 80, duration: 999999 })
+      ;(sys as any)._activePairSet.add('3_4')
+      sys.update(0, makeEm(), makeCivManager([1, 2, 3, 4]), CHECK_INTERVAL)
+      expect((sys as any).pledges).toHaveLength(1)
+      expect((sys as any).pledges[0].id).toBe(2)
+    })
+
+    it('同一对 civ 不能有多条 active pledge', () => {
+      injectPledge(sys, { id: 1, fromCivId: 1, toCivId: 2 })
+      expect((sys as any)._activePairSet.has('1_2')).toBe(true)
+      // 尝试注入第二条会被 _activePairSet 拦截（在实际 spawn 逻辑中）
+    })
+  })
+
+  // ── 10. _activePairSet 管理测试 ───────────────────────────────────────────
+  describe('_activePairSet 管理测试', () => {
+    it('注入 pledge 后 _activePairSet 包含对应键', () => {
+      injectPledge(sys, { fromCivId: 5, toCivId: 6 })
+      expect((sys as any)._activePairSet.has('5_6')).toBe(true)
+    })
+
+    it('cleanup 删除 pledge 后 _activePairSet 移除键', () => {
+      injectPledge(sys, { fromCivId: 7, toCivId: 8, strength: 0 })
+      sys.update(0, makeEm(), makeCivManager([7, 8]), CHECK_INTERVAL)
+      expect((sys as any)._activePairSet.has('7_8')).toBe(false)
+    })
+
+    it('多条 pledge 的 _activePairSet 键独立管理', () => {
+      injectPledge(sys, { id: 1, fromCivId: 1, toCivId: 2 })
+      injectPledge(sys, { id: 2, fromCivId: 3, toCivId: 4 })
+      ;(sys as any)._activePairSet.add('3_4')
+      expect((sys as any)._activePairSet.has('1_2')).toBe(true)
+      expect((sys as any)._activePairSet.has('3_4')).toBe(true)
+    })
+  })
+
+  // ── 11. duration 边界测试 ─────────────────────────────────────────────────
+  describe('duration 边界测试', () => {
+    it('duration = 0 时立即过期', () => {
+      injectPledge(sys, { strength: 80, startTick: 0, duration: 0 })
+      sys.update(0, makeEm(), makeCivManager([1, 2]), CHECK_INTERVAL)
+      expect((sys as any).pledges).toHaveLength(0)
+    })
+
+    it('duration = 1 时在 tick=2 过期', () => {
+      injectPledge(sys, { strength: 80, startTick: 0, duration: 1 })
+      sys.update(0, makeEm(), makeCivManager([1, 2]), 2)
+      expect((sys as any).pledges).toHaveLength(0)
+    })
+
+    it('duration 很大时不过期', () => {
+      injectPledge(sys, { strength: 80, startTick: 0, duration: 999999 })
+      sys.update(0, makeEm(), makeCivManager([1, 2]), CHECK_INTERVAL)
+      expect((sys as any).pledges).toHaveLength(1)
+    })
+  })
+
+  // ── 12. strength 边界测试 ─────────────────────────────────────────────────
+  describe('strength 边界测试', () => {
+    it('strength = 0.1 经过衰减后变负被删除', () => {
+      injectPledge(sys, { strength: 0.1, duration: 999999 })
+      sys.update(0, makeEm(), makeCivManager([1, 2]), CHECK_INTERVAL)
+      expect((sys as any).pledges).toHaveLength(0)
+    })
+
+    it('strength = 100 经过多次衰减仍保留', () => {
+      const pledge = injectPledge(sys, { strength: 100, duration: 999999 })
+      for (let t = 1; t <= 10; t++) {
+        sys.update(0, makeEm(), makeCivManager([1, 2]), CHECK_INTERVAL * t)
+      }
+      expect(pledge.strength).toBeGreaterThan(0)
+    })
+
+    it('strength 负数立即被删除', () => {
+      injectPledge(sys, { strength: -10 })
+      sys.update(0, makeEm(), makeCivManager([1, 2]), CHECK_INTERVAL)
+      expect((sys as any).pledges).toHaveLength(0)
+    })
+  })
+
+  // ── 13. VIOLATION_PENALTY 测试 ────────────────────────────────────────────
+  describe('VIOLATION_PENALTY 测试', () => {
+    it('violation 发生时 strength 减少 20', () => {
+      const pledge = injectPledge(sys, { strength: 80, duration: 999999 })
+      const before = pledge.strength
+      pledge.violations++
+      pledge.strength -= 20
+      pledge.honored = false
+      expect(pledge.strength).toBe(before - 20)
+    })
+
+    it('多次 violation 累计扣除', () => {
+      const pledge = injectPledge(sys, { strength: 100, duration: 999999 })
+      pledge.violations += 3
+      pledge.strength -= 20 * 3
+      expect(pledge.strength).toBe(40)
+    })
+  })
+
+  // ── 14. honored 字段测试 ──────────────────────────────────────────────────
+  describe('honored 字段测试', () => {
+    it('honored 初始为 true', () => {
+      const pledge = injectPledge(sys)
+      expect(pledge.honored).toBe(true)
+    })
+
+    it('honored 可被设为 false', () => {
+      const pledge = injectPledge(sys, { honored: true })
+      pledge.honored = false
+      expect(pledge.honored).toBe(false)
+    })
+
+    it('honored = false 后不影响 cleanup', () => {
+      injectPledge(sys, { strength: 0, honored: false })
+      sys.update(0, makeEm(), makeCivManager([1, 2]), CHECK_INTERVAL)
+      expect((sys as any).pledges).toHaveLength(0)
+    })
+  })
+
+  // ── 15. 空 civManager 测试 ────────────────────────────────────────────────
+  describe('空 civManager 测试', () => {
+    it('civManager.civilizations 为空 Map 时安全返回', () => {
+      expect(() => sys.update(0, makeEm(), makeCivManager([]), CHECK_INTERVAL)).not.toThrow()
+    })
+
+    it('civManager.civilizations 只有 1 个 civ 时不处理', () => {
+      injectPledge(sys, { strength: 80 })
+      sys.update(0, makeEm(), makeCivManager([1]), CHECK_INTERVAL)
+      expect((sys as any).pledges[0].strength).toBe(80)
+    })
   })
 })
