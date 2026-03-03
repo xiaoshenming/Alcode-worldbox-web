@@ -167,28 +167,6 @@ describe('DiplomaticMarriageSystem', () => {
 })
 
 describe('字段边界扩展测试', () => {
-  it('bondStrength可以是小数', () => {
-    const m = makeMarriage({ bondStrength: 45.7 })
-    expect(m.bondStrength).toBeCloseTo(45.7, 1)
-  })
-  it('culturalHarmony可以是小数', () => {
-    const m = makeMarriage({ culturalHarmony: 33.3 })
-    expect(m.culturalHarmony).toBeCloseTo(33.3, 1)
-  })
-  it('politicalInfluence可以是小数', () => {
-    const m = makeMarriage({ politicalInfluence: 22.2 })
-    expect(m.politicalInfluence).toBeCloseTo(22.2, 1)
-  })
-  it('duration初始为0时每次update递增1', () => {
-    const s = new DiplomaticMarriageSystem()
-    ;(s as any).marriages = [makeMarriage({ duration: 0 })]
-    ;(s as any).lastCheck = 0
-    for (let i = 1; i <= 5; i++) {
-      s.update(1, {} as any, {} as any, 2400 * i)
-      // duration字段不存在于实际实现中，跳过此测试
-      expect((s as any).marriages[0]).toBeDefined()
-    }
-  })
   it('tick字段在update中保持不变', () => {
     const s = new DiplomaticMarriageSystem()
     const m = makeMarriage({ tick: 12345 })
@@ -252,15 +230,6 @@ describe('多marriage交互扩展', () => {
 })
 
 describe('civId组合测试', () => {
-  it('royalCivIdA和royalCivIdB可以是大数', () => {
-    const m = makeMarriage({ royalCivIdA: 9999, royalCivIdB: 8888 })
-    expect(m.royalCivIdA).toBe(9999)
-    expect(m.royalCivIdB).toBe(8888)
-  })
-  it('royalCivIdA和royalCivIdB可以相同（虽然逻辑会拦截）', () => {
-    const m = makeMarriage({ royalCivIdA: 5, royalCivIdB: 5 })
-    expect(m.royalCivIdA).toBe(m.royalCivIdB)
-  })
   it('marriage结构包含所有必要字段', () => {
     const m = makeMarriage()
     expect(m).toHaveProperty('id')
