@@ -239,7 +239,11 @@ describe('CreatureToolsmithSystem — 技能递增', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 describe('CreatureToolsmithSystem — cleanup：metalWorking <= 4 时移除', () => {
   let sys: CreatureToolsmithSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys = makeSys(); nextId = 1
+  })
+  afterEach(() => vi.restoreAllMocks())
 
   it('metalWorking=3.98 先递增再检查，递增后 4.00 仍被删除（边界=4）', () => {
     const t = makeToolsmith(1, { metalWorking: 3.98 })
