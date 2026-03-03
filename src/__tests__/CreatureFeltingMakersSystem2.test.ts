@@ -273,7 +273,7 @@ describe('CreatureFeltingMakers2System - 技能增长规则', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 describe('CreatureFeltingMakers2System - needleSkill <= 3 清理规则', () => {
   let sys: CreatureFeltingMakers2System
-  beforeEach(() => { sys = makeSys(); nextId = 100 })
+  beforeEach(() => { sys = makeSys(); nextId = 100; vi.spyOn(Math, 'random').mockReturnValue(0.99) })
   afterEach(() => vi.restoreAllMocks())
 
   it('needleSkill=2.98 时 update 后恰好超过 3.00 被清除', () => {

@@ -648,28 +648,25 @@ describe('AISystem 繁殖系统额外覆盖', () => {
   })
 
   it('同物种 female+male 在 spatialHash 邻近时可能触发繁殖（breedCooldown 被设为 300）', () => {
-    let triggered = false
-    for (let attempt = 0; attempt < 500 && !triggered; attempt++) {
-      const mocks = makeMocks()
-      const femaleId = mocks.em.createEntity()
-      mocks.em.addComponent<PositionComponent>(femaleId, { type: 'position', x: 5, y: 5 })
-      mocks.em.addComponent<AIComponent>(femaleId, { type: 'ai', state: 'idle', targetX: 0, targetY: 0, targetEntity: null, cooldown: 0 })
-      mocks.em.addComponent<NeedsComponent>(femaleId, { type: 'needs', hunger: 0, health: 100 })
-      mocks.em.addComponent<CreatureComponent>(femaleId, { type: 'creature', species: 'human', speed: 1, damage: 5, isHostile: false, name: 'F', age: 300, maxAge: 1000, gender: 'female' })
+    // Mock Math.random 确保触发繁殖（需要 random < 0.005）
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
 
-      const maleId = mocks.em.createEntity()
-      mocks.em.addComponent<PositionComponent>(maleId, { type: 'position', x: 5, y: 5 })
-      mocks.em.addComponent<AIComponent>(maleId, { type: 'ai', state: 'idle', targetX: 0, targetY: 0, targetEntity: null, cooldown: 0 })
-      mocks.em.addComponent<NeedsComponent>(maleId, { type: 'needs', hunger: 0, health: 100 })
-      mocks.em.addComponent<CreatureComponent>(maleId, { type: 'creature', species: 'human', speed: 1, damage: 5, isHostile: false, name: 'M', age: 300, maxAge: 1000, gender: 'male' })
+    const mocks = makeMocks()
+    const femaleId = mocks.em.createEntity()
+    mocks.em.addComponent<PositionComponent>(femaleId, { type: 'position', x: 5, y: 5 })
+    mocks.em.addComponent<AIComponent>(femaleId, { type: 'ai', state: 'idle', targetX: 0, targetY: 0, targetEntity: null, cooldown: 0 })
+    mocks.em.addComponent<NeedsComponent>(femaleId, { type: 'needs', hunger: 0, health: 100 })
+    mocks.em.addComponent<CreatureComponent>(femaleId, { type: 'creature', species: 'human', speed: 1, damage: 5, isHostile: false, name: 'F', age: 300, maxAge: 1000, gender: 'female' })
 
-      mocks.spatialHash.query = () => [maleId]
-      const sys = new AISystem(mocks.em as any, mocks.world as any, mocks.particles as any, mocks.factory as any, mocks.spatialHash as any)
-      sys.update()
-      if ((sys as any).breedCooldown.get(femaleId) === 300) {
-        triggered = true
-      }
-    }
-    expect(triggered).toBe(true)
+    const maleId = mocks.em.createEntity()
+    mocks.em.addComponent<PositionComponent>(maleId, { type: 'position', x: 5, y: 5 })
+    mocks.em.addComponent<AIComponent>(maleId, { type: 'ai', state: 'idle', targetX: 0, targetY: 0, targetEntity: null, cooldown: 0 })
+    mocks.em.addComponent<NeedsComponent>(maleId, { type: 'needs', hunger: 0, health: 100 })
+    mocks.em.addComponent<CreatureComponent>(maleId, { type: 'creature', species: 'human', speed: 1, damage: 5, isHostile: false, name: 'M', age: 300, maxAge: 1000, gender: 'male' })
+
+    mocks.spatialHash.query = () => [maleId]
+    const sys = new AISystem(mocks.em as any, mocks.world as any, mocks.particles as any, mocks.factory as any, mocks.spatialHash as any)
+    sys.update()
+    expect((sys as any).breedCooldown.get(femaleId)).toBe(300)
   })
 })
