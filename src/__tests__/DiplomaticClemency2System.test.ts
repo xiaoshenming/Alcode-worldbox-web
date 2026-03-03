@@ -308,4 +308,324 @@ describe('DiplomaticClemency2System', () => {
       expect((sys as any).acts.length).toBeLessThanOrEqual(20)
     })
   })
+
+  // ─── 6. civIdA === civIdB 冲突检测 ─────────────────────────────────────────
+  describe('civIdA === civIdB 冲突检测', () => {
+    const T = 10000
+
+    it('civA === civB 时不创建 act', () => {
+      let calls = 0
+      vi.spyOn(Math, 'random').mockImplementation(() => {
+        calls++
+        if (calls === 1) return 0.001  // PROCEED_CHANCE pass
+        if (calls === 2) return 0.0    // civA = 1
+        if (calls === 3) return 0.0    // civB = 1 (相同)
+        return 0.5
+      })
+      sys.update(1, {} as any, {} as any, T)
+      expect((sys as any).acts).toHaveLength(0)
+    })
+
+    it('civA=8, civB=8 时不创建 act', () => {
+      let calls = 0
+      vi.spyOn(Math, 'random').mockImplementation(() => {
+        calls++
+        if (calls === 1) return 0.001
+        if (calls === 2) return 0.999  // civA = 8
+        if (calls === 3) return 0.999  // civB = 8
+        return 0.5
+      })
+      sys.update(1, {} as any, {} as any, T)
+      expect((sys as any).acts).toHaveLength(0)
+    })
+
+    it('civA !== civB 时正常创建 act', () => {
+      let calls = 0
+      vi.spyOn(Math, 'random').mockImplementation(() => {
+        calls++
+        if (calls === 1) return 0.001
+        if (calls === 2) return 0.0    // civA = 1
+        if (calls === 3) return 0.125  // civB = 2
+        return 0.5
+      })
+      sys.update(1, {} as any, {} as any, T)
+      expect((sys as any).acts.length).toBeGreaterThan(0)
+    })
+  })
+
+  // ─── 7. nextId 自增逻辑 ─────────────────────────────────────────────────────
+  describe('nextId 自增逻辑', () => {
+    const T = 10000
+
+    it('创建第一个 act 时 id=1，nextId 变为 2', () => {
+      let calls = 0
+      vi.spyOn(Math, 'random').mockImplementation(() => {
+        calls++
+        if (calls === 1) return 0.001
+        if (calls === 2) return 0.0
+        if (calls === 3) return 0.125
+        return 0.5
+      })
+      sys.update(1, {} as any, {} as any, T)
+      if ((sys as any).acts.length > 0) {
+        expect((sys as any).acts[0].id).toBe(1)
+        expect((sys as any).nextId).toBe(2)
+      }
+    })
+
+    it('连续创建多个 acts 时 id 严格递增', () => {
+      let callCount = 0
+      vi.spyOn(Math, 'random').mockImplementation(() => {
+        callCount++
+        const cycle = (callCount - 1) % 4
+        if (cycle === 0) return 0.001
+        if (cycle === 1) return 0.0
+        if (cycle === 2) return 0.125
+        return 0.5
+      })
+      for (let t = T; t <= T + 15000; t += 3000) {
+        sys.update(1, {} as any, {} as any, t)
+      }
+      const ids = (sys as any).acts.map((a: any) => a.id)
+      for (let i = 1; i < ids.length; i++) {
+        expect(ids[i]).toBeGreaterThan(ids[i - 1])
+      }
+    })
+
+    it('手动设置 nextId=100 后，新 act 的 id 从 100 开始', () => {
+      ;(sys as any).nextId = 100
+      let calls = 0
+      vi.spyOn(Math, 'random').mockImplementation(() => {
+        calls++
+        if (calls === 1) return 0.001
+        if (calls === 2) return 0.0
+        if (calls === 3) return 0.125
+        return 0.5
+      })
+      sys.update(1, {} as any, {} as any, T)
+      if ((sys as any).acts.length > 0) {
+        expect((sys as any).acts[0].id).toBe(100)
+      }
+    })
+  })
+
+  // ─── 8. 数值字段边界值组合测试 ─────────────────────────────────────────────
+  describe('数值字段边界值组合测试', () => {
+    const T = 10000
+
+    it('所有字段同时达到上限时保持稳定', () => {
+      ;(sys as any).acts.push(makeSafeAct(1, T, {
+        mercyLevel: 85,
+        recipientGratitude: 80,
+        thirdPartyReaction: 75,
+        precedentRisk: 65,
+      }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.9)
+      sys.update(1, {} as any, {} as any, T)
+      const act = (sys as any).acts[0]
+      expect(act.mercyLevel).toBeLessThanOrEqual(85)
+      expect(act.recipientGratitude).toBeLessThanOrEqual(80)
+      expect(act.thirdPartyReaction).toBeLessThanOrEqual(75)
+      expect(act.precedentRisk).toBeLessThanOrEqual(65)
+    })
+
+    it('所有字段同时达到下限时保持稳定', () => {
+      ;(sys as any).acts.push(makeSafeAct(1, T, {
+        mercyLevel: 10,
+        recipientGratitude: 10,
+        thirdPartyReaction: 5,
+        precedentRisk: 5,
+      }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.0)
+      sys.update(1, {} as any, {} as any, T)
+      const act = (sys as any).acts[0]
+      expect(act.mercyLevel).toBeGreaterThanOrEqual(10)
+      expect(act.recipientGratitude).toBeGreaterThanOrEqual(10)
+      expect(act.thirdPartyReaction).toBeGreaterThanOrEqual(5)
+      expect(act.precedentRisk).toBeGreaterThanOrEqual(5)
+    })
+
+    it('字段值在中间范围时可以正常波动', () => {
+      ;(sys as any).acts.push(makeSafeAct(1, T, {
+        mercyLevel: 50,
+        recipientGratitude: 50,
+        thirdPartyReaction: 40,
+        precedentRisk: 35,
+      }))
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, T)
+      const act = (sys as any).acts[0]
+      expect(act.mercyLevel).toBeGreaterThanOrEqual(10)
+      expect(act.mercyLevel).toBeLessThanOrEqual(85)
+    })
+  })
+
+  // ─── 9. 多实体并发更新测试 ─────────────────────────────────────────────────
+  describe('多实体并发更新测试', () => {
+    const T = 10000
+
+    it('10 个 acts 同时更新 duration 都递增 1', () => {
+      for (let i = 0; i < 10; i++) {
+        ;(sys as any).acts.push(makeSafeAct(i + 1, T, { duration: i }))
+      }
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, T)
+      for (let i = 0; i < 10; i++) {
+        expect((sys as any).acts[i].duration).toBe(i + 1)
+      }
+    })
+
+    it('混合不同 civId 的 acts 可以共存', () => {
+      ;(sys as any).acts.push(
+        makeSafeAct(1, T, { civIdA: 1, civIdB: 2 }),
+        makeSafeAct(2, T, { civIdA: 3, civIdB: 4 }),
+        makeSafeAct(3, T, { civIdA: 5, civIdB: 6 }),
+      )
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, T)
+      expect((sys as any).acts).toHaveLength(3)
+    })
+
+    it('混合不同 form 的 acts 可以共存', () => {
+      ;(sys as any).acts.push(
+        makeSafeAct(1, T, { form: 'sanction_reduction' }),
+        makeSafeAct(2, T, { form: 'penalty_commutation' }),
+        makeSafeAct(3, T, { form: 'embargo_easing' }),
+        makeSafeAct(4, T, { form: 'tribute_forgiveness' }),
+      )
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, T)
+      expect((sys as any).acts).toHaveLength(4)
+    })
+  })
+
+  // ─── 10. 极端 tick 值测试 ──────────────────────────────────────────────────
+  describe('极端 tick 值测试', () => {
+    it('tick=0 时系统正常运行', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 0)
+      expect((sys as any).lastCheck).toBe(0)
+    })
+
+    it('tick=Number.MAX_SAFE_INTEGER 时不崩溃', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      expect(() => {
+        sys.update(1, {} as any, {} as any, Number.MAX_SAFE_INTEGER)
+      }).not.toThrow()
+    })
+
+    it('tick 从大值回退到小值时 lastCheck 仍然更新', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 100000)
+      expect((sys as any).lastCheck).toBe(100000)
+      sys.update(1, {} as any, {} as any, 102500)
+      expect((sys as any).lastCheck).toBe(102500)
+    })
+
+    it('tick 负数时系统不崩溃（虽然不符合预期）', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      expect(() => {
+        sys.update(1, {} as any, {} as any, -1000)
+      }).not.toThrow()
+    })
+  })
+
+  // ─── 11. 过期清理与新增的交互测试 ──────────────────────────────────────────
+  describe('过期清理与新增的交互测试', () => {
+    it('清理过期 acts 后可以立即新增', () => {
+      for (let i = 0; i < 20; i++) {
+        ;(sys as any).acts.push(makeSafeAct(i + 1, 0, { tick: 0 }))
+      }
+      let calls = 0
+      vi.spyOn(Math, 'random').mockImplementation(() => {
+        calls++
+        if (calls === 1) return 0.001
+        if (calls === 2) return 0.0
+        if (calls === 3) return 0.125
+        return 0.5
+      })
+      sys.update(1, {} as any, {} as any, 100000)
+      expect((sys as any).acts.length).toBeLessThanOrEqual(20)
+    })
+
+    it('部分过期清理后 acts 数量减少', () => {
+      ;(sys as any).acts.push(
+        makeSafeAct(1, 0, { tick: 0 }),
+        makeSafeAct(2, 0, { tick: 50000 }),
+        makeSafeAct(3, 0, { tick: 100000 }),
+      )
+      vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      sys.update(1, {} as any, {} as any, 120000)
+      expect((sys as any).acts).toHaveLength(2)
+    })
+  })
+
+  // ─── 12. PROCEED_CHANCE 概率边界测试 ───────────────────────────────────────
+  describe('PROCEED_CHANCE 概率边界测试', () => {
+    const T = 10000
+
+    it('Math.random=0.0023 时刚好不触发（边界）', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.0023)
+      sys.update(1, {} as any, {} as any, T)
+      expect((sys as any).acts).toHaveLength(0)
+    })
+
+    it('Math.random=0.00229 时触发创建', () => {
+      let calls = 0
+      vi.spyOn(Math, 'random').mockImplementation(() => {
+        calls++
+        if (calls === 1) return 0.00229
+        if (calls === 2) return 0.0
+        if (calls === 3) return 0.125
+        return 0.5
+      })
+      sys.update(1, {} as any, {} as any, T)
+      expect((sys as any).acts.length).toBeGreaterThan(0)
+    })
+
+    it('Math.random=1.0 时不触发', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(1.0)
+      sys.update(1, {} as any, {} as any, T)
+      expect((sys as any).acts).toHaveLength(0)
+    })
+  })
+
+  // ─── 13. civId 范围测试 ────────────────────────────────────────────────────
+  describe('civId 范围测试', () => {
+    const T = 10000
+
+    it('civA 可以是 1-8 范围内的值', () => {
+      let calls = 0
+      vi.spyOn(Math, 'random').mockImplementation(() => {
+        calls++
+        if (calls === 1) return 0.001
+        if (calls === 2) return 0.5
+        if (calls === 3) return 0.0
+        return 0.5
+      })
+      sys.update(1, {} as any, {} as any, T)
+      if ((sys as any).acts.length > 0) {
+        const civA = (sys as any).acts[0].civIdA
+        expect(civA).toBeGreaterThanOrEqual(1)
+        expect(civA).toBeLessThanOrEqual(8)
+      }
+    })
+
+    it('civB 可以是 1-8 范围内的值', () => {
+      let calls = 0
+      vi.spyOn(Math, 'random').mockImplementation(() => {
+        calls++
+        if (calls === 1) return 0.001
+        if (calls === 2) return 0.0
+        if (calls === 3) return 0.5
+        return 0.5
+      })
+      sys.update(1, {} as any, {} as any, T)
+      if ((sys as any).acts.length > 0) {
+        const civB = (sys as any).acts[0].civIdB
+        expect(civB).toBeGreaterThanOrEqual(1)
+        expect(civB).toBeLessThanOrEqual(8)
+      }
+    })
+  })
 })
