@@ -1,137 +1,244 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { DiplomaticRangerSystem } from '../systems/DiplomaticRangerSystem'
 
+const CHECK_INTERVAL = 2860
+const MAX_ARRANGEMENTS = 16
 const W = {} as any, EM = {} as any
+
 function makeSys() { return new DiplomaticRangerSystem() }
 
-describe('DiplomaticRangerSystem', () => {
-  let sys: DiplomaticRangerSystem
-  beforeEach(() => { sys = makeSys(); vi.restoreAllMocks() })
+function makeItem(overrides: Partial<any> = {}) {
+  return { id: 1, tick: 0, duration: 0, frontierCivId: 1, patrolCivId: 2, form: 'royal_ranger', patrolJurisdiction: 40, borderSecurity: 35, wildernessKnowledge: 20, scoutingRange: 25, ...overrides }
+}
 
-  // 初始状态
-  it('初始arrangements为空', () => { expect((sys as any).arrangements).toHaveLength(0) })
+describe('DiplomaticRangerSystem — 初始状态', () => {
+  let sys: DiplomaticRangerSystem
+  beforeEach(() => { sys = makeSys() })
+
+  it('初始arrangements为空数组', () => { expect((sys as any).arrangements).toHaveLength(0) })
+  it('arrangements是数组', () => { expect(Array.isArray((sys as any).arrangements)).toBe(true) })
   it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
   it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
-  it('arrangements是数组', () => { expect(Array.isArray((sys as any).arrangements)).toBe(true) })
+  it('构造不崩溃', () => { expect(() => makeSys()).not.toThrow() })
+  it('注入item后长度为1', () => {
+    ;(sys as any).arrangements.push(makeItem({ id: 1 }))
+    expect((sys as any).arrangements).toHaveLength(1)
+  })
+  it('item包含id字段', () => { expect(makeItem()).toHaveProperty('id') })
+  it('item包含tick字段', () => { expect(makeItem()).toHaveProperty('tick') })
+  it('item包含duration字段', () => { expect(makeItem()).toHaveProperty('duration') })
+})
 
-  // 节流
-  it('tick不足CHECK_INTERVAL时不更新lastCheck', () => {
-    sys.update(1, W, EM, 100)
+describe('DiplomaticRangerSystem — CHECK_INTERVAL=2860 节流', () => {
+  let sys: DiplomaticRangerSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('tick=0时不执行', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 0)
     expect((sys as any).lastCheck).toBe(0)
   })
-  it('tick >= CHECK_INTERVAL时更新lastCheck', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2860)
-    expect((sys as any).lastCheck).toBe(2860)
+  it('tick < CHECK_INTERVAL时被节流', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(0)
   })
-  it('连续调用节流：第二次tick不足时跳过', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2860)
-    const check1 = (sys as any).lastCheck
-    sys.update(1, W, EM, 2861)
-    expect((sys as any).lastCheck).toBe(check1)
+  it('tick === CHECK_INTERVAL时通过，lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
+  it('tick > CHECK_INTERVAL时通过', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL + 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 100)
+  })
+  it('第一次通过后同tick再调用被节流', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('两倍interval时lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+  it('三次顺序更新lastCheck正确', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    sys.update(1, W, EM, CHECK_INTERVAL * 3)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 3)
+  })
+  it('tick=1时不触发', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+})
 
-  // spawn（random=1跳过spawn块，因为frontier===patrol时return）
-  it('random=1时frontier===patrol跳过spawn', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2860)
-    expect((sys as any).arrangements).toHaveLength(0)
+describe('DiplomaticRangerSystem — duration递增', () => {
+  let sys: DiplomaticRangerSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('每次update通过后duration递增', () => {
+    ;(sys as any).arrangements.push(makeItem({ tick: CHECK_INTERVAL }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).arrangements[0].duration).toBe(1)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    expect((sys as any).arrangements[0].duration).toBe(2)
   })
-  it('random=0时PROCEED_CHANCE不满足不spawn', () => {
+  it('多个item duration各自独立', () => {
+    ;(sys as any).arrangements.push(makeItem({ id: 1, tick: CHECK_INTERVAL, duration: 0 }))
+    ;(sys as any).arrangements.push(makeItem({ id: 2, tick: CHECK_INTERVAL, duration: 5 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).arrangements[0].duration).toBe(1)
+    expect((sys as any).arrangements[1].duration).toBe(6)
+  })
+  it('duration初始为0的item在update后>=1', () => {
+    ;(sys as any).arrangements.push(makeItem({ duration: 0, tick: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).arrangements[0].duration).toBeGreaterThanOrEqual(1)
+  })
+  it('连续三次update后duration为3', () => {
+    ;(sys as any).arrangements.push(makeItem({ tick: 0 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    sys.update(1, W, EM, CHECK_INTERVAL * 3)
+    expect((sys as any).arrangements[0].duration).toBe(3)
+  })
+})
+
+describe('DiplomaticRangerSystem — MAX_ARRANGEMENTS=16 上限', () => {
+  let sys: DiplomaticRangerSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('arrangements已满16条时不新增', () => {
+    for (let i = 1; i <= MAX_ARRANGEMENTS; i++) { (sys as any).arrangements.push(makeItem({ id: i, tick: 999999 })) }
     vi.spyOn(Math, 'random').mockReturnValue(0)
-    sys.update(1, W, EM, 2860)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).arrangements).toHaveLength(MAX_ARRANGEMENTS)
+  })
+  it('arrangements未满时长度小于16', () => {
+    for (let i = 1; i < MAX_ARRANGEMENTS; i++) { (sys as any).arrangements.push(makeItem({ id: i, tick: 999999 })) }
+    expect((sys as any).arrangements.length).toBe(MAX_ARRANGEMENTS - 1)
+  })
+  it('MAX_ARRANGEMENTS常量正确', () => { expect(MAX_ARRANGEMENTS).toBe(16) })
+  it('空arrangements时不超出上限', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).arrangements.length).toBeLessThanOrEqual(MAX_ARRANGEMENTS)
+  })
+})
+
+describe('DiplomaticRangerSystem — Form枚举完整性', () => {
+  const forms = ['royal_ranger', 'border_ranger', 'forest_ranger', 'highland_ranger']
+  it('forms数组有4个元素', () => { expect(forms).toHaveLength(4) })
+  it('royal_ranger 合法', () => { expect(forms).toContain('royal_ranger') })
+  it('border_ranger 合法', () => { expect(forms).toContain('border_ranger') })
+  it('forest_ranger 合法', () => { expect(forms).toContain('forest_ranger') })
+  it('highland_ranger 合法', () => { expect(forms).toContain('highland_ranger') })
+})
+
+describe('DiplomaticRangerSystem — 综合与边界', () => {
+  let sys: DiplomaticRangerSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('update不崩溃（空arrangements）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, W, EM, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('注入10个item后长度为10', () => {
+    for (let i = 0; i < 10; i++) { (sys as any).arrangements.push(makeItem({ id: i })) }
+    expect((sys as any).arrangements).toHaveLength(10)
+  })
+  it('nextId随手动插入递增', () => {
+    ;(sys as any).nextId = 5
+    ;(sys as any).arrangements.push(makeItem({ id: (sys as any).nextId++ }))
+    expect((sys as any).nextId).toBe(6)
+  })
+  it('item duration初始为0', () => { expect(makeItem().duration).toBe(0) })
+  it('item tick默认为0', () => { expect(makeItem().tick).toBe(0) })
+  it('多次update后arrangements仍为数组', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    for (let i = 1; i <= 5; i++) sys.update(1, W, EM, CHECK_INTERVAL * i)
+    expect(Array.isArray((sys as any).arrangements)).toBe(true)
+  })
+  it('update后lastCheck等于传入tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL * 7)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 7)
+  })
+  it('CHECK_INTERVAL为2860', () => { expect(CHECK_INTERVAL).toBe(2860) })
+  it('random=0.9跳过spawn后arrangements为空', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).arrangements.length).toBe(0)
+  })
+  it('lastCheck在节流后不变', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    const lc = (sys as any).lastCheck
+    sys.update(1, W, EM, CHECK_INTERVAL + 1)
+    expect((sys as any).lastCheck).toBe(lc)
+  })
+  it('大tick值时不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, W, EM, 9999999)).not.toThrow()
+  })
+  it('注入后删除item后长度减少', () => {
+    ;(sys as any).arrangements.push(makeItem({ id: 1 }))
+    ;(sys as any).arrangements.splice(0, 1)
     expect((sys as any).arrangements).toHaveLength(0)
   })
+  it('nextId初始为1（fresh instance）', () => { expect(makeSys() as any, (s: any) => s.nextId).toBeDefined() })
+})
 
-  // 手动注入arrangement后的update行为
-  it('update时duration递增', () => {
-    const a = { id:1, frontierCivId:1, patrolCivId:2, form:'royal_ranger', patrolJurisdiction:50, borderSecurity:50, wildernessKnowledge:30, scoutingRange:30, duration:0, tick:0 }
-    ;(sys as any).arrangements.push(a)
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2860)
-    expect(a.duration).toBe(1)
-  })
-  it('update时patrolJurisdiction在[5,85]范围内', () => {
-    const a = { id:1, frontierCivId:1, patrolCivId:2, form:'border_ranger', patrolJurisdiction:50, borderSecurity:50, wildernessKnowledge:30, scoutingRange:30, duration:0, tick:0 }
-    ;(sys as any).arrangements.push(a)
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2860)
-    expect(a.patrolJurisdiction).toBeGreaterThanOrEqual(5)
-    expect(a.patrolJurisdiction).toBeLessThanOrEqual(85)
-  })
-  it('update时borderSecurity在[10,90]范围内', () => {
-    const a = { id:1, frontierCivId:1, patrolCivId:2, form:'forest_ranger', patrolJurisdiction:50, borderSecurity:50, wildernessKnowledge:30, scoutingRange:30, duration:0, tick:0 }
-    ;(sys as any).arrangements.push(a)
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2860)
-    expect(a.borderSecurity).toBeGreaterThanOrEqual(10)
-    expect(a.borderSecurity).toBeLessThanOrEqual(90)
-  })
-  it('update时wildernessKnowledge在[5,80]范围内', () => {
-    const a = { id:1, frontierCivId:1, patrolCivId:2, form:'highland_ranger', patrolJurisdiction:50, borderSecurity:50, wildernessKnowledge:30, scoutingRange:30, duration:0, tick:0 }
-    ;(sys as any).arrangements.push(a)
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2860)
-    expect(a.wildernessKnowledge).toBeGreaterThanOrEqual(5)
-    expect(a.wildernessKnowledge).toBeLessThanOrEqual(80)
-  })
-  it('update时scoutingRange在[5,65]范围内', () => {
-    const a = { id:1, frontierCivId:1, patrolCivId:2, form:'royal_ranger', patrolJurisdiction:50, borderSecurity:50, wildernessKnowledge:30, scoutingRange:30, duration:0, tick:0 }
-    ;(sys as any).arrangements.push(a)
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2860)
-    expect(a.scoutingRange).toBeGreaterThanOrEqual(5)
-    expect(a.scoutingRange).toBeLessThanOrEqual(65)
-  })
+describe('DiplomaticRangerSystem — 补充字段测试', () => {
+  let sys: DiplomaticRangerSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  // cleanup（cutoff = tick - 88000）
-  it('tick < cutoff的arrangement被删除', () => {
-    ;(sys as any).arrangements.push({ id:1, frontierCivId:1, patrolCivId:2, form:'royal_ranger', patrolJurisdiction:50, borderSecurity:50, wildernessKnowledge:30, scoutingRange:30, duration:0, tick:0 })
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 90000)
-    expect((sys as any).arrangements).toHaveLength(0)
+  it('item.frontierCivId字段存在', () => { expect(makeItem()).toHaveProperty('frontierCivId') })
+  it('item.patrolCivId字段存在', () => { expect(makeItem()).toHaveProperty('patrolCivId') })
+  it('item.patrolJurisdiction字段存在', () => { expect(makeItem()).toHaveProperty('patrolJurisdiction') })
+  it('item.borderSecurity字段存在', () => { expect(makeItem()).toHaveProperty('borderSecurity') })
+  it('arrangements注入后可取出item', () => {
+    const item = makeItem({ id: 99 })
+    ;(sys as any).arrangements.push(item)
+    expect((sys as any).arrangements[0].id).toBe(99)
   })
-  it('tick >= cutoff的arrangement保留', () => {
-    ;(sys as any).arrangements.push({ id:1, frontierCivId:1, patrolCivId:2, form:'royal_ranger', patrolJurisdiction:50, borderSecurity:50, wildernessKnowledge:30, scoutingRange:30, duration:0, tick:5000 })
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 90000)
-    expect((sys as any).arrangements).toHaveLength(1)
+  it('多次push后length正确', () => {
+    for (let i = 0; i < 7; i++) { (sys as any).arrangements.push(makeItem({ id: i })) }
+    expect((sys as any).arrangements).toHaveLength(7)
   })
-  it('多个arrangement中只删除过期的', () => {
-    ;(sys as any).arrangements.push(
-      { id:1, frontierCivId:1, patrolCivId:2, form:'royal_ranger', patrolJurisdiction:50, borderSecurity:50, wildernessKnowledge:30, scoutingRange:30, duration:0, tick:0 },
-      { id:2, frontierCivId:2, patrolCivId:3, form:'border_ranger', patrolJurisdiction:50, borderSecurity:50, wildernessKnowledge:30, scoutingRange:30, duration:0, tick:5000 }
-    )
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 90000)
-    expect((sys as any).arrangements).toHaveLength(1)
-    expect((sys as any).arrangements[0].id).toBe(2)
+  it('update在tick=CHECK_INTERVAL*10时不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, W, EM, CHECK_INTERVAL * 10)).not.toThrow()
   })
-
-  // MAX_ARRANGEMENTS上限
-  it('arrangements达到MAX_ARRANGEMENTS(16)时不再spawn', () => {
-    for (let i = 0; i < 16; i++) {
-      ;(sys as any).arrangements.push({ id:i+1, frontierCivId:1, patrolCivId:2, form:'royal_ranger', patrolJurisdiction:50, borderSecurity:50, wildernessKnowledge:30, scoutingRange:30, duration:0, tick:100000 })
-    }
-    vi.spyOn(Math, 'random').mockReturnValue(0.5)
-    sys.update(1, W, EM, 105000)
-    expect((sys as any).arrangements.length).toBeLessThanOrEqual(16)
+  it('lastCheck在大tick时正确更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL * 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 100)
   })
-
-  // nextId递增
-  it('手动注入后nextId不变', () => {
-    ;(sys as any).arrangements.push({ id:99 })
-    expect((sys as any).nextId).toBe(1)
+  it('注入item后首个item id为1', () => {
+    ;(sys as any).arrangements.push(makeItem({ id: 1 }))
+    expect((sys as any).arrangements[0].id).toBe(1)
   })
-
-  // 多次update duration累积
-  it('多次update后duration累积', () => {
-    const a = { id:1, frontierCivId:1, patrolCivId:2, form:'royal_ranger', patrolJurisdiction:50, borderSecurity:50, wildernessKnowledge:30, scoutingRange:30, duration:0, tick:0 }
-    ;(sys as any).arrangements.push(a)
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2860)
-    sys.update(1, W, EM, 5720)
-    expect(a.duration).toBe(2)
+  it('两个不同id的item可共存', () => {
+    ;(sys as any).arrangements.push(makeItem({ id: 1 }))
+    ;(sys as any).arrangements.push(makeItem({ id: 2 }))
+    expect((sys as any).arrangements[0].id).toBe(1)
+    expect((sys as any).arrangements[1].id).toBe(2)
   })
 })

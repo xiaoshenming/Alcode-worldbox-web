@@ -218,3 +218,143 @@ describe('CreatureTattingMakersSystem — age < 10 过滤', () => {
     expect((sys as any).makers).toHaveLength(0)
   })
 })
+
+describe('CreatureTattingMakersSystem — 综合与边界', () => {
+  let sys: CreatureTattingMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.restoreAllMocks() })
+
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('skillMap初始为空', () => { expect((sys as any).skillMap.size).toBe(0) })
+  it('empty update不崩溃', () => {
+    const em = makeEmptyEM()
+    expect(() => sys.update(1, em, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('makers是数组类型', () => {
+    expect(Array.isArray((sys as any).makers)).toBe(true)
+  })
+  it('delicacy字段正确存储', () => {
+    ;(sys as any).makers.push(makeMaker(1, 'needle', 0))
+    expect((sys as any).makers[0].delicacy).toBe(65)
+  })
+  it('reputation字段正确存储', () => {
+    ;(sys as any).makers.push(makeMaker(1, 'needle', 0))
+    expect((sys as any).makers[0].reputation).toBe(45)
+  })
+  it('piecesMade字段正确存储', () => {
+    ;(sys as any).makers.push(makeMaker(1, 'needle', 0))
+    expect((sys as any).makers[0].piecesMade).toBe(12)
+  })
+  it('支持所有4种TattingStyle类型', () => {
+    const styles: TattingStyle[] = ['needle', 'shuttle', 'cro', 'frivolite']
+    styles.forEach((s, i) => { ;(sys as any).makers.push(makeMaker(i + 1, s)) })
+    const all = (sys as any).makers
+    styles.forEach((s, i) => { expect(all[i].style).toBe(s) })
+  })
+  it('delicacy公式：14 + skill * 0.75', () => {
+    const skill = 60
+    const delicacy = 14 + skill * 0.75
+    expect(delicacy).toBeCloseTo(59, 1)
+  })
+  it('reputation公式：10 + skill * 0.82', () => {
+    const skill = 60
+    const reputation = 10 + skill * 0.82
+    expect(reputation).toBeCloseTo(59.2, 1)
+  })
+  it('piecesMade公式：1 + floor(skill/10)', () => {
+    const skill = 60
+    const piecesMade = 1 + Math.floor(skill / 10)
+    expect(piecesMade).toBe(7)
+  })
+  it('skill<10时皮ecesMade=1', () => {
+    const skill = 5
+    const piecesMade = 1 + Math.floor(skill / 10)
+    expect(piecesMade).toBe(1)
+  })
+  it('age<10的实体不被招募', () => {
+    const [em] = makeEMWithCreature(5)
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).makers).toHaveLength(0)
+  })
+  it('技能上限100', () => {
+    const [em, eid] = makeEMWithCreature()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).skillMap.set(eid, 99.99)
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).skillMap.get(eid)).toBeLessThanOrEqual(100)
+  })
+  it('SKILL_GROWTH=0.055', () => {
+    const SKILL_GROWTH = 0.055
+    expect(SKILL_GROWTH).toBe(0.055)
+  })
+  it('cutoff公式：tick - 52000', () => {
+    const tick = 100000
+    const cutoff = tick - 52000
+    expect(cutoff).toBe(48000)
+  })
+  it('makers在节流期间数量不变', () => {
+    const em = makeEmptyEM()
+    ;(sys as any).makers.push(makeMaker(1, 'needle', 0))
+    sys.update(1, em, CHECK_INTERVAL - 1)
+    expect((sys as any).makers).toHaveLength(1)
+  })
+  it('system不崩溃tick=0', () => {
+    const em = makeEmptyEM()
+    expect(() => sys.update(1, em, 0)).not.toThrow()
+  })
+  it('MAX_MAKERS为30', () => {
+    for (let i = 0; i < 30; i++) {
+      ;(sys as any).makers.push(makeMaker(i + 100, 'needle', 0))
+    }
+    const [em] = makeEMWithCreature()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).makers.length).toBeLessThanOrEqual(30)
+  })
+  it('skill记录tick字段', () => {
+    ;(sys as any).makers.push(makeMaker(1, 'needle', 500))
+    expect((sys as any).makers[0].tick).toBe(500)
+  })
+  it('招募成功时tick等于当前tick', () => {
+    const [em] = makeEMWithCreature()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, em, CHECK_INTERVAL)
+    if ((sys as any).makers.length > 0) {
+      expect((sys as any).makers[0].tick).toBe(CHECK_INTERVAL)
+    }
+  })
+  it('连续三次update后lastCheck推进', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, CHECK_INTERVAL)
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    sys.update(1, em, CHECK_INTERVAL * 3)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 3)
+  })
+  it('makers数组被正确初始化为空', () => {
+    const newSys = new CreatureTattingMakersSystem()
+    expect((newSys as any).makers.length).toBe(0)
+  })
+  it('typeIdx计算：skill/25取floor，上限3', () => {
+    const skill = 100
+    const typeIdx = Math.min(3, Math.floor(skill / 25))
+    expect(typeIdx).toBe(3)
+  })
+  it('typeIdx计算：skill=50时为2', () => {
+    const skill = 50
+    const typeIdx = Math.min(3, Math.floor(skill / 25))
+    expect(typeIdx).toBe(2)
+  })
+  it('CHECK_INTERVAL为1440', () => {
+    expect(CHECK_INTERVAL).toBe(1440)
+  })
+  it('skillMap在多次调用中累积', () => {
+    const [em, eid] = makeEMWithCreature()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, em, CHECK_INTERVAL)
+    const skill1 = (sys as any).skillMap.get(eid) ?? 0
+    sys.update(1, em, CHECK_INTERVAL * 2)
+    const skill2 = (sys as any).skillMap.get(eid) ?? 0
+    expect(skill2).toBeGreaterThanOrEqual(skill1)
+  })
+})

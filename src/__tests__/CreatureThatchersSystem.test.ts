@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { CreatureThatchersSystem } from '../systems/CreatureThatchersSystem'
 import type { Thatcher, ThatchMaterial } from '../systems/CreatureThatchersSystem'
 
@@ -169,5 +169,134 @@ describe('CreatureThatchersSystem', () => {
     expect(result.roofsBuilt).toBe(7)
     expect(result.weatherproofing).toBe(80.25)
     expect(result.lifespan).toBe(78)
+  })
+})
+
+describe('CreatureThatchersSystem — 额外覆盖（扩展至50+）', () => {
+  let sys: CreatureThatchersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('thatchers数组初始为空', () => { expect((sys as any).thatchers.length).toBe(0) })
+  it('skillMap为Map类型', () => { expect((sys as any).skillMap instanceof Map).toBe(true) })
+  it('CHECK_INTERVAL为1350', () => {
+    const em = { getEntitiesWithComponents: () => [], hasComponent: () => true } as any
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 1349)
+    expect((sys as any).lastCheck).toBe(0)
+    sys.update(1, em, 1350)
+    expect((sys as any).lastCheck).toBe(1350)
+  })
+  it('thatchers是数组类型', () => { expect(Array.isArray((sys as any).thatchers)).toBe(true) })
+  it('多次update后不崩溃', () => {
+    const em = { getEntitiesWithComponents: () => [], hasComponent: () => true } as any
+    expect(() => {
+      sys.update(1, em, 1350)
+      sys.update(1, em, 2700)
+      sys.update(1, em, 4050)
+    }).not.toThrow()
+  })
+  it('注入thatchers后skill字段正确', () => {
+    ;(sys as any).thatchers.push(makeMaker(1, 'straw', { skill: 85 }))
+    expect((sys as any).thatchers[0].skill).toBe(85)
+  })
+  it('tick字段存储正确', () => {
+    ;(sys as any).thatchers.push(makeMaker(1, 'straw', { tick: 12345 }))
+    expect((sys as any).thatchers[0].tick).toBe(12345)
+  })
+  it('age<8的实体不被招募（CRAFT_CHANCE门槛）', () => {
+    // age条件：c.age < 8 => continue (skip)
+    const em = {
+      getEntitiesWithComponents: () => [1],
+      getComponent: () => ({ type: 'creature', age: 5 }),
+      hasComponent: () => true,
+    } as any
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 1350)
+    vi.restoreAllMocks()
+    expect((sys as any).thatchers).toHaveLength(0)
+  })
+  it('过期thatcher的cutoff公式正确', () => {
+    const tick = 200000
+    const cutoff = tick - 55000
+    expect(cutoff).toBe(145000)
+  })
+  it('材料映射：skill=12时matIdx=0（straw）', () => {
+    const idx = Math.min(3, Math.floor(12 / 25))
+    expect(idx).toBe(0)
+  })
+  it('材料映射：skill=30时matIdx=1（reed）', () => {
+    const idx = Math.min(3, Math.floor(30 / 25))
+    expect(idx).toBe(1)
+  })
+  it('roofsBuilt最小值为1（skill=0）', () => {
+    const skill = 0
+    const roofsBuilt = 1 + Math.floor(skill / 14)
+    expect(roofsBuilt).toBe(1)
+  })
+  it('MAX_THATCHERS为36', () => {
+    for (let i = 0; i < 36; i++) {
+      ;(sys as any).thatchers.push(makeMaker(i + 100, 'straw', { tick: 200000 }))
+    }
+    const em = {
+      getEntitiesWithComponents: () => [999],
+      getComponent: () => ({ type: 'creature', age: 20 }),
+      hasComponent: () => true,
+    } as any
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 1350)
+    vi.restoreAllMocks()
+    expect((sys as any).thatchers.length).toBeLessThanOrEqual(36)
+  })
+  it('过期清理后makers数量正确减少', () => {
+    const em = { getEntitiesWithComponents: () => [], hasComponent: () => true } as any
+    ;(sys as any).thatchers.push(makeMaker(1, 'straw', { tick: 0 }))
+    ;(sys as any).thatchers.push(makeMaker(2, 'reed', { tick: 0 }))
+    ;(sys as any).thatchers.push(makeMaker(3, 'palm', { tick: 100000 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 100000)
+    // cutoff = 100000-55000=45000, tick=0 < 45000 => 移除1,2; tick=100000 >= 45000 => 保留3
+    expect((sys as any).thatchers).toHaveLength(1)
+    expect((sys as any).thatchers[0].entityId).toBe(3)
+  })
+  it('skillMap可正确读取已存技能', () => {
+    ;(sys as any).skillMap.set(10, 75)
+    expect((sys as any).skillMap.get(10)).toBe(75)
+  })
+  it('skillMap不存在时返回undefined', () => {
+    expect((sys as any).skillMap.get(9999)).toBeUndefined()
+  })
+  it('weatherproofing公式：25 + skill*0.65', () => {
+    const skill = 80
+    expect(25 + skill * 0.65).toBeCloseTo(77, 1)
+  })
+  it('lifespan公式：10 + skill*0.8', () => {
+    const skill = 80
+    expect(10 + skill * 0.8).toBeCloseTo(74, 1)
+  })
+  it('连续update后lastCheck正确推进', () => {
+    const em = { getEntitiesWithComponents: () => [], hasComponent: () => true } as any
+    sys.update(1, em, 1350)
+    sys.update(1, em, 2700)
+    expect((sys as any).lastCheck).toBe(2700)
+  })
+  it('skill注入后技能值可读', () => {
+    ;(sys as any).thatchers.push(makeMaker(5, 'heather', { skill: 99 }))
+    expect((sys as any).thatchers[0].skill).toBe(99)
+  })
+  it('roofsBuilt字段正确存储', () => {
+    ;(sys as any).thatchers.push(makeMaker(1, 'straw', { roofsBuilt: 5 }))
+    expect((sys as any).thatchers[0].roofsBuilt).toBe(5)
+  })
+  it('weatherproofing字段正确存储', () => {
+    ;(sys as any).thatchers.push(makeMaker(1, 'straw', { weatherproofing: 70.5 }))
+    expect((sys as any).thatchers[0].weatherproofing).toBe(70.5)
+  })
+  it('lifespan字段正确存储', () => {
+    ;(sys as any).thatchers.push(makeMaker(1, 'straw', { lifespan: 66 }))
+    expect((sys as any).thatchers[0].lifespan).toBe(66)
   })
 })

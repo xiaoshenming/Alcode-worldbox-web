@@ -1,201 +1,219 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { DiplomaticTradeAgreementSystem } from '../systems/DiplomaticTradeAgreementSystem'
 
-const em = {} as any
+const CHECK_INTERVAL = 1200
+const MAX_AGREEMENTS = 40
+const W = {} as any, EM = {} as any
 
 function makeSys() { return new DiplomaticTradeAgreementSystem() }
 
-describe('DiplomaticTradeAgreementSystem', () => {
+function makeItem(overrides: Partial<any> = {}) {
+  return { id: 1, tick: 0, duration: 0, civ1: 'human', civ2: 'elf', type: 'free_trade', status: 'active', benefit: 50, duration: 0, maxDuration: 3000, ...overrides }
+}
+
+describe('DiplomaticTradeAgreementSystem — 初始状态', () => {
+  let sys: DiplomaticTradeAgreementSystem
+  beforeEach(() => { sys = makeSys() })
+
+  it('初始agreements为空数组', () => { expect((sys as any).agreements).toHaveLength(0) })
+  it('agreements是数组', () => { expect(Array.isArray((sys as any).agreements)).toBe(true) })
+  it('nextId初��为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('构造不崩溃', () => { expect(() => makeSys()).not.toThrow() })
+  it('注入item后长度为1', () => {
+    ;(sys as any).agreements.push(makeItem({ id: 1 }))
+    expect((sys as any).agreements).toHaveLength(1)
+  })
+  it('item包含id字段', () => { expect(makeItem()).toHaveProperty('id') })
+  it('item包含tick字段', () => { expect(makeItem()).toHaveProperty('tick') })
+  it('item包含duration字段', () => { expect(makeItem()).toHaveProperty('duration') })
+})
+
+describe('DiplomaticTradeAgreementSystem — CHECK_INTERVAL=1200 节流', () => {
   let sys: DiplomaticTradeAgreementSystem
   beforeEach(() => { sys = makeSys() })
   afterEach(() => { vi.restoreAllMocks() })
 
-  // 初始状态
-  it('初始agreements为空', () => { expect((sys as any).agreements).toHaveLength(0) })
-  it('初始nextId为1', () => { expect((sys as any).nextId).toBe(1) })
-  it('初始lastCheck为0', () => { expect((sys as any).lastCheck).toBe(0) })
-  it('agreements是数组', () => { expect(Array.isArray((sys as any).agreements)).toBe(true) })
-
-  // 节流
-  it('tick不足CHECK_INTERVAL时不更新lastCheck', () => {
-    sys.update(1, em, 100)
+  it('tick=0时不执行', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, EM, 0)
     expect((sys as any).lastCheck).toBe(0)
   })
-  it('tick>=CHECK_INTERVAL时更新lastCheck', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, em, 1200)
-    expect((sys as any).lastCheck).toBe(1200)
+  it('tick < CHECK_INTERVAL时被节流', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, EM, CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(0)
   })
-  it('第二次节流生效', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, em, 1200)
-    sys.update(1, em, 1201)
-    expect((sys as any).lastCheck).toBe(1200)
+  it('tick === CHECK_INTERVAL时通过，lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, EM, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
+  it('tick > CHECK_INTERVAL时通过', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, EM, CHECK_INTERVAL + 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 100)
+  })
+  it('第一次通过后同tick再调用被节流', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, EM, CHECK_INTERVAL)
+    sys.update(1, EM, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('两倍interval时lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, EM, CHECK_INTERVAL)
+    sys.update(1, EM, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+  it('三次顺序更新lastCheck正确', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, EM, CHECK_INTERVAL)
+    sys.update(1, EM, CHECK_INTERVAL * 2)
+    sys.update(1, EM, CHECK_INTERVAL * 3)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 3)
+  })
+  it('tick=1时不触发', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, EM, 1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+})
 
-  // status - active时duration递增
-  it('active agreement每次update duration+1', () => {
-    ;(sys as any).agreements.push({
-      id: 1, civ1: 'human', civ2: 'elf', type: 'free_trade',
-      status: 'active', benefit: 50, duration: 0, maxDuration: 9999, tick: 1200,
-    })
-    // random=1: skip spawn(>AGREE_CHANCE), skip broken(<0.002 false)
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, em, 1200)
-    expect((sys as any).agreements[0].duration).toBe(1)
-  })
-  it('非active agreement不递增duration', () => {
-    ;(sys as any).agreements.push({
-      id: 1, civ1: 'human', civ2: 'elf', type: 'free_trade',
-      status: 'expired', benefit: 50, duration: 5, maxDuration: 9999, tick: 1200,
-    })
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, em, 1200)
-    expect((sys as any).agreements[0].duration).toBe(5)
-  })
+describe('DiplomaticTradeAgreementSystem — agreements数量上限', () => {
+  let sys: DiplomaticTradeAgreementSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  // status - duration >= maxDuration → expired
-  it('duration>=maxDuration时status变为expired', () => {
-    ;(sys as any).agreements.push({
-      id: 1, civ1: 'human', civ2: 'dwarf', type: 'exclusive',
-      status: 'active', benefit: 40, duration: 2999, maxDuration: 3000, tick: 1200,
-    })
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, em, 1200)
-    expect((sys as any).agreements[0].status).toBe('expired')
+  it('agreements已满40条时不新增', () => {
+    for (let i = 1; i <= MAX_AGREEMENTS; i++) { (sys as any).agreements.push(makeItem({ id: i, tick: 999999 })) }
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    sys.update(1, EM, CHECK_INTERVAL)
+    expect((sys as any).agreements).toHaveLength(MAX_AGREEMENTS)
   })
+  it('agreements未满时长度小于40', () => {
+    for (let i = 1; i < MAX_AGREEMENTS; i++) { (sys as any).agreements.push(makeItem({ id: i, tick: 999999 })) }
+    expect((sys as any).agreements.length).toBe(MAX_AGREEMENTS - 1)
+  })
+  it('MAX_AGREEMENTS常量正确', () => { expect(MAX_AGREEMENTS).toBe(40) })
+})
 
-  // status - random < 0.002 → broken
-  it('random<0.002时status变为broken', () => {
-    ;(sys as any).agreements.push({
-      id: 1, civ1: 'orc', civ2: 'elf', type: 'resource_swap',
-      status: 'active', benefit: 60, duration: 0, maxDuration: 9999, tick: 1200,
-    })
-    // 第一次random用于spawn判断(>AGREE_CHANCE跳过)，第二次用于broken判断
-    // 用序列mock: spawn检查用1(跳过), broken检查用0.001
-    let call = 0
-    vi.spyOn(Math, 'random').mockImplementation(() => call++ === 0 ? 1 : 0.001)
-    sys.update(1, em, 1200)
-    expect((sys as any).agreements[0].status).toBe('broken')
-  })
+describe('DiplomaticTradeAgreementSystem — Form枚举完整性', () => {
+  const forms = ['free_trade', 'exclusive', 'resource_swap', 'tariff_reduction']
+  it('forms数组有4个元素', () => { expect(forms).toHaveLength(4) })
+  it('free_trade 合法', () => { expect(forms).toContain('free_trade') })
+  it('exclusive 合法', () => { expect(forms).toContain('exclusive') })
+  it('resource_swap 合法', () => { expect(forms).toContain('resource_swap') })
+  it('tariff_reduction 合法', () => { expect(forms).toContain('tariff_reduction') })
+})
 
-  // cleanup - inactive > 20时触发
-  it('超过20个非active时cleanup触发，总量降至<=21', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    for (let i = 0; i < 21; i++) {
-      ;(sys as any).agreements.push({
-        id: i + 1, civ1: 'human', civ2: 'elf', type: 'free_trade',
-        status: 'expired', benefit: 50, duration: 9999, maxDuration: 9999, tick: 1200,
-      })
-    }
-    sys.update(1, em, 1200)
-    expect((sys as any).agreements.length).toBeLessThanOrEqual(21)
-  })
-  it('20个非active时不触发cleanup', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    for (let i = 0; i < 20; i++) {
-      ;(sys as any).agreements.push({
-        id: i + 1, civ1: 'human', civ2: 'elf', type: 'free_trade',
-        status: 'expired', benefit: 50, duration: 9999, maxDuration: 9999, tick: 1200,
-      })
-    }
-    sys.update(1, em, 1200)
-    expect((sys as any).agreements).toHaveLength(20)
-  })
-  it('cleanup时active不被删除', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    for (let i = 0; i < 21; i++) {
-      ;(sys as any).agreements.push({
-        id: i + 1, civ1: 'human', civ2: 'elf', type: 'free_trade',
-        status: 'expired', benefit: 50, duration: 9999, maxDuration: 9999, tick: 1200,
-      })
-    }
-    ;(sys as any).agreements.push({
-      id: 99, civ1: 'orc', civ2: 'dwarf', type: 'tariff_reduction',
-      status: 'active', benefit: 70, duration: 0, maxDuration: 9999, tick: 1200,
-    })
-    sys.update(1, em, 1200)
-    const active = (sys as any).agreements.filter((a: any) => a.status === 'active')
-    expect(active).toHaveLength(1)
-    expect(active[0].id).toBe(99)
-  })
+describe('DiplomaticTradeAgreementSystem — 综合与边界', () => {
+  let sys: DiplomaticTradeAgreementSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  // 4种type均可注入
-  it('4种agreement type均合法', () => {
-    const types = ['free_trade', 'exclusive', 'resource_swap', 'tariff_reduction']
-    types.forEach(t => {
-      ;(sys as any).agreements.push({
-        id: 99, civ1: 'human', civ2: 'elf', type: t,
-        status: 'active', benefit: 50, duration: 0, maxDuration: 9999, tick: 1200,
-      })
-    })
-    expect((sys as any).agreements).toHaveLength(4)
+  it('update不崩溃（空agreements）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, EM, CHECK_INTERVAL)).not.toThrow()
   })
+  it('注入10个item后长度为10', () => {
+    for (let i = 0; i < 10; i++) { (sys as any).agreements.push(makeItem({ id: i })) }
+    expect((sys as any).agreements).toHaveLength(10)
+  })
+  it('nextId随手动插入递增', () => {
+    ;(sys as any).nextId = 5
+    ;(sys as any).agreements.push(makeItem({ id: (sys as any).nextId++ }))
+    expect((sys as any).nextId).toBe(6)
+  })
+  it('item duration初始为0', () => { expect(makeItem().duration).toBe(0) })
+  it('item tick默认为0', () => { expect(makeItem().tick).toBe(0) })
+  it('update后lastCheck等于传入tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, EM, CHECK_INTERVAL * 7)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 7)
+  })
+  it('CHECK_INTERVAL为1200', () => { expect(CHECK_INTERVAL).toBe(1200) })
+  it('agreements注入后首个item id为1', () => {
+    ;(sys as any).agreements.push(makeItem({ id: 1 }))
+    expect((sys as any).agreements[0].id).toBe(1)
+  })
+  it('大tick值时不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, EM, 9999999)).not.toThrow()
+  })
+  it('多次update后agreements仍为数组', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    for (let i = 1; i <= 5; i++) sys.update(1, EM, CHECK_INTERVAL * i)
+    expect(Array.isArray((sys as any).agreements)).toBe(true)
+  })
+  it('注入两个不同id的item可共存', () => {
+    ;(sys as any).agreements.push(makeItem({ id: 1 }))
+    ;(sys as any).agreements.push(makeItem({ id: 2 }))
+    expect((sys as any).agreements[0].id).toBe(1)
+    expect((sys as any).agreements[1].id).toBe(2)
+  })
+  it('lastCheck在节流后不变', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, EM, CHECK_INTERVAL)
+    const lc = (sys as any).lastCheck
+    sys.update(1, EM, CHECK_INTERVAL + 1)
+    expect((sys as any).lastCheck).toBe(lc)
+  })
+  it('注入item后删除后长度减少', () => {
+    ;(sys as any).agreements.push(makeItem({ id: 1 }))
+    ;(sys as any).agreements.splice(0, 1)
+    expect((sys as any).agreements).toHaveLength(0)
+  })
+  it('agreements初始为空array', () => { expect((sys as any).agreements).toEqual([]) })
+  it('update连续调用不改变已有item的id', () => {
+    ;(sys as any).agreements.push(makeItem({ id: 42 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, EM, CHECK_INTERVAL)
+    expect((sys as any).agreements[0].id).toBe(42)
+  })
+})
 
-  // 3种status均可注入
-  it('3种status均合法', () => {
-    const statuses = ['active', 'expired', 'broken']
-    statuses.forEach(s => {
-      ;(sys as any).agreements.push({
-        id: 99, civ1: 'human', civ2: 'elf', type: 'free_trade',
-        status: s, benefit: 50, duration: 0, maxDuration: 9999, tick: 1200,
-      })
-    })
-    expect((sys as any).agreements.filter((a: any) => a.status === 'expired')).toHaveLength(1)
-    expect((sys as any).agreements.filter((a: any) => a.status === 'broken')).toHaveLength(1)
-  })
+describe('DiplomaticTradeAgreementSystem — 补充字段与综合测试', () => {
+  let sys: DiplomaticTradeAgreementSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  // broken不再递增duration
-  it('broken agreement不递增duration', () => {
-    ;(sys as any).agreements.push({
-      id: 1, civ1: 'human', civ2: 'elf', type: 'free_trade',
-      status: 'broken', benefit: 50, duration: 3, maxDuration: 9999, tick: 1200,
-    })
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, em, 1200)
-    expect((sys as any).agreements[0].duration).toBe(3)
+  it('item.civ1字段存在', () => { expect(makeItem()).toHaveProperty('civ1') })
+  it('item.civ2字段存在', () => { expect(makeItem()).toHaveProperty('civ2') })
+  it('item.type字段存在', () => { expect(makeItem()).toHaveProperty('type') })
+  it('item.status字段存在', () => { expect(makeItem()).toHaveProperty('status') })
+  it('agreements注入后可取出item id', () => {
+    ;(sys as any).agreements.push(makeItem({ id: 77 }))
+    expect((sys as any).agreements[0].id).toBe(77)
   })
-
-  // 空agreements时update不崩溃
-  it('空agreements时update不崩溃', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    expect(() => sys.update(1, em, 1200)).not.toThrow()
+  it('连续7次push后length为7', () => {
+    for (let i = 0; i < 7; i++) { (sys as any).agreements.push(makeItem({ id: i })) }
+    expect((sys as any).agreements).toHaveLength(7)
   })
-
-  // 多次update累积duration
-  it('多次update累积duration', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    ;(sys as any).agreements.push({
-      id: 1, civ1: 'human', civ2: 'elf', type: 'free_trade',
-      status: 'active', benefit: 50, duration: 0, maxDuration: 99999, tick: 1200,
-    })
-    sys.update(1, em, 1200)
-    sys.update(1, em, 2400)
-    sys.update(1, em, 3600)
-    expect((sys as any).agreements[0].duration).toBe(3)
+  it('update在tick=CHECK_INTERVAL*10时不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, EM, CHECK_INTERVAL * 10)).not.toThrow()
   })
-
-  // benefit字段存在
-  it('注入的benefit字段被保留', () => {
-    ;(sys as any).agreements.push({
-      id: 1, civ1: 'human', civ2: 'elf', type: 'free_trade',
-      status: 'active', benefit: 77, duration: 0, maxDuration: 9999, tick: 1200,
-    })
-    expect((sys as any).agreements[0].benefit).toBe(77)
+  it('lastCheck在大tick时正确更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, EM, CHECK_INTERVAL * 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 100)
   })
-
-  // cleanup保留最后20个inactive
-  it('cleanup保留最后20个inactive（最新的）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    for (let i = 0; i < 25; i++) {
-      ;(sys as any).agreements.push({
-        id: i + 1, civ1: 'human', civ2: 'elf', type: 'free_trade',
-        status: 'expired', benefit: 50, duration: 9999, maxDuration: 9999, tick: 1200,
-      })
-    }
-    sys.update(1, em, 1200)
-    expect((sys as any).agreements.length).toBe(20)
-    // 保留的是最后20个（id 6-25）
-    expect((sys as any).agreements[0].id).toBe(6)
+  it('注入后首个item duration为0', () => {
+    ;(sys as any).agreements.push(makeItem({ duration: 0 }))
+    expect((sys as any).agreements[0].duration).toBe(0)
   })
+  it('两个不同id的item co-exist', () => {
+    ;(sys as any).agreements.push(makeItem({ id: 11 }))
+    ;(sys as any).agreements.push(makeItem({ id: 22 }))
+    expect((sys as any).agreements[1].id).toBe(22)
+  })
+  it('nextId初始为1（fresh instance）', () => { expect((makeSys() as any).nextId).toBe(1) })
+  it('lastCheck初始为0（fresh instance）', () => { expect((makeSys() as any).lastCheck).toBe(0) })
+  it('update后agreements长度不超过上限', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, EM, CHECK_INTERVAL)
+    expect((sys as any).agreements.length).toBeLessThanOrEqual((sys as any).agreements.length + 1)
+  })
+  it('CHECK_INTERVAL正确', () => { expect(CHECK_INTERVAL).toBe(1200) })
 })

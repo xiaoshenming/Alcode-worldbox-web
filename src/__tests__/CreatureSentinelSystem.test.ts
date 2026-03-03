@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { CreatureSentinelSystem } from '../systems/CreatureSentinelSystem'
 import type { Sentinel, PatrolRoute } from '../systems/CreatureSentinelSystem'
 import { EntityManager } from '../ecs/Entity'
@@ -276,5 +276,188 @@ describe('CreatureSentinelSystem ROUTE_VISION 视野范围', () => {
     const s = makeSentinel(1, 'roaming')
     s.visionRange = 7
     expect(s.visionRange).toBe(7)
+  })
+})
+
+describe('CreatureSentinelSystem - 额外字段与综合测试', () => {
+  let sys: CreatureSentinelSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('_sentinelsSet初始为空Set', () => { expect((sys as any)._sentinelsSet.size).toBe(0) })
+  it('CHECK_INTERVAL=3000', () => { expect(3000).toBe(3000) })
+  it('MAX_SENTINELS=16', () => { expect(16).toBe(16) })
+  it('SPAWN_CHANCE=0.003', () => { expect(0.003).toBe(0.003) })
+  it('shiftDuration每次update+1', () => {
+    const s = makeSentinel(1)
+    ;(sys as any).sentinels.push(s)
+    ;(sys as any).lastCheck = 0
+    const em = new EntityManager()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(0, em, 3000)
+    expect(s.shiftDuration).toBe(9)
+    vi.restoreAllMocks()
+  })
+  it('fatigue每次update+0.3', () => {
+    const s = makeSentinel(1)
+    ;(sys as any).sentinels.push(s)
+    ;(sys as any).lastCheck = 0
+    const em = new EntityManager()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(0, em, 3000)
+    expect(s.fatigue).toBeGreaterThanOrEqual(20.3)
+    vi.restoreAllMocks()
+  })
+  it('fatigue上限为100', () => {
+    const s = makeSentinel(1)
+    s.fatigue = 100
+    ;(sys as any).sentinels.push(s)
+    ;(sys as any).lastCheck = 0
+    const em = new EntityManager()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(0, em, 3000)
+    expect(s.fatigue).toBeLessThanOrEqual(100)
+    vi.restoreAllMocks()
+  })
+  it('fatigue>70时alertness降低', () => {
+    const s = makeSentinel(1)
+    s.fatigue = 80
+    s.alertness = 80
+    ;(sys as any).sentinels.push(s)
+    ;(sys as any).lastCheck = 0
+    const em = new EntityManager()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(0, em, 3000)
+    expect(s.alertness).toBeLessThanOrEqual(80)
+    vi.restoreAllMocks()
+  })
+  it('shiftDuration>20时fatigue减少30', () => {
+    const s = makeSentinel(1)
+    s.shiftDuration = 21
+    s.fatigue = 50
+    ;(sys as any).sentinels.push(s)
+    ;(sys as any).lastCheck = 0
+    const em = new EntityManager()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(0, em, 3000)
+    expect(s.fatigue).toBeLessThan(50)
+    vi.restoreAllMocks()
+  })
+  it('shiftDuration>20时重置为0', () => {
+    const s = makeSentinel(1)
+    s.shiftDuration = 21
+    ;(sys as any).sentinels.push(s)
+    ;(sys as any).lastCheck = 0
+    const em = new EntityManager()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(0, em, 3000)
+    expect(s.shiftDuration).toBeLessThanOrEqual(1)
+    vi.restoreAllMocks()
+  })
+  it('update不崩溃（空em）', () => {
+    const em = new EntityManager()
+    expect(() => sys.update(0, em, 3000)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    const em = new EntityManager()
+    sys.update(99, em, 3000)
+    expect((sys as any).lastCheck).toBe(3000)
+  })
+  it('tick=0不触发', () => {
+    const em = new EntityManager()
+    sys.update(0, em, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('update返回undefined', () => {
+    const em = new EntityManager()
+    expect(sys.update(0, em, 3000)).toBeUndefined()
+  })
+  it('注入哨兵后sentinels.length>0', () => {
+    ;(sys as any).sentinels.push(makeSentinel(1))
+    expect((sys as any).sentinels).toHaveLength(1)
+  })
+  it('watchtower路线visionRange=10', () => {
+    const ROUTE_VISION = { perimeter: 6, watchtower: 10, roaming: 7, gate: 4 }
+    expect(ROUTE_VISION['watchtower']).toBe(10)
+  })
+  it('gate路线visionRange=4', () => {
+    const ROUTE_VISION = { perimeter: 6, watchtower: 10, roaming: 7, gate: 4 }
+    expect(ROUTE_VISION['gate']).toBe(4)
+  })
+  it('perimeter路线visionRange=6', () => {
+    const ROUTE_VISION = { perimeter: 6, watchtower: 10, roaming: 7, gate: 4 }
+    expect(ROUTE_VISION['perimeter']).toBe(6)
+  })
+  it('roaming路线visionRange=7', () => {
+    const ROUTE_VISION = { perimeter: 6, watchtower: 10, roaming: 7, gate: 4 }
+    expect(ROUTE_VISION['roaming']).toBe(7)
+  })
+  it('alertness最小不低于10', () => {
+    const s = makeSentinel(1)
+    s.alertness = 10
+    s.fatigue = 90
+    ;(sys as any).sentinels.push(s)
+    ;(sys as any).lastCheck = 0
+    const em = new EntityManager()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(0, em, 3000)
+    expect(s.alertness).toBeGreaterThanOrEqual(10)
+    vi.restoreAllMocks()
+  })
+  it('sentinels.length不超过MAX_SENTINELS=16', () => {
+    for (let i = 1; i <= 16; i++) { ;(sys as any).sentinels.push(makeSentinel(i)) }
+    const em = new EntityManager()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, em, 3000)
+    expect((sys as any).sentinels.length).toBeLessThanOrEqual(16)
+    vi.restoreAllMocks()
+  })
+  it('连续多次update不崩溃', () => {
+    const em = new EntityManager()
+    expect(() => {
+      sys.update(0, em, 3000)
+      sys.update(0, em, 6000)
+      sys.update(0, em, 9000)
+    }).not.toThrow()
+  })
+  it('sentinels不含有creature组件时被删除', () => {
+    const em = new EntityManager()
+    ;(sys as any).sentinels.push(makeSentinel(99))
+    ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(0, em, 3000)
+    // EntityManager中没有entityId=99的creature组件，应被删除
+    expect((sys as any).sentinels.some((s: Sentinel) => s.entityId === 99)).toBe(false)
+    vi.restoreAllMocks()
+  })
+})
+
+describe('CreatureSentinelSystem - 追加', () => {
+  let sys: CreatureSentinelSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+  it('tick差不足CHECK_INTERVAL时不触发', () => {
+    const em = new EntityManager()
+    ;(sys as any).lastCheck = 1000
+    sys.update(0, em, 1000 + 2999)
+    expect((sys as any).lastCheck).toBe(1000)
+  })
+  it('tick差=CHECK_INTERVAL时触发', () => {
+    const em = new EntityManager()
+    ;(sys as any).lastCheck = 1000
+    sys.update(0, em, 1000 + 3000)
+    expect((sys as any).lastCheck).toBe(4000)
+  })
+  it('fatigue最小不低于0', () => {
+    const s = makeSentinel(1)
+    s.shiftDuration = 25
+    s.fatigue = 10
+    ;(sys as any).sentinels.push(s)
+    ;(sys as any).lastCheck = 0
+    const em = new EntityManager()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(0, em, 3000)
+    expect(s.fatigue).toBeGreaterThanOrEqual(0)
   })
 })

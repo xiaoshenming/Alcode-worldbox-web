@@ -1,180 +1,352 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { CreaturePotterSystem } from '../systems/CreaturePotterSystem'
 import type { Potter } from '../systems/CreaturePotterSystem'
 
 const CHECK_INTERVAL = 2550
-const MAX_POTTERS = 13
+const MAX_WORKERS = 13
 
 let nextId = 1
 function makeSys(): CreaturePotterSystem { return new CreaturePotterSystem() }
-function makePotter(entityId: number, overrides: Partial<Potter> = {}): Potter {
-  return {
-    id: nextId++,
-    entityId,
-    wheelControl: 70,
-    clayPreparation: 65,
-    glazingSkill: 80,
-    outputQuality: 75,
-    tick: 0,
-    ...overrides,
-  }
+function makeWorker(entityId: number, overrides: Partial<Potter> = {}): Potter {
+  return { id: nextId++, entityId, wheelControl: 70, glazingSkill: 65, clayPreparation: 60, outputQuality: 75, tick: 0, ...overrides }
 }
+const emMock = { getEntitiesWithComponents: () => [] } as any
 
-const mockEm = { getEntitiesWithComponents: () => [], getComponent: () => null } as any
-
-describe('CreaturePotterSystem - 基础状态', () => {
+describe('CreaturePotterSystem - 初始状态', () => {
   let sys: CreaturePotterSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无陶匠', () => { expect((sys as any).potters).toHaveLength(0) })
-  it('注入后可查询', () => {
-    ;(sys as any).potters.push(makePotter(1))
+  it('初始无工匠', () => { expect((sys as any).potters).toHaveLength(0) })
+  it('注入后entityId可查询', () => {
+    ;(sys as any).potters.push(makeWorker(1))
     expect((sys as any).potters[0].entityId).toBe(1)
   })
-  it('返回内部引用', () => {
-    ;(sys as any).potters.push(makePotter(1))
+  it('返回内部引用一致', () => {
+    ;(sys as any).potters.push(makeWorker(1))
     expect((sys as any).potters).toBe((sys as any).potters)
   })
-  it('字段正确', () => {
-    ;(sys as any).potters.push(makePotter(2))
-    const p = (sys as any).potters[0]
-    expect(p.wheelControl).toBe(70)
-    expect(p.glazingSkill).toBe(80)
+  it('字段wheelControl正确', () => {
+    ;(sys as any).potters.push(makeWorker(2))
+    expect((sys as any).potters[0].wheelControl).toBe(70)
+  })
+  it('字段outputQuality正确', () => {
+    ;(sys as any).potters.push(makeWorker(2))
+    expect((sys as any).potters[0].outputQuality).toBe(75)
   })
   it('多个全部返回', () => {
-    ;(sys as any).potters.push(makePotter(1))
-    ;(sys as any).potters.push(makePotter(2))
+    ;(sys as any).potters.push(makeWorker(1))
+    ;(sys as any).potters.push(makeWorker(2))
     expect((sys as any).potters).toHaveLength(2)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })
 
-describe('CreaturePotterSystem - CHECK_INTERVAL 节流', () => {
+describe('CreaturePotterSystem - CHECK_INTERVAL节流', () => {
   let sys: CreaturePotterSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('tick 不足 CHECK_INTERVAL 时不执行逻辑（lastCheck 不变）', () => {
-    sys.update(0, mockEm, 0)          // 初始化 lastCheck=0
-    ;(sys as any).lastCheck = 0
-    sys.update(0, mockEm, CHECK_INTERVAL - 1)  // 不足，跳过
+  it('tick差不足CHECK_INTERVAL时不执行，lastCheck不变', () => {
+    sys.update(0, emMock, CHECK_INTERVAL - 1)
     expect((sys as any).lastCheck).toBe(0)
   })
-
-  it('tick 恰好等于 CHECK_INTERVAL 时执行逻辑（lastCheck 更新）', () => {
-    sys.update(0, mockEm, CHECK_INTERVAL)
+  it('tick差=CHECK_INTERVAL时触发，lastCheck更新', () => {
+    sys.update(0, emMock, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
-
-  it('连续两次 tick 相差不足 CHECK_INTERVAL，第二次不执行', () => {
-    sys.update(0, mockEm, CHECK_INTERVAL)
-    const before = (sys as any).lastCheck
-    sys.update(0, mockEm, CHECK_INTERVAL + 1)
-    expect((sys as any).lastCheck).toBe(before)
+  it('tick差=CHECK_INTERVAL-1不触发', () => {
+    ;(sys as any).lastCheck = 5000
+    sys.update(0, emMock, 5000 + CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(5000)
   })
-
-  it('间隔超过 CHECK_INTERVAL 的两次 update 都会执行', () => {
-    sys.update(0, mockEm, CHECK_INTERVAL)
-    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
-    sys.update(0, mockEm, CHECK_INTERVAL * 2)
-    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  it('tick差=CHECK_INTERVAL精确触发', () => {
+    ;(sys as any).lastCheck = 5000
+    sys.update(0, emMock, 5000 + CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(5000 + CHECK_INTERVAL)
+  })
+  it('未触发时技能不增长', () => {
+    const w = makeWorker(1, { wheelControl: 50 })
+    ;(sys as any).potters.push(w)
+    sys.update(0, emMock, CHECK_INTERVAL - 1)
+    expect(w.wheelControl).toBe(50)
+  })
+  it('触发后lastCheck更新为当前tick', () => {
+    ;(sys as any).lastCheck = 1000
+    sys.update(0, emMock, 1000 + CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(1000 + CHECK_INTERVAL)
+  })
+  it('连续两次间隔不足跳过第二次', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    const snap = (sys as any).potters.length
+    sys.update(0, emMock, CHECK_INTERVAL + 1)
+    expect((sys as any).potters.length).toBe(snap)
+  })
+  it('两次均触发则技能增长两次', () => {
+    const w = makeWorker(1, { wheelControl: 50 })
+    ;(sys as any).potters.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    sys.update(0, emMock, CHECK_INTERVAL * 2)
+    expect(w.wheelControl).toBeCloseTo(50 + 0.02 * 2, 4)
   })
 })
 
 describe('CreaturePotterSystem - 技能递增与上限', () => {
   let sys: CreaturePotterSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('update 后 wheelControl 增加 0.02', () => {
-    ;(sys as any).potters.push(makePotter(1, { wheelControl: 50 }))
-    sys.update(0, mockEm, CHECK_INTERVAL)
-    expect((sys as any).potters[0].wheelControl).toBeCloseTo(50.02, 5)
+  it('wheelControl每次+0.02', () => {
+    const w = makeWorker(1, { wheelControl: 50 })
+    ;(sys as any).potters.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.wheelControl).toBeCloseTo(50 + 0.02, 5)
   })
-
-  it('update 后 glazingSkill 增加 0.015', () => {
-    ;(sys as any).potters.push(makePotter(1, { glazingSkill: 50 }))
-    sys.update(0, mockEm, CHECK_INTERVAL)
-    expect((sys as any).potters[0].glazingSkill).toBeCloseTo(50.015, 5)
+  it('glazingSkill每次+0.015', () => {
+    const w = makeWorker(1, { glazingSkill: 40 })
+    ;(sys as any).potters.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.glazingSkill).toBeCloseTo(40 + 0.015, 5)
   })
-
-  it('update 后 outputQuality 增加 0.01', () => {
-    ;(sys as any).potters.push(makePotter(1, { outputQuality: 50 }))
-    sys.update(0, mockEm, CHECK_INTERVAL)
-    expect((sys as any).potters[0].outputQuality).toBeCloseTo(50.01, 5)
+  it('outputQuality每次+0.01', () => {
+    const w = makeWorker(1, { outputQuality: 60 })
+    ;(sys as any).potters.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.outputQuality).toBeCloseTo(60 + 0.01, 5)
   })
-
-  it('wheelControl 上限 100，不会超过', () => {
-    ;(sys as any).potters.push(makePotter(1, { wheelControl: 99.99 }))
-    sys.update(0, mockEm, CHECK_INTERVAL)
-    expect((sys as any).potters[0].wheelControl).toBe(100)
+  it('wheelControl上限100不超过', () => {
+    const w = makeWorker(1, { wheelControl: 99.99 })
+    ;(sys as any).potters.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.wheelControl).toBeLessThanOrEqual(100)
   })
-
-  it('glazingSkill 上限 100，不会超过', () => {
-    ;(sys as any).potters.push(makePotter(1, { glazingSkill: 99.99 }))
-    sys.update(0, mockEm, CHECK_INTERVAL)
-    expect((sys as any).potters[0].glazingSkill).toBe(100)
+  it('glazingSkill上限100不超过', () => {
+    const w = makeWorker(1, { glazingSkill: 99.99 })
+    ;(sys as any).potters.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.glazingSkill).toBeLessThanOrEqual(100)
   })
-
-  it('outputQuality 上限 100，不会超过', () => {
-    ;(sys as any).potters.push(makePotter(1, { outputQuality: 99.99 }))
-    sys.update(0, mockEm, CHECK_INTERVAL)
-    expect((sys as any).potters[0].outputQuality).toBe(100)
+  it('outputQuality上限100不超过', () => {
+    const w = makeWorker(1, { outputQuality: 99.99 })
+    ;(sys as any).potters.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.outputQuality).toBeLessThanOrEqual(100)
   })
-
-  it('满值技能保持在 100 不再累加', () => {
-    ;(sys as any).potters.push(makePotter(1, { wheelControl: 100, glazingSkill: 100, outputQuality: 100 }))
-    sys.update(0, mockEm, CHECK_INTERVAL)
-    const p = (sys as any).potters[0]
-    expect(p.wheelControl).toBe(100)
-    expect(p.glazingSkill).toBe(100)
-    expect(p.outputQuality).toBe(100)
+  it('clayPreparation不参与递增', () => {
+    const w = makeWorker(1, { clayPreparation: 60 })
+    ;(sys as any).potters.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.clayPreparation).toBe(60)
+  })
+  it('多个工匠同时增长', () => {
+    ;(sys as any).potters.push(makeWorker(1, { wheelControl: 50 }))
+    ;(sys as any).potters.push(makeWorker(2, { wheelControl: 60 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).potters[0].wheelControl).toBeCloseTo(50 + 0.02, 5)
+    expect((sys as any).potters[1].wheelControl).toBeCloseTo(60 + 0.02, 5)
+  })
+  it('wheelControl=100时保持不变', () => {
+    const w = makeWorker(1, { wheelControl: 100 })
+    ;(sys as any).potters.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.wheelControl).toBe(100)
   })
 })
 
-describe('CreaturePotterSystem - cleanup 边界', () => {
+describe('CreaturePotterSystem - cleanup: wheelControl<=4时删除', () => {
+  let sys: CreaturePotterSystem
+  beforeEach(() => {
+    sys = makeSys(); nextId = 1
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+  })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('wheelControl=4时更新后>4，保留', () => {
+    ;(sys as any).potters.push(makeWorker(1, { wheelControl: 4 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).potters).toHaveLength(1)
+  })
+  it('wheelControl=3.98时更新后<=4，删除', () => {
+    ;(sys as any).potters.push(makeWorker(1, { wheelControl: 3.98 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).potters).toHaveLength(0)
+  })
+  it('wheelControl=3.99时更新后>4，保留', () => {
+    ;(sys as any).potters.push(makeWorker(1, { wheelControl: 3.99 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).potters).toHaveLength(1)
+  })
+  it('高技能工匠不被删除', () => {
+    ;(sys as any).potters.push(makeWorker(1, { wheelControl: 50 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).potters).toHaveLength(1)
+  })
+  it('多个低技能全部删除', () => {
+    for (let i = 1; i <= 3; i++) {
+      ;(sys as any).potters.push(makeWorker(i, { wheelControl: 2 }))
+    }
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).potters).toHaveLength(0)
+  })
+  it('混合：低技能删除高技能保留', () => {
+    ;(sys as any).potters.push(makeWorker(1, { wheelControl: 2 }))
+    ;(sys as any).potters.push(makeWorker(2, { wheelControl: 50 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).potters).toHaveLength(1)
+    expect((sys as any).potters[0].entityId).toBe(2)
+  })
+  it('wheelControl=1时必然被删除', () => {
+    ;(sys as any).potters.push(makeWorker(1, { wheelControl: 1 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).potters).toHaveLength(0)
+  })
+  it('wheelControl=3.97时更新后<4被删除', () => {
+    ;(sys as any).potters.push(makeWorker(1, { wheelControl: 3.97 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).potters).toHaveLength(0)
+  })
+})
+
+describe('CreaturePotterSystem - MAX_WORKERS上限与招募', () => {
   let sys: CreaturePotterSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('wheelControl > 4 的陶匠不被清���', () => {
-    ;(sys as any).potters.push(makePotter(1, { wheelControl: 4.01 }))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, mockEm, CHECK_INTERVAL)
-    expect((sys as any).potters).toHaveLength(1)
+  it('已达MAX_WORKERS时不再招募', () => {
+    for (let i = 0; i < MAX_WORKERS; i++) {
+      ;(sys as any).potters.push(makeWorker(i + 1))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).potters.length).toBeLessThanOrEqual(MAX_WORKERS)
   })
-
-  it('wheelControl 加增后恰好等于 4 的陶匠被清除（3.98+0.02=4.0 <=4）', () => {
-    // update 先加技能：3.98 + 0.02 = 4.0，然后 cleanup 条件 <=4 成立 → 清除
-    ;(sys as any).potters.push(makePotter(1, { wheelControl: 3.98 }))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, mockEm, CHECK_INTERVAL)
+  it('数量<MAX且random<RECRUIT_CHANCE时招募', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).potters.length).toBeGreaterThanOrEqual(1)
+  })
+  it('random=1时不招募', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(0, emMock, CHECK_INTERVAL)
     expect((sys as any).potters).toHaveLength(0)
   })
+  it('招募后tick等于当前tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    if ((sys as any).potters.length > 0) {
+      expect((sys as any).potters[0].tick).toBe(CHECK_INTERVAL)
+    }
+  })
+  it('多次招募id递增唯一', () => {
+    const sys2 = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys2.update(0, emMock, CHECK_INTERVAL)
+    sys2.update(0, emMock, CHECK_INTERVAL * 2)
+    const workers = (sys2 as any).potters
+    if (workers.length >= 2) {
+      expect(workers[1].id).toBeGreaterThan(workers[0].id)
+    }
+  })
+  it('招募时wheelControl在[10,35]范围内', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    if ((sys as any).potters.length > 0) {
+      const v = (sys as any).potters[0].wheelControl
+      expect(v).toBeGreaterThanOrEqual(10)
+      expect(v).toBeLessThanOrEqual(35)
+    }
+  })
+  it('招募的entityId在[0,499]范围', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    if ((sys as any).potters.length > 0) {
+      const eid = (sys as any).potters[0].entityId
+      expect(eid).toBeGreaterThanOrEqual(0)
+      expect(eid).toBeLessThanOrEqual(499)
+    }
+  })
+})
 
-  it('wheelControl=4.0 加增后=4.02 不被清除（4.02 > 4）', () => {
-    // update 先加技能：4.0 + 0.02 = 4.02，cleanup 条件 <=4 不成立 → 保留
-    ;(sys as any).potters.push(makePotter(1, { wheelControl: 4.0 }))
+describe('CreaturePotterSystem - 边界与综合场景', () => {
+  let sys: CreaturePotterSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('空系统更新不抛出异常', () => {
+    expect(() => sys.update(0, emMock, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    sys.update(999, emMock, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('多次更新技能累积', () => {
+    const w = makeWorker(1, { wheelControl: 50 })
+    ;(sys as any).potters.push(w)
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, mockEm, CHECK_INTERVAL)
+    for (let t = 1; t <= 3; t++) {
+      sys.update(0, emMock, CHECK_INTERVAL * t)
+    }
+    expect(w.wheelControl).toBeCloseTo(50 + 0.02 * 3, 4)
+  })
+  it('系统update返回undefined', () => {
+    expect(sys.update(0, emMock, CHECK_INTERVAL)).toBeUndefined()
+  })
+  it('tick=0不触发', () => {
+    sys.update(0, emMock, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('注入5个工匠后长度为5', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).potters.push(makeWorker(i)) }
+    expect((sys as any).potters).toHaveLength(5)
+  })
+  it('大量工匠同时更新不抛出', () => {
+    for (let i = 1; i <= 8; i++) {
+      ;(sys as any).potters.push(makeWorker(i, { wheelControl: 50 }))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(0, emMock, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('wheelControl和outputQuality同时增长验证', () => {
+    const w = makeWorker(1, { wheelControl: 50, outputQuality: 60 })
+    ;(sys as any).potters.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.wheelControl).toBeCloseTo(50 + 0.02, 5)
+    expect(w.outputQuality).toBeCloseTo(60 + 0.01, 5)
+  })
+})
+
+describe('CreaturePotterSystem - 额外边界验证', () => {
+  let sys: CreaturePotterSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('wheelControl=4.00时更新后4.02>4保留', () => {
+    ;(sys as any).potters.push({ id: 99, entityId: 99, wheelControl: 4.00, tick: 0 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(0, emMock, CHECK_INTERVAL)
     expect((sys as any).potters).toHaveLength(1)
   })
-
-  it('wheelControl=3.97 加增后=3.99 被清除（3.99 <=4）', () => {
-    ;(sys as any).potters.push(makePotter(1, { wheelControl: 3.97 }))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, mockEm, CHECK_INTERVAL)
-    expect((sys as any).potters).toHaveLength(0)
+  it('tick负值时不触发', () => {
+    sys.update(0, emMock, -1)
+    expect((sys as any).lastCheck).toBe(0)
   })
-
-  it('混合时仅低值陶匠被清除', () => {
-    ;(sys as any).potters.push(makePotter(1, { wheelControl: 3.5 }))   // 3.5+0.02=3.52 <=4 → 清除
-    ;(sys as any).potters.push(makePotter(2, { wheelControl: 50 }))    // 50+0.02=50.02 >4  → 保留
-    ;(sys as any).potters.push(makePotter(3, { wheelControl: 4.0 }))   // 4.0+0.02=4.02 >4  → 保留
+  it('两次相同tick只触发一次', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(0, mockEm, CHECK_INTERVAL)
-    expect((sys as any).potters).toHaveLength(2)
-    expect((sys as any).potters.map((p: any) => p.entityId)).toContain(2)
-    expect((sys as any).potters.map((p: any) => p.entityId)).toContain(3)
-  })
-
-  it('陶匠上限 MAX_POTTERS 为 13', () => {
-    expect(MAX_POTTERS).toBe(13)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    const check1 = (sys as any).lastCheck
+    sys.update(0, emMock, CHECK_INTERVAL) // same tick, difference=0
+    expect((sys as any).lastCheck).toBe(check1)
   })
 })

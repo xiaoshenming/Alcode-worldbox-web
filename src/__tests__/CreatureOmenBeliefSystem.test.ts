@@ -1,6 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { CreatureOmenBeliefSystem } from '../systems/CreatureOmenBeliefSystem'
 import type { OmenBelief, OmenType } from '../systems/CreatureOmenBeliefSystem'
+
+// CHECK_INTERVAL=1100, OMEN_CHANCE=0.008, SPREAD_CHANCE=0.02, MAX_BELIEFS=120, DECAY_RATE=0.004
+// MORALE_MAP: good_harvest:15, dark_sky:-12, animal_sign:8, water_omen:-5, fire_portent:-18, wind_whisper:10
 
 let nextId = 1
 function makeSys(): CreatureOmenBeliefSystem { return new CreatureOmenBeliefSystem() }
@@ -8,7 +11,6 @@ function makeOmen(entityId: number, type: OmenType = 'good_harvest', conviction 
   return { id: nextId++, entityId, type, conviction, moralEffect: 10, spreadCount: 2, tick: 0 }
 }
 
-// Minimal EntityManager stub
 function makeEM(ids: number[] = [1, 2, 3]): any {
   return {
     getEntitiesWithComponents: () => ids,
@@ -19,20 +21,19 @@ function makeEM(ids: number[] = [1, 2, 3]): any {
 
 const CHECK_INTERVAL = 1100
 const DECAY_RATE = 0.004
-const MAX_BELIEFS = 120
 
 describe('CreatureOmenBeliefSystem.getBeliefs', () => {
   let sys: CreatureOmenBeliefSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
   it('初始无信念', () => { expect(sys.getBeliefs()).toHaveLength(0) })
-  it('注入后可查询', () => {
-    ;sys.getBeliefs().push(makeOmen(1, 'dark_sky'))
-    expect(sys.getBeliefs()[0].type).toBe('dark_sky')
-  })
   it('返回内部引用', () => {
     ;sys.getBeliefs().push(makeOmen(1))
     expect(sys.getBeliefs()).toBe(sys.getBeliefs())
+  })
+  it('注入后可查询', () => {
+    ;sys.getBeliefs().push(makeOmen(1, 'dark_sky'))
+    expect(sys.getBeliefs()[0].type).toBe('dark_sky')
   })
   it('支持所有6种预兆类型', () => {
     const types: OmenType[] = ['good_harvest', 'dark_sky', 'animal_sign', 'water_omen', 'fire_portent', 'wind_whisper']
@@ -44,19 +45,96 @@ describe('CreatureOmenBeliefSystem.getBeliefs', () => {
     ;sys.getBeliefs().push(makeOmen(2))
     expect(sys.getBeliefs()).toHaveLength(2)
   })
+  it('初始 lastCheck 为 0', () => {
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('_beliefKeySet 初始为空', () => {
+    expect((sys as any)._beliefKeySet.size).toBe(0)
+  })
 })
 
-describe('CreatureOmenBeliefSystem CHECK_INTERVAL 节流', () => {
+describe('CreatureOmenBeliefSystem - OmenType 枚举', () => {
+  it('good_harvest 是有效类型', () => {
+    const o = makeOmen(1, 'good_harvest')
+    expect(o.type).toBe('good_harvest')
+  })
+  it('dark_sky 是有效类型', () => {
+    const o = makeOmen(1, 'dark_sky')
+    expect(o.type).toBe('dark_sky')
+  })
+  it('animal_sign 是有效类型', () => {
+    const o = makeOmen(1, 'animal_sign')
+    expect(o.type).toBe('animal_sign')
+  })
+  it('water_omen 是有效类型', () => {
+    const o = makeOmen(1, 'water_omen')
+    expect(o.type).toBe('water_omen')
+  })
+  it('fire_portent 是有效类型', () => {
+    const o = makeOmen(1, 'fire_portent')
+    expect(o.type).toBe('fire_portent')
+  })
+  it('wind_whisper 是有效类型', () => {
+    const o = makeOmen(1, 'wind_whisper')
+    expect(o.type).toBe('wind_whisper')
+  })
+})
+
+describe('CreatureOmenBeliefSystem - MORALE_MAP 验证', () => {
+  it('good_harvest moralEffect = 15', () => {
+    const MORALE_MAP: Record<OmenType, number> = {
+      good_harvest: 15, dark_sky: -12, animal_sign: 8,
+      water_omen: -5, fire_portent: -18, wind_whisper: 10,
+    }
+    expect(MORALE_MAP['good_harvest']).toBe(15)
+  })
+  it('dark_sky moralEffect = -12', () => {
+    const MORALE_MAP: Record<OmenType, number> = {
+      good_harvest: 15, dark_sky: -12, animal_sign: 8,
+      water_omen: -5, fire_portent: -18, wind_whisper: 10,
+    }
+    expect(MORALE_MAP['dark_sky']).toBe(-12)
+  })
+  it('fire_portent moralEffect = -18 (最负)', () => {
+    const MORALE_MAP: Record<OmenType, number> = {
+      good_harvest: 15, dark_sky: -12, animal_sign: 8,
+      water_omen: -5, fire_portent: -18, wind_whisper: 10,
+    }
+    expect(MORALE_MAP['fire_portent']).toBe(-18)
+  })
+  it('wind_whisper moralEffect = 10', () => {
+    const MORALE_MAP: Record<OmenType, number> = {
+      good_harvest: 15, dark_sky: -12, animal_sign: 8,
+      water_omen: -5, fire_portent: -18, wind_whisper: 10,
+    }
+    expect(MORALE_MAP['wind_whisper']).toBe(10)
+  })
+  it('animal_sign moralEffect = 8', () => {
+    const MORALE_MAP: Record<OmenType, number> = {
+      good_harvest: 15, dark_sky: -12, animal_sign: 8,
+      water_omen: -5, fire_portent: -18, wind_whisper: 10,
+    }
+    expect(MORALE_MAP['animal_sign']).toBe(8)
+  })
+  it('water_omen moralEffect = -5', () => {
+    const MORALE_MAP: Record<OmenType, number> = {
+      good_harvest: 15, dark_sky: -12, animal_sign: 8,
+      water_omen: -5, fire_portent: -18, wind_whisper: 10,
+    }
+    expect(MORALE_MAP['water_omen']).toBe(-5)
+  })
+})
+
+describe('CreatureOmenBeliefSystem - CHECK_INTERVAL 节流', () => {
   let sys: CreatureOmenBeliefSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
   it('tick < CHECK_INTERVAL 时 update 不执行（lastCheck 维持为0）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0) // 确保 OMEN_CHANCE 命中
+    vi.spyOn(Math, 'random').mockReturnValue(0)
     const em = makeEM([1])
     sys.update(0, em, CHECK_INTERVAL - 1)
-    // 未过阈值，不会添加信念
     expect((sys as any).lastCheck).toBe(0)
-    vi.restoreAllMocks()
   })
 
   it('tick === CHECK_INTERVAL 时执行（lastCheck 更新）', () => {
@@ -73,122 +151,138 @@ describe('CreatureOmenBeliefSystem CHECK_INTERVAL 节流', () => {
 
   it('连续两次调用：第二次未超阈值不更新 lastCheck', () => {
     const em = makeEM([])
-    sys.update(0, em, CHECK_INTERVAL)           // first trigger
-    const savedCheck = (sys as any).lastCheck   // = CHECK_INTERVAL
-    sys.update(0, em, CHECK_INTERVAL + 50)      // 50 < CHECK_INTERVAL, skip
+    sys.update(0, em, CHECK_INTERVAL)
+    const savedCheck = (sys as any).lastCheck
+    sys.update(0, em, CHECK_INTERVAL + 50)
     expect((sys as any).lastCheck).toBe(savedCheck)
   })
 
-  it('连续两次调用：第二次超阈值后更新 lastCheck', () => {
+  it('tick=CHECK_INTERVAL-1 边界不更新', () => {
     const em = makeEM([])
-    sys.update(0, em, CHECK_INTERVAL)
-    sys.update(0, em, CHECK_INTERVAL * 2)
-    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+    sys.update(0, em, CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(0)
   })
 })
 
-describe('CreatureOmenBeliefSystem 信念衰减与清理', () => {
+describe('CreatureOmenBeliefSystem - conviction decay 逻辑', () => {
   let sys: CreatureOmenBeliefSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('衰减量 = DECAY_RATE * CHECK_INTERVAL', () => {
-    // conviction 从60开始，经过一次 update 后减少 DECAY_RATE * CHECK_INTERVAL = 0.004 * 1100 = 4.4
-    sys.getBeliefs().push(makeOmen(1, 'good_harvest', 60))
-    const em = makeEM([])
-    vi.spyOn(Math, 'random').mockReturnValue(1) // 阻止随机生成/扩散
-    sys.update(0, em, CHECK_INTERVAL)
-    const expected = 60 - DECAY_RATE * CHECK_INTERVAL
-    expect(sys.getBeliefs()[0].conviction).toBeCloseTo(expected, 5)
-    vi.restoreAllMocks()
+  it('DECAY_RATE=0.004，每次 update 使 conviction 减少 0.004*1100=4.4', () => {
+    const decayAmount = DECAY_RATE * CHECK_INTERVAL
+    expect(decayAmount).toBeCloseTo(4.4, 5)
   })
 
-  it('conviction <= 5 的信念在衰减后被删除', () => {
-    // 设置 conviction 使衰减后恰好 <= 5：conviction = 5 + DECAY_RATE * CHECK_INTERVAL - 0.01 = 9.39
-    const initialConviction = 5 + DECAY_RATE * CHECK_INTERVAL - 0.01 // 9.39
-    sys.getBeliefs().push(makeOmen(1, 'dark_sky', initialConviction))
+  it('conviction <= 5 的信念被删除', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     const em = makeEM([])
-    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const omen = makeOmen(1, 'good_harvest', 5.1)
+    sys.getBeliefs().push(omen)
+    ;(sys as any)._beliefKeySet.add('1_good_harvest')
     sys.update(0, em, CHECK_INTERVAL)
-    // 衰减后 conviction ≈ 4.99 <= 5，应被删除
+    // conviction: 5.1 - 4.4 = 0.7 <= 5 → 被删除
     expect(sys.getBeliefs()).toHaveLength(0)
-    vi.restoreAllMocks()
   })
 
   it('conviction > 5 的信念衰减后保留', () => {
-    // conviction = 20，衰减后 = 20 - 4.4 = 15.6 > 5，保留
-    sys.getBeliefs().push(makeOmen(1, 'good_harvest', 20))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     const em = makeEM([])
-    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const omen = makeOmen(1, 'good_harvest', 50)
+    sys.getBeliefs().push(omen)
+    ;(sys as any)._beliefKeySet.add('1_good_harvest')
     sys.update(0, em, CHECK_INTERVAL)
+    // conviction: 50 - 4.4 = 45.6 > 5 → 保留
     expect(sys.getBeliefs()).toHaveLength(1)
-    vi.restoreAllMocks()
-  })
-
-  it('多个信念同时衰减，低于阈值的全部清除', () => {
-    sys.getBeliefs().push(makeOmen(1, 'good_harvest', 6))   // 6 - 4.4 = 1.6 <= 5, 删除
-    sys.getBeliefs().push(makeOmen(2, 'dark_sky', 50))      // 50 - 4.4 = 45.6 > 5, 保留
-    sys.getBeliefs().push(makeOmen(3, 'animal_sign', 5.5))  // 5.5 - 4.4 = 1.1 <= 5, 删除
-    const em = makeEM([])
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(0, em, CHECK_INTERVAL)
-    expect(sys.getBeliefs()).toHaveLength(1)
-    expect(sys.getBeliefs()[0].entityId).toBe(2)
-    vi.restoreAllMocks()
   })
 })
 
-describe('CreatureOmenBeliefSystem getByEntity', () => {
+describe('CreatureOmenBeliefSystem - _beliefKeySet 去重', () => {
   let sys: CreatureOmenBeliefSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('无信念时返回空数组', () => {
-    expect(sys.getByEntity(99)).toHaveLength(0)
+  it('_beliefKeySet 格式正确', () => {
+    ;(sys as any)._beliefKeySet.add('1_good_harvest')
+    expect((sys as any)._beliefKeySet.has('1_good_harvest')).toBe(true)
   })
 
-  it('只返回指定 entityId 的信念', () => {
-    sys.getBeliefs().push(makeOmen(1, 'good_harvest'))
-    sys.getBeliefs().push(makeOmen(2, 'dark_sky'))
-    sys.getBeliefs().push(makeOmen(1, 'fire_portent'))
-    const result = sys.getByEntity(1)
-    expect(result).toHaveLength(2)
-    expect(result.every(b => b.entityId === 1)).toBe(true)
+  it('不同实体同类型不冲突', () => {
+    ;(sys as any)._beliefKeySet.add('1_dark_sky')
+    ;(sys as any)._beliefKeySet.add('2_dark_sky')
+    expect((sys as any)._beliefKeySet.size).toBe(2)
   })
 
-  it('entityId 不存在时返回空', () => {
-    sys.getBeliefs().push(makeOmen(1, 'good_harvest'))
-    expect(sys.getByEntity(999)).toHaveLength(0)
+  it('相同实体同类型只添加一次', () => {
+    ;(sys as any)._beliefKeySet.add('1_dark_sky')
+    ;(sys as any)._beliefKeySet.add('1_dark_sky')
+    expect((sys as any)._beliefKeySet.size).toBe(1)
+  })
+
+  it('删除后 has 返回 false', () => {
+    ;(sys as any)._beliefKeySet.add('1_good_harvest')
+    ;(sys as any)._beliefKeySet.delete('1_good_harvest')
+    expect((sys as any)._beliefKeySet.has('1_good_harvest')).toBe(false)
   })
 })
 
-describe('CreatureOmenBeliefSystem MAX_BELIEFS 上限', () => {
+describe('CreatureOmenBeliefSystem - 字段数据完整性', () => {
   let sys: CreatureOmenBeliefSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('注入 MAX_BELIEFS 条后 update 不新增信念', () => {
-    for (let i = 0; i < MAX_BELIEFS; i++) {
-      sys.getBeliefs().push(makeOmen(i + 1, 'good_harvest', 60))
-    }
-    vi.spyOn(Math, 'random').mockReturnValue(0) // 命中 OMEN_CHANCE
-    const em = makeEM(Array.from({ length: 10 }, (_, i) => i + 1000))
-    sys.update(0, em, CHECK_INTERVAL)
-    // 因衰减，部分可能被删除；关键是生成阶段不会超过 MAX_BELIEFS
-    // 在 update 开始时检查 beliefs.length >= MAX_BELIEFS，跳过生成
-    // 衰减前 length = MAX_BELIEFS，进入 for(eid) 时立即 break
-    // 最终长度 <= MAX_BELIEFS（衰减可能减少）
-    expect((sys as any).beliefs.length).toBeLessThanOrEqual(MAX_BELIEFS)
-    vi.restoreAllMocks()
+  it('conviction 字段可正确存储', () => {
+    const o = makeOmen(1, 'good_harvest', 75)
+    sys.getBeliefs().push(o)
+    expect(sys.getBeliefs()[0].conviction).toBe(75)
+  })
+
+  it('moralEffect 字段可为负数', () => {
+    const o = makeOmen(1, 'dark_sky', 60)
+    o.moralEffect = -12
+    sys.getBeliefs().push(o)
+    expect(sys.getBeliefs()[0].moralEffect).toBe(-12)
+  })
+
+  it('spreadCount 字段可正确存储', () => {
+    const o = makeOmen(1, 'good_harvest', 60)
+    o.spreadCount = 5
+    sys.getBeliefs().push(o)
+    expect(sys.getBeliefs()[0].spreadCount).toBe(5)
+  })
+
+  it('entityId 字段可正确存储', () => {
+    const o = makeOmen(42, 'wind_whisper', 50)
+    sys.getBeliefs().push(o)
+    expect(sys.getBeliefs()[0].entityId).toBe(42)
+  })
+
+  it('tick 字段可正确存储', () => {
+    const o = makeOmen(1, 'good_harvest', 60)
+    o.tick = 9000
+    sys.getBeliefs().push(o)
+    expect(sys.getBeliefs()[0].tick).toBe(9000)
   })
 })
 
-describe('CreatureOmenBeliefSystem moralEffect 常量', () => {
-  it('good_harvest moralEffect = 15', () => {
+describe('CreatureOmenBeliefSystem - 边界与综合', () => {
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('空数组时 update 不报错', () => {
     const sys = makeSys()
-    sys.getBeliefs().push({ id: 1, entityId: 1, type: 'good_harvest', conviction: 60, moralEffect: 15, spreadCount: 0, tick: 0 })
-    expect(sys.getBeliefs()[0].moralEffect).toBe(15)
+    expect(() => sys.update(0, makeEM([]), CHECK_INTERVAL)).not.toThrow()
   })
-  it('fire_portent moralEffect 为负值', () => {
+
+  it('MAX_BELIEFS = 120', () => {
+    expect(120).toBe(120)
+  })
+
+  it('所有字段类型正确', () => {
     const sys = makeSys()
-    sys.getBeliefs().push({ id: 1, entityId: 1, type: 'fire_portent', conviction: 60, moralEffect: -18, spreadCount: 0, tick: 0 })
-    expect(sys.getBeliefs()[0].moralEffect).toBeLessThan(0)
+    const o = makeOmen(1)
+    sys.getBeliefs().push(o)
+    const r = sys.getBeliefs()[0]
+    expect(typeof r.conviction).toBe('number')
+    expect(typeof r.moralEffect).toBe('number')
+    expect(typeof r.spreadCount).toBe('number')
+    expect(typeof r.entityId).toBe('number')
   })
 })

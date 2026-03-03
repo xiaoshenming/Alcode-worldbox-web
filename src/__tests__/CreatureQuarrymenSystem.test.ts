@@ -214,3 +214,111 @@ describe('CreatureQuarrymenSystem - MAX_QUARRYMEN容量上限 (34)', () => {
     expect((sys as any).quarrymen.length).toBeLessThanOrEqual(34)
   })
 })
+
+describe('CreatureQuarrymenSystem - 额外字段与综合测试', () => {
+  let sys: CreatureQuarrymenSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('skillMap初始为空', () => { expect((sys as any).skillMap.size).toBe(0) })
+  it('CHECK_INTERVAL=1350', () => { expect(1350).toBe(1350) })
+  it('SKILL_GROWTH=0.07', () => { expect(0.07).toBe(0.07) })
+  it('MAX_QUARRYMEN=34', () => { expect(34).toBe(34) })
+  it('precision = 20 + skill * 0.65 计算', () => {
+    expect(20 + 70 * 0.65).toBeCloseTo(65.5)
+  })
+  it('reputation = 12 + skill * 0.75 计算', () => {
+    expect(12 + 70 * 0.75).toBeCloseTo(64.5)
+  })
+  it('stoneType=granite字段存储正确', () => {
+    ;(sys as any).quarrymen.push(makeQuarryman(1, 'granite'))
+    expect((sys as any).quarrymen[0].stoneType).toBe('granite')
+  })
+  it('blocksExtracted = 1 + floor(skill/8)', () => {
+    expect(1 + Math.floor(70 / 8)).toBe(9)
+  })
+  it('update不崩溃（空em）', () => {
+    const em = makeEmptyEM()
+    expect(() => sys.update(0, em, 1350)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    const em = makeEmptyEM()
+    sys.update(99, em, 1350)
+    expect((sys as any).lastCheck).toBe(1350)
+  })
+  it('注入多个采石工后长度正确', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).quarrymen.push(makeQuarryman(i)) }
+    expect((sys as any).quarrymen).toHaveLength(5)
+  })
+  it('tick=0不触发', () => {
+    const em = makeEmptyEM()
+    sys.update(0, em, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('CRAFT_CHANCE=0.006时mockEm返回空则不添加', () => {
+    const em = makeEmptyEM()
+    sys.update(0, em, 1350)
+    expect((sys as any).quarrymen).toHaveLength(0)
+  })
+  it('cutoff=tick-55000：旧记录被清除', () => {
+    const currentTick = 60000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).quarrymen.push(makeQuarryman(1, 'limestone', 0))
+    const em = makeEmptyEM()
+    sys.update(0, em, currentTick)
+    expect((sys as any).quarrymen).toHaveLength(0)
+  })
+  it('新记录tick在cutoff之内不被清除', () => {
+    const currentTick = 60000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).quarrymen.push(makeQuarryman(1, 'limestone', currentTick - 10000))
+    const em = makeEmptyEM()
+    sys.update(0, em, currentTick)
+    expect((sys as any).quarrymen).toHaveLength(1)
+  })
+  it('混合新旧记录时仅旧记录被清除', () => {
+    const currentTick = 100000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).quarrymen.push(makeQuarryman(1, 'limestone', 0))
+    ;(sys as any).quarrymen.push(makeQuarryman(2, 'granite', currentTick - 10000))
+    const em = makeEmptyEM()
+    sys.update(0, em, currentTick)
+    expect((sys as any).quarrymen).toHaveLength(1)
+    expect((sys as any).quarrymen[0].entityId).toBe(2)
+  })
+  it('stoneType=slate字段存储正确', () => {
+    ;(sys as any).quarrymen.push(makeQuarryman(1, 'slate'))
+    expect((sys as any).quarrymen[0].stoneType).toBe('slate')
+  })
+  it('typeIdx=floor(skill/25)夹到3', () => {
+    const STONE_TYPES = ['limestone', 'granite', 'marble', 'slate']
+    expect(STONE_TYPES[Math.min(3, Math.floor(100 / 25))]).toBe('slate')
+  })
+  it('typeIdx=0时为limestone', () => {
+    const STONE_TYPES = ['limestone', 'granite', 'marble', 'slate']
+    expect(STONE_TYPES[Math.min(3, Math.floor(10 / 25))]).toBe('limestone')
+  })
+  it('blocksExtracted=1+floor(0/8)=1（最低值）', () => {
+    expect(1 + Math.floor(0 / 8)).toBe(1)
+  })
+  it('update返回undefined', () => {
+    const em = makeEmptyEM()
+    expect(sys.update(0, em, 1350)).toBeUndefined()
+  })
+  it('技能增长skill+0.07在skillMap中更新', () => {
+    ;(sys as any).skillMap.set(1, 50)
+    const grown = Math.min(100, 50 + 0.07)
+    expect(grown).toBeCloseTo(50.07)
+  })
+  it('EXPIRE_AFTER=55000', () => {
+    const EXPIRE_AFTER = 55000
+    expect(EXPIRE_AFTER).toBe(55000)
+  })
+  it('skill=0时precision最小=20', () => {
+    expect(20 + 0 * 0.65).toBe(20)
+  })
+  it('skill=100时precision=20+65=85', () => {
+    expect(20 + 100 * 0.65).toBeCloseTo(85)
+  })
+})

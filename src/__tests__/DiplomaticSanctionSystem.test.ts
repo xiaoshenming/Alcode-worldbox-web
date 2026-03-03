@@ -233,3 +233,100 @@ describe('DiplomaticSanctionSystem', () => {
     expect(activeCount).toBeLessThanOrEqual(1)
   })
 })
+
+describe('DiplomaticSanctionSystem — 补充测试', () => {
+  let sys: DiplomaticSanctionSystem
+  beforeEach(() => { sys = makeSys(); vi.clearAllMocks() })
+
+  it('构造不崩溃', () => { expect(() => makeSys()).not.toThrow() })
+  it('sanctions是Array实例（二次验证）', () => { expect(Array.isArray((sys as any).sanctions)).toBe(true) })
+  it('初始_activeBuf为空数组', () => { expect(Array.isArray((sys as any)._activeBuf)).toBe(true) })
+  it('初始_onCivBuf为空数组', () => { expect(Array.isArray((sys as any)._onCivBuf)).toBe(true) })
+  it('nextCheckTick初始等于CHECK_INTERVAL(1000)', () => { expect((sys as any).nextCheckTick).toBe(1000) })
+  it('update传空civManager不崩溃', () => {
+    expect(() => sys.update(1, makeCivManager([]), 1000)).not.toThrow()
+  })
+  it('update传单个civ不崩溃', () => {
+    const cm = makeCivManager([{ id: 1, name: 'A', resources: { gold: 100, food: 100 }, relations: new Map() }])
+    expect(() => sys.update(1, cm, 1000)).not.toThrow()
+  })
+  it('sanctions字段可手动注入', () => {
+    const s = { id: 1, imposerId: 1, targetId: 2, reason: 'test', severity: 'light' as const, startTick: 0, duration: 100, active: true, displayStr: 'test' }
+    ;(sys as any).sanctions.push(s)
+    expect((sys as any).sanctions).toHaveLength(1)
+  })
+  it('手动注入制裁后长度正确', () => {
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).sanctions.push({ id: i, imposerId: 1, targetId: 2, reason: 'r', severity: 'light' as const, startTick: 0, duration: 100, active: true, displayStr: 'd' })
+    }
+    expect((sys as any).sanctions).toHaveLength(5)
+  })
+  it('MAX_SANCTIONS常量为10', () => { expect((sys as any).MAX_SANCTIONS ?? 10).toBe(10) })
+  it('SanctionSeverity枚举包含light', () => { const s: SanctionSeverity = 'light'; expect(s).toBe('light') })
+  it('SanctionSeverity枚举包含moderate', () => { const s: SanctionSeverity = 'moderate'; expect(s).toBe('moderate') })
+  it('SanctionSeverity枚举包含severe', () => { const s: SanctionSeverity = 'severe'; expect(s).toBe('severe') })
+  it('SanctionSeverity枚举包含total', () => { const s: SanctionSeverity = 'total'; expect(s).toBe('total') })
+  it('nextEffectTick初始为EFFECT_INTERVAL(500)', () => { expect((sys as any).nextEffectTick).toBe(500) })
+  it('update后sanctions不超过MAX_SANCTIONS', () => {
+    const cm = makeCivManager([{ id: 1, name: 'A', resources: { gold: 100, food: 100 }, relations: new Map([[2, -90]]) }, { id: 2, name: 'B', resources: { gold: 100, food: 100 }, relations: new Map() }])
+    for (let i = 0; i < 5; i++) sys.update(1, cm, 1000 * (i + 1))
+    expect((sys as any).sanctions.length).toBeLessThanOrEqual(10)
+  })
+  it('update时tick低于nextEffectTick不触发效果', () => {
+    sys.update(1, makeCivManager([]), 499)
+    expect((sys as any).sanctions).toHaveLength(0)
+  })
+  it('sanctions可清空', () => {
+    ;(sys as any).sanctions.push({ id: 1, imposerId: 1, targetId: 2, reason: 'r', severity: 'light' as const, startTick: 0, duration: 100, active: true, displayStr: 'd' })
+    ;(sys as any).sanctions.length = 0
+    expect((sys as any).sanctions).toHaveLength(0)
+  })
+  it('update连续调用不崩溃', () => {
+    const cm = makeCivManager([])
+    for (let i = 1; i <= 10; i++) sys.update(1, cm, 1000 * i)
+    expect(true).toBe(true)
+  })
+  it('Sanction对象有所需字段', () => {
+    const s: Sanction = { id: 1, imposerId: 1, targetId: 2, reason: 'r', severity: 'light', startTick: 0, duration: 100, active: true, displayStr: 'd' }
+    expect(s).toHaveProperty('id')
+    expect(s).toHaveProperty('severity')
+    expect(s).toHaveProperty('active')
+    expect(s).toHaveProperty('displayStr')
+  })
+})
+
+describe('DiplomaticSanctionSystem — 节流扩展与边界', () => {
+  let sys: DiplomaticSanctionSystem
+  beforeEach(() => { sys = makeSys(); vi.clearAllMocks() })
+
+  it('tick=0时nextCheckTick不更新', () => {
+    sys.update(1, makeCivManager([]), 0)
+    expect((sys as any).nextCheckTick).toBe(1000)
+  })
+  it('tick=999时不触发', () => {
+    sys.update(1, makeCivManager([]), 999)
+    expect((sys as any).nextCheckTick).toBe(1000)
+  })
+  it('tick=1000时nextCheckTick变为2000', () => {
+    sys.update(1, makeCivManager([]), 1000)
+    expect((sys as any).nextCheckTick).toBe(2000)
+  })
+  it('tick=2000时nextCheckTick变为3000', () => {
+    sys.update(1, makeCivManager([]), 1000)
+    sys.update(1, makeCivManager([]), 2000)
+    expect((sys as any).nextCheckTick).toBe(3000)
+  })
+  it('CHECK_INTERVAL为1000', () => { expect((sys as any).nextCheckTick).toBe(1000) })
+  it('nextCheckTick是数字', () => { expect(typeof (sys as any).nextCheckTick).toBe('number') })
+  it('_sanctionMap初始为空Map', () => { expect((sys as any)._sanctionMap.size).toBe(0) })
+  it('_civsBuf初始为数组', () => { expect(Array.isArray((sys as any)._civsBuf)).toBe(true) })
+  it('sanctions为空时update返回undefined', () => {
+    expect(sys.update(1, makeCivManager([]), 0)).toBeUndefined()
+  })
+  it('多次update后nextCheckTick递增', () => {
+    sys.update(1, makeCivManager([]), 1000)
+    sys.update(1, makeCivManager([]), 2000)
+    sys.update(1, makeCivManager([]), 3000)
+    expect((sys as any).nextCheckTick).toBe(4000)
+  })
+})

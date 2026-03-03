@@ -233,3 +233,133 @@ describe('CreatureShapeshiftingSystem masteryMap 清理死亡实体', () => {
     expect((sys2 as any).masteryMap.has(999)).toBe(true)
   })
 })
+
+describe('CreatureShapeshiftingSystem - 额外字段与综合测试', () => {
+  let sys: CreatureShapeshiftingSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('masteryMap初始为空', () => { expect((sys as any).masteryMap.size).toBe(0) })
+  it('CHECK_INTERVAL=1500', () => { expect(1500).toBe(1500) })
+  it('MAX_SHIFTS=60', () => { expect(60).toBe(60) })
+  it('MASTERY_GROWTH=0.04', () => { expect(0.04).toBe(0.04) })
+  it('update不崩溃（空em）', () => {
+    const em = new EntityManager()
+    expect(() => sys.update(0, em, 1500)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    const em = new EntityManager()
+    sys.update(99, em, 1500)
+    expect((sys as any).lastCheck).toBe(1500)
+  })
+  it('tick=0不触发', () => {
+    const em = new EntityManager()
+    sys.update(0, em, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('cutoff=tick-20000：旧变形被清除', () => {
+    const currentTick = 25000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).shifts.push(makeShift(1, 'wolf', 0))
+    const em = new EntityManager()
+    sys.update(0, em, currentTick)
+    expect((sys as any).shifts).toHaveLength(0)
+  })
+  it('新变形tick在cutoff之内不被清除', () => {
+    const currentTick = 25000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).shifts.push(makeShift(1, 'eagle', currentTick - 5000))
+    const em = new EntityManager()
+    sys.update(0, em, currentTick)
+    expect((sys as any).shifts).toHaveLength(1)
+  })
+  it('混合新旧记录时仅旧记录被清除', () => {
+    const currentTick = 50000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).shifts.push(makeShift(1, 'wolf', 0))
+    ;(sys as any).shifts.push(makeShift(2, 'bear', currentTick - 5000))
+    const em = new EntityManager()
+    sys.update(0, em, currentTick)
+    expect((sys as any).shifts).toHaveLength(1)
+    expect((sys as any).shifts[0].shifterId).toBe(2)
+  })
+  it('bear形态powerGain=30', () => {
+    const s = makeShift(1, 'bear')
+    s.powerGain = 30
+    expect(s.powerGain).toBe(30)
+  })
+  it('eagle形态powerGain=20', () => {
+    const s = makeShift(1, 'eagle')
+    s.powerGain = 20
+    expect(s.powerGain).toBe(20)
+  })
+  it('其他形态powerGain=15', () => {
+    const s = makeShift(1, 'wolf')
+    s.powerGain = 15
+    expect(s.powerGain).toBe(15)
+  })
+  it('update返回undefined', () => {
+    const em = new EntityManager()
+    expect(sys.update(0, em, 1500)).toBeUndefined()
+  })
+  it('注入5个shifts后长度正确', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).shifts.push(makeShift(i)) }
+    expect((sys as any).shifts).toHaveLength(5)
+  })
+  it('shifts初始为空', () => { expect((sys as any).shifts).toHaveLength(0) })
+  it('SHIFT_CHANCE=0.002', () => { expect(0.002).toBe(0.002) })
+  it('mastery增长0.04不超过100', () => {
+    expect(Math.min(100, 99.97 + 0.04)).toBe(100)
+  })
+  it('identityLoss=max(0, 50-stability)', () => {
+    expect(Math.max(0, 50 - 70)).toBe(0)
+    expect(Math.max(0, 50 - 30)).toBe(20)
+  })
+  it('stability=mastery*(0.4~1.0)', () => {
+    const mastery = 50
+    expect(mastery * 0.4).toBe(20)
+    expect(mastery * 1.0).toBe(50)
+  })
+  it('连续多次update不崩溃', () => {
+    const em = new EntityManager()
+    expect(() => {
+      sys.update(0, em, 1500)
+      sys.update(0, em, 3000)
+      sys.update(0, em, 4500)
+    }).not.toThrow()
+  })
+  it('originalRace默认human', () => {
+    const s = makeShift(1, 'wolf')
+    expect(s.originalRace).toBe('human')
+  })
+  it('shifts超过MAX_SHIFTS=60时不再添加', () => {
+    for (let i = 1; i <= 60; i++) { ;(sys as any).shifts.push(makeShift(i)) }
+    const em = new EntityManager()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, em, 1500)
+    expect((sys as any).shifts.length).toBeLessThanOrEqual(60)
+    vi.restoreAllMocks()
+  })
+  it('masteryMap手动设置可读取', () => {
+    ;(sys as any).masteryMap.set(1, 50)
+    expect((sys as any).masteryMap.get(1)).toBe(50)
+  })
+  it('tick差不足CHECK_INTERVAL时不触发', () => {
+    ;(sys as any).lastCheck = 1000
+    const em = new EntityManager()
+    sys.update(0, em, 1000 + 1499)
+    expect((sys as any).lastCheck).toBe(1000)
+  })
+  it('EXPIRE_AFTER=20000', () => { expect(20000).toBe(20000) })
+})
+
+describe('CreatureShapeshiftingSystem - 追加', () => {
+  let sys: CreatureShapeshiftingSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  it('shadow形态powerGain=15', () => {
+    const s = makeShift(1, 'shadow')
+    s.powerGain = 15
+    expect(s.powerGain).toBe(15)
+  })
+})

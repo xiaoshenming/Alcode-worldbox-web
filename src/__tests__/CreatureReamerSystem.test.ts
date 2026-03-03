@@ -1,204 +1,352 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { CreatureReamerSystem } from '../systems/CreatureReamerSystem'
 import type { Reamer } from '../systems/CreatureReamerSystem'
 
+const CHECK_INTERVAL = 2940
+const MAX_WORKERS = 10
+
 let nextId = 1
 function makeSys(): CreatureReamerSystem { return new CreatureReamerSystem() }
-function makeReamer(entityId: number, overrides: Partial<Reamer> = {}): Reamer {
-  return { id: nextId++, entityId, reamingSkill: 70, holePrecision: 65, surfaceFinish: 80, dimensionalTolerance: 75, tick: 0, ...overrides }
+function makeWorker(entityId: number, overrides: Partial<Reamer> = {}): Reamer {
+  return { id: nextId++, entityId, reamingSkill: 70, holePrecision: 65, surfaceFinish: 60, dimensionalTolerance: 75, tick: 0, ...overrides }
 }
+const emMock = { getEntitiesWithComponents: () => [] } as any
 
-function makeEm(ids: number[] = []) {
-  return {
-    getEntitiesWithComponent: vi.fn().mockReturnValue(ids),
-    getEntitiesWithComponents: vi.fn().mockReturnValue(ids),
-    hasComponent: vi.fn().mockReturnValue(true),
-  } as any
-}
-
-const CHECK_INTERVAL = 2940
-
-describe('CreatureReamerSystem — 基础状态', () => {
+describe('CreatureReamerSystem - 初始状态', () => {
   let sys: CreatureReamerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无铰孔工', () => { expect((sys as any).reamers).toHaveLength(0) })
-  it('注入后可查询', () => {
-    ;(sys as any).reamers.push(makeReamer(1))
+  it('初始无工匠', () => { expect((sys as any).reamers).toHaveLength(0) })
+  it('注入后entityId可查询', () => {
+    ;(sys as any).reamers.push(makeWorker(1))
     expect((sys as any).reamers[0].entityId).toBe(1)
   })
-  it('返回内部引用', () => {
-    ;(sys as any).reamers.push(makeReamer(1))
+  it('返回内部引用一致', () => {
+    ;(sys as any).reamers.push(makeWorker(1))
     expect((sys as any).reamers).toBe((sys as any).reamers)
   })
-  it('字段正确', () => {
-    ;(sys as any).reamers.push(makeReamer(2))
-    const r = (sys as any).reamers[0]
-    expect(r.reamingSkill).toBe(70)
-    expect(r.surfaceFinish).toBe(80)
+  it('字段reamingSkill正确', () => {
+    ;(sys as any).reamers.push(makeWorker(2))
+    expect((sys as any).reamers[0].reamingSkill).toBe(70)
+  })
+  it('字段dimensionalTolerance正确', () => {
+    ;(sys as any).reamers.push(makeWorker(2))
+    expect((sys as any).reamers[0].dimensionalTolerance).toBe(75)
   })
   it('多个全部返回', () => {
-    ;(sys as any).reamers.push(makeReamer(1))
-    ;(sys as any).reamers.push(makeReamer(2))
+    ;(sys as any).reamers.push(makeWorker(1))
+    ;(sys as any).reamers.push(makeWorker(2))
     expect((sys as any).reamers).toHaveLength(2)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })
 
-describe('CreatureReamerSystem — CHECK_INTERVAL 节流', () => {
+describe('CreatureReamerSystem - CHECK_INTERVAL节流', () => {
   let sys: CreatureReamerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('tick 未达 CHECK_INTERVAL 时 lastCheck 不更新', () => {
-    const em = makeEm()
-    sys.update(1, em, CHECK_INTERVAL - 1)
+  it('tick差不足CHECK_INTERVAL时不执行，lastCheck不变', () => {
+    sys.update(0, emMock, CHECK_INTERVAL - 1)
     expect((sys as any).lastCheck).toBe(0)
   })
-
-  it('tick 恰好等于 CHECK_INTERVAL 时触发更新', () => {
-    const em = makeEm()
-    sys.update(1, em, CHECK_INTERVAL)
+  it('tick差=CHECK_INTERVAL时触发，lastCheck更新', () => {
+    sys.update(0, emMock, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
-
-  it('两次连续 tick 间隔不足时第二次不触发', () => {
-    const em = makeEm()
-    sys.update(1, em, CHECK_INTERVAL)
-    const snap = (sys as any).lastCheck
-    sys.update(1, em, CHECK_INTERVAL + 500)
-    expect((sys as any).lastCheck).toBe(snap)
+  it('tick差=CHECK_INTERVAL-1不触发', () => {
+    ;(sys as any).lastCheck = 5000
+    sys.update(0, emMock, 5000 + CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(5000)
   })
-
-  it('间隔满足时 lastCheck 随 tick 推进', () => {
-    const em = makeEm()
-    sys.update(1, em, CHECK_INTERVAL)
-    sys.update(1, em, CHECK_INTERVAL * 2)
-    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  it('tick差=CHECK_INTERVAL精确触发', () => {
+    ;(sys as any).lastCheck = 5000
+    sys.update(0, emMock, 5000 + CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(5000 + CHECK_INTERVAL)
+  })
+  it('未触发时技能不增长', () => {
+    const w = makeWorker(1, { reamingSkill: 50 })
+    ;(sys as any).reamers.push(w)
+    sys.update(0, emMock, CHECK_INTERVAL - 1)
+    expect(w.reamingSkill).toBe(50)
+  })
+  it('触发后lastCheck更新为当前tick', () => {
+    ;(sys as any).lastCheck = 1000
+    sys.update(0, emMock, 1000 + CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(1000 + CHECK_INTERVAL)
+  })
+  it('连续两次间隔不足跳过第二次', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    const snap = (sys as any).reamers.length
+    sys.update(0, emMock, CHECK_INTERVAL + 1)
+    expect((sys as any).reamers.length).toBe(snap)
+  })
+  it('两次均触发则技能增长两次', () => {
+    const w = makeWorker(1, { reamingSkill: 50 })
+    ;(sys as any).reamers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    sys.update(0, emMock, CHECK_INTERVAL * 2)
+    expect(w.reamingSkill).toBeCloseTo(50 + 0.02 * 2, 4)
   })
 })
 
-describe('CreatureReamerSystem — 技能增长与上限', () => {
+describe('CreatureReamerSystem - 技能递增与上限', () => {
   let sys: CreatureReamerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('update 后 reamingSkill 增加 0.02', () => {
-    const r = makeReamer(1, { reamingSkill: 50 })
-    ;(sys as any).reamers.push(r)
-    const em = makeEm()
-    sys.update(1, em, CHECK_INTERVAL)
-    expect(r.reamingSkill).toBeCloseTo(50.02, 5)
+  it('reamingSkill每次+0.02', () => {
+    const w = makeWorker(1, { reamingSkill: 50 })
+    ;(sys as any).reamers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.reamingSkill).toBeCloseTo(50 + 0.02, 5)
   })
-
-  it('update 后 holePrecision 增加 0.015', () => {
-    const r = makeReamer(1, { holePrecision: 40 })
-    ;(sys as any).reamers.push(r)
-    const em = makeEm()
-    sys.update(1, em, CHECK_INTERVAL)
-    expect(r.holePrecision).toBeCloseTo(40.015, 5)
+  it('holePrecision每次+0.015', () => {
+    const w = makeWorker(1, { holePrecision: 40 })
+    ;(sys as any).reamers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.holePrecision).toBeCloseTo(40 + 0.015, 5)
   })
-
-  it('update 后 dimensionalTolerance 增加 0.01', () => {
-    const r = makeReamer(1, { dimensionalTolerance: 30 })
-    ;(sys as any).reamers.push(r)
-    const em = makeEm()
-    sys.update(1, em, CHECK_INTERVAL)
-    expect(r.dimensionalTolerance).toBeCloseTo(30.01, 5)
+  it('dimensionalTolerance每次+0.01', () => {
+    const w = makeWorker(1, { dimensionalTolerance: 60 })
+    ;(sys as any).reamers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.dimensionalTolerance).toBeCloseTo(60 + 0.01, 5)
   })
-
-  it('reamingSkill 不超过 100 上限', () => {
-    const r = makeReamer(1, { reamingSkill: 99.99 })
-    ;(sys as any).reamers.push(r)
-    const em = makeEm()
-    sys.update(1, em, CHECK_INTERVAL)
-    expect(r.reamingSkill).toBeLessThanOrEqual(100)
+  it('reamingSkill上限100不超过', () => {
+    const w = makeWorker(1, { reamingSkill: 99.99 })
+    ;(sys as any).reamers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.reamingSkill).toBeLessThanOrEqual(100)
   })
-
-  it('holePrecision 不超过 100 上限', () => {
-    const r = makeReamer(1, { holePrecision: 99.99 })
-    ;(sys as any).reamers.push(r)
-    const em = makeEm()
-    sys.update(1, em, CHECK_INTERVAL)
-    expect(r.holePrecision).toBeLessThanOrEqual(100)
+  it('holePrecision上限100不超过', () => {
+    const w = makeWorker(1, { holePrecision: 99.99 })
+    ;(sys as any).reamers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.holePrecision).toBeLessThanOrEqual(100)
   })
-
-  it('dimensionalTolerance 不超过 100 上限', () => {
-    const r = makeReamer(1, { dimensionalTolerance: 99.99 })
-    ;(sys as any).reamers.push(r)
-    const em = makeEm()
-    sys.update(1, em, CHECK_INTERVAL)
-    expect(r.dimensionalTolerance).toBeLessThanOrEqual(100)
+  it('dimensionalTolerance上限100不超过', () => {
+    const w = makeWorker(1, { dimensionalTolerance: 99.99 })
+    ;(sys as any).reamers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.dimensionalTolerance).toBeLessThanOrEqual(100)
   })
-
-  it('多个 reamer 各自独立增长', () => {
-    const r1 = makeReamer(1, { reamingSkill: 20 })
-    const r2 = makeReamer(2, { reamingSkill: 60 })
-    ;(sys as any).reamers.push(r1, r2)
-    const em = makeEm()
-    sys.update(1, em, CHECK_INTERVAL)
-    expect(r1.reamingSkill).toBeCloseTo(20.02, 5)
-    expect(r2.reamingSkill).toBeCloseTo(60.02, 5)
+  it('surfaceFinish不参与递增', () => {
+    const w = makeWorker(1, { surfaceFinish: 60 })
+    ;(sys as any).reamers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.surfaceFinish).toBe(60)
+  })
+  it('多个工匠同时增长', () => {
+    ;(sys as any).reamers.push(makeWorker(1, { reamingSkill: 50 }))
+    ;(sys as any).reamers.push(makeWorker(2, { reamingSkill: 60 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).reamers[0].reamingSkill).toBeCloseTo(50 + 0.02, 5)
+    expect((sys as any).reamers[1].reamingSkill).toBeCloseTo(60 + 0.02, 5)
+  })
+  it('reamingSkill=100时保持不变', () => {
+    const w = makeWorker(1, { reamingSkill: 100 })
+    ;(sys as any).reamers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.reamingSkill).toBe(100)
   })
 })
 
-describe('CreatureReamerSystem — cleanup（reamingSkill <= 4 移除）', () => {
+describe('CreatureReamerSystem - cleanup: reamingSkill<=4时删除', () => {
   let sys: CreatureReamerSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  it('reamingSkill <= 4 的 reamer 在 update 后被移除', () => {
-    // 注入一个 reamingSkill=3.98（增长后仍 <= 4）的 reamer
-    const r = makeReamer(1, { reamingSkill: 3.98 })
-    ;(sys as any).reamers.push(r)
-    const em = makeEm()
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, em, CHECK_INTERVAL)
-    // 3.98 + 0.02 = 4.00，边界条件：<= 4 被移除
-    expect((sys as any).reamers).toHaveLength(0)
+  beforeEach(() => {
+    sys = makeSys(); nextId = 1
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
   })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('reamingSkill 刚好大于 4（4.001）的不被移除', () => {
-    const r = makeReamer(1, { reamingSkill: 3.99 })
-    ;(sys as any).reamers.push(r)
-    const em = makeEm()
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, em, CHECK_INTERVAL)
-    // 3.99 + 0.02 = 4.01 > 4，保留
+  it('reamingSkill=4时更新后>4，保留', () => {
+    ;(sys as any).reamers.push(makeWorker(1, { reamingSkill: 4 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
     expect((sys as any).reamers).toHaveLength(1)
   })
-
-  it('混合：低技能被移除，高技能保留', () => {
-    const low = makeReamer(1, { reamingSkill: 3.97 })  // 3.97+0.02=3.99 <= 4 => 移除
-    const high = makeReamer(2, { reamingSkill: 50 })
-    ;(sys as any).reamers.push(low, high)
-    const em = makeEm()
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, em, CHECK_INTERVAL)
-    const reamers = (sys as any).reamers as Reamer[]
-    expect(reamers).toHaveLength(1)
-    expect(reamers[0].entityId).toBe(2)
+  it('reamingSkill=3.98时更新后<=4，删除', () => {
+    ;(sys as any).reamers.push(makeWorker(1, { reamingSkill: 3.98 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).reamers).toHaveLength(0)
   })
-
-  it('所有 reamer 技能充足时无移除', () => {
-    ;(sys as any).reamers.push(makeReamer(1, { reamingSkill: 50 }))
-    ;(sys as any).reamers.push(makeReamer(2, { reamingSkill: 80 }))
-    const em = makeEm()
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, em, CHECK_INTERVAL)
-    expect((sys as any).reamers).toHaveLength(2)
+  it('reamingSkill=3.99时更新后>4，保留', () => {
+    ;(sys as any).reamers.push(makeWorker(1, { reamingSkill: 3.99 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).reamers).toHaveLength(1)
+  })
+  it('高技能工匠不被删除', () => {
+    ;(sys as any).reamers.push(makeWorker(1, { reamingSkill: 50 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).reamers).toHaveLength(1)
+  })
+  it('多个低技能全部删除', () => {
+    for (let i = 1; i <= 3; i++) {
+      ;(sys as any).reamers.push(makeWorker(i, { reamingSkill: 2 }))
+    }
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).reamers).toHaveLength(0)
+  })
+  it('混合：低技能删除高技能保留', () => {
+    ;(sys as any).reamers.push(makeWorker(1, { reamingSkill: 2 }))
+    ;(sys as any).reamers.push(makeWorker(2, { reamingSkill: 50 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).reamers).toHaveLength(1)
+    expect((sys as any).reamers[0].entityId).toBe(2)
+  })
+  it('reamingSkill=1时必然被删除', () => {
+    ;(sys as any).reamers.push(makeWorker(1, { reamingSkill: 1 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).reamers).toHaveLength(0)
+  })
+  it('reamingSkill=3.97时更新后<4被删除', () => {
+    ;(sys as any).reamers.push(makeWorker(1, { reamingSkill: 3.97 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).reamers).toHaveLength(0)
   })
 })
 
-describe('CreatureReamerSystem — 招募上限', () => {
+describe('CreatureReamerSystem - MAX_WORKERS上限与招募', () => {
   let sys: CreatureReamerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('已达 MAX_REAMERS(10) 时不再招募', () => {
-    for (let i = 1; i <= 10; i++) {
-      ;(sys as any).reamers.push(makeReamer(i))
+  it('已达MAX_WORKERS时不再招募', () => {
+    for (let i = 0; i < MAX_WORKERS; i++) {
+      ;(sys as any).reamers.push(makeWorker(i + 1))
     }
-    vi.spyOn(Math, 'random').mockReturnValue(0) // 使概率通过
-    const em = makeEm()
-    sys.update(1, em, CHECK_INTERVAL)
-    vi.restoreAllMocks()
-    // 招募后技能增长，cleanup 不会移除（skill 都是 70+0.02），长度保持 10
-    expect((sys as any).reamers).toHaveLength(10)
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).reamers.length).toBeLessThanOrEqual(MAX_WORKERS)
+  })
+  it('数量<MAX且random<RECRUIT_CHANCE时招募', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).reamers.length).toBeGreaterThanOrEqual(1)
+  })
+  it('random=1时不招募', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).reamers).toHaveLength(0)
+  })
+  it('招募后tick等于当前tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    if ((sys as any).reamers.length > 0) {
+      expect((sys as any).reamers[0].tick).toBe(CHECK_INTERVAL)
+    }
+  })
+  it('多次招募id递增唯一', () => {
+    const sys2 = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys2.update(0, emMock, CHECK_INTERVAL)
+    sys2.update(0, emMock, CHECK_INTERVAL * 2)
+    const workers = (sys2 as any).reamers
+    if (workers.length >= 2) {
+      expect(workers[1].id).toBeGreaterThan(workers[0].id)
+    }
+  })
+  it('招募时reamingSkill在[10,35]范围内', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    if ((sys as any).reamers.length > 0) {
+      const v = (sys as any).reamers[0].reamingSkill
+      expect(v).toBeGreaterThanOrEqual(10)
+      expect(v).toBeLessThanOrEqual(35)
+    }
+  })
+  it('招募的entityId在[0,499]范围', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    if ((sys as any).reamers.length > 0) {
+      const eid = (sys as any).reamers[0].entityId
+      expect(eid).toBeGreaterThanOrEqual(0)
+      expect(eid).toBeLessThanOrEqual(499)
+    }
+  })
+})
+
+describe('CreatureReamerSystem - 边界与综合场景', () => {
+  let sys: CreatureReamerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('空系统更新不抛出异常', () => {
+    expect(() => sys.update(0, emMock, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    sys.update(999, emMock, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('多次更新技能累积', () => {
+    const w = makeWorker(1, { reamingSkill: 50 })
+    ;(sys as any).reamers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    for (let t = 1; t <= 3; t++) {
+      sys.update(0, emMock, CHECK_INTERVAL * t)
+    }
+    expect(w.reamingSkill).toBeCloseTo(50 + 0.02 * 3, 4)
+  })
+  it('系统update返回undefined', () => {
+    expect(sys.update(0, emMock, CHECK_INTERVAL)).toBeUndefined()
+  })
+  it('tick=0不触发', () => {
+    sys.update(0, emMock, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('注入5个工匠后长度为5', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).reamers.push(makeWorker(i)) }
+    expect((sys as any).reamers).toHaveLength(5)
+  })
+  it('大量工匠同时更新不抛出', () => {
+    for (let i = 1; i <= 8; i++) {
+      ;(sys as any).reamers.push(makeWorker(i, { reamingSkill: 50 }))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(0, emMock, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('reamingSkill和dimensionalTolerance同时增长验证', () => {
+    const w = makeWorker(1, { reamingSkill: 50, dimensionalTolerance: 60 })
+    ;(sys as any).reamers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.reamingSkill).toBeCloseTo(50 + 0.02, 5)
+    expect(w.dimensionalTolerance).toBeCloseTo(60 + 0.01, 5)
+  })
+})
+
+describe('CreatureReamerSystem - 额外边界验证', () => {
+  let sys: CreatureReamerSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('reamingSkill=4.00时更新后4.02>4保留', () => {
+    ;(sys as any).reamers.push({ id: 99, entityId: 99, reamingSkill: 4.00, tick: 0 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).reamers).toHaveLength(1)
+  })
+  it('tick负值时不触发', () => {
+    sys.update(0, emMock, -1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('两次相同tick只触发一次', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    const check1 = (sys as any).lastCheck
+    sys.update(0, emMock, CHECK_INTERVAL) // same tick, difference=0
+    expect((sys as any).lastCheck).toBe(check1)
   })
 })

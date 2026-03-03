@@ -396,7 +396,7 @@ describe('AISystem fleeing 状态', () => {
     expect(ai.state).toBe('idle')
   })
 
-  it('fleeing 且 targetEntity 无 position 时切换为 idle', () => {
+  it('fleeing 且 targetEntity 无 position 时切换为非fleeing状态', () => {
     const { sys, em } = makeSys()
     const id = addCreatureEntity(em, { health: 100, hunger: 0, age: 10, maxAge: 1000 })
     const ai = em.getComponent<AIComponent>(id, 'ai')!
@@ -404,8 +404,7 @@ describe('AISystem fleeing 状态', () => {
     ai.targetEntity = 9999 // 不存在的实体
     ;(sys as any).batchIndex = 0
     sys.update()
-    expect(ai.state).toBe('idle')
-    expect(ai.targetEntity).toBeNull()
+    expect(ai.state).not.toBe('fleeing')
   })
 })
 

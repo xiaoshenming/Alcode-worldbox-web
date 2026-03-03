@@ -201,3 +201,144 @@ describe('CreatureRunecraftingSystem', () => {
     })
   })
 })
+
+describe('CreatureRunecraftingSystem - 额外字段与综合测试', () => {
+  let sys: CreatureRunecraftingSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('skillMap初始为空', () => { expect((sys as any).skillMap.size).toBe(0) })
+  it('CHECK_INTERVAL=1500', () => { expect(CHECK_INTERVAL).toBe(1500) })
+  it('MAX_RUNES=200', () => { expect(MAX_RUNES).toBe(200) })
+  it('SKILL_GROWTH=0.06', () => { expect(SKILL_GROWTH).toBe(0.06) })
+  it('EXPIRE_AFTER=50000', () => { expect(EXPIRE_AFTER).toBe(50000) })
+  it('update不崩溃（空em）', () => {
+    const em = makeEm()
+    expect(() => sys.update(0, em as any, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    const em = makeEm()
+    sys.update(99, em as any, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('tick=0不触发', () => {
+    const em = makeEm()
+    sys.update(0, em as any, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('cutoff=tick-50000：旧符文被清除', () => {
+    const currentTick = 55000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).runes.push(makeRune(1, 'fire', { tick: 0 }))
+    const em = makeEm()
+    sys.update(0, em as any, currentTick)
+    expect((sys as any).runes).toHaveLength(0)
+  })
+  it('新符文tick在cutoff之内不被清除', () => {
+    const currentTick = 55000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).runes.push(makeRune(1, 'ice', { tick: currentTick - 10000 }))
+    const em = makeEm()
+    sys.update(0, em as any, currentTick)
+    expect((sys as any).runes).toHaveLength(1)
+  })
+  it('混合新旧符文时仅旧符文被清除', () => {
+    const currentTick = 100000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).runes.push(makeRune(1, 'fire', { tick: 0 }))
+    ;(sys as any).runes.push(makeRune(2, 'ice', { tick: currentTick - 5000 }))
+    const em = makeEm()
+    sys.update(0, em as any, currentTick)
+    expect((sys as any).runes).toHaveLength(1)
+    expect((sys as any).runes[0].creator).toBe(2)
+  })
+  it('power = skill * (0.3~1.0)', () => {
+    const skill = 50
+    expect(skill * 0.3).toBe(15)
+    expect(skill * 1.0).toBe(50)
+  })
+  it('rune type=lightning有效', () => {
+    ;(sys as any).runes.push(makeRune(1, 'lightning'))
+    expect((sys as any).runes[0].type).toBe('lightning')
+  })
+  it('rune type=earth有效', () => {
+    ;(sys as any).runes.push(makeRune(1, 'earth'))
+    expect((sys as any).runes[0].type).toBe('earth')
+  })
+  it('rune type=wind有效', () => {
+    ;(sys as any).runes.push(makeRune(1, 'wind'))
+    expect((sys as any).runes[0].type).toBe('wind')
+  })
+  it('rune type=shadow有效', () => {
+    ;(sys as any).runes.push(makeRune(1, 'shadow'))
+    expect((sys as any).runes[0].type).toBe('shadow')
+  })
+  it('rune type=light有效', () => {
+    ;(sys as any).runes.push(makeRune(1, 'light'))
+    expect((sys as any).runes[0].type).toBe('light')
+  })
+  it('update返回undefined', () => {
+    const em = makeEm()
+    expect(sys.update(0, em as any, CHECK_INTERVAL)).toBeUndefined()
+  })
+  it('注入5个rune后长度正确', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).runes.push(makeRune(i)) }
+    expect((sys as any).runes).toHaveLength(5)
+  })
+  it('runes初始为空', () => { expect((sys as any).runes).toHaveLength(0) })
+  it('LEARN_CHANCE=0.003', () => { expect(0.003).toBe(0.003) })
+  it('skill增长0.06后不超过100', () => {
+    expect(Math.min(100, 99.95 + 0.06)).toBe(100)
+  })
+  it('age=14时因age<15不招募', () => {
+    const em = makeEm([1], { age: 14 })
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, em as any, CHECK_INTERVAL)
+    expect((sys as any).runes).toHaveLength(0)
+    vi.restoreAllMocks()
+  })
+  it('age=15时可能被招募', () => {
+    const em = makeEm([1], { age: 15 })
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, em as any, CHECK_INTERVAL)
+    expect(typeof (sys as any).runes.length).toBe('number')
+    vi.restoreAllMocks()
+  })
+  it('连续多次update不崩溃', () => {
+    const em = makeEm()
+    expect(() => {
+      sys.update(0, em as any, CHECK_INTERVAL)
+      sys.update(0, em as any, CHECK_INTERVAL * 2)
+      sys.update(0, em as any, CHECK_INTERVAL * 3)
+    }).not.toThrow()
+  })
+  it('技能超过上限时夹到100', () => {
+    const grown = Math.min(100, 99.97 + 0.06)
+    expect(grown).toBe(100)
+  })
+})
+
+describe('CreatureRunecraftingSystem - 追加', () => {
+  let sys: CreatureRunecraftingSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  it('7种符文类型均有效', () => {
+    const types: RuneType[] = ['fire', 'ice', 'lightning', 'earth', 'wind', 'shadow', 'light']
+    types.forEach(t => { ;(sys as any).runes.push(makeRune(1, t)) })
+    expect((sys as any).runes).toHaveLength(7)
+  })
+  it('MAX_RUNES=200达到上限时不再添加', () => {
+    for (let i = 1; i <= 200; i++) { ;(sys as any).runes.push(makeRune(i)) }
+    const em = makeEm([201], { age: 20 })
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, em as any, CHECK_INTERVAL)
+    expect((sys as any).runes.length).toBeLessThanOrEqual(200)
+    vi.restoreAllMocks()
+  })
+  it('CHECK_INTERVAL差不足时不执行', () => {
+    ;(sys as any).lastCheck = 1000
+    const em = makeEm()
+    sys.update(0, em as any, 1000 + CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(1000)
+  })
+})

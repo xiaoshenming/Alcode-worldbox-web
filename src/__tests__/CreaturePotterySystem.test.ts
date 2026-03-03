@@ -188,3 +188,109 @@ describe('CreaturePotterySystem - durability 衰减与 cleanup', () => {
     expect(MAX_POTTERY).toBe(100)
   })
 })
+
+describe('CreaturePotterySystem - 额外字段与综合测试', () => {
+  let sys: CreaturePotterySystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('skillMap初始为空Map', () => { expect((sys as any).skillMap.size).toBe(0) })
+  it('注入后crafterId可查询', () => {
+    ;(sys as any).pottery.push(makePottery(42))
+    expect((sys as any).pottery[0].crafterId).toBe(42)
+  })
+  it('空系统update不抛出', () => {
+    expect(() => sys.update(0, mockEm, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    sys.update(99, mockEm, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('tick=0不触发', () => {
+    sys.update(0, mockEm, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('SKILL_GROWTH=0.07', () => { expect(SKILL_GROWTH).toBe(0.07) })
+  it('EXPIRE_AFTER=60000', () => { expect(EXPIRE_AFTER).toBe(60000) })
+  it('DURABILITY_DECAY=0.02', () => { expect(DURABILITY_DECAY).toBe(0.02) })
+  it('CHECK_INTERVAL=1200', () => { expect(CHECK_INTERVAL).toBe(1200) })
+  it('durability=0.02时更新后被删除', () => {
+    ;(sys as any).pottery.push(makePottery(1, { durability: 0.02, tick: 99999 }))
+    sys.update(0, mockEm, 100000)
+    expect((sys as any).pottery).toHaveLength(0)
+  })
+  it('durability=0.03时更新后保留（0.03-0.02=0.01>0）', () => {
+    ;(sys as any).pottery.push(makePottery(1, { durability: 0.03, tick: 99999 }))
+    sys.update(0, mockEm, 100000)
+    expect((sys as any).pottery).toHaveLength(1)
+  })
+  it('老陶器（tick<cutoff）被清除', () => {
+    const cur = 70000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).pottery.push(makePottery(1, { tick: 0, durability: 99 }))
+    sys.update(0, mockEm, cur)
+    expect((sys as any).pottery).toHaveLength(0)
+  })
+  it('质量和贸易值计算验证', () => {
+    const skill = 80
+    expect(50 + skill * 0.4).toBeCloseTo(82)
+    expect(skill * 0.6).toBeCloseTo(48)
+  })
+  it('6种使用类型均支持', () => {
+    const uses: PotteryUse[] = ['storage', 'cooking', 'ceremonial', 'trade', 'decorative', 'funerary']
+    uses.forEach(u => {
+      ;(sys as any).pottery.push(makePottery(1, { use: u }))
+    })
+    expect((sys as any).pottery).toHaveLength(6)
+  })
+  it('update返回undefined', () => {
+    expect(sys.update(0, mockEm, CHECK_INTERVAL)).toBeUndefined()
+  })
+  it('MAX_POTTERY=100', () => { expect(MAX_POTTERY).toBe(100) })
+  it('多次连续update不崩溃', () => {
+    expect(() => {
+      for (let t = 1; t <= 3; t++) {
+        sys.update(0, mockEm, CHECK_INTERVAL * t)
+      }
+    }).not.toThrow()
+  })
+  it('注入tradeValue后字段正确', () => {
+    ;(sys as any).pottery.push(makePottery(1, { tradeValue: 42 }))
+    expect((sys as any).pottery[0].tradeValue).toBe(42)
+  })
+  it('注入quality后字段正确', () => {
+    ;(sys as any).pottery.push(makePottery(1, { quality: 88 }))
+    expect((sys as any).pottery[0].quality).toBe(88)
+  })
+  it('6种陶器风格均有效', () => {
+    const styles: PotteryStyle[] = ['coiled', 'wheel-thrown', 'slab-built', 'pinched', 'molded', 'glazed']
+    styles.forEach(s => {
+      ;(sys as any).pottery.push(makePottery(1, { style: s }))
+    })
+    expect((sys as any).pottery).toHaveLength(6)
+  })
+  it('大量陶器注入后长度正确', () => {
+    for (let i = 1; i <= 10; i++) { ;(sys as any).pottery.push(makePottery(i)) }
+    expect((sys as any).pottery).toHaveLength(10)
+  })
+  it('durability=0时被清除（<=0条件）', () => {
+    ;(sys as any).pottery.push(makePottery(1, { durability: 0, tick: 99999 }))
+    sys.update(0, mockEm, 100000)
+    // durability - 0.02 = -0.02 <= 0 => removed
+    expect((sys as any).pottery).toHaveLength(0)
+  })
+})
+
+describe('CreaturePotterySystem - 追加边界', () => {
+  let sys: CreaturePotterySystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  it('pottery数组初始为空', () => { expect((sys as any).pottery).toHaveLength(0) })
+  it('连续多次update后skillMap仍存在', () => {
+    sys.update(0, mockEm, CHECK_INTERVAL)
+    expect((sys as any).skillMap).toBeDefined()
+  })
+  it('skill=0时potteryMade=1', () => {
+    expect(Math.floor(1 + 0 / 8)).toBe(1)
+  })
+})

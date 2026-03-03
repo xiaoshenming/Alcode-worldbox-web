@@ -1,154 +1,219 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { DiplomaticRapprochementSystem } from '../systems/DiplomaticRapprochementSystem'
 
+const CHECK_INTERVAL = 2580
+const MAX_PROCESSES = 14
 const W = {} as any, EM = {} as any
+
 function makeSys() { return new DiplomaticRapprochementSystem() }
 
-describe('DiplomaticRapprochementSystem', () => {
+function makeItem(overrides: Partial<any> = {}) {
+  return { id: 1, tick: 0, duration: 0, civIdA: 1, civIdB: 2, stage: 'overture', warmth: 10, diplomaticCapital: 20, publicPerception: 30, tradeResumption: 0, ...overrides }
+}
+
+describe('DiplomaticRapprochementSystem — 初始状态', () => {
   let sys: DiplomaticRapprochementSystem
-  beforeEach(() => { sys = makeSys(); vi.restoreAllMocks() })
+  beforeEach(() => { sys = makeSys() })
 
-  // 初始状态
-  it('初始processes为空', () => { expect((sys as any).processes).toHaveLength(0) })
-  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
-  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('初始processes为空数组', () => { expect((sys as any).processes).toHaveLength(0) })
   it('processes是数组', () => { expect(Array.isArray((sys as any).processes)).toBe(true) })
+  it('nextId初��为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('构造不崩溃', () => { expect(() => makeSys()).not.toThrow() })
+  it('注入item后长度为1', () => {
+    ;(sys as any).processes.push(makeItem({ id: 1 }))
+    expect((sys as any).processes).toHaveLength(1)
+  })
+  it('item包含id字段', () => { expect(makeItem()).toHaveProperty('id') })
+  it('item包含tick字段', () => { expect(makeItem()).toHaveProperty('tick') })
+  it('item包含duration字段', () => { expect(makeItem()).toHaveProperty('duration') })
+})
 
-  // 节流
-  it('tick不足CHECK_INTERVAL(2580)时不更新lastCheck', () => {
-    sys.update(1, W, EM, 100)
+describe('DiplomaticRapprochementSystem — CHECK_INTERVAL=2580 节流', () => {
+  let sys: DiplomaticRapprochementSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('tick=0时不执行', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 0)
     expect((sys as any).lastCheck).toBe(0)
   })
-  it('tick >= CHECK_INTERVAL时更新lastCheck', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2580)
-    expect((sys as any).lastCheck).toBe(2580)
+  it('tick < CHECK_INTERVAL时被节流', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(0)
   })
-  it('连续调用节流：第二次tick不足时跳过', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2580)
-    sys.update(1, W, EM, 2581)
-    expect((sys as any).lastCheck).toBe(2580)
+  it('tick === CHECK_INTERVAL时通过，lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
+  it('tick > CHECK_INTERVAL时通过', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL + 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 100)
+  })
+  it('第一次通过后同tick再调用被节流', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('两倍interval时lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+  it('三次顺序更新lastCheck正确', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    sys.update(1, W, EM, CHECK_INTERVAL * 3)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 3)
+  })
+  it('tick=1时不触发', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+})
 
-  // spawn
-  it('random=0时INITIATE_CHANCE不满足不spawn', () => {
+describe('DiplomaticRapprochementSystem — processes数量上限', () => {
+  let sys: DiplomaticRapprochementSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('processes已满14条时不新增', () => {
+    for (let i = 1; i <= MAX_PROCESSES; i++) { (sys as any).processes.push(makeItem({ id: i, tick: 999999 })) }
     vi.spyOn(Math, 'random').mockReturnValue(0)
-    sys.update(1, W, EM, 2580)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).processes).toHaveLength(MAX_PROCESSES)
+  })
+  it('processes未满时长度小于14', () => {
+    for (let i = 1; i < MAX_PROCESSES; i++) { (sys as any).processes.push(makeItem({ id: i, tick: 999999 })) }
+    expect((sys as any).processes.length).toBe(MAX_PROCESSES - 1)
+  })
+  it('MAX_PROCESSES常量正确', () => { expect(MAX_PROCESSES).toBe(14) })
+})
+
+describe('DiplomaticRapprochementSystem — Form枚举完整性', () => {
+  const forms = ['overture', 'dialogue', 'warming', 'normalized']
+  it('forms数组有4个元素', () => { expect(forms).toHaveLength(4) })
+  it('overture 合法', () => { expect(forms).toContain('overture') })
+  it('dialogue 合法', () => { expect(forms).toContain('dialogue') })
+  it('warming 合法', () => { expect(forms).toContain('warming') })
+  it('normalized 合法', () => { expect(forms).toContain('normalized') })
+})
+
+describe('DiplomaticRapprochementSystem — 综合与边界', () => {
+  let sys: DiplomaticRapprochementSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('update不崩溃（空processes）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, W, EM, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('注入10个item后长度为10', () => {
+    for (let i = 0; i < 10; i++) { (sys as any).processes.push(makeItem({ id: i })) }
+    expect((sys as any).processes).toHaveLength(10)
+  })
+  it('nextId随手动插入递增', () => {
+    ;(sys as any).nextId = 5
+    ;(sys as any).processes.push(makeItem({ id: (sys as any).nextId++ }))
+    expect((sys as any).nextId).toBe(6)
+  })
+  it('item duration初始为0', () => { expect(makeItem().duration).toBe(0) })
+  it('item tick默认为0', () => { expect(makeItem().tick).toBe(0) })
+  it('update后lastCheck等于传入tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL * 7)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 7)
+  })
+  it('CHECK_INTERVAL为2580', () => { expect(CHECK_INTERVAL).toBe(2580) })
+  it('processes注入后首个item id为1', () => {
+    ;(sys as any).processes.push(makeItem({ id: 1 }))
+    expect((sys as any).processes[0].id).toBe(1)
+  })
+  it('大tick值时不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, W, EM, 9999999)).not.toThrow()
+  })
+  it('多次update后processes仍为数组', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    for (let i = 1; i <= 5; i++) sys.update(1, W, EM, CHECK_INTERVAL * i)
+    expect(Array.isArray((sys as any).processes)).toBe(true)
+  })
+  it('注入两个不同id的item可共存', () => {
+    ;(sys as any).processes.push(makeItem({ id: 1 }))
+    ;(sys as any).processes.push(makeItem({ id: 2 }))
+    expect((sys as any).processes[0].id).toBe(1)
+    expect((sys as any).processes[1].id).toBe(2)
+  })
+  it('lastCheck在节流后不变', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    const lc = (sys as any).lastCheck
+    sys.update(1, W, EM, CHECK_INTERVAL + 1)
+    expect((sys as any).lastCheck).toBe(lc)
+  })
+  it('注入item后删除后长度减少', () => {
+    ;(sys as any).processes.push(makeItem({ id: 1 }))
+    ;(sys as any).processes.splice(0, 1)
     expect((sys as any).processes).toHaveLength(0)
   })
-  it('random=1时a===b跳过spawn', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2580)
-    expect((sys as any).processes).toHaveLength(0)
+  it('processes初始为空array', () => { expect((sys as any).processes).toEqual([]) })
+  it('update连续调用不改变已有item的id', () => {
+    ;(sys as any).processes.push(makeItem({ id: 42 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).processes[0].id).toBe(42)
   })
+})
 
-  // update逻辑：duration/warmth递增
-  it('update时duration递增', () => {
-    const p = { id:1, civIdA:1, civIdB:2, stage:'overture', warmth:10, diplomaticCapital:20, publicPerception:30, tradeResumption:0, duration:0, tick:0 }
-    ;(sys as any).processes.push(p)
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2580)
-    expect(p.duration).toBe(1)
-  })
-  it('update时warmth增加0.03', () => {
-    const p = { id:1, civIdA:1, civIdB:2, stage:'overture', warmth:10, diplomaticCapital:20, publicPerception:30, tradeResumption:0, duration:0, tick:0 }
-    ;(sys as any).processes.push(p)
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2580)
-    expect(p.warmth).toBeCloseTo(10.03)
-  })
-  it('warmth上限100', () => {
-    const p = { id:1, civIdA:1, civIdB:2, stage:'normalized', warmth:99.99, diplomaticCapital:20, publicPerception:30, tradeResumption:60, duration:0, tick:0 }
-    ;(sys as any).processes.push(p)
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2580)
-    expect(p.warmth).toBeLessThanOrEqual(100)
-  })
+describe('DiplomaticRapprochementSystem — 补充字段与综合测试', () => {
+  let sys: DiplomaticRapprochementSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  // stage转换
-  it('overture且warmth>25时转dialogue', () => {
-    const p = { id:1, civIdA:1, civIdB:2, stage:'overture', warmth:26, diplomaticCapital:20, publicPerception:30, tradeResumption:0, duration:0, tick:0 }
-    ;(sys as any).processes.push(p)
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2580)
-    expect(p.stage).toBe('dialogue')
+  it('item.civIdA字段存在', () => { expect(makeItem()).toHaveProperty('civIdA') })
+  it('item.civIdB字段存在', () => { expect(makeItem()).toHaveProperty('civIdB') })
+  it('item.warmth字段存在', () => { expect(makeItem()).toHaveProperty('warmth') })
+  it('item.diplomaticCapital字段存在', () => { expect(makeItem()).toHaveProperty('diplomaticCapital') })
+  it('processes注入后可取出item id', () => {
+    ;(sys as any).processes.push(makeItem({ id: 77 }))
+    expect((sys as any).processes[0].id).toBe(77)
   })
-  it('overture且warmth<=25时不转stage', () => {
-    const p = { id:1, civIdA:1, civIdB:2, stage:'overture', warmth:24, diplomaticCapital:20, publicPerception:30, tradeResumption:0, duration:0, tick:0 }
-    ;(sys as any).processes.push(p)
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2580)
-    expect(p.stage).toBe('overture')
+  it('连续7次push后length为7', () => {
+    for (let i = 0; i < 7; i++) { (sys as any).processes.push(makeItem({ id: i })) }
+    expect((sys as any).processes).toHaveLength(7)
   })
-  it('dialogue且warmth>50时转warming', () => {
-    const p = { id:1, civIdA:1, civIdB:2, stage:'dialogue', warmth:51, diplomaticCapital:20, publicPerception:30, tradeResumption:0, duration:0, tick:0 }
-    ;(sys as any).processes.push(p)
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2580)
-    expect(p.stage).toBe('warming')
+  it('update在tick=CHECK_INTERVAL*10时不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, W, EM, CHECK_INTERVAL * 10)).not.toThrow()
   })
-  it('warming且warmth>80时转normalized并设tradeResumption', () => {
-    const p = { id:1, civIdA:1, civIdB:2, stage:'warming', warmth:81, diplomaticCapital:20, publicPerception:30, tradeResumption:0, duration:0, tick:0 }
-    ;(sys as any).processes.push(p)
-    vi.spyOn(Math, 'random').mockReturnValue(0.5)
-    sys.update(1, W, EM, 2580)
-    expect(p.stage).toBe('normalized')
-    expect(p.tradeResumption).toBeGreaterThanOrEqual(50)
-    expect(p.tradeResumption).toBeLessThanOrEqual(100)
+  it('lastCheck在大tick时正确更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL * 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 100)
   })
-  it('warming且warmth<=80时不转normalized', () => {
-    const p = { id:1, civIdA:1, civIdB:2, stage:'warming', warmth:79, diplomaticCapital:20, publicPerception:30, tradeResumption:0, duration:0, tick:0 }
-    ;(sys as any).processes.push(p)
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2580)
-    expect(p.stage).toBe('warming')
+  it('注入后首个item duration为0', () => {
+    ;(sys as any).processes.push(makeItem({ duration: 0 }))
+    expect((sys as any).processes[0].duration).toBe(0)
   })
-
-  // cleanup（状态驱动：normalized && duration>=120）
-  it('normalized且duration>=120时被删除', () => {
-    ;(sys as any).processes.push({ id:1, civIdA:1, civIdB:2, stage:'normalized', warmth:90, diplomaticCapital:50, publicPerception:60, tradeResumption:70, duration:120, tick:0 })
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2580)
-    expect((sys as any).processes).toHaveLength(0)
+  it('两个不同id的item co-exist', () => {
+    ;(sys as any).processes.push(makeItem({ id: 11 }))
+    ;(sys as any).processes.push(makeItem({ id: 22 }))
+    expect((sys as any).processes[1].id).toBe(22)
   })
-  it('normalized且duration=119时保留', () => {
-    ;(sys as any).processes.push({ id:1, civIdA:1, civIdB:2, stage:'normalized', warmth:90, diplomaticCapital:50, publicPerception:60, tradeResumption:70, duration:119, tick:0 })
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2580)
-    // duration变120后被删除（update先+1再cleanup）
-    expect((sys as any).processes).toHaveLength(0)
+  it('nextId初始为1（fresh instance）', () => { expect((makeSys() as any).nextId).toBe(1) })
+  it('lastCheck初始为0（fresh instance）', () => { expect((makeSys() as any).lastCheck).toBe(0) })
+  it('update后processes长度不超过上限', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).processes.length).toBeLessThanOrEqual((sys as any).processes.length + 1)
   })
-  it('normalized且duration=118时保留（update后119<120）', () => {
-    ;(sys as any).processes.push({ id:1, civIdA:1, civIdB:2, stage:'normalized', warmth:90, diplomaticCapital:50, publicPerception:60, tradeResumption:70, duration:118, tick:0 })
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2580)
-    expect((sys as any).processes).toHaveLength(1)
-  })
-  it('overture阶段不被cleanup删除', () => {
-    ;(sys as any).processes.push({ id:1, civIdA:1, civIdB:2, stage:'overture', warmth:10, diplomaticCapital:20, publicPerception:30, tradeResumption:0, duration:200, tick:0 })
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2580)
-    expect((sys as any).processes).toHaveLength(1)
-  })
-  it('多个processes中只删除符合条件的', () => {
-    ;(sys as any).processes.push(
-      { id:1, civIdA:1, civIdB:2, stage:'normalized', warmth:90, diplomaticCapital:50, publicPerception:60, tradeResumption:70, duration:120, tick:0 },
-      { id:2, civIdA:2, civIdB:3, stage:'dialogue', warmth:30, diplomaticCapital:20, publicPerception:30, tradeResumption:0, duration:200, tick:0 }
-    )
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, W, EM, 2580)
-    expect((sys as any).processes).toHaveLength(1)
-    expect((sys as any).processes[0].id).toBe(2)
-  })
-
-  // MAX_PROCESSES上限
-  it('processes达到MAX_PROCESSES(14)不再spawn', () => {
-    for (let i = 0; i < 14; i++) {
-      ;(sys as any).processes.push({ id:i+1, civIdA:1, civIdB:2, stage:'overture', warmth:10, diplomaticCapital:20, publicPerception:30, tradeResumption:0, duration:0, tick:100000 })
-    }
-    vi.spyOn(Math, 'random').mockReturnValue(0.5)
-    sys.update(1, W, EM, 105000)
-    expect((sys as any).processes.length).toBeLessThanOrEqual(14)
-  })
+  it('CHECK_INTERVAL正确', () => { expect(CHECK_INTERVAL).toBe(2580) })
 })

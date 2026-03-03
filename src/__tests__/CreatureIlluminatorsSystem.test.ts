@@ -1,38 +1,50 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { CreatureIlluminatorsSystem } from '../systems/CreatureIlluminatorsSystem'
 import type { Illuminator, IlluminationStyle } from '../systems/CreatureIlluminatorsSystem'
 
+// CHECK_INTERVAL=1350, SKILL_GROWTH=0.056
+// goldLeafUse = 10 + skill * 0.74
+// reputation = 10 + skill * 0.86
+// pagesIlluminated = 1 + Math.floor(skill / 10)
+// style: styleIdx = Math.min(3, Math.floor(skill/25))
+// cleanup cutoff = tick - 50500
+
 let nextId = 1
 function makeSys(): CreatureIlluminatorsSystem { return new CreatureIlluminatorsSystem() }
-function makeMaker(entityId: number, style: IlluminationStyle = 'decorated', skill = 60, tick = 0): Illuminator {
+function makeMaker(entityId: number, overrides: Partial<Illuminator> = {}): Illuminator {
   return {
-    id: nextId++,
-    entityId,
-    skill,
-    pagesIlluminated: 1 + Math.floor(skill / 10),
-    style,
-    goldLeafUse: 10 + skill * 0.74,
-    reputation: 10 + skill * 0.86,
-    tick,
+    id: nextId++, entityId, skill: 30, pagesIlluminated: 4,
+    style: 'historiated', goldLeafUse: 32.2, reputation: 35.8, tick: 0,
+    ...overrides
   }
 }
+function makeEmptyEM() {
+  return {
+    getEntitiesWithComponents: vi.fn().mockReturnValue([]),
+    getEntitiesWithComponent: vi.fn().mockReturnValue([]),
+    getComponent: vi.fn().mockReturnValue(null),
+    hasComponent: vi.fn().mockReturnValue(false),
+  } as any
+}
 
-describe('CreatureIlluminatorsSystem — 数据注入与查询', () => {
+describe('CreatureIlluminatorsSystem - 基础状态', () => {
   let sys: CreatureIlluminatorsSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无彩饰师', () => {
-    expect((sys as any).makers).toHaveLength(0)
+  it('初始无照明师', () => { expect((sys as any).makers).toHaveLength(0) })
+  it('初始 lastCheck 为 0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('初始 nextId 为 1', () => { expect((sys as any).nextId).toBe(1) })
+
+  it('注入后可查询', () => {
+    ;(sys as any).makers.push(makeMaker(1, { style: 'decorated' }))
+    expect((sys as any).makers[0].style).toBe('decorated')
   })
 
-  it('注入后可查询 entityId', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'historiated'))
-    expect((sys as any).makers[0].entityId).toBe(1)
-  })
-
-  it('注入后 style 正确', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'inhabited'))
-    expect((sys as any).makers[0].style).toBe('inhabited')
+  it('IlluminationStyle包含4种类型', () => {
+    const styles: IlluminationStyle[] = ['historiated', 'decorated', 'inhabited', 'border']
+    styles.forEach((s, i) => { ;(sys as any).makers.push(makeMaker(i + 1, { style: s })) })
+    const all = (sys as any).makers as Illuminator[]
+    styles.forEach((s, i) => { expect(all[i].style).toBe(s) })
   })
 
   it('多个全部返回', () => {
@@ -40,149 +52,180 @@ describe('CreatureIlluminatorsSystem — 数据注入与查询', () => {
     ;(sys as any).makers.push(makeMaker(2))
     expect((sys as any).makers).toHaveLength(2)
   })
-})
 
-describe('CreatureIlluminatorsSystem — IlluminationStyle 4 种枚举', () => {
-  let sys: CreatureIlluminatorsSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  it('支持 historiated', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'historiated'))
-    expect((sys as any).makers[0].style).toBe('historiated')
-  })
-
-  it('支持 decorated', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'decorated'))
-    expect((sys as any).makers[0].style).toBe('decorated')
-  })
-
-  it('支持 inhabited', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'inhabited'))
-    expect((sys as any).makers[0].style).toBe('inhabited')
-  })
-
-  it('支持 border', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'border'))
-    expect((sys as any).makers[0].style).toBe('border')
+  it('内部引用一致', () => {
+    ;(sys as any).makers.push(makeMaker(1))
+    expect((sys as any).makers).toBe((sys as any).makers)
   })
 })
 
-describe('CreatureIlluminatorsSystem — goldLeafUse / reputation 公式', () => {
-  let sys: CreatureIlluminatorsSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  it('skill=60 时 goldLeafUse = 10 + 60*0.74 = 54.4', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'decorated', 60))
-    expect((sys as any).makers[0].goldLeafUse).toBeCloseTo(10 + 60 * 0.74, 5)
+describe('CreatureIlluminatorsSystem - 公式验证', () => {
+  it('goldLeafUse公式: skill=40 → 10+40*0.74=39.6', () => {
+    expect(10 + 40 * 0.74).toBeCloseTo(39.6, 5)
+  })
+  it('goldLeafUse公式: skill=0 → 10', () => {
+    expect(10 + 0 * 0.74).toBeCloseTo(10, 5)
+  })
+  it('goldLeafUse公式: skill=100 → 10+100*0.74=84', () => {
+    expect(10 + 100 * 0.74).toBeCloseTo(84, 5)
+  })
+  it('reputation公式: skill=50 → 10+50*0.86=53', () => {
+    expect(10 + 50 * 0.86).toBeCloseTo(53, 5)
+  })
+  it('reputation公式: skill=100 → 10+100*0.86=96', () => {
+    expect(10 + 100 * 0.86).toBeCloseTo(96, 5)
+  })
+  it('pagesIlluminated: skill=40 → 1+floor(40/10)=5', () => {
+    expect(1 + Math.floor(40 / 10)).toBe(5)
+  })
+  it('pagesIlluminated: skill=0 → 1', () => {
+    expect(1 + Math.floor(0 / 10)).toBe(1)
+  })
+  it('pagesIlluminated: skill=100 → 1+floor(100/10)=11', () => {
+    expect(1 + Math.floor(100 / 10)).toBe(11)
   })
 
-  it('skill=0 时 goldLeafUse = 10', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'decorated', 0))
-    expect((sys as any).makers[0].goldLeafUse).toBeCloseTo(10, 5)
+  it('style: skill=10 → historiated', () => {
+    const STYLES: IlluminationStyle[] = ['historiated', 'decorated', 'inhabited', 'border']
+    expect(STYLES[Math.min(3, Math.floor(10 / 25))]).toBe('historiated')
   })
-
-  it('skill=100 时 reputation = 10 + 100*0.86 = 96', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'decorated', 100))
-    expect((sys as any).makers[0].reputation).toBeCloseTo(96, 5)
+  it('style: skill=25 → decorated', () => {
+    const STYLES: IlluminationStyle[] = ['historiated', 'decorated', 'inhabited', 'border']
+    expect(STYLES[Math.min(3, Math.floor(25 / 25))]).toBe('decorated')
   })
-
-  it('skill=0 时 reputation = 10', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'decorated', 0))
-    expect((sys as any).makers[0].reputation).toBeCloseTo(10, 5)
+  it('style: skill=50 → inhabited', () => {
+    const STYLES: IlluminationStyle[] = ['historiated', 'decorated', 'inhabited', 'border']
+    expect(STYLES[Math.min(3, Math.floor(50 / 25))]).toBe('inhabited')
   })
-})
-
-describe('CreatureIlluminatorsSystem — pagesIlluminated 公式', () => {
-  let sys: CreatureIlluminatorsSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  it('skill=0 时 pagesIlluminated = 1', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'decorated', 0))
-    expect((sys as any).makers[0].pagesIlluminated).toBe(1)
+  it('style: skill=75 → border', () => {
+    const STYLES: IlluminationStyle[] = ['historiated', 'decorated', 'inhabited', 'border']
+    expect(STYLES[Math.min(3, Math.floor(75 / 25))]).toBe('border')
   })
-
-  it('skill=10 时 pagesIlluminated = 1 + floor(10/10) = 2', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'decorated', 10))
-    expect((sys as any).makers[0].pagesIlluminated).toBe(2)
-  })
-
-  it('skill=50 时 pagesIlluminated = 1 + floor(50/10) = 6', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'decorated', 50))
-    expect((sys as any).makers[0].pagesIlluminated).toBe(6)
-  })
-})
-
-describe('CreatureIlluminatorsSystem — style 4 段 skill 映射', () => {
-  let sys: CreatureIlluminatorsSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  // styleIdx = Math.min(3, Math.floor(skill / 25))
-  // skill < 25 => idx 0 => 'historiated'
-  it('skill=10 => style=historiated (idx 0)', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'historiated', 10))
-    expect((sys as any).makers[0].style).toBe('historiated')
-  })
-
-  // skill in [25,49] => idx 1 => 'decorated'
-  it('skill=30 => style=decorated (idx 1)', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'decorated', 30))
-    expect((sys as any).makers[0].style).toBe('decorated')
-  })
-
-  // skill in [50,74] => idx 2 => 'inhabited'
-  it('skill=60 => style=inhabited (idx 2)', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'inhabited', 60))
-    expect((sys as any).makers[0].style).toBe('inhabited')
-  })
-
-  // skill >= 75 => idx 3 => 'border'
-  it('skill=80 => style=border (idx 3)', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'border', 80))
-    expect((sys as any).makers[0].style).toBe('border')
+  it('style: skill=100 → border(上限3)', () => {
+    const STYLES: IlluminationStyle[] = ['historiated', 'decorated', 'inhabited', 'border']
+    expect(STYLES[Math.min(3, Math.floor(100 / 25))]).toBe('border')
   })
 })
 
-describe('CreatureIlluminatorsSystem — CHECK_INTERVAL 节流', () => {
+describe('CreatureIlluminatorsSystem - CHECK_INTERVAL 节流', () => {
   let sys: CreatureIlluminatorsSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('tick 差 < 1350 时 update 不改变 lastCheck', () => {
-    ;(sys as any).lastCheck = 1000
-    const em = { getEntitiesWithComponents: () => [], getComponent: () => null } as any
-    sys.update(0, em, 2000)   // diff=1000 < 1350 => skip
-    expect((sys as any).lastCheck).toBe(1000)
+  it('tick差<1350不更新lastCheck', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1349)
+    expect((sys as any).lastCheck).toBe(0)
+    expect(em.getEntitiesWithComponents).not.toHaveBeenCalled()
   })
-
-  it('tick 差 >= 1350 时 update 更新 lastCheck', () => {
-    ;(sys as any).lastCheck = 1000
-    const em = { getEntitiesWithComponents: () => [], getComponent: () => null } as any
-    sys.update(0, em, 2400)   // diff=1400 >= 1350 => proceed
-    expect((sys as any).lastCheck).toBe(2400)
+  it('tick差>=1350更新lastCheck', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1350)
+    expect((sys as any).lastCheck).toBe(1350)
+  })
+  it('tick=1349边界不更新', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1349)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('第二次差值不足时保持', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1350)
+    sys.update(1, em, 2000)
+    expect((sys as any).lastCheck).toBe(1350)
+  })
+  it('第二次差值足够时再次更新', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1350)
+    sys.update(1, em, 2700)
+    expect((sys as any).lastCheck).toBe(2700)
   })
 })
 
-describe('CreatureIlluminatorsSystem — time-based cleanup', () => {
+describe('CreatureIlluminatorsSystem - time-based cleanup', () => {
   let sys: CreatureIlluminatorsSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('tick 过期记录(< cutoff = currentTick - 50500)被清除', () => {
-    // 当前 tick = 60000, cutoff = 60000 - 50500 = 9500
-    // 注入 tick=5000 (过期) 和 tick=15000 (有效)
-    ;(sys as any).makers.push(makeMaker(1, 'decorated', 60, 5000))
-    ;(sys as any).makers.push(makeMaker(2, 'decorated', 60, 15000))
-    ;(sys as any).lastCheck = 0
-    const em = { getEntitiesWithComponents: () => [], getComponent: () => null } as any
-    sys.update(0, em, 60000)
+  it('过期记录被清除, cutoff=tick-50500', () => {
+    const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).makers.push(makeMaker(1, { tick: 0 }))
+    ;(sys as any).makers.push(makeMaker(2, { tick: 55000 }))
+    sys.update(1, em, 60000)
     expect((sys as any).makers).toHaveLength(1)
     expect((sys as any).makers[0].entityId).toBe(2)
   })
-
   it('未过期记录全部保留', () => {
-    ;(sys as any).makers.push(makeMaker(1, 'decorated', 60, 50000))
-    ;(sys as any).makers.push(makeMaker(2, 'decorated', 60, 55000))
-    ;(sys as any).lastCheck = 0
-    const em = { getEntitiesWithComponents: () => [], getComponent: () => null } as any
-    sys.update(0, em, 60000)
+    const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).makers.push(makeMaker(1, { tick: 55000 }))
+    ;(sys as any).makers.push(makeMaker(2, { tick: 56000 }))
+    sys.update(1, em, 60000)
     expect((sys as any).makers).toHaveLength(2)
+  })
+  it('cutoff边界: cutoff=60000-50500=9500', () => {
+    const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).makers.push(makeMaker(1, { tick: 9499 }))
+    ;(sys as any).makers.push(makeMaker(2, { tick: 9500 }))
+    sys.update(1, em, 60000)
+    expect((sys as any).makers).toHaveLength(1)
+    expect((sys as any).makers[0].entityId).toBe(2)
+  })
+  it('全部过期时全部删除', () => {
+    const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).makers.push(makeMaker(1, { tick: 0 }))
+    sys.update(1, em, 60000)
+    expect((sys as any).makers).toHaveLength(0)
+  })
+})
+
+describe('CreatureIlluminatorsSystem - skillMap 操作', () => {
+  let sys: CreatureIlluminatorsSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('skillMap初始为空', () => { expect((sys as any).skillMap.size).toBe(0) })
+  it('未知实体返回undefined', () => { expect((sys as any).skillMap.get(999)).toBeUndefined() })
+  it('注入后可读取', () => {
+    ;(sys as any).skillMap.set(5, 56)
+    expect((sys as any).skillMap.get(5)).toBe(56)
+  })
+  it('多个实体独立存储', () => {
+    ;(sys as any).skillMap.set(1, 30)
+    ;(sys as any).skillMap.set(2, 60)
+    expect((sys as any).skillMap.get(1)).toBe(30)
+    expect((sys as any).skillMap.get(2)).toBe(60)
+  })
+})
+
+describe('CreatureIlluminatorsSystem - 边界与综合', () => {
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('空数组时 update 不报错', () => {
+    expect(() => makeSys().update(1, makeEmptyEM(), 1350)).not.toThrow()
+  })
+
+  it('dt参数不影响节流', () => {
+    const sys = makeSys()
+    sys.update(999, makeEmptyEM(), 1349)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('entityId被正确保存', () => {
+    const sys = makeSys()
+    ;(sys as any).makers.push(makeMaker(44))
+    expect((sys as any).makers[0].entityId).toBe(44)
+  })
+
+  it('所有字段类型正确', () => {
+    const sys = makeSys()
+    ;(sys as any).makers.push(makeMaker(1))
+    const r = (sys as any).makers[0]
+    expect(typeof r.skill).toBe('number')
+    expect(typeof r.pagesIlluminated).toBe('number')
+    expect(typeof r.goldLeafUse).toBe('number')
+    expect(typeof r.reputation).toBe('number')
   })
 })

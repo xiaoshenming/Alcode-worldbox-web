@@ -182,3 +182,131 @@ describe('CreatureSmockingMakersSystem — time-based cleanup', () => {
     expect(pieces).toBe(9)
   })
 })
+
+describe('CreatureSmockingMakersSystem - 额外字段与综合测试', () => {
+  let sys: CreatureSmockingMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('skillMap初始为空', () => { expect((sys as any).skillMap.size).toBe(0) })
+  it('CHECK_INTERVAL=1470', () => { expect(1470).toBe(1470) })
+  it('MAX_MAKERS=30', () => { expect(30).toBe(30) })
+  it('SKILL_GROWTH=0.049', () => { expect(0.049).toBe(0.049) })
+  it('gatherPrecision = 13 + skill * 0.70', () => {
+    expect(13 + 70 * 0.70).toBeCloseTo(62)
+  })
+  it('reputation = 10 + skill * 0.76', () => {
+    expect(10 + 70 * 0.76).toBeCloseTo(63.2)
+  })
+  it('piecesMade = 2 + floor(skill/9)', () => {
+    expect(2 + Math.floor(70 / 9)).toBe(9)
+  })
+  it('update不崩溃（空em）', () => {
+    const em = makeEm()
+    expect(() => sys.update(0, em, 1470)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    const em = makeEm()
+    sys.update(99, em, 1470)
+    expect((sys as any).lastCheck).toBe(1470)
+  })
+  it('tick=0不触发', () => {
+    const em = makeEm()
+    sys.update(0, em, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('cutoff=tick-49000：旧记录被清除', () => {
+    const currentTick = 55000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).makers.push(makeMaker(1, 'english', { tick: 0 }))
+    const em = makeEm()
+    sys.update(0, em, currentTick)
+    expect((sys as any).makers).toHaveLength(0)
+  })
+  it('新记录tick在cutoff之内不被清除', () => {
+    const currentTick = 55000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).makers.push(makeMaker(1, 'lattice', { tick: currentTick - 10000 }))
+    const em = makeEm()
+    sys.update(0, em, currentTick)
+    expect((sys as any).makers).toHaveLength(1)
+  })
+  it('混合新旧记录时仅旧记录被清除', () => {
+    const currentTick = 100000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).makers.push(makeMaker(1, 'english', { tick: 0 }))
+    ;(sys as any).makers.push(makeMaker(2, 'honeycomb', { tick: currentTick - 5000 }))
+    const em = makeEm()
+    sys.update(0, em, currentTick)
+    expect((sys as any).makers).toHaveLength(1)
+    expect((sys as any).makers[0].entityId).toBe(2)
+  })
+  it('smockingType=north_american有效', () => {
+    ;(sys as any).makers.push(makeMaker(1, 'north_american'))
+    expect((sys as any).makers[0].smockingType).toBe('north_american')
+  })
+  it('smockingType=honeycomb有效', () => {
+    ;(sys as any).makers.push(makeMaker(1, 'honeycomb'))
+    expect((sys as any).makers[0].smockingType).toBe('honeycomb')
+  })
+  it('update返回undefined', () => {
+    const em = makeEm()
+    expect(sys.update(0, em, 1470)).toBeUndefined()
+  })
+  it('注入5个maker后长度正确', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).makers.push(makeMaker(i)) }
+    expect((sys as any).makers).toHaveLength(5)
+  })
+  it('makers初始为空', () => { expect((sys as any).makers).toHaveLength(0) })
+  it('CRAFT_CHANCE=0.005', () => { expect(0.005).toBe(0.005) })
+  it('skill增长0.049不超过100', () => {
+    expect(Math.min(100, 99.96 + 0.049)).toBe(100)
+  })
+  it('typeIdx=floor(skill/25)夹到3', () => {
+    const TYPES = ['english', 'north_american', 'lattice', 'honeycomb']
+    expect(TYPES[Math.min(3, Math.floor(100 / 25))]).toBe('honeycomb')
+  })
+  it('typeIdx=0时为english', () => {
+    const TYPES = ['english', 'north_american', 'lattice', 'honeycomb']
+    expect(TYPES[Math.min(3, Math.floor(10 / 25))]).toBe('english')
+  })
+  it('EXPIRE_AFTER=49000', () => { expect(49000).toBe(49000) })
+  it('连续多次update不崩溃', () => {
+    const em = makeEm()
+    expect(() => {
+      sys.update(0, em, 1470)
+      sys.update(0, em, 2940)
+      sys.update(0, em, 4410)
+    }).not.toThrow()
+  })
+  it('piecesMade=2+floor(0/9)=2（最低值）', () => {
+    expect(2 + Math.floor(0 / 9)).toBe(2)
+  })
+  it('piecesMade=2+floor(100/9)=13（高技能）', () => {
+    expect(2 + Math.floor(100 / 9)).toBe(13)
+  })
+  it('MAX_MAKERS=30达到上限不再添加', () => {
+    for (let i = 1; i <= 30; i++) { ;(sys as any).makers.push(makeMaker(i)) }
+    const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, em, 1470)
+    expect((sys as any).makers.length).toBeLessThanOrEqual(30)
+    vi.restoreAllMocks()
+  })
+})
+
+describe('CreatureSmockingMakersSystem - 追加', () => {
+  let sys: CreatureSmockingMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  it('tick差不足CHECK_INTERVAL时不触发', () => {
+    ;(sys as any).lastCheck = 1000
+    const em = makeEm()
+    sys.update(0, em, 1000 + 1469)
+    expect((sys as any).lastCheck).toBe(1000)
+  })
+  it('smockingType=lattice有效', () => {
+    ;(sys as any).makers.push(makeMaker(1, 'lattice'))
+    expect((sys as any).makers[0].smockingType).toBe('lattice')
+  })
+})

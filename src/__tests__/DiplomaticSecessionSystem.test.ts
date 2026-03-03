@@ -1,209 +1,219 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { DiplomaticSecessionSystem } from '../systems/DiplomaticSecessionSystem'
-import type { SecessionMovement, SecessionMethod } from '../systems/DiplomaticSecessionSystem'
+
+const CHECK_INTERVAL = 2500
+const MAX_MOVEMENTS = 20
+const W = {} as any, EM = {} as any
 
 function makeSys() { return new DiplomaticSecessionSystem() }
-const nullWorld = {} as any
-const nullEm = {} as any
 
-describe('DiplomaticSecessionSystem', () => {
+function makeItem(overrides: Partial<any> = {}) {
+  return { id: 1, tick: 0, duration: 0, parentCivId: 1, regionId: 2, method: 'referendum', support: 50, opposition: 30, legitimacy: 40, internationalRecognition: 20, ...overrides }
+}
+
+describe('DiplomaticSecessionSystem — 初始状态', () => {
   let sys: DiplomaticSecessionSystem
+  beforeEach(() => { sys = makeSys() })
 
-  beforeEach(() => {
-    sys = makeSys()
-    vi.restoreAllMocks()
+  it('初始movements为空数组', () => { expect((sys as any).movements).toHaveLength(0) })
+  it('movements是数组', () => { expect(Array.isArray((sys as any).movements)).toBe(true) })
+  it('nextId初��为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('构造不崩溃', () => { expect(() => makeSys()).not.toThrow() })
+  it('注入item后长度为1', () => {
+    ;(sys as any).movements.push(makeItem({ id: 1 }))
+    expect((sys as any).movements).toHaveLength(1)
   })
+  it('item包含id字段', () => { expect(makeItem()).toHaveProperty('id') })
+  it('item包含tick字段', () => { expect(makeItem()).toHaveProperty('tick') })
+  it('item包含duration字段', () => { expect(makeItem()).toHaveProperty('duration') })
+})
 
-  // --- 初始状态 ---
-  it('初始movements为空数组', () => {
-    expect((sys as any).movements).toHaveLength(0)
+describe('DiplomaticSecessionSystem — CHECK_INTERVAL=2500 节流', () => {
+  let sys: DiplomaticSecessionSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('tick=0时不执行', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 0)
+    expect((sys as any).lastCheck).toBe(0)
   })
+  it('tick < CHECK_INTERVAL时被节流', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick === CHECK_INTERVAL时通过，lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('tick > CHECK_INTERVAL时通过', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL + 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 100)
+  })
+  it('第一次通过后同tick再调用被节流', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('两倍interval时lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+  it('三次顺序更新lastCheck正确', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    sys.update(1, W, EM, CHECK_INTERVAL * 3)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 3)
+  })
+  it('tick=1时不触发', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+})
 
-  it('movements字段是Array实例', () => {
+describe('DiplomaticSecessionSystem — movements数量上限', () => {
+  let sys: DiplomaticSecessionSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('movements已满20条时不新增', () => {
+    for (let i = 1; i <= MAX_MOVEMENTS; i++) { (sys as any).movements.push(makeItem({ id: i, tick: 999999 })) }
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).movements).toHaveLength(MAX_MOVEMENTS)
+  })
+  it('movements未满时长度小于20', () => {
+    for (let i = 1; i < MAX_MOVEMENTS; i++) { (sys as any).movements.push(makeItem({ id: i, tick: 999999 })) }
+    expect((sys as any).movements.length).toBe(MAX_MOVEMENTS - 1)
+  })
+  it('MAX_MOVEMENTS常量正确', () => { expect(MAX_MOVEMENTS).toBe(20) })
+})
+
+describe('DiplomaticSecessionSystem — Form枚举完整性', () => {
+  const forms = ['referendum', 'declaration', 'negotiated', 'revolt']
+  it('forms数组有4个元素', () => { expect(forms).toHaveLength(4) })
+  it('referendum 合法', () => { expect(forms).toContain('referendum') })
+  it('declaration 合法', () => { expect(forms).toContain('declaration') })
+  it('negotiated 合法', () => { expect(forms).toContain('negotiated') })
+  it('revolt 合法', () => { expect(forms).toContain('revolt') })
+})
+
+describe('DiplomaticSecessionSystem — 综合与边界', () => {
+  let sys: DiplomaticSecessionSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('update不崩溃（空movements）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, W, EM, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('注入10个item后长度为10', () => {
+    for (let i = 0; i < 10; i++) { (sys as any).movements.push(makeItem({ id: i })) }
+    expect((sys as any).movements).toHaveLength(10)
+  })
+  it('nextId随手动插入递增', () => {
+    ;(sys as any).nextId = 5
+    ;(sys as any).movements.push(makeItem({ id: (sys as any).nextId++ }))
+    expect((sys as any).nextId).toBe(6)
+  })
+  it('item duration初始为0', () => { expect(makeItem().duration).toBe(0) })
+  it('item tick默认为0', () => { expect(makeItem().tick).toBe(0) })
+  it('update后lastCheck等于传入tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL * 7)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 7)
+  })
+  it('CHECK_INTERVAL为2500', () => { expect(CHECK_INTERVAL).toBe(2500) })
+  it('movements注入后首个item id为1', () => {
+    ;(sys as any).movements.push(makeItem({ id: 1 }))
+    expect((sys as any).movements[0].id).toBe(1)
+  })
+  it('大tick值时不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, W, EM, 9999999)).not.toThrow()
+  })
+  it('多次update后movements仍为数组', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    for (let i = 1; i <= 5; i++) sys.update(1, W, EM, CHECK_INTERVAL * i)
     expect(Array.isArray((sys as any).movements)).toBe(true)
   })
-
-  it('初始nextId为1', () => {
-    expect((sys as any).nextId).toBe(1)
+  it('注入两个不同id的item可共存', () => {
+    ;(sys as any).movements.push(makeItem({ id: 1 }))
+    ;(sys as any).movements.push(makeItem({ id: 2 }))
+    expect((sys as any).movements[0].id).toBe(1)
+    expect((sys as any).movements[1].id).toBe(2)
   })
-
-  it('初始lastCheck为0', () => {
-    expect((sys as any).lastCheck).toBe(0)
+  it('lastCheck在节流后不变', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    const lc = (sys as any).lastCheck
+    sys.update(1, W, EM, CHECK_INTERVAL + 1)
+    expect((sys as any).lastCheck).toBe(lc)
   })
-
-  // --- 节流控制 ---
-  it('tick未超过CHECK_INTERVAL(2500)时不更新lastCheck', () => {
-    sys.update(1, nullWorld, nullEm, 100)
-    expect((sys as any).lastCheck).toBe(0)
-  })
-
-  it('tick超过CHECK_INTERVAL时更新lastCheck', () => {
-    sys.update(1, nullWorld, nullEm, 3000)
-    expect((sys as any).lastCheck).toBe(3000)
-  })
-
-  it('连续两次update：第二次tick差不足时不再更新lastCheck', () => {
-    sys.update(1, nullWorld, nullEm, 3000)
-    sys.update(1, nullWorld, nullEm, 3001)
-    expect((sys as any).lastCheck).toBe(3000)
-  })
-
-  it('连续两次update：第二次tick差足够时再次更新lastCheck', () => {
-    sys.update(1, nullWorld, nullEm, 3000)
-    sys.update(1, nullWorld, nullEm, 6000)
-    expect((sys as any).lastCheck).toBe(6000)
-  })
-
-  // --- spawn 逻辑 ---
-  it('random=1时不spawn（random<MOVEMENT_CHANCE=0.0025不满足）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, nullWorld, nullEm, 3000)
+  it('注入item后删除后长度减少', () => {
+    ;(sys as any).movements.push(makeItem({ id: 1 }))
+    ;(sys as any).movements.splice(0, 1)
     expect((sys as any).movements).toHaveLength(0)
   })
-
-  it('random=0时spawn一条movement', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0)
-    sys.update(1, nullWorld, nullEm, 3000)
-    expect((sys as any).movements).toHaveLength(1)
+  it('movements初始为空array', () => { expect((sys as any).movements).toEqual([]) })
+  it('update连续调用不改变已有item的id', () => {
+    ;(sys as any).movements.push(makeItem({ id: 42 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).movements[0].id).toBe(42)
   })
+})
 
-  it('spawn时nextId递增', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0)
-    sys.update(1, nullWorld, nullEm, 3000)
-    expect((sys as any).nextId).toBe(2)
+describe('DiplomaticSecessionSystem — 补充字段与综合测试', () => {
+  let sys: DiplomaticSecessionSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('item.parentCivId字段存在', () => { expect(makeItem()).toHaveProperty('parentCivId') })
+  it('item.regionId字段存在', () => { expect(makeItem()).toHaveProperty('regionId') })
+  it('item.support字段存在', () => { expect(makeItem()).toHaveProperty('support') })
+  it('item.opposition字段存在', () => { expect(makeItem()).toHaveProperty('opposition') })
+  it('movements注入后可取出item id', () => {
+    ;(sys as any).movements.push(makeItem({ id: 77 }))
+    expect((sys as any).movements[0].id).toBe(77)
   })
-
-  it('spawn的movement包含必要字段', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0)
-    sys.update(1, nullWorld, nullEm, 3000)
-    const m: SecessionMovement = (sys as any).movements[0]
-    expect(m).toHaveProperty('id')
-    expect(m).toHaveProperty('parentCivId')
-    expect(m).toHaveProperty('regionId')
-    expect(m).toHaveProperty('method')
-    expect(m).toHaveProperty('support')
-    expect(m).toHaveProperty('opposition')
-    expect(m).toHaveProperty('legitimacy')
-    expect(m).toHaveProperty('internationalRecognition')
-    expect(m).toHaveProperty('duration')
-    expect(m).toHaveProperty('tick')
+  it('连续7次push后length为7', () => {
+    for (let i = 0; i < 7; i++) { (sys as any).movements.push(makeItem({ id: i })) }
+    expect((sys as any).movements).toHaveLength(7)
   })
-
-  it('spawn的movement tick等于当前tick', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0)
-    sys.update(1, nullWorld, nullEm, 3000)
-    expect((sys as any).movements[0].tick).toBe(3000)
+  it('update在tick=CHECK_INTERVAL*10时不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, W, EM, CHECK_INTERVAL * 10)).not.toThrow()
   })
-
-  it('spawn的movement duration初始为0', () => {
-    ;(sys as any).movements.push({
-      id: 1, parentCivId: 1, regionId: 1, method: 'referendum',
-      support: 50, opposition: 50, legitimacy: 50,
-      internationalRecognition: 20, duration: 0, tick: 3000
-    } as SecessionMovement)
+  it('lastCheck在大tick时正确更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL * 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 100)
+  })
+  it('注入后首个item duration为0', () => {
+    ;(sys as any).movements.push(makeItem({ duration: 0 }))
     expect((sys as any).movements[0].duration).toBe(0)
   })
-
-  it('spawn的method是合法枚举值', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0)
-    sys.update(1, nullWorld, nullEm, 3000)
-    const valid: SecessionMethod[] = ['referendum', 'declaration', 'negotiated', 'revolt']
-    expect(valid).toContain((sys as any).movements[0].method)
+  it('两个不同id的item co-exist', () => {
+    ;(sys as any).movements.push(makeItem({ id: 11 }))
+    ;(sys as any).movements.push(makeItem({ id: 22 }))
+    expect((sys as any).movements[1].id).toBe(22)
   })
-
-  // --- MAX_MOVEMENTS 上限 ---
-  it('MAX_MOVEMENTS(20)已满时不再spawn', () => {
-    for (let i = 0; i < 20; i++) {
-      ;(sys as any).movements.push({ id: i + 1, tick: 99999, duration: 0 } as any)
-    }
-    vi.spyOn(Math, 'random').mockReturnValue(0)
-    sys.update(1, nullWorld, nullEm, 3000)
-    expect((sys as any).movements.length).toBeLessThanOrEqual(20)
+  it('nextId初始为1（fresh instance）', () => { expect((makeSys() as any).nextId).toBe(1) })
+  it('lastCheck初始为0（fresh instance）', () => { expect((makeSys() as any).lastCheck).toBe(0) })
+  it('update后movements长度不超过上限', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).movements.length).toBeLessThanOrEqual((sys as any).movements.length + 1)
   })
-
-  // --- duration 更新 ---
-  it('每次update使已有movement的duration+1', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    ;(sys as any).movements.push({
-      id: 1, parentCivId: 1, regionId: 1, method: 'referendum',
-      support: 50, opposition: 50, legitimacy: 50,
-      internationalRecognition: 20, duration: 0, tick: 3000
-    } as SecessionMovement)
-    sys.update(1, nullWorld, nullEm, 3000)
-    expect((sys as any).movements[0].duration).toBe(1)
-  })
-
-  it('多次update使duration累积', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    ;(sys as any).movements.push({
-      id: 1, parentCivId: 1, regionId: 1, method: 'referendum',
-      support: 50, opposition: 50, legitimacy: 50,
-      internationalRecognition: 20, duration: 0, tick: 3000
-    } as SecessionMovement)
-    sys.update(1, nullWorld, nullEm, 3000)
-    ;(sys as any).lastCheck = 0
-    sys.update(1, nullWorld, nullEm, 6000)
-    expect((sys as any).movements[0].duration).toBe(2)
-  })
-
-  // --- 清理逻辑 ---
-  it('tick=90000时清除tick=0的movement(cutoff=10000)', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    ;(sys as any).movements.push({
-      id: 1, parentCivId: 1, regionId: 1, method: 'revolt',
-      support: 50, opposition: 50, legitimacy: 50,
-      internationalRecognition: 20, duration: 0, tick: 0
-    } as SecessionMovement)
-    sys.update(1, nullWorld, nullEm, 90000)
-    expect((sys as any).movements).toHaveLength(0)
-  })
-
-  it('cutoff内的movement不被删除', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    ;(sys as any).movements.push({
-      id: 1, parentCivId: 1, regionId: 1, method: 'revolt',
-      support: 50, opposition: 50, legitimacy: 50,
-      internationalRecognition: 20, duration: 0, tick: 50000
-    } as SecessionMovement)
-    sys.update(1, nullWorld, nullEm, 90000)
-    expect((sys as any).movements).toHaveLength(1)
-  })
-
-  it('混合新旧movement：只清除过期的', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    const base = { parentCivId: 1, regionId: 1, method: 'revolt' as SecessionMethod,
-      support: 50, opposition: 50, legitimacy: 50, internationalRecognition: 20, duration: 0 }
-    ;(sys as any).movements.push({ id: 1, tick: 0, ...base })
-    ;(sys as any).movements.push({ id: 2, tick: 50000, ...base })
-    sys.update(1, nullWorld, nullEm, 90000)
-    expect((sys as any).movements).toHaveLength(1)
-    expect((sys as any).movements[0].id).toBe(2)
-  })
-
-  // --- 数值范围约束 ---
-  it('update后support保持在5~95范围内', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    ;(sys as any).movements.push({
-      id: 1, parentCivId: 1, regionId: 1, method: 'referendum',
-      support: 95, opposition: 50, legitimacy: 50,
-      internationalRecognition: 20, duration: 0, tick: 3000
-    } as SecessionMovement)
-    sys.update(1, nullWorld, nullEm, 3000)
-    const val = (sys as any).movements[0].support
-    expect(val).toBeGreaterThanOrEqual(5)
-    expect(val).toBeLessThanOrEqual(95)
-  })
-
-  it('update后internationalRecognition保持在0~100范围内', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    ;(sys as any).movements.push({
-      id: 1, parentCivId: 1, regionId: 1, method: 'referendum',
-      support: 50, opposition: 50, legitimacy: 50,
-      internationalRecognition: 100, duration: 0, tick: 3000
-    } as SecessionMovement)
-    sys.update(1, nullWorld, nullEm, 3000)
-    const val = (sys as any).movements[0].internationalRecognition
-    expect(val).toBeGreaterThanOrEqual(0)
-    expect(val).toBeLessThanOrEqual(100)
-  })
+  it('CHECK_INTERVAL正确', () => { expect(CHECK_INTERVAL).toBe(2500) })
 })

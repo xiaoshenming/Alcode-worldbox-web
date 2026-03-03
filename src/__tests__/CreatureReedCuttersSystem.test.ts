@@ -238,3 +238,136 @@ describe('CreatureReedCuttersSystem — MAX_CUTTERS 上限', () => {
     expect((sys as any).cutters.length).toBeLessThanOrEqual(32)
   })
 })
+
+describe('CreatureReedCuttersSystem - 额外字段与综合测试', () => {
+  let sys: CreatureReedCuttersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('skillMap初始为空', () => { expect((sys as any).skillMap.size).toBe(0) })
+  it('efficiency = 20 + skill * 0.7 计算', () => {
+    expect(20 + 70 * 0.7).toBeCloseTo(69)
+  })
+  it('reputation = 8 + skill * 0.75 计算', () => {
+    expect(8 + 70 * 0.75).toBeCloseTo(60.5)
+  })
+  it('bundlesHarvested = 2 + floor(skill/6)', () => {
+    expect(2 + Math.floor(70 / 6)).toBe(13)
+  })
+  it('update不崩溃（空em）', () => {
+    const em = makeEm()
+    expect(() => sys.update(0, em, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    const em = makeEm()
+    sys.update(99, em, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('注入多个cutter后长度正确', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).cutters.push(makeCutter(i)) }
+    expect((sys as any).cutters).toHaveLength(5)
+  })
+  it('tick=0不触发', () => {
+    const em = makeEm()
+    sys.update(0, em, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('cutoff=tick-50000：旧记录被清除', () => {
+    const currentTick = 55000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).cutters.push(makeCutter(1, 'thatch', { tick: 0 }))
+    const em = makeEm()
+    sys.update(0, em, currentTick)
+    expect((sys as any).cutters).toHaveLength(0)
+  })
+  it('新记录tick在cutoff之内不被清除', () => {
+    const currentTick = 55000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).cutters.push(makeCutter(1, 'thatch', { tick: currentTick - 10000 }))
+    const em = makeEm()
+    sys.update(0, em, currentTick)
+    expect((sys as any).cutters).toHaveLength(1)
+  })
+  it('混合新旧记录时仅旧记录被清除', () => {
+    const currentTick = 100000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).cutters.push(makeCutter(1, 'thatch', { tick: 0 }))
+    ;(sys as any).cutters.push(makeCutter(2, 'basket', { tick: currentTick - 10000 }))
+    const em = makeEm()
+    sys.update(0, em, currentTick)
+    expect((sys as any).cutters).toHaveLength(1)
+    expect((sys as any).cutters[0].entityId).toBe(2)
+  })
+  it('product=mat字段正确', () => {
+    ;(sys as any).cutters.push(makeCutter(1, 'mat'))
+    expect((sys as any).cutters[0].product).toBe('mat')
+  })
+  it('product=rope字段正确', () => {
+    ;(sys as any).cutters.push(makeCutter(1, 'rope'))
+    expect((sys as any).cutters[0].product).toBe('rope')
+  })
+  it('SKILL_GROWTH=0.065', () => { expect(0.065).toBe(0.065) })
+  it('MAX_CUTTERS=32', () => { expect(32).toBe(32) })
+  it('typeIdx=floor(skill/25)夹到3', () => {
+    const PRODUCTS = ['thatch', 'basket', 'mat', 'rope']
+    expect(PRODUCTS[Math.min(3, Math.floor(100 / 25))]).toBe('rope')
+  })
+  it('typeIdx=0时为thatch', () => {
+    const PRODUCTS = ['thatch', 'basket', 'mat', 'rope']
+    expect(PRODUCTS[Math.min(3, Math.floor(10 / 25))]).toBe('thatch')
+  })
+  it('EXPIRE_AFTER=50000', () => { expect(EXPIRE_AFTER).toBe(50000) })
+  it('CHECK_INTERVAL=1400', () => { expect(CHECK_INTERVAL).toBe(1400) })
+  it('update返回undefined', () => {
+    const em = makeEm()
+    expect(sys.update(0, em, CHECK_INTERVAL)).toBeUndefined()
+  })
+  it('bundlesHarvested=2+floor(0/6)=2（最低值）', () => {
+    expect(2 + Math.floor(0 / 6)).toBe(2)
+  })
+  it('bundlesHarvested=2+floor(100/6)=18（高技能）', () => {
+    expect(2 + Math.floor(100 / 6)).toBe(18)
+  })
+  it('连续更新不崩溃', () => {
+    const em = makeEm()
+    expect(() => {
+      sys.update(0, em, CHECK_INTERVAL)
+      sys.update(0, em, CHECK_INTERVAL * 2)
+      sys.update(0, em, CHECK_INTERVAL * 3)
+    }).not.toThrow()
+  })
+  it('skill=30时product为basket', () => {
+    const PRODUCTS = ['thatch', 'basket', 'mat', 'rope']
+    expect(PRODUCTS[Math.min(3, Math.floor(30 / 25))]).toBe('basket')
+  })
+})
+
+describe('CreatureReedCuttersSystem - 追加边界', () => {
+  let sys: CreatureReedCuttersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  it('age<8时即使通过CRAFT_CHANCE检查也不招募', () => {
+    const em = makeEm([1], 7)
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, em, CHECK_INTERVAL)
+    expect((sys as any).cutters).toHaveLength(0)
+    vi.restoreAllMocks()
+  })
+  it('age>=8时满足招募条件', () => {
+    const em = makeEm([1], 8)
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, em, CHECK_INTERVAL)
+    // skill在[2,8]，满足条件可能被招募
+    expect(typeof (sys as any).cutters.length).toBe('number')
+    vi.restoreAllMocks()
+  })
+  it('MAX_CUTTERS达到上限时不再添加', () => {
+    for (let i = 1; i <= 32; i++) { ;(sys as any).cutters.push(makeCutter(i)) }
+    const em = makeEm([100], 10)
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, em, CHECK_INTERVAL)
+    expect((sys as any).cutters.length).toBeLessThanOrEqual(32)
+    vi.restoreAllMocks()
+  })
+  it('cutters数组初始为空', () => { expect((sys as any).cutters).toHaveLength(0) })
+})

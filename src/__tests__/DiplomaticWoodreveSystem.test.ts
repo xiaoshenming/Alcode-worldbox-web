@@ -24,6 +24,11 @@ describe('DiplomaticWoodreveSystem', () => {
   it('arrangements是数组', () => {
     expect(Array.isArray((sys as any).arrangements)).toBe(true)
   })
+  it('新建两个实例互相独立', () => {
+    const s1 = makeSys(); const s2 = makeSys()
+    ;(s1 as any).arrangements.push({ id: 1 })
+    expect((s2 as any).arrangements).toHaveLength(0)
+  })
 
   // ─── 节流控制 ───
   it('tick不足CHECK_INTERVAL(2850)时不执行', () => {
@@ -42,6 +47,25 @@ describe('DiplomaticWoodreveSystem', () => {
     const before = (sys as any).arrangements.length
     sys.update(1, world, em, CHECK_INTERVAL)
     expect((sys as any).arrangements.length).toBe(before)
+  })
+  it('第二次间隔不足时lastCheck不更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, world, em, CHECK_INTERVAL)
+    sys.update(1, world, em, CHECK_INTERVAL + 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('间隔足够时第二次触发并更新lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, world, em, CHECK_INTERVAL)
+    sys.update(1, world, em, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+  it('三次连续触发lastCheck正确', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, world, em, CHECK_INTERVAL)
+    sys.update(1, world, em, CHECK_INTERVAL * 2)
+    sys.update(1, world, em, CHECK_INTERVAL * 3)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 3)
   })
 
   // ─── spawn ───
@@ -103,6 +127,40 @@ describe('DiplomaticWoodreveSystem', () => {
     }
     expect((sys as any).arrangements.length).toBeLessThanOrEqual(16)
   })
+  it('spawn后arrangement包含timberJurisdiction字段', () => {
+    const mockRandom = vi.spyOn(Math, 'random')
+    mockRandom.mockReturnValueOnce(0.001)
+               .mockReturnValueOnce(0.001)
+               .mockReturnValueOnce(0.6)
+               .mockReturnValue(0.5)
+    sys.update(1, world, em, CHECK_INTERVAL)
+    if ((sys as any).arrangements.length > 0) {
+      expect(typeof (sys as any).arrangements[0].timberJurisdiction).toBe('number')
+    }
+  })
+  it('spawn后arrangement包含revenueCollection字段', () => {
+    const mockRandom = vi.spyOn(Math, 'random')
+    mockRandom.mockReturnValueOnce(0.001)
+               .mockReturnValueOnce(0.001)
+               .mockReturnValueOnce(0.6)
+               .mockReturnValue(0.5)
+    sys.update(1, world, em, CHECK_INTERVAL)
+    if ((sys as any).arrangements.length > 0) {
+      expect(typeof (sys as any).arrangements[0].revenueCollection).toBe('number')
+    }
+  })
+  it('woodland===revenue时不spawn', () => {
+    let call = 0
+    vi.spyOn(Math, 'random').mockImplementation(() => {
+      call++
+      if (call === 1) return 0.001  // < PROCEED_CHANCE
+      if (call === 2) return 0.0    // woodland = 1
+      if (call === 3) return 0.0    // revenue = 1 (same)
+      return 0.5
+    })
+    sys.update(1, world, em, CHECK_INTERVAL)
+    expect((sys as any).arrangements).toHaveLength(0)
+  })
 
   // ─── duration递增 ───
   it('update后已有arrangement的duration递增1', () => {
@@ -145,6 +203,42 @@ describe('DiplomaticWoodreveSystem', () => {
       expect((sys as any).arrangements[i].duration).toBe(i * 10 + 1)
     }
   })
+  it('多次update后duration累计递增', () => {
+    ;(sys as any).arrangements.push({
+      id: 1, woodlandCivId: 1, revenueCivId: 2,
+      form: 'forest_woodreve',
+      timberJurisdiction: 50, revenueCollection: 50,
+      woodlandSurvey: 30, harvestScheduling: 30,
+      duration: 0, tick: CHECK_INTERVAL
+    })
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, world, em, CHECK_INTERVAL * 2)
+    ;(sys as any).lastCheck = 0
+    sys.update(1, world, em, CHECK_INTERVAL * 3)
+    expect((sys as any).arrangements[0].duration).toBe(2)
+  })
+
+  // ─── 字段约束 ───
+  it('timberJurisdiction不低于5', () => {
+    ;(sys as any).arrangements.push({
+      id: 1, woodlandCivId: 1, revenueCivId: 2, form: 'royal_woodreve',
+      timberJurisdiction: 5, revenueCollection: 50, woodlandSurvey: 30, harvestScheduling: 30,
+      duration: 0, tick: CHECK_INTERVAL
+    })
+    vi.spyOn(Math, 'random').mockReturnValue(0.0)
+    sys.update(1, world, em, CHECK_INTERVAL * 2)
+    expect((sys as any).arrangements[0].timberJurisdiction).toBeGreaterThanOrEqual(5)
+  })
+  it('revenueCollection不低于10', () => {
+    ;(sys as any).arrangements.push({
+      id: 1, woodlandCivId: 1, revenueCivId: 2, form: 'royal_woodreve',
+      timberJurisdiction: 50, revenueCollection: 10, woodlandSurvey: 30, harvestScheduling: 30,
+      duration: 0, tick: CHECK_INTERVAL
+    })
+    vi.spyOn(Math, 'random').mockReturnValue(0.0)
+    sys.update(1, world, em, CHECK_INTERVAL * 2)
+    expect((sys as any).arrangements[0].revenueCollection).toBeGreaterThanOrEqual(10)
+  })
 
   // ─── cleanup ───
   it('tick < cutoff(tick-88000)时arrangement被删除', () => {
@@ -161,7 +255,7 @@ describe('DiplomaticWoodreveSystem', () => {
   })
   it('cleanup边界：tick恰好等于cutoff时保留', () => {
     const bigTick = 90000
-    const cutoff = bigTick - 88000  // = 2000
+    const cutoff = bigTick - 88000
     ;(sys as any).arrangements.push({
       id: 1, woodlandCivId: 3, revenueCivId: 5,
       form: 'forest_woodreve',
@@ -180,19 +274,32 @@ describe('DiplomaticWoodreveSystem', () => {
       form: 'royal_woodreve',
       timberJurisdiction: 50, revenueCollection: 50,
       woodlandSurvey: 30, harvestScheduling: 30,
-      duration: 0, tick: 0  // 过期
+      duration: 0, tick: 0
     })
     ;(sys as any).arrangements.push({
       id: 2, woodlandCivId: 3, revenueCivId: 4,
       form: 'manor_woodreve',
       timberJurisdiction: 50, revenueCollection: 50,
       woodlandSurvey: 30, harvestScheduling: 30,
-      duration: 0, tick: bigTick - 1000  // 未过期
+      duration: 0, tick: bigTick - 1000
     })
     vi.spyOn(Math, 'random').mockReturnValue(1)
     sys.update(1, world, em, bigTick)
     expect((sys as any).arrangements).toHaveLength(1)
     expect((sys as any).arrangements[0].id).toBe(2)
+  })
+  it('所有arrangements都过期时全部删除', () => {
+    const bigTick = 200000
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).arrangements.push({
+        id: i + 1, woodlandCivId: 1, revenueCivId: 2, form: 'shire_woodreve',
+        timberJurisdiction: 50, revenueCollection: 50, woodlandSurvey: 30, harvestScheduling: 30,
+        duration: 0, tick: bigTick - 90000
+      })
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, world, em, bigTick)
+    expect((sys as any).arrangements).toHaveLength(0)
   })
 
   // ─── 手动注入 ───
@@ -205,5 +312,19 @@ describe('DiplomaticWoodreveSystem', () => {
       ;(sys as any).arrangements.push({ id: i + 1, form: 'royal_woodreve' })
     }
     expect((sys as any).arrangements).toHaveLength(5)
+  })
+
+  // ─── 边界条件 ───
+  it('tick=0不触发', () => {
+    sys.update(1, world, em, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('大tick值不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    expect(() => sys.update(1, world, em, 9999999)).not.toThrow()
+  })
+  it('arrangements为空时update不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    expect(() => sys.update(1, world, em, CHECK_INTERVAL)).not.toThrow()
   })
 })

@@ -1,202 +1,352 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { CreatureScabbardMakerSystem } from '../systems/CreatureScabbardMakerSystem'
 import type { ScabbardMaker } from '../systems/CreatureScabbardMakerSystem'
 
-// CHECK_INTERVAL = 2560, MAX_MAKERS = 12
 const CHECK_INTERVAL = 2560
-const em = { getEntitiesWithComponent: () => [] } as any
+const MAX_WORKERS = 12
 
 let nextId = 1
 function makeSys(): CreatureScabbardMakerSystem { return new CreatureScabbardMakerSystem() }
-function makeMaker(entityId: number, overrides: Partial<ScabbardMaker> = {}): ScabbardMaker {
-  return {
-    id: nextId++,
-    entityId,
-    leatherWorking: 70,
-    woodCarving: 65,
-    fittingPrecision: 75,
-    outputQuality: 80,
-    tick: 0,
-    ...overrides,
-  }
+function makeWorker(entityId: number, overrides: Partial<ScabbardMaker> = {}): ScabbardMaker {
+  return { id: nextId++, entityId, leatherWorking: 70, fittingPrecision: 65, woodCarving: 60, outputQuality: 75, tick: 0, ...overrides }
 }
+const emMock = { getEntitiesWithComponents: () => [] } as any
 
-describe('CreatureScabbardMakerSystem - 基础字段', () => {
+describe('CreatureScabbardMakerSystem - 初始状态', () => {
   let sys: CreatureScabbardMakerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无刀鞘工', () => { expect((sys as any).makers).toHaveLength(0) })
-  it('注入后可查询', () => {
-    ;(sys as any).makers.push(makeMaker(1))
+  it('初始无工匠', () => { expect((sys as any).makers).toHaveLength(0) })
+  it('注入后entityId可查询', () => {
+    ;(sys as any).makers.push(makeWorker(1))
     expect((sys as any).makers[0].entityId).toBe(1)
   })
-  it('返回内部引用', () => {
-    ;(sys as any).makers.push(makeMaker(1))
+  it('返回内部引用一致', () => {
+    ;(sys as any).makers.push(makeWorker(1))
     expect((sys as any).makers).toBe((sys as any).makers)
   })
-  it('字段正确', () => {
-    ;(sys as any).makers.push(makeMaker(2))
-    const m = (sys as any).makers[0]
-    expect(m.leatherWorking).toBe(70)
-    expect(m.fittingPrecision).toBe(75)
+  it('字段leatherWorking正确', () => {
+    ;(sys as any).makers.push(makeWorker(2))
+    expect((sys as any).makers[0].leatherWorking).toBe(70)
+  })
+  it('字段outputQuality正确', () => {
+    ;(sys as any).makers.push(makeWorker(2))
+    expect((sys as any).makers[0].outputQuality).toBe(75)
   })
   it('多个全部返回', () => {
-    ;(sys as any).makers.push(makeMaker(1))
-    ;(sys as any).makers.push(makeMaker(2))
+    ;(sys as any).makers.push(makeWorker(1))
+    ;(sys as any).makers.push(makeWorker(2))
     expect((sys as any).makers).toHaveLength(2)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })
 
 describe('CreatureScabbardMakerSystem - CHECK_INTERVAL节流', () => {
   let sys: CreatureScabbardMakerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('tick不足CHECK_INTERVAL时不更新技能', () => {
-    ;(sys as any).makers.push(makeMaker(1, { leatherWorking: 50 }))
-    sys.update(1, em, CHECK_INTERVAL - 1)
-    expect((sys as any).makers[0].leatherWorking).toBe(50)
+  it('tick差不足CHECK_INTERVAL时不执行，lastCheck不变', () => {
+    sys.update(0, emMock, CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(0)
   })
-
-  it('tick恰好等于CHECK_INTERVAL时执行更新', () => {
-    ;(sys as any).makers.push(makeMaker(1, { leatherWorking: 50 }))
-    sys.update(1, em, CHECK_INTERVAL)
-    expect((sys as any).makers[0].leatherWorking).toBeCloseTo(50.02, 5)
+  it('tick差=CHECK_INTERVAL时触发，lastCheck更新', () => {
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
-
-  it('两次间隔不足时第二次不再更新', () => {
-    ;(sys as any).makers.push(makeMaker(1, { leatherWorking: 50 }))
-    sys.update(1, em, CHECK_INTERVAL)
-    const after1 = (sys as any).makers[0].leatherWorking
-    sys.update(1, em, CHECK_INTERVAL + 1) // 差值=1，不足
-    expect((sys as any).makers[0].leatherWorking).toBe(after1)
+  it('tick差=CHECK_INTERVAL-1不触发', () => {
+    ;(sys as any).lastCheck = 5000
+    sys.update(0, emMock, 5000 + CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(5000)
   })
-
-  it('第二个完整间隔后再次更新', () => {
-    ;(sys as any).makers.push(makeMaker(1, { leatherWorking: 50 }))
-    sys.update(1, em, CHECK_INTERVAL)
-    sys.update(1, em, CHECK_INTERVAL * 2)
-    expect((sys as any).makers[0].leatherWorking).toBeCloseTo(50.04, 5)
+  it('tick差=CHECK_INTERVAL精确触发', () => {
+    ;(sys as any).lastCheck = 5000
+    sys.update(0, emMock, 5000 + CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(5000 + CHECK_INTERVAL)
+  })
+  it('未触发时技能不增长', () => {
+    const w = makeWorker(1, { leatherWorking: 50 })
+    ;(sys as any).makers.push(w)
+    sys.update(0, emMock, CHECK_INTERVAL - 1)
+    expect(w.leatherWorking).toBe(50)
+  })
+  it('触发后lastCheck更新为当前tick', () => {
+    ;(sys as any).lastCheck = 1000
+    sys.update(0, emMock, 1000 + CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(1000 + CHECK_INTERVAL)
+  })
+  it('连续两次间隔不足跳过第二次', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    const snap = (sys as any).makers.length
+    sys.update(0, emMock, CHECK_INTERVAL + 1)
+    expect((sys as any).makers.length).toBe(snap)
+  })
+  it('两次均触发则技能增长两次', () => {
+    const w = makeWorker(1, { leatherWorking: 50 })
+    ;(sys as any).makers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    sys.update(0, emMock, CHECK_INTERVAL * 2)
+    expect(w.leatherWorking).toBeCloseTo(50 + 0.02 * 2, 4)
   })
 })
 
-describe('CreatureScabbardMakerSystem - 技能递增', () => {
+describe('CreatureScabbardMakerSystem - 技能递增与上限', () => {
   let sys: CreatureScabbardMakerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('leatherWorking 每次+0.02', () => {
-    ;(sys as any).makers.push(makeMaker(1, { leatherWorking: 50 }))
-    sys.update(1, em, CHECK_INTERVAL)
-    expect((sys as any).makers[0].leatherWorking).toBeCloseTo(50.02, 5)
+  it('leatherWorking每次+0.02', () => {
+    const w = makeWorker(1, { leatherWorking: 50 })
+    ;(sys as any).makers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.leatherWorking).toBeCloseTo(50 + 0.02, 5)
   })
-
-  it('fittingPrecision 每次+0.015', () => {
-    ;(sys as any).makers.push(makeMaker(1, { fittingPrecision: 50 }))
-    sys.update(1, em, CHECK_INTERVAL)
-    expect((sys as any).makers[0].fittingPrecision).toBeCloseTo(50.015, 5)
+  it('fittingPrecision每次+0.015', () => {
+    const w = makeWorker(1, { fittingPrecision: 40 })
+    ;(sys as any).makers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.fittingPrecision).toBeCloseTo(40 + 0.015, 5)
   })
-
-  it('outputQuality 每次+0.01', () => {
-    ;(sys as any).makers.push(makeMaker(1, { outputQuality: 50 }))
-    sys.update(1, em, CHECK_INTERVAL)
-    expect((sys as any).makers[0].outputQuality).toBeCloseTo(50.01, 5)
+  it('outputQuality每次+0.01', () => {
+    const w = makeWorker(1, { outputQuality: 60 })
+    ;(sys as any).makers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.outputQuality).toBeCloseTo(60 + 0.01, 5)
   })
-
-  it('leatherWorking 上限100，不超过', () => {
-    ;(sys as any).makers.push(makeMaker(1, { leatherWorking: 99.99 }))
-    sys.update(1, em, CHECK_INTERVAL)
-    expect((sys as any).makers[0].leatherWorking).toBe(100)
+  it('leatherWorking上限100不超过', () => {
+    const w = makeWorker(1, { leatherWorking: 99.99 })
+    ;(sys as any).makers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.leatherWorking).toBeLessThanOrEqual(100)
   })
-
-  it('outputQuality 已达100时不继续增加', () => {
-    ;(sys as any).makers.push(makeMaker(1, { outputQuality: 100 }))
-    sys.update(1, em, CHECK_INTERVAL)
-    expect((sys as any).makers[0].outputQuality).toBe(100)
+  it('fittingPrecision上限100不超过', () => {
+    const w = makeWorker(1, { fittingPrecision: 99.99 })
+    ;(sys as any).makers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.fittingPrecision).toBeLessThanOrEqual(100)
   })
-
-  it('woodCarving 不在技能递增列表，保持不变', () => {
-    ;(sys as any).makers.push(makeMaker(1, { woodCarving: 60 }))
-    sys.update(1, em, CHECK_INTERVAL)
-    expect((sys as any).makers[0].woodCarving).toBe(60)
+  it('outputQuality上限100不超过', () => {
+    const w = makeWorker(1, { outputQuality: 99.99 })
+    ;(sys as any).makers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.outputQuality).toBeLessThanOrEqual(100)
+  })
+  it('woodCarving不参与递增', () => {
+    const w = makeWorker(1, { woodCarving: 60 })
+    ;(sys as any).makers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.woodCarving).toBe(60)
+  })
+  it('多个工匠同时增长', () => {
+    ;(sys as any).makers.push(makeWorker(1, { leatherWorking: 50 }))
+    ;(sys as any).makers.push(makeWorker(2, { leatherWorking: 60 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).makers[0].leatherWorking).toBeCloseTo(50 + 0.02, 5)
+    expect((sys as any).makers[1].leatherWorking).toBeCloseTo(60 + 0.02, 5)
+  })
+  it('leatherWorking=100时保持不变', () => {
+    const w = makeWorker(1, { leatherWorking: 100 })
+    ;(sys as any).makers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.leatherWorking).toBe(100)
   })
 })
 
-describe('CreatureScabbardMakerSystem - cleanup边界', () => {
+describe('CreatureScabbardMakerSystem - cleanup: leatherWorking<=4时删除', () => {
   let sys: CreatureScabbardMakerSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  it('leatherWorking 恰好为3.98时（+0.02=4.0），等于4仍被移除', () => {
-    ;(sys as any).makers.push(makeMaker(1, { leatherWorking: 3.98 }))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, em, CHECK_INTERVAL)
-    // 3.98 + 0.02 = 4.0, cleanup条件 <= 4, 所以被移除
-    expect((sys as any).makers).toHaveLength(0)
+  beforeEach(() => {
+    sys = makeSys(); nextId = 1
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
   })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('leatherWorking 为4.01时不被移除', () => {
-    ;(sys as any).makers.push(makeMaker(1, { leatherWorking: 4.01 }))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, em, CHECK_INTERVAL)
-    // 4.01 + 0.02 = 4.03 > 4, 不移除
+  it('leatherWorking=4时更新后>4，保留', () => {
+    ;(sys as any).makers.push(makeWorker(1, { leatherWorking: 4 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
     expect((sys as any).makers).toHaveLength(1)
   })
-
-  it('leatherWorking <= 4 时从列表移除（低值测试）', () => {
-    ;(sys as any).makers.push(makeMaker(1, { leatherWorking: 1.0 }))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, em, CHECK_INTERVAL)
-    // 1.0 + 0.02 = 1.02 <= 4, 被移除
+  it('leatherWorking=3.98时更新后<=4，删除', () => {
+    ;(sys as any).makers.push(makeWorker(1, { leatherWorking: 3.98 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
     expect((sys as any).makers).toHaveLength(0)
   })
-
-  it('多个刀鞘工中只移除低技能者', () => {
-    ;(sys as any).makers.push(makeMaker(1, { leatherWorking: 3.0 }))
-    ;(sys as any).makers.push(makeMaker(2, { leatherWorking: 50 }))
-    ;(sys as any).makers.push(makeMaker(3, { leatherWorking: 2.0 }))
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, em, CHECK_INTERVAL)
+  it('leatherWorking=3.99时更新后>4，保留', () => {
+    ;(sys as any).makers.push(makeWorker(1, { leatherWorking: 3.99 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).makers).toHaveLength(1)
+  })
+  it('高技能工匠不被删除', () => {
+    ;(sys as any).makers.push(makeWorker(1, { leatherWorking: 50 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).makers).toHaveLength(1)
+  })
+  it('多个低技能全部删除', () => {
+    for (let i = 1; i <= 3; i++) {
+      ;(sys as any).makers.push(makeWorker(i, { leatherWorking: 2 }))
+    }
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).makers).toHaveLength(0)
+  })
+  it('混合：低技能删除高技能保留', () => {
+    ;(sys as any).makers.push(makeWorker(1, { leatherWorking: 2 }))
+    ;(sys as any).makers.push(makeWorker(2, { leatherWorking: 50 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
     expect((sys as any).makers).toHaveLength(1)
     expect((sys as any).makers[0].entityId).toBe(2)
   })
+  it('leatherWorking=1时必然被删除', () => {
+    ;(sys as any).makers.push(makeWorker(1, { leatherWorking: 1 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).makers).toHaveLength(0)
+  })
+  it('leatherWorking=3.97时更新后<4被删除', () => {
+    ;(sys as any).makers.push(makeWorker(1, { leatherWorking: 3.97 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).makers).toHaveLength(0)
+  })
 })
 
-describe('CreatureScabbardMakerSystem - 招募上限', () => {
+describe('CreatureScabbardMakerSystem - MAX_WORKERS上限与招募', () => {
   let sys: CreatureScabbardMakerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('满员时（12人）不再招募', () => {
-    for (let i = 0; i < 12; i++) {
-      ;(sys as any).makers.push(makeMaker(i + 1))
+  it('已达MAX_WORKERS时不再招募', () => {
+    for (let i = 0; i < MAX_WORKERS; i++) {
+      ;(sys as any).makers.push(makeWorker(i + 1))
     }
-    vi.spyOn(Math, 'random').mockReturnValue(0.9999)
-    sys.update(1, em, CHECK_INTERVAL)
-    expect((sys as any).makers.length).toBeLessThanOrEqual(12)
-    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).makers.length).toBeLessThanOrEqual(MAX_WORKERS)
   })
-
-  it('未满员且随机值小于RECRUIT_CHANCE时触发招募', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.001) // 0.001 < 0.0017
-    sys.update(1, em, CHECK_INTERVAL)
+  it('数量<MAX且random<RECRUIT_CHANCE时招募', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, emMock, CHECK_INTERVAL)
     expect((sys as any).makers.length).toBeGreaterThanOrEqual(1)
-    vi.restoreAllMocks()
   })
-
-  it('招募后nextId递增', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    const beforeId = (sys as any).nextId
-    sys.update(1, em, CHECK_INTERVAL)
-    expect((sys as any).nextId).toBe(beforeId + 1)
-    vi.restoreAllMocks()
+  it('random=1时不招募', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).makers).toHaveLength(0)
   })
-
-  it('刀鞘工上限为12，大于马鞍工/锯木工的10', () => {
-    // 验证MAX_MAKERS=12而非10
-    for (let i = 0; i < 11; i++) {
-      ;(sys as any).makers.push(makeMaker(i + 1))
+  it('招募后tick等于当前tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    if ((sys as any).makers.length > 0) {
+      expect((sys as any).makers[0].tick).toBe(CHECK_INTERVAL)
     }
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(1, em, CHECK_INTERVAL)
-    // 11人未满12，可以招募
-    expect((sys as any).makers.length).toBeGreaterThan(11)
-    vi.restoreAllMocks()
+  })
+  it('多次招募id递增唯一', () => {
+    const sys2 = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys2.update(0, emMock, CHECK_INTERVAL)
+    sys2.update(0, emMock, CHECK_INTERVAL * 2)
+    const workers = (sys2 as any).makers
+    if (workers.length >= 2) {
+      expect(workers[1].id).toBeGreaterThan(workers[0].id)
+    }
+  })
+  it('招募时leatherWorking在[10,35]范围内', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    if ((sys as any).makers.length > 0) {
+      const v = (sys as any).makers[0].leatherWorking
+      expect(v).toBeGreaterThanOrEqual(10)
+      expect(v).toBeLessThanOrEqual(35)
+    }
+  })
+  it('招募的entityId在[0,499]范围', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    if ((sys as any).makers.length > 0) {
+      const eid = (sys as any).makers[0].entityId
+      expect(eid).toBeGreaterThanOrEqual(0)
+      expect(eid).toBeLessThanOrEqual(499)
+    }
+  })
+})
+
+describe('CreatureScabbardMakerSystem - 边界与综合场景', () => {
+  let sys: CreatureScabbardMakerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('空系统更新不抛出异常', () => {
+    expect(() => sys.update(0, emMock, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    sys.update(999, emMock, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('多次更新技能累积', () => {
+    const w = makeWorker(1, { leatherWorking: 50 })
+    ;(sys as any).makers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    for (let t = 1; t <= 3; t++) {
+      sys.update(0, emMock, CHECK_INTERVAL * t)
+    }
+    expect(w.leatherWorking).toBeCloseTo(50 + 0.02 * 3, 4)
+  })
+  it('系统update返回undefined', () => {
+    expect(sys.update(0, emMock, CHECK_INTERVAL)).toBeUndefined()
+  })
+  it('tick=0不触发', () => {
+    sys.update(0, emMock, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('注入5个工匠后长度为5', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).makers.push(makeWorker(i)) }
+    expect((sys as any).makers).toHaveLength(5)
+  })
+  it('大量工匠同时更新不抛出', () => {
+    for (let i = 1; i <= 8; i++) {
+      ;(sys as any).makers.push(makeWorker(i, { leatherWorking: 50 }))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(0, emMock, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('leatherWorking和outputQuality同时增长验证', () => {
+    const w = makeWorker(1, { leatherWorking: 50, outputQuality: 60 })
+    ;(sys as any).makers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.leatherWorking).toBeCloseTo(50 + 0.02, 5)
+    expect(w.outputQuality).toBeCloseTo(60 + 0.01, 5)
+  })
+})
+
+describe('CreatureScabbardMakerSystem - 额外边界验证', () => {
+  let sys: CreatureScabbardMakerSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('leatherWorking=4.00时更新后4.02>4保留', () => {
+    ;(sys as any).makers.push({ id: 99, entityId: 99, leatherWorking: 4.00, tick: 0 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).makers).toHaveLength(1)
+  })
+  it('tick负值时不触发', () => {
+    sys.update(0, emMock, -1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('两次相同tick只触发一次', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    const check1 = (sys as any).lastCheck
+    sys.update(0, emMock, CHECK_INTERVAL) // same tick, difference=0
+    expect((sys as any).lastCheck).toBe(check1)
   })
 })

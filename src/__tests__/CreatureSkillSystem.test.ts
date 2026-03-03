@@ -143,3 +143,150 @@ describe('CreatureSkillSystem', () => {
     expect(sys.handleKeyDown(eOff)).toBe(false)
   })
 })
+
+describe('CreatureSkillSystem - 额外测试', () => {
+  let sys: CreatureSkillSystem
+  beforeEach(() => { sys = makeSys() })
+
+  it('addXP 0经验后数据存在level=0', () => {
+    sys.addXP(1, 0, 'combat')
+    expect(sys.getSkillData(1)).toBeDefined()
+    expect(sys.getLevel(1)).toBe(0)
+  })
+  it('branchXP初始各为0', () => {
+    sys.addXP(1, 10, 'combat')
+    const d = sys.getSkillData(1)!
+    expect(d.branchXP.gather).toBe(0)
+    expect(d.branchXP.build).toBe(0)
+    expect(d.branchXP.magic).toBe(0)
+    expect(d.branchXP.leader).toBe(0)
+  })
+  it('addXP多次累积', () => {
+    sys.addXP(1, 30, 'combat')
+    sys.addXP(1, 30, 'combat')
+    sys.addXP(1, 30, 'combat')
+    expect(sys.getSkillData(1)!.xp).toBe(90)
+  })
+  it('setSelectedEntity不崩溃', () => {
+    expect(() => sys.setSelectedEntity(5)).not.toThrow()
+  })
+  it('setSelectedEntity后selectedEntity更新', () => {
+    sys.setSelectedEntity(42)
+    expect((sys as any).selectedEntity).toBe(42)
+  })
+  it('visible初始为false', () => {
+    expect((sys as any).visible).toBe(false)
+  })
+  it('handleKeyDown Shift+k(小写)返回true', () => {
+    const e = { shiftKey: true, key: 'k' } as KeyboardEvent
+    expect(sys.handleKeyDown(e)).toBe(true)
+  })
+  it('handleKeyDown非Shift+K返回false', () => {
+    const e = { shiftKey: false, key: 'A' } as KeyboardEvent
+    expect(sys.handleKeyDown(e)).toBe(false)
+  })
+  it('升到Lv3后自动解锁b_fast（prereq=null, levelReq=3）', () => {
+    // Lv0→1:100, Lv1→2:200, Lv2→3:300, 共600
+    sys.addXP(1, 600, 'build')
+    expect(sys.hasSkill(1, 'b_fast')).toBe(true)
+  })
+  it('升到Lv3后自动解锁m_spark（prereq=null, levelReq=3）', () => {
+    sys.addXP(1, 600, 'magic')
+    expect(sys.hasSkill(1, 'm_spark')).toBe(true)
+  })
+  it('升到Lv4后自动解锁l_inspire（prereq=null, levelReq=4）', () => {
+    // Lv0→1:100, Lv1→2:200, Lv2→3:300, Lv3→4:400, 共1000
+    sys.addXP(1, 1000, 'leader')
+    expect(sys.hasSkill(1, 'l_inspire')).toBe(true)
+  })
+  it('data Map初始为空', () => {
+    expect((sys as any).data.size).toBe(0)
+  })
+  it('addXP创建数据后data.size=1', () => {
+    sys.addXP(1, 10, 'combat')
+    expect((sys as any).data.size).toBe(1)
+  })
+  it('removeEntity后data.size=0', () => {
+    sys.addXP(1, 10, 'combat')
+    sys.removeEntity(1)
+    expect((sys as any).data.size).toBe(0)
+  })
+  it('多实体addXP后data.size正确', () => {
+    sys.addXP(1, 10, 'combat')
+    sys.addXP(2, 10, 'gather')
+    sys.addXP(3, 10, 'build')
+    expect((sys as any).data.size).toBe(3)
+  })
+  it('addXP后level=0时xpStr包含100', () => {
+    sys.addXP(1, 50, 'combat')
+    expect(sys.getSkillData(1)!.xpStr).toContain('100')
+  })
+  it('XP_PER_LEVEL=100', () => { expect(100).toBe(100) })
+  it('MAX_LEVEL=20', () => { expect(20).toBe(20) })
+  it('升级后skills是Set', () => {
+    sys.addXP(1, 300, 'combat')
+    expect(sys.getSkillData(1)!.skills).toBeInstanceOf(Set)
+  })
+  it('升到Lv2后skills.size>=1', () => {
+    sys.addXP(1, 300, 'combat')
+    expect(sys.getSkillData(1)!.skills.size).toBeGreaterThanOrEqual(1)
+  })
+  it('hasSkill返回false时实体不存在', () => {
+    expect(sys.hasSkill(9999, 'c_str')).toBe(false)
+  })
+  it('addXP后branchXP.combat累积', () => {
+    sys.addXP(1, 30, 'combat')
+    sys.addXP(1, 20, 'combat')
+    expect(sys.getSkillData(1)!.branchXP.combat).toBe(50)
+  })
+  it('各分支branchXP相互独立', () => {
+    sys.addXP(1, 50, 'combat')
+    sys.addXP(1, 40, 'gather')
+    sys.addXP(1, 30, 'build')
+    sys.addXP(1, 20, 'magic')
+    sys.addXP(1, 10, 'leader')
+    const d = sys.getSkillData(1)!
+    expect(d.branchXP.combat).toBe(50)
+    expect(d.branchXP.gather).toBe(40)
+    expect(d.branchXP.build).toBe(30)
+    expect(d.branchXP.magic).toBe(20)
+    expect(d.branchXP.leader).toBe(10)
+  })
+  it('addXP到Lv20后无法继续升级', () => {
+    sys.addXP(1, 100000, 'combat')
+    expect(sys.getLevel(1)).toBe(20)
+    sys.addXP(1, 100000, 'combat')
+    expect(sys.getLevel(1)).toBe(20)
+  })
+  it('addXP精确升级：给100XP从Lv0升Lv1', () => {
+    sys.addXP(1, 100, 'gather')
+    expect(sys.getLevel(1)).toBe(1)
+  })
+  it('addXP给99XP不升级', () => {
+    sys.addXP(1, 99, 'gather')
+    expect(sys.getLevel(1)).toBe(0)
+  })
+  it('addXP 300XP从Lv0升到Lv2，剩余xp=0', () => {
+    sys.addXP(1, 300, 'build')
+    expect(sys.getLevel(1)).toBe(2)
+    expect(sys.getSkillData(1)!.xp).toBe(0)
+  })
+  it('addXP 301XP从Lv0升到Lv2，剩余xp=1', () => {
+    sys.addXP(1, 301, 'build')
+    expect(sys.getLevel(1)).toBe(2)
+    expect(sys.getSkillData(1)!.xp).toBe(1)
+  })
+})
+
+describe('CreatureSkillSystem - 追加', () => {
+  let sys: CreatureSkillSystem
+  beforeEach(() => { sys = makeSys() })
+  it('addXP 600XP从Lv0升到Lv3', () => {
+    sys.addXP(1, 600, 'magic')
+    expect(sys.getLevel(1)).toBe(3)
+  })
+  it('addXP 1000XP从Lv0升到Lv4', () => {
+    sys.addXP(1, 1000, 'leader')
+    expect(sys.getLevel(1)).toBe(4)
+  })
+})

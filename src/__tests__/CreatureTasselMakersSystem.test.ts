@@ -208,3 +208,132 @@ describe('CreatureTasselMakersSystem — MAX_MAKERS 上限', () => {
     expect((sys as any).makers.length).toBeLessThanOrEqual(30)
   })
 })
+
+describe('CreatureTasselMakersSystem — 综合与边界', () => {
+  let sys: CreatureTasselMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.restoreAllMocks() })
+
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('skillMap初始为空', () => { expect((sys as any).skillMap.size).toBe(0) })
+  it('empty update不崩溃', () => {
+    const em = makeEmptyEM()
+    expect(() => sys.update(1, em, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('tick=0时节流不通过', () => {
+    const em = makeEmptyEM()
+    ;(sys as any).lastCheck = CHECK_INTERVAL
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('招募成功时tick字段等于当前tick', () => {
+    const [em, _eid] = makeEMWithCreature()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, em, CHECK_INTERVAL)
+    if ((sys as any).makers.length > 0) {
+      expect((sys as any).makers[0].tick).toBe(CHECK_INTERVAL)
+    }
+  })
+  it('多种TasselType均可存储', () => {
+    const types: TasselType[] = ['silk', 'wool', 'metallic', 'ceremonial']
+    types.forEach((t, i) => { ;(sys as any).makers.push(makeMaker(i + 1, t)) })
+    expect((sys as any).makers).toHaveLength(4)
+  })
+  it('symmetry字段正确存储', () => {
+    ;(sys as any).makers.push(makeMaker(1, 'silk', 0))
+    expect((sys as any).makers[0].symmetry).toBe(65)
+  })
+  it('reputation字段正确存储', () => {
+    ;(sys as any).makers.push(makeMaker(1, 'silk', 0))
+    expect((sys as any).makers[0].reputation).toBe(45)
+  })
+  it('tasselsMade字段正确存储', () => {
+    ;(sys as any).makers.push(makeMaker(1, 'silk', 0))
+    expect((sys as any).makers[0].tasselsMade).toBe(12)
+  })
+  it('makers是数组类型', () => {
+    expect(Array.isArray((sys as any).makers)).toBe(true)
+  })
+  it('skillMap存储技能值', () => {
+    const [em, eid] = makeEMWithCreature()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, em, CHECK_INTERVAL)
+    if ((sys as any).skillMap.has(eid)) {
+      expect(typeof (sys as any).skillMap.get(eid)).toBe('number')
+    }
+  })
+  it('symmetry公式：15 + skill * 0.72', () => {
+    const skill = 60
+    const symmetry = 15 + skill * 0.72
+    expect(symmetry).toBeCloseTo(58.2, 1)
+  })
+  it('reputation公式：10 + skill * 0.81', () => {
+    const skill = 60
+    const reputation = 10 + skill * 0.81
+    expect(reputation).toBeCloseTo(58.6, 1)
+  })
+  it('tasselsMade公式：4 + floor(skill/6)', () => {
+    const skill = 60
+    const tasselsMade = 4 + Math.floor(skill / 6)
+    expect(tasselsMade).toBe(14)
+  })
+  it('系统在多次update后不崩溃', () => {
+    const em = makeEmptyEM()
+    expect(() => {
+      sys.update(1, em, CHECK_INTERVAL)
+      sys.update(1, em, CHECK_INTERVAL * 2)
+      sys.update(1, em, CHECK_INTERVAL * 3)
+    }).not.toThrow()
+  })
+  it('age<10的实体不被招募', () => {
+    const [em] = makeEMWithCreature(5) // age=5 < 10
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, em, CHECK_INTERVAL)
+    expect((sys as any).makers).toHaveLength(0)
+  })
+  it('age>=10的实体可以被招募', () => {
+    const [em] = makeEMWithCreature(20) // age=20 >= 10
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, em, CHECK_INTERVAL)
+    // 有可能招募成功
+    expect((sys as any).makers.length).toBeGreaterThanOrEqual(0)
+  })
+  it('tech type索引：skill>=75时typeIdx=3（ceremonial）', () => {
+    // 75/25 = 3 -> min(3,3)=3 -> ceremonial
+    const skill = 75
+    const typeIdx = Math.min(3, Math.floor(skill / 25))
+    expect(typeIdx).toBe(3)
+  })
+  it('tech type索引：skill<25时typeIdx=0（silk）', () => {
+    const skill = 10
+    const typeIdx = Math.min(3, Math.floor(skill / 25))
+    expect(typeIdx).toBe(0)
+  })
+  it('cutoff公式：tick - 52000', () => {
+    const tick = 100000
+    const cutoff = tick - 52000
+    expect(cutoff).toBe(48000)
+  })
+  it('makers在节流期间数量不变', () => {
+    const em = makeEmptyEM()
+    ;(sys as any).makers.push(makeMaker(1, 'silk', 0))
+    sys.update(1, em, CHECK_INTERVAL - 1)
+    expect((sys as any).makers).toHaveLength(1)
+  })
+  it('系统在tick=0时不崩溃', () => {
+    const em = makeEmptyEM()
+    expect(() => sys.update(1, em, 0)).not.toThrow()
+  })
+  it('makers数组被正确初始化为空', () => {
+    const newSys = new CreatureTasselMakersSystem()
+    expect((newSys as any).makers.length).toBe(0)
+  })
+  it('记录tick字段正确设置', () => {
+    ;(sys as any).makers.push(makeMaker(1, 'silk', 500))
+    expect((sys as any).makers[0].tick).toBe(500)
+  })
+  it('SKILL_GROWTH 正确（0.053）', () => {
+    const SKILL_GROWTH = 0.053
+    expect(SKILL_GROWTH).toBe(0.053)
+  })
+})

@@ -1,9 +1,13 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { DiplomaticWarrenerSystem } from '../systems/DiplomaticWarrenerSystem'
 
 function makeSys() { return new DiplomaticWarrenerSystem() }
 const world = {} as any
 const em = {} as any
+
+const CHECK_INTERVAL = 2830
+const PROCEED_CHANCE = 0.0021
+const MAX_ARRANGEMENTS = 16
 
 describe('DiplomaticWarrenerSystem', () => {
   let sys: DiplomaticWarrenerSystem
@@ -21,6 +25,11 @@ describe('DiplomaticWarrenerSystem', () => {
   })
   it('arrangements是数组类型', () => {
     expect(Array.isArray((sys as any).arrangements)).toBe(true)
+  })
+  it('新建两个实例互相独立', () => {
+    const s1 = makeSys(); const s2 = makeSys()
+    ;(s1 as any).arrangements.push({ id: 1 })
+    expect((s2 as any).arrangements).toHaveLength(0)
   })
 
   // === 节流逻辑 ===
@@ -42,14 +51,27 @@ describe('DiplomaticWarrenerSystem', () => {
     vi.spyOn(Math, 'random').mockReturnValue(1)
     sys.update(1, world, em, 3000)
     expect((sys as any).lastCheck).toBe(3000)
-    sys.update(1, world, em, 4000) // 4000-3000=1000 < 2830
+    sys.update(1, world, em, 4000)
     expect((sys as any).lastCheck).toBe(3000)
   })
   it('间隔足够时再次触发并更新lastCheck', () => {
     vi.spyOn(Math, 'random').mockReturnValue(1)
     sys.update(1, world, em, 3000)
-    sys.update(1, world, em, 6000) // 6000-3000=3000 >= 2830
+    sys.update(1, world, em, 6000)
     expect((sys as any).lastCheck).toBe(6000)
+  })
+  it('第一次触发后再次触发需再等2830', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, world, em, 2830)
+    sys.update(1, world, em, 2830 + 2829)
+    expect((sys as any).lastCheck).toBe(2830)
+  })
+  it('三次连续触发lastCheck正确更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, world, em, 2830)
+    sys.update(1, world, em, 5660)
+    sys.update(1, world, em, 8490)
+    expect((sys as any).lastCheck).toBe(8490)
   })
 
   // === spawn逻辑 ===
@@ -62,9 +84,9 @@ describe('DiplomaticWarrenerSystem', () => {
     let call = 0
     vi.spyOn(Math, 'random').mockImplementation(() => {
       call++
-      if (call === 1) return 0.0001  // < 0.0021
-      if (call === 2) return 0.0      // warren = 1
-      if (call === 3) return 0.99     // preserve = 8
+      if (call === 1) return 0.0001
+      if (call === 2) return 0.0
+      if (call === 3) return 0.99
       return 0.5
     })
     sys.update(1, world, em, 2830)
@@ -94,7 +116,7 @@ describe('DiplomaticWarrenerSystem', () => {
     })
     sys.update(1, world, em, 2830)
     const arr = (sys as any).arrangements
-    if (arr.length > 0) expect(arr[0].duration).toBe(1)  // spawn后同次update递增
+    if (arr.length > 0) expect(arr[0].duration).toBe(1)
   })
   it('spawn的arrangement含tick字段等于当前tick', () => {
     let call = 0
@@ -130,6 +152,49 @@ describe('DiplomaticWarrenerSystem', () => {
     sys.update(1, world, em, 2830)
     expect((sys as any).arrangements).toHaveLength(16)
   })
+  it('spawn的arrangement包含form字段', () => {
+    let call = 0
+    vi.spyOn(Math, 'random').mockImplementation(() => {
+      call++
+      if (call === 1) return 0.0001
+      if (call === 2) return 0.0
+      if (call === 3) return 0.99
+      return 0.5
+    })
+    sys.update(1, world, em, 2830)
+    const arr = (sys as any).arrangements
+    if (arr.length > 0) {
+      expect(['royal_warrener', 'manor_warrener', 'chase_warrener', 'park_warrener']).toContain(arr[0].form)
+    }
+  })
+  it('spawn的arrangement包含warrenCivId和preserveCivId', () => {
+    let call = 0
+    vi.spyOn(Math, 'random').mockImplementation(() => {
+      call++
+      if (call === 1) return 0.0001
+      if (call === 2) return 0.0
+      if (call === 3) return 0.99
+      return 0.5
+    })
+    sys.update(1, world, em, 2830)
+    const arr = (sys as any).arrangements
+    if (arr.length > 0) {
+      expect(typeof arr[0].warrenCivId).toBe('number')
+      expect(typeof arr[0].preserveCivId).toBe('number')
+    }
+  })
+  it('当warren===preserve时不spawn', () => {
+    let call = 0
+    vi.spyOn(Math, 'random').mockImplementation(() => {
+      call++
+      if (call === 1) return 0.0001  // < PROCEED_CHANCE
+      if (call === 2) return 0.0     // warren = 1
+      if (call === 3) return 0.0     // preserve = 1 (same as warren)
+      return 0.5
+    })
+    sys.update(1, world, em, 2830)
+    expect((sys as any).arrangements).toHaveLength(0)
+  })
 
   // === duration递增 ===
   it('update后已有arrangement的duration递增1', () => {
@@ -153,6 +218,42 @@ describe('DiplomaticWarrenerSystem', () => {
     sys.update(1, world, em, 200000 + 5660)
     sys.update(1, world, em, 200000 + 8490)
     expect((sys as any).arrangements[0].duration).toBe(3)
+  })
+  it('多个arrangement的duration都递增', () => {
+    for (let i = 0; i < 3; i++) {
+      ;(sys as any).arrangements.push({
+        id: i + 1, warrenCivId: i + 1, preserveCivId: i + 5, form: 'chase_warrener',
+        warrenJurisdiction: 50, gameRights: 50, breedingManagement: 30, harvestQuota: 30,
+        duration: i * 5, tick: 200000
+      })
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, world, em, 200000 + 2830)
+    for (let i = 0; i < 3; i++) {
+      expect((sys as any).arrangements[i].duration).toBe(i * 5 + 1)
+    }
+  })
+
+  // === warrenJurisdiction字段更新 ===
+  it('warrenJurisdiction不低于5（下界钳制）', () => {
+    ;(sys as any).arrangements.push({
+      id: 1, warrenCivId: 1, preserveCivId: 2, form: 'park_warrener',
+      warrenJurisdiction: 5, gameRights: 50, breedingManagement: 30, harvestQuota: 30,
+      duration: 0, tick: 200000
+    })
+    vi.spyOn(Math, 'random').mockReturnValue(0.0)  // (0-0.48)*0.12 = -0.0576 → 5-0.0576 < 5 → clamp to 5
+    sys.update(1, world, em, 200000 + 2830)
+    expect((sys as any).arrangements[0].warrenJurisdiction).toBeGreaterThanOrEqual(5)
+  })
+  it('warrenJurisdiction不高于85（上界钳制）', () => {
+    ;(sys as any).arrangements.push({
+      id: 1, warrenCivId: 1, preserveCivId: 2, form: 'park_warrener',
+      warrenJurisdiction: 85, gameRights: 50, breedingManagement: 30, harvestQuota: 30,
+      duration: 0, tick: 200000
+    })
+    vi.spyOn(Math, 'random').mockReturnValue(1.0)
+    sys.update(1, world, em, 200000 + 2830)
+    expect((sys as any).arrangements[0].warrenJurisdiction).toBeLessThanOrEqual(85)
   })
 
   // === cleanup逻辑（cutoff = tick - 88000）===
@@ -200,6 +301,19 @@ describe('DiplomaticWarrenerSystem', () => {
     expect((sys as any).arrangements).toHaveLength(1)
     expect((sys as any).arrangements[0].id).toBe(2)
   })
+  it('所有arrangement都过期时全部删除', () => {
+    const currentTick = 300000
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).arrangements.push({
+        id: i + 1, warrenCivId: 1, preserveCivId: 2, form: 'royal_warrener',
+        warrenJurisdiction: 50, gameRights: 50, breedingManagement: 30, harvestQuota: 30,
+        duration: 0, tick: currentTick - 90000
+      })
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, world, em, currentTick)
+    expect((sys as any).arrangements).toHaveLength(0)
+  })
 
   // === 手动注入 ===
   it('手动注入后arrangements长度正确', () => {
@@ -209,5 +323,41 @@ describe('DiplomaticWarrenerSystem', () => {
   it('手动注入arrangement的id字段可读取', () => {
     ;(sys as any).arrangements.push({ id: 88, tick: 999999, duration: 1 })
     expect((sys as any).arrangements[0].id).toBe(88)
+  })
+  it('手动注入5条后length为5', () => {
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).arrangements.push({ id: i + 1 })
+    }
+    expect((sys as any).arrangements).toHaveLength(5)
+  })
+
+  // === 边界条件 ===
+  it('tick=0时不触发', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0001)
+    sys.update(1, world, em, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('大tick值正常处理', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    expect(() => sys.update(1, world, em, 9999999)).not.toThrow()
+  })
+  it('arrangements为空时update不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    expect(() => sys.update(1, world, em, 2830)).not.toThrow()
+  })
+  it('arrangements长度15时仍可再次spawn', () => {
+    for (let i = 0; i < 15; i++) {
+      ;(sys as any).arrangements.push({ id: i + 1, tick: 999999, duration: 0, warrenJurisdiction: 50, gameRights: 50, breedingManagement: 30, harvestQuota: 30 })
+    }
+    let call = 0
+    vi.spyOn(Math, 'random').mockImplementation(() => {
+      call++
+      if (call === 1) return 0.0001
+      if (call === 2) return 0.0
+      if (call === 3) return 0.99
+      return 0.5
+    })
+    sys.update(1, world, em, 2830)
+    expect((sys as any).arrangements.length).toBeLessThanOrEqual(16)
   })
 })

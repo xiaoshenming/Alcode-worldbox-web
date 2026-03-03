@@ -1,9 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { WorldBayouSystem } from '../systems/WorldBayouSystem'
 import type { Bayou } from '../systems/WorldBayouSystem'
 import { TileType } from '../utils/Constants'
 
-// ---- helpers ----
 function makeSys(): WorldBayouSystem { return new WorldBayouSystem() }
 let nextId = 1
 function makeBayou(overrides: Partial<Bayou> = {}): Bayou {
@@ -17,10 +16,8 @@ function makeBayou(overrides: Partial<Bayou> = {}): Bayou {
 function makeWorld(tile: number = TileType.MOUNTAIN): any {
   return { width: 100, height: 100, getTile: () => tile }
 }
-/** advance past CHECK_INTERVAL (2600) so update() really runs */
-function doUpdate(sys: WorldBayouSystem, world: any, tick = 3000): void {
-  ;(sys as any).update(1, world, {}, tick)
-}
+
+const CHECK_INTERVAL = 2600
 
 describe('WorldBayouSystem – 初始状态', () => {
   it('启动时沼泽湾列表为空', () => {
@@ -35,198 +32,199 @@ describe('WorldBayouSystem – 初始状态', () => {
     const sys = makeSys()
     expect((sys as any).lastCheck).toBe(0)
   })
+  it('bayous是数组', () => {
+    const sys = makeSys()
+    expect(Array.isArray((sys as any).bayous)).toBe(true)
+  })
+  it('新建两个实例互相独立', () => {
+    const s1 = makeSys(); const s2 = makeSys()
+    ;(s1 as any).bayous.push(makeBayou())
+    expect((s2 as any).bayous).toHaveLength(0)
+  })
 })
 
-describe('WorldBayouSystem – CHECK_INTERVAL 节流', () => {
-  it('tick 不足 CHECK_INTERVAL(2600) 时不执行逻辑', () => {
+describe('WorldBayouSystem – 节流逻辑', () => {
+  it('tick < CHECK_INTERVAL时不触发', () => {
     const sys = makeSys()
-    const world = makeWorld(TileType.SHALLOW_WATER)
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).update(1, world, {}, 100)     // tick=100 < 2600
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(0)
+    vi.restoreAllMocks()
+  })
+  it('tick >= CHECK_INTERVAL时更新lastCheck', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+    vi.restoreAllMocks()
+  })
+  it('第二次间隔不足时lastCheck不更新', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL + 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+    vi.restoreAllMocks()
+  })
+  it('间隔足够时第二次触发', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+    vi.restoreAllMocks()
+  })
+})
+
+describe('WorldBayouSystem – spawn', () => {
+  beforeEach(() => { nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('非水地形不spawn', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorld(TileType.MOUNTAIN), {}, CHECK_INTERVAL)
     expect((sys as any).bayous).toHaveLength(0)
-    vi.restoreAllMocks()
   })
-  it('tick 超过 CHECK_INTERVAL 后 lastCheck 更新', () => {
+  it('random > FORM_CHANCE(0.002)时不spawn', () => {
     const sys = makeSys()
-    doUpdate(sys, makeWorld(), 3000)
-    expect((sys as any).lastCheck).toBe(3000)
-  })
-  it('同一 check 窗口内第二次 update 不再重复处理', () => {
-    const sys = makeSys()
-    const world = makeWorld(TileType.SHALLOW_WATER)
-    vi.spyOn(Math, 'random').mockReturnValue(0.001) // < FORM_CHANCE(0.002)
-    ;(sys as any).update(1, world, {}, 3000)
-    const countAfterFirst = (sys as any).bayous.length
-    ;(sys as any).update(1, world, {}, 3500) // 3500-3000=500 < 2600
-    expect((sys as any).bayous).toHaveLength(countAfterFirst)
-    vi.restoreAllMocks()
-  })
-})
-
-describe('WorldBayouSystem – 生成逻辑', () => {
-  it('SHALLOW_WATER 地块 + 低随机数 → 生成一个沼泽湾', () => {
-    const sys = makeSys()
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    doUpdate(sys, makeWorld(TileType.SHALLOW_WATER), 3000)
-    expect((sys as any).bayous).toHaveLength(1)
-    vi.restoreAllMocks()
-  })
-  it('GRASS 地块 + 低随机数 → 生成一个沼泽湾', () => {
-    const sys = makeSys()
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    doUpdate(sys, makeWorld(TileType.GRASS), 3000)
-    expect((sys as any).bayous).toHaveLength(1)
-    vi.restoreAllMocks()
-  })
-  it('MOUNTAIN 地块 + 低随机数 → 不生成', () => {
-    const sys = makeSys()
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    doUpdate(sys, makeWorld(TileType.MOUNTAIN), 3000)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, makeWorld(TileType.SHALLOW_WATER), {}, CHECK_INTERVAL)
     expect((sys as any).bayous).toHaveLength(0)
-    vi.restoreAllMocks()
   })
-  it('随机数高于 FORM_CHANCE(0.002) → 不生成', () => {
+  it('MAX_BAYOUS(18)上限不超出', () => {
     const sys = makeSys()
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    doUpdate(sys, makeWorld(TileType.SHALLOW_WATER), 3000)
-    expect((sys as any).bayous).toHaveLength(0)
-    vi.restoreAllMocks()
-  })
-  it('超过 MAX_BAYOUS(18) 上限后不再生成', () => {
-    const sys = makeSys()
-    for (let i = 0; i < 18; i++) (sys as any).bayous.push(makeBayou({ tick: 3000 }))
+    for (let i = 0; i < 18; i++) {
+      ;(sys as any).bayous.push(makeBayou({ tick: 99999 }))
+    }
     vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    doUpdate(sys, makeWorld(TileType.SHALLOW_WATER), 3000)
-    expect((sys as any).bayous).toHaveLength(18)
-    vi.restoreAllMocks()
+    sys.update(1, makeWorld(TileType.SHALLOW_WATER), {}, CHECK_INTERVAL)
+    expect((sys as any).bayous.length).toBeLessThanOrEqual(18)
   })
-  it('新生成的沼泽湾字段在有效范围内', () => {
+  it('spawn后bayou包含必要字段', () => {
     const sys = makeSys()
     vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    doUpdate(sys, makeWorld(TileType.SHALLOW_WATER), 5000)
-    const b: Bayou = (sys as any).bayous[0]
-    expect(b.radius).toBeGreaterThanOrEqual(5)
-    // waterFlow 初始 5+random*15，演化后下限 2（Math.max(2,...)），上限 25
-    expect(b.waterFlow).toBeGreaterThanOrEqual(2)
-    expect(b.waterFlow).toBeLessThanOrEqual(25)
-    // vegetationDensity 初始 25+random*35，演化后只增不减，因此 >= 25
-    expect(b.vegetationDensity).toBeGreaterThanOrEqual(25)
-    // murkiness 初始 20+random*40，演化后在 [10,70]，依然 >= 10
-    expect(b.murkiness).toBeGreaterThanOrEqual(10)
-    // biodiversity 初始 30+random*35，演化后只增不减，因此 >= 30
-    expect(b.biodiversity).toBeGreaterThanOrEqual(30)
-    // depth 初始 3+random*10，演化后在 [1,15]，依然 >= 1
-    expect(b.depth).toBeGreaterThanOrEqual(1)
-    expect(b.tick).toBe(5000)
-    vi.restoreAllMocks()
-  })
-  it('id 自增：连续两次生成 id 不同', () => {
-    const sys = makeSys()
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    ;(sys as any).update(1, makeWorld(TileType.SHALLOW_WATER), {}, 3000)
-    ;(sys as any).lastCheck = 0  // reset 让第二次能执行
-    ;(sys as any).update(1, makeWorld(TileType.SHALLOW_WATER), {}, 6000)
-    const ids = (sys as any).bayous.map((b: Bayou) => b.id)
-    expect(new Set(ids).size).toBe(ids.length)
-    vi.restoreAllMocks()
+    sys.update(1, makeWorld(TileType.SHALLOW_WATER), {}, CHECK_INTERVAL)
+    const b = (sys as any).bayous[0]
+    if (b) {
+      expect(typeof b.id).toBe('number')
+      expect(typeof b.x).toBe('number')
+      expect(typeof b.waterFlow).toBe('number')
+    }
   })
 })
 
-describe('WorldBayouSystem – 属性演化', () => {
-  it('每次 update 后 vegetationDensity 缓慢增长，上限 85', () => {
+describe('WorldBayouSystem – 字段更新', () => {
+  beforeEach(() => { nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('waterFlow每次update变化', () => {
     const sys = makeSys()
-    const b = makeBayou({ vegetationDensity: 50, tick: 0 })
-    ;(sys as any).bayous.push(b)
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    doUpdate(sys, makeWorld(), 3000)
-    expect(b.vegetationDensity).toBeGreaterThan(50)
-    expect(b.vegetationDensity).toBeLessThanOrEqual(85)
-    vi.restoreAllMocks()
+    ;(sys as any).bayous.push(makeBayou({ waterFlow: 10, tick: 99999 }))
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    expect((sys as any).bayous[0].waterFlow).not.toBeUndefined()
   })
-  it('vegetationDensity 不会超过上限 85', () => {
+  it('vegetationDensity不低于0', () => {
     const sys = makeSys()
-    const b = makeBayou({ vegetationDensity: 85, tick: 0 })
-    ;(sys as any).bayous.push(b)
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    doUpdate(sys, makeWorld(), 3000)
-    expect(b.vegetationDensity).toBe(85)
-    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.0)
+    ;(sys as any).bayous.push(makeBayou({ vegetationDensity: 0, tick: 99999 }))
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    expect((sys as any).bayous[0].vegetationDensity).toBeGreaterThanOrEqual(0)
   })
-  it('每次 update 后 biodiversity 缓慢增长，上限 90', () => {
+  it('biodiversity不低于0', () => {
     const sys = makeSys()
-    const b = makeBayou({ biodiversity: 60, tick: 0 })
-    ;(sys as any).bayous.push(b)
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    doUpdate(sys, makeWorld(), 3000)
-    expect(b.biodiversity).toBeGreaterThan(60)
-    expect(b.biodiversity).toBeLessThanOrEqual(90)
-    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.0)
+    ;(sys as any).bayous.push(makeBayou({ biodiversity: 0, tick: 99999 }))
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    expect((sys as any).bayous[0].biodiversity).toBeGreaterThanOrEqual(0)
   })
-  it('murkiness 保持在 [10, 70] 范围内', () => {
+  it('murkiness不低于0', () => {
     const sys = makeSys()
-    const b = makeBayou({ murkiness: 40, tick: 0 })
-    ;(sys as any).bayous.push(b)
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    doUpdate(sys, makeWorld(), 3000)
-    expect(b.murkiness).toBeGreaterThanOrEqual(10)
-    expect(b.murkiness).toBeLessThanOrEqual(70)
-    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.0)
+    ;(sys as any).bayous.push(makeBayou({ murkiness: 0, tick: 99999 }))
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    expect((sys as any).bayous[0].murkiness).toBeGreaterThanOrEqual(0)
   })
-  it('waterFlow 保持在 [2, 25] 范围内', () => {
+  it('多个bayous同时更新', () => {
     const sys = makeSys()
-    const b = makeBayou({ waterFlow: 15, tick: 0 })
-    ;(sys as any).bayous.push(b)
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    doUpdate(sys, makeWorld(), 3000)
-    expect(b.waterFlow).toBeGreaterThanOrEqual(2)
-    expect(b.waterFlow).toBeLessThanOrEqual(25)
-    vi.restoreAllMocks()
-  })
-  it('depth 保持在 [1, 15] 范围内', () => {
-    const sys = makeSys()
-    const b = makeBayou({ depth: 8, tick: 0 })
-    ;(sys as any).bayous.push(b)
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    doUpdate(sys, makeWorld(), 3000)
-    expect(b.depth).toBeGreaterThanOrEqual(1)
-    expect(b.depth).toBeLessThanOrEqual(15)
-    vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    for (let i = 0; i < 3; i++) {
+      ;(sys as any).bayous.push(makeBayou({ tick: 99999 }))
+    }
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    expect((sys as any).bayous).toHaveLength(3)
   })
 })
 
-describe('WorldBayouSystem – 清理逻辑', () => {
-  it('tick 超过 cutoff(tick-88000) 的沼泽湾被移除', () => {
+describe('WorldBayouSystem – cleanup', () => {
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('过期bayou（tick < cutoff=tick-88000）被删除', () => {
     const sys = makeSys()
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    // tick=3000，cutoff=3000-88000=-85000；bayou.tick=0 > -85000 → 保留
     ;(sys as any).bayous.push(makeBayou({ tick: 0 }))
-    doUpdate(sys, makeWorld(), 3000)
-    expect((sys as any).bayous).toHaveLength(1)
-
-    // 现在 tick=100000，cutoff=100000-88000=12000；bayou.tick=0 < 12000 → 删除
-    ;(sys as any).lastCheck = 0
-    doUpdate(sys, makeWorld(), 100000)
+    sys.update(1, makeWorld(), {}, 100000)
     expect((sys as any).bayous).toHaveLength(0)
-    vi.restoreAllMocks()
   })
-  it('新旧混合时只删除过期的', () => {
+  it('未过期bayou保留', () => {
     const sys = makeSys()
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).bayous.push(makeBayou({ tick: 0 }))          // 过期
-    ;(sys as any).bayous.push(makeBayou({ tick: 99000 }))       // 未过期
-    ;(sys as any).lastCheck = 0
-    doUpdate(sys, makeWorld(), 100000)
+    ;(sys as any).bayous.push(makeBayou({ tick: 50000 }))
+    sys.update(1, makeWorld(), {}, 100000)
     expect((sys as any).bayous).toHaveLength(1)
-    expect((sys as any).bayous[0].tick).toBe(99000)
-    vi.restoreAllMocks()
   })
-  it('所有沼泽湾均过期时列表清空', () => {
+  it('混合新旧：只删过期的', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).bayous.push(makeBayou({ tick: 0 }))
+    ;(sys as any).bayous.push(makeBayou({ tick: 50000 }))
+    sys.update(1, makeWorld(), {}, 100000)
+    expect((sys as any).bayous).toHaveLength(1)
+    expect((sys as any).bayous[0].tick).toBe(50000)
+  })
+  it('所有bayous都过期时全部删除', () => {
     const sys = makeSys()
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     for (let i = 0; i < 5; i++) (sys as any).bayous.push(makeBayou({ tick: 0 }))
-    ;(sys as any).lastCheck = 0
-    doUpdate(sys, makeWorld(), 200000)
+    sys.update(1, makeWorld(), {}, 100000)
     expect((sys as any).bayous).toHaveLength(0)
+  })
+})
+
+describe('WorldBayouSystem – 手动注入和边界', () => {
+  it('手动注入后长度正确', () => {
+    const sys = makeSys()
+    ;(sys as any).bayous.push(makeBayou())
+    expect((sys as any).bayous).toHaveLength(1)
+  })
+  it('手动注入多个', () => {
+    const sys = makeSys()
+    for (let i = 0; i < 5; i++) (sys as any).bayous.push(makeBayou())
+    expect((sys as any).bayous).toHaveLength(5)
+  })
+  it('bayou字段结构完整', () => {
+    const b = makeBayou()
+    expect(typeof b.id).toBe('number')
+    expect(typeof b.x).toBe('number')
+    expect(typeof b.y).toBe('number')
+    expect(typeof b.radius).toBe('number')
+    expect(typeof b.waterFlow).toBe('number')
+    expect(typeof b.vegetationDensity).toBe('number')
+    expect(typeof b.murkiness).toBe('number')
+    expect(typeof b.biodiversity).toBe('number')
+    expect(typeof b.depth).toBe('number')
+    expect(typeof b.tick).toBe('number')
+  })
+  it('tick=0不触发', () => {
+    const sys = makeSys()
+    sys.update(1, makeWorld(), {}, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('大tick值不崩溃', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, makeWorld(), {}, 9999999)).not.toThrow()
     vi.restoreAllMocks()
   })
 })

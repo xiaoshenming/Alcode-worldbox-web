@@ -198,3 +198,151 @@ describe('CreatureProfessionSystem', () => {
     expect((sys as any).visible).toBe(false)
   })
 })
+
+describe('CreatureProfessionSystem - 更多API测试', () => {
+  let sys: CreatureProfessionSystem
+  beforeEach(() => { sys = makeSys() })
+
+  it('remove后实体无职业', () => {
+    ;(sys as any).professions.set(5, { type: 'farmer', rank: 'apprentice', experience: 0, assignedTick: 0, expStr: '', _prevExpFloor: 0 })
+    sys.remove(5)
+    expect(sys.getProfession(5)).toBeUndefined()
+  })
+  it('getBonus farmer有foodOutput加成', () => {
+    ;(sys as any).professions.set(2, { type: 'farmer', rank: 'apprentice', experience: 0, assignedTick: 0, expStr: '', _prevExpFloor: 0 })
+    const bonus = sys.getBonus(2)
+    expect(bonus.foodOutput).toBeGreaterThan(1)
+  })
+  it('getBonus soldier有combatDamage加成', () => {
+    ;(sys as any).professions.set(3, { type: 'soldier', rank: 'apprentice', experience: 0, assignedTick: 0, expStr: '', _prevExpFloor: 0 })
+    const bonus = sys.getBonus(3)
+    expect(bonus.combatDamage).toBeGreaterThan(1)
+  })
+  it('getBonus master等级加成大于apprentice', () => {
+    ;(sys as any).professions.set(4, { type: 'farmer', rank: 'master', experience: 0, assignedTick: 0, expStr: '', _prevExpFloor: 0 })
+    const masterFoodOutput = sys.getBonus(4).foodOutput
+    ;(sys as any).professions.set(5, { type: 'farmer', rank: 'apprentice', experience: 0, assignedTick: 0, expStr: '', _prevExpFloor: 0 })
+    const apprenticeFoodOutput = sys.getBonus(5).foodOutput
+    expect(masterFoodOutput).toBeGreaterThan(apprenticeFoodOutput)
+  })
+  it('getBonus scholar有researchRate加成', () => {
+    ;(sys as any).professions.set(6, { type: 'scholar', rank: 'apprentice', experience: 0, assignedTick: 0, expStr: '', _prevExpFloor: 0 })
+    const bonus = sys.getBonus(6)
+    expect(bonus.researchRate).toBeGreaterThan(1)
+  })
+  it('getBonus miner有miningRate加成', () => {
+    ;(sys as any).professions.set(7, { type: 'miner', rank: 'apprentice', experience: 0, assignedTick: 0, expStr: '', _prevExpFloor: 0 })
+    const bonus = sys.getBonus(7)
+    expect(bonus.miningRate).toBeGreaterThan(1)
+  })
+  it('getBonus priest有faithGain加成', () => {
+    ;(sys as any).professions.set(8, { type: 'priest', rank: 'apprentice', experience: 0, assignedTick: 0, expStr: '', _prevExpFloor: 0 })
+    const bonus = sys.getBonus(8)
+    expect(bonus.faithGain).toBeGreaterThan(1)
+  })
+  it('getBonus builder有buildSpeed加成', () => {
+    ;(sys as any).professions.set(9, { type: 'builder', rank: 'apprentice', experience: 0, assignedTick: 0, expStr: '', _prevExpFloor: 0 })
+    const bonus = sys.getBonus(9)
+    expect(bonus.buildSpeed).toBeGreaterThan(1)
+  })
+  it('getBonus merchant有tradeIncome加成', () => {
+    ;(sys as any).professions.set(10, { type: 'merchant', rank: 'apprentice', experience: 0, assignedTick: 0, expStr: '', _prevExpFloor: 0 })
+    const bonus = sys.getBonus(10)
+    expect(bonus.tradeIncome).toBeGreaterThan(1)
+  })
+  it('getBonus blacksmith有craftQuality加成', () => {
+    ;(sys as any).professions.set(11, { type: 'blacksmith', rank: 'apprentice', experience: 0, assignedTick: 0, expStr: '', _prevExpFloor: 0 })
+    const bonus = sys.getBonus(11)
+    expect(bonus.craftQuality).toBeGreaterThan(1)
+  })
+  it('setCivManager不崩溃', () => {
+    const cm = { civilizations: new Map() } as any
+    expect(() => sys.setCivManager(cm)).not.toThrow()
+  })
+  it('handleKeyDown不相关键返回false', () => {
+    const e = { shiftKey: false, key: 'A' } as any
+    expect(sys.handleKeyDown(e)).toBe(false)
+  })
+  it('handleKeyDown Shift+P返回true', () => {
+    const e = { shiftKey: true, key: 'P' } as any
+    expect(sys.handleKeyDown(e)).toBe(true)
+  })
+  it('update不崩溃（空em）', () => {
+    const em = makeEm()
+    expect(() => sys.update(1, em, 120)).not.toThrow()
+  })
+  it('professions初始为空Map', () => {
+    expect((sys as any).professions.size).toBe(0)
+  })
+  it('注入3个职业后professions.size=3', () => {
+    for (let i = 1; i <= 3; i++) {
+      ;(sys as any).professions.set(i, { type: 'farmer', rank: 'apprentice', experience: 0, assignedTick: 0, expStr: '', _prevExpFloor: 0 })
+    }
+    expect((sys as any).professions.size).toBe(3)
+  })
+  it('ASSIGN_INTERVAL=120时tick=120触发assignProfessions', () => {
+    const em = makeEm({ getEntitiesWithComponents: () => [] })
+    expect(() => sys.update(1, em, 120)).not.toThrow()
+  })
+  it('getBonus返回对象包含8个key', () => {
+    const bonus = sys.getBonus(999)
+    const keys = ['foodOutput', 'combatDamage', 'buildSpeed', 'miningRate', 'tradeIncome', 'researchRate', 'faithGain', 'craftQuality']
+    keys.forEach(k => expect(k in bonus).toBe(true))
+  })
+  it('gainExperience在tick%30=0时触发不崩溃', () => {
+    ;(sys as any).professions.set(1, { type: 'farmer', rank: 'apprentice', experience: 0, assignedTick: 0, expStr: '', _prevExpFloor: 0 })
+    const em = makeEm()
+    expect(() => sys.update(1, em, 30)).not.toThrow()
+  })
+  it('cleanup在hasComponent=false时删除职业', () => {
+    ;(sys as any).professions.set(99, { type: 'farmer', rank: 'apprentice', experience: 0, assignedTick: 0, expStr: '', _prevExpFloor: 0 })
+    const em = makeEm({ hasComponent: () => false })
+    sys.update(1, em, 1) // triggers cleanup every tick
+    expect((sys as any).professions.has(99)).toBe(false)
+  })
+  it('journeyman等级threshold=100', () => {
+    const RANK_THRESHOLDS = { apprentice: 0, journeyman: 100, master: 300 }
+    expect(RANK_THRESHOLDS.journeyman).toBe(100)
+  })
+  it('master等级threshold=300', () => {
+    const RANK_THRESHOLDS = { apprentice: 0, journeyman: 100, master: 300 }
+    expect(RANK_THRESHOLDS.master).toBe(300)
+  })
+  it('experience>=100时从apprentice升为journeyman', () => {
+    ;(sys as any).professions.set(1, { type: 'farmer', rank: 'apprentice', experience: 99.5, assignedTick: 0, expStr: '', _prevExpFloor: 0 })
+    const em = makeEm({ hasComponent: () => true, getComponent: () => undefined })
+    sys.update(1, em, 30) // triggers gainExperience
+    const prof = (sys as any).professions.get(1)
+    if (prof) {
+      expect(['apprentice', 'journeyman']).toContain(prof.rank)
+    }
+  })
+})
+
+describe('CreatureProfessionSystem - 追加测试', () => {
+  let sys: CreatureProfessionSystem
+  beforeEach(() => { sys = makeSys() })
+  it('remove不存在的实体不崩溃', () => {
+    expect(() => sys.remove(9999)).not.toThrow()
+  })
+  it('visible初始为false', () => {
+    expect((sys as any).visible).toBe(false)
+  })
+  it('handleKeyDown Shift+p(小写)返回true', () => {
+    const e = { shiftKey: true, key: 'p' } as any
+    expect(sys.handleKeyDown(e)).toBe(true)
+  })
+  it('getBonus blacksmith有combatDamage加成', () => {
+    ;(sys as any).professions.set(20, { type: 'blacksmith', rank: 'journeyman', experience: 0, assignedTick: 0, expStr: '', _prevExpFloor: 0 })
+    const bonus = sys.getBonus(20)
+    expect(bonus.combatDamage).toBeGreaterThan(1)
+  })
+  it('update多次不崩溃', () => {
+    const em = makeEm()
+    expect(() => {
+      sys.update(1, em, 120)
+      sys.update(1, em, 240)
+      sys.update(1, em, 360)
+    }).not.toThrow()
+  })
+})

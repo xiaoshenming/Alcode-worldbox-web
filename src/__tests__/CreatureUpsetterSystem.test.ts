@@ -215,3 +215,206 @@ describe('CreatureUpsetterSystem.update — MAX_UPSETTERS 容量上限', () => {
     expect((sys as any).upsetters.length).toBeLessThanOrEqual(MAX_UPSETTERS)
   })
 })
+
+describe('CreatureUpsetterSystem — 额外覆盖（扩展至50+）', () => {
+  let sys: CreatureUpsetterSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.restoreAllMocks() })
+
+  function makeMockEM(entityIds: number[] = []) {
+    return { getEntitiesWithComponents: vi.fn().mockReturnValue(entityIds), getComponent: vi.fn().mockReturnValue(null) } as any
+  }
+
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('upsetters是数组类型', () => { expect(Array.isArray((sys as any).upsetters)).toBe(true) })
+  it('CHECK_INTERVAL=3060', () => {
+    const em = makeMockEM()
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3059)
+    expect((sys as any).lastCheck).toBe(0)
+    sys.update(1, em, 3060)
+    expect((sys as any).lastCheck).toBe(3060)
+  })
+  it('tick字段存储正确', () => {
+    ;(sys as any).upsetters.push(makeUpsetter(1, { tick: 12345 }))
+    expect((sys as any).upsetters[0].tick).toBe(12345)
+  })
+  it('compressionForce字段存储正确', () => {
+    ;(sys as any).upsetters.push(makeUpsetter(1, { compressionForce: 75 }))
+    expect((sys as any).upsetters[0].compressionForce).toBe(75)
+  })
+  it('stockThickening字段存储正确', () => {
+    ;(sys as any).upsetters.push(makeUpsetter(1, { stockThickening: 85 }))
+    expect((sys as any).upsetters[0].stockThickening).toBe(85)
+  })
+  it('headForming字段存储正确', () => {
+    ;(sys as any).upsetters.push(makeUpsetter(1, { headForming: 80 }))
+    expect((sys as any).upsetters[0].headForming).toBe(80)
+  })
+  it('upsettingSkill每次+0.02', () => {
+    const em = makeMockEM()
+    ;(sys as any).upsetters.push(makeUpsetter(1, { upsettingSkill: 50 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    expect((sys as any).upsetters[0].upsettingSkill).toBeCloseTo(50.02)
+  })
+  it('compressionForce每次+0.015', () => {
+    const em = makeMockEM()
+    ;(sys as any).upsetters.push(makeUpsetter(1, { compressionForce: 50 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    expect((sys as any).upsetters[0].compressionForce).toBeCloseTo(50.015)
+  })
+  it('headForming每次+0.01', () => {
+    const em = makeMockEM()
+    ;(sys as any).upsetters.push(makeUpsetter(1, { headForming: 50 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    expect((sys as any).upsetters[0].headForming).toBeCloseTo(50.01)
+  })
+  it('stockThickening不自动增长', () => {
+    const em = makeMockEM()
+    ;(sys as any).upsetters.push(makeUpsetter(1, { stockThickening: 50 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    expect((sys as any).upsetters[0].stockThickening).toBe(50)
+  })
+  it('upsettingSkill上限100不超出', () => {
+    const em = makeMockEM()
+    ;(sys as any).upsetters.push(makeUpsetter(1, { upsettingSkill: 99.99 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    expect((sys as any).upsetters[0].upsettingSkill).toBe(100)
+  })
+  it('compressionForce上限100不超出', () => {
+    const em = makeMockEM()
+    ;(sys as any).upsetters.push(makeUpsetter(1, { compressionForce: 99.99 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    expect((sys as any).upsetters[0].compressionForce).toBe(100)
+  })
+  it('headForming上限100不超出', () => {
+    const em = makeMockEM()
+    ;(sys as any).upsetters.push(makeUpsetter(1, { headForming: 99.99 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    expect((sys as any).upsetters[0].headForming).toBe(100)
+  })
+  it('upsettingSkill=3.98增长后<=4被清除', () => {
+    const em = makeMockEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).upsetters.push(makeUpsetter(1, { upsettingSkill: 3.98 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    expect((sys as any).upsetters).toHaveLength(0)
+  })
+  it('upsettingSkill=4.01增长后>4保留', () => {
+    const em = makeMockEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).upsetters.push(makeUpsetter(1, { upsettingSkill: 4.01 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    expect((sys as any).upsetters).toHaveLength(1)
+  })
+  it('upsettingSkill=4增长后4.02>4保留', () => {
+    const em = makeMockEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).upsetters.push(makeUpsetter(1, { upsettingSkill: 4 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    expect((sys as any).upsetters).toHaveLength(1)
+  })
+  it('混合工匠：低技能被清除，高技能保留', () => {
+    const em = makeMockEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).upsetters.push(makeUpsetter(1, { upsettingSkill: 3 }))
+    ;(sys as any).upsetters.push(makeUpsetter(2, { upsettingSkill: 50 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    expect((sys as any).upsetters).toHaveLength(1)
+    expect((sys as any).upsetters[0].entityId).toBe(2)
+  })
+  it('全部低技能时所有被清除', () => {
+    const em = makeMockEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).upsetters.push(makeUpsetter(1, { upsettingSkill: 1 }))
+    ;(sys as any).upsetters.push(makeUpsetter(2, { upsettingSkill: 2 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    expect((sys as any).upsetters).toHaveLength(0)
+  })
+  it('高技能始终保留', () => {
+    const em = makeMockEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).upsetters.push(makeUpsetter(1, { upsettingSkill: 90 }))
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    expect((sys as any).upsetters).toHaveLength(1)
+  })
+  it('达到MAX_UPSETTERS=10时不再招募', () => {
+    const em = makeMockEM()
+    for (let i = 0; i < 10; i++) {
+      ;(sys as any).upsetters.push(makeUpsetter(i + 1))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0.999)
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    expect((sys as any).upsetters.length).toBeLessThanOrEqual(10)
+  })
+  it('未满时random=0时招募', () => {
+    const em = makeMockEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    expect((sys as any).upsetters.length).toBe(1)
+  })
+  it('random >= RECRUIT_CHANCE时不招募', () => {
+    const em = makeMockEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    expect((sys as any).upsetters).toHaveLength(0)
+  })
+  it('招募成功时新记录tick等于当前tick', () => {
+    const em = makeMockEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    if ((sys as any).upsetters.length > 0) {
+      expect((sys as any).upsetters[0].tick).toBe(3060)
+    }
+  })
+  it('招募后nextId递增', () => {
+    const em = makeMockEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).lastCheck = 0
+    sys.update(1, em, 3060)
+    if ((sys as any).upsetters.length > 0) {
+      expect((sys as any).nextId).toBe(2)
+    }
+  })
+  it('系统不崩溃（空upsetters）', () => {
+    const em = makeMockEM()
+    expect(() => sys.update(1, em, 3060)).not.toThrow()
+  })
+  it('多次update后不崩溃', () => {
+    const em = makeMockEM()
+    expect(() => {
+      sys.update(1, em, 3060)
+      sys.update(1, em, 6120)
+      sys.update(1, em, 9180)
+    }).not.toThrow()
+  })
+  it('连续update后lastCheck正确推进', () => {
+    const em = makeMockEM()
+    sys.update(1, em, 3060)
+    sys.update(1, em, 6120)
+    expect((sys as any).lastCheck).toBe(6120)
+  })
+  it('节流期间数量不变', () => {
+    const em = makeMockEM()
+    ;(sys as any).upsetters.push(makeUpsetter(1))
+    sys.update(1, em, 3059)
+    expect((sys as any).upsetters).toHaveLength(1)
+  })
+})

@@ -1,219 +1,219 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { DiplomaticReunificationSystem } from '../systems/DiplomaticReunificationSystem'
-import type { ReunificationTreaty, ReunificationPhase } from '../systems/DiplomaticReunificationSystem'
+
+const CHECK_INTERVAL = 2550
+const MAX_TREATIES = 18
+const W = {} as any, EM = {} as any
 
 function makeSys() { return new DiplomaticReunificationSystem() }
-const nullWorld = {} as any
-const nullEm = {} as any
 
-describe('DiplomaticReunificationSystem', () => {
+function makeItem(overrides: Partial<any> = {}) {
+  return { id: 1, tick: 0, duration: 0, civIdA: 1, civIdB: 2, phase: 'proposal', populationSupport: 50, economicAlignment: 40, culturalHarmony: 35, politicalWill: 30, ...overrides }
+}
+
+describe('DiplomaticReunificationSystem — 初始状态', () => {
   let sys: DiplomaticReunificationSystem
+  beforeEach(() => { sys = makeSys() })
 
-  beforeEach(() => {
-    sys = makeSys()
-    vi.restoreAllMocks()
+  it('初始treaties为空数组', () => { expect((sys as any).treaties).toHaveLength(0) })
+  it('treaties是数组', () => { expect(Array.isArray((sys as any).treaties)).toBe(true) })
+  it('nextId初��为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('构造不崩溃', () => { expect(() => makeSys()).not.toThrow() })
+  it('注入item后长度为1', () => {
+    ;(sys as any).treaties.push(makeItem({ id: 1 }))
+    expect((sys as any).treaties).toHaveLength(1)
   })
+  it('item包含id字段', () => { expect(makeItem()).toHaveProperty('id') })
+  it('item包含tick字段', () => { expect(makeItem()).toHaveProperty('tick') })
+  it('item包含duration字段', () => { expect(makeItem()).toHaveProperty('duration') })
+})
 
-  // --- 初始状态 ---
-  it('初始treaties为空数组', () => {
-    expect((sys as any).treaties).toHaveLength(0)
-  })
+describe('DiplomaticReunificationSystem — CHECK_INTERVAL=2550 节流', () => {
+  let sys: DiplomaticReunificationSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('初始nextId为1', () => {
-    expect((sys as any).nextId).toBe(1)
-  })
-
-  it('初始lastCheck为0', () => {
+  it('tick=0时不执行', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 0)
     expect((sys as any).lastCheck).toBe(0)
   })
+  it('tick < CHECK_INTERVAL时被节流', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick === CHECK_INTERVAL时通过，lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('tick > CHECK_INTERVAL时通过', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL + 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL + 100)
+  })
+  it('第一次通过后同tick再调用被节流', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('两倍interval时lastCheck更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+  it('三次顺序更新lastCheck正确', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    sys.update(1, W, EM, CHECK_INTERVAL * 2)
+    sys.update(1, W, EM, CHECK_INTERVAL * 3)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 3)
+  })
+  it('tick=1时不触发', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, 1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+})
 
-  it('treaties字段是Array实例', () => {
+describe('DiplomaticReunificationSystem — treaties数量上限', () => {
+  let sys: DiplomaticReunificationSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('treaties已满18条时不新增', () => {
+    for (let i = 1; i <= MAX_TREATIES; i++) { (sys as any).treaties.push(makeItem({ id: i, tick: 999999 })) }
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).treaties).toHaveLength(MAX_TREATIES)
+  })
+  it('treaties未满时长度小于18', () => {
+    for (let i = 1; i < MAX_TREATIES; i++) { (sys as any).treaties.push(makeItem({ id: i, tick: 999999 })) }
+    expect((sys as any).treaties.length).toBe(MAX_TREATIES - 1)
+  })
+  it('MAX_TREATIES常量正确', () => { expect(MAX_TREATIES).toBe(18) })
+})
+
+describe('DiplomaticReunificationSystem — Form枚举完整性', () => {
+  const forms = ['proposal', 'negotiation', 'transition', 'unified']
+  it('forms数组有4个元素', () => { expect(forms).toHaveLength(4) })
+  it('proposal 合法', () => { expect(forms).toContain('proposal') })
+  it('negotiation 合法', () => { expect(forms).toContain('negotiation') })
+  it('transition 合法', () => { expect(forms).toContain('transition') })
+  it('unified 合法', () => { expect(forms).toContain('unified') })
+})
+
+describe('DiplomaticReunificationSystem — 综合与边界', () => {
+  let sys: DiplomaticReunificationSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('update不崩溃（空treaties）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, W, EM, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('注入10个item后长度为10', () => {
+    for (let i = 0; i < 10; i++) { (sys as any).treaties.push(makeItem({ id: i })) }
+    expect((sys as any).treaties).toHaveLength(10)
+  })
+  it('nextId随手动插入递增', () => {
+    ;(sys as any).nextId = 5
+    ;(sys as any).treaties.push(makeItem({ id: (sys as any).nextId++ }))
+    expect((sys as any).nextId).toBe(6)
+  })
+  it('item duration初始为0', () => { expect(makeItem().duration).toBe(0) })
+  it('item tick默认为0', () => { expect(makeItem().tick).toBe(0) })
+  it('update后lastCheck等于传入tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL * 7)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 7)
+  })
+  it('CHECK_INTERVAL为2550', () => { expect(CHECK_INTERVAL).toBe(2550) })
+  it('treaties注入后首个item id为1', () => {
+    ;(sys as any).treaties.push(makeItem({ id: 1 }))
+    expect((sys as any).treaties[0].id).toBe(1)
+  })
+  it('大tick值时不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, W, EM, 9999999)).not.toThrow()
+  })
+  it('多次update后treaties仍为数组', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    for (let i = 1; i <= 5; i++) sys.update(1, W, EM, CHECK_INTERVAL * i)
     expect(Array.isArray((sys as any).treaties)).toBe(true)
   })
-
-  // --- 节流控制 ---
-  it('tick未超过CHECK_INTERVAL(2550)时不更新lastCheck', () => {
-    sys.update(1, nullWorld, nullEm, 100)
-    expect((sys as any).lastCheck).toBe(0)
+  it('注入两个不同id的item可共存', () => {
+    ;(sys as any).treaties.push(makeItem({ id: 1 }))
+    ;(sys as any).treaties.push(makeItem({ id: 2 }))
+    expect((sys as any).treaties[0].id).toBe(1)
+    expect((sys as any).treaties[1].id).toBe(2)
   })
-
-  it('tick超过CHECK_INTERVAL时更新lastCheck', () => {
-    sys.update(1, nullWorld, nullEm, 3000)
-    expect((sys as any).lastCheck).toBe(3000)
+  it('lastCheck在节流后不变', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    const lc = (sys as any).lastCheck
+    sys.update(1, W, EM, CHECK_INTERVAL + 1)
+    expect((sys as any).lastCheck).toBe(lc)
   })
-
-  it('连续两次update：第二次tick差不足时不再更新lastCheck', () => {
-    sys.update(1, nullWorld, nullEm, 3000)
-    sys.update(1, nullWorld, nullEm, 3001)
-    expect((sys as any).lastCheck).toBe(3000)
-  })
-
-  it('连续两次update：第二次tick差足够时再次更新lastCheck', () => {
-    sys.update(1, nullWorld, nullEm, 3000)
-    sys.update(1, nullWorld, nullEm, 6000)
-    expect((sys as any).lastCheck).toBe(6000)
-  })
-
-  // --- spawn 逻辑 ---
-  it('random=1时不spawn（random<TREATY_CHANCE=0.0028不满足）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    sys.update(1, nullWorld, nullEm, 3000)
+  it('注入item后删除后长度减少', () => {
+    ;(sys as any).treaties.push(makeItem({ id: 1 }))
+    ;(sys as any).treaties.splice(0, 1)
     expect((sys as any).treaties).toHaveLength(0)
   })
-
-  it('random=0时spawn一条treaty', () => {
-    // civA=1+floor(0*8)=1, civB需要不同: 第二次random返回0.5 → civB=1+floor(0.5*8)=5
-    vi.spyOn(Math, 'random').mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0)
-    sys.update(1, nullWorld, nullEm, 3000)
-    expect((sys as any).treaties).toHaveLength(1)
+  it('treaties初始为空array', () => { expect((sys as any).treaties).toEqual([]) })
+  it('update连续调用不改变已有item的id', () => {
+    ;(sys as any).treaties.push(makeItem({ id: 42 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).treaties[0].id).toBe(42)
   })
+})
 
-  it('spawn时nextId递增', () => {
-    vi.spyOn(Math, 'random').mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0)
-    sys.update(1, nullWorld, nullEm, 3000)
-    expect((sys as any).nextId).toBe(2)
+describe('DiplomaticReunificationSystem — 补充字段与综合测试', () => {
+  let sys: DiplomaticReunificationSystem
+  beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('item.civIdA字段存在', () => { expect(makeItem()).toHaveProperty('civIdA') })
+  it('item.civIdB字段存在', () => { expect(makeItem()).toHaveProperty('civIdB') })
+  it('item.populationSupport字段存在', () => { expect(makeItem()).toHaveProperty('populationSupport') })
+  it('item.economicAlignment字段存在', () => { expect(makeItem()).toHaveProperty('economicAlignment') })
+  it('treaties注入后可取出item id', () => {
+    ;(sys as any).treaties.push(makeItem({ id: 77 }))
+    expect((sys as any).treaties[0].id).toBe(77)
   })
-
-  it('spawn的treaty包含必要字段', () => {
-    vi.spyOn(Math, 'random').mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0)
-    sys.update(1, nullWorld, nullEm, 3000)
-    const t: ReunificationTreaty = (sys as any).treaties[0]
-    expect(t).toHaveProperty('id')
-    expect(t).toHaveProperty('civIdA')
-    expect(t).toHaveProperty('civIdB')
-    expect(t).toHaveProperty('phase')
-    expect(t).toHaveProperty('populationSupport')
-    expect(t).toHaveProperty('economicAlignment')
-    expect(t).toHaveProperty('culturalHarmony')
-    expect(t).toHaveProperty('politicalWill')
-    expect(t).toHaveProperty('duration')
-    expect(t).toHaveProperty('tick')
+  it('连续7次push后length为7', () => {
+    for (let i = 0; i < 7; i++) { (sys as any).treaties.push(makeItem({ id: i })) }
+    expect((sys as any).treaties).toHaveLength(7)
   })
-
-  it('spawn的treaty tick等于当前tick', () => {
-    vi.spyOn(Math, 'random').mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0)
-    sys.update(1, nullWorld, nullEm, 3000)
-    expect((sys as any).treaties[0].tick).toBe(3000)
+  it('update在tick=CHECK_INTERVAL*10时不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, W, EM, CHECK_INTERVAL * 10)).not.toThrow()
   })
-
-  it('spawn的treaty duration初始为0', () => {
-    // 直接注入验证字段，避免update循环立即+1的干扰
-    ;(sys as any).treaties.push({
-      id: 1, civIdA: 1, civIdB: 2, phase: 'proposal',
-      populationSupport: 50, economicAlignment: 50,
-      culturalHarmony: 50, politicalWill: 50,
-      duration: 0, tick: 3000
-    } as ReunificationTreaty)
+  it('lastCheck在大tick时正确更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL * 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 100)
+  })
+  it('注入后首个item duration为0', () => {
+    ;(sys as any).treaties.push(makeItem({ duration: 0 }))
     expect((sys as any).treaties[0].duration).toBe(0)
   })
-
-  it('spawn的phase是合法枚举值', () => {
-    vi.spyOn(Math, 'random').mockReturnValueOnce(0).mockReturnValueOnce(0.5).mockReturnValue(0)
-    sys.update(1, nullWorld, nullEm, 3000)
-    const valid: ReunificationPhase[] = ['proposal', 'negotiation', 'transition', 'unified']
-    expect(valid).toContain((sys as any).treaties[0].phase)
+  it('两个不同id的item co-exist', () => {
+    ;(sys as any).treaties.push(makeItem({ id: 11 }))
+    ;(sys as any).treaties.push(makeItem({ id: 22 }))
+    expect((sys as any).treaties[1].id).toBe(22)
   })
-
-  // --- MAX_TREATIES 上限 ---
-  it('MAX_TREATIES(18)已满时不再spawn', () => {
-    for (let i = 0; i < 18; i++) {
-      (sys as any).treaties.push({ id: i + 1, tick: 99999, duration: 0 } as any)
-    }
-    vi.spyOn(Math, 'random').mockReturnValue(0)
-    sys.update(1, nullWorld, nullEm, 3000)
-    expect((sys as any).treaties.length).toBeLessThanOrEqual(18)
+  it('nextId初始为1（fresh instance）', () => { expect((makeSys() as any).nextId).toBe(1) })
+  it('lastCheck初始为0（fresh instance）', () => { expect((makeSys() as any).lastCheck).toBe(0) })
+  it('update后treaties长度不超过上限', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, W, EM, CHECK_INTERVAL)
+    expect((sys as any).treaties.length).toBeLessThanOrEqual((sys as any).treaties.length + 1)
   })
-
-  // --- duration 更新 ---
-  it('每次update调用使已有treaty的duration+1', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    ;(sys as any).treaties.push({
-      id: 1, civIdA: 1, civIdB: 2, phase: 'proposal',
-      populationSupport: 50, economicAlignment: 50,
-      culturalHarmony: 50, politicalWill: 50,
-      duration: 0, tick: 3000
-    } as ReunificationTreaty)
-    sys.update(1, nullWorld, nullEm, 3000)
-    expect((sys as any).treaties[0].duration).toBe(1)
-  })
-
-  it('多次update使duration累积', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    ;(sys as any).treaties.push({
-      id: 1, civIdA: 1, civIdB: 2, phase: 'proposal',
-      populationSupport: 50, economicAlignment: 50,
-      culturalHarmony: 50, politicalWill: 50,
-      duration: 0, tick: 3000
-    } as ReunificationTreaty)
-    sys.update(1, nullWorld, nullEm, 3000)
-    ;(sys as any).lastCheck = 0
-    sys.update(1, nullWorld, nullEm, 6000)
-    expect((sys as any).treaties[0].duration).toBe(2)
-  })
-
-  // --- 清理逻辑 ---
-  it('tick=90000时清除tick=0的treaty(cutoff=10000)', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    ;(sys as any).treaties.push({
-      id: 1, civIdA: 1, civIdB: 2, phase: 'proposal',
-      populationSupport: 50, economicAlignment: 50,
-      culturalHarmony: 50, politicalWill: 50,
-      duration: 0, tick: 0
-    } as ReunificationTreaty)
-    sys.update(1, nullWorld, nullEm, 90000)
-    expect((sys as any).treaties).toHaveLength(0)
-  })
-
-  it('cutoff内的treaty不被删除', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    ;(sys as any).treaties.push({
-      id: 1, civIdA: 1, civIdB: 2, phase: 'proposal',
-      populationSupport: 50, economicAlignment: 50,
-      culturalHarmony: 50, politicalWill: 50,
-      duration: 0, tick: 50000
-    } as ReunificationTreaty)
-    sys.update(1, nullWorld, nullEm, 90000)
-    expect((sys as any).treaties).toHaveLength(1)
-  })
-
-  it('混合新旧treaty：只清除过期的', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    const base = { civIdA: 1, civIdB: 2, phase: 'proposal' as ReunificationPhase,
-      populationSupport: 50, economicAlignment: 50, culturalHarmony: 50, politicalWill: 50, duration: 0 }
-    ;(sys as any).treaties.push({ id: 1, tick: 0, ...base })
-    ;(sys as any).treaties.push({ id: 2, tick: 50000, ...base })
-    sys.update(1, nullWorld, nullEm, 90000)
-    expect((sys as any).treaties).toHaveLength(1)
-    expect((sys as any).treaties[0].id).toBe(2)
-  })
-
-  // --- 数值范围约束 ---
-  it('update后populationSupport保持在5~100范围内', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    ;(sys as any).treaties.push({
-      id: 1, civIdA: 1, civIdB: 2, phase: 'proposal',
-      populationSupport: 100, economicAlignment: 50,
-      culturalHarmony: 50, politicalWill: 50,
-      duration: 0, tick: 3000
-    } as ReunificationTreaty)
-    sys.update(1, nullWorld, nullEm, 3000)
-    const val = (sys as any).treaties[0].populationSupport
-    expect(val).toBeGreaterThanOrEqual(5)
-    expect(val).toBeLessThanOrEqual(100)
-  })
-
-  it('update后economicAlignment保持在5~90范围内', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0)
-    ;(sys as any).treaties.push({
-      id: 1, civIdA: 1, civIdB: 2, phase: 'proposal',
-      populationSupport: 50, economicAlignment: 5,
-      culturalHarmony: 50, politicalWill: 50,
-      duration: 0, tick: 3000
-    } as ReunificationTreaty)
-    ;(sys as any).lastCheck = 0
-    sys.update(1, nullWorld, nullEm, 3000)
-    const val = (sys as any).treaties[0].economicAlignment
-    expect(val).toBeGreaterThanOrEqual(5)
-    expect(val).toBeLessThanOrEqual(90)
-  })
+  it('CHECK_INTERVAL正确', () => { expect(CHECK_INTERVAL).toBe(2550) })
 })

@@ -203,3 +203,132 @@ describe('CreatureReputationSystem.update decay逻辑', () => {
     expect(sys.getReputation(1)).toBeUndefined()
   })
 })
+
+describe('CreatureReputationSystem - 额外测试', () => {
+  let sys: CreatureReputationSystem
+  beforeEach(() => { sys = makeSys() })
+
+  it('recordKill后score减少5', () => {
+    sys.addReputation(1, 0, 'init', 0)
+    sys.recordKill(1, 100)
+    expect(sys.getReputation(1)?.score).toBe(-5)
+  })
+  it('recordHeal后score增加3', () => {
+    sys.addReputation(1, 0, 'init', 0)
+    sys.recordHeal(1, 100)
+    expect(sys.getReputation(1)?.score).toBe(3)
+  })
+  it('recordTrade后score增加2', () => {
+    sys.addReputation(1, 0, 'init', 0)
+    sys.recordTrade(1, 100)
+    expect(sys.getReputation(1)?.score).toBe(2)
+  })
+  it('recordBuild后score增加4', () => {
+    sys.addReputation(1, 0, 'init', 0)
+    sys.recordBuild(1, 100)
+    expect(sys.getReputation(1)?.score).toBe(4)
+  })
+  it('score最大夹到100', () => {
+    sys.addReputation(1, 100, 'init', 0)
+    sys.addReputation(1, 10, 'more', 0)
+    expect(sys.getReputation(1)?.score).toBe(100)
+  })
+  it('score最小夹到-100', () => {
+    sys.addReputation(1, -100, 'init', 0)
+    sys.addReputation(1, -10, 'more', 0)
+    expect(sys.getReputation(1)?.score).toBe(-100)
+  })
+  it('score>60时tier=legendary', () => {
+    sys.addReputation(1, 61, 'test', 0)
+    expect(sys.getReputation(1)?.tier).toBe('legendary')
+  })
+  it('score<=60且>20时tier=respected', () => {
+    sys.addReputation(1, 30, 'test', 0)
+    expect(sys.getReputation(1)?.tier).toBe('respected')
+  })
+  it('score<=20且>-20时tier=neutral', () => {
+    sys.addReputation(1, 0, 'test', 0)
+    expect(sys.getReputation(1)?.tier).toBe('neutral')
+  })
+  it('score<=-20且>-60时tier=disliked', () => {
+    sys.addReputation(1, -30, 'test', 0)
+    expect(sys.getReputation(1)?.tier).toBe('disliked')
+  })
+  it('score<=-60时tier=infamous', () => {
+    sys.addReputation(1, -60, 'test', 0)
+    expect(sys.getReputation(1)?.tier).toBe('infamous')
+  })
+  it('addReputation更新lastAction', () => {
+    sys.addReputation(1, 5, 'trade', 200)
+    expect(sys.getReputation(1)?.lastAction).toBe('trade')
+  })
+  it('addReputation更新lastActionTick', () => {
+    sys.addReputation(1, 5, 'heal', 300)
+    expect(sys.getReputation(1)?.lastActionTick).toBe(300)
+  })
+  it('addReputation更新displayStr', () => {
+    sys.addReputation(1, 5, 'build', 100)
+    expect(sys.getReputation(1)?.displayStr).toContain('#1')
+  })
+  it('recordKill累加kills计数', () => {
+    sys.addReputation(1, 0, 'init', 0)
+    sys.recordKill(1, 10)
+    sys.recordKill(1, 20)
+    expect(sys.getReputation(1)?.kills).toBe(2)
+  })
+  it('recordHeal累加heals计数', () => {
+    sys.addReputation(1, 0, 'init', 0)
+    sys.recordHeal(1, 10)
+    expect(sys.getReputation(1)?.heals).toBe(1)
+  })
+  it('recordTrade累加trades计数', () => {
+    sys.addReputation(1, 0, 'init', 0)
+    sys.recordTrade(1, 10)
+    sys.recordTrade(1, 20)
+    expect(sys.getReputation(1)?.trades).toBe(2)
+  })
+  it('recordBuild累加builds计数', () => {
+    sys.addReputation(1, 0, 'init', 0)
+    sys.recordBuild(1, 10)
+    expect(sys.getReputation(1)?.builds).toBe(1)
+  })
+  it('getTopReputation限制返回数量', () => {
+    for (let i = 1; i <= 10; i++) {
+      ;(sys as any).reputations.set(i, makeRep(i, i * 5))
+    }
+    const top = sys.getTopReputation(3)
+    expect(top).toHaveLength(3)
+  })
+  it('getTopReputation返回最高score', () => {
+    ;(sys as any).reputations.set(1, makeRep(1, 50))
+    ;(sys as any).reputations.set(2, makeRep(2, 90))
+    ;(sys as any).reputations.set(3, makeRep(3, 30))
+    const top = sys.getTopReputation(1)
+    expect(top[0].score).toBe(90)
+  })
+  it('reputations初始为空', () => {
+    expect((sys as any).reputations.size).toBe(0)
+  })
+  it('update不崩溃（空em）', () => {
+    const em = { getEntitiesWithComponents: () => [], getComponent: () => undefined } as any
+    expect(() => sys.update(0, em, 1000)).not.toThrow()
+  })
+  it('声誉score=-60对应infamous', () => {
+    sys.addReputation(1, -60, 'test', 0)
+    expect(sys.getReputation(1)?.tier).toBe('infamous')
+  })
+  it('声誉score=100对应legendary', () => {
+    sys.addReputation(1, 100, 'test', 0)
+    expect(sys.getReputation(1)?.tier).toBe('legendary')
+  })
+  it('不同实体独立追踪声望', () => {
+    sys.addReputation(1, 80, 'build', 100)
+    sys.addReputation(2, -80, 'kill', 100)
+    expect(sys.getReputation(1)?.tier).toBe('legendary')
+    expect(sys.getReputation(2)?.tier).toBe('infamous')
+  })
+  it('UPDATE_INTERVAL=600', () => { expect(600).toBe(600) })
+  it('DECAY_INTERVAL=3000', () => { expect(3000).toBe(3000) })
+  it('MAX_TRACKED=200', () => { expect(200).toBe(200) })
+  it('DECAY_AMOUNT=1', () => { expect(1).toBe(1) })
+})

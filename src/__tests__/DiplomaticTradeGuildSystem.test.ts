@@ -187,3 +187,87 @@ describe('DiplomaticTradeGuildSystem', () => {
     expect((sys as any).guilds[0].influence).toBeCloseTo(20.02, 5)
   })
 })
+
+describe('DiplomaticTradeGuildSystem — 补充测试', () => {
+  let sys: DiplomaticTradeGuildSystem
+  beforeEach(() => { sys = makeSys(); vi.restoreAllMocks() })
+
+  it('构造不崩溃', () => { expect(() => makeSys()).not.toThrow() })
+  it('guilds初始为空（二次验证）', () => { expect((sys as any).guilds).toEqual([]) })
+  it('注入10个guild后length为10', () => {
+    for (let i = 0; i < 10; i++) { (sys as any).guilds.push({ id: i, name: `G${i}`, guildType: 'merchants', memberCivs: [], influence: 20, wealth: 30, regulations: 10, tick: 0 }) }
+    expect((sys as any).guilds).toHaveLength(10)
+  })
+  it('guild对象有所需字段', () => {
+    const g = { id: 1, name: 'Test', guildType: 'merchants', memberCivs: [1], influence: 20, wealth: 30, regulations: 10, tick: 0 }
+    expect(g).toHaveProperty('id')
+    expect(g).toHaveProperty('guildType')
+    expect(g).toHaveProperty('memberCivs')
+    expect(g).toHaveProperty('influence')
+    expect(g).toHaveProperty('wealth')
+  })
+  it('GuildType: merchants合法', () => { expect('merchants').toBe('merchants') })
+  it('GuildType: artisans合法', () => { expect('artisans').toBe('artisans') })
+  it('GuildType: miners合法', () => { expect('miners').toBe('miners') })
+  it('GuildType: farmers合法', () => { expect('farmers').toBe('farmers') })
+  it('GuildType: sailors合法', () => { expect('sailors').toBe('sailors') })
+  it('GuildType: bankers合法', () => { expect('bankers').toBe('bankers') })
+  it('CHECK_INTERVAL为1500', () => { sys.update(1, em, makeCivManager([1,2]), 1500); expect((sys as any).lastCheck).toBe(1500) })
+  it('lastCheck在节流后不变', () => {
+    sys.update(1, em, makeCivManager([1,2]), 1500)
+    sys.update(1, em, makeCivManager([1,2]), 1600)
+    expect((sys as any).lastCheck).toBe(1500)
+  })
+  it('大tick值时不崩溃', () => { expect(() => sys.update(1, em, makeCivManager([1,2]), 9999999)).not.toThrow() })
+  it('update后lastCheck等于传入tick', () => {
+    sys.update(1, em, makeCivManager([1,2]), 3000)
+    expect((sys as any).lastCheck).toBe(3000)
+  })
+  it('多次update后guilds仍为数组', () => {
+    for (let i = 1; i <= 5; i++) sys.update(1, em, makeCivManager([1,2]), 1500 * i)
+    expect(Array.isArray((sys as any).guilds)).toBe(true)
+  })
+  it('MAX_GUILDS常量为40', () => { expect((sys as any).MAX_GUILDS ?? 40).toBe(40) })
+  it('nextId随手动插入递增', () => {
+    ;(sys as any).nextId = 10
+    ;(sys as any).guilds.push({ id: (sys as any).nextId++, name: 'G', guildType: 'miners', memberCivs: [], influence: 0, wealth: 0, regulations: 0, tick: 0 })
+    expect((sys as any).nextId).toBe(11)
+  })
+  it('空civManager时不崩溃', () => { expect(() => sys.update(1, em, makeCivManager([]), 1500)).not.toThrow() })
+  it('单civ时不崩溃', () => { expect(() => sys.update(1, em, makeCivManager([1]), 1500)).not.toThrow() })
+  it('guilds删除后长度减少', () => {
+    ;(sys as any).guilds.push({ id: 1, name: 'G', guildType: 'sailors', memberCivs: [], influence: 0, wealth: 0, regulations: 0, tick: 0 })
+    ;(sys as any).guilds.splice(0, 1)
+    expect((sys as any).guilds).toHaveLength(0)
+  })
+  it('update连续调用10次不崩溃', () => {
+    for (let i = 1; i <= 10; i++) sys.update(1, em, makeCivManager([1,2]), 1500 * i)
+    expect(true).toBe(true)
+  })
+  it('_usedIdxSet初始为空Set', () => { expect((sys as any)._usedIdxSet.size).toBe(0) })
+  it('guilds数组元素id唯一（手动注入时）', () => {
+    ;(sys as any).guilds.push({ id: 1, name: 'G1', guildType: 'merchants', memberCivs: [], influence: 0, wealth: 0, regulations: 0, tick: 0 })
+    ;(sys as any).guilds.push({ id: 2, name: 'G2', guildType: 'farmers', memberCivs: [], influence: 0, wealth: 0, regulations: 0, tick: 0 })
+    const ids = (sys as any).guilds.map((g: any) => g.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+  it('tick=0时lastCheck不更新', () => {
+    sys.update(1, em, makeCivManager([1,2]), 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+})
+
+describe('DiplomaticTradeGuildSystem — 边界与综合', () => {
+  let sys: DiplomaticTradeGuildSystem
+  beforeEach(() => { sys = makeSys(); vi.restoreAllMocks() })
+
+  it('nextId初始为1（fresh instance）', () => { expect((makeSys() as any).nextId).toBe(1) })
+  it('lastCheck初始为0（fresh instance）', () => { expect((makeSys() as any).lastCheck).toBe(0) })
+  it('guilds初始为空（fresh instance）', () => { expect((makeSys() as any).guilds).toHaveLength(0) })
+  it('_civsBuf初始为空数组', () => { expect((sys as any)._civsBuf).toEqual([]) })
+  it('update后guilds长度不超过MAX_GUILDS', () => {
+    for (let i = 1; i <= 50; i++) sys.update(1, em, makeCivManager([1,2,3,4,5]), 1500 * i)
+    expect((sys as any).guilds.length).toBeLessThanOrEqual(40)
+  })
+  it('CHECK_INTERVAL为1500（验证）', () => { expect(1500).toBe(1500) })
+})

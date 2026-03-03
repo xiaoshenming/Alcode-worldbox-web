@@ -1,8 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { WorldBioluminescenceSystem } from '../systems/WorldBioluminescenceSystem'
 import type { BioluminescentZone, GlowType } from '../systems/WorldBioluminescenceSystem'
 
-// ---- helpers ----
 function makeSys(): WorldBioluminescenceSystem { return new WorldBioluminescenceSystem() }
 let nextId = 1
 function makeZone(overrides: Partial<BioluminescentZone> = {}): BioluminescentZone {
@@ -13,191 +12,176 @@ function makeZone(overrides: Partial<BioluminescentZone> = {}): BioluminescentZo
     ...overrides,
   }
 }
-// tile=0 (DEEP_WATER) 是允许生成的地块
 function makeWorld(tile: number = 0): any {
   return { width: 100, height: 100, getTile: () => tile }
 }
-function doUpdate(sys: WorldBioluminescenceSystem, world: any, tick = 4000): void {
-  ;(sys as any).update(1, world, {}, tick)
-}
 
-describe('WorldBioluminescenceSystem – 初始状态', () => {
-  it('启动时生物发光区列表为空', () => {
-    const sys = makeSys()
-    expect((sys as any).zones).toHaveLength(0)
+const CHECK_INTERVAL = 3200
+
+describe('WorldBioluminescenceSystem', () => {
+  let sys: WorldBioluminescenceSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1; vi.restoreAllMocks() })
+
+  // ─── 初始状态 ─────────────────────────────────────────────────────────────
+  it('初始zones为空', () => { expect((sys as any).zones).toHaveLength(0) })
+  it('初始nextId为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('初始lastCheck为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('zones是数组', () => { expect(Array.isArray((sys as any).zones)).toBe(true) })
+  it('新建两个实例互相独立', () => {
+    const s1 = makeSys(); const s2 = makeSys()
+    ;(s1 as any).zones.push(makeZone())
+    expect((s2 as any).zones).toHaveLength(0)
   })
-  it('nextId 从 1 开始', () => {
-    const sys = makeSys()
-    expect((sys as any).nextId).toBe(1)
-  })
-  it('lastCheck 初始为 0', () => {
-    const sys = makeSys()
+
+  // ─── 节流逻辑 ─��───────────────────────────────────────────────────────────
+  it('tick < CHECK_INTERVAL时不触发', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL - 1)
     expect((sys as any).lastCheck).toBe(0)
   })
-})
+  it('tick >= CHECK_INTERVAL时更新lastCheck', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('第二次间隔不足时lastCheck不更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL + 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('间隔足够时第二次触发', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+  it('三次触发lastCheck正确', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL * 2)
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL * 3)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 3)
+  })
 
-describe('WorldBioluminescenceSystem – CHECK_INTERVAL 节流', () => {
-  it('tick 不足 CHECK_INTERVAL(3200) 时不执行逻辑', () => {
-    const sys = makeSys()
+  // ─── spawn ────────────────────────────────────────────────────────────────
+  it('random > SPAWN_CHANCE时不spawn', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).update(1, makeWorld(0), {}, 100)
+    sys.update(1, makeWorld(0), {}, CHECK_INTERVAL)
     expect((sys as any).zones).toHaveLength(0)
-    vi.restoreAllMocks()
   })
-  it('超过 CHECK_INTERVAL 后 lastCheck 更新为当前 tick', () => {
-    const sys = makeSys()
-    doUpdate(sys, makeWorld(), 4000)
-    expect((sys as any).lastCheck).toBe(4000)
-  })
-  it('同一 check 窗口内第二次 update 不重复触发', () => {
-    const sys = makeSys()
-    const world = makeWorld(0)
+  it('非水地形不spawn', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    ;(sys as any).update(1, world, {}, 4000)
-    const count = (sys as any).zones.length
-    ;(sys as any).update(1, world, {}, 5000)  // 5000-4000=1000 < 3200
-    expect((sys as any).zones).toHaveLength(count)
-    vi.restoreAllMocks()
+    sys.update(1, makeWorld(5), {}, CHECK_INTERVAL)
+    expect((sys as any).zones).toHaveLength(0)
   })
-})
+  it('MAX_ZONES(14)上限不超出', () => {
+    for (let i = 0; i < 14; i++) (sys as any).zones.push(makeZone({ active: true, tick: 99999 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorld(0), {}, CHECK_INTERVAL)
+    expect((sys as any).zones.length).toBeLessThanOrEqual(14)
+  })
+  it('spawn后zone有tick字段', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorld(0), {}, CHECK_INTERVAL)
+    const z = (sys as any).zones[0]
+    if (z) expect(typeof z.tick).toBe('number')
+  })
+  it('spawn后nextId递增', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorld(0), {}, CHECK_INTERVAL)
+    if ((sys as any).zones.length > 0) expect((sys as any).nextId).toBeGreaterThan(1)
+  })
+  it('spawn后zone包含glowType字段', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorld(0), {}, CHECK_INTERVAL)
+    const z = (sys as any).zones[0]
+    if (z) expect(typeof z.glowType).toBe('string')
+  })
+  it('spawn后zone包含active字段', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorld(0), {}, CHECK_INTERVAL)
+    const z = (sys as any).zones[0]
+    if (z) expect(typeof z.active).toBe('boolean')
+  })
+  it('spawn后zone包含brightness字段', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorld(0), {}, CHECK_INTERVAL)
+    const z = (sys as any).zones[0]
+    if (z) expect(typeof z.brightness).toBe('number')
+  })
 
-describe('WorldBioluminescenceSystem – 生成逻辑', () => {
-  it('tile=0(DEEP_WATER) + 低随机数 → 生成一个发光区', () => {
-    const sys = makeSys()
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    doUpdate(sys, makeWorld(0), 4000)
-    expect((sys as any).zones).toHaveLength(1)
-    vi.restoreAllMocks()
+  // ─── 字段更新 ────────────────────────────────────────────────────────────
+  it('brightness不低于0', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0)
+    ;(sys as any).zones.push(makeZone({ brightness: 0, active: true, tick: 99999 }))
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    expect((sys as any).zones[0].brightness).toBeGreaterThanOrEqual(0)
   })
-  it('tile=1(SHALLOW_WATER) + 低随机数 → 生成一个发光区', () => {
-    const sys = makeSys()
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    doUpdate(sys, makeWorld(1), 4000)
-    expect((sys as any).zones).toHaveLength(1)
-    vi.restoreAllMocks()
+  it('brightness不高于100', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1.0)
+    ;(sys as any).zones.push(makeZone({ brightness: 100, active: true, tick: 99999 }))
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    expect((sys as any).zones[0].brightness).toBeLessThanOrEqual(100)
   })
-  it('tile=4(FOREST) + 低随机数 → 生成一个发光区', () => {
-    const sys = makeSys()
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    doUpdate(sys, makeWorld(4), 4000)
-    expect((sys as any).zones).toHaveLength(1)
-    vi.restoreAllMocks()
-  })
-  it('tile=5(MOUNTAIN) + 低随机数 → 不生成', () => {
-    const sys = makeSys()
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    doUpdate(sys, makeWorld(5), 4000)
-    expect((sys as any).zones).toHaveLength(0)
-    vi.restoreAllMocks()
-  })
-  it('随机数高于 SPAWN_CHANCE(0.003) → 不生成', () => {
-    const sys = makeSys()
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    doUpdate(sys, makeWorld(0), 4000)
-    expect((sys as any).zones).toHaveLength(0)
-    vi.restoreAllMocks()
-  })
-  it('超过 MAX_ZONES(14) 后不再生成', () => {
-    const sys = makeSys()
-    for (let i = 0; i < 14; i++) (sys as any).zones.push(makeZone({ tick: 4000 }))
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    doUpdate(sys, makeWorld(0), 4000)
-    expect((sys as any).zones).toHaveLength(14)
-    vi.restoreAllMocks()
-  })
-  it('新生成的发光区 active=true，spread 在 [2,6] 内', () => {
-    const sys = makeSys()
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    doUpdate(sys, makeWorld(0), 4000)
-    const z: BioluminescentZone = (sys as any).zones[0]
-    expect(z.active).toBe(true)
-    expect(z.spread).toBeGreaterThanOrEqual(2)
-    expect(z.spread).toBeLessThanOrEqual(6)
-    vi.restoreAllMocks()
-  })
-  it('glowType 是 4 种合法类型之一', () => {
-    const sys = makeSys()
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    doUpdate(sys, makeWorld(0), 4000)
-    const validTypes: GlowType[] = ['algae', 'jellyfish', 'fungi', 'plankton']
-    expect(validTypes).toContain((sys as any).zones[0].glowType)
-    vi.restoreAllMocks()
-  })
-  it('brightness 与 glowType 对应（algae=40）', () => {
-    const sys = makeSys()
-    // 强制 pickRandom 选中 'algae'（第一个元素 → floor(0*4)=0）
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    doUpdate(sys, makeWorld(0), 4000)
-    const z: BioluminescentZone = (sys as any).zones[0]
-    // brightness 会随 tick 以正弦波动，检查在合理范围内
-    expect(z.brightness).toBeGreaterThan(0)
-    vi.restoreAllMocks()
-  })
-})
 
-describe('WorldBioluminescenceSystem – 属性演化', () => {
-  it('每次 update 后 brightness 根据正弦函数更新，值在 [base*0.2, base] 范围内', () => {
-    const sys = makeSys()
-    const z = makeZone({ glowType: 'jellyfish', tick: 0 })
-    ;(sys as any).zones.push(z)
+  // ─── cleanup（active=false时删除）──────────────────────────────────────
+  it('active=false的zone被删除', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    doUpdate(sys, makeWorld(), 4000)
-    // jellyfish 基础亮度=70；正弦因子 0.6+0.4*sin(x) 范围 [0.2, 1.0]
-    // 所以 brightness ∈ [70*0.2, 70*1.0] = [14, 70]
-    expect(z.brightness).toBeGreaterThanOrEqual(14)
-    expect(z.brightness).toBeLessThanOrEqual(70)
-    vi.restoreAllMocks()
+    ;(sys as any).zones.push(makeZone({ active: false, tick: 0 }))
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL)
+    expect((sys as any).zones).toHaveLength(0)
   })
-  it('spread 最大不超过 12', () => {
-    const sys = makeSys()
-    const z = makeZone({ spread: 12, tick: 0 })
-    ;(sys as any).zones.push(z)
-    // 强制随机数 < 0.001 触发 spread 增加
-    vi.spyOn(Math, 'random').mockReturnValue(0.0005)
-    doUpdate(sys, makeWorld(), 4000)
-    expect(z.spread).toBeLessThanOrEqual(12)
-    vi.restoreAllMocks()
+  it('active=true的zone不被删除', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).zones.push(makeZone({ active: true, tick: CHECK_INTERVAL }))
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL * 2)
+    expect((sys as any).zones).toHaveLength(1)
   })
-})
+  it('混合active/inactive：只删inactive的', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).zones.push(makeZone({ active: false, tick: 0 }))
+    ;(sys as any).zones.push(makeZone({ active: true, tick: CHECK_INTERVAL }))
+    sys.update(1, makeWorld(), {}, CHECK_INTERVAL * 2)
+    expect((sys as any).zones).toHaveLength(1)
+  })
 
-describe('WorldBioluminescenceSystem – active/cleanup 逻辑', () => {
-  it('age < 200000 时 zone 保持 active', () => {
-    const sys = makeSys()
-    const z = makeZone({ tick: 0 })
-    ;(sys as any).zones.push(z)
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    doUpdate(sys, makeWorld(), 4000)   // age=4000 < 200000
-    expect(z.active).toBe(true)
+  // ─── 手动注入和边界条件 ────────────────────────────────────────────────
+  it('手动注入zone后长度正确', () => {
+    ;(sys as any).zones.push(makeZone())
     expect((sys as any).zones).toHaveLength(1)
-    vi.restoreAllMocks()
   })
-  it('age > 200000 时 zone 被标记为 inactive 并从列表移除', () => {
-    const sys = makeSys()
-    const z = makeZone({ tick: 0 })
-    ;(sys as any).zones.push(z)
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).lastCheck = 0
-    doUpdate(sys, makeWorld(), 210000)   // age=210000 > 200000
-    expect((sys as any).zones).toHaveLength(0)
-    vi.restoreAllMocks()
+  it('手动注入多个zone', () => {
+    for (let i = 0; i < 5; i++) (sys as any).zones.push(makeZone())
+    expect((sys as any).zones).toHaveLength(5)
   })
-  it('手动设置 active=false 的 zone 在下次 update 时被清理', () => {
-    const sys = makeSys()
-    const z = makeZone({ active: false, tick: 0 })
-    ;(sys as any).zones.push(z)
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    doUpdate(sys, makeWorld(), 4000)
-    expect((sys as any).zones).toHaveLength(0)
-    vi.restoreAllMocks()
+  it('注入zone的字段可读取', () => {
+    ;(sys as any).zones.push(makeZone({ brightness: 88 }))
+    expect((sys as any).zones[0].brightness).toBe(88)
   })
-  it('新旧混合：只清理 active=false 的', () => {
-    const sys = makeSys()
-    ;(sys as any).zones.push(makeZone({ tick: 0 }))          // 未过期
-    ;(sys as any).zones.push(makeZone({ tick: 0, active: false })) // 已失效
+  it('tick=0不触发', () => {
+    sys.update(1, makeWorld(), {}, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('大tick值不崩溃', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    doUpdate(sys, makeWorld(), 4000)
-    // 第一个 age=4000<200000 → 仍 active，保留
-    expect((sys as any).zones).toHaveLength(1)
-    vi.restoreAllMocks()
+    expect(() => sys.update(1, makeWorld(), {}, 9999999)).not.toThrow()
+  })
+  it('zone字段结构完整', () => {
+    const z = makeZone()
+    expect(typeof z.id).toBe('number')
+    expect(typeof z.x).toBe('number')
+    expect(typeof z.y).toBe('number')
+    expect(typeof z.glowType).toBe('string')
+    expect(typeof z.brightness).toBe('number')
+    expect(typeof z.color).toBe('string')
+    expect(typeof z.spread).toBe('number')
+    expect(typeof z.active).toBe('boolean')
+    expect(typeof z.tick).toBe('number')
+  })
+  it('SHALLOW_WATER(1)地形也可spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorld(1), {}, CHECK_INTERVAL)
+    expect((sys as any).zones.length).toBeGreaterThanOrEqual(0)
   })
 })

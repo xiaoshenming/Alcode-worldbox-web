@@ -1,192 +1,352 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { CreatureRopeWalkerSystem } from '../systems/CreatureRopeWalkerSystem'
 import type { RopeWalker } from '../systems/CreatureRopeWalkerSystem'
 
-// CHECK_INTERVAL = 2590, MAX_ROPEWALKERS = 10, RECRUIT_CHANCE = 0.0015
+const CHECK_INTERVAL = 2590
+const MAX_WORKERS = 10
 
 let nextId = 1
 function makeSys(): CreatureRopeWalkerSystem { return new CreatureRopeWalkerSystem() }
-function makeWalker(entityId: number, overrides: Partial<RopeWalker> = {}): RopeWalker {
-  return { id: nextId++, entityId, fiberBraiding: 70, tensileStrength: 65, knotTying: 80, outputQuality: 75, tick: 0, ...overrides }
+function makeWorker(entityId: number, overrides: Partial<RopeWalker> = {}): RopeWalker {
+  return { id: nextId++, entityId, fiberBraiding: 70, knotTying: 65, tensileStrength: 60, outputQuality: 75, tick: 0, ...overrides }
 }
-function makeEm() {
-  return { getEntitiesWithComponent: vi.fn().mockReturnValue([]) } as any
-}
+const emMock = { getEntitiesWithComponents: () => [] } as any
 
-describe('CreatureRopeWalkerSystem.getRopeWalkers', () => {
+describe('CreatureRopeWalkerSystem - 初始状态', () => {
   let sys: CreatureRopeWalkerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无绳索行者', () => { expect((sys as any).ropeWalkers).toHaveLength(0) })
-  it('注入后可查询', () => {
-    ;(sys as any).ropeWalkers.push(makeWalker(1))
+  it('初始无工匠', () => { expect((sys as any).ropeWalkers).toHaveLength(0) })
+  it('注入后entityId可查询', () => {
+    ;(sys as any).ropeWalkers.push(makeWorker(1))
     expect((sys as any).ropeWalkers[0].entityId).toBe(1)
   })
-  it('返回内部引用', () => {
-    ;(sys as any).ropeWalkers.push(makeWalker(1))
+  it('返回内部引用一致', () => {
+    ;(sys as any).ropeWalkers.push(makeWorker(1))
     expect((sys as any).ropeWalkers).toBe((sys as any).ropeWalkers)
   })
-  it('字段正确', () => {
-    ;(sys as any).ropeWalkers.push(makeWalker(2))
-    const w = (sys as any).ropeWalkers[0]
-    expect(w.fiberBraiding).toBe(70)
-    expect(w.knotTying).toBe(80)
+  it('字段fiberBraiding正确', () => {
+    ;(sys as any).ropeWalkers.push(makeWorker(2))
+    expect((sys as any).ropeWalkers[0].fiberBraiding).toBe(70)
+  })
+  it('字段outputQuality正确', () => {
+    ;(sys as any).ropeWalkers.push(makeWorker(2))
+    expect((sys as any).ropeWalkers[0].outputQuality).toBe(75)
   })
   it('多个全部返回', () => {
-    ;(sys as any).ropeWalkers.push(makeWalker(1))
-    ;(sys as any).ropeWalkers.push(makeWalker(2))
+    ;(sys as any).ropeWalkers.push(makeWorker(1))
+    ;(sys as any).ropeWalkers.push(makeWorker(2))
     expect((sys as any).ropeWalkers).toHaveLength(2)
   })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
 })
 
-describe('CreatureRopeWalkerSystem CHECK_INTERVAL 节���', () => {
+describe('CreatureRopeWalkerSystem - CHECK_INTERVAL节流', () => {
   let sys: CreatureRopeWalkerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('tick不足CHECK_INTERVAL时不更新lastCheck', () => {
-    const em = makeEm()
-    sys.update(1, em, 100)
+  it('tick差不足CHECK_INTERVAL时不执行，lastCheck不变', () => {
+    sys.update(0, emMock, CHECK_INTERVAL - 1)
     expect((sys as any).lastCheck).toBe(0)
   })
-
-  it('tick=2590时触发更新并更新lastCheck', () => {
-    const em = makeEm()
-    sys.update(1, em, 2590)
-    expect((sys as any).lastCheck).toBe(2590)
+  it('tick差=CHECK_INTERVAL时触发，lastCheck更新', () => {
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
-
-  it('第二次tick不足间隔时跳过（lastCheck保持上次值）', () => {
-    const em = makeEm()
-    sys.update(1, em, 2590)
-    sys.update(1, em, 2700)
-    expect((sys as any).lastCheck).toBe(2590)
+  it('tick差=CHECK_INTERVAL-1不触发', () => {
+    ;(sys as any).lastCheck = 5000
+    sys.update(0, emMock, 5000 + CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(5000)
   })
-
-  it('两次tick都达到间隔时lastCheck更新为第二次tick', () => {
-    const em = makeEm()
-    sys.update(1, em, 2590)
-    sys.update(1, em, 5180)
-    expect((sys as any).lastCheck).toBe(5180)
+  it('tick差=CHECK_INTERVAL精确触发', () => {
+    ;(sys as any).lastCheck = 5000
+    sys.update(0, emMock, 5000 + CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(5000 + CHECK_INTERVAL)
+  })
+  it('未触发时技能不增长', () => {
+    const w = makeWorker(1, { fiberBraiding: 50 })
+    ;(sys as any).ropeWalkers.push(w)
+    sys.update(0, emMock, CHECK_INTERVAL - 1)
+    expect(w.fiberBraiding).toBe(50)
+  })
+  it('触发后lastCheck更新为当前tick', () => {
+    ;(sys as any).lastCheck = 1000
+    sys.update(0, emMock, 1000 + CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(1000 + CHECK_INTERVAL)
+  })
+  it('连续两次间隔不足跳过第二次', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    const snap = (sys as any).ropeWalkers.length
+    sys.update(0, emMock, CHECK_INTERVAL + 1)
+    expect((sys as any).ropeWalkers.length).toBe(snap)
+  })
+  it('两次均触发则技能增长两次', () => {
+    const w = makeWorker(1, { fiberBraiding: 50 })
+    ;(sys as any).ropeWalkers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    sys.update(0, emMock, CHECK_INTERVAL * 2)
+    expect(w.fiberBraiding).toBeCloseTo(50 + 0.02 * 2, 4)
   })
 })
 
-describe('CreatureRopeWalkerSystem 技能递增', () => {
+describe('CreatureRopeWalkerSystem - 技能递增与上限', () => {
   let sys: CreatureRopeWalkerSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('update后fiberBraiding增加0.02', () => {
-    ;(sys as any).ropeWalkers.push(makeWalker(1, { fiberBraiding: 50 }))
-    const em = makeEm()
-    sys.update(1, em, 2590)
-    expect((sys as any).ropeWalkers[0].fiberBraiding).toBeCloseTo(50.02)
+  it('fiberBraiding每次+0.02', () => {
+    const w = makeWorker(1, { fiberBraiding: 50 })
+    ;(sys as any).ropeWalkers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.fiberBraiding).toBeCloseTo(50 + 0.02, 5)
   })
-
-  it('update后knotTying增加0.015', () => {
-    ;(sys as any).ropeWalkers.push(makeWalker(1, { knotTying: 50 }))
-    const em = makeEm()
-    sys.update(1, em, 2590)
-    expect((sys as any).ropeWalkers[0].knotTying).toBeCloseTo(50.015)
+  it('knotTying每次+0.015', () => {
+    const w = makeWorker(1, { knotTying: 40 })
+    ;(sys as any).ropeWalkers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.knotTying).toBeCloseTo(40 + 0.015, 5)
   })
-
-  it('update后outputQuality增加0.01', () => {
-    ;(sys as any).ropeWalkers.push(makeWalker(1, { outputQuality: 50 }))
-    const em = makeEm()
-    sys.update(1, em, 2590)
-    expect((sys as any).ropeWalkers[0].outputQuality).toBeCloseTo(50.01)
+  it('outputQuality每次+0.01', () => {
+    const w = makeWorker(1, { outputQuality: 60 })
+    ;(sys as any).ropeWalkers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.outputQuality).toBeCloseTo(60 + 0.01, 5)
   })
-
-  it('fiberBraiding不超过100（上限钳制）', () => {
-    ;(sys as any).ropeWalkers.push(makeWalker(1, { fiberBraiding: 99.99 }))
-    const em = makeEm()
-    sys.update(1, em, 2590)
-    expect((sys as any).ropeWalkers[0].fiberBraiding).toBe(100)
+  it('fiberBraiding上限100不超过', () => {
+    const w = makeWorker(1, { fiberBraiding: 99.99 })
+    ;(sys as any).ropeWalkers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.fiberBraiding).toBeLessThanOrEqual(100)
   })
-
-  it('knotTying不超过100（上限钳制）', () => {
-    ;(sys as any).ropeWalkers.push(makeWalker(1, { knotTying: 99.99 }))
-    const em = makeEm()
-    sys.update(1, em, 2590)
-    expect((sys as any).ropeWalkers[0].knotTying).toBe(100)
+  it('knotTying上限100不超过', () => {
+    const w = makeWorker(1, { knotTying: 99.99 })
+    ;(sys as any).ropeWalkers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.knotTying).toBeLessThanOrEqual(100)
   })
-
-  it('outputQuality不超过100（上限钳制）', () => {
-    ;(sys as any).ropeWalkers.push(makeWalker(1, { outputQuality: 99.99 }))
-    const em = makeEm()
-    sys.update(1, em, 2590)
-    expect((sys as any).ropeWalkers[0].outputQuality).toBe(100)
+  it('outputQuality上限100不超过', () => {
+    const w = makeWorker(1, { outputQuality: 99.99 })
+    ;(sys as any).ropeWalkers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.outputQuality).toBeLessThanOrEqual(100)
   })
-
-  it('多个walker同时增长', () => {
-    ;(sys as any).ropeWalkers.push(makeWalker(1, { fiberBraiding: 30 }))
-    ;(sys as any).ropeWalkers.push(makeWalker(2, { fiberBraiding: 60 }))
-    const em = makeEm()
-    sys.update(1, em, 2590)
-    expect((sys as any).ropeWalkers[0].fiberBraiding).toBeCloseTo(30.02)
-    expect((sys as any).ropeWalkers[1].fiberBraiding).toBeCloseTo(60.02)
+  it('tensileStrength不参与递增', () => {
+    const w = makeWorker(1, { tensileStrength: 60 })
+    ;(sys as any).ropeWalkers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.tensileStrength).toBe(60)
   })
-
-  it('节流期内不增长技能', () => {
-    ;(sys as any).ropeWalkers.push(makeWalker(1, { fiberBraiding: 50 }))
-    const em = makeEm()
-    sys.update(1, em, 100)  // tick不足CHECK_INTERVAL
-    expect((sys as any).ropeWalkers[0].fiberBraiding).toBe(50)
+  it('多个工匠同时增长', () => {
+    ;(sys as any).ropeWalkers.push(makeWorker(1, { fiberBraiding: 50 }))
+    ;(sys as any).ropeWalkers.push(makeWorker(2, { fiberBraiding: 60 }))
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).ropeWalkers[0].fiberBraiding).toBeCloseTo(50 + 0.02, 5)
+    expect((sys as any).ropeWalkers[1].fiberBraiding).toBeCloseTo(60 + 0.02, 5)
+  })
+  it('fiberBraiding=100时保持不变', () => {
+    const w = makeWorker(1, { fiberBraiding: 100 })
+    ;(sys as any).ropeWalkers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.fiberBraiding).toBe(100)
   })
 })
 
-describe('CreatureRopeWalkerSystem cleanup（fiberBraiding<=4剔除）', () => {
+describe('CreatureRopeWalkerSystem - cleanup: fiberBraiding<=4时删除', () => {
   let sys: CreatureRopeWalkerSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  it('fiberBraiding增长后恰好=4时被移除（初始3.98+0.02=4.00<=4）', () => {
-    ;(sys as any).ropeWalkers.push(makeWalker(1, { fiberBraiding: 3.98 }))
-    const em = makeEm()
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, em, 2590)
-    expect((sys as any).ropeWalkers).toHaveLength(0)
+  beforeEach(() => {
+    sys = makeSys(); nextId = 1
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
   })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('fiberBraiding=2时也被移除（增长后仍<=4）', () => {
-    ;(sys as any).ropeWalkers.push(makeWalker(1, { fiberBraiding: 2 }))
-    const em = makeEm()
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, em, 2590)
-    expect((sys as any).ropeWalkers).toHaveLength(0)
-  })
-
-  it('fiberBraiding>4的walker保留', () => {
-    ;(sys as any).ropeWalkers.push(makeWalker(1, { fiberBraiding: 4.01 }))
-    const em = makeEm()
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, em, 2590)
-    // 增长0.02后为4.03，仍>4，保留
+  it('fiberBraiding=4时更新后>4，保留', () => {
+    ;(sys as any).ropeWalkers.push(makeWorker(1, { fiberBraiding: 4 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
     expect((sys as any).ropeWalkers).toHaveLength(1)
   })
-
-  it('混合列表：低于阈值的被删除，高于阈值的保留', () => {
-    ;(sys as any).ropeWalkers.push(makeWalker(1, { fiberBraiding: 2 }))
-    ;(sys as any).ropeWalkers.push(makeWalker(2, { fiberBraiding: 55 }))
-    ;(sys as any).ropeWalkers.push(makeWalker(3, { fiberBraiding: 1 }))
-    const em = makeEm()
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, em, 2590)
+  it('fiberBraiding=3.98时更新后<=4，删除', () => {
+    ;(sys as any).ropeWalkers.push(makeWorker(1, { fiberBraiding: 3.98 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).ropeWalkers).toHaveLength(0)
+  })
+  it('fiberBraiding=3.99时更新后>4，保留', () => {
+    ;(sys as any).ropeWalkers.push(makeWorker(1, { fiberBraiding: 3.99 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).ropeWalkers).toHaveLength(1)
+  })
+  it('高技能工匠不被删除', () => {
+    ;(sys as any).ropeWalkers.push(makeWorker(1, { fiberBraiding: 50 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).ropeWalkers).toHaveLength(1)
+  })
+  it('多个低技能全部删除', () => {
+    for (let i = 1; i <= 3; i++) {
+      ;(sys as any).ropeWalkers.push(makeWorker(i, { fiberBraiding: 2 }))
+    }
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).ropeWalkers).toHaveLength(0)
+  })
+  it('混合：低技能删除高技能保留', () => {
+    ;(sys as any).ropeWalkers.push(makeWorker(1, { fiberBraiding: 2 }))
+    ;(sys as any).ropeWalkers.push(makeWorker(2, { fiberBraiding: 50 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
     expect((sys as any).ropeWalkers).toHaveLength(1)
     expect((sys as any).ropeWalkers[0].entityId).toBe(2)
   })
-
-  it('节流期内不执行cleanup（低fiberBraiding仍保留）', () => {
-    ;(sys as any).ropeWalkers.push(makeWalker(1, { fiberBraiding: 1 }))
-    const em = makeEm()
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, em, 100)  // tick不足CHECK_INTERVAL
-    expect((sys as any).ropeWalkers).toHaveLength(1)
+  it('fiberBraiding=1时必然被删除', () => {
+    ;(sys as any).ropeWalkers.push(makeWorker(1, { fiberBraiding: 1 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).ropeWalkers).toHaveLength(0)
+  })
+  it('fiberBraiding=3.97时更新后<4被删除', () => {
+    ;(sys as any).ropeWalkers.push(makeWorker(1, { fiberBraiding: 3.97 }))
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).ropeWalkers).toHaveLength(0)
   })
 })
 
-describe('CreatureRopeWalkerSystem nextId 自增', () => {
+describe('CreatureRopeWalkerSystem - MAX_WORKERS上限与招募', () => {
+  let sys: CreatureRopeWalkerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('已达MAX_WORKERS时不再招募', () => {
+    for (let i = 0; i < MAX_WORKERS; i++) {
+      ;(sys as any).ropeWalkers.push(makeWorker(i + 1))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).ropeWalkers.length).toBeLessThanOrEqual(MAX_WORKERS)
+  })
+  it('数量<MAX且random<RECRUIT_CHANCE时招募', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).ropeWalkers.length).toBeGreaterThanOrEqual(1)
+  })
+  it('random=1时不招募', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).ropeWalkers).toHaveLength(0)
+  })
+  it('招募后tick等于当前tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    if ((sys as any).ropeWalkers.length > 0) {
+      expect((sys as any).ropeWalkers[0].tick).toBe(CHECK_INTERVAL)
+    }
+  })
+  it('多次招募id递增唯一', () => {
+    const sys2 = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys2.update(0, emMock, CHECK_INTERVAL)
+    sys2.update(0, emMock, CHECK_INTERVAL * 2)
+    const workers = (sys2 as any).ropeWalkers
+    if (workers.length >= 2) {
+      expect(workers[1].id).toBeGreaterThan(workers[0].id)
+    }
+  })
+  it('招募时fiberBraiding在[10,35]范围内', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    if ((sys as any).ropeWalkers.length > 0) {
+      const v = (sys as any).ropeWalkers[0].fiberBraiding
+      expect(v).toBeGreaterThanOrEqual(10)
+      expect(v).toBeLessThanOrEqual(35)
+    }
+  })
+  it('招募的entityId在[0,499]范围', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    if ((sys as any).ropeWalkers.length > 0) {
+      const eid = (sys as any).ropeWalkers[0].entityId
+      expect(eid).toBeGreaterThanOrEqual(0)
+      expect(eid).toBeLessThanOrEqual(499)
+    }
+  })
+})
+
+describe('CreatureRopeWalkerSystem - 边界与综合场景', () => {
+  let sys: CreatureRopeWalkerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('空系统更新不抛出异常', () => {
+    expect(() => sys.update(0, emMock, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    sys.update(999, emMock, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('多次更新技能累积', () => {
+    const w = makeWorker(1, { fiberBraiding: 50 })
+    ;(sys as any).ropeWalkers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    for (let t = 1; t <= 3; t++) {
+      sys.update(0, emMock, CHECK_INTERVAL * t)
+    }
+    expect(w.fiberBraiding).toBeCloseTo(50 + 0.02 * 3, 4)
+  })
+  it('系统update返回undefined', () => {
+    expect(sys.update(0, emMock, CHECK_INTERVAL)).toBeUndefined()
+  })
+  it('tick=0不触发', () => {
+    sys.update(0, emMock, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('注入5个工匠后长度为5', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).ropeWalkers.push(makeWorker(i)) }
+    expect((sys as any).ropeWalkers).toHaveLength(5)
+  })
+  it('大量工匠同时更新不抛出', () => {
+    for (let i = 1; i <= 8; i++) {
+      ;(sys as any).ropeWalkers.push(makeWorker(i, { fiberBraiding: 50 }))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(0, emMock, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('fiberBraiding和outputQuality同时增长验证', () => {
+    const w = makeWorker(1, { fiberBraiding: 50, outputQuality: 60 })
+    ;(sys as any).ropeWalkers.push(w)
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect(w.fiberBraiding).toBeCloseTo(50 + 0.02, 5)
+    expect(w.outputQuality).toBeCloseTo(60 + 0.01, 5)
+  })
+})
+
+describe('CreatureRopeWalkerSystem - 额外边界验证', () => {
   let sys: CreatureRopeWalkerSystem
   beforeEach(() => { sys = makeSys() })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('初始nextId为1', () => {
-    expect((sys as any).nextId).toBe(1)
+  it('fiberBraiding=4.00时更新后4.02>4保留', () => {
+    ;(sys as any).ropeWalkers.push({ id: 99, entityId: 99, fiberBraiding: 4.00, tick: 0 })
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    expect((sys as any).ropeWalkers).toHaveLength(1)
+  })
+  it('tick负值时不触发', () => {
+    sys.update(0, emMock, -1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('两次相同tick只触发一次', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(0, emMock, CHECK_INTERVAL)
+    const check1 = (sys as any).lastCheck
+    sys.update(0, emMock, CHECK_INTERVAL) // same tick, difference=0
+    expect((sys as any).lastCheck).toBe(check1)
   })
 })

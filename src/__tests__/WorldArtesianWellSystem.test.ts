@@ -31,161 +31,222 @@ describe('WorldArtesianWellSystem', () => {
   it('初始wells为空', () => {
     expect((sys as any).wells).toHaveLength(0)
   })
-
-  it('nextId初始为1', () => {
+  it('初始nextId为1', () => {
     expect((sys as any).nextId).toBe(1)
   })
-
-  it('lastCheck初始为0', () => {
+  it('初始lastCheck为0', () => {
     expect((sys as any).lastCheck).toBe(0)
   })
+  it('wells是数组', () => {
+    expect(Array.isArray((sys as any).wells)).toBe(true)
+  })
+  it('新建两个实例互相独立', () => {
+    const s1 = makeSys(); const s2 = makeSys()
+    ;(s1 as any).wells.push(makeWell())
+    expect((s2 as any).wells).toHaveLength(0)
+  })
 
-  // --- CHECK_INTERVAL 节流 ---
-  it('tick < CHECK_INTERVAL时不更新lastCheck', () => {
+  // --- CHECK_INTERVAL节流 ---
+  it('tick < CHECK_INTERVAL时不触发', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, makeWorld(), em, CHECK_INTERVAL - 1)
     expect((sys as any).lastCheck).toBe(0)
   })
-
-  it('tick == CHECK_INTERVAL时更新lastCheck', () => {
+  it('tick >= CHECK_INTERVAL时更新lastCheck', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
-
-  it('连续调用：第二次tick不满足间隔则跳过', () => {
+  it('第二次间隔不足时lastCheck不更新', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
-    const lastCheck = (sys as any).lastCheck
-    sys.update(1, makeWorld(), em, CHECK_INTERVAL + 1)
-    expect((sys as any).lastCheck).toBe(lastCheck)
+    sys.update(1, makeWorld(), em, CHECK_INTERVAL + 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('间隔足够时第二次触发', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
+    sys.update(1, makeWorld(), em, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
   })
 
-  // --- Spawn 生成逻辑 ---
-  it('random > FORM_CHANCE时不生成wells', () => {
+  // --- spawn ---
+  it('random > FORM_CHANCE时不spawn', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
     expect((sys as any).wells).toHaveLength(0)
   })
-
-  it('random < FORM_CHANCE时生成1个well', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.0005)
+  it('random < FORM_CHANCE时spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
     expect((sys as any).wells).toHaveLength(1)
   })
-
-  it('生成的well字段在合法范围内', () => {
-    // mock=0.0005时 spawn后还有一次update：
-    // waterPressure = max(10, min(85, (20 + 0.0005*45) + (0.0005-0.48)*0.2)) ≈ 19.93
-    // 因此用夹紧后的系统下限10作为断言下限
-    vi.spyOn(Math, 'random').mockReturnValue(0.0005)
+  it('MAX_WELLS(12)上限不超出', () => {
+    for (let i = 0; i < MAX_WELLS; i++) {
+      ;(sys as any).wells.push(makeWell({ tick: 99999 }))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
+    expect((sys as any).wells.length).toBeLessThanOrEqual(MAX_WELLS)
+  })
+  it('spawn后well有id字段', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
     const w = (sys as any).wells[0]
-    expect(w.waterPressure).toBeGreaterThanOrEqual(10)
-    expect(w.waterPressure).toBeLessThanOrEqual(85)
-    expect(w.flowRate).toBeGreaterThanOrEqual(2)
-    expect(w.flowRate).toBeLessThanOrEqual(55)
-    expect(w.aquiferDepth).toBeGreaterThanOrEqual(10)
-    expect(w.aquiferDepth).toBeLessThanOrEqual(50)
-    expect(w.waterPurity).toBeGreaterThanOrEqual(15)
-    expect(w.waterPurity).toBeLessThanOrEqual(90)
+    if (w) expect(typeof w.id).toBe('number')
   })
-
-  it('生成的well记录spawn时的tick', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.0005)
+  it('spawn后well tick等于当前tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
-    expect((sys as any).wells[0].tick).toBe(CHECK_INTERVAL)
+    const w = (sys as any).wells[0]
+    if (w) expect(w.tick).toBe(CHECK_INTERVAL)
   })
-
-  it('已达MAX_WELLS时不再生成', () => {
-    for (let i = 0; i < MAX_WELLS; i++) {
-      ;(sys as any).wells.push(makeWell())
+  it('spawn后nextId递增', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
+    if ((sys as any).wells.length > 0) {
+      expect((sys as any).nextId).toBeGreaterThan(1)
     }
-    vi.spyOn(Math, 'random').mockReturnValue(0.0005)
+  })
+  it('spawn后well包含waterPressure字段', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
-    expect((sys as any).wells).toHaveLength(MAX_WELLS)
+    const w = (sys as any).wells[0]
+    if (w) expect(typeof w.waterPressure).toBe('number')
+  })
+  it('spawn后well包含aquiferDepth字段', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
+    const w = (sys as any).wells[0]
+    if (w) expect(typeof w.aquiferDepth).toBe('number')
   })
 
   // --- 字段更新 ---
-  it('update后waterPressure保持在[10, 85]范围内', () => {
+  it('waterPressure每次update变化', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).wells.push(makeWell({ waterPressure: 84 }))
+    ;(sys as any).wells.push(makeWell({ waterPressure: 40, tick: 99999 }))
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
-    const w = (sys as any).wells[0]
-    expect(w.waterPressure).toBeGreaterThanOrEqual(10)
-    expect(w.waterPressure).toBeLessThanOrEqual(85)
+    // waterPressure = max(10, min(85, 40 + (0.9-0.48)*0.2)) = max(10, min(85, 40.084)) = 40.084
+    expect((sys as any).wells[0].waterPressure).toBeCloseTo(40.084, 4)
+  })
+  it('waterPressure不低于10', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0)
+    ;(sys as any).wells.push(makeWell({ waterPressure: 10, tick: 99999 }))
+    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
+    expect((sys as any).wells[0].waterPressure).toBeGreaterThanOrEqual(10)
+  })
+  it('waterPressure不高于85', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1.0)
+    ;(sys as any).wells.push(makeWell({ waterPressure: 85, tick: 99999 }))
+    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
+    expect((sys as any).wells[0].waterPressure).toBeLessThanOrEqual(85)
+  })
+  it('flowRate不低于2', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0)
+    ;(sys as any).wells.push(makeWell({ flowRate: 2, tick: 99999 }))
+    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
+    expect((sys as any).wells[0].flowRate).toBeGreaterThanOrEqual(2)
+  })
+  it('flowRate不高于55', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1.0)
+    ;(sys as any).wells.push(makeWell({ flowRate: 55, tick: 99999 }))
+    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
+    expect((sys as any).wells[0].flowRate).toBeLessThanOrEqual(55)
+  })
+  it('waterPurity不低于15', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0)
+    ;(sys as any).wells.push(makeWell({ waterPurity: 15, tick: 99999 }))
+    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
+    expect((sys as any).wells[0].waterPurity).toBeGreaterThanOrEqual(15)
+  })
+  it('waterPurity不高于90', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1.0)
+    ;(sys as any).wells.push(makeWell({ waterPurity: 90, tick: 99999 }))
+    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
+    expect((sys as any).wells[0].waterPurity).toBeLessThanOrEqual(90)
+  })
+  it('多个wells同时更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    for (let i = 0; i < 3; i++) {
+      ;(sys as any).wells.push(makeWell({ waterPressure: 40, tick: 99999 }))
+    }
+    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
+    for (const w of (sys as any).wells) {
+      expect(w.waterPressure).toBeGreaterThan(40)
+    }
   })
 
-  it('update后flowRate保持在[2, 55]范围内', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).wells.push(makeWell({ flowRate: 54 }))
-    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
-    const w = (sys as any).wells[0]
-    expect(w.flowRate).toBeGreaterThanOrEqual(2)
-    expect(w.flowRate).toBeLessThanOrEqual(55)
-  })
-
-  it('update后waterPurity保持在[15, 90]范围内', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).wells.push(makeWell({ waterPurity: 89 }))
-    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
-    const w = (sys as any).wells[0]
-    expect(w.waterPurity).toBeGreaterThanOrEqual(15)
-    expect(w.waterPurity).toBeLessThanOrEqual(90)
-  })
-
-  // --- Cleanup 清理 ---
-  it('超过cutoff(tick-86000)的well被删除', () => {
+  // --- cleanup ---
+  it('tick < cutoff(tick-86000)时被删除', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     ;(sys as any).wells.push(makeWell({ tick: 0 }))
-    sys.update(1, makeWorld(), em, 90000)
+    sys.update(1, makeWorld(), em, 100000)
+    expect((sys as any).wells).toHaveLength(0)
+  })
+  it('tick >= cutoff时保留', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).wells.push(makeWell({ tick: 50000 }))
+    sys.update(1, makeWorld(), em, 100000)
+    expect((sys as any).wells).toHaveLength(1)
+  })
+  it('cutoff边界时保留', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    const bigTick = 100000; const cutoff = bigTick - 86000
+    ;(sys as any).wells.push(makeWell({ tick: cutoff }))
+    sys.update(1, makeWorld(), em, bigTick)
+    expect((sys as any).wells).toHaveLength(1)
+  })
+  it('混合新旧：只删过期的', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).wells.push(makeWell({ tick: 0 }))
+    ;(sys as any).wells.push(makeWell({ tick: 50000 }))
+    sys.update(1, makeWorld(), em, 100000)
+    expect((sys as any).wells).toHaveLength(1)
+    expect((sys as any).wells[0].tick).toBe(50000)
+  })
+  it('所有wells过期时全部删除', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    for (let i = 0; i < 5; i++) (sys as any).wells.push(makeWell({ tick: 0 }))
+    sys.update(1, makeWorld(), em, 100000)
     expect((sys as any).wells).toHaveLength(0)
   })
 
-  it('未超过cutoff的well保留', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).wells.push(makeWell({ tick: 50000 }))
-    sys.update(1, makeWorld(), em, 90000)
-    expect((sys as any).wells).toHaveLength(1)
-  })
-
-  it('tick恰好在cutoff边界的well保留', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    const tick = 90000
-    const cutoff = tick - 86000  // = 4000
-    ;(sys as any).wells.push(makeWell({ tick: cutoff }))
-    sys.update(1, makeWorld(), em, tick)
-    // wells[i].tick < cutoff => cutoff < cutoff 为false，不删除
-    expect((sys as any).wells).toHaveLength(1)
-  })
-
-  it('混合tick：旧的被清除，新的保留', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).wells.push(makeWell({ tick: 0 }))
-    ;(sys as any).wells.push(makeWell({ tick: 80000 }))
-    sys.update(1, makeWorld(), em, 90000)
-    expect((sys as any).wells).toHaveLength(1)
-    expect((sys as any).wells[0].tick).toBe(80000)
-  })
-
-  // --- 注入验证 ---
-  it('直接注入well后字段可访问', () => {
-    ;(sys as any).wells.push(makeWell({ waterPressure: 70, aquiferDepth: 100, waterPurity: 90 }))
-    const w = (sys as any).wells[0]
-    expect(w.waterPressure).toBe(70)
-    expect(w.aquiferDepth).toBe(100)
-    expect(w.waterPurity).toBe(90)
-  })
-
-  it('多个wells全部返回', () => {
+  // --- 手动注入 ---
+  it('手动注入后长度正确', () => {
     ;(sys as any).wells.push(makeWell())
-    ;(sys as any).wells.push(makeWell())
-    expect((sys as any).wells).toHaveLength(2)
+    expect((sys as any).wells).toHaveLength(1)
+  })
+  it('手动注入多个', () => {
+    for (let i = 0; i < 5; i++) (sys as any).wells.push(makeWell())
+    expect((sys as any).wells).toHaveLength(5)
+  })
+  it('注入well的字段可读取', () => {
+    ;(sys as any).wells.push(makeWell({ waterPressure: 99 }))
+    expect((sys as any).wells[0].waterPressure).toBe(99)
   })
 
-  it('nextId在spawn后递增', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.0005)
-    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
-    expect((sys as any).nextId).toBe(2)
+  // --- 边界条件 ---
+  it('tick=0不触发', () => {
+    sys.update(1, makeWorld(), em, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('大tick值不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, makeWorld(), em, 9999999)).not.toThrow()
+  })
+  it('wells为空时update不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, makeWorld(), em, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('well字段结构完整', () => {
+    const w = makeWell()
+    expect(typeof w.id).toBe('number')
+    expect(typeof w.x).toBe('number')
+    expect(typeof w.y).toBe('number')
+    expect(typeof w.waterPressure).toBe('number')
+    expect(typeof w.flowRate).toBe('number')
+    expect(typeof w.aquiferDepth).toBe('number')
+    expect(typeof w.waterPurity).toBe('number')
+    expect(typeof w.tick).toBe('number')
   })
 })

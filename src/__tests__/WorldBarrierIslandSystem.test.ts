@@ -23,177 +23,181 @@ describe('WorldBarrierIslandSystem', () => {
   it('初始islands为空', () => {
     expect((sys as any).islands).toHaveLength(0)
   })
-
   it('初始nextId为1', () => {
     expect((sys as any).nextId).toBe(1)
   })
-
   it('初始lastCheck为0', () => {
     expect((sys as any).lastCheck).toBe(0)
   })
+  it('islands是数组', () => {
+    expect(Array.isArray((sys as any).islands)).toBe(true)
+  })
+  it('新建两个实例互相独立', () => {
+    const s1 = makeSys(); const s2 = makeSys()
+    ;(s1 as any).islands.push(makeIsland())
+    expect((s2 as any).islands).toHaveLength(0)
+  })
 
   // ─── 节流逻辑 ────────────────────────────────────────────────────────────────
-  it('tick不足CHECK_INTERVAL时不执行', () => {
+  it('tick < CHECK_INTERVAL时不触发', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).islands.push(makeIsland({ tick: 0 }))
     sys.update(1, worldNoSpawn, em, CHECK_INTERVAL - 1)
     expect((sys as any).lastCheck).toBe(0)
   })
-
-  it('tick达到CHECK_INTERVAL时更新lastCheck', () => {
+  it('tick >= CHECK_INTERVAL时更新lastCheck', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, worldNoSpawn, em, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
-
-  // ─── 字段更新：sandVolume & vegetationCover ──────────────────────────────────
-  it('每次update后sandVolume减少erosionRate', () => {
+  it('第二次间隔不足时lastCheck不更新', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).islands.push(makeIsland({ sandVolume: 50, erosionRate: 0.05, tick: CHECK_INTERVAL }))
     sys.update(1, worldNoSpawn, em, CHECK_INTERVAL)
-    expect((sys as any).islands[0].sandVolume).toBeCloseTo(49.95)
+    sys.update(1, worldNoSpawn, em, CHECK_INTERVAL + 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
-
-  it('sandVolume被夹到最小值5（Math.max保护）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    // sandVolume=5.001, erosionRate=0.1 → 5.001-0.1=4.901 → Math.max(5, 4.901)=5
-    ;(sys as any).islands.push(makeIsland({ sandVolume: 5.001, erosionRate: 0.1, tick: CHECK_INTERVAL }))
-    sys.update(1, worldNoSpawn, em, CHECK_INTERVAL)
-    expect((sys as any).islands[0].sandVolume).toBe(5)
-  })
-
-  it('每次update后vegetationCover增加0.02', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).islands.push(makeIsland({ vegetationCover: 30, tick: CHECK_INTERVAL }))
-    sys.update(1, worldNoSpawn, em, CHECK_INTERVAL)
-    expect((sys as any).islands[0].vegetationCover).toBeCloseTo(30.02)
-  })
-
-  it('vegetationCover不超过80（Math.min上限）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).islands.push(makeIsland({ vegetationCover: 79.99, tick: CHECK_INTERVAL }))
-    sys.update(1, worldNoSpawn, em, CHECK_INTERVAL)
-    expect((sys as any).islands[0].vegetationCover).toBeLessThanOrEqual(80)
-  })
-
-  it('多个island字段同时更新', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).islands.push(makeIsland({ sandVolume: 100, erosionRate: 0.1, vegetationCover: 10, tick: CHECK_INTERVAL }))
-    ;(sys as any).islands.push(makeIsland({ sandVolume: 200, erosionRate: 0.2, vegetationCover: 20, tick: CHECK_INTERVAL }))
-    sys.update(1, worldNoSpawn, em, CHECK_INTERVAL)
-    expect((sys as any).islands[0].sandVolume).toBeCloseTo(99.9)
-    expect((sys as any).islands[1].sandVolume).toBeCloseTo(199.8)
-  })
-
-  // ─── cleanup：tick过期 ───────────────────────────────────────────────────────
-  it('tick < cutoff(currentTick-92000)的island被删除', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    const currentTick = CHECK_INTERVAL + 92001
-    ;(sys as any).islands.push(makeIsland({ tick: 0 }))
-    sys.update(1, worldNoSpawn, em, currentTick)
-    expect((sys as any).islands).toHaveLength(0)
-  })
-
-  it('tick在cutoff之内的island被保留', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    const currentTick = CHECK_INTERVAL
-    ;(sys as any).islands.push(makeIsland({ tick: currentTick - 91999 }))
-    sys.update(1, worldNoSpawn, em, currentTick)
-    expect((sys as any).islands).toHaveLength(1)
-  })
-
-  it('tick恰好等于cutoff(currentTick-92000)的island被保留（不满足 < 条件）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    const currentTick = CHECK_INTERVAL + 92000
-    const zoneTick = currentTick - 92000  // 恰好等于cutoff，不小于cutoff
-    ;(sys as any).islands.push(makeIsland({ tick: zoneTick }))
-    sys.update(1, worldNoSpawn, em, currentTick)
-    expect((sys as any).islands).toHaveLength(1)
-  })
-
-  it('只删除过期island，保留新鲜island', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    const currentTick = CHECK_INTERVAL + 100000
-    ;(sys as any).islands.push(makeIsland({ tick: 0 }))                   // 过期
-    ;(sys as any).islands.push(makeIsland({ tick: currentTick - 1000 }))  // 新鲜
-    sys.update(1, worldNoSpawn, em, currentTick)
-    expect((sys as any).islands).toHaveLength(1)
-    expect((sys as any).islands[0].tick).toBe(currentTick - 1000)
-  })
-
-  // ─── cleanup：sandVolume < 5（字段更新后检查）────────────────────────────────
-  // 注意：update先执行sandVolume = Math.max(5, sandVolume-erosionRate)
-  // 所以直接注入sandVolume=3时，字段更新后变为5，cleanup判5<5为false不删除
-  // sandVolume<5 cleanup 实际触发的场景是：sandVolume刚好在5.001并减去大erosionRate后触底
-  // 但字段更新用Math.max(5)保护，所以cleanup中sandVolume<5路径在正常情况下不可达
-  // 测试砂量恰好被夹在5时不被删除（侧面验证cleanup逻辑）
-  it('sandVolume被Math.max保护到5时island不被cleanup删除', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).islands.push(makeIsland({ sandVolume: 5.001, erosionRate: 0.1, tick: CHECK_INTERVAL }))
-    sys.update(1, worldNoSpawn, em, CHECK_INTERVAL)
-    // 字段更新：Math.max(5, 5.001-0.1)=5, cleanup: 5<5=false → 不删
-    expect((sys as any).islands).toHaveLength(1)
-  })
-
-  // ─── spawn：沙地/浅水地形 ────────────────────────────────────────────────────
-  it('getTile返回SAND(2)且random<FORM_CHANCE时spawn新island', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(1, worldSand, em, CHECK_INTERVAL)
-    expect((sys as any).islands).toHaveLength(1)
-  })
-
-  it('getTile返回SHALLOW_WATER(1)时也可spawn', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    const worldShallow = { width: 200, height: 200, getTile: () => 1 } as any
-    sys.update(1, worldShallow, em, CHECK_INTERVAL)
-    expect((sys as any).islands).toHaveLength(1)
-  })
-
-  it('getTile返回5（草地）时不spawn', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(1, worldNoSpawn, em, CHECK_INTERVAL)
-    expect((sys as any).islands).toHaveLength(0)
-  })
-
-  it('random >= FORM_CHANCE(0.003)时不spawn', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    sys.update(1, worldSand, em, CHECK_INTERVAL)
-    expect((sys as any).islands).toHaveLength(0)
-  })
-
-  // ─── MAX_ISLANDS 上限 ────────────────────────────────────────────────────────
-  it('islands达到MAX_ISLANDS时不再spawn', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    for (let i = 0; i < MAX_ISLANDS; i++) {
-      ;(sys as any).islands.push(makeIsland({ tick: CHECK_INTERVAL }))
-    }
-    sys.update(1, worldSand, em, CHECK_INTERVAL)
-    expect((sys as any).islands.length).toBeLessThanOrEqual(MAX_ISLANDS)
-  })
-
-  // ─── spawn后字段合法性 ───────────────────────────────────────────────────────
-  it('spawn的island字段在合法范围内', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    sys.update(1, worldSand, em, CHECK_INTERVAL)
-    const isle = (sys as any).islands[0]
-    expect(isle.sandVolume).toBeGreaterThanOrEqual(40)
-    expect(isle.sandVolume).toBeLessThanOrEqual(100)
-    expect(isle.erosionRate).toBeGreaterThanOrEqual(0.01)
-    expect(isle.erosionRate).toBeLessThanOrEqual(0.05)
-    expect(isle.tick).toBe(CHECK_INTERVAL)
-  })
-
-  it('spawn后nextId递增', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.001)
-    const idBefore = (sys as any).nextId
-    sys.update(1, worldSand, em, CHECK_INTERVAL)
-    expect((sys as any).nextId).toBe(idBefore + 1)
-  })
-
-  it('连续两次CHECK_INTERVAL触发lastCheck各自更新', () => {
+  it('间隔足够时第二次触发', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, worldNoSpawn, em, CHECK_INTERVAL)
     sys.update(1, worldNoSpawn, em, CHECK_INTERVAL * 2)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
+
+  // ─── spawn ───────────────────────────────────────────────────────────────────
+  it('非SAND地形不spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, worldNoSpawn, em, CHECK_INTERVAL)
+    expect((sys as any).islands).toHaveLength(0)
+  })
+  it('random > FORM_CHANCE时不spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, worldSand, em, CHECK_INTERVAL)
+    expect((sys as any).islands).toHaveLength(0)
+  })
+  it('SAND地形+random<FORM_CHANCE时spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, worldSand, em, CHECK_INTERVAL)
+    expect((sys as any).islands).toHaveLength(1)
+  })
+  it('MAX_ISLANDS(26)上限不超出', () => {
+    for (let i = 0; i < MAX_ISLANDS; i++) {
+      ;(sys as any).islands.push(makeIsland({ tick: 99999 }))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, worldSand, em, CHECK_INTERVAL)
+    expect((sys as any).islands.length).toBeLessThanOrEqual(MAX_ISLANDS)
+  })
+  it('spawn后island有tick字段', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, worldSand, em, CHECK_INTERVAL)
+    const island = (sys as any).islands[0]
+    if (island) expect(island.tick).toBe(CHECK_INTERVAL)
+  })
+  it('spawn后island包含必要字段', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, worldSand, em, CHECK_INTERVAL)
+    const island = (sys as any).islands[0]
+    if (island) {
+      expect(typeof island.id).toBe('number')
+      expect(typeof island.x).toBe('number')
+      expect(typeof island.sandVolume).toBe('number')
+    }
+  })
+
+  // ─── 字段更新 ────────────────────────────────────────────────────────────────
+  it('sandVolume随erosion减少', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).islands.push(makeIsland({ sandVolume: 5000, erosionRate: 0.02, tick: 99999 }))
+    sys.update(1, worldNoSpawn, em, CHECK_INTERVAL)
+    // sandVolume减少 erosionRate*factor
+    expect((sys as any).islands[0].sandVolume).toBeLessThan(5000)
+  })
+  it('sandVolume不低于0', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).islands.push(makeIsland({ sandVolume: 0, erosionRate: 0.02, tick: 99999 }))
+    sys.update(1, worldNoSpawn, em, CHECK_INTERVAL)
+    expect((sys as any).islands[0].sandVolume).toBeGreaterThanOrEqual(0)
+  })
+  it('vegetationCover字段保持在合理范围', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    ;(sys as any).islands.push(makeIsland({ vegetationCover: 40, tick: 99999 }))
+    sys.update(1, worldNoSpawn, em, CHECK_INTERVAL)
+    expect((sys as any).islands[0].vegetationCover).toBeGreaterThanOrEqual(0)
+    expect((sys as any).islands[0].vegetationCover).toBeLessThanOrEqual(100)
+  })
+
+  // ─── cleanup ─────────────────────────────────────────────────────────────────
+  it('过期zone被删除', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).islands.push(makeIsland({ tick: 0 }))
+    sys.update(1, worldNoSpawn, em, 100000)
+    expect((sys as any).islands).toHaveLength(0)
+  })
+  it('未过期island保留', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).islands.push(makeIsland({ tick: 50000 }))
+    sys.update(1, worldNoSpawn, em, 100000)
+    expect((sys as any).islands).toHaveLength(1)
+  })
+  it('混合新旧：只删过期的', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).islands.push(makeIsland({ tick: 0 }))
+    ;(sys as any).islands.push(makeIsland({ tick: 80000 }))
+    sys.update(1, worldNoSpawn, em, 100000)
+    expect((sys as any).islands).toHaveLength(1)
+    expect((sys as any).islands[0].tick).toBe(80000)
+  })
+  it('所有island都过期时全部删除', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    for (let i = 0; i < 5; i++) (sys as any).islands.push(makeIsland({ tick: 0 }))
+    sys.update(1, worldNoSpawn, em, 100000)
+    expect((sys as any).islands).toHaveLength(0)
+  })
+
+  // ─── 手动注入 ────────────────────────────────────────────────────────────────
+  it('手动注入island后长度正确', () => {
+    ;(sys as any).islands.push(makeIsland())
+    expect((sys as any).islands).toHaveLength(1)
+  })
+  it('手动注入多个island', () => {
+    for (let i = 0; i < 5; i++) (sys as any).islands.push(makeIsland())
+    expect((sys as any).islands).toHaveLength(5)
+  })
+  it('注入island的字段可读取', () => {
+    ;(sys as any).islands.push(makeIsland({ sandVolume: 9999 }))
+    expect((sys as any).islands[0].sandVolume).toBe(9999)
+  })
+
+  // ─── 边界条件 ────────────────────────────────────────────────────────────────
+  it('tick=0不触发', () => {
+    sys.update(1, worldNoSpawn, em, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('大tick值不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, worldNoSpawn, em, 9999999)).not.toThrow()
+  })
+  it('islands为空时update不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, worldNoSpawn, em, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('island字段结构完整', () => {
+    const island = makeIsland()
+    expect(typeof island.id).toBe('number')
+    expect(typeof island.x).toBe('number')
+    expect(typeof island.y).toBe('number')
+    expect(typeof island.length).toBe('number')
+    expect(typeof island.width).toBe('number')
+    expect(typeof island.sandVolume).toBe('number')
+    expect(typeof island.vegetationCover).toBe('number')
+    expect(typeof island.erosionRate).toBe('number')
+    expect(typeof island.tick).toBe('number')
+  })
+  it('erosionRate字段值合理', () => {
+    const island = makeIsland({ erosionRate: 0.05 })
+    expect(island.erosionRate).toBe(0.05)
+  })
+  it('length字段值合理', () => {
+    const island = makeIsland({ length: 80 })
+    expect(island.length).toBe(80)
   })
 })

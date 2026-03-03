@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { CreatureBellfounderSystem } from '../systems/CreatureBellfounderSystem'
 import type { Bellfounder } from '../systems/CreatureBellfounderSystem'
 
@@ -10,7 +10,7 @@ function makeMaker(entityId: number): Bellfounder {
   return { id: nextId++, entityId, bronzeCasting: 70, moldMaking: 65, toneTuning: 80, outputQuality: 75, tick: 0 }
 }
 
-describe('CreatureBellfounderSystem.getBellfounders', () => {
+describe('CreatureBellfounderSystem - 初始状态', () => {
   let sys: CreatureBellfounderSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
@@ -38,9 +38,17 @@ describe('CreatureBellfounderSystem.getBellfounders', () => {
     ;(sys as any).bellfounders.push(makeMaker(2))
     expect((sys as any).bellfounders).toHaveLength(2)
   })
+
+  it('初始 lastCheck 为 0', () => {
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('初始 nextId 为 1', () => {
+    expect((sys as any).nextId).toBe(1)
+  })
 })
 
-describe('CreatureBellfounderSystem CHECK_INTERVAL 节流', () => {
+describe('CreatureBellfounderSystem - CHECK_INTERVAL 节流', () => {
   let sys: CreatureBellfounderSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
@@ -62,7 +70,6 @@ describe('CreatureBellfounderSystem CHECK_INTERVAL 节流', () => {
   it('第二次 tick 未超过间隔时不再更新 lastCheck', () => {
     sys.update(1, {} as any, CHECK_INTERVAL)
     sys.update(1, {} as any, CHECK_INTERVAL + 1)
-    // 差值 1 < CHECK_INTERVAL，不更新
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
 
@@ -71,9 +78,26 @@ describe('CreatureBellfounderSystem CHECK_INTERVAL 节流', () => {
     sys.update(1, {} as any, CHECK_INTERVAL * 2)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
   })
+
+  it('tick=1 时不触发', () => {
+    sys.update(1, {} as any, 1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('CHECK_INTERVAL-1 边界不触发', () => {
+    sys.update(1, {} as any, CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('三倍间隔触发第三次', () => {
+    sys.update(1, {} as any, CHECK_INTERVAL)
+    sys.update(1, {} as any, CHECK_INTERVAL * 2)
+    sys.update(1, {} as any, CHECK_INTERVAL * 3)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 3)
+  })
 })
 
-describe('CreatureBellfounderSystem 技能递增', () => {
+describe('CreatureBellfounderSystem - bronzeCasting 主技能递增', () => {
   let sys: CreatureBellfounderSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
@@ -84,6 +108,45 @@ describe('CreatureBellfounderSystem 技能递增', () => {
     sys.update(1, {} as any, CHECK_INTERVAL)
     expect((sys as any).bellfounders[0].bronzeCasting).toBeCloseTo(50.02)
   })
+
+  it('bronzeCasting 上限为 100，不超过', () => {
+    const b = makeMaker(1)
+    b.bronzeCasting = 99.99
+    ;(sys as any).bellfounders.push(b)
+    sys.update(1, {} as any, CHECK_INTERVAL)
+    expect((sys as any).bellfounders[0].bronzeCasting).toBe(100)
+  })
+
+  it('bronzeCasting 恰好 100 保持不变', () => {
+    const b = makeMaker(1)
+    b.bronzeCasting = 100
+    ;(sys as any).bellfounders.push(b)
+    sys.update(1, {} as any, CHECK_INTERVAL)
+    expect((sys as any).bellfounders[0].bronzeCasting).toBe(100)
+  })
+
+  it('两个铸钟工同时递增 bronzeCasting', () => {
+    const b1 = makeMaker(1); b1.bronzeCasting = 40
+    const b2 = makeMaker(2); b2.bronzeCasting = 60
+    ;(sys as any).bellfounders.push(b1, b2)
+    sys.update(1, {} as any, CHECK_INTERVAL)
+    expect((sys as any).bellfounders[0].bronzeCasting).toBeCloseTo(40.02)
+    expect((sys as any).bellfounders[1].bronzeCasting).toBeCloseTo(60.02)
+  })
+
+  it('多次 update 后 bronzeCasting 累积', () => {
+    const b = makeMaker(1)
+    b.bronzeCasting = 50
+    ;(sys as any).bellfounders.push(b)
+    sys.update(1, {} as any, CHECK_INTERVAL)
+    sys.update(1, {} as any, CHECK_INTERVAL * 2)
+    expect((sys as any).bellfounders[0].bronzeCasting).toBeCloseTo(50.04)
+  })
+})
+
+describe('CreatureBellfounderSystem - 次要技能字段递增', () => {
+  let sys: CreatureBellfounderSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
 
   it('每次触发后 toneTuning 增加 0.015', () => {
     const b = makeMaker(1)
@@ -101,20 +164,20 @@ describe('CreatureBellfounderSystem 技能递增', () => {
     expect((sys as any).bellfounders[0].outputQuality).toBeCloseTo(50.01)
   })
 
-  it('bronzeCasting 上限为 100，不超过', () => {
-    const b = makeMaker(1)
-    b.bronzeCasting = 99.99
-    ;(sys as any).bellfounders.push(b)
-    sys.update(1, {} as any, CHECK_INTERVAL)
-    expect((sys as any).bellfounders[0].bronzeCasting).toBe(100)
-  })
-
   it('outputQuality 上限为 100，不超过', () => {
     const b = makeMaker(1)
     b.outputQuality = 99.999
     ;(sys as any).bellfounders.push(b)
     sys.update(1, {} as any, CHECK_INTERVAL)
     expect((sys as any).bellfounders[0].outputQuality).toBe(100)
+  })
+
+  it('toneTuning 上限为 100，不超过', () => {
+    const b = makeMaker(1)
+    b.toneTuning = 99.99
+    ;(sys as any).bellfounders.push(b)
+    sys.update(1, {} as any, CHECK_INTERVAL)
+    expect((sys as any).bellfounders[0].toneTuning).toBe(100)
   })
 
   it('节流期间技能不递增', () => {
@@ -124,20 +187,29 @@ describe('CreatureBellfounderSystem 技能递增', () => {
     sys.update(1, {} as any, CHECK_INTERVAL - 1)
     expect((sys as any).bellfounders[0].bronzeCasting).toBe(50)
   })
+
+  it('moldMaking 字段不被 update 修改', () => {
+    const b = makeMaker(1)
+    b.moldMaking = 65
+    ;(sys as any).bellfounders.push(b)
+    sys.update(1, {} as any, CHECK_INTERVAL)
+    expect((sys as any).bellfounders[0].moldMaking).toBe(65)
+  })
 })
 
-describe('CreatureBellfounderSystem cleanup', () => {
+describe('CreatureBellfounderSystem - cleanup 逻辑', () => {
   let sys: CreatureBellfounderSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  beforeEach(() => {
+    sys = makeSys(); nextId = 1
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+  })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  // 注意：cleanup 先做技能递增再判断，所以初始值需低于 4
-  // 例如初始 3.0 → +0.02 = 3.02 ≤ 4，被移除
   it('技能递增后仍 <= 4 的铸钟工被移除（初始值 3.0）', () => {
     const b = makeMaker(1)
     b.bronzeCasting = 3.0
     ;(sys as any).bellfounders.push(b)
     sys.update(1, {} as any, CHECK_INTERVAL)
-    // 3.0 + 0.02 = 3.02 <= 4，被清除
     expect((sys as any).bellfounders).toHaveLength(0)
   })
 
@@ -154,16 +226,123 @@ describe('CreatureBellfounderSystem cleanup', () => {
     b.bronzeCasting = 3.98
     ;(sys as any).bellfounders.push(b)
     sys.update(1, {} as any, CHECK_INTERVAL)
-    // 3.98 + 0.02 = 4.00，仍 <= 4 被清除
     expect((sys as any).bellfounders).toHaveLength(0)
   })
 
   it('只清除低技能，高技能保留', () => {
-    const b1 = makeMaker(1); b1.bronzeCasting = 3.0   // 递增后 3.02 <= 4 → 被清除
-    const b2 = makeMaker(2); b2.bronzeCasting = 50    // 递增后 50.02 > 4 → 保留
+    const b1 = makeMaker(1); b1.bronzeCasting = 3.0
+    const b2 = makeMaker(2); b2.bronzeCasting = 50
     ;(sys as any).bellfounders.push(b1, b2)
     sys.update(1, {} as any, CHECK_INTERVAL)
     expect((sys as any).bellfounders).toHaveLength(1)
     expect((sys as any).bellfounders[0].entityId).toBe(2)
+  })
+
+  it('bronzeCasting 恰好 4 被清除', () => {
+    const b = makeMaker(1)
+    b.bronzeCasting = 4 - 0.02
+    ;(sys as any).bellfounders.push(b)
+    sys.update(1, {} as any, CHECK_INTERVAL)
+    expect((sys as any).bellfounders).toHaveLength(0)
+  })
+
+  it('节流期间不触发 cleanup', () => {
+    const b = makeMaker(1)
+    b.bronzeCasting = 2.0
+    ;(sys as any).bellfounders.push(b)
+    sys.update(1, {} as any, CHECK_INTERVAL - 1)
+    expect((sys as any).bellfounders).toHaveLength(1)
+  })
+
+  it('清除后数组缩短', () => {
+    for (let i = 0; i < 4; i++) {
+      const b = makeMaker(i + 1)
+      b.bronzeCasting = i < 2 ? 2.0 : 50
+      ;(sys as any).bellfounders.push(b)
+    }
+    sys.update(1, {} as any, CHECK_INTERVAL)
+    expect((sys as any).bellfounders).toHaveLength(2)
+  })
+})
+
+describe('CreatureBellfounderSystem - 招募逻辑', () => {
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('random < RECRUIT_CHANCE(0.0014) 时招募', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, {} as any, CHECK_INTERVAL)
+    expect((sys as any).bellfounders.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('random >= RECRUIT_CHANCE 时不招募', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    sys.update(1, {} as any, CHECK_INTERVAL)
+    expect((sys as any).bellfounders).toHaveLength(0)
+  })
+
+  it('达到 MAX_MAKERS(10) 上限时不再招募', () => {
+    const sys = makeSys()
+    for (let i = 0; i < 10; i++) {
+      ;(sys as any).bellfounders.push(makeMaker(i + 1))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, {} as any, CHECK_INTERVAL)
+    expect((sys as any).bellfounders).toHaveLength(10)
+  })
+
+  it('招募后 nextId 递增', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, {} as any, CHECK_INTERVAL)
+    expect((sys as any).nextId).toBeGreaterThan(1)
+  })
+
+  it('招募的铸钟工包含所有必要字段', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, {} as any, CHECK_INTERVAL)
+    if ((sys as any).bellfounders.length > 0) {
+      const b = (sys as any).bellfounders[0]
+      expect(typeof b.bronzeCasting).toBe('number')
+      expect(typeof b.moldMaking).toBe('number')
+      expect(typeof b.toneTuning).toBe('number')
+      expect(typeof b.outputQuality).toBe('number')
+    }
+  })
+})
+
+describe('CreatureBellfounderSystem - 边界与综合场景', () => {
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('空数组时 update 不报错', () => {
+    const sys = makeSys()
+    expect(() => sys.update(1, {} as any, CHECK_INTERVAL)).not.toThrow()
+  })
+
+  it('dt 参数不影响节流逻辑', () => {
+    const sys = makeSys()
+    sys.update(999, {} as any, CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+
+  it('篮编师的 entityId 被正确保存', () => {
+    const sys = makeSys()
+    const b = makeMaker(77)
+    ;(sys as any).bellfounders.push(b)
+    expect((sys as any).bellfounders[0].entityId).toBe(77)
+  })
+
+  it('大量铸钟工时 cleanup 正确处理多个移除', () => {
+    const sys = makeSys()
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    for (let i = 0; i < 8; i++) {
+      const b = makeMaker(i + 1)
+      b.bronzeCasting = i % 2 === 0 ? 2.0 : 50
+      ;(sys as any).bellfounders.push(b)
+    }
+    sys.update(1, {} as any, CHECK_INTERVAL)
+    expect((sys as any).bellfounders).toHaveLength(4)
   })
 })

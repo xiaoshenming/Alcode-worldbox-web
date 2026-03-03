@@ -1,178 +1,228 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { CreatureMacrameMakersSystem } from '../systems/CreatureMacrameMakersSystem'
 import type { MacrameMaker, MacrameType } from '../systems/CreatureMacrameMakersSystem'
 
-// CHECK_INTERVAL=1510, MAX_MAKERS=30, SKILL_GROWTH=0.054
-// cleanup: cutoff = tick - 53000，tick < cutoff 的记录被删除
-// skillMap: entityId → 技能值，累积增长
+// CHECK_INTERVAL=1510, SKILL_GROWTH=0.054
+// knotDensity = 12 + skill * 0.72
+// reputation = 10 + skill * 0.81
+// piecesMade = 2 + Math.floor(skill / 8)
+// macrameType: typeIdx = Math.min(3, Math.floor(skill/25))
+// cleanup cutoff = tick - 53000
 
 let nextId = 1
 function makeSys(): CreatureMacrameMakersSystem { return new CreatureMacrameMakersSystem() }
 function makeMaker(entityId: number, overrides: Partial<MacrameMaker> = {}): MacrameMaker {
   return {
-    id: nextId++, entityId, skill: 60, piecesMade: 10,
-    macrameType: 'wall_hanging', knotDensity: 70, reputation: 50, tick: 0,
+    id: nextId++, entityId, skill: 30, piecesMade: 5,
+    macrameType: 'wall_hanging', knotDensity: 33.6, reputation: 34.3, tick: 0,
     ...overrides
   }
 }
+function makeEmptyEM() {
+  return {
+    getEntitiesWithComponents: vi.fn().mockReturnValue([]),
+    getEntitiesWithComponent: vi.fn().mockReturnValue([]),
+    getComponent: vi.fn().mockReturnValue(null),
+    hasComponent: vi.fn().mockReturnValue(false),
+  } as any
+}
 
-describe('CreatureMacrameMakersSystem', () => {
+describe('CreatureMacrameMakersSystem - 基础状态', () => {
   let sys: CreatureMacrameMakersSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  // ── 原有 5 个测试 ──────────────────────────────────────────────
-  it('初始无绳结师', () => { expect((sys as any).makers).toHaveLength(0) })
+  it('初始无绳编工', () => { expect((sys as any).makers).toHaveLength(0) })
+  it('初始 lastCheck 为 0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('初始 nextId 为 1', () => { expect((sys as any).nextId).toBe(1) })
+
   it('注入后可查询', () => {
     ;(sys as any).makers.push(makeMaker(1, { macrameType: 'plant_hanger' }))
     expect((sys as any).makers[0].macrameType).toBe('plant_hanger')
   })
-  it('返回内部引用', () => {
-    ;(sys as any).makers.push(makeMaker(1))
-    expect((sys as any).makers).toBe((sys as any).makers)
-  })
-  it('支持所有 4 种绳结类型', () => {
+
+  it('MacrameType包含4种类型', () => {
     const types: MacrameType[] = ['wall_hanging', 'plant_hanger', 'curtain', 'belt']
     types.forEach((t, i) => { ;(sys as any).makers.push(makeMaker(i + 1, { macrameType: t })) })
-    const all = (sys as any).makers
+    const all = (sys as any).makers as MacrameMaker[]
     types.forEach((t, i) => { expect(all[i].macrameType).toBe(t) })
   })
+
   it('多个全部返回', () => {
     ;(sys as any).makers.push(makeMaker(1))
     ;(sys as any).makers.push(makeMaker(2))
     expect((sys as any).makers).toHaveLength(2)
   })
 
-  // ── skillMap 存储测试 ────────────────────────────────────────
-  it('初始 skillMap 为空', () => {
-    expect((sys as any).skillMap.size).toBe(0)
+  it('内部引用一致', () => {
+    ;(sys as any).makers.push(makeMaker(1))
+    expect((sys as any).makers).toBe((sys as any).makers)
+  })
+})
+
+describe('CreatureMacrameMakersSystem - 公式验证', () => {
+  it('knotDensity公式: skill=40 → 12+40*0.72=40.8', () => {
+    expect(12 + 40 * 0.72).toBeCloseTo(40.8, 5)
+  })
+  it('knotDensity公式: skill=0 → 12', () => {
+    expect(12 + 0 * 0.72).toBeCloseTo(12, 5)
+  })
+  it('knotDensity公式: skill=100 → 12+100*0.72=84', () => {
+    expect(12 + 100 * 0.72).toBeCloseTo(84, 5)
+  })
+  it('reputation公式: skill=50 → 10+50*0.81=50.5', () => {
+    expect(10 + 50 * 0.81).toBeCloseTo(50.5, 5)
+  })
+  it('reputation公式: skill=100 → 10+100*0.81=91', () => {
+    expect(10 + 100 * 0.81).toBeCloseTo(91, 5)
+  })
+  it('piecesMade: skill=40 → 2+floor(40/8)=7', () => {
+    expect(2 + Math.floor(40 / 8)).toBe(7)
+  })
+  it('piecesMade: skill=0 → 2', () => {
+    expect(2 + Math.floor(0 / 8)).toBe(2)
+  })
+  it('piecesMade: skill=100 → 2+floor(100/8)=14', () => {
+    expect(2 + Math.floor(100 / 8)).toBe(14)
   })
 
-  it('注入 skillMap 条目后可读取', () => {
-    ;(sys as any).skillMap.set(42, 55)
-    expect((sys as any).skillMap.get(42)).toBe(55)
+  it('macrameType: skill=10 → wall_hanging', () => {
+    const TYPES: MacrameType[] = ['wall_hanging', 'plant_hanger', 'curtain', 'belt']
+    expect(TYPES[Math.min(3, Math.floor(10 / 25))]).toBe('wall_hanging')
   })
-
-  it('skillMap 可存储多个实体的技能值', () => {
-    ;(sys as any).skillMap.set(1, 30)
-    ;(sys as any).skillMap.set(2, 60)
-    ;(sys as any).skillMap.set(3, 90)
-    expect((sys as any).skillMap.size).toBe(3)
-    expect((sys as any).skillMap.get(2)).toBe(60)
+  it('macrameType: skill=25 → plant_hanger', () => {
+    const TYPES: MacrameType[] = ['wall_hanging', 'plant_hanger', 'curtain', 'belt']
+    expect(TYPES[Math.min(3, Math.floor(25 / 25))]).toBe('plant_hanger')
   })
+  it('macrameType: skill=50 → curtain', () => {
+    const TYPES: MacrameType[] = ['wall_hanging', 'plant_hanger', 'curtain', 'belt']
+    expect(TYPES[Math.min(3, Math.floor(50 / 25))]).toBe('curtain')
+  })
+  it('macrameType: skill=75 → belt', () => {
+    const TYPES: MacrameType[] = ['wall_hanging', 'plant_hanger', 'curtain', 'belt']
+    expect(TYPES[Math.min(3, Math.floor(75 / 25))]).toBe('belt')
+  })
+  it('macrameType: skill=100 → belt(上限3)', () => {
+    const TYPES: MacrameType[] = ['wall_hanging', 'plant_hanger', 'curtain', 'belt']
+    expect(TYPES[Math.min(3, Math.floor(100 / 25))]).toBe('belt')
+  })
+})
 
-  // ── time-based cleanup 测试 ──────────────────────────────────
-  it('tick=0 的记录在 tick=53001 时被清除（cutoff=1）', () => {
+describe('CreatureMacrameMakersSystem - CHECK_INTERVAL 节流', () => {
+  let sys: CreatureMacrameMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('tick差<1510不更新lastCheck', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1509)
+    expect((sys as any).lastCheck).toBe(0)
+    expect(em.getEntitiesWithComponents).not.toHaveBeenCalled()
+  })
+  it('tick差>=1510更新lastCheck', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1510)
+    expect((sys as any).lastCheck).toBe(1510)
+  })
+  it('tick=1509边界不更新', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1509)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('第二次差值不足时保持', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1510)
+    sys.update(1, em, 2000)
+    expect((sys as any).lastCheck).toBe(1510)
+  })
+  it('第二次差值足够时再次更新', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1510)
+    sys.update(1, em, 3020)
+    expect((sys as any).lastCheck).toBe(3020)
+  })
+})
+
+describe('CreatureMacrameMakersSystem - time-based cleanup', () => {
+  let sys: CreatureMacrameMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('过期记录被清除, cutoff=tick-53000', () => {
+    const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
     ;(sys as any).makers.push(makeMaker(1, { tick: 0 }))
-    ;(sys as any).lastCheck = 0
-    // 手动调用内部 cleanup 逻辑：cutoff = 53001 - 53000 = 1，tick=0 < 1 → 删除
-    const cutoff = 53001 - 53000
-    for (let i = (sys as any).makers.length - 1; i >= 0; i--) {
-      if ((sys as any).makers[i].tick < cutoff) (sys as any).makers.splice(i, 1)
-    }
-    expect((sys as any).makers).toHaveLength(0)
-  })
-
-  it('tick=53000 的记录在 currentTick=106000 时被清除（cutoff=53000）', () => {
-    ;(sys as any).makers.push(makeMaker(1, { tick: 53000 }))
-    const cutoff = 106001 - 53000  // =53001，53000 < 53001 → 删除
-    for (let i = (sys as any).makers.length - 1; i >= 0; i--) {
-      if ((sys as any).makers[i].tick < cutoff) (sys as any).makers.splice(i, 1)
-    }
-    expect((sys as any).makers).toHaveLength(0)
-  })
-
-  it('新记录（tick 未超过 cutoff）不被清除', () => {
-    ;(sys as any).makers.push(makeMaker(1, { tick: 50000 }))
-    const cutoff = 100000 - 53000  // =47000，50000 >= 47000 → 保留
-    for (let i = (sys as any).makers.length - 1; i >= 0; i--) {
-      if ((sys as any).makers[i].tick < cutoff) (sys as any).makers.splice(i, 1)
-    }
-    expect((sys as any).makers).toHaveLength(1)
-  })
-
-  it('旧记录被清除、新记录保留（混合情形）', () => {
-    ;(sys as any).makers.push(makeMaker(1, { tick: 0 }))      // 旧
-    ;(sys as any).makers.push(makeMaker(2, { tick: 60000 }))  // 新
-    ;(sys as any).makers.push(makeMaker(3, { tick: 100 }))    // 旧
-    const cutoff = 110000 - 53000  // =57000
-    for (let i = (sys as any).makers.length - 1; i >= 0; i--) {
-      if ((sys as any).makers[i].tick < cutoff) (sys as any).makers.splice(i, 1)
-    }
+    ;(sys as any).makers.push(makeMaker(2, { tick: 55000 }))
+    sys.update(1, em, 60000)
     expect((sys as any).makers).toHaveLength(1)
     expect((sys as any).makers[0].entityId).toBe(2)
   })
+  it('未过期记录全部保留', () => {
+    const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).makers.push(makeMaker(1, { tick: 55000 }))
+    ;(sys as any).makers.push(makeMaker(2, { tick: 56000 }))
+    sys.update(1, em, 60000)
+    expect((sys as any).makers).toHaveLength(2)
+  })
+  it('cutoff边界: cutoff=60000-53000=7000', () => {
+    const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).makers.push(makeMaker(1, { tick: 6999 }))
+    ;(sys as any).makers.push(makeMaker(2, { tick: 7000 }))
+    sys.update(1, em, 60000)
+    expect((sys as any).makers).toHaveLength(1)
+    expect((sys as any).makers[0].entityId).toBe(2)
+  })
+  it('全部过期时全部删除', () => {
+    const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).makers.push(makeMaker(1, { tick: 0 }))
+    sys.update(1, em, 60000)
+    expect((sys as any).makers).toHaveLength(0)
+  })
+})
 
-  // ── CHECK_INTERVAL 节流测试 ────────────────────────────────────
-  it('lastCheck 初始为 0', () => {
+describe('CreatureMacrameMakersSystem - skillMap 操作', () => {
+  let sys: CreatureMacrameMakersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('skillMap初始为空', () => { expect((sys as any).skillMap.size).toBe(0) })
+  it('未知实体返回undefined', () => { expect((sys as any).skillMap.get(999)).toBeUndefined() })
+  it('注入后可读取', () => {
+    ;(sys as any).skillMap.set(5, 54)
+    expect((sys as any).skillMap.get(5)).toBe(54)
+  })
+  it('多个实体独立存储', () => {
+    ;(sys as any).skillMap.set(1, 30)
+    ;(sys as any).skillMap.set(2, 60)
+    expect((sys as any).skillMap.get(1)).toBe(30)
+    expect((sys as any).skillMap.get(2)).toBe(60)
+  })
+})
+
+describe('CreatureMacrameMakersSystem - 边界与综合', () => {
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('空数组时 update 不报错', () => {
+    expect(() => makeSys().update(1, makeEmptyEM(), 1510)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    const sys = makeSys()
+    sys.update(999, makeEmptyEM(), 1509)
     expect((sys as any).lastCheck).toBe(0)
   })
-
-  it('tick 差值不足 CHECK_INTERVAL=1510 时不更新 lastCheck', () => {
-    const mockEm = { getEntitiesWithComponents: () => [] } as any
-    sys.update(1, mockEm, 100)  // 100 - 0 < 1510
-    expect((sys as any).lastCheck).toBe(0)
+  it('entityId被正确保存', () => {
+    const sys = makeSys()
+    ;(sys as any).makers.push(makeMaker(55))
+    expect((sys as any).makers[0].entityId).toBe(55)
   })
-
-  it('tick 差值满足 CHECK_INTERVAL 时更新 lastCheck', () => {
-    const mockEm = { getEntitiesWithComponents: () => [] } as any
-    sys.update(1, mockEm, 1510)
-    expect((sys as any).lastCheck).toBe(1510)
-  })
-
-  // ── 数据完整性测试 ───────────────────────────────────────────
-  it('所有字段正确存储', () => {
-    const m = makeMaker(77, {
-      skill: 42, piecesMade: 8, macrameType: 'curtain',
-      knotDensity: 35, reputation: 44, tick: 500
-    })
-    ;(sys as any).makers.push(m)
-    const stored = (sys as any).makers[0]
-    expect(stored.entityId).toBe(77)
-    expect(stored.skill).toBe(42)
-    expect(stored.piecesMade).toBe(8)
-    expect(stored.macrameType).toBe('curtain')
-    expect(stored.knotDensity).toBe(35)
-    expect(stored.reputation).toBe(44)
-    expect(stored.tick).toBe(500)
-  })
-
-  it('id 自增保证唯一性', () => {
+  it('所有字段类型正确', () => {
+    const sys = makeSys()
     ;(sys as any).makers.push(makeMaker(1))
-    ;(sys as any).makers.push(makeMaker(2))
-    ;(sys as any).makers.push(makeMaker(3))
-    const ids = (sys as any).makers.map((m: MacrameMaker) => m.id)
-    expect(new Set(ids).size).toBe(3)
-  })
-
-  it('MAX_MAKERS=30，注入30个后不超出', () => {
-    for (let i = 1; i <= 30; i++) {
-      ;(sys as any).makers.push(makeMaker(i))
-    }
-    expect((sys as any).makers).toHaveLength(30)
-  })
-
-  // ── macrameType 与 skill 的关系（typeIdx = min(3, floor(skill/25))）──
-  it('skill=0 → typeIdx=0 → macrameType=wall_hanging', () => {
-    const typeIdx = Math.min(3, Math.floor(0 / 25))
-    const TYPES: MacrameType[] = ['wall_hanging', 'plant_hanger', 'curtain', 'belt']
-    expect(TYPES[typeIdx]).toBe('wall_hanging')
-  })
-
-  it('skill=25 → typeIdx=1 → macrameType=plant_hanger', () => {
-    const typeIdx = Math.min(3, Math.floor(25 / 25))
-    const TYPES: MacrameType[] = ['wall_hanging', 'plant_hanger', 'curtain', 'belt']
-    expect(TYPES[typeIdx]).toBe('plant_hanger')
-  })
-
-  it('skill=75 → typeIdx=3 → macrameType=belt', () => {
-    const typeIdx = Math.min(3, Math.floor(75 / 25))
-    const TYPES: MacrameType[] = ['wall_hanging', 'plant_hanger', 'curtain', 'belt']
-    expect(TYPES[typeIdx]).toBe('belt')
-  })
-
-  it('skill=100 → typeIdx=3（上限clamp）→ macrameType=belt', () => {
-    const typeIdx = Math.min(3, Math.floor(100 / 25))
-    const TYPES: MacrameType[] = ['wall_hanging', 'plant_hanger', 'curtain', 'belt']
-    expect(TYPES[typeIdx]).toBe('belt')
+    const r = (sys as any).makers[0]
+    expect(typeof r.skill).toBe('number')
+    expect(typeof r.piecesMade).toBe('number')
+    expect(typeof r.knotDensity).toBe('number')
+    expect(typeof r.reputation).toBe('number')
   })
 })

@@ -3,7 +3,8 @@ import { WorldArroyoSystem } from '../systems/WorldArroyoSystem'
 import type { Arroyo } from '../systems/WorldArroyoSystem'
 
 const CHECK_INTERVAL = 2550
-// TileType: SAND=2, GRASS=3；getTile 返回 5 阻止 spawn
+const MAX_ARROYOS = 15
+const CUTOFF = 86000
 
 let nextId = 1
 function makeSys() { return new WorldArroyoSystem() }
@@ -22,176 +23,235 @@ function makeArroyo(overrides: Partial<Arroyo> = {}): Arroyo {
   }
 }
 
-/** getTile 返回 5，既非 SAND(2) 也非 GRASS(3)，阻止 spawn */
 const makeWorld = () => ({ width: 200, height: 200, getTile: () => 5 }) as any
+const makeWorldSand = () => ({ width: 200, height: 200, getTile: () => 2 }) as any
+const makeWorldGrass = () => ({ width: 200, height: 200, getTile: () => 3 }) as any
 const em = {} as any
 
 describe('WorldArroyoSystem', () => {
   let sys: WorldArroyoSystem
   beforeEach(() => { sys = makeSys(); nextId = 1; vi.restoreAllMocks() })
 
-  // ── 初始状态 ────────────────────────────────────────────────────────────────
-  it('初始 arroyos 为空', () => {
+  // ─── 初始状态 ───
+  it('初始arroyos为空', () => {
     expect((sys as any).arroyos).toHaveLength(0)
   })
-
-  it('nextId 初始为1', () => {
+  it('初始nextId为1', () => {
     expect((sys as any).nextId).toBe(1)
   })
-
-  it('lastCheck 初始为0', () => {
+  it('初始lastCheck为0', () => {
     expect((sys as any).lastCheck).toBe(0)
   })
+  it('arroyos是数组', () => {
+    expect(Array.isArray((sys as any).arroyos)).toBe(true)
+  })
+  it('新建两个实例互相独立', () => {
+    const s1 = makeSys(); const s2 = makeSys()
+    ;(s1 as any).arroyos.push(makeArroyo())
+    expect((s2 as any).arroyos).toHaveLength(0)
+  })
 
-  // ── CHECK_INTERVAL 节流 ─────────────────────────────────────────────────────
-  it('tick < CHECK_INTERVAL 时不更新 lastCheck', () => {
+  // ─── 节流逻辑 ───
+  it('tick < CHECK_INTERVAL时不触发', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, makeWorld(), em, CHECK_INTERVAL - 1)
     expect((sys as any).lastCheck).toBe(0)
   })
-
-  it('tick == CHECK_INTERVAL 时更新 lastCheck', () => {
+  it('tick >= CHECK_INTERVAL时更新lastCheck', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
-
-  it('连续两次 update 后 lastCheck 更新到最新 tick', () => {
+  it('第二次间隔不足时lastCheck不更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
+    sys.update(1, makeWorld(), em, CHECK_INTERVAL + 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('间隔足够时第二次触发', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
     sys.update(1, makeWorld(), em, CHECK_INTERVAL * 2)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
   })
 
-  it('getTile 返回 5 时不 spawn，arroyos 保持为空', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.0001) // < FORM_CHANCE=0.0016
+  // ─── spawn ───
+  it('非SAND/GRASS地形不spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
     expect((sys as any).arroyos).toHaveLength(0)
   })
-
-  // ── 字段数据测试 ────────────────────────────────────────────────────────────
-  it('注入后 arroyos 长度正确', () => {
-    ;(sys as any).arroyos.push(makeArroyo())
+  it('SAND地形+random<FORM_CHANCE时spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorldSand(), em, CHECK_INTERVAL)
     expect((sys as any).arroyos).toHaveLength(1)
   })
-
-  it('注入后字段值正确', () => {
-    ;(sys as any).arroyos.push(makeArroyo({ flashFloodRisk: 55, sedimentLoad: 30 }))
+  it('GRASS地形+random<FORM_CHANCE时spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorldGrass(), em, CHECK_INTERVAL)
+    expect((sys as any).arroyos).toHaveLength(1)
+  })
+  it('FORM_CHANCE超出时不spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, makeWorldSand(), em, CHECK_INTERVAL)
+    expect((sys as any).arroyos).toHaveLength(0)
+  })
+  it('MAX_ARROYOS(15)上限不超出', () => {
+    for (let i = 0; i < MAX_ARROYOS; i++) {
+      ;(sys as any).arroyos.push(makeArroyo({ tick: 99999 }))
+    }
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorldSand(), em, CHECK_INTERVAL)
+    expect((sys as any).arroyos.length).toBeLessThanOrEqual(MAX_ARROYOS)
+  })
+  it('spawn后arroyo包含必要字段', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorldSand(), em, CHECK_INTERVAL)
     const a = (sys as any).arroyos[0]
-    expect(a.flashFloodRisk).toBe(55)
-    expect(a.sedimentLoad).toBe(30)
+    if (a) {
+      expect(typeof a.id).toBe('number')
+      expect(typeof a.x).toBe('number')
+      expect(typeof a.length).toBe('number')
+      expect(typeof a.depth).toBe('number')
+      expect(typeof a.tick).toBe('number')
+    }
+  })
+  it('spawn后arroyo tick等于当前tick', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorldSand(), em, CHECK_INTERVAL)
+    const a = (sys as any).arroyos[0]
+    if (a) expect(a.tick).toBe(CHECK_INTERVAL)
+  })
+  it('spawn后nextId递增', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, makeWorldSand(), em, CHECK_INTERVAL)
+    if ((sys as any).arroyos.length > 0) {
+      expect((sys as any).nextId).toBeGreaterThan(1)
+    }
   })
 
-  it('注入3个后 arroyos 长度为3', () => {
-    ;(sys as any).arroyos.push(makeArroyo())
-    ;(sys as any).arroyos.push(makeArroyo())
-    ;(sys as any).arroyos.push(makeArroyo())
-    expect((sys as any).arroyos).toHaveLength(3)
-  })
-
-  // ── 字段更新：depth += sedimentLoad * 0.00003 ────────────────────────────
-  it('depth 每次 update 按 sedimentLoad 增长', () => {
+  // ─── 字段更新 ───
+  it('waterPresence每次update变化（受random影响）', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).arroyos.push(makeArroyo({ depth: 3, sedimentLoad: 20 }))
+    ;(sys as any).arroyos.push(makeArroyo({ waterPresence: 40, tick: 99999 }))
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
-    // depth = 3 + 20 * 0.00003 = 3 + 0.0006
-    expect((sys as any).arroyos[0].depth).toBeCloseTo(3.0006, 6)
+    // waterPresence = max(0, min(80, 40+(0.9-0.52)*0.3)) = max(0, min(80, 40.114)) = 40.114
+    expect((sys as any).arroyos[0].waterPresence).toBeCloseTo(40.114, 4)
   })
-
-  it('depth 最大不超过 20', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    ;(sys as any).arroyos.push(makeArroyo({ depth: 19.9999, sedimentLoad: 100 }))
-    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
-    expect((sys as any).arroyos[0].depth).toBeLessThanOrEqual(20)
-  })
-
-  // ── 字段更新：waterPresence 范围 [0, 80] ─────────────────────────────────
-  it('waterPresence 不低于 0（Math.random=0 偏移 -0.52*0.3）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0)
-    ;(sys as any).arroyos.push(makeArroyo({ waterPresence: 0.01 }))
+  it('waterPresence不低于0', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0)
+    ;(sys as any).arroyos.push(makeArroyo({ waterPresence: 0, tick: 99999 }))
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
     expect((sys as any).arroyos[0].waterPresence).toBeGreaterThanOrEqual(0)
   })
-
-  it('waterPresence 不超过 80（Math.random=1 偏移 +0.48*0.3）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    ;(sys as any).arroyos.push(makeArroyo({ waterPresence: 79.99 }))
+  it('waterPresence不高于80', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1.0)
+    ;(sys as any).arroyos.push(makeArroyo({ waterPresence: 80, tick: 99999 }))
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
     expect((sys as any).arroyos[0].waterPresence).toBeLessThanOrEqual(80)
   })
-
-  // ── 字段更新：flashFloodRisk 范围 [5, 80] ────────────────────────────────
-  it('flashFloodRisk 不低于 5（Math.random=0 偏移 -0.48*0.2）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0)
-    ;(sys as any).arroyos.push(makeArroyo({ flashFloodRisk: 5.01 }))
+  it('depth随sedimentLoad慢慢增长', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).arroyos.push(makeArroyo({ depth: 3, sedimentLoad: 20, tick: 99999 }))
+    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
+    // depth = min(20, 3 + 20*0.00003) = min(20, 3.0006)
+    expect((sys as any).arroyos[0].depth).toBeCloseTo(3.0006, 5)
+  })
+  it('depth最大不超过20', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).arroyos.push(makeArroyo({ depth: 20, sedimentLoad: 100, tick: 99999 }))
+    sys.update(1, makeWorld(), em, CHECK_INTERVAL)
+    expect((sys as any).arroyos[0].depth).toBe(20)
+  })
+  it('flashFloodRisk不低于5', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0)
+    ;(sys as any).arroyos.push(makeArroyo({ flashFloodRisk: 5, tick: 99999 }))
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
     expect((sys as any).arroyos[0].flashFloodRisk).toBeGreaterThanOrEqual(5)
   })
-
-  it('flashFloodRisk 不超过 80（Math.random=1 偏移 +0.52*0.2）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    ;(sys as any).arroyos.push(makeArroyo({ flashFloodRisk: 79.99 }))
+  it('flashFloodRisk不高于80', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1.0)
+    ;(sys as any).arroyos.push(makeArroyo({ flashFloodRisk: 80, tick: 99999 }))
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
     expect((sys as any).arroyos[0].flashFloodRisk).toBeLessThanOrEqual(80)
   })
-
-  // ── 字段更新：spectacle 范围 [5, 60] ─────────────────────────────────────
-  it('spectacle 不低于 5（Math.random=0 偏移 -0.47*0.11）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0)
-    ;(sys as any).arroyos.push(makeArroyo({ spectacle: 5.001 }))
+  it('spectacle不低于5', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0)
+    ;(sys as any).arroyos.push(makeArroyo({ spectacle: 5, tick: 99999 }))
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
     expect((sys as any).arroyos[0].spectacle).toBeGreaterThanOrEqual(5)
   })
-
-  it('spectacle 不超过 60（Math.random=1 偏移 +0.53*0.11）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(1)
-    ;(sys as any).arroyos.push(makeArroyo({ spectacle: 59.99 }))
+  it('spectacle不高于60', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1.0)
+    ;(sys as any).arroyos.push(makeArroyo({ spectacle: 60, tick: 99999 }))
     sys.update(1, makeWorld(), em, CHECK_INTERVAL)
     expect((sys as any).arroyos[0].spectacle).toBeLessThanOrEqual(60)
   })
 
-  // ── cleanup：tick < cutoff (tick - 86000) 时删除 ─────────────────────────
-  it('超过存活时限的 arroyo 被删除（cutoff 公式）', () => {
+  // ─── cleanup ───
+  it('tick < cutoff(tick-86000)时被删除', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    // cutoff = 90000 - 86000 = 4000; a.tick=0 < 4000 => 删除
     ;(sys as any).arroyos.push(makeArroyo({ tick: 0 }))
-    sys.update(1, makeWorld(), em, 90000)
+    sys.update(1, makeWorld(), em, 100000)
     expect((sys as any).arroyos).toHaveLength(0)
   })
-
-  it('未超存活时限的 arroyo 保留', () => {
+  it('tick >= cutoff时保留', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    // cutoff = 90000 - 86000 = 4000; a.tick=5000 > 4000 => 保留
-    ;(sys as any).arroyos.push(makeArroyo({ tick: 5000 }))
-    sys.update(1, makeWorld(), em, 90000)
+    ;(sys as any).arroyos.push(makeArroyo({ tick: 50000 }))
+    sys.update(1, makeWorld(), em, 100000)
     expect((sys as any).arroyos).toHaveLength(1)
   })
-
-  it('混合：过期删除，新的保留', () => {
+  it('cutoff边界时保留', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    // cutoff = 90000 - 86000 = 4000
-    ;(sys as any).arroyos.push(makeArroyo({ tick: 0 }))    // 过期
-    ;(sys as any).arroyos.push(makeArroyo({ tick: 5000 })) // 保留
-    sys.update(1, makeWorld(), em, 90000)
+    const bigTick = 100000
+    const cutoff = bigTick - CUTOFF  // 14000
+    ;(sys as any).arroyos.push(makeArroyo({ tick: cutoff }))
+    sys.update(1, makeWorld(), em, bigTick)
     expect((sys as any).arroyos).toHaveLength(1)
-    expect((sys as any).arroyos[0].tick).toBe(5000)
   })
-
-  it('多个过期 arroyo 全部删除', () => {
+  it('混合新旧：只删过期的', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    // cutoff = 90000 - 86000 = 4000
     ;(sys as any).arroyos.push(makeArroyo({ tick: 0 }))
-    ;(sys as any).arroyos.push(makeArroyo({ tick: 1000 }))
-    ;(sys as any).arroyos.push(makeArroyo({ tick: 3999 }))
-    sys.update(1, makeWorld(), em, 90000)
-    expect((sys as any).arroyos).toHaveLength(0)
+    ;(sys as any).arroyos.push(makeArroyo({ tick: 50000 }))
+    sys.update(1, makeWorld(), em, 100000)
+    expect((sys as any).arroyos).toHaveLength(1)
+    expect((sys as any).arroyos[0].tick).toBe(50000)
   })
 
-  it('tick 恰好等于 cutoff 边界时保留（a.tick === cutoff 不删除）', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9)
-    // cutoff = 90000 - 86000 = 4000; a.tick=4000 => NOT < cutoff => 保留
-    ;(sys as any).arroyos.push(makeArroyo({ tick: 4000 }))
-    sys.update(1, makeWorld(), em, 90000)
+  // ─── 手动注入 ───
+  it('手动注入后长度正确', () => {
+    ;(sys as any).arroyos.push(makeArroyo())
     expect((sys as any).arroyos).toHaveLength(1)
+  })
+  it('手动注入多个后长度正确', () => {
+    for (let i = 0; i < 4; i++) (sys as any).arroyos.push(makeArroyo())
+    expect((sys as any).arroyos).toHaveLength(4)
+  })
+
+  // ─── 边界条件 ───
+  it('tick=0不触发', () => {
+    sys.update(1, makeWorld(), em, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('大tick值不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, makeWorld(), em, 9999999)).not.toThrow()
+  })
+  it('空arroyos时update不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, makeWorld(), em, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('arroyo字段结构完整', () => {
+    const a = makeArroyo()
+    expect(typeof a.id).toBe('number')
+    expect(typeof a.x).toBe('number')
+    expect(typeof a.y).toBe('number')
+    expect(typeof a.length).toBe('number')
+    expect(typeof a.depth).toBe('number')
+    expect(typeof a.waterPresence).toBe('number')
+    expect(typeof a.sedimentLoad).toBe('number')
+    expect(typeof a.flashFloodRisk).toBe('number')
+    expect(typeof a.spectacle).toBe('number')
+    expect(typeof a.tick).toBe('number')
   })
 })

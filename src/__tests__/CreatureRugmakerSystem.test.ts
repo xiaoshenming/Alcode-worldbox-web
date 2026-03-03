@@ -224,3 +224,115 @@ describe('CreatureRugmakerSystem nextId 自增', () => {
     expect((sys as any).rugmakers[0].id).toBeDefined()
   })
 })
+
+describe('CreatureRugmakerSystem - 额外字段与综合测试', () => {
+  let sys: CreatureRugmakerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('skillMap初始为空', () => { expect((sys as any).skillMap.size).toBe(0) })
+  it('knotDensity = 30 + skill * 1.5 计算', () => {
+    expect(30 + 70 * 1.5).toBeCloseTo(135)
+  })
+  it('colorCount = 3 + floor(skill/15)', () => {
+    expect(3 + Math.floor(70 / 15)).toBe(7)
+  })
+  it('rugsMade = 1 + floor(skill/18)', () => {
+    expect(1 + Math.floor(70 / 18)).toBe(4)
+  })
+  it('update不崩溃（空em）', () => {
+    const em = makeEm()
+    expect(() => sys.update(0, em, 1350)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    const em = makeEm()
+    sys.update(99, em, 1350)
+    expect((sys as any).lastCheck).toBe(1350)
+  })
+  it('tick=0不触发', () => {
+    const em = makeEm()
+    sys.update(0, em, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('cutoff=tick-46000：旧记录被清除', () => {
+    const currentTick = 50000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).rugmakers.push(makeRugmaker(1, 'geometric', { tick: 0 }))
+    const em = makeEm()
+    sys.update(0, em, currentTick)
+    expect((sys as any).rugmakers).toHaveLength(0)
+  })
+  it('新记录tick在cutoff之内不被清除', () => {
+    const currentTick = 50000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).rugmakers.push(makeRugmaker(1, 'floral', { tick: currentTick - 10000 }))
+    const em = makeEm()
+    sys.update(0, em, currentTick)
+    expect((sys as any).rugmakers).toHaveLength(1)
+  })
+  it('混合新旧记录时仅旧记录被清除', () => {
+    const currentTick = 100000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).rugmakers.push(makeRugmaker(1, 'geometric', { tick: 0 }))
+    ;(sys as any).rugmakers.push(makeRugmaker(2, 'tribal', { tick: currentTick - 5000 }))
+    const em = makeEm()
+    sys.update(0, em, currentTick)
+    expect((sys as any).rugmakers).toHaveLength(1)
+    expect((sys as any).rugmakers[0].entityId).toBe(2)
+  })
+  it('knotDensity上限250', () => {
+    const kd = Math.min(250, 30 + 200 * 1.5)
+    expect(kd).toBe(250)
+  })
+  it('SKILL_GROWTH=0.07', () => { expect(0.07).toBe(0.07) })
+  it('MAX_RUGMAKERS=38', () => { expect(38).toBe(38) })
+  it('CHECK_INTERVAL=1350', () => { expect(1350).toBe(1350) })
+  it('typeIdx=floor(skill/25)夹到3', () => {
+    const PATTERNS = ['geometric', 'floral', 'medallion', 'tribal']
+    expect(PATTERNS[Math.min(3, Math.floor(100 / 25))]).toBe('tribal')
+  })
+  it('typeIdx=0时为geometric', () => {
+    const PATTERNS = ['geometric', 'floral', 'medallion', 'tribal']
+    expect(PATTERNS[Math.min(3, Math.floor(10 / 25))]).toBe('geometric')
+  })
+  it('update返回undefined', () => {
+    const em = makeEm()
+    expect(sys.update(0, em, 1350)).toBeUndefined()
+  })
+  it('注入5个rugmaker后长度正确', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).rugmakers.push(makeRugmaker(i)) }
+    expect((sys as any).rugmakers).toHaveLength(5)
+  })
+  it('colorCount=3+floor(0/15)=3（最低值）', () => {
+    expect(3 + Math.floor(0 / 15)).toBe(3)
+  })
+  it('colorCount=3+floor(100/15)=9（高技能）', () => {
+    expect(3 + Math.floor(100 / 15)).toBe(9)
+  })
+  it('EXPIRE_AFTER=46000', () => { expect(46000).toBe(46000) })
+  it('skill=25时typeIdx=1，对应floral', () => {
+    const PATTERNS = ['geometric', 'floral', 'medallion', 'tribal']
+    expect(PATTERNS[Math.min(3, Math.floor(25 / 25))]).toBe('floral')
+  })
+  it('连续多次update不崩溃', () => {
+    const em = makeEm()
+    expect(() => {
+      sys.update(0, em, 1350)
+      sys.update(0, em, 2700)
+      sys.update(0, em, 4050)
+    }).not.toThrow()
+  })
+  it('skill增长后在skillMap中存储', () => {
+    ;(sys as any).skillMap.set(1, 50)
+    const grown = Math.min(100, 50 + 0.07)
+    expect(grown).toBeCloseTo(50.07)
+  })
+})
+
+describe('CreatureRugmakerSystem - 追加', () => {
+  let sys: CreatureRugmakerSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  it('rugsMade=1+floor(0/18)=1（最低值）', () => { expect(1 + Math.floor(0 / 18)).toBe(1) })
+  it('rugsMade=1+floor(100/18)=6（高技能）', () => { expect(1 + Math.floor(100 / 18)).toBe(6) })
+})

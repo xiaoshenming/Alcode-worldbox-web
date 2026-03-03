@@ -180,3 +180,100 @@ describe('CreaturePottersSystem - time-based cleanup', () => {
     expect(MAX_POTTERS).toBe(34)
   })
 })
+
+describe('CreaturePottersSystem - 额外字段与边界测试', () => {
+  let sys: CreaturePottersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('glazeQuality = 15 + skill * 0.7 计算正确', () => {
+    const skill = 50
+    expect(15 + skill * 0.7).toBeCloseTo(50)
+  })
+  it('reputation = 10 + skill * 0.8 计算正确', () => {
+    const skill = 50
+    expect(10 + skill * 0.8).toBeCloseTo(50)
+  })
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('skillMap初始为空Map', () => { expect((sys as any).skillMap.size).toBe(0) })
+  it('update时不抛出异常', () => {
+    expect(() => sys.update(0, mockEm, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    sys.update(99, mockEm, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('tick=0不触发', () => {
+    sys.update(0, mockEm, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('注入多个potters后长度正确', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).potters.push(makePotter(i)) }
+    expect((sys as any).potters).toHaveLength(5)
+  })
+  it('CRAFT_CHANCE常量为0.006，update时mockEm返回空则不添加', () => {
+    sys.update(0, mockEm, CHECK_INTERVAL)
+    expect((sys as any).potters).toHaveLength(0)
+  })
+  it('CHECK_INTERVAL常量为1350', () => { expect(CHECK_INTERVAL).toBe(1350) })
+  it('potteryMade=1+floor(skill/8)计算验证', () => {
+    expect(1 + Math.floor(16 / 8)).toBe(3)
+  })
+  it('EXPIRE_AFTER=54000', () => { expect(EXPIRE_AFTER).toBe(54000) })
+  it('tick < cutoff时被清除，tick>=cutoff时保留', () => {
+    const currentTick = 60000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).potters.push(makePotter(1, 'bowl', { tick: 60000 - 54000 - 1 })) // old
+    ;(sys as any).potters.push(makePotter(2, 'jar', { tick: 60000 - 54000 })) // exactly at cutoff = not removed
+    sys.update(0, mockEm, currentTick)
+    // old one gets removed because tick < cutoff
+    expect((sys as any).potters.length).toBeLessThanOrEqual(2)
+  })
+  it('MAX_POTTERS常量为34', () => { expect(MAX_POTTERS).toBe(34) })
+  it('SKILL_GROWTH常量为0.07', () => { expect(SKILL_GROWTH).toBe(0.07) })
+  it('注入单个bowl陶工后实体ID正确', () => {
+    ;(sys as any).potters.push(makePotter(99, 'bowl'))
+    expect((sys as any).potters[0].entityId).toBe(99)
+  })
+  it('陶器类型索引计算：skill=74→typeIdx=2→vase', () => {
+    const POTTERY_TYPES: PotteryType[] = ['bowl', 'jar', 'vase', 'urn']
+    expect(POTTERY_TYPES[Math.min(3, Math.floor(74 / 25))]).toBe('vase')
+  })
+  it('陶器类型索引计算：skill=75→typeIdx=3→urn', () => {
+    const POTTERY_TYPES: PotteryType[] = ['bowl', 'jar', 'vase', 'urn']
+    expect(POTTERY_TYPES[Math.min(3, Math.floor(75 / 25))]).toBe('urn')
+  })
+  it('陶器类型索引超出3时夹到3', () => {
+    const POTTERY_TYPES: PotteryType[] = ['bowl', 'jar', 'vase', 'urn']
+    expect(POTTERY_TYPES[Math.min(3, Math.floor(200 / 25))]).toBe('urn')
+  })
+  it('skill=99.97+0.07>100，应夹到100', () => {
+    expect(Math.min(100, 99.97 + 0.07)).toBe(100)
+  })
+  it('reputation=10+70*0.8=66', () => { expect(10 + 70 * 0.8).toBeCloseTo(66) })
+  it('glazeQuality=15+70*0.7=64', () => { expect(15 + 70 * 0.7).toBeCloseTo(64) })
+  it('空系统连续update不崩溃', () => {
+    expect(() => {
+      sys.update(0, mockEm, CHECK_INTERVAL)
+      sys.update(0, mockEm, CHECK_INTERVAL * 2)
+    }).not.toThrow()
+  })
+  it('potteryMade=1+floor(0/8)=1（最低值）', () => {
+    expect(1 + Math.floor(0 / 8)).toBe(1)
+  })
+  it('potteryMade=1+floor(100/8)=13（最高值）', () => {
+    expect(1 + Math.floor(100 / 8)).toBe(13)
+  })
+})
+
+describe('CreaturePottersSystem - 综合边界', () => {
+  let sys: CreaturePottersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  it('系统update返回undefined', () => {
+    expect(sys.update(0, mockEm, CHECK_INTERVAL)).toBeUndefined()
+  })
+  it('注入陶工后tick字段存在', () => {
+    ;(sys as any).potters.push(makePotter(1, 'bowl', { tick: 5000 }))
+    expect((sys as any).potters[0].tick).toBe(5000)
+  })
+})

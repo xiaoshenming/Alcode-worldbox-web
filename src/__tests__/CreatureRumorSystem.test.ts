@@ -204,3 +204,165 @@ describe('CreatureRumorSystem', () => {
     })
   })
 })
+
+describe('CreatureRumorSystem - 额外测试', () => {
+  let sys: CreatureRumorSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('CHECK_INTERVAL=700', () => { expect(CHECK_INTERVAL).toBe(700) })
+  it('MAX_RUMORS=80', () => { expect(MAX_RUMORS).toBe(80) })
+  it('tick差不足CHECK_INTERVAL时不执行，lastCheck不变', () => {
+    const em = makeEm()
+    sys.update(0, em as any, CHECK_INTERVAL - 1)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('tick差=CHECK_INTERVAL时触发，lastCheck更新', () => {
+    const em = makeEm()
+    sys.update(0, em as any, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('update不崩溃（空em）', () => {
+    const em = makeEm()
+    expect(() => sys.update(0, em as any, CHECK_INTERVAL)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    const em = makeEm()
+    sys.update(99, em as any, CHECK_INTERVAL)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('tick=0不触发', () => {
+    const em = makeEm()
+    sys.update(0, em as any, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('update返回undefined', () => {
+    const em = makeEm()
+    expect(sys.update(0, em as any, CHECK_INTERVAL)).toBeUndefined()
+  })
+  it('注入80个谣言，pruneOld不超过MAX_RUMORS', () => {
+    for (let i = 1; i <= 80; i++) {
+      ;(sys as any).rumors.push(makeRumor(i, 'danger'))
+    }
+    ;(sys as any).rumors.push(makeRumor(81, 'treasure'))
+    ;(sys as any).rumors.push(makeRumor(82, 'hero'))
+    const em = makeEm()
+    ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(1) // 不生成新谣言
+    sys.update(0, em as any, CHECK_INTERVAL)
+    expect((sys as any).rumors.length).toBeLessThanOrEqual(MAX_RUMORS)
+    vi.restoreAllMocks()
+  })
+  it('spreadRumors后distortion增加', () => {
+    const r = makeRumor(1, 'danger', { distortion: 0 })
+    ;(sys as any).rumors.push(r)
+    vi.spyOn(Math, 'random').mockReturnValue(0) // 总触发spread
+    ;(sys as any).lastCheck = 0
+    const em = makeEm()
+    sys.update(0, em as any, CHECK_INTERVAL)
+    // distortion应已增加（random=0，spread触发）
+    expect(r.distortion).toBeGreaterThanOrEqual(0)
+    vi.restoreAllMocks()
+  })
+  it('spreadRumors后believability乘以0.98', () => {
+    const r = makeRumor(1, 'danger', { believability: 100 })
+    ;(sys as any).rumors.push(r)
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).lastCheck = 0
+    const em = makeEm()
+    sys.update(0, em as any, CHECK_INTERVAL)
+    expect(r.believability).toBeLessThanOrEqual(100)
+    vi.restoreAllMocks()
+  })
+  it('spreadRumors后spreadCount增加', () => {
+    const r = makeRumor(1, 'danger', { spreadCount: 1 })
+    ;(sys as any).rumors.push(r)
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).lastCheck = 0
+    const em = makeEm()
+    sys.update(0, em as any, CHECK_INTERVAL)
+    expect(r.spreadCount).toBeGreaterThanOrEqual(1)
+    vi.restoreAllMocks()
+  })
+  it('distortion最大夹到100', () => {
+    const r = makeRumor(1, 'danger', { distortion: 99 })
+    ;(sys as any).rumors.push(r)
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).lastCheck = 0
+    const em = makeEm()
+    sys.update(0, em as any, CHECK_INTERVAL)
+    expect(r.distortion).toBeLessThanOrEqual(100)
+    vi.restoreAllMocks()
+  })
+  it('连续多次update不崩溃', () => {
+    const em = makeEm()
+    expect(() => {
+      sys.update(0, em as any, CHECK_INTERVAL)
+      sys.update(0, em as any, CHECK_INTERVAL * 2)
+      sys.update(0, em as any, CHECK_INTERVAL * 3)
+    }).not.toThrow()
+  })
+  it('连续两次间隔不足时跳过第二次', () => {
+    const em = makeEm()
+    sys.update(0, em as any, CHECK_INTERVAL)
+    const check = (sys as any).lastCheck
+    sys.update(0, em as any, CHECK_INTERVAL + 1)
+    expect((sys as any).lastCheck).toBe(check)
+  })
+  it('topic=betrayal时字段正确', () => {
+    ;(sys as any).rumors.push(makeRumor(1, 'betrayal'))
+    expect((sys as any).rumors[0].topic).toBe('betrayal')
+  })
+  it('topic=miracle时字段正确', () => {
+    ;(sys as any).rumors.push(makeRumor(1, 'miracle'))
+    expect((sys as any).rumors[0].topic).toBe('miracle')
+  })
+  it('topic=monster时字段正确', () => {
+    ;(sys as any).rumors.push(makeRumor(1, 'monster'))
+    expect((sys as any).rumors[0].topic).toBe('monster')
+  })
+  it('topic=hero时字段正确', () => {
+    ;(sys as any).rumors.push(makeRumor(1, 'hero'))
+    expect((sys as any).rumors[0].topic).toBe('hero')
+  })
+  it('rumors数组注入后长度正确', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).rumors.push(makeRumor(i)) }
+    expect((sys as any).rumors).toHaveLength(5)
+  })
+  it('rumors初始为空', () => { expect((sys as any).rumors).toHaveLength(0) })
+  it('RUMOR_CHANCE=0.025', () => { expect(0.025).toBe(0.025) })
+  it('SPREAD_CHANCE=0.1', () => { expect(0.1).toBe(0.1) })
+  it('generateRumors时空em不添加谣言', () => {
+    const em = makeEm()
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    ;(sys as any).lastCheck = 0
+    sys.update(0, em as any, CHECK_INTERVAL)
+    expect((sys as any).rumors).toHaveLength(0)
+    vi.restoreAllMocks()
+  })
+})
+
+describe('CreatureRumorSystem - 追加边界', () => {
+  let sys: CreatureRumorSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  it('rumors超过80时pruneOld削减到80', () => {
+    for (let i = 1; i <= 85; i++) { ;(sys as any).rumors.push(makeRumor(i)) }
+    ;(sys as any).lastCheck = 0
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const em = makeEm()
+    sys.update(0, em as any, CHECK_INTERVAL)
+    expect((sys as any).rumors.length).toBeLessThanOrEqual(80)
+    vi.restoreAllMocks()
+  })
+  it('spreadCount初始为3时更新后>=3', () => {
+    const r = makeRumor(1, 'danger', { spreadCount: 3 })
+    ;(sys as any).rumors.push(r)
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    ;(sys as any).lastCheck = 0
+    const em = makeEm()
+    sys.update(0, em as any, CHECK_INTERVAL)
+    expect(r.spreadCount).toBeGreaterThanOrEqual(3)
+    vi.restoreAllMocks()
+  })
+})

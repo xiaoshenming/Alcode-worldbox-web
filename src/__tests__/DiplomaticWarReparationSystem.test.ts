@@ -30,6 +30,11 @@ describe('DiplomaticWarReparationSystem', () => {
   it('_activeReparationSet初始为空Set', () => {
     expect((sys as any)._activeReparationSet.size).toBe(0)
   })
+  it('新建两个实例互相独立', () => {
+    const s1 = makeSys(); const s2 = makeSys()
+    ;(s1 as any).reparations.push({ id: 1 })
+    expect((s2 as any).reparations).toHaveLength(0)
+  })
 
   // ─── 节流控制 ───
   it('tick不足CHECK_INTERVAL(1500)时不执行', () => {
@@ -42,6 +47,20 @@ describe('DiplomaticWarReparationSystem', () => {
     sys.update(1, em, makeCivManager(civs), CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
+  it('第二次间隔不足时不更新', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const civs = [{ id: 1, population: 100 }, { id: 2, population: 200 }]
+    sys.update(1, em, makeCivManager(civs), CHECK_INTERVAL)
+    sys.update(1, em, makeCivManager(civs), CHECK_INTERVAL + 100)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('间隔足够时第二次触发', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const civs = [{ id: 1, population: 100 }, { id: 2, population: 200 }]
+    sys.update(1, em, makeCivManager(civs), CHECK_INTERVAL)
+    sys.update(1, em, makeCivManager(civs), CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
+  })
 
   // ─── civilizations guard ───
   it('civManager为null时不崩溃', () => {
@@ -52,13 +71,17 @@ describe('DiplomaticWarReparationSystem', () => {
     sys.update(1, em, makeCivManager([{ id: 1, population: 100 }]), CHECK_INTERVAL)
     expect((sys as any).reparations).toHaveLength(0)
   })
+  it('文明数为0时不spawn', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    sys.update(1, em, makeCivManager([]), CHECK_INTERVAL)
+    expect((sys as any).reparations).toHaveLength(0)
+  })
 
   // ─── spawn ───
   it('满足条件时spawn reparation', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.001)
     const civs = [{ id: 1, population: 50 }, { id: 2, population: 200 }, { id: 3, population: 300 }]
     sys.update(1, em, makeCivManager(civs), CHECK_INTERVAL)
-    // 至少spawn1条（因random很小，每个civ都会触发）
     expect((sys as any).reparations.length).toBeGreaterThanOrEqual(1)
   })
   it('spawn后reparation初始status为active', () => {
@@ -81,8 +104,49 @@ describe('DiplomaticWarReparationSystem', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.001)
     const civs = [{ id: 1, population: 100 }, { id: 2, population: 100 }]
     sys.update(1, em, makeCivManager(civs), CHECK_INTERVAL)
-    // 没有更大population的civ，所以不spawn
     expect((sys as any).reparations).toHaveLength(0)
+  })
+  it('spawn后nextId递增', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    const civs = [{ id: 1, population: 50 }, { id: 2, population: 200 }]
+    sys.update(1, em, makeCivManager(civs), CHECK_INTERVAL)
+    if ((sys as any).reparations.length > 0) {
+      expect((sys as any).nextId).toBeGreaterThan(1)
+    }
+  })
+  it('spawn的reparation包含totalAmount字段', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    const civs = [{ id: 1, population: 50 }, { id: 2, population: 200 }]
+    sys.update(1, em, makeCivManager(civs), CHECK_INTERVAL)
+    if ((sys as any).reparations.length > 0) {
+      expect(typeof (sys as any).reparations[0].totalAmount).toBe('number')
+    }
+  })
+  it('spawn的reparation的paidAmount初始为0', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    const civs = [{ id: 1, population: 50 }, { id: 2, population: 200 }]
+    sys.update(1, em, makeCivManager(civs), CHECK_INTERVAL)
+    if ((sys as any).reparations.length > 0) {
+      // paidAmount starts at 0 but processPayments runs immediately in same update
+      expect((sys as any).reparations[0].paidAmount).toBeGreaterThanOrEqual(0)
+    }
+  })
+  it('spawn的reparation包含deadline字段', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    const civs = [{ id: 1, population: 50 }, { id: 2, population: 200 }]
+    sys.update(1, em, makeCivManager(civs), CHECK_INTERVAL)
+    if ((sys as any).reparations.length > 0) {
+      expect(typeof (sys as any).reparations[0].deadline).toBe('number')
+    }
+  })
+  it('MAX_REPARATIONS(20)上限不超出', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    const civs = [{ id: 1, population: 50 }, { id: 2, population: 200 }]
+    for (let i = 0; i < 25; i++) {
+      ;(sys as any).lastCheck = 0
+      sys.update(1, em, makeCivManager(civs), CHECK_INTERVAL * (i + 1))
+    }
+    expect((sys as any).reparations.length).toBeLessThanOrEqual(20)
   })
 
   // ─── processPayments ───
@@ -117,6 +181,26 @@ describe('DiplomaticWarReparationSystem', () => {
     sys.update(1, em, makeCivManager([{ id: 1, population: 50 }, { id: 2, population: 200 }]), CHECK_INTERVAL)
     expect((sys as any)._activeReparationSet.has(1 * 1000 + 2)).toBe(false)
   })
+  it('非active状态不会被processPayments修改', () => {
+    ;(sys as any).reparations.push({
+      id: 1, loserCivId: 1, victorCivId: 2,
+      totalAmount: 100, paidAmount: 50,
+      status: 'completed', startTick: 0, deadline: 99999
+    })
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, em, makeCivManager([{ id: 1, population: 50 }, { id: 2, population: 200 }]), CHECK_INTERVAL)
+    expect((sys as any).reparations[0].paidAmount).toBe(50)
+  })
+  it('defaulted状态不会被processPayments修改', () => {
+    ;(sys as any).reparations.push({
+      id: 1, loserCivId: 1, victorCivId: 2,
+      totalAmount: 100, paidAmount: 10,
+      status: 'defaulted', startTick: 0, deadline: 99999
+    })
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, em, makeCivManager([{ id: 1, population: 50 }, { id: 2, population: 200 }]), CHECK_INTERVAL)
+    expect((sys as any).reparations[0].paidAmount).toBe(10)
+  })
 
   // ─── checkDefaults ───
   it('active且tick>deadline时status变为defaulted', () => {
@@ -129,10 +213,30 @@ describe('DiplomaticWarReparationSystem', () => {
     sys.update(1, em, makeCivManager([{ id: 1, population: 50 }, { id: 2, population: 200 }]), CHECK_INTERVAL + 200)
     expect((sys as any).reparations[0].status).toBe('defaulted')
   })
+  it('active但tick<=deadline时不变为defaulted', () => {
+    ;(sys as any).reparations.push({
+      id: 1, loserCivId: 1, victorCivId: 2,
+      totalAmount: 100, paidAmount: 0,
+      status: 'active', startTick: 0, deadline: 99999
+    })
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, em, makeCivManager([{ id: 1, population: 50 }, { id: 2, population: 200 }]), CHECK_INTERVAL)
+    expect((sys as any).reparations[0].status).not.toBe('defaulted')
+  })
+  it('defaulted时_activeReparationSet移除key', () => {
+    ;(sys as any)._activeReparationSet.add(1 * 1000 + 2)
+    ;(sys as any).reparations.push({
+      id: 1, loserCivId: 1, victorCivId: 2,
+      totalAmount: 100, paidAmount: 0,
+      status: 'active', startTick: 0, deadline: 100
+    })
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    sys.update(1, em, makeCivManager([{ id: 1, population: 50 }, { id: 2, population: 200 }]), CHECK_INTERVAL + 200)
+    expect((sys as any)._activeReparationSet.has(1 * 1000 + 2)).toBe(false)
+  })
 
   // ─── cleanup ───
   it('满额20条时cleanup能清理多余finished记录', () => {
-    // 注入19条completed + 1条active
     for (let i = 0; i < 19; i++) {
       ;(sys as any).reparations.push({
         id: i + 1, loserCivId: i + 10, victorCivId: i + 20,
@@ -147,9 +251,7 @@ describe('DiplomaticWarReparationSystem', () => {
     })
     vi.spyOn(Math, 'random').mockReturnValue(1)
     sys.update(1, em, makeCivManager([{ id: 1, population: 50 }, { id: 2, population: 200 }]), CHECK_INTERVAL)
-    // active保留，maxFinished=20-1=19个completed也应全部保留(刚好19)
     expect((sys as any).reparations.length).toBeLessThanOrEqual(20)
-    // active记录应该还在
     const activeRecords = (sys as any).reparations.filter((r: any) => r.status === 'active')
     expect(activeRecords.length).toBeGreaterThanOrEqual(1)
   })
@@ -175,5 +277,27 @@ describe('DiplomaticWarReparationSystem', () => {
     ;(sys as any)._activeReparationSet.add(1 * 1000 + 2)
     expect((sys as any).hasActiveReparation(1, 2)).toBe(true)
     expect((sys as any).hasActiveReparation(2, 1)).toBe(false)
+  })
+  it('手动注入多条reparation', () => {
+    for (let i = 0; i < 5; i++) {
+      ;(sys as any).reparations.push({ id: i + 1, status: 'active' })
+    }
+    expect((sys as any).reparations).toHaveLength(5)
+  })
+
+  // ─── 边界条件 ───
+  it('大tick值不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    expect(() => sys.update(1, em, makeCivManager([{ id: 1, population: 100 }, { id: 2, population: 200 }]), 9999999)).not.toThrow()
+  })
+  it('tick=0不触发', () => {
+    sys.update(1, em, makeCivManager([{ id: 1, population: 100 }, { id: 2, population: 200 }]), 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('_activeReparationSet是Set类型', () => {
+    expect((sys as any)._activeReparationSet instanceof Set).toBe(true)
+  })
+  it('hasActiveReparation不存在时返回false', () => {
+    expect((sys as any).hasActiveReparation(99, 100)).toBe(false)
   })
 })

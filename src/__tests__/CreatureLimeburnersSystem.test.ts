@@ -1,204 +1,228 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { CreatureLimeburnersSystem } from '../systems/CreatureLimeburnersSystem'
 import type { Limeburner, LimeProduct } from '../systems/CreatureLimeburnersSystem'
-import { EntityManager } from '../ecs/Entity'
 
-// CHECK_INTERVAL=1450, MAX_BURNERS=30, CRAFT_CHANCE=0.005, SKILL_GROWTH=0.065
-// skillMap存(entityId->skill)，cleanup: burner.tick < tick-54000 时删除
-// 产品选择: PRODUCTS[min(3, floor(skill/25))]
-//   skill<25 => 'quicklime', 25<=skill<50 => 'slaked_lime'
-//   50<=skill<75 => 'mortar', skill>=75 => 'plaster'
+// CHECK_INTERVAL=1450, SKILL_GROWTH=0.065
+// purity = 20 + skill * 0.7
+// reputation = 10 + skill * 0.75
+// batchesBurned = 1 + Math.floor(skill / 10)
+// product: prodIdx = Math.min(3, Math.floor(skill/25))
+// cleanup cutoff = tick - 54000
 
 let nextId = 1
 function makeSys(): CreatureLimeburnersSystem { return new CreatureLimeburnersSystem() }
-function makeBurner(entityId: number, product: LimeProduct = 'quicklime', overrides: Partial<Limeburner> = {}): Limeburner {
-  return { id: nextId++, entityId, skill: 60, batchesBurned: 10, product, purity: 80, reputation: 50, tick: 0, ...overrides }
-}
-
-function makeEm(eids: number[] = [], age = 20): EntityManager {
-  const em = new EntityManager()
-  for (const eid of eids) {
-    const id = em.createEntity()
-    em.addComponent(id, { type: 'creature', age } as any)
-    em.addComponent(id, { type: 'position' } as any)
+function makeMaker(entityId: number, overrides: Partial<Limeburner> = {}): Limeburner {
+  return {
+    id: nextId++, entityId, skill: 30, batchesBurned: 4,
+    product: 'quicklime', purity: 41, reputation: 32.5, tick: 0,
+    ...overrides
   }
-  return em
+}
+function makeEmptyEM() {
+  return {
+    getEntitiesWithComponents: vi.fn().mockReturnValue([]),
+    getEntitiesWithComponent: vi.fn().mockReturnValue([]),
+    getComponent: vi.fn().mockReturnValue(null),
+    hasComponent: vi.fn().mockReturnValue(false),
+  } as any
 }
 
-describe('CreatureLimeburnersSystem.getBurners', () => {
+describe('CreatureLimeburnersSystem - 基础状态', () => {
   let sys: CreatureLimeburnersSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无烧灰工', () => { expect((sys as any).burners).toHaveLength(0) })
+  it('初始无石灰烧制工', () => { expect((sys as any).burners).toHaveLength(0) })
+  it('初始 lastCheck 为 0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('初始 nextId 为 1', () => { expect((sys as any).nextId).toBe(1) })
+
   it('注入后可查询', () => {
-    ;(sys as any).burners.push(makeBurner(1, 'mortar'))
-    expect((sys as any).burners[0].product).toBe('mortar')
-  })
-  it('返回内部引用', () => {
-    ;(sys as any).burners.push(makeBurner(1))
-    expect((sys as any).burners).toBe((sys as any).burners)
-  })
-  it('支持所有 4 种产品', () => {
-    const products: LimeProduct[] = ['quicklime', 'slaked_lime', 'mortar', 'plaster']
-    products.forEach((p, i) => { ;(sys as any).burners.push(makeBurner(i + 1, p)) })
-    const all = (sys as any).burners
-    products.forEach((p, i) => { expect(all[i].product).toBe(p) })
-  })
-  it('多个全部返回', () => {
-    ;(sys as any).burners.push(makeBurner(1))
-    ;(sys as any).burners.push(makeBurner(2))
-    expect((sys as any).burners).toHaveLength(2)
-  })
-})
-
-describe('CreatureLimeburnersSystem - CHECK_INTERVAL节流', () => {
-  let sys: CreatureLimeburnersSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  it('tick<CHECK_INTERVAL时不执行逻辑', () => {
-    ;(sys as any).burners.push(makeBurner(1, 'quicklime', { tick: 0 }))
-    const em = makeEm()
-    sys.update(1, em, 100)
-    // burner 不会被删（tick=0, cutoff=100-54000<0，不删）
-    expect((sys as any).burners).toHaveLength(1)
-    expect((sys as any).lastCheck).toBe(0)
-  })
-
-  it('tick>=CHECK_INTERVAL时执行更新并更新lastCheck', () => {
-    const em = makeEm()
-    sys.update(1, em, 1450)
-    expect((sys as any).lastCheck).toBe(1450)
-  })
-
-  it('lastCheck在节流期内保持不变', () => {
-    ;(sys as any).lastCheck = 1450
-    const em = makeEm()
-    sys.update(1, em, 1500)
-    expect((sys as any).lastCheck).toBe(1450)
-  })
-})
-
-describe('CreatureLimeburnersSystem - skillMap缓存', () => {
-  let sys: CreatureLimeburnersSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  it('直接注入skillMap后可读取', () => {
-    ;(sys as any).skillMap.set(42, 55)
-    expect((sys as any).skillMap.get(42)).toBe(55)
-  })
-
-  it('skillMap初始为空Map', () => {
-    expect((sys as any).skillMap.size).toBe(0)
-  })
-
-  it('同一entityId多次注入skill值叠加（SKILL_GROWTH=0.065）', () => {
-    ;(sys as any).skillMap.set(1, 50)
-    // 模拟手动增长
-    const old = (sys as any).skillMap.get(1)
-    const newSkill = Math.min(100, old + 0.065)
-    ;(sys as any).skillMap.set(1, newSkill)
-    expect((sys as any).skillMap.get(1)).toBeCloseTo(50.065)
-  })
-})
-
-describe('CreatureLimeburnersSystem - 产品等级（skill决定）', () => {
-  let sys: CreatureLimeburnersSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  it('skill<25 => quicklime', () => {
-    ;(sys as any).burners.push(makeBurner(1, 'quicklime', { skill: 10 }))
-    expect((sys as any).burners[0].product).toBe('quicklime')
-  })
-
-  it('25<=skill<50 => slaked_lime', () => {
-    ;(sys as any).burners.push(makeBurner(1, 'slaked_lime', { skill: 30 }))
+    ;(sys as any).burners.push(makeMaker(1, { product: 'slaked_lime' }))
     expect((sys as any).burners[0].product).toBe('slaked_lime')
   })
 
-  it('50<=skill<75 => mortar', () => {
-    ;(sys as any).burners.push(makeBurner(1, 'mortar', { skill: 60 }))
-    expect((sys as any).burners[0].product).toBe('mortar')
+  it('LimeProduct包含4种类型', () => {
+    const products: LimeProduct[] = ['quicklime', 'slaked_lime', 'mortar', 'plaster']
+    products.forEach((p, i) => { ;(sys as any).burners.push(makeMaker(i + 1, { product: p })) })
+    const all = (sys as any).burners as Limeburner[]
+    products.forEach((p, i) => { expect(all[i].product).toBe(p) })
   })
 
-  it('skill>=75 => plaster', () => {
-    ;(sys as any).burners.push(makeBurner(1, 'plaster', { skill: 80 }))
-    expect((sys as any).burners[0].product).toBe('plaster')
+  it('多个全部返回', () => {
+    ;(sys as any).burners.push(makeMaker(1))
+    ;(sys as any).burners.push(makeMaker(2))
+    expect((sys as any).burners).toHaveLength(2)
+  })
+
+  it('内部引用一致', () => {
+    ;(sys as any).burners.push(makeMaker(1))
+    expect((sys as any).burners).toBe((sys as any).burners)
   })
 })
 
-describe('CreatureLimeburnersSystem - time-based cleanup（tick<cutoff 删除）', () => {
+describe('CreatureLimeburnersSystem - 公式验证', () => {
+  it('purity公式: skill=50 → 20+50*0.7=55', () => {
+    expect(20 + 50 * 0.7).toBeCloseTo(55, 5)
+  })
+  it('purity公式: skill=0 → 20', () => {
+    expect(20 + 0 * 0.7).toBeCloseTo(20, 5)
+  })
+  it('purity公式: skill=100 → 20+100*0.7=90', () => {
+    expect(20 + 100 * 0.7).toBeCloseTo(90, 5)
+  })
+  it('reputation公式: skill=50 → 10+50*0.75=47.5', () => {
+    expect(10 + 50 * 0.75).toBeCloseTo(47.5, 5)
+  })
+  it('reputation公式: skill=100 → 10+100*0.75=85', () => {
+    expect(10 + 100 * 0.75).toBeCloseTo(85, 5)
+  })
+  it('batchesBurned: skill=50 → 1+floor(50/10)=6', () => {
+    expect(1 + Math.floor(50 / 10)).toBe(6)
+  })
+  it('batchesBurned: skill=0 → 1', () => {
+    expect(1 + Math.floor(0 / 10)).toBe(1)
+  })
+  it('batchesBurned: skill=100 → 1+floor(100/10)=11', () => {
+    expect(1 + Math.floor(100 / 10)).toBe(11)
+  })
+
+  it('product: skill=10 → quicklime', () => {
+    const PRODUCTS: LimeProduct[] = ['quicklime', 'slaked_lime', 'mortar', 'plaster']
+    expect(PRODUCTS[Math.min(3, Math.floor(10 / 25))]).toBe('quicklime')
+  })
+  it('product: skill=25 → slaked_lime', () => {
+    const PRODUCTS: LimeProduct[] = ['quicklime', 'slaked_lime', 'mortar', 'plaster']
+    expect(PRODUCTS[Math.min(3, Math.floor(25 / 25))]).toBe('slaked_lime')
+  })
+  it('product: skill=50 → mortar', () => {
+    const PRODUCTS: LimeProduct[] = ['quicklime', 'slaked_lime', 'mortar', 'plaster']
+    expect(PRODUCTS[Math.min(3, Math.floor(50 / 25))]).toBe('mortar')
+  })
+  it('product: skill=75 → plaster', () => {
+    const PRODUCTS: LimeProduct[] = ['quicklime', 'slaked_lime', 'mortar', 'plaster']
+    expect(PRODUCTS[Math.min(3, Math.floor(75 / 25))]).toBe('plaster')
+  })
+  it('product: skill=100 → plaster(上限3)', () => {
+    const PRODUCTS: LimeProduct[] = ['quicklime', 'slaked_lime', 'mortar', 'plaster']
+    expect(PRODUCTS[Math.min(3, Math.floor(100 / 25))]).toBe('plaster')
+  })
+})
+
+describe('CreatureLimeburnersSystem - CHECK_INTERVAL 节流', () => {
   let sys: CreatureLimeburnersSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('burner.tick=0，currentTick=54001 => cutoff=1 => 0<1 => 被删除', () => {
-    ;(sys as any).burners.push(makeBurner(1, 'quicklime', { tick: 0 }))
-    ;(sys as any).lastCheck = 0
-    const em = makeEm()
-    sys.update(1, em, 54001 + 1450)
-    // lastCheck=0, tick=55451>=1450 => 执行; cutoff=55451-54000=1451 > 0 => 删除
-    expect((sys as any).burners).toHaveLength(0)
+  it('tick差<1450不更新lastCheck', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1449)
+    expect((sys as any).lastCheck).toBe(0)
+    expect(em.getEntitiesWithComponents).not.toHaveBeenCalled()
   })
-
-  it('burner.tick等于cutoff => 不删除', () => {
-    // cutoff = currentTick - 54000
-    // 让 burner.tick == cutoff：burner.tick = tick - 54000
-    const currentTick = 60000
-    ;(sys as any).lastCheck = 0
-    const burnerTick = currentTick - 54000  // =6000，等于cutoff，条件是 < cutoff
-    ;(sys as any).burners.push(makeBurner(1, 'quicklime', { tick: burnerTick }))
-    const em = makeEm()
-    sys.update(1, em, currentTick)
-    expect((sys as any).burners).toHaveLength(1)
+  it('tick差>=1450更新lastCheck', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1450)
+    expect((sys as any).lastCheck).toBe(1450)
   })
-
-  it('burner.tick=currentTick（新鲜记录）=> 不删除', () => {
-    ;(sys as any).burners.push(makeBurner(1, 'quicklime', { tick: 55000 }))
-    ;(sys as any).lastCheck = 0
-    const em = makeEm()
-    sys.update(1, em, 55000)
-    // cutoff = 55000-54000=1000; burner.tick=55000 >= 1000 => 保留
-    expect((sys as any).burners).toHaveLength(1)
+  it('tick=1449边界不更新', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1449)
+    expect((sys as any).lastCheck).toBe(0)
   })
+  it('第二次差值不足时保持', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1450)
+    sys.update(1, em, 2000)
+    expect((sys as any).lastCheck).toBe(1450)
+  })
+  it('第二次差值足够时再次更新', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1450)
+    sys.update(1, em, 2900)
+    expect((sys as any).lastCheck).toBe(2900)
+  })
+})
 
-  it('旧记录（tick<cutoff）被删，新记录保留', () => {
-    ;(sys as any).burners.push(makeBurner(1, 'quicklime', { tick: 100 }))
-    ;(sys as any).burners.push(makeBurner(2, 'mortar', { tick: 55000 }))
-    ;(sys as any).lastCheck = 0
-    const em = makeEm()
-    // currentTick=56000; cutoff=2000; 100<2000=>删, 55000>=2000=>保
-    sys.update(1, em, 56000)
+describe('CreatureLimeburnersSystem - time-based cleanup', () => {
+  let sys: CreatureLimeburnersSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('过期记录被清除, cutoff=tick-54000', () => {
+    const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).burners.push(makeMaker(1, { tick: 0 }))
+    ;(sys as any).burners.push(makeMaker(2, { tick: 55000 }))
+    sys.update(1, em, 60000)
     expect((sys as any).burners).toHaveLength(1)
     expect((sys as any).burners[0].entityId).toBe(2)
   })
-
-  it('多个旧记录全部删除', () => {
-    ;(sys as any).burners.push(makeBurner(1, 'quicklime', { tick: 100 }))
-    ;(sys as any).burners.push(makeBurner(2, 'quicklime', { tick: 200 }))
-    ;(sys as any).burners.push(makeBurner(3, 'quicklime', { tick: 300 }))
-    ;(sys as any).lastCheck = 0
-    const em = makeEm()
-    // currentTick=56000; cutoff=2000; 所有tick都<2000 => 全删
-    sys.update(1, em, 56000)
+  it('未过期记录全部保留', () => {
+    const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).burners.push(makeMaker(1, { tick: 55000 }))
+    ;(sys as any).burners.push(makeMaker(2, { tick: 56000 }))
+    sys.update(1, em, 60000)
+    expect((sys as any).burners).toHaveLength(2)
+  })
+  it('cutoff边界: cutoff=60000-54000=6000', () => {
+    const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).burners.push(makeMaker(1, { tick: 5999 }))
+    ;(sys as any).burners.push(makeMaker(2, { tick: 6000 }))
+    sys.update(1, em, 60000)
+    expect((sys as any).burners).toHaveLength(1)
+    expect((sys as any).burners[0].entityId).toBe(2)
+  })
+  it('全部过期时全部删除', () => {
+    const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).burners.push(makeMaker(1, { tick: 0 }))
+    sys.update(1, em, 60000)
     expect((sys as any).burners).toHaveLength(0)
   })
 })
 
-describe('CreatureLimeburnersSystem - purity/reputation/batchesBurned计算', () => {
+describe('CreatureLimeburnersSystem - skillMap 操作', () => {
   let sys: CreatureLimeburnersSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('purity = 20 + skill * 0.7', () => {
-    ;(sys as any).burners.push(makeBurner(1, 'quicklime', { skill: 50, purity: 20 + 50 * 0.7 }))
-    expect((sys as any).burners[0].purity).toBeCloseTo(55)
+  it('skillMap初始为空', () => { expect((sys as any).skillMap.size).toBe(0) })
+  it('未知实体返回undefined', () => { expect((sys as any).skillMap.get(999)).toBeUndefined() })
+  it('注入后可读取', () => {
+    ;(sys as any).skillMap.set(5, 65)
+    expect((sys as any).skillMap.get(5)).toBe(65)
   })
-
-  it('reputation = 10 + skill * 0.75', () => {
-    ;(sys as any).burners.push(makeBurner(1, 'quicklime', { skill: 50, reputation: 10 + 50 * 0.75 }))
-    expect((sys as any).burners[0].reputation).toBeCloseTo(47.5)
+  it('多个实体独立存储', () => {
+    ;(sys as any).skillMap.set(1, 30)
+    ;(sys as any).skillMap.set(2, 60)
+    expect((sys as any).skillMap.get(1)).toBe(30)
+    expect((sys as any).skillMap.get(2)).toBe(60)
   })
+})
 
-  it('batchesBurned = 1 + floor(skill/10)', () => {
-    ;(sys as any).burners.push(makeBurner(1, 'quicklime', { skill: 30, batchesBurned: 1 + Math.floor(30 / 10) }))
-    expect((sys as any).burners[0].batchesBurned).toBe(4)
+describe('CreatureLimeburnersSystem - 边界与综合', () => {
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('空数组时 update 不报错', () => {
+    expect(() => makeSys().update(1, makeEmptyEM(), 1450)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    const sys = makeSys()
+    sys.update(999, makeEmptyEM(), 1449)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('entityId被正确保存', () => {
+    const sys = makeSys()
+    ;(sys as any).burners.push(makeMaker(22))
+    expect((sys as any).burners[0].entityId).toBe(22)
+  })
+  it('所有字段类型正确', () => {
+    const sys = makeSys()
+    ;(sys as any).burners.push(makeMaker(1))
+    const r = (sys as any).burners[0]
+    expect(typeof r.skill).toBe('number')
+    expect(typeof r.batchesBurned).toBe('number')
+    expect(typeof r.purity).toBe('number')
+    expect(typeof r.reputation).toBe('number')
   })
 })

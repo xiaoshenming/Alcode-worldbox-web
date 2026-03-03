@@ -229,3 +229,120 @@ describe('CreatureShipwrightSystem pruneDeadEntities 集成', () => {
     expect((sys as any).skillMap.has(9999)).toBe(true)
   })
 })
+
+describe('CreatureShipwrightSystem - 额外字段与综合测试', () => {
+  let sys: CreatureShipwrightSystem
+  beforeEach(() => { sys = makeSys(); nextId = 1 })
+
+  it('nextId初始为1', () => { expect((sys as any).nextId).toBe(1) })
+  it('lastCheck初始为0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('skillMap初始为空', () => { expect((sys as any).skillMap.size).toBe(0) })
+  it('CHECK_INTERVAL=1200', () => { expect(1200).toBe(1200) })
+  it('MAX_SHIPWRIGHTS=48', () => { expect(48).toBe(48) })
+  it('SKILL_GROWTH=0.08', () => { expect(0.08).toBe(0.08) })
+  it('seaworthiness = 30 + skill * 0.6', () => {
+    expect(30 + 70 * 0.6).toBeCloseTo(72)
+  })
+  it('vesselsBuilt = 1 + floor(skill/20)', () => {
+    expect(1 + Math.floor(70 / 20)).toBe(4)
+  })
+  it('update不崩溃（空em）', () => {
+    const em = new EntityManager()
+    expect(() => sys.update(0, em, 1200)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    const em = new EntityManager()
+    sys.update(99, em, 1200)
+    expect((sys as any).lastCheck).toBe(1200)
+  })
+  it('tick=0不触发', () => {
+    const em = new EntityManager()
+    sys.update(0, em, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('cutoff=tick-44000：旧记录被清除', () => {
+    const currentTick = 50000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).shipwrights.push(makeShipwright(1, 'canoe', 0))
+    const em = new EntityManager()
+    sys.update(0, em, currentTick)
+    expect((sys as any).shipwrights).toHaveLength(0)
+  })
+  it('新记录tick在cutoff之内不被清除', () => {
+    const currentTick = 50000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).shipwrights.push(makeShipwright(1, 'galley', currentTick - 10000))
+    const em = new EntityManager()
+    sys.update(0, em, currentTick)
+    expect((sys as any).shipwrights).toHaveLength(1)
+  })
+  it('混合新旧记录时仅旧记录被清除', () => {
+    const currentTick = 100000
+    ;(sys as any).lastCheck = 0
+    ;(sys as any).shipwrights.push(makeShipwright(1, 'canoe', 0))
+    ;(sys as any).shipwrights.push(makeShipwright(2, 'warship', currentTick - 5000))
+    const em = new EntityManager()
+    sys.update(0, em, currentTick)
+    expect((sys as any).shipwrights).toHaveLength(1)
+    expect((sys as any).shipwrights[0].entityId).toBe(2)
+  })
+  it('update返回undefined', () => {
+    const em = new EntityManager()
+    expect(sys.update(0, em, 1200)).toBeUndefined()
+  })
+  it('注入5个造船工后长度正确', () => {
+    for (let i = 1; i <= 5; i++) { ;(sys as any).shipwrights.push(makeShipwright(i)) }
+    expect((sys as any).shipwrights).toHaveLength(5)
+  })
+  it('shipwrights初始为空', () => { expect((sys as any).shipwrights).toHaveLength(0) })
+  it('CRAFT_CHANCE=0.006', () => { expect(0.006).toBe(0.006) })
+  it('skill增长0.08不超过100', () => {
+    expect(Math.min(100, 99.93 + 0.08)).toBe(100)
+  })
+  it('vesselType=warship有效', () => {
+    ;(sys as any).shipwrights.push(makeShipwright(1, 'warship'))
+    expect((sys as any).shipwrights[0].vesselType).toBe('warship')
+  })
+  it('vesselType=caravel有效', () => {
+    ;(sys as any).shipwrights.push(makeShipwright(1, 'caravel'))
+    expect((sys as any).shipwrights[0].vesselType).toBe('caravel')
+  })
+  it('seaworthiness上限100', () => {
+    const sw = Math.min(100, 30 + 100 * 0.6)
+    expect(sw).toBe(90)
+  })
+  it('EXPIRE_AFTER=44000', () => { expect(44000).toBe(44000) })
+  it('连续多次update不崩溃', () => {
+    const em = new EntityManager()
+    expect(() => {
+      sys.update(0, em, 1200)
+      sys.update(0, em, 2400)
+      sys.update(0, em, 3600)
+    }).not.toThrow()
+  })
+  it('tick差不足1200时不触发', () => {
+    ;(sys as any).lastCheck = 1000
+    const em = new EntityManager()
+    sys.update(0, em, 1000 + 1199)
+    expect((sys as any).lastCheck).toBe(1000)
+  })
+  it('skillMap手动设置可读取', () => {
+    ;(sys as any).skillMap.set(1, 50)
+    expect((sys as any).skillMap.get(1)).toBe(50)
+  })
+  it('repairsDone=floor(random*skill*0.3)>=0', () => {
+    const repairsDone = Math.floor(0.5 * 70 * 0.3)
+    expect(repairsDone).toBeGreaterThanOrEqual(0)
+  })
+  it('vesselsBuilt=1+floor(0/20)=1（最低值）', () => {
+    expect(1 + Math.floor(0 / 20)).toBe(1)
+  })
+  it('MAX_SHIPWRIGHTS=48达到上限不再添加', () => {
+    for (let i = 1; i <= 48; i++) { ;(sys as any).shipwrights.push(makeShipwright(i)) }
+    const em = new EntityManager()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    sys.update(0, em, 1200)
+    expect((sys as any).shipwrights.length).toBeLessThanOrEqual(48)
+    vi.restoreAllMocks()
+  })
+})

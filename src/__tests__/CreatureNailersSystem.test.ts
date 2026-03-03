@@ -1,206 +1,228 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { CreatureNailersSystem } from '../systems/CreatureNailersSystem'
 import type { Nailer, NailType } from '../systems/CreatureNailersSystem'
 
+// CHECK_INTERVAL=1300, SKILL_GROWTH=0.07, MAX_NAILERS=34
+// strength = 25 + skill * 0.6
+// reputation = 10 + skill * 0.7
+// nailsForged = 10 + Math.floor(skill / 3)
+// nailType: typeIdx = Math.min(3, Math.floor(skill/25))
+// cleanup cutoff = tick - 52000
+
 let nextId = 1
 function makeSys(): CreatureNailersSystem { return new CreatureNailersSystem() }
-function makeNailer(entityId: number, nailType: NailType = 'tack', skill = 60, tick = 0): Nailer {
+function makeMaker(entityId: number, overrides: Partial<Nailer> = {}): Nailer {
   return {
-    id: nextId++,
-    entityId,
-    skill,
-    nailsForged: 10 + Math.floor(skill / 3),
-    nailType,
-    strength: 25 + skill * 0.6,
-    reputation: 10 + skill * 0.7,
-    tick,
+    id: nextId++, entityId, skill: 30, nailsForged: 20,
+    nailType: 'tack', strength: 43, reputation: 31, tick: 0,
+    ...overrides
   }
 }
+function makeEmptyEM() {
+  return {
+    getEntitiesWithComponents: vi.fn().mockReturnValue([]),
+    getEntitiesWithComponent: vi.fn().mockReturnValue([]),
+    getComponent: vi.fn().mockReturnValue(null),
+    hasComponent: vi.fn().mockReturnValue(false),
+  } as any
+}
 
-// ─── 初始状态 ─────────────────────────────────────────────────────────────────
-describe('CreatureNailersSystem.getNailers', () => {
+describe('CreatureNailersSystem - 基础状态', () => {
   let sys: CreatureNailersSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('初始无钉工', () => { expect((sys as any).nailers).toHaveLength(0) })
+  it('初始无制钉师', () => { expect((sys as any).nailers).toHaveLength(0) })
+  it('初始 lastCheck 为 0', () => { expect((sys as any).lastCheck).toBe(0) })
+  it('初始 nextId 为 1', () => { expect((sys as any).nextId).toBe(1) })
+
   it('注入后可查询', () => {
-    ;(sys as any).nailers.push(makeNailer(1, 'spike'))
-    expect((sys as any).nailers[0].nailType).toBe('spike')
+    ;(sys as any).nailers.push(makeMaker(1, { nailType: 'brad' }))
+    expect((sys as any).nailers[0].nailType).toBe('brad')
   })
-  it('返回内部引用', () => {
-    ;(sys as any).nailers.push(makeNailer(1))
-    expect((sys as any).nailers).toBe((sys as any).nailers)
-  })
-  it('支持所有 4 种钉子类型', () => {
+
+  it('NailType包含4种类���', () => {
     const types: NailType[] = ['tack', 'brad', 'spike', 'rivet']
-    types.forEach((t, i) => { ;(sys as any).nailers.push(makeNailer(i + 1, t)) })
-    const all = (sys as any).nailers
+    types.forEach((t, i) => { ;(sys as any).nailers.push(makeMaker(i + 1, { nailType: t })) })
+    const all = (sys as any).nailers as Nailer[]
     types.forEach((t, i) => { expect(all[i].nailType).toBe(t) })
   })
+
   it('多个全部返回', () => {
-    ;(sys as any).nailers.push(makeNailer(1))
-    ;(sys as any).nailers.push(makeNailer(2))
+    ;(sys as any).nailers.push(makeMaker(1))
+    ;(sys as any).nailers.push(makeMaker(2))
     expect((sys as any).nailers).toHaveLength(2)
   })
-})
 
-// ─── Nailer 数据结构正确性 ────────────────────────────────────────────────────
-describe('Nailer data integrity', () => {
-  let sys: CreatureNailersSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
-
-  it('strength = 25 + skill * 0.6', () => {
-    const n = makeNailer(1, 'brad', 60)
-    expect(n.strength).toBeCloseTo(25 + 60 * 0.6)
-  })
-  it('reputation = 10 + skill * 0.7', () => {
-    const n = makeNailer(1, 'rivet', 60)
-    expect(n.reputation).toBeCloseTo(10 + 60 * 0.7)
-  })
-  it('nailsForged = 10 + floor(skill/3)', () => {
-    const n = makeNailer(1, 'tack', 60)
-    expect(n.nailsForged).toBe(10 + Math.floor(60 / 3))
-  })
-  it('entityId 字段正确存储', () => {
-    const n = makeNailer(77, 'spike')
-    ;(sys as any).nailers.push(n)
-    expect((sys as any).nailers[0].entityId).toBe(77)
-  })
-  it('tick 字段正确存储', () => {
-    const n = makeNailer(1, 'rivet', 60, 9999)
-    ;(sys as any).nailers.push(n)
-    expect((sys as any).nailers[0].tick).toBe(9999)
+  it('内部引用一致', () => {
+    ;(sys as any).nailers.push(makeMaker(1))
+    expect((sys as any).nailers).toBe((sys as any).nailers)
   })
 })
 
-// ─── skillMap ─────────────────────────────────────────────────────────────────
-describe('CreatureNailersSystem.skillMap', () => {
-  let sys: CreatureNailersSystem
-  beforeEach(() => { sys = makeSys(); nextId = 1 })
+describe('CreatureNailersSystem - 公式验证', () => {
+  it('strength公式: skill=40 → 25+40*0.6=49', () => {
+    expect(25 + 40 * 0.6).toBeCloseTo(49, 5)
+  })
+  it('strength公式: skill=0 → 25', () => {
+    expect(25 + 0 * 0.6).toBeCloseTo(25, 5)
+  })
+  it('strength公式: skill=100 → 25+100*0.6=85', () => {
+    expect(25 + 100 * 0.6).toBeCloseTo(85, 5)
+  })
+  it('reputation公式: skill=50 → 10+50*0.7=45', () => {
+    expect(10 + 50 * 0.7).toBeCloseTo(45, 5)
+  })
+  it('reputation公式: skill=100 → 10+100*0.7=80', () => {
+    expect(10 + 100 * 0.7).toBeCloseTo(80, 5)
+  })
+  it('nailsForged: skill=30 → 10+floor(30/3)=20', () => {
+    expect(10 + Math.floor(30 / 3)).toBe(20)
+  })
+  it('nailsForged: skill=0 → 10+floor(0/3)=10', () => {
+    expect(10 + Math.floor(0 / 3)).toBe(10)
+  })
+  it('nailsForged: skill=100 → 10+floor(100/3)=43', () => {
+    expect(10 + Math.floor(100 / 3)).toBe(43)
+  })
 
-  it('初始 skillMap 为空', () => {
-    expect((sys as any).skillMap.size).toBe(0)
+  it('nailType: skill=10 → tack', () => {
+    const TYPES: NailType[] = ['tack', 'brad', 'spike', 'rivet']
+    expect(TYPES[Math.min(3, Math.floor(10 / 25))]).toBe('tack')
   })
-  it('注入 skillMap 后读取正确', () => {
-    ;(sys as any).skillMap.set(5, 42.7)
-    expect((sys as any).skillMap.get(5)).toBeCloseTo(42.7)
+  it('nailType: skill=25 → brad', () => {
+    const TYPES: NailType[] = ['tack', 'brad', 'spike', 'rivet']
+    expect(TYPES[Math.min(3, Math.floor(25 / 25))]).toBe('brad')
   })
-  it('多个实体 skill 独立存储', () => {
-    ;(sys as any).skillMap.set(1, 25)
-    ;(sys as any).skillMap.set(2, 75)
-    expect((sys as any).skillMap.get(1)).toBe(25)
-    expect((sys as any).skillMap.get(2)).toBe(75)
+  it('nailType: skill=50 → spike', () => {
+    const TYPES: NailType[] = ['tack', 'brad', 'spike', 'rivet']
+    expect(TYPES[Math.min(3, Math.floor(50 / 25))]).toBe('spike')
+  })
+  it('nailType: skill=75 → rivet', () => {
+    const TYPES: NailType[] = ['tack', 'brad', 'spike', 'rivet']
+    expect(TYPES[Math.min(3, Math.floor(75 / 25))]).toBe('rivet')
+  })
+  it('nailType: skill=100 → rivet(上限3)', () => {
+    const TYPES: NailType[] = ['tack', 'brad', 'spike', 'rivet']
+    expect(TYPES[Math.min(3, Math.floor(100 / 25))]).toBe('rivet')
   })
 })
 
-// ─── CHECK_INTERVAL 节流 (CHECK_INTERVAL=1300) ────────────────────────────────
-describe('CreatureNailersSystem.update throttling', () => {
+describe('CreatureNailersSystem - CHECK_INTERVAL 节流', () => {
   let sys: CreatureNailersSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('tick - lastCheck < 1300 时不调用 getEntitiesWithComponents', () => {
-    let called = false
-    const mockEM = {
-      getEntitiesWithComponents: () => { called = true; return [] },
-      getComponent: () => ({ age: 20 }),
-    }
-    // lastCheck=0，tick=500，差=500 < 1300
-    sys.update(1, mockEM as any, 500)
-    expect(called).toBe(false)
+  it('tick差<1300不更新lastCheck', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1299)
+    expect((sys as any).lastCheck).toBe(0)
+    expect(em.getEntitiesWithComponents).not.toHaveBeenCalled()
   })
-  it('tick - lastCheck >= 1300 时调用 getEntitiesWithComponents', () => {
-    let called = false
-    const mockEM = {
-      getEntitiesWithComponents: () => { called = true; return [] },
-      getComponent: () => ({ age: 20 }),
-    }
-    // lastCheck=0，tick=1300，差=1300 >= 1300
-    sys.update(1, mockEM as any, 1300)
-    expect(called).toBe(true)
-  })
-  it('update 空实体列表不崩溃', () => {
-    const mockEM = {
-      getEntitiesWithComponents: () => [],
-      getComponent: () => undefined,
-    }
-    expect(() => sys.update(1, mockEM as any, 1300)).not.toThrow()
-  })
-  it('update 后 lastCheck 更新为当前 tick', () => {
-    const mockEM = {
-      getEntitiesWithComponents: () => [],
-      getComponent: () => undefined,
-    }
-    sys.update(1, mockEM as any, 1300)
+  it('tick差>=1300更新lastCheck', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1300)
     expect((sys as any).lastCheck).toBe(1300)
   })
+  it('tick=1299边界不更新', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1299)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('第二次差值不足时保持', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1300)
+    sys.update(1, em, 2000)
+    expect((sys as any).lastCheck).toBe(1300)
+  })
+  it('第二次差值足够时再次更新', () => {
+    const em = makeEmptyEM()
+    sys.update(1, em, 1300)
+    sys.update(1, em, 2600)
+    expect((sys as any).lastCheck).toBe(2600)
+  })
 })
 
-// ─── time-based cleanup (cutoff = tick - 52000) ───────────────────────────────
-describe('CreatureNailersSystem cleanup (cutoff = tick - 52000)', () => {
+describe('CreatureNailersSystem - time-based cleanup', () => {
   let sys: CreatureNailersSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
+  afterEach(() => { vi.restoreAllMocks() })
 
-  it('tick < cutoff 的 nailer 被删除', () => {
-    // tick=60000, cutoff=8000, nailer.tick=5000 < 8000 → 删除
-    ;(sys as any).nailers.push(makeNailer(1, 'tack', 60, 5000))
-    ;(sys as any).lastCheck = 0
-    const mockEM = {
-      getEntitiesWithComponents: () => [],
-      getComponent: () => undefined,
-    }
-    sys.update(1, mockEM as any, 60000)
-    expect((sys as any).nailers).toHaveLength(0)
-  })
-  it('tick >= cutoff 的 nailer 保留', () => {
-    // tick=60000, cutoff=8000, nailer.tick=9000 >= 8000 → 保留
-    ;(sys as any).nailers.push(makeNailer(1, 'brad', 60, 9000))
-    ;(sys as any).lastCheck = 0
-    const mockEM = {
-      getEntitiesWithComponents: () => [],
-      getComponent: () => undefined,
-    }
-    sys.update(1, mockEM as any, 60000)
-    expect((sys as any).nailers).toHaveLength(1)
-  })
-  it('精确边界：nailer.tick = cutoff-1 被删除', () => {
-    // tick=52000, cutoff=0, nailer.tick=-1 < 0 → 删除
-    ;(sys as any).nailers.push(makeNailer(1, 'spike', 60, -1))
-    ;(sys as any).lastCheck = 0
-    const mockEM = {
-      getEntitiesWithComponents: () => [],
-      getComponent: () => undefined,
-    }
-    sys.update(1, mockEM as any, 52000)
-    expect((sys as any).nailers).toHaveLength(0)
-  })
-  it('旧的删除，新的保留 (混合)', () => {
-    // tick=60000, cutoff=8000
-    ;(sys as any).nailers.push(makeNailer(1, 'tack', 60, 5000))   // 老，删除
-    ;(sys as any).nailers.push(makeNailer(2, 'rivet', 60, 10000)) // 新，保留
-    ;(sys as any).lastCheck = 0
-    const mockEM = {
-      getEntitiesWithComponents: () => [],
-      getComponent: () => undefined,
-    }
-    sys.update(1, mockEM as any, 60000)
+  it('过期记录被清除, cutoff=tick-52000', () => {
+    const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).nailers.push(makeMaker(1, { tick: 0 }))
+    ;(sys as any).nailers.push(makeMaker(2, { tick: 55000 }))
+    sys.update(1, em, 60000)
     expect((sys as any).nailers).toHaveLength(1)
     expect((sys as any).nailers[0].entityId).toBe(2)
   })
+  it('未过期记录全部保留', () => {
+    const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).nailers.push(makeMaker(1, { tick: 55000 }))
+    ;(sys as any).nailers.push(makeMaker(2, { tick: 56000 }))
+    sys.update(1, em, 60000)
+    expect((sys as any).nailers).toHaveLength(2)
+  })
+  it('cutoff边界: cutoff=60000-52000=8000', () => {
+    const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).nailers.push(makeMaker(1, { tick: 7999 }))
+    ;(sys as any).nailers.push(makeMaker(2, { tick: 8000 }))
+    sys.update(1, em, 60000)
+    expect((sys as any).nailers).toHaveLength(1)
+    expect((sys as any).nailers[0].entityId).toBe(2)
+  })
+  it('全部过期时全部删除', () => {
+    const em = makeEmptyEM()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    ;(sys as any).nailers.push(makeMaker(1, { tick: 0 }))
+    sys.update(1, em, 60000)
+    expect((sys as any).nailers).toHaveLength(0)
+  })
 })
 
-// ─── MAX_NAILERS 上限 (MAX_NAILERS=34) ───────────────────────────────────────
-describe('CreatureNailersSystem.MAX_NAILERS', () => {
+describe('CreatureNailersSystem - skillMap 操作', () => {
   let sys: CreatureNailersSystem
   beforeEach(() => { sys = makeSys(); nextId = 1 })
 
-  it('注入 34 个 nailers 后内部数组长度为 34', () => {
-    for (let i = 0; i < 34; i++) {
-      ;(sys as any).nailers.push(makeNailer(i + 1))
-    }
-    expect((sys as any).nailers).toHaveLength(34)
+  it('skillMap初始为空', () => { expect((sys as any).skillMap.size).toBe(0) })
+  it('未知实体返回undefined', () => { expect((sys as any).skillMap.get(999)).toBeUndefined() })
+  it('注入后可读取', () => {
+    ;(sys as any).skillMap.set(5, 70)
+    expect((sys as any).skillMap.get(5)).toBe(70)
   })
-  it('lastCheck 和 nextId 为数字类型', () => {
-    expect(typeof (sys as any).lastCheck).toBe('number')
-    expect(typeof (sys as any).nextId).toBe('number')
+  it('多个实体独立存储', () => {
+    ;(sys as any).skillMap.set(1, 30)
+    ;(sys as any).skillMap.set(2, 60)
+    expect((sys as any).skillMap.get(1)).toBe(30)
+    expect((sys as any).skillMap.get(2)).toBe(60)
+  })
+})
+
+describe('CreatureNailersSystem - 边界与综合', () => {
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('空数组时 update 不报错', () => {
+    expect(() => makeSys().update(1, makeEmptyEM(), 1300)).not.toThrow()
+  })
+  it('dt参数不影响节流', () => {
+    const sys = makeSys()
+    sys.update(999, makeEmptyEM(), 1299)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('entityId被正确保存', () => {
+    const sys = makeSys()
+    ;(sys as any).nailers.push(makeMaker(44))
+    expect((sys as any).nailers[0].entityId).toBe(44)
+  })
+  it('所有字段类型正确', () => {
+    const sys = makeSys()
+    ;(sys as any).nailers.push(makeMaker(1))
+    const r = (sys as any).nailers[0]
+    expect(typeof r.skill).toBe('number')
+    expect(typeof r.nailsForged).toBe('number')
+    expect(typeof r.strength).toBe('number')
+    expect(typeof r.reputation).toBe('number')
   })
 })

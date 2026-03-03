@@ -22,18 +22,16 @@ function makeAtoll(overrides: Partial<Atoll> = {}): Atoll {
   }
 }
 
-// DEEP_WATER=0, SHALLOW_WATER=1 — 全水域允许spawn
 const makeWorldAllDeepWater = () => ({
   width: 200,
   height: 200,
-  getTile: () => 0,  // DEEP_WATER
+  getTile: () => 0,
 }) as any
 
-// getTile返回3(GRASS)，不是DEEP_WATER，spawn检查失败
 const makeWorldGrass = () => ({
   width: 200,
   height: 200,
-  getTile: () => 3,  // GRASS
+  getTile: () => 3,
 }) as any
 
 const em = {} as any
@@ -46,13 +44,19 @@ describe('WorldAtollSystem', () => {
   it('初始atolls为空', () => {
     expect((sys as any).atolls).toHaveLength(0)
   })
-
   it('nextId初始为1', () => {
     expect((sys as any).nextId).toBe(1)
   })
-
   it('lastCheck初始为0', () => {
     expect((sys as any).lastCheck).toBe(0)
+  })
+  it('atolls是数组', () => {
+    expect(Array.isArray((sys as any).atolls)).toBe(true)
+  })
+  it('新建两个实例互相独立', () => {
+    const s1 = makeSys(); const s2 = makeSys()
+    ;(s1 as any).atolls.push(makeAtoll())
+    expect((s2 as any).atolls).toHaveLength(0)
   })
 
   // --- CHECK_INTERVAL 节流 ---
@@ -61,18 +65,22 @@ describe('WorldAtollSystem', () => {
     sys.update(1, makeWorldGrass(), em, CHECK_INTERVAL - 1)
     expect((sys as any).lastCheck).toBe(0)
   })
-
   it('tick == CHECK_INTERVAL时更新lastCheck', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, makeWorldGrass(), em, CHECK_INTERVAL)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
   })
-
   it('连续调用：第二次tick不满足间隔则跳过', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, makeWorldGrass(), em, CHECK_INTERVAL)
     sys.update(1, makeWorldGrass(), em, CHECK_INTERVAL + 100)
     expect((sys as any).lastCheck).toBe(CHECK_INTERVAL)
+  })
+  it('间隔足够时第二次触发', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    sys.update(1, makeWorldGrass(), em, CHECK_INTERVAL)
+    sys.update(1, makeWorldGrass(), em, CHECK_INTERVAL * 2)
+    expect((sys as any).lastCheck).toBe(CHECK_INTERVAL * 2)
   })
 
   // --- Spawn 生成逻辑 ---
@@ -81,22 +89,17 @@ describe('WorldAtollSystem', () => {
     sys.update(1, makeWorldGrass(), em, CHECK_INTERVAL)
     expect((sys as any).atolls).toHaveLength(0)
   })
-
   it('random > SPAWN_CHANCE时不spawn', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     sys.update(1, makeWorldAllDeepWater(), em, CHECK_INTERVAL)
     expect((sys as any).atolls).toHaveLength(0)
   })
-
   it('全DEEP_WATER且random < SPAWN_CHANCE时spawn', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.0005)
     sys.update(1, makeWorldAllDeepWater(), em, CHECK_INTERVAL)
     expect((sys as any).atolls).toHaveLength(1)
   })
-
   it('生成的atoll字段在合法范围内', () => {
-    // mock=0.0005时spawn后还有update循环（age++, coralHealth随机浮动, lagoonDepth-0.001）
-    // coralHealth = max(10, min(100, (50+0.0005*40) + (0.0005-0.48)*2)) ≈ 49.06，用系统夹紧下限10
     vi.spyOn(Math, 'random').mockReturnValue(0.0005)
     sys.update(1, makeWorldAllDeepWater(), em, CHECK_INTERVAL)
     const a = (sys as any).atolls[0]
@@ -108,16 +111,14 @@ describe('WorldAtollSystem', () => {
     expect(a.coralHealth).toBeLessThanOrEqual(100)
     expect(a.marineLife).toBeGreaterThanOrEqual(5)
     expect(a.marineLife).toBeLessThanOrEqual(14)
-    expect(a.sandAccumulation).toBeCloseTo(0.05)  // spawn后update循环执行一次+0.05
-    expect(a.age).toBe(1)  // spawn后update循环执行一次age++
+    expect(a.sandAccumulation).toBeCloseTo(0.05)
+    expect(a.age).toBe(1)
   })
-
   it('生成的atoll记录spawn时的tick', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.0005)
     sys.update(1, makeWorldAllDeepWater(), em, CHECK_INTERVAL)
     expect((sys as any).atolls[0].tick).toBe(CHECK_INTERVAL)
   })
-
   it('已达MAX_ATOLLS时不再生成', () => {
     for (let i = 0; i < MAX_ATOLLS; i++) {
       ;(sys as any).atolls.push(makeAtoll())
@@ -125,6 +126,19 @@ describe('WorldAtollSystem', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.0005)
     sys.update(1, makeWorldAllDeepWater(), em, CHECK_INTERVAL)
     expect((sys as any).atolls).toHaveLength(MAX_ATOLLS)
+  })
+  it('spawn后nextId递增', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0005)
+    sys.update(1, makeWorldAllDeepWater(), em, CHECK_INTERVAL)
+    if ((sys as any).atolls.length > 0) {
+      expect((sys as any).nextId).toBeGreaterThan(1)
+    }
+  })
+  it('spawn后atoll active=true（通过tick存储）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0005)
+    sys.update(1, makeWorldAllDeepWater(), em, CHECK_INTERVAL)
+    const a = (sys as any).atolls[0]
+    if (a) expect(a.tick).toBe(CHECK_INTERVAL)
   })
 
   // --- 字段更新 ---
@@ -134,21 +148,18 @@ describe('WorldAtollSystem', () => {
     sys.update(1, makeWorldGrass(), em, CHECK_INTERVAL)
     expect((sys as any).atolls[0].age).toBe(1)
   })
-
   it('每次update后sandAccumulation增加0.05', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     ;(sys as any).atolls.push(makeAtoll({ sandAccumulation: 10 }))
     sys.update(1, makeWorldGrass(), em, CHECK_INTERVAL)
     expect((sys as any).atolls[0].sandAccumulation).toBeCloseTo(10.05)
   })
-
   it('sandAccumulation上限为100', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     ;(sys as any).atolls.push(makeAtoll({ sandAccumulation: 100 }))
     sys.update(1, makeWorldGrass(), em, CHECK_INTERVAL)
     expect((sys as any).atolls[0].sandAccumulation).toBe(100)
   })
-
   it('update后coralHealth保持在[10, 100]范围内', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     ;(sys as any).atolls.push(makeAtoll({ coralHealth: 99 }))
@@ -157,7 +168,6 @@ describe('WorldAtollSystem', () => {
     expect(a.coralHealth).toBeGreaterThanOrEqual(10)
     expect(a.coralHealth).toBeLessThanOrEqual(100)
   })
-
   it('update后lagoonDepth逐渐减少且不低于0.5', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     ;(sys as any).atolls.push(makeAtoll({ lagoonDepth: 4 }))
@@ -166,21 +176,37 @@ describe('WorldAtollSystem', () => {
     expect(a.lagoonDepth).toBeCloseTo(3.999)
     expect(a.lagoonDepth).toBeGreaterThanOrEqual(0.5)
   })
-
   it('lagoonDepth不低于下限0.5', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     ;(sys as any).atolls.push(makeAtoll({ lagoonDepth: 0.5 }))
     sys.update(1, makeWorldGrass(), em, CHECK_INTERVAL)
     expect((sys as any).atolls[0].lagoonDepth).toBe(0.5)
   })
+  it('多个atolls同时更新age', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    for (let i = 0; i < 3; i++) {
+      ;(sys as any).atolls.push(makeAtoll({ age: i }))
+    }
+    sys.update(1, makeWorldGrass(), em, CHECK_INTERVAL)
+    for (let i = 0; i < 3; i++) {
+      expect((sys as any).atolls[i].age).toBe(i + 1)
+    }
+  })
 
-  // --- Cleanup 清理（WorldAtollSystem无cleanup逻辑，验证不删除） ---
+  // --- Cleanup 清理 ---
   it('注入的atoll在update后保留（无时间淘汰逻辑）', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9)
     ;(sys as any).atolls.push(makeAtoll({ tick: 0 }))
-    // 用一个很大的tick验证不会被清除
     sys.update(1, makeWorldGrass(), em, 999999)
     expect((sys as any).atolls).toHaveLength(1)
+  })
+  it('大量atoll也不会被删除（无cleanup逻辑）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    for (let i = 0; i < MAX_ATOLLS; i++) {
+      ;(sys as any).atolls.push(makeAtoll({ tick: 0 }))
+    }
+    sys.update(1, makeWorldGrass(), em, 999999)
+    expect((sys as any).atolls).toHaveLength(MAX_ATOLLS)
   })
 
   // --- 注入验证 ---
@@ -191,10 +217,38 @@ describe('WorldAtollSystem', () => {
     expect(a.coralHealth).toBe(80)
     expect(a.marineLife).toBe(70)
   })
-
   it('多个atolls全部返回', () => {
     ;(sys as any).atolls.push(makeAtoll())
     ;(sys as any).atolls.push(makeAtoll())
     expect((sys as any).atolls).toHaveLength(2)
+  })
+
+  // --- 边界条件 ---
+  it('tick=0不触发', () => {
+    sys.update(1, makeWorldGrass(), em, 0)
+    expect((sys as any).lastCheck).toBe(0)
+  })
+  it('大tick值不崩溃', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9)
+    expect(() => sys.update(1, makeWorldGrass(), em, 9999999)).not.toThrow()
+  })
+  it('atoll字段结构完整', () => {
+    const a = makeAtoll()
+    expect(typeof a.id).toBe('number')
+    expect(typeof a.x).toBe('number')
+    expect(typeof a.y).toBe('number')
+    expect(typeof a.radius).toBe('number')
+    expect(typeof a.lagoonDepth).toBe('number')
+    expect(typeof a.coralHealth).toBe('number')
+    expect(typeof a.marineLife).toBe('number')
+    expect(typeof a.sandAccumulation).toBe('number')
+    expect(typeof a.age).toBe('number')
+    expect(typeof a.tick).toBe('number')
+  })
+  it('coralHealth低于10时被截断为10', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.0)
+    ;(sys as any).atolls.push(makeAtoll({ coralHealth: 10 }))
+    sys.update(1, makeWorldGrass(), em, CHECK_INTERVAL)
+    expect((sys as any).atolls[0].coralHealth).toBeGreaterThanOrEqual(10)
   })
 })
